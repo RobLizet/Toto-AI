@@ -666,7 +666,7 @@ body{
       </div>
       <div class="w-stat-box">
         <div class="s-lbl">Hitrate</div>
-        <div class="s-val" id="hitRate" style="color:var(--cyan);">—</div>
+        <div class="s-val" id="hitRate" style="color:#a78bfa;">—</div>
       </div>
     </div>
 
@@ -844,11 +844,11 @@ let deferredInstall = null;
 // INIT
 // ═══════════════════════════════════════════════════════
 window.addEventListener('load', () => {
-  loadState();
-  applySettings();
-  updateWalletUI();
-  loadMatches(state.activeComp);
-  registerSW();
+  try { loadState(); } catch(e) { console.error('loadState fout:', e); }
+  try { applySettings(); } catch(e) { console.error('applySettings fout:', e); }
+  try { updateWalletUI(); } catch(e) { console.error('updateWalletUI fout:', e); }
+  try { loadMatches(state.activeComp); } catch(e) { console.error('loadMatches fout:', e); }
+  try { registerSW(); } catch(e) { console.error('registerSW fout:', e); }
 });
 
 window.addEventListener('beforeinstallprompt', e => {
