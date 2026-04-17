@@ -519,17 +519,26 @@ body{
       <div class="comp-chip" onclick="selectComp('kkd')" id="comp-kkd">
         <span class="flag">🇳🇱</span><div class="cname">Keuken Kampioen</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('bundesliga')" id="comp-bundesliga">
-        <span class="flag">🇩🇪</span><div class="cname">Bundesliga</div>
+      <div class="comp-chip" onclick="selectComp('beker')" id="comp-beker">
+        <span class="flag">🏆</span><div class="cname">KNVB Beker</div>
       </div>
       <div class="comp-chip" onclick="selectComp('premier')" id="comp-premier">
         <span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><div class="cname">Premier League</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('beker')" id="comp-beker">
-        <span class="flag">🏆</span><div class="cname">KNVB Beker</div>
+      <div class="comp-chip" onclick="selectComp('bundesliga')" id="comp-bundesliga">
+        <span class="flag">🇩🇪</span><div class="cname">Bundesliga</div>
+      </div>
+      <div class="comp-chip" onclick="selectComp('ligue1')" id="comp-ligue1">
+        <span class="flag">🇫🇷</span><div class="cname">Ligue 1</div>
+      </div>
+      <div class="comp-chip" onclick="selectComp('seriea')" id="comp-seriea">
+        <span class="flag">🇮🇹</span><div class="cname">Serie A</div>
       </div>
       <div class="comp-chip" onclick="selectComp('champions')" id="comp-champions">
         <span class="flag">⭐</span><div class="cname">Champions League</div>
+      </div>
+      <div class="comp-chip" onclick="selectComp('nations')" id="comp-nations">
+        <span class="flag">🌍</span><div class="cname">Nations League</div>
       </div>
     </div>
 
@@ -693,28 +702,55 @@ body{
        TAB 4: INSTELLINGEN
   ══════════════════════════════════════ -->
   <div id="tab-instellingen" class="tab-content">
+
+    <!-- FIREBASE STATUS BALK -->
+    <div id="firebaseStatus" style="display:none;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.25);border-radius:12px;padding:.65rem 1rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;"></div>
+
+    <div class="settings-section">
+      <h4>🔥 Firebase</h4>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Status</div>
+          <div class="sr-sub">toto-ai-397cb · europe-west1</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:#2ecc71;font-weight:700;">✓ VERBONDEN</div>
+      </div>
+      <div class="settings-row">
+        <div style="flex:1;">
+          <div class="sr-label">Keys opslaan</div>
+          <div class="sr-sub">API keys worden automatisch gesynchroniseerd</div>
+        </div>
+      </div>
+      <div style="margin-top:.5rem;">
+        <button onclick="saveToFirebase().then(()=>showFirebaseStatus('🔥 Gesynchroniseerd!','#2ecc71')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#e74c3c'))"
+          style="background:linear-gradient(135deg,rgba(255,154,193,.2),rgba(167,139,250,.2));border:1px solid rgba(255,154,193,.3);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;padding:.45rem 1rem;border-radius:999px;cursor:pointer;">
+          🔄 NU SYNCHRONISEREN
+        </button>
+      </div>
+    </div>
+
     <div class="settings-section">
       <h4>🔑 API Keys</h4>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">API-Football Key</div>
+          <div class="sr-sub">⭐ Primair — alle competities + H2H</div>
+        </div>
+        <input class="sr-input sr-input-border" id="settFootballKey" type="password" placeholder="RapidAPI key..." value="">
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">football-data.org Key</div>
+          <div class="sr-sub">Backup — Eredivisie, PL, BL, CL</div>
+        </div>
+        <input class="sr-input sr-input-border" id="settFdKey" type="password" placeholder="fd-org token..." value="">
+      </div>
       <div class="settings-row">
         <div>
           <div class="sr-label">Anthropic API Key</div>
           <div class="sr-sub">Voor AI analyses (claude-sonnet)</div>
         </div>
         <input class="sr-input sr-input-border" id="settAnthropicKey" type="password" placeholder="sk-ant-..." value="">
-      </div>
-      <div class="settings-row">
-        <div>
-          <div class="sr-label">football-data.org Key</div>
-          <div class="sr-sub">⭐ Primair — Eredivisie, PL, BL, CL</div>
-        </div>
-        <input class="sr-input sr-input-border" id="settFdKey" type="password" placeholder="fd-org token..." value="">
-      </div>
-      <div class="settings-row">
-        <div>
-          <div class="sr-label">API-Football Key</div>
-          <div class="sr-sub">Backup + H2H/statistieken</div>
-        </div>
-        <input class="sr-input sr-input-border" id="settFootballKey" type="password" placeholder="RapidAPI key..." value="">
       </div>
     </div>
 
@@ -725,12 +761,16 @@ body{
           <div class="sr-label">Favoriete competitie</div>
           <div class="sr-sub">Wordt standaard geopend</div>
         </div>
-        <select class="sr-input sr-input-border" id="settDefaultComp" style="background:var(--surface);">
+        <select class="sr-input sr-input-border" id="settDefaultComp" style="background:rgba(255,255,255,.8);">
           <option value="eredivisie">🇳🇱 Eredivisie</option>
           <option value="kkd">🇳🇱 Keuken Kampioen</option>
-          <option value="bundesliga">🇩🇪 Bundesliga</option>
+          <option value="beker">🏆 KNVB Beker</option>
           <option value="premier">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</option>
+          <option value="bundesliga">🇩🇪 Bundesliga</option>
+          <option value="ligue1">🇫🇷 Ligue 1</option>
+          <option value="seriea">🇮🇹 Serie A</option>
           <option value="champions">⭐ Champions League</option>
+          <option value="nations">🌍 Nations League</option>
         </select>
       </div>
     </div>
@@ -845,11 +885,14 @@ let deferredInstall = null;
 // INIT
 // ═══════════════════════════════════════════════════════
 window.addEventListener('load', () => {
-  try { loadState(); } catch(e) { console.error('loadState fout:', e); }
-  try { applySettings(); } catch(e) { console.error('applySettings fout:', e); }
-  try { updateWalletUI(); } catch(e) { console.error('updateWalletUI fout:', e); }
-  try { loadMatches(state.activeComp); } catch(e) { console.error('loadMatches fout:', e); }
-  try { registerSW(); } catch(e) { console.error('registerSW fout:', e); }
+  try { loadState(); } catch(e) { console.error('loadState:', e); }
+  try { applySettings(); } catch(e) { console.error('applySettings:', e); }
+  try { updateWalletUI(); } catch(e) { console.error('updateWalletUI:', e); }
+  // Laad keys uit Firebase, dan wedstrijden
+  loadFromFirebase().finally(() => {
+    try { loadMatches(state.activeComp); } catch(e) { console.error('loadMatches:', e); }
+  });
+  try { registerSW(); } catch(e) { console.error('registerSW:', e); }
 });
 
 window.addEventListener('beforeinstallprompt', e => {
@@ -899,24 +942,30 @@ function selectComp(comp) {
 // API CONFIGURATIE
 // ═══════════════════════════════════════════════════════
 
-// Football-data.org codes (primair)
+// Football-data.org codes (backup)
 const FD_CODES = {
   eredivisie: 'DED',
-  kkd: null,        // niet beschikbaar op gratis tier
+  kkd: null,
   bundesliga: 'BL1',
   premier: 'PL',
   beker: 'KBR',
-  champions: 'CL'
+  champions: 'CL',
+  ligue1: 'FL1',
+  seriea: 'SA',
+  nations: null  // niet beschikbaar op fd.org
 };
 
-// API-Football IDs (backup)
+// API-Football IDs (primair)
 const COMP_IDS = {
   eredivisie: 88,
   kkd: 89,
   bundesliga: 78,
   premier: 39,
   beker: 90,
-  champions: 2
+  champions: 2,
+  ligue1: 61,
+  seriea: 135,
+  nations: 5  // UEFA Nations League
 };
 
 function getCurrentSeason() { return 2025; }
@@ -1031,25 +1080,25 @@ async function loadMatches(comp) {
   document.getElementById('matchList').innerHTML = '';
   showLoadingMsg('⟳ Wedstrijden laden...', 'var(--muted)');
 
-  const fdKey   = state.settings.fdKey;
   const apifKey = state.settings.footballKey;
+  const fdKey   = state.settings.fdKey;
   const fdCode  = FD_CODES[comp];
 
-  // ── Probeer football-data.org eerst ──
-  if (fdKey && fdCode) {
-    const result = await loadFromFD(fdCode, fdKey, comp);
-    if (result) return;
-  }
-
-  // ── Fallback: API-Football ──
+  // ── Primair: API-Football ──
   if (apifKey) {
     const result = await loadFromAPIFootball(comp, apifKey);
     if (result) return;
   }
 
+  // ── Backup: football-data.org ──
+  if (fdKey && fdCode) {
+    const result = await loadFromFD(fdCode, fdKey, comp);
+    if (result) return;
+  }
+
   // ── Geen keys ──
-  if (!fdKey && !apifKey) {
-    showLoadingMsg('⚠ Vul je API keys in bij ⚙️ Instellingen (football-data.org en/of API-Football)', 'var(--yellow)');
+  if (!apifKey && !fdKey) {
+    showLoadingMsg('⚠ Vul je API-Football key in bij ⚙️ Instellingen', 'var(--yellow)');
     return;
   }
 
@@ -1120,11 +1169,17 @@ async function loadFromFD(fdCode, fdKey, comp) {
 
 async function loadFromAPIFootball(comp, apiKey) {
   const leagueId = COMP_IDS[comp];
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date();
+  const dateFrom = today.toISOString().split('T')[0];
+  const dateTo = new Date(today.getTime() + 2 * 86400000).toISOString().split('T')[0];
   try {
     showLoadingMsg('⟳ API-Football laden...', 'var(--muted)');
+
+    // Stap 1: vandaag t/m overmorgen
     let resp = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&date=${today}&season=2025`, apiKey);
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`,
+      apiKey
+    );
     let data = await resp.json();
     if (data.response?.length > 0) {
       state.matches = data.response.map(parseAPIMatch);
@@ -1132,7 +1187,12 @@ async function loadFromAPIFootball(comp, apiKey) {
       renderMatches(state.matches);
       return true;
     }
-    resp = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=10`, apiKey);
+
+    // Stap 2: komende wedstrijden
+    resp = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=12`,
+      apiKey
+    );
     data = await resp.json();
     if (data.response?.length > 0) {
       state.matches = data.response.map(parseAPIMatch);
@@ -1140,7 +1200,12 @@ async function loadFromAPIFootball(comp, apiKey) {
       renderMatches(state.matches);
       return true;
     }
-    resp = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=10`, apiKey);
+
+    // Stap 3: laatste gespeelde wedstrijden
+    resp = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=12`,
+      apiKey
+    );
     data = await resp.json();
     if (data.response?.length > 0) {
       state.matches = data.response.map(parseAPIMatch);
@@ -1952,28 +2017,92 @@ function saveApiKey() {
 }
 
 function saveSettings() {
-  state.settings.anthropicKey = document.getElementById('settAnthropicKey').value.trim();
-  state.settings.fdKey = document.getElementById('settFdKey').value.trim();
-  state.settings.footballKey = document.getElementById('settFootballKey').value.trim();
-  state.settings.defaultComp = document.getElementById('settDefaultComp').value;
-  state.settings.startBalance = parseInt(document.getElementById('settStartBalance').value) || 500;
-  state.settings.defaultBet = parseInt(document.getElementById('settDefaultBet').value) || 10;
-  saveState();
-  alert('✓ Instellingen opgeslagen!');
+  state.settings.anthropicKey    = document.getElementById('settAnthropicKey').value.trim();
+  state.settings.footballKey     = document.getElementById('settFootballKey').value.trim();
+  state.settings.fdKey           = document.getElementById('settFdKey').value.trim();
+  state.settings.defaultComp    = document.getElementById('settDefaultComp').value;
+  state.settings.startBalance   = parseInt(document.getElementById('settStartBalance').value) || 500;
+  state.settings.defaultBet     = parseInt(document.getElementById('settDefaultBet').value) || 10;
+  saveState(); // altijd lokaal opslaan
+  // Automatisch ook naar Firebase
+  saveToFirebase()
+    .then(() => showFirebaseStatus('🔥 Opgeslagen in Firebase', '#2ecc71'))
+    .catch(e => showFirebaseStatus('⚠ Firebase fout: ' + e.message, '#e74c3c'));
 }
 
 function applySettings() {
-  document.getElementById('apiKeyInput').value = state.settings.anthropicKey || '';
-  document.getElementById('settAnthropicKey').value = state.settings.anthropicKey || '';
-  document.getElementById('settFdKey').value = state.settings.fdKey || '';
-  document.getElementById('settFootballKey').value = state.settings.footballKey || '';
-  document.getElementById('settDefaultComp').value = state.settings.defaultComp || 'eredivisie';
-  document.getElementById('settStartBalance').value = state.settings.startBalance || 500;
-  document.getElementById('settDefaultBet').value = state.settings.defaultBet || 10;
-  document.getElementById('betAmount').value = state.settings.defaultBet || 10;
+  document.getElementById('apiKeyInput').value        = state.settings.anthropicKey || '';
+  document.getElementById('settAnthropicKey').value   = state.settings.anthropicKey || '';
+  document.getElementById('settFootballKey').value    = state.settings.footballKey || '';
+  document.getElementById('settFdKey').value          = state.settings.fdKey || '';
+  document.getElementById('settDefaultComp').value    = state.settings.defaultComp || 'eredivisie';
+  document.getElementById('settStartBalance').value   = state.settings.startBalance || 500;
+  document.getElementById('settDefaultBet').value     = state.settings.defaultBet || 10;
+  document.getElementById('betAmount').value          = state.settings.defaultBet || 10;
   if (state.settings.anthropicKey) {
     document.getElementById('apiStatus').textContent = '✓ API key geladen';
     document.getElementById('apiStatus').className = 'api-status ok';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// FIREBASE — Realtime Database
+// ═══════════════════════════════════════════════════════
+const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
+const FB_KEY = 'AIzaSyB7K4SXPdxHSPIvFyXOfY2bpehcNnjRM-M';
+
+function showFirebaseStatus(msg, color) {
+  const el = document.getElementById('firebaseStatus');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color = color || 'var(--muted)';
+  el.textContent = msg;
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+async function saveToFirebase() {
+  // Sla alleen API keys op — NIET de wallet (die blijft lokaal)
+  const payload = {
+    anthropicKey: state.settings.anthropicKey || '',
+    footballKey:  state.settings.footballKey  || '',
+    fdKey:        state.settings.fdKey        || '',
+    defaultComp:  state.settings.defaultComp  || 'eredivisie',
+    defaultBet:   state.settings.defaultBet   || 10,
+    startBalance: state.settings.startBalance || 500,
+    updatedAt:    new Date().toISOString()
+  };
+  const url = `${FB_DB}/settings.json?auth=${FB_KEY}`;
+  const resp = await fetch(url, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
+}
+
+async function loadFromFirebase() {
+  try {
+    const url = `${FB_DB}/settings.json?auth=${FB_KEY}`;
+    const resp = await fetch(url);
+    if (!resp.ok) return false;
+    const d = await resp.json();
+    if (!d) return false;
+    if (d.anthropicKey) state.settings.anthropicKey = d.anthropicKey;
+    if (d.footballKey)  state.settings.footballKey  = d.footballKey;
+    if (d.fdKey)        state.settings.fdKey         = d.fdKey;
+    if (d.defaultComp)  state.settings.defaultComp  = d.defaultComp;
+    if (d.defaultBet)   state.settings.defaultBet   = d.defaultBet;
+    if (d.startBalance) state.settings.startBalance = d.startBalance;
+    // Sla ook lokaal op als backup
+    saveState();
+    applySettings();
+    showFirebaseStatus('🔥 Keys geladen vanuit Firebase', '#2ecc71');
+    return true;
+  } catch(e) {
+    console.warn('Firebase laden mislukt:', e.message);
+    return false;
   }
 }
 
