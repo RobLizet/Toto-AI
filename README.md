@@ -1,2 +1,0 @@
-# Toto-AI
-Toto
