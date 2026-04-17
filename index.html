@@ -1428,7 +1428,7 @@ function loadState() {
 // ═══════════════════════════════════════════════════════
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.register('/Toto-AI/sw.js', { scope: '/Toto-AI/' }).catch(() => {});
   }
 }
 </script>
