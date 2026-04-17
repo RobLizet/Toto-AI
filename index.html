@@ -1057,14 +1057,16 @@ async function loadMatches(comp) {
 }
 
 async function loadFromFD(fdCode, fdKey, comp) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date();
+  const dateFrom = today.toISOString().split('T')[0];
+  const dateTo = new Date(today.getTime() + 2 * 86400000).toISOString().split('T')[0];
   const compName = { eredivisie:'Eredivisie', bundesliga:'Bundesliga', premier:'Premier League', beker:'KNVB Beker', champions:'Champions League' }[comp] || comp;
 
   try {
-    // Stap 1: wedstrijden vandaag
+    // Stap 1: vandaag + morgen + overmorgen
     showLoadingMsg('⟳ football-data.org laden...', 'var(--muted)');
     let resp = await fdFetch(
-      `https://api.football-data.org/v4/competitions/${fdCode}/matches?dateFrom=${today}&dateTo=${today}`,
+      `https://api.football-data.org/v4/competitions/${fdCode}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`,
       fdKey
     );
     if (!resp.ok && resp.status !== 404) {
@@ -1079,7 +1081,7 @@ async function loadFromFD(fdCode, fdKey, comp) {
       return true;
     }
 
-    // Stap 2: komende wedstrijden
+    // Stap 2: komende wedstrijden (volgende speelronde)
     showLoadingMsg('⟳ Komende wedstrijden zoeken...', 'var(--muted)');
     resp = await fdFetch(
       `https://api.football-data.org/v4/competitions/${fdCode}/matches?status=SCHEDULED`,
@@ -1087,8 +1089,7 @@ async function loadFromFD(fdCode, fdKey, comp) {
     );
     data = await resp.json();
     if (data.matches?.length > 0) {
-      // Sorteer op datum, neem eerste 10
-      const sorted = data.matches.sort((a,b) => new Date(a.utcDate)-new Date(b.utcDate)).slice(0,10);
+      const sorted = data.matches.sort((a,b) => new Date(a.utcDate)-new Date(b.utcDate)).slice(0,12);
       state.matches = sorted.map(m => parseFDMatch(m, compName));
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
@@ -1103,7 +1104,7 @@ async function loadFromFD(fdCode, fdKey, comp) {
     );
     data = await resp.json();
     if (data.matches?.length > 0) {
-      const sorted = data.matches.sort((a,b) => new Date(b.utcDate)-new Date(a.utcDate)).slice(0,10);
+      const sorted = data.matches.sort((a,b) => new Date(b.utcDate)-new Date(a.utcDate)).slice(0,12);
       state.matches = sorted.map(m => parseFDMatch(m, compName));
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
