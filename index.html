@@ -815,14 +815,6 @@ body{
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
-const COMP_IDS = {
-  eredivisie: 88,
-  kkd: 89,
-  bundesliga: 78,
-  premier: 39,
-  beker: 90,
-  champions: 2
-};
 
 let state = {
   activeComp: 'eredivisie',
@@ -1894,6 +1886,8 @@ function cycleCombiBetStatus(id) {
   saveState();
   updateWalletUI();
 }
+
+function cycleBetStatus(id) {
   const bet = state.wallet.bets.find(b => b.id === id);
   if (!bet) return;
   if (bet.status === 'pending') {
