@@ -1228,42 +1228,37 @@ async function loadFromFD(fdCode, fdKey, comp) {
 async function loadFromAPIFootball(comp, apiKey) {
   const leagueId = COMP_IDS[comp];
   const today = new Date();
-  const dateFrom = new Date(today.getTime() - 3*86400000).toISOString().split('T')[0];
-  const dateTo   = new Date(today.getTime() + 7*86400000).toISOString().split('T')[0];
+  const dateFrom = today.toISOString().split('T')[0];
+  const dateTo   = new Date(today.getTime() + 14*86400000).toISOString().split('T')[0]; // 2 weken vooruit
 
   try {
     showLoadingMsg('⟳ API-Football laden...', 'var(--muted)');
 
-    // Stap 1: next=15 + last=5 combineren
-    const [r1, r2] = await Promise.all([
-      apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=15`, apiKey),
-      apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=5`, apiKey)
-    ]);
-    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
-    const combined = [...(d1.response||[]), ...(d2.response||[])];
-
-    if (combined.length > 0) {
-      const seen = new Set();
-      const unique = combined.filter(f => {
-        if (seen.has(f.fixture.id)) return false;
-        seen.add(f.fixture.id); return true;
-      });
-      state.matches = unique.sort((a,b) => new Date(a.fixture.date)-new Date(b.fixture.date)).map(parseAPIMatch);
-      document.getElementById('match-loading').style.display = 'none';
-      renderMatches(state.matches);
-      // Haal odds op op de achtergrond
-      fetchOddsForMatches(leagueId, apiKey);
-      return true;
-    }
-
-    // Stap 2: datum venster seizoen 2025
+    // Alleen komende wedstrijden
     const resp = await apiFetch(
       `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`,
       apiKey
     );
     const data = await resp.json();
+
     if (data.response?.length > 0) {
       state.matches = data.response
+        .sort((a,b) => new Date(a.fixture.date)-new Date(b.fixture.date))
+        .map(parseAPIMatch);
+      document.getElementById('match-loading').style.display = 'none';
+      renderMatches(state.matches);
+      fetchOddsForMatches(leagueId, apiKey);
+      return true;
+    }
+
+    // Geen wedstrijden in 2 weken — probeer next=10
+    const resp2 = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=10`,
+      apiKey
+    );
+    const data2 = await resp2.json();
+    if (data2.response?.length > 0) {
+      state.matches = data2.response
         .sort((a,b) => new Date(a.fixture.date)-new Date(b.fixture.date))
         .map(parseAPIMatch);
       document.getElementById('match-loading').style.display = 'none';
