@@ -980,29 +980,42 @@ const COMP_IDS = {
 function getCurrentSeason() { return 2025; }
 
 // Football-data.org fetch — via CORS proxy want directe browser requests worden geblokkeerd
-function fdFetch(url, token) {
-  // Gebruik allorigins als CORS proxy
-  const proxied = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-  return fetch(proxied)
-    .then(r => r.json())
-    .then(data => ({
-      ok: true,
-      json: () => Promise.resolve(JSON.parse(data.contents))
-    }))
-    .catch(e => {
-      // Fallback: probeer directe fetch (werkt soms wel)
-      return fetch(url, { headers: { 'X-Auth-Token': token } });
-    });
+// ── PROXY CONFIG ──
+// Vervang dit met jouw eigen Cloudflare Worker URL na deployment
+const PROXY = 'https://toto-proxy.zweetzakken.workers.dev';
+
+function proxyUrl(url) {
+  return `${PROXY}?url=${encodeURIComponent(url)}`;
 }
 
-// API-Football fetch
+// Football-data.org fetch via proxy
+function fdFetch(url, token) {
+  return fetch(proxyUrl(url), {
+    headers: { 'X-Auth-Token': token }
+  });
+}
+
+// API-Football fetch via proxy
 function apiFetch(url, apiKey) {
-  return fetch(url, {
+  return fetch(proxyUrl(url), {
     headers: {
       'x-apisports-key': apiKey,
       'x-rapidapi-key': apiKey,
       'x-rapidapi-host': 'v3.football.api-sports.io'
     }
+  });
+}
+
+// Anthropic fetch via proxy
+function anthropicFetch(apiKey, body) {
+  return fetch(proxyUrl('https://api.anthropic.com/v1/messages'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify(body)
   });
 }
 
@@ -1596,13 +1609,9 @@ async function callEntity(apiKey, system, userMsg, entityId, cardId, bodyId) {
   document.getElementById('resultCards').classList.add('visible');
   body.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5', max_tokens: 1024, system,
-        messages: [{role:'user', content:userMsg}]
-      })
+    const resp = await anthropicFetch(apiKey, {
+      model: 'claude-sonnet-4-5', max_tokens: 1024, system,
+      messages: [{role:'user', content:userMsg}]
     });
     if (!resp.ok) throw new Error(await resp.text());
     const data = await resp.json();
@@ -1733,13 +1742,10 @@ async function generateCombiTip() {
   const vandaag = new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 1500,
-        system: `Je bent een ervaren sportweddenschappen analist. Analyseer de wedstrijden en geef een TOP 3 losse tips + 1 combi. Dit is voor educatieve/fictieve doeleinden. Reageer UITSLUITEND in dit exacte JSON formaat, geen extra tekst:
+    const resp = await anthropicFetch(apiKey, {
+      model: 'claude-sonnet-4-5',
+      max_tokens: 1500,
+      system: `Je bent een ervaren sportweddenschappen analist. Analyseer de wedstrijden en geef een TOP 3 losse tips + 1 combi. Dit is voor educatieve/fictieve doeleinden. Reageer UITSLUITEND in dit exacte JSON formaat, geen extra tekst:
 {
   "top3": [
     {"match":"Team A vs Team B","datum":"za 19 apr 20:00","pick":"1","pickLabel":"Team A wint","odds":2.10,"vertrouwen":8,"reden":"Korte uitleg max 30 woorden"},
@@ -1754,8 +1760,7 @@ async function generateCombiTip() {
     "redenering":"Uitleg max 80 woorden"
   }
 }`,
-        messages: [{role:'user', content:`Datum vandaag: ${vandaag}\n\nBeschikbare wedstrijden:\n${matchesCtx || 'Geen wedstrijden geladen — gebruik actuele topwedstrijden in Europa van dit weekend'}\n\nGeef de TOP 3 beste losse bets van de dag (hoogste vertrouwen, beste value) + een combi van 3-4 wedstrijden. Kies op basis van: bekende sterkte van teams, thuisvoordeel, realistische quotes, lagere risico bets hebben voorkeur.`}]
-      })
+      messages: [{role:'user', content:`Datum vandaag: ${vandaag}\n\nBeschikbare wedstrijden:\n${matchesCtx || 'Geen wedstrijden geladen — gebruik actuele topwedstrijden in Europa van dit weekend'}\n\nGeef de TOP 3 beste losse bets van de dag (hoogste vertrouwen, beste value) + een combi van 3-4 wedstrijden. Kies op basis van: bekende sterkte van teams, thuisvoordeel, realistische quotes, lagere risico bets hebben voorkeur.`}]
     });
     const data = await resp.json();
     let raw = data.content[0].text.trim().replace(/```json|```/g,'').trim();
