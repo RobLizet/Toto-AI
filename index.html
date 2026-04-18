@@ -1024,32 +1024,24 @@ function parseFDMatch(m, compName) {
   const homeScore = m.score?.fullTime?.home;
   const awayScore = m.score?.fullTime?.away;
 
-  // Implied odds berekenen uit form als beschikbaar
-  const homeOdds = (Math.random()*1.5+1.4).toFixed(2);
-  const drawOdds = (Math.random()*1+2.9).toFixed(2);
-  const awayOdds = (Math.random()*2+1.8).toFixed(2);
-  const ho = parseFloat(homeOdds), do_ = parseFloat(drawOdds), ao = parseFloat(awayOdds);
-  const tot = (1/ho)+(1/do_)+(1/ao);
-  const homePct = Math.round((1/ho)/tot*100);
-  const drawPct = Math.round((1/do_)/tot*100);
+  // fd.org geeft geen odds — toon streepjes
+  const homeOdds = '—', drawOdds = '—', awayOdds = '—';
+  const homePct = 33, drawPct = 33, awayPct = 34;
 
   return {
     id: m.id,
     source: 'fd',
     comp: compName || m.competition?.name || '',
-    time: timeStr,
-    date: dateStr,
+    time: timeStr, date: dateStr,
     home: m.homeTeam?.shortName || m.homeTeam?.name || '?',
     away: m.awayTeam?.shortName || m.awayTeam?.name || '?',
-    homeId: m.homeTeam?.id,
-    awayId: m.awayTeam?.id,
+    homeId: m.homeTeam?.id, awayId: m.awayTeam?.id,
     homeForm: m.homeTeam?.form || '',
     awayForm: m.awayTeam?.form || '',
     homeOdds, drawOdds, awayOdds,
-    homePct, drawPct, awayPct: 100 - homePct - drawPct,
+    homePct, drawPct, awayPct,
     score: (isDone || isLive) && homeScore != null ? `${homeScore}-${awayScore}` : null,
-    liveMin: null,
-    isLive, isDone,
+    liveMin: null, isLive, isDone,
     matchday: m.matchday,
     raw: m, rawSource: 'fd'
   };
@@ -1068,13 +1060,35 @@ function parseAPIMatch(f) {
   const isLive = ['1H','HT','2H','ET','BT','P'].includes(status);
   const isDone = ['FT','AET','PEN'].includes(status);
 
-  const homeOdds = (Math.random()*1.5+1.4).toFixed(2);
-  const drawOdds = (Math.random()*1+2.9).toFixed(2);
-  const awayOdds = (Math.random()*2+1.8).toFixed(2);
-  const ho = parseFloat(homeOdds), do_ = parseFloat(drawOdds), ao = parseFloat(awayOdds);
-  const tot = (1/ho)+(1/do_)+(1/ao);
-  const homePct = Math.round((1/ho)/tot*100);
-  const drawPct = Math.round((1/do_)/tot*100);
+  // Echte odds uit API response (zit in f.odds als die meegeleverd worden)
+  let homeOdds, drawOdds, awayOdds;
+  const oddsData = f.odds?.[0]?.values || f.odds?.response?.[0]?.bookmakers?.[0]?.bets?.[0]?.values;
+  if (oddsData && oddsData.length >= 3) {
+    homeOdds = parseFloat(oddsData[0]?.odd || oddsData[0]?.value).toFixed(2);
+    drawOdds = parseFloat(oddsData[1]?.odd || oddsData[1]?.value).toFixed(2);
+    awayOdds = parseFloat(oddsData[2]?.odd || oddsData[2]?.value).toFixed(2);
+  } else {
+    // Geen odds in response — gebruik tijdelijke placeholders
+    homeOdds = '—';
+    drawOdds = '—';
+    awayOdds = '—';
+  }
+
+  // Kansen berekenen uit odds (als beschikbaar)
+  let homePct = 33, drawPct = 33, awayPct = 34;
+  if (homeOdds !== '—') {
+    const ho = parseFloat(homeOdds), do_ = parseFloat(drawOdds), ao = parseFloat(awayOdds);
+    if (ho > 0 && do_ > 0 && ao > 0) {
+      const tot = (1/ho) + (1/do_) + (1/ao);
+      homePct = Math.round((1/ho)/tot*100);
+      drawPct = Math.round((1/do_)/tot*100);
+      awayPct = 100 - homePct - drawPct;
+    }
+  }
+
+  // Echte vorm uit API
+  const homeForm = home.form || '';
+  const awayForm = away.form || '';
 
   return {
     id: fix.id,
@@ -1083,12 +1097,13 @@ function parseAPIMatch(f) {
     time: timeStr, date: dateStr,
     home: home.name, away: away.name,
     homeId: home.id, awayId: away.id,
-    homeForm: 'WDWLW', awayForm: 'LWWDL',
+    homeForm, awayForm,
     homeOdds, drawOdds, awayOdds,
-    homePct, drawPct, awayPct: 100 - homePct - drawPct,
+    homePct, drawPct, awayPct,
     score: isDone || isLive ? `${goals.home??0}-${goals.away??0}` : null,
     liveMin: fix.status.elapsed,
     isLive, isDone,
+    venue: fix.venue?.name || '',
     raw: f, rawSource: 'apif'
   };
 }
@@ -1387,26 +1402,36 @@ function renderMatches(matches) {
         </div>
       </div>
       <div class="match-odds">
-        <div class="odds-btn" onclick="openBetModal(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">
+        <div class="odds-btn" onclick="handleOddsBet(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">
           <span class="odds-lbl">1 THUIS</span>
-          <span class="odds-val">${m.homeOdds}</span>
+          <span class="odds-val" style="${m.homeOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.homeOdds}</span>
         </div>
-        <div class="odds-btn" onclick="openBetModal(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')">
+        <div class="odds-btn" onclick="handleOddsBet(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')">
           <span class="odds-lbl">X GELIJK</span>
-          <span class="odds-val">${m.drawOdds}</span>
+          <span class="odds-val" style="${m.drawOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.drawOdds}</span>
         </div>
-        <div class="odds-btn" onclick="openBetModal(event,'${m.id}','2','${m.away} wint','${m.awayOdds}')">
+        <div class="odds-btn" onclick="handleOddsBet(event,'${m.id}','2','${m.away} wint','${m.awayOdds}')">
           <span class="odds-lbl">2 UIT</span>
-          <span class="odds-val">${m.awayOdds}</span>
+          <span class="odds-val" style="${m.awayOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.awayOdds}</span>
         </div>
       </div>
-      <div class="add-combi-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;padding:.4rem .9rem .6rem;">
-        <div class="add-combi-btn" data-match="${m.id}" onclick="toggleCombiLeg('${m.id}','1','${m.home} wint',${m.homeOdds})">+1</div>
-        <div class="add-combi-btn" data-match="${m.id}" onclick="toggleCombiLeg('${m.id}','X','Gelijkspel',${m.drawOdds})">+X</div>
-        <div class="add-combi-btn" data-match="${m.id}" onclick="toggleCombiLeg('${m.id}','2','${m.away} wint',${m.awayOdds})">+2</div>
+      <div class="add-combi-row" id="combi-row-${m.id}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;padding:.4rem .9rem .6rem;">
+        <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">+1</div>
+        <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')">+X</div>
+        <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','2','${m.away} wint','${m.awayOdds}')">+2</div>
       </div>`;
     list.appendChild(card);
   });
+}
+
+function handleOddsBet(e, matchId, pick, pickLabel, odds) {
+  if (odds === '—') return; // geen odds beschikbaar
+  openBetModal(e, matchId, pick, pickLabel, odds);
+}
+
+function handleCombiAdd(e, matchId, pick, pickLabel, odds) {
+  if (odds === '—') { e.stopPropagation(); return; }
+  toggleCombiLeg(matchId, pick, pickLabel, parseFloat(odds));
 }
 
 function selectMatch(match) {
