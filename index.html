@@ -1122,6 +1122,7 @@ function parseAPIMatch(f) {
     liveMin: fix.status.elapsed,
     isLive, isDone,
     venue: fix.venue?.name || '',
+    fixture: { neutral: fix.neutral || false },
     raw: f, rawSource: 'apif'
   };
 }
@@ -1564,38 +1565,71 @@ async function fetchTeamStats(teamId, leagueId) {
   } catch(e) { return null; }
 }
 
-function formatH2H(fixtures, home, away) {
-  if (!fixtures || fixtures.length === 0) return 'Geen H2H data beschikbaar.';
-  let homeWins = 0, awayWins = 0, draws = 0;
-  const lines = fixtures.slice(0,10).map(f => {
-    const ht = f.teams.home.name, at = f.teams.away.name;
-    const hg = f.goals.home ?? '?', ag = f.goals.away ?? '?';
-    const dt = new Date(f.fixture.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'});
-    if (f.teams.home.winner) homeWins++; else if (f.teams.away.winner) awayWins++; else draws++;
-    const w = f.teams.home.winner ? ht : f.teams.away.winner ? at : 'Gelijk';
-    return `${dt}: ${ht} ${hg}-${ag} ${at} → ${w}`;
-  });
-  const summary = `SAMENVATTING laatste ${fixtures.length} duels: ${home} won ${homeWins}x | Gelijk ${draws}x | ${away} won ${awayWins}x`;
-  return summary + '\n\n' + lines.join('\n');
+async function fetchInjuries(teamId, fixtureId) {
+  if (!teamId || !state.settings.footballKey) return [];
+  try {
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/injuries?team=${teamId}&fixture=${fixtureId}`,
+      state.settings.footballKey
+    );
+    const d = await r.json();
+    return d.response || [];
+  } catch(e) { return []; }
 }
 
-function formatForm(fixtures, teamId, teamName) {
-  if (!fixtures || fixtures.length === 0) return 'Geen vorm data beschikbaar.';
-  const results = fixtures.slice(0,8).map(f => {
-    const isHome = f.teams.home.id === teamId;
-    const team = isHome ? f.teams.home : f.teams.away;
-    const opp = isHome ? f.teams.away.name : f.teams.home.name;
-    const gFor = isHome ? (f.goals.home ?? 0) : (f.goals.away ?? 0);
-    const gAg = isHome ? (f.goals.away ?? 0) : (f.goals.home ?? 0);
-    const res = team.winner === true ? '✓WIN' : team.winner === false ? '✗VER' : '=GEL';
-    const loc = isHome ? 'Thuis' : 'Uit';
-    const dt = new Date(f.fixture.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
-    const comp = f.league.name;
-    return `${dt} [${loc}] vs ${opp} (${comp}): ${gFor}-${gAg} ${res}`;
+async function fetchPredictions(fixtureId) {
+  if (!fixtureId || !state.settings.footballKey) return null;
+  try {
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/predictions?fixture=${fixtureId}`,
+      state.settings.footballKey
+    );
+    const d = await r.json();
+    return d.response?.[0] || null;
+  } catch(e) { return null; }
+}
+
+async function fetchSquad(teamId) {
+  if (!teamId || !state.settings.footballKey) return null;
+  try {
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/players/squads?team=${teamId}`,
+      state.settings.footballKey
+    );
+    const d = await r.json();
+    return d.response?.[0]?.players || null;
+  } catch(e) { return null; }
+}
+
+function formatInjuries(injuries, teamName) {
+  if (!injuries || injuries.length === 0) return `${teamName}: Geen bekende blessures/schorsingen ✅`;
+  const list = injuries.map(i => {
+    const p = i.player;
+    const t = i.type === 'Injury' ? '🤕' : '🟥';
+    return `${t} ${p.name} (${p.position}) — ${i.reason || 'Blessure'}`;
   });
-  const wins = results.filter(r => r.includes('✓WIN')).length;
-  const summary = `VORM ${teamName}: ${wins}/${fixtures.slice(0,8).length} gewonnen`;
-  return summary + '\n' + results.join('\n');
+  return `${teamName} AFWEZIGEN (${injuries.length}):\n${list.join('\n')}`;
+}
+
+function formatPredictions(pred) {
+  if (!pred) return '';
+  const p = pred.predictions;
+  const comp = pred.comparison;
+  let txt = '';
+  if (p?.winner?.name) txt += `API VOORSPELLING: ${p.winner.name} wint\n`;
+  if (p?.goals?.home && p?.goals?.away) txt += `Verwachte score: ${p.goals.home} - ${p.goals.away}\n`;
+  if (p?.under_over) txt += `Over/Under: ${p.under_over}\n`;
+  if (p?.advice) txt += `Advies: ${p.advice}\n`;
+  if (p?.percent) txt += `Kansen API: Thuis ${p.percent.home} | Gelijk ${p.percent.draw} | Uit ${p.percent.away}\n`;
+  if (comp?.total?.home && comp?.total?.away) {
+    txt += `\nVERGELIJKING:\n`;
+    txt += `Aanval: ${comp.att?.home||'?'} vs ${comp.att?.away||'?'}\n`;
+    txt += `Verdediging: ${comp.def?.home||'?'} vs ${comp.def?.away||'?'}\n`;
+    txt += `Poisson doelpunten: ${comp.poisson_distribution?.home||'?'} vs ${comp.poisson_distribution?.away||'?'}\n`;
+    txt += `H2H: ${comp.h2h?.home||'?'} vs ${comp.h2h?.away||'?'}\n`;
+    txt += `Vorm: ${comp.form?.home||'?'} vs ${comp.form?.away||'?'}`;
+  }
+  return txt;
 }
 
 function formatStats(stats, teamName) {
@@ -1608,7 +1642,14 @@ function formatStats(stats, teamName) {
   const homeW = f?.wins?.home || 0, awayW = f?.wins?.away || 0;
   const cs = stats.clean_sheet?.total || 0;
   const btts = stats.failed_to_score?.total || 0;
-  return `${teamName} SEIZOENSSTATISTIEKEN 2025/26:\nGespeeld: ${played} | W:${wins} G:${draws} V:${losses}\nDoelpunten: ${gFor} voor / ${gAg} tegen (${avgFor} / ${avgAg} per duel)\nThuis gewonnen: ${homeW} | Uit gewonnen: ${awayW}\nClean sheets: ${cs} | Niet gescoord: ${btts}x`;
+  const biggestWin = stats.biggest?.wins?.home || stats.biggest?.wins?.away || '?';
+  const streak = stats.biggest?.streak?.wins || 0;
+  return `${teamName} SEIZOENSSTATISTIEKEN 2025/26:
+Gespeeld: ${played} | W:${wins} G:${draws} V:${losses}
+Doelpunten: ${gFor} voor / ${gAg} tegen (gem. ${avgFor} / ${avgAg} per duel)
+Thuis: ${homeW} overwinningen | Uit: ${awayW} overwinningen
+Clean sheets: ${cs} | Niet gescoord: ${btts}x
+Langste winstserie: ${streak} duels`;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1660,73 +1701,104 @@ async function runAnalyse() {
   btn.disabled = true;
   btn.textContent = '⟳ DATA OPHALEN...';
 
-  // Haal echte data op (parallel)
+  // Haal alle data parallel op
   let h2hTxt = '', homeFormTxt = '', awayFormTxt = '', homeStatsTxt = '', awayStatsTxt = '';
+  let homeBlessuresTxt = '', awayBlessuresTxt = '', predTxt = '';
+
   if (state.settings.footballKey && homeId && awayId) {
-    btn.textContent = '⟳ H2H & STATISTIEKEN LADEN...';
-    const [h2h, homeForm, awayForm, hStats, aStats] = await Promise.all([
+    btn.textContent = '⟳ DATA OPHALEN (blessures, vorm, H2H)...';
+    const fixtureId = m.id;
+    const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred] = await Promise.all([
       fetchH2H(homeId, awayId),
       fetchTeamForm(homeId, leagueId),
       fetchTeamForm(awayId, leagueId),
       fetchTeamStats(homeId, leagueId),
-      fetchTeamStats(awayId, leagueId)
+      fetchTeamStats(awayId, leagueId),
+      fetchInjuries(homeId, fixtureId),
+      fetchInjuries(awayId, fixtureId),
+      fetchPredictions(fixtureId)
     ]);
     h2hTxt = formatH2H(h2h, m.home, m.away);
     homeFormTxt = formatForm(homeForm, homeId, m.home);
     awayFormTxt = formatForm(awayForm, awayId, m.away);
     homeStatsTxt = formatStats(hStats, m.home);
     awayStatsTxt = formatStats(aStats, m.away);
+    homeBlessuresTxt = formatInjuries(homeInj, m.home);
+    awayBlessuresTxt = formatInjuries(awayInj, m.away);
+    predTxt = formatPredictions(pred);
   } else {
     h2hTxt = 'Geen API-Football key — H2H data niet beschikbaar.';
     homeFormTxt = awayFormTxt = 'Geen form data — voeg API-Football key toe in Instellingen.';
+    homeBlessuresTxt = awayBlessuresTxt = 'Geen blessuredata beschikbaar.';
   }
 
   btn.textContent = '⟳ AI ANALYSEERT...';
 
   const wedstrijdDatum = m.date ? `${m.date} om ${m.time}` : m.time;
+  // Bepaal of het een neutrale locatie is (bekerfinales, CL finales etc.)
+  const isNeutral = m.comp?.toLowerCase().includes('beker') ||
+                    m.comp?.toLowerCase().includes('cup') ||
+                    m.comp?.toLowerCase().includes('finale') ||
+                    m.venue?.toLowerCase().includes('kuip') ||
+                    m.venue?.toLowerCase().includes('wembley') ||
+                    m.venue?.toLowerCase().includes('olympia') ||
+                    (m.fixture?.neutral === true);
+
+  const locatieInfo = isNeutral
+    ? `LOCATIE: ${m.venue || 'Neutraal stadion'} — NEUTRALE LOCATIE (geen thuisvoordeel voor ${m.home}!)`
+    : `LOCATIE: ${m.venue || 'Thuisstadion ' + m.home} — THUISWEDSTRIJD voor ${m.home}`;
+
   const ctx = `
 WEDSTRIJD: ${m.home} vs ${m.away}
 COMPETITIE: ${m.comp}
 DATUM/TIJD: ${wedstrijdDatum}
+${locatieInfo}
 QUOTES: 1=${m.homeOdds} | X=${m.drawOdds} | 2=${m.awayOdds}
 RISICOPROFIEL: ${risk} | INZET: €${bet}
+${isNeutral ? 'LET OP: Dit is een finaleduels op neutrale locatie — thuisvoordeel speelt GEEN rol!' : ''}
+
+BLESSURES & SCHORSINGEN:
+${homeBlessuresTxt}
+${awayBlessuresTxt}
+
+${predTxt ? 'API STATISTISCH MODEL:\n' + predTxt : ''}
 `.trim();
 
-  const nl = 'Analyseer in het Nederlands. Wees concreet, gebruik echte cijfers uit de data.';
+  const nl = 'Analyseer in het Nederlands. Wees concreet, gebruik echte cijfers uit de data. Noem blessures als die relevant zijn.';
 
   const vormText = await callEntity(apiKey,
     `Je bent een voetbal vormexpert. Gebruik de meegeleverde echte data. ${nl} Max 220 woorden.`,
-    `${ctx}\n\nVORM ${m.home} (laatste 8):\n${homeFormTxt}\n\nVORM ${m.away} (laatste 8):\n${awayFormTxt}\n\nAnalyseer: huidige momentum, thuisrecord vs uitrecord, doelpuntentrend, vertrouwen, wie heeft betere vorm en waarom.`,
+    `${ctx}\n\nVORM ${m.home} (laatste 8):\n${homeFormTxt}\n\nVORM ${m.away} (laatste 8):\n${awayFormTxt}\n\nAnalyseer: huidige momentum, thuisrecord vs uitrecord, doelpuntentrend, vertrouwen, impact van blessures op vorm, wie heeft betere vorm en waarom.`,
     'vorm','vorm','vorm'
   );
 
   const statsText = await callEntity(apiKey,
     `Je bent een voetbalstatisticus. Gebruik de meegeleverde echte data. ${nl} Max 220 woorden.`,
-    `${ctx}\n\nH2H HISTORIE:\n${h2hTxt}\n\n${homeStatsTxt}\n\n${awayStatsTxt}\n\nAnalyseer: H2H patroon, wie domineert historisch, doelpunten patroon (over/under 2.5, BTTS), thuisvoordeel effect, seizoensstatistieken vergelijking.`,
+    `${ctx}\n\nH2H HISTORIE:\n${h2hTxt}\n\n${homeStatsTxt}\n\n${awayStatsTxt}\n\nAnalyseer: H2H patroon, wie domineert historisch, doelpunten patroon (over/under 2.5, BTTS), seizoensstatistieken vergelijking, impact afwezige spelers op statistieken.`,
     'stats','stats','stats'
   );
 
   const tactiekText = await callEntity(apiKey,
-    `Je bent een voetbal tactisch analist. ${nl} Max 200 woorden.`,
-    `${ctx}\n\nVorm context: ${vormText?.substring(0,300)||''}\nStats context: ${statsText?.substring(0,200)||''}\n\nAnalyseer: verwachte speelstijlen, sleutelspelers om te volgen, middenveld strijd, verdedigingslinie kwaliteit, aanvalskracht, tactisch match-up voordeel.`,
+    `Je bent een voetbal tactisch analist. ${nl} Max 220 woorden.`,
+    `${ctx}\n\nVorm context: ${vormText?.substring(0,300)||''}\nStats context: ${statsText?.substring(0,200)||''}\n\nAnalyseer: verwachte speelstijlen, sleutelspelers om te volgen, hoe blessures de tactiek beïnvloeden, middenveld strijd, verdedigingslinie kwaliteit, aanvalskracht, tactisch match-up voordeel.`,
     'tactiek','tactiek','tactiek'
   );
 
   const kansText = await callEntity(apiKey,
     `Je bent een sportweddenschappen kansen-analist. Geef concrete percentages en value bets. ${nl} Max 250 woorden.`,
-    `${ctx}\n\nAnalyse samenvatting:\nVorm: ${vormText?.substring(0,200)||''}\nStats/H2H: ${statsText?.substring(0,200)||''}\n\nGeef:\n1. Winstkansen % (thuis/gelijk/uit) op basis van alle data\n2. Vergelijk jouw kansen met de bookmaker quotes — is er VALUE?\n3. Verwachte uitslag\n4. Over/under 2.5 doelpunten advies\n5. Beide teams scoren (ja/nee)\n6. Betrouwbaarheidsscore 1-10 voor deze analyse`,
+    `${ctx}\n\nAPI MODEL:\n${predTxt||'Niet beschikbaar'}\n\nAnalyse samenvatting:\nVorm: ${vormText?.substring(0,200)||''}\nStats/H2H: ${statsText?.substring(0,200)||''}\n\nGeef:\n1. Winstkansen % (thuis/gelijk/uit) op basis van ALLE data inclusief blessures\n2. Vergelijk met bookmaker quotes — is er VALUE?\n3. Verwachte uitslag\n4. Over/under 2.5 doelpunten advies (impact blessures op scorend vermogen meenemen)\n5. Beide teams scoren (ja/nee)\n6. Betrouwbaarheidsscore 1-10`,
     'kans','kans','kans'
   );
 
   const risicoText = await callEntity(apiKey,
-    `Je bent een risicoanalist voor sportweddenschappen. ${nl} Max 180 woorden.`,
-    `${ctx}\n\nKansen analyse: ${kansText?.substring(0,250)||''}\n\nGeef: risicoscore 1-10, voornaamste onzekerheden (blessures/vorm/motivatie), beste én slechtste scenario, aanbeveling: WEL of NIET spelen en waarom.`,
+    `Je bent een risicoanalist voor sportweddenschappen. ${nl} Max 200 woorden.`,
+    `${ctx}\n\nKansen analyse: ${kansText?.substring(0,250)||''}\n\nGeef: risicoscore 1-10, impact van blessures/schorsingen op uitkomst, overige onzekerheden (motivatie/vermoeidheid), beste én slechtste scenario, aanbeveling: WEL of NIET spelen en waarom.`,
     'risico','risico','risico'
   );
 
   await callEntity(apiKey,
     `Je bent een ervaren sportweddenschappen adviseur. Dit is voor educatieve/fictieve doeleinden. ${nl} Max 300 woorden.`,
-    `${ctx}\n\nRisico: ${risicoText?.substring(0,200)||''}\nKansen: ${kansText?.substring(0,200)||''}\n\nGeef een concreet advies:\n1. BESTE BET (1/X/2 of andere markt) met uitleg\n2. Waarom dit de beste keuze is op basis van de data\n3. Inzetstrategie voor €${bet} (kelly/flat/percentage)\n4. Alternatieve bets (handicap/beide teams scoren/totaal doelpunten)\n5. TOP TIP: één zin samenvatting van je advies\n\nDISCLAIMER: Fictief, voor educatieve doeleinden.`,
+    `${ctx}\n\nRisico: ${risicoText?.substring(0,200)||''}\nKansen: ${kansText?.substring(0,200)||''}\nTactiek: ${tactiekText?.substring(0,150)||''}\n\nGeef een concreet advies:\n1. BESTE BET (1/X/2 of andere markt) met uitleg — houd rekening met blessures!\n2. Waarom dit de beste keuze is op basis van alle data\n3. Inzetstrategie voor €${bet}\n4. Alternatieve bets (handicap/BTTS/totaal doelpunten)\n5. TOP TIP: één zin samenvatting\n\nDISCLAIMER: Fictief, voor educatieve doeleinden.`,
     'advies','advies','advies'
   );
 
