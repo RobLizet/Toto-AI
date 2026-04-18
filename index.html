@@ -1278,26 +1278,32 @@ async function loadFromAPIFootball(comp, apiKey) {
 // Haal odds op voor alle geladen wedstrijden en update de kaarten
 async function fetchOddsForMatches(leagueId, apiKey) {
   try {
+    // Probeer zonder bookmaker filter — pakt best beschikbare
     const resp = await apiFetch(
-      `https://v3.football.api-sports.io/odds?league=${leagueId}&season=2025&bookmaker=8`,
+      `https://v3.football.api-sports.io/odds?league=${leagueId}&season=2025`,
       apiKey
     );
     const data = await resp.json();
     if (!data.response?.length) return;
 
-    // Maak een map van fixture_id -> odds
+    // Maak een map van fixture_id -> beste odds
     const oddsMap = {};
     data.response.forEach(o => {
       const fixtureId = o.fixture?.id;
       if (!fixtureId) return;
-      const bets = o.bookmakers?.[0]?.bets;
-      const matchWinner = bets?.find(b => b.name === 'Match Winner');
-      if (matchWinner?.values?.length >= 3) {
-        oddsMap[fixtureId] = {
-          home: matchWinner.values[0]?.odd || '—',
-          draw: matchWinner.values[1]?.odd || '—',
-          away: matchWinner.values[2]?.odd || '—',
-        };
+
+      // Loop door alle bookmakers om Match Winner te vinden
+      for (const bm of (o.bookmakers || [])) {
+        const matchWinner = bm.bets?.find(b => b.name === 'Match Winner');
+        if (matchWinner?.values?.length >= 3) {
+          const home = parseFloat(matchWinner.values[0]?.odd);
+          const draw = parseFloat(matchWinner.values[1]?.odd);
+          const away = parseFloat(matchWinner.values[2]?.odd);
+          if (home > 1 && draw > 1 && away > 1) {
+            oddsMap[fixtureId] = { home, draw, away };
+            break; // eerste geldige bookmaker is genoeg
+          }
+        }
       }
     });
 
@@ -1307,16 +1313,15 @@ async function fetchOddsForMatches(leagueId, apiKey) {
       const o = oddsMap[m.id];
       if (!o) return m;
       updated = true;
-      const ho = parseFloat(o.home), do_ = parseFloat(o.draw), ao = parseFloat(o.away);
-      const tot = (1/ho)+(1/do_)+(1/ao);
+      const tot = (1/o.home) + (1/o.draw) + (1/o.away);
       return {
         ...m,
-        homeOdds: parseFloat(o.home).toFixed(2),
-        drawOdds: parseFloat(o.draw).toFixed(2),
-        awayOdds: parseFloat(o.away).toFixed(2),
-        homePct: Math.round((1/ho)/tot*100),
-        drawPct: Math.round((1/do_)/tot*100),
-        awayPct: Math.round((1/ao)/tot*100),
+        homeOdds: o.home.toFixed(2),
+        drawOdds: o.draw.toFixed(2),
+        awayOdds: o.away.toFixed(2),
+        homePct: Math.round((1/o.home)/tot*100),
+        drawPct: Math.round((1/o.draw)/tot*100),
+        awayPct: Math.round((1/o.away)/tot*100),
       };
     });
 
