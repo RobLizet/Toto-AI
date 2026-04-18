@@ -14,9 +14,9 @@
 <style>
 :root {
   --bg1:#fff7f0;--bg2:#f4f1ff;--bg3:#eef7ff;
-  --ink:#1d2330;--muted:#5a6578;
+  --ink:#111827;--muted:#374151;
   --card:rgba(255,255,255,0.72);--card2:rgba(255,255,255,0.55);
-  --stroke:rgba(28,35,48,0.10);
+  --stroke:rgba(28,35,48,0.12);
   --shadow:0 18px 50px rgba(12,18,30,0.10);
   --shadow2:0 10px 30px rgba(12,18,30,0.08);
   --green:#2ecc71;--red:#e74c3c;--yellow:#f39c12;--orange:#e67e22;
@@ -253,7 +253,7 @@ body{
 .t-advies{background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.3);}
 .t-combi{background:rgba(255,154,193,.12);color:#d63384;border:1px solid rgba(255,154,193,.3);}
 .card-title-txt{font-size:.78rem;font-weight:600;flex:1;color:var(--ink);}
-.card-body{padding:.85rem .9rem;font-size:.82rem;line-height:1.85;color:var(--muted);
+.card-body{padding:.85rem .9rem;font-size:.82rem;line-height:1.85;color:#1f2937;
   font-family:'DM Sans',sans-serif;white-space:pre-wrap;min-height:50px;}
 .dots{display:inline-flex;gap:5px;}
 .dots span{width:5px;height:5px;background:#ff9ac1;border-radius:50%;animation:blink 1s infinite;}
@@ -624,6 +624,7 @@ body{
       <div class="entity-chip" id="ec-kans"><span class="led"></span>KANSEN</div>
       <div class="entity-chip" id="ec-risico"><span class="led"></span>RISICO</div>
       <div class="entity-chip" id="ec-advies"><span class="led"></span>BET ADVIES</div>
+      <div class="entity-chip" id="ec-tip"><span class="led"></span>🎯 AI TIP</div>
     </div>
 
     <button class="analyse-btn" id="analyseBtn" onclick="runAnalyse()">
@@ -655,6 +656,10 @@ body{
       <div class="result-card" id="rc-advies" style="display:none">
         <div class="card-head"><span class="card-tag t-advies">BET ADVIES</span><span class="card-title-txt">Strategie & Inzet Advies</span></div>
         <div class="card-body" id="rb-advies"><span class="dots"><span></span><span></span><span></span></span></div>
+      </div>
+      <div class="result-card" id="rc-tip" style="display:none;border:2px solid rgba(255,154,193,.4);background:linear-gradient(135deg,rgba(255,215,230,.25),rgba(214,240,255,.2));">
+        <div class="card-head"><span class="card-tag" style="background:linear-gradient(135deg,#ff9ac1,#a78bfa);color:#fff;">🎯 AI TIP</span><span class="card-title-txt" style="color:#d63384;font-weight:700;">Beste Tip + Kans van Slagen</span></div>
+        <div class="card-body" id="rb-tip"><span class="dots"><span></span><span></span><span></span></span></div>
       </div>
     </div>
 
@@ -1246,6 +1251,8 @@ async function loadFromAPIFootball(comp, apiKey) {
       state.matches = unique.sort((a,b) => new Date(a.fixture.date)-new Date(b.fixture.date)).map(parseAPIMatch);
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
+      // Haal odds op op de achtergrond
+      fetchOddsForMatches(leagueId, apiKey);
       return true;
     }
 
@@ -1261,11 +1268,61 @@ async function loadFromAPIFootball(comp, apiKey) {
         .map(parseAPIMatch);
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
+      fetchOddsForMatches(leagueId, apiKey);
       return true;
     }
 
     return false;
   } catch(e) { return false; }
+}
+
+// Haal odds op voor alle geladen wedstrijden en update de kaarten
+async function fetchOddsForMatches(leagueId, apiKey) {
+  try {
+    const resp = await apiFetch(
+      `https://v3.football.api-sports.io/odds?league=${leagueId}&season=2025&bookmaker=8`,
+      apiKey
+    );
+    const data = await resp.json();
+    if (!data.response?.length) return;
+
+    // Maak een map van fixture_id -> odds
+    const oddsMap = {};
+    data.response.forEach(o => {
+      const fixtureId = o.fixture?.id;
+      if (!fixtureId) return;
+      const bets = o.bookmakers?.[0]?.bets;
+      const matchWinner = bets?.find(b => b.name === 'Match Winner');
+      if (matchWinner?.values?.length >= 3) {
+        oddsMap[fixtureId] = {
+          home: matchWinner.values[0]?.odd || '—',
+          draw: matchWinner.values[1]?.odd || '—',
+          away: matchWinner.values[2]?.odd || '—',
+        };
+      }
+    });
+
+    // Update matches met echte odds
+    let updated = false;
+    state.matches = state.matches.map(m => {
+      const o = oddsMap[m.id];
+      if (!o) return m;
+      updated = true;
+      const ho = parseFloat(o.home), do_ = parseFloat(o.draw), ao = parseFloat(o.away);
+      const tot = (1/ho)+(1/do_)+(1/ao);
+      return {
+        ...m,
+        homeOdds: parseFloat(o.home).toFixed(2),
+        drawOdds: parseFloat(o.draw).toFixed(2),
+        awayOdds: parseFloat(o.away).toFixed(2),
+        homePct: Math.round((1/ho)/tot*100),
+        drawPct: Math.round((1/do_)/tot*100),
+        awayPct: Math.round((1/ao)/tot*100),
+      };
+    });
+
+    if (updated) renderMatches(state.matches);
+  } catch(e) { /* odds zijn optioneel */ }
 }
 
 async function debugAPI() {
@@ -1678,6 +1735,58 @@ RISICOPROFIEL: ${risk} | INZET: €${bet}
     'advies','advies','advies'
   );
 
+  // 🎯 AI TIP — beste tip + kans van slagen als visuele meter
+  const tipCard = document.getElementById('rc-tip');
+  const tipBody = document.getElementById('rb-tip');
+  const tipChip = document.getElementById('ec-tip');
+  tipCard.style.display = 'block';
+  tipChip.className = 'entity-chip loading';
+  tipBody.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+
+  try {
+    const tipResp = await anthropicFetch(apiKey, {
+      model: 'claude-sonnet-4-5', max_tokens: 600,
+      system: `Je bent een top sporttipster. Geef een ultieme tip voor deze wedstrijd in exact dit JSON formaat, geen extra tekst:
+{"pick":"1","pickLabel":"[Thuisteam] wint","odds":"2.10","kans":72,"sterren":4,"redenering":"Max 60 woorden uitleg waarom dit de beste tip is.","alternatief":{"pick":"X","pickLabel":"Gelijkspel","odds":"3.20","kans":45}}`,
+      messages: [{role:'user', content:`${ctx}\n\nVorm: ${vormText?.substring(0,150)||''}\nKansen: ${kansText?.substring(0,150)||''}\nAdvies: ${risicoText?.substring(0,100)||''}`}]
+    });
+    const tipData = await tipResp.json();
+    let raw = tipData.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const tip = JSON.parse(raw);
+
+    const sterren = '⭐'.repeat(tip.sterren||3) + '☆'.repeat(5-(tip.sterren||3));
+    const kleur = tip.kans >= 70 ? '#2ecc71' : tip.kans >= 55 ? '#f39c12' : '#e74c3c';
+    const breedte = Math.min(100, Math.max(10, tip.kans||50));
+
+    tipBody.innerHTML = `
+      <div style="background:rgba(255,154,193,.08);border-radius:10px;padding:.8rem;margin-bottom:.7rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#d63384;letter-spacing:.05em;">
+          ${tip.pick} — ${tip.pickLabel}
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:#374151;margin:.2rem 0;">
+          Quote: <b style="color:#111827;">${tip.odds}</b> &nbsp;·&nbsp; ${sterren}
+        </div>
+      </div>
+      <div style="margin-bottom:.8rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#374151;margin-bottom:.3rem;display:flex;justify-content:space-between;">
+          <span>KANS VAN SLAGEN</span><span style="color:${kleur};font-weight:700;">${tip.kans}%</span>
+        </div>
+        <div style="background:rgba(0,0,0,.08);border-radius:999px;height:10px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg,${kleur},${kleur}88);width:${breedte}%;height:100%;border-radius:999px;transition:width .8s ease;"></div>
+        </div>
+      </div>
+      <div style="font-size:.78rem;line-height:1.6;color:#1f2937;margin-bottom:.7rem;">${tip.redenering}</div>
+      ${tip.alternatief ? `
+      <div style="background:rgba(167,139,250,.08);border-radius:8px;padding:.5rem .7rem;font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#374151;">
+        💡 Alternatief: <b>${tip.alternatief.pick} — ${tip.alternatief.pickLabel}</b> @ ${tip.alternatief.odds} (${tip.alternatief.kans}% kans)
+      </div>` : ''}
+    `;
+    tipChip.className = 'entity-chip done';
+  } catch(e) {
+    tipBody.textContent = '⚠ Fout: ' + e.message;
+    tipChip.className = 'entity-chip err';
+  }
+
   btn.disabled = false;
   btn.textContent = '⚽ ANALYSEER OPNIEUW';
 }
@@ -1695,10 +1804,9 @@ async function generateCombiTip() {
   btn.disabled = true;
   btn.textContent = '⟳ TOP 3 + COMBI BEREKENEN...';
 
-  // Bouw rijke context op met datums
-  const matchesCtx = state.matches.slice(0,12).map(m => {
+  const matchesCtx = state.matches.slice(0,15).map(m => {
     const datum = m.date ? `${m.date} ${m.time}` : m.time;
-    return `${m.home} vs ${m.away} | ${m.comp} | ${datum} | quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
+    return `ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${datum} | quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
   }).join('\n');
 
   const vandaag = new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1706,23 +1814,25 @@ async function generateCombiTip() {
   try {
     const resp = await anthropicFetch(apiKey, {
       model: 'claude-sonnet-4-5',
-      max_tokens: 1500,
-      system: `Je bent een ervaren sportweddenschappen analist. Analyseer de wedstrijden en geef een TOP 3 losse tips + 1 combi. Dit is voor educatieve/fictieve doeleinden. Reageer UITSLUITEND in dit exacte JSON formaat, geen extra tekst:
+      max_tokens: 1800,
+      system: `Je bent een ervaren sportweddenschappen analist. Analyseer de wedstrijden en geef TOP 3 losse tips + exact 1 combi van PRECIES 3 wedstrijden. Educatief/fictief. Reageer UITSLUITEND in dit JSON formaat, geen extra tekst:
 {
   "top3": [
-    {"match":"Team A vs Team B","datum":"za 19 apr 20:00","pick":"1","pickLabel":"Team A wint","odds":2.10,"vertrouwen":8,"reden":"Korte uitleg max 30 woorden"},
-    {"match":"Team C vs Team D","datum":"zo 20 apr 18:30","pick":"X","pickLabel":"Gelijkspel","odds":3.20,"vertrouwen":7,"reden":"Korte uitleg max 30 woorden"},
-    {"match":"Team E vs Team F","datum":"zo 20 apr 16:00","pick":"2","pickLabel":"Team F wint","odds":2.80,"vertrouwen":6,"reden":"Korte uitleg max 30 woorden"}
+    {"match":"Team A vs Team B","datum":"za 19 apr 20:00","pick":"1","pickLabel":"Team A wint","odds":2.10,"vertrouwen":8,"reden":"Max 30 woorden"},
+    {"match":"Team C vs Team D","datum":"zo 20 apr 18:30","pick":"X","pickLabel":"Gelijkspel","odds":3.20,"vertrouwen":7,"reden":"Max 30 woorden"},
+    {"match":"Team E vs Team F","datum":"zo 20 apr 16:00","pick":"2","pickLabel":"Team F wint","odds":2.80,"vertrouwen":6,"reden":"Max 30 woorden"}
   ],
   "combi": {
     "legs":[
-      {"match":"Team A vs Team B","datum":"za 19 apr 20:00","pick":"1","pickLabel":"Team A wint","odds":2.10},
-      {"match":"Team C vs Team D","datum":"zo 20 apr 18:30","pick":"X","pickLabel":"Gelijkspel","odds":3.20}
+      {"match":"Team A vs Team B","datum":"za 19 apr 20:00","pick":"1","pickLabel":"Team A wint","odds":2.10,"vertrouwen":8},
+      {"match":"Team C vs Team D","datum":"zo 20 apr 18:30","pick":"X","pickLabel":"Gelijkspel","odds":3.20,"vertrouwen":7},
+      {"match":"Team E vs Team F","datum":"zo 20 apr 16:00","pick":"2","pickLabel":"Team F wint","odds":2.80,"vertrouwen":6}
     ],
-    "redenering":"Uitleg max 80 woorden"
+    "redenering":"Uitleg max 80 woorden waarom deze 3 combigoed samengaan"
   }
-}`,
-      messages: [{role:'user', content:`Datum vandaag: ${vandaag}\n\nBeschikbare wedstrijden:\n${matchesCtx || 'Geen wedstrijden geladen — gebruik actuele topwedstrijden in Europa van dit weekend'}\n\nGeef de TOP 3 beste losse bets van de dag (hoogste vertrouwen, beste value) + een combi van 3-4 wedstrijden. Kies op basis van: bekende sterkte van teams, thuisvoordeel, realistische quotes, lagere risico bets hebben voorkeur.`}]
+}
+BELANGRIJK: De combi MOET altijd exact 3 legs hebben. Kies wedstrijden met de hoogste zekerheid en goede combinatie.`,
+      messages: [{role:'user', content:`Datum vandaag: ${vandaag}\n\nBeschikbare wedstrijden:\n${matchesCtx || 'Geen wedstrijden geladen — gebruik actuele topwedstrijden Europa dit weekend'}\n\nGeef TOP 3 beste losse bets + een combi van PRECIES 3 wedstrijden. Prioriteit: veilige bets, realistische odds tussen 1.50-2.50, thuisvoordeel, goede vorm.`}]
     });
     const data = await resp.json();
     let raw = data.content[0].text.trim().replace(/```json|```/g,'').trim();
@@ -1742,64 +1852,109 @@ function renderTop3EnCombi(result) {
   const defaultBet = state.settings.defaultBet || 10;
   const card = document.getElementById('combiCard');
 
-  // Vertrouwen sterren
-  const stars = n => '★'.repeat(Math.min(n,10)) + '☆'.repeat(Math.max(0,10-n));
-  const confColor = n => n >= 8 ? 'var(--green)' : n >= 6 ? 'var(--gold)' : 'var(--orange)';
+  const stars = n => '⭐'.repeat(Math.min(n,5));
+  const confColor = n => n >= 8 ? '#2ecc71' : n >= 6 ? '#f39c12' : '#e74c3c';
+  const confBg = n => n >= 8 ? 'rgba(46,204,113,.1)' : n >= 6 ? 'rgba(243,156,18,.1)' : 'rgba(231,76,60,.1)';
 
   // TOP 3
   const top3Html = (result.top3 || []).map((t,i) => `
-    <div style="background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:8px;padding:.65rem .85rem;margin-bottom:.4rem;">
+    <div style="background:rgba(255,255,255,.6);border:1px solid rgba(28,35,48,.08);border-radius:12px;padding:.7rem .9rem;margin-bottom:.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
         <div style="flex:1;">
-          <div style="font-size:.82rem;font-weight:600;">${i+1}. ${t.match}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--coffee);margin-top:2px;">📅 ${t.datum||''}</div>
+          <div style="font-size:.85rem;font-weight:700;color:#111827;">${i+1}. ${t.match}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#a78bfa;margin-top:2px;">📅 ${t.datum||''}</div>
         </div>
         <div style="text-align:right;margin-left:.8rem;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--green);">${parseFloat(t.odds).toFixed(2)}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:${confColor(t.vertrouwen)};">${t.vertrouwen}/10</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#2ecc71;">${parseFloat(t.odds).toFixed(2)}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:${confColor(t.vertrouwen)};">${t.vertrouwen}/10</div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;background:rgba(200,149,108,.1);color:var(--coffee);border:1px solid rgba(200,149,108,.25);padding:2px 8px;border-radius:3px;">${t.pick} — ${t.pickLabel}</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:${confColor(t.vertrouwen)};">${stars(t.vertrouwen)}</span>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;background:${confBg(t.vertrouwen)};color:${confColor(t.vertrouwen)};border:1px solid ${confColor(t.vertrouwen)}44;padding:2px 8px;border-radius:4px;font-weight:700;">${t.pick} — ${t.pickLabel}</span>
+        <span style="font-size:.7rem;">${stars(Math.round(t.vertrouwen/2))}</span>
       </div>
-      <div style="font-size:.75rem;color:#9aadbd;line-height:1.5;">${t.reden}</div>
+      <div style="font-size:.76rem;color:#374151;line-height:1.5;">${t.reden}</div>
     </div>`).join('');
 
   // COMBI
   const combi = result.combi || {};
-  const legs = combi.legs || [];
-  const totalOdds = legs.reduce((a,l) => a * parseFloat(l.odds), 1);
+  const legs = (combi.legs || []).slice(0,3);
+  const totalOdds = legs.reduce((a,l) => a * parseFloat(l.odds||1), 1);
   const payout = (defaultBet * totalOdds).toFixed(2);
+  const kansStr = legs.length === 3 ? Math.round(legs.reduce((a,l) => a * ((l.vertrouwen||7)/10), 1) * 100) : '—';
 
-  const legsHtml = legs.map(l => `
-    <div class="combi-leg">
-      <div class="leg-left">
-        <div class="leg-match-name">${l.match}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--coffee);">📅 ${l.datum||''}</div>
-        <div class="leg-pick">${l.pick} — ${l.pickLabel}</div>
+  const legsHtml = legs.map((l,i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .7rem;background:rgba(255,255,255,.5);border-radius:8px;margin-bottom:.35rem;border:1px solid rgba(28,35,48,.07);">
+      <div style="flex:1;">
+        <div style="font-size:.8rem;font-weight:700;color:#111827;">${i+1}. ${l.match}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#a78bfa;">📅 ${l.datum||''}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#d63384;margin-top:2px;font-weight:700;">${l.pick} — ${l.pickLabel}</div>
       </div>
-      <div class="leg-odds-val">${parseFloat(l.odds).toFixed(2)}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#2ecc71;margin-left:.8rem;">${parseFloat(l.odds).toFixed(2)}</div>
     </div>`).join('');
 
+  // Sla combi op zodat we hem in builder kunnen zetten
+  window._lastAICombi = legs;
+
   card.innerHTML = `
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--coffee);letter-spacing:.1em;margin-bottom:.7rem;">🏆 TOP 3 TIPS VAN DE DAG</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#d63384;letter-spacing:.08em;margin-bottom:.7rem;">🏆 TOP 3 TIPS VAN DE DAG</div>
     ${top3Html}
-    <div style="height:1px;background:var(--border);margin:1rem 0;"></div>
-    <div class="combi-header">⚡ AANBEVOLEN COMBI</div>
-    <div class="combi-legs">${legsHtml}</div>
-    <div style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:#9aadbd;line-height:1.7;margin-bottom:.75rem;">${combi.redenering||''}</div>
-    <div class="combi-footer">
+    <div style="height:1px;background:rgba(28,35,48,.08);margin:1rem 0;"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#d63384;letter-spacing:.08em;margin-bottom:.6rem;">⚡ AI COMBI TIP — 3 WEDSTRIJDEN</div>
+    ${legsHtml}
+    <div style="font-size:.76rem;color:#374151;line-height:1.65;margin:.6rem 0 .8rem;">${combi.redenering||''}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,154,193,.1);border:1px solid rgba(255,154,193,.25);border-radius:10px;padding:.65rem .9rem;margin-bottom:.7rem;">
       <div>
-        <div class="combi-foot-lbl">TOTALE QUOTE</div>
-        <div class="combi-totaal">${totalOdds.toFixed(2)}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#374151;">TOTALE QUOTE</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#111827;">${totalOdds.toFixed(2)}</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#374151;">KANS</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#f39c12;">${kansStr}%</div>
       </div>
       <div style="text-align:right;">
-        <div class="combi-foot-lbl">Bij €${defaultBet} inzet</div>
-        <div class="combi-payout">▶ €${payout}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#374151;">BIJ €${defaultBet}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#2ecc71;">€${payout}</div>
       </div>
-    </div>`;
+    </div>
+    <button onclick="loadAICombiIntoBuilder()" style="width:100%;background:linear-gradient(135deg,rgba(255,154,193,.3),rgba(167,139,250,.3));border:1px solid rgba(255,154,193,.4);color:#111827;font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:700;padding:.7rem;border-radius:10px;cursor:pointer;letter-spacing:.05em;">
+      🎰 ZET DEZE COMBI IN DE BUILDER
+    </button>`;
   card.style.display = 'block';
+}
+
+function loadAICombiIntoBuilder() {
+  const legs = window._lastAICombi;
+  if (!legs?.length) return;
+
+  // Reset builder
+  state.combiBuilder = [];
+
+  legs.forEach((l, i) => {
+    // Zoek matching wedstrijd in state.matches op naam
+    const match = state.matches.find(m =>
+      m.home.toLowerCase().includes(l.match.split(' vs ')[0]?.trim().toLowerCase().substring(0,5)) ||
+      l.match.toLowerCase().includes(m.home.toLowerCase().substring(0,5))
+    );
+
+    const matchId = match ? match.id : `ai-${i}-${Date.now()}`;
+    const home = match ? match.home : l.match.split(' vs ')[0]?.trim();
+    const away = match ? match.away : l.match.split(' vs ')[1]?.trim();
+
+    state.combiBuilder.push({
+      matchId: String(matchId),
+      home, away,
+      pick: l.pick,
+      pickLabel: l.pickLabel,
+      odds: parseFloat(l.odds),
+      date: l.datum || ''
+    });
+  });
+
+  updateCombiBuilderUI();
+  // Scroll naar combi builder
+  document.getElementById('combiBuilder').scrollIntoView({behavior:'smooth'});
+  document.getElementById('combiBuilder').style.display = 'block';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1829,6 +1984,7 @@ function toggleCombiLeg(matchId, pick, pickLabel, odds) {
   updateMatchCardCombiState(matchId);
 }
 
+function updateCombiBuilderUI() { updateCombiBuilder(); }
 function updateCombiBuilder() {
   const legs = state.combiBuilder;
   const builder = document.getElementById('combiBuilder');
