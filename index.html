@@ -1093,6 +1093,12 @@ async function loadMatches(comp) {
   const fdKey   = state.settings.fdKey;
   const fdCode  = FD_CODES[comp];
 
+  // KNVB Beker: altijd football-data.org eerst (gratis + betrouwbaar)
+  if (comp === 'beker' && fdKey && fdCode) {
+    const result = await loadFromFD(fdCode, fdKey, comp);
+    if (result) return;
+  }
+
   // ── Primair: API-Football ──
   if (apifKey) {
     const result = await loadFromAPIFootball(comp, apifKey);
@@ -1107,7 +1113,7 @@ async function loadMatches(comp) {
 
   // ── Geen keys ──
   if (!apifKey && !fdKey) {
-    showLoadingMsg('⚠ Vul je API-Football key in bij ⚙️ Instellingen', 'var(--yellow)');
+    showLoadingMsg('⚠ Vul je API keys in bij ⚙️ Instellingen', 'var(--yellow)');
     return;
   }
 
@@ -1255,54 +1261,55 @@ async function loadFromAPIFootball(comp, apiKey) {
 
 async function debugAPI() {
   const apiKey = state.settings.footballKey;
+  const fdKey  = state.settings.fdKey;
   const out = document.getElementById('debugOutput');
   out.style.display = 'block';
   out.textContent = '⟳ Testen...';
 
-  if (!apiKey) { out.textContent = '⚠ Geen API-Football key ingevuld'; return; }
-
   const leagueId = COMP_IDS[state.activeComp];
+  const fdCode   = FD_CODES[state.activeComp];
   const today = new Date();
-  const dateFrom = today.toISOString().split('T')[0];
-  const dateTo = new Date(today.getTime() + 7 * 86400000).toISOString().split('T')[0];
-  let log = `Competitie: ${state.activeComp} (ID: ${leagueId})\nVandaag: ${dateFrom}\nTot: ${dateTo}\n\n`;
+  const dateFrom = new Date(today.getTime() - 3*86400000).toISOString().split('T')[0];
+  const dateTo   = new Date(today.getTime() + 7*86400000).toISOString().split('T')[0];
+  let log = `Competitie: ${state.activeComp}\nAPI-Football ID: ${leagueId}\nfd.org code: ${fdCode||'geen'}\nVenster: ${dateFrom} → ${dateTo}\n\n`;
 
-  try {
-    // Test seizoen 2024
-    let r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2024&from=${dateFrom}&to=${dateTo}`, apiKey);
-    let d = await r.json();
-    log += `Seizoen 2024 (${dateFrom}→${dateTo}): ${d.response?.length || 0} wedstrijden\n`;
-    if (d.response?.length > 0) {
-      d.response.slice(0,3).forEach(f => {
-        log += `  → ${f.fixture.date.split('T')[0]} ${f.teams.home.name} vs ${f.teams.away.name}\n`;
+  // Test football-data.org
+  if (fdKey && fdCode) {
+    try {
+      let r = await fdFetch(`https://api.football-data.org/v4/competitions/${fdCode}/matches?status=SCHEDULED`, fdKey);
+      let d = await r.json();
+      const upcoming = d.matches?.filter(m => new Date(m.utcDate) >= today).slice(0,5) || [];
+      log += `fd.org SCHEDULED: ${d.matches?.length||0} totaal, ${upcoming.length} komend\n`;
+      upcoming.forEach(m => {
+        const dt = new Date(m.utcDate).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'});
+        log += `  → ${dt}: ${m.homeTeam?.shortName} vs ${m.awayTeam?.shortName}\n`;
       });
-    }
-    if (d.errors) log += `  Errors: ${JSON.stringify(d.errors)}\n`;
-
-    // Test seizoen 2025
-    r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`, apiKey);
-    d = await r.json();
-    log += `\nSeizoen 2025 (${dateFrom}→${dateTo}): ${d.response?.length || 0} wedstrijden\n`;
-    if (d.response?.length > 0) {
-      d.response.slice(0,3).forEach(f => {
-        log += `  → ${f.fixture.date.split('T')[0]} ${f.teams.home.name} vs ${f.teams.away.name}\n`;
-      });
-    }
-
-    // Test next=5
-    r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=5`, apiKey);
-    d = await r.json();
-    log += `\nNext=5: ${d.response?.length || 0} wedstrijden\n`;
-    if (d.response?.length > 0) {
-      d.response.forEach(f => {
-        log += `  → ${f.fixture.date.split('T')[0]} ${f.teams.home.name} vs ${f.teams.away.name}\n`;
-      });
-    }
-
-    out.textContent = log;
-  } catch(e) {
-    out.textContent = log + '\nFOUT: ' + e.message;
+      log += '\n';
+    } catch(e) { log += `fd.org fout: ${e.message}\n\n`; }
+  } else {
+    log += `fd.org: geen key ingevuld\n\n`;
   }
+
+  // Test API-Football
+  if (apiKey) {
+    try {
+      let r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`, apiKey);
+      let d = await r.json();
+      log += `API-Football s2025: ${d.response?.length||0} wedstrijden`;
+      if (d.errors && Object.keys(d.errors).length) log += ` (errors: ${JSON.stringify(d.errors)})`;
+      log += '\n';
+      d.response?.slice(0,3).forEach(f => log += `  → ${f.fixture.date.split('T')[0]}: ${f.teams.home.name} vs ${f.teams.away.name}\n`);
+
+      r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=5`, apiKey);
+      d = await r.json();
+      log += `\nAPI-Football next=5: ${d.response?.length||0} wedstrijden\n`;
+      d.response?.forEach(f => log += `  → ${f.fixture.date.split('T')[0]}: ${f.teams.home.name} vs ${f.teams.away.name}\n`);
+    } catch(e) { log += `API-Football fout: ${e.message}\n`; }
+  } else {
+    log += `API-Football: geen key ingevuld\n`;
+  }
+
+  out.textContent = log;
 }
 
 
