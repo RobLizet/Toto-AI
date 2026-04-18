@@ -979,9 +979,20 @@ const COMP_IDS = {
 
 function getCurrentSeason() { return 2025; }
 
-// Football-data.org fetch
+// Football-data.org fetch — via CORS proxy want directe browser requests worden geblokkeerd
 function fdFetch(url, token) {
-  return fetch(url, { headers: { 'X-Auth-Token': token } });
+  // Gebruik allorigins als CORS proxy
+  const proxied = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  return fetch(proxied)
+    .then(r => r.json())
+    .then(data => ({
+      ok: true,
+      json: () => Promise.resolve(JSON.parse(data.contents))
+    }))
+    .catch(e => {
+      // Fallback: probeer directe fetch (werkt soms wel)
+      return fetch(url, { headers: { 'X-Auth-Token': token } });
+    });
 }
 
 // API-Football fetch
@@ -1185,74 +1196,51 @@ async function loadFromFD(fdCode, fdKey, comp) {
 async function loadFromAPIFootball(comp, apiKey) {
   const leagueId = COMP_IDS[comp];
   const today = new Date();
-  // Gebruik ruim venster: 3 dagen terug t/m 7 dagen vooruit
-  const dateFrom = new Date(today.getTime() - 3 * 86400000).toISOString().split('T')[0];
-  const dateTo   = new Date(today.getTime() + 7 * 86400000).toISOString().split('T')[0];
+  const dateFrom = new Date(today.getTime() - 3*86400000).toISOString().split('T')[0];
+  const dateTo   = new Date(today.getTime() + 7*86400000).toISOString().split('T')[0];
+
+  // Gratis plan: seizoen 2025 werkt NIET — gebruik 2024 voor cups, probeer beide voor leagues
+  const isCup = ['beker','champions','nations'].includes(comp);
+  const seasons = isCup ? [2024] : [2025, 2024];
 
   try {
     showLoadingMsg('⟳ API-Football laden...', 'var(--muted)');
 
-    // Stap 1: next=15 (meest betrouwbaar, geen seizoen/datum filter nodig)
-    let resp = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=15`,
-      apiKey
-    );
-    let data = await resp.json();
+    // Stap 1: next=15 + last=5 combineren (geen seizoen nodig — meest betrouwbaar)
+    const [r1, r2] = await Promise.all([
+      apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=15`, apiKey),
+      apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=5`, apiKey)
+    ]);
+    const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
 
-    // Combineer met recent gespeeld (last=5) zodat vandaag ook zichtbaar is
-    let resp2 = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=5`,
-      apiKey
-    );
-    let data2 = await resp2.json();
-
-    const combined = [
-      ...(data.response || []),
-      ...(data2.response || [])
-    ];
-
+    const combined = [...(d1.response||[]), ...(d2.response||[])];
     if (combined.length > 0) {
-      // Dedupliceer op fixture ID
       const seen = new Set();
       const unique = combined.filter(f => {
         if (seen.has(f.fixture.id)) return false;
-        seen.add(f.fixture.id);
-        return true;
+        seen.add(f.fixture.id); return true;
       });
-      // Sorteer: eerste toekomstige/huidige wedstrijden, dan recente
-      const sorted = unique.sort((a,b) => new Date(a.fixture.date) - new Date(b.fixture.date));
-      state.matches = sorted.map(parseAPIMatch);
+      state.matches = unique.sort((a,b) => new Date(a.fixture.date)-new Date(b.fixture.date)).map(parseAPIMatch);
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
       return true;
     }
 
-    // Stap 2: probeer seizoen 2025 met datum venster
-    resp = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`,
-      apiKey
-    );
-    data = await resp.json();
-    if (data.response?.length > 0) {
-      const sorted = data.response.sort((a,b) => new Date(a.fixture.date) - new Date(b.fixture.date));
-      state.matches = sorted.map(parseAPIMatch);
-      document.getElementById('match-loading').style.display = 'none';
-      renderMatches(state.matches);
-      return true;
-    }
-
-    // Stap 3: probeer seizoen 2024
-    resp = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2024&from=${dateFrom}&to=${dateTo}`,
-      apiKey
-    );
-    data = await resp.json();
-    if (data.response?.length > 0) {
-      const sorted = data.response.sort((a,b) => new Date(a.fixture.date) - new Date(b.fixture.date));
-      state.matches = sorted.map(parseAPIMatch);
-      document.getElementById('match-loading').style.display = 'none';
-      renderMatches(state.matches);
-      return true;
+    // Stap 2: probeer datum venster per seizoen
+    for (const season of seasons) {
+      const resp = await apiFetch(
+        `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&from=${dateFrom}&to=${dateTo}`,
+        apiKey
+      );
+      const data = await resp.json();
+      if (data.response?.length > 0) {
+        state.matches = data.response
+          .sort((a,b) => new Date(a.fixture.date)-new Date(b.fixture.date))
+          .map(parseAPIMatch);
+        document.getElementById('match-loading').style.display = 'none';
+        renderMatches(state.matches);
+        return true;
+      }
     }
 
     return false;
