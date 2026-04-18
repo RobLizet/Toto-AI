@@ -85,33 +85,33 @@ body{
 
 /* ── WALLET STRIP ── */
 .wallet-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;
-  background:rgba(255,255,255,.65);border:1px solid var(--stroke);
-  border-radius:18px;padding:.75rem .9rem;margin-bottom:1.2rem;
-  box-shadow:var(--shadow2);backdrop-filter:blur(10px);}
-.w-item .lbl{font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--muted);
-  letter-spacing:.08em;text-transform:uppercase;margin-bottom:.2rem;}
-.w-item .val{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.04em;}
-.w-item.bal .val{color:#d63384;}
+  background:rgba(255,255,255,.82);border:1px solid var(--stroke);
+  border-radius:16px;padding:.8rem .9rem;margin-bottom:1.2rem;
+  box-shadow:var(--shadow2);}
+.w-item .lbl{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);
+  letter-spacing:.05em;text-transform:uppercase;margin-bottom:.2rem;font-weight:600;}
+.w-item .val{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.03em;}
+.w-item.bal .val{color:#be185d;}
 .w-item.pnl .val{color:var(--green);}
-.w-item.bets .val{color:#6bb6ff;}
-.w-item.rate .val{color:#a78bfa;}
+.w-item.bets .val{color:#2563eb;}
+.w-item.rate .val{color:#7c3aed;}
 
 /* ── TAB NAV ── */
 .tab-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem;margin-bottom:1.2rem;
-  background:rgba(255,255,255,.65);border:1px solid var(--stroke);
-  border-radius:18px;padding:.35rem;box-shadow:var(--shadow2);backdrop-filter:blur(10px);}
-.tab-btn{background:transparent;border:1px solid transparent;color:var(--muted);
-  font-family:'IBM Plex Mono',monospace;font-size:.52rem;padding:.5rem .2rem;
-  border-radius:14px;cursor:pointer;transition:all .2s;letter-spacing:.03em;text-align:center;font-weight:700;}
-.tab-btn.active{background:linear-gradient(135deg,rgba(255,215,230,.75),rgba(214,240,255,.75),rgba(239,228,255,.75));
-  color:var(--ink);border-color:rgba(255,255,255,.7);box-shadow:0 8px 24px rgba(12,18,30,.10);}
+  background:rgba(255,255,255,.82);border:1px solid var(--stroke);
+  border-radius:16px;padding:.35rem;box-shadow:var(--shadow2);}
+.tab-btn{background:transparent;border:1px solid transparent;color:var(--sub);
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;padding:.55rem .2rem;
+  border-radius:12px;cursor:pointer;transition:all .2s;letter-spacing:.02em;text-align:center;font-weight:700;}
+.tab-btn.active{background:linear-gradient(135deg,rgba(252,231,243,.85),rgba(224,242,254,.8),rgba(237,233,254,.8));
+  color:var(--ink);border-color:rgba(255,255,255,.8);box-shadow:0 4px 12px rgba(12,18,30,.08);}
 
 /* ── TABS ── */
 .tab-content{display:none;}
 .tab-content.active{display:block;}
 
 /* ── SECTION LABEL ── */
-.section-label{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--sub);
   letter-spacing:.12em;text-transform:uppercase;margin:1rem 0 .55rem;font-weight:600;
   display:flex;align-items:center;gap:.5rem;}
 .section-label::after{content:'';flex:1;height:1px;background:var(--stroke);}
@@ -121,9 +121,9 @@ body{
 .comp-chip{background:rgba(255,255,255,.78);border:1px solid var(--stroke);border-radius:14px;
   padding:.55rem .4rem;text-align:center;cursor:pointer;transition:all .2s;
   box-shadow:0 2px 8px rgba(15,23,42,.06);}
-.comp-chip .flag{font-size:1.1rem;display:block;margin-bottom:.25rem;}
-.comp-chip .cname{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--muted);
-  letter-spacing:.03em;line-height:1.3;font-weight:600;}
+.comp-chip .flag{font-size:1.2rem;display:block;margin-bottom:.3rem;}
+.comp-chip .cname{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);
+  letter-spacing:.02em;line-height:1.3;font-weight:600;}
 .comp-chip.active{border-color:rgba(219,39,119,.4);
   background:linear-gradient(135deg,rgba(252,231,243,.8),rgba(224,242,254,.65));}
 .comp-chip.active .cname{color:#be185d;}
@@ -138,11 +138,11 @@ body{
   background:linear-gradient(135deg,rgba(252,231,243,.7),rgba(224,242,254,.6));}
 .match-top{display:flex;align-items:center;padding:.45rem .9rem;
   border-bottom:1px solid var(--stroke);background:rgba(255,255,255,.3);}
-.match-comp-name{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);
-  letter-spacing:.05em;flex:1;font-weight:500;}
-.match-time{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#7c3aed;font-weight:700;}
-.match-status-pill{font-family:'IBM Plex Mono',monospace;font-size:.46rem;
-  padding:2px 8px;border-radius:999px;margin-left:.5rem;}
+.match-comp-name{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);
+  letter-spacing:.04em;flex:1;font-weight:600;}
+.match-time{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#7c3aed;font-weight:700;}
+.match-status-pill{font-family:'IBM Plex Mono',monospace;font-size:.54rem;
+  padding:3px 9px;border-radius:999px;margin-left:.5rem;font-weight:700;}
 .status-soon{background:rgba(124,58,237,.1);color:#7c3aed;border:1px solid rgba(124,58,237,.25);}
 .status-live{background:rgba(220,38,38,.08);color:var(--red);border:1px solid rgba(220,38,38,.2);
   animation:pulse 1.5s infinite;}
@@ -151,7 +151,9 @@ body{
 .match-teams{display:flex;align-items:center;justify-content:space-between;padding:.8rem .9rem;}
 .team-block{flex:1;}
 .team-away{text-align:right;}
-.team-name{font-size:.95rem;font-weight:800;line-height:1.2;color:var(--ink);letter-spacing:-.01em;}
+.team-name{font-size:.95rem;font-weight:800;line-height:1.2;color:var(--ink);letter-spacing:-.01em;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
+  word-break:break-word;}
 .team-form{display:flex;gap:2px;margin-top:.35rem;}
 .team-away .team-form{justify-content:flex-end;}
 .form-dot{width:9px;height:9px;border-radius:3px;}
@@ -171,29 +173,29 @@ body{
 .prob-bar-fill.w{background:var(--green);}
 .prob-bar-fill.d{background:var(--yellow);}
 .prob-bar-fill.l{background:var(--red);}
-.prob-pct{font-family:'IBM Plex Mono',monospace;font-size:.5rem;text-align:center;}
+.prob-pct{font-family:'IBM Plex Mono',monospace;font-size:.58rem;text-align:center;font-weight:700;}
 .prob-pct.w{color:var(--green);}
 .prob-pct.d{color:var(--yellow);}
 .prob-pct.l{color:var(--red);}
 
 /* Quote knoppen */
 .match-odds{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;
-  padding:.55rem .9rem;border-top:1px solid var(--stroke);}
-.odds-btn{background:rgba(255,255,255,.75);border:1px solid var(--stroke);border-radius:10px;
-  padding:.5rem .3rem;text-align:center;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(15,23,42,.05);}
+  padding:.6rem .9rem;border-top:1px solid var(--stroke);}
+.odds-btn{background:rgba(255,255,255,.85);border:1px solid var(--stroke);border-radius:10px;
+  padding:.55rem .3rem;text-align:center;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(15,23,42,.05);}
 .odds-btn:hover{border-color:rgba(219,39,119,.35);box-shadow:var(--shadow2);}
-.odds-btn.picked{background:linear-gradient(135deg,rgba(252,231,243,.8),rgba(224,242,254,.7));
+.odds-btn.picked{background:linear-gradient(135deg,rgba(252,231,243,.85),rgba(224,242,254,.75));
   border-color:rgba(219,39,119,.4);}
-.odds-lbl{font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);
-  letter-spacing:.05em;display:block;margin-bottom:.2rem;font-weight:600;}
-.odds-val{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.04em;color:var(--ink);}
+.odds-lbl{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
+  letter-spacing:.04em;display:block;margin-bottom:.2rem;font-weight:700;}
+.odds-val{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:.04em;color:var(--ink);}
 .odds-btn.picked .odds-val{color:#be185d;}
 
 /* ── API KEY BALK ── */
 .api-bar{background:rgba(255,255,255,.65);border:1px solid var(--stroke);
   border-radius:14px;padding:.75rem 1rem;margin-bottom:1rem;
   box-shadow:var(--shadow2);backdrop-filter:blur(10px);}
-.api-bar-label{font-family:'IBM Plex Mono',monospace;font-size:.53rem;color:var(--muted);
+.api-bar-label{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);
   letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem;display:block;}
 .api-row{display:flex;gap:.5rem;align-items:center;}
 .api-input{flex:1;background:transparent;border:none;color:var(--ink);
@@ -228,7 +230,7 @@ body{
 /* ── ENTITIES ── */
 .entity-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem;}
 .entity-chip{display:flex;align-items:center;gap:.3rem;font-family:'IBM Plex Mono',monospace;
-  font-size:.52rem;padding:4px 9px;border-radius:999px;border:1px solid var(--stroke);
+  font-size:.62rem;padding:5px 11px;border-radius:999px;border:1px solid var(--stroke);
   color:var(--muted);background:rgba(255,255,255,.6);transition:all .25s;box-shadow:0 2px 8px rgba(12,18,30,.05);}
 .entity-chip .led{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;}
 .entity-chip.running{border-color:rgba(255,154,193,.5);color:#d63384;background:rgba(255,215,230,.3);}
@@ -244,9 +246,9 @@ body{
 .result-card{background:rgba(255,255,255,.88);border:1px solid var(--stroke);border-radius:16px;
   overflow:hidden;animation:fadeUp .3s ease both;box-shadow:var(--shadow2);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);}}
-.card-head{display:flex;align-items:center;gap:.5rem;padding:.6rem .9rem;
-  border-bottom:1px solid var(--stroke);background:rgba(248,250,252,.8);}
-.card-tag{font-family:'IBM Plex Mono',monospace;font-size:.5rem;letter-spacing:.07em;
+.card-head{display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;
+  border-bottom:1px solid var(--stroke);background:rgba(248,250,252,.9);}
+.card-tag{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.07em;
   padding:3px 9px;border-radius:999px;white-space:nowrap;font-weight:700;}
 .t-vorm{background:rgba(37,99,235,.1);color:#1d4ed8;border:1px solid rgba(37,99,235,.25);}
 .t-stats{background:rgba(234,88,12,.1);color:#c2410c;border:1px solid rgba(234,88,12,.25);}
@@ -255,8 +257,8 @@ body{
 .t-risico{background:rgba(220,38,38,.08);color:#b91c1c;border:1px solid rgba(220,38,38,.2);}
 .t-advies{background:rgba(124,58,237,.1);color:#6d28d9;border:1px solid rgba(124,58,237,.25);}
 .t-combi{background:rgba(219,39,119,.1);color:#be185d;border:1px solid rgba(219,39,119,.25);}
-.card-title-txt{font-size:.82rem;font-weight:700;flex:1;color:var(--ink);}
-.card-body{padding:.9rem 1rem;font-size:.88rem;line-height:1.9;color:#0f172a;
+.card-title-txt{font-size:.88rem;font-weight:700;flex:1;color:var(--ink);}
+.card-body{padding:1rem 1.1rem;font-size:.94rem;line-height:2.0;color:#0f172a;
   font-family:'DM Sans',sans-serif;white-space:pre-wrap;min-height:50px;font-weight:400;}
 .dots{display:inline-flex;gap:5px;}
 .dots span{width:5px;height:5px;background:#db2777;border-radius:50%;animation:blink 1s infinite;}
@@ -372,10 +374,10 @@ body{
 .settings-row{display:flex;align-items:center;justify-content:space-between;
   padding:.5rem 0;border-bottom:1px solid var(--stroke);}
 .settings-row:last-child{border:none;padding-bottom:0;}
-.sr-label{font-size:.82rem;font-weight:600;color:var(--ink);}
-.sr-sub{font-family:'IBM Plex Mono',monospace;font-size:.51rem;color:var(--muted);margin-top:1px;}
+.sr-label{font-size:.88rem;font-weight:600;color:var(--ink);}
+.sr-sub{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--muted);margin-top:1px;}
 .sr-input{background:transparent;border:none;color:#a78bfa;
-  font-family:'IBM Plex Mono',monospace;font-size:.8rem;outline:none;text-align:right;width:200px;}
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;outline:none;text-align:right;width:200px;}
 .sr-input-border{background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:8px;
   padding:.35rem .6rem;}
 .sr-input-border:focus{border-color:rgba(255,154,193,.45);}
@@ -1414,12 +1416,12 @@ function renderMatches(matches) {
       </div>
       <div class="match-teams">
         <div class="team-block team-home">
-          <div class="team-name">${m.home}</div>
+          <div class="team-name">${shortName(m.home)}</div>
           <div class="team-form">${homeFormHtml}</div>
         </div>
         <div class="vs-col">${centerContent}</div>
         <div class="team-block team-away">
-          <div class="team-name">${m.away}</div>
+          <div class="team-name">${shortName(m.away)}</div>
           <div class="team-form">${awayFormHtml}</div>
         </div>
       </div>
@@ -1468,6 +1470,56 @@ function handleOddsBet(e, matchId, pick, pickLabel, odds) {
 function handleCombiAdd(e, matchId, pick, pickLabel, odds) {
   if (odds === '—') { e.stopPropagation(); return; }
   toggleCombiLeg(matchId, pick, pickLabel, parseFloat(odds));
+}
+
+function shortName(name) {
+  // Bekende afkortingen
+  const map = {
+    'Sparta Rotterdam': 'Sparta',
+    'PSV Eindhoven': 'PSV',
+    'AFC Ajax': 'Ajax',
+    'Feyenoord': 'Feyenoord',
+    'AZ Alkmaar': 'AZ',
+    'FC Utrecht': 'Utrecht',
+    'SC Heerenveen': 'Heerenveen',
+    'Go Ahead Eagles': 'Go Ahead',
+    'NEC Nijmegen': 'NEC',
+    'Fortuna Sittard': 'Fortuna',
+    'NAC Breda': 'NAC',
+    'PEC Zwolle': 'Zwolle',
+    'FC Groningen': 'Groningen',
+    'RKC Waalwijk': 'RKC',
+    'Almere City': 'Almere',
+    'Heracles Almelo': 'Heracles',
+    'Manchester City': 'Man City',
+    'Manchester United': 'Man United',
+    'Nottingham Forest': "Nott'm Forest",
+    'Newcastle United': 'Newcastle',
+    'Tottenham Hotspur': 'Spurs',
+    'West Ham United': 'West Ham',
+    'Wolverhampton Wanderers': 'Wolves',
+    'Brighton & Hove Albion': 'Brighton',
+    'Leicester City': 'Leicester',
+    'Bayer Leverkusen': 'Leverkusen',
+    'Borussia Dortmund': 'Dortmund',
+    'Borussia Mönchengladbach': "M'gladbach",
+    'RB Leipzig': 'Leipzig',
+    'Eintracht Frankfurt': 'Frankfurt',
+    'Paris Saint Germain': 'PSG',
+    'Paris Saint-Germain': 'PSG',
+    'Olympique Lyonnais': 'Lyon',
+    'Olympique Marseille': 'Marseille',
+    'Atletico Madrid': 'Atlético',
+    'Atlético de Madrid': 'Atlético',
+    'Real Madrid': 'Real Madrid',
+    'FC Barcelona': 'Barcelona',
+    'Inter Milan': 'Inter',
+    'AC Milan': 'Milan',
+    'Juventus': 'Juventus',
+    'SSC Napoli': 'Napoli',
+    'AS Roma': 'Roma',
+  };
+  return map[name] || (name.length > 13 ? name.split(' ').slice(-1)[0] : name);
 }
 
 function selectMatch(match) {
