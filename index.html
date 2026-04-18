@@ -548,6 +548,9 @@ body{
       <button class="tab-btn" onclick="switchTab('analyse')" id="tab-btn-analyse">
         <span class="tab-icon">🤖</span><span class="tab-label">ANALYSE</span>
       </button>
+      <button class="tab-btn" onclick="switchTab('tips')" id="tab-btn-tips">
+        <span class="tab-icon">⚡</span><span class="tab-label">TIPS</span>
+      </button>
       <button class="tab-btn" onclick="switchTab('wallet')" id="tab-btn-wallet">
         <span class="tab-icon">💶</span><span class="tab-label">WALLET</span>
       </button>
@@ -623,14 +626,26 @@ body{
         </div>
       </div>
     </div>
-    <div id="combiCard" class="combi-card" style="display:none;"></div>
-    <button class="combi-gen-btn" id="combiGenBtn" onclick="generateCombiTip()">
-      ⚡ GENEREER TOP 3 TIPS + COMBI
-    </button>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════
-       TAB 2: ANALYSE
+       TAB 3: TIPS & COMBI
+  ══════════════════════════════════════ -->
+  <div id="tab-tips" class="tab-content">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);
+      background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:12px;
+      padding:.7rem 1rem;margin-bottom:.9rem;line-height:1.7;">
+      💡 AI selecteert de beste tips uit de geladen wedstrijden. Ga eerst naar <b>⚽ Wedstrijden</b> en laad een competitie.
+    </div>
+    <button class="combi-gen-btn" id="combiGenBtn" onclick="generateCombiTip()">
+      ⚡ GENEREER TOP 3 TIPS + COMBI
+    </button>
+    <div id="combiCard" class="combi-card" style="display:none;margin-top:.8rem;"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB 5: ANALYSE
   ══════════════════════════════════════ -->
   <div id="tab-analyse" class="tab-content">
     <div id="selectedMatchInfo" style="background:rgba(255,154,193,.08);border:1px solid rgba(255,154,193,.25);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#a78bfa;display:none;">
@@ -844,7 +859,7 @@ body{
       <div class="settings-row">
         <div>
           <div class="sr-label">Startbedrag fictief saldo</div>
-          <div class="sr-sub">Voor nieuwe wallet reset</div>
+          <div class="sr-sub">Huidig saldo: <span id="currentBalanceDisplay" style="color:#be185d;font-weight:700;"></span></div>
         </div>
         <input class="sr-input sr-input-border" id="settStartBalance" type="number" value="500" min="10" max="10000">
       </div>
@@ -854,6 +869,13 @@ body{
           <div class="sr-sub">Vooraf ingevuld bij inzetten</div>
         </div>
         <input class="sr-input sr-input-border" id="settDefaultBet" type="number" value="10" min="1" max="500">
+      </div>
+      <div style="margin-top:.6rem;">
+        <button onclick="resetWallet()" style="width:100%;background:rgba(220,38,38,.08);
+          border:1px solid rgba(220,38,38,.25);color:#dc2626;font-family:'IBM Plex Mono',monospace;
+          font-size:.65rem;font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
+          🔄 WALLET RESETTEN NAAR INGEVOERD BEDRAG
+        </button>
       </div>
     </div>
 
@@ -2494,10 +2516,23 @@ function applySettings() {
   document.getElementById('settStartBalance').value   = state.settings.startBalance || 500;
   document.getElementById('settDefaultBet').value     = state.settings.defaultBet || 10;
   document.getElementById('betAmount').value          = state.settings.defaultBet || 10;
+  const balEl = document.getElementById('currentBalanceDisplay');
+  if (balEl) balEl.textContent = '€' + (state.wallet.balance || 0).toFixed(2).replace('.',',');
   if (state.settings.anthropicKey) {
     document.getElementById('apiStatus').textContent = '✓ API key geladen';
     document.getElementById('apiStatus').className = 'api-status ok';
   }
+}
+
+function resetWallet() {
+  const newBalance = parseInt(document.getElementById('settStartBalance').value) || 500;
+  if (!confirm(`Wallet resetten naar €${newBalance}? Alle geschiedenis blijft bewaard.`)) return;
+  state.wallet.balance = newBalance;
+  state.settings.startBalance = newBalance;
+  saveState();
+  updateWalletUI();
+  applySettings();
+  showFirebaseStatus(`✅ Wallet gereset naar €${newBalance}`, '#16a34a');
 }
 
 // ═══════════════════════════════════════════════════════
