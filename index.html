@@ -1132,13 +1132,7 @@ async function loadMatches(comp) {
   const fdKey   = state.settings.fdKey;
   const fdCode  = FD_CODES[comp];
 
-  // KNVB Beker: altijd football-data.org eerst
-  if (comp === 'beker' && fdKey && fdCode) {
-    const result = await loadFromFD(fdCode, fdKey, comp);
-    if (result) return;
-  }
-
-  // Primair: API-Football
+  // Primair: API-Football (betaald — alle competities + seizoen 2025)
   if (apifKey) {
     const result = await loadFromAPIFootball(comp, apifKey);
     if (result) return;
@@ -1150,40 +1144,14 @@ async function loadMatches(comp) {
     if (result) return;
   }
 
-  // Geen keys
   if (!apifKey && !fdKey) {
     showLoadingMsg('⚠ Vul je API keys in bij ⚙️ Instellingen', 'var(--yellow)');
     return;
   }
 
-  // KNVB Beker handmatige fallback — bekende wedstrijden
+  // Handmatige fallback voor KNVB Beker als alles faalt
   if (comp === 'beker') {
-    showLoadingMsg('', 'var(--muted)');
-    state.matches = [
-      {
-        id: 99001,
-        source: 'manual',
-        comp: 'KNVB Beker Finale',
-        time: '18:00',
-        date: 'zo 20 apr',
-        home: 'AZ',
-        away: 'NEC',
-        homeId: null, awayId: null,
-        homeForm: 'WWLWW',
-        awayForm: 'WDWWL',
-        homeOdds: '1.95',
-        drawOdds: '3.40',
-        awayOdds: '3.60',
-        homePct: 46, drawPct: 27, awayPct: 27,
-        score: null, liveMin: null,
-        isLive: false, isDone: false,
-        raw: {}, rawSource: 'manual'
-      }
-    ];
-    document.getElementById('match-loading').style.display = 'none';
-    renderMatches(state.matches);
-    showLoadingMsg('📌 Handmatige data — API niet beschikbaar op gratis plan', 'var(--muted)');
-    document.getElementById('match-loading').style.display = 'block';
+    showLoadingMsg('📌 Geen data beschikbaar voor KNVB Beker', 'var(--muted)');
     return;
   }
 
@@ -1258,21 +1226,17 @@ async function loadFromAPIFootball(comp, apiKey) {
   const dateFrom = new Date(today.getTime() - 3*86400000).toISOString().split('T')[0];
   const dateTo   = new Date(today.getTime() + 7*86400000).toISOString().split('T')[0];
 
-  // Gratis plan: seizoen 2025 werkt NIET — gebruik 2024 voor cups, probeer beide voor leagues
-  const isCup = ['beker','champions','nations'].includes(comp);
-  const seasons = isCup ? [2024] : [2025, 2024];
-
   try {
     showLoadingMsg('⟳ API-Football laden...', 'var(--muted)');
 
-    // Stap 1: next=15 + last=5 combineren (geen seizoen nodig — meest betrouwbaar)
+    // Stap 1: next=15 + last=5 combineren
     const [r1, r2] = await Promise.all([
       apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=15`, apiKey),
       apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=5`, apiKey)
     ]);
     const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
-
     const combined = [...(d1.response||[]), ...(d2.response||[])];
+
     if (combined.length > 0) {
       const seen = new Set();
       const unique = combined.filter(f => {
@@ -1285,21 +1249,19 @@ async function loadFromAPIFootball(comp, apiKey) {
       return true;
     }
 
-    // Stap 2: probeer datum venster per seizoen
-    for (const season of seasons) {
-      const resp = await apiFetch(
-        `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&from=${dateFrom}&to=${dateTo}`,
-        apiKey
-      );
-      const data = await resp.json();
-      if (data.response?.length > 0) {
-        state.matches = data.response
-          .sort((a,b) => new Date(a.fixture.date)-new Date(b.fixture.date))
-          .map(parseAPIMatch);
-        document.getElementById('match-loading').style.display = 'none';
-        renderMatches(state.matches);
-        return true;
-      }
+    // Stap 2: datum venster seizoen 2025
+    const resp = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`,
+      apiKey
+    );
+    const data = await resp.json();
+    if (data.response?.length > 0) {
+      state.matches = data.response
+        .sort((a,b) => new Date(a.fixture.date)-new Date(b.fixture.date))
+        .map(parseAPIMatch);
+      document.getElementById('match-loading').style.display = 'none';
+      renderMatches(state.matches);
+      return true;
     }
 
     return false;
