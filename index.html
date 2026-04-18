@@ -1171,31 +1171,48 @@ async function loadFromAPIFootball(comp, apiKey) {
   const leagueId = COMP_IDS[comp];
   const today = new Date();
   const dateFrom = today.toISOString().split('T')[0];
-  const dateTo = new Date(today.getTime() + 2 * 86400000).toISOString().split('T')[0];
+  const dateTo = new Date(today.getTime() + 7 * 86400000).toISOString().split('T')[0];
+
   try {
     showLoadingMsg('⟳ API-Football laden...', 'var(--muted)');
 
-    // Stap 1: vandaag t/m overmorgen
+    // Stap 1a: seizoen 2025, week venster
     let resp = await apiFetch(
       `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`,
       apiKey
     );
     let data = await resp.json();
     if (data.response?.length > 0) {
-      state.matches = data.response.map(parseAPIMatch);
+      const sorted = data.response.sort((a,b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+      state.matches = sorted.map(parseAPIMatch);
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
       return true;
     }
 
-    // Stap 2: komende wedstrijden
+    // Stap 1b: seizoen 2024, week venster (voor beker/cup finales)
     resp = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=12`,
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2024&from=${dateFrom}&to=${dateTo}`,
       apiKey
     );
     data = await resp.json();
     if (data.response?.length > 0) {
-      state.matches = data.response.map(parseAPIMatch);
+      const sorted = data.response.sort((a,b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+      state.matches = sorted.map(parseAPIMatch);
+      document.getElementById('match-loading').style.display = 'none';
+      renderMatches(state.matches);
+      return true;
+    }
+
+    // Stap 2: komende wedstrijden seizoen 2025
+    resp = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=15`,
+      apiKey
+    );
+    data = await resp.json();
+    if (data.response?.length > 0) {
+      const sorted = data.response.sort((a,b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+      state.matches = sorted.map(parseAPIMatch);
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
       return true;
@@ -1208,7 +1225,8 @@ async function loadFromAPIFootball(comp, apiKey) {
     );
     data = await resp.json();
     if (data.response?.length > 0) {
-      state.matches = data.response.map(parseAPIMatch);
+      const sorted = data.response.sort((a,b) => new Date(b.fixture.date) - new Date(a.fixture.date));
+      state.matches = sorted.map(parseAPIMatch);
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
       return true;
