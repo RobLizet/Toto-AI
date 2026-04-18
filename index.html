@@ -523,7 +523,7 @@ body{
         <span class="flag">🏆</span><div class="cname">KNVB Beker</div>
       </div>
       <div class="comp-chip" onclick="selectComp('premier')" id="comp-premier">
-        <span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><div class="cname">Premier League</div>
+        <span class="flag">🇬🇧</span><div class="cname">Premier League</div>
       </div>
       <div class="comp-chip" onclick="selectComp('bundesliga')" id="comp-bundesliga">
         <span class="flag">🇩🇪</span><div class="cname">Bundesliga</div>
@@ -542,7 +542,16 @@ body{
       </div>
     </div>
 
-    <div class="section-label">Wedstrijden vandaag</div>
+    <div class="section-label">
+      Wedstrijden vandaag t/m overmorgen
+      <button onclick="debugAPI()" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;
+        background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:#a78bfa;
+        border-radius:999px;padding:2px 8px;cursor:pointer;margin-left:.3rem;">🔍 DEBUG</button>
+    </div>
+    <div id="debugOutput" style="display:none;background:rgba(255,255,255,.6);border:1px solid var(--stroke);
+      border-radius:10px;padding:.7rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;
+      font-size:.52rem;color:var(--ink);line-height:1.7;white-space:pre-wrap;word-break:break-all;
+      max-height:200px;overflow-y:auto;"></div>
     <div id="match-loading" style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);padding:.8rem 0;">
       ⟳ Wedstrijden laden...
     </div>
@@ -765,7 +774,7 @@ body{
           <option value="eredivisie">🇳🇱 Eredivisie</option>
           <option value="kkd">🇳🇱 Keuken Kampioen</option>
           <option value="beker">🏆 KNVB Beker</option>
-          <option value="premier">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</option>
+          <option value="premier">🇬🇧 Premier League</option>
           <option value="bundesliga">🇩🇪 Bundesliga</option>
           <option value="ligue1">🇫🇷 Ligue 1</option>
           <option value="seriea">🇮🇹 Serie A</option>
@@ -1170,18 +1179,54 @@ async function loadFromFD(fdCode, fdKey, comp) {
 async function loadFromAPIFootball(comp, apiKey) {
   const leagueId = COMP_IDS[comp];
   const today = new Date();
-  const dateFrom = today.toISOString().split('T')[0];
-  const dateTo = new Date(today.getTime() + 7 * 86400000).toISOString().split('T')[0];
+  // Gebruik ruim venster: 3 dagen terug t/m 7 dagen vooruit
+  const dateFrom = new Date(today.getTime() - 3 * 86400000).toISOString().split('T')[0];
+  const dateTo   = new Date(today.getTime() + 7 * 86400000).toISOString().split('T')[0];
 
   try {
     showLoadingMsg('⟳ API-Football laden...', 'var(--muted)');
 
-    // Stap 1a: seizoen 2025, week venster
+    // Stap 1: next=15 (meest betrouwbaar, geen seizoen/datum filter nodig)
     let resp = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`,
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=15`,
       apiKey
     );
     let data = await resp.json();
+
+    // Combineer met recent gespeeld (last=5) zodat vandaag ook zichtbaar is
+    let resp2 = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=5`,
+      apiKey
+    );
+    let data2 = await resp2.json();
+
+    const combined = [
+      ...(data.response || []),
+      ...(data2.response || [])
+    ];
+
+    if (combined.length > 0) {
+      // Dedupliceer op fixture ID
+      const seen = new Set();
+      const unique = combined.filter(f => {
+        if (seen.has(f.fixture.id)) return false;
+        seen.add(f.fixture.id);
+        return true;
+      });
+      // Sorteer: eerste toekomstige/huidige wedstrijden, dan recente
+      const sorted = unique.sort((a,b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+      state.matches = sorted.map(parseAPIMatch);
+      document.getElementById('match-loading').style.display = 'none';
+      renderMatches(state.matches);
+      return true;
+    }
+
+    // Stap 2: probeer seizoen 2025 met datum venster
+    resp = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`,
+      apiKey
+    );
+    data = await resp.json();
     if (data.response?.length > 0) {
       const sorted = data.response.sort((a,b) => new Date(a.fixture.date) - new Date(b.fixture.date));
       state.matches = sorted.map(parseAPIMatch);
@@ -1190,7 +1235,7 @@ async function loadFromAPIFootball(comp, apiKey) {
       return true;
     }
 
-    // Stap 1b: seizoen 2024, week venster (voor beker/cup finales)
+    // Stap 3: probeer seizoen 2024
     resp = await apiFetch(
       `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2024&from=${dateFrom}&to=${dateTo}`,
       apiKey
@@ -1204,38 +1249,63 @@ async function loadFromAPIFootball(comp, apiKey) {
       return true;
     }
 
-    // Stap 2: komende wedstrijden seizoen 2025
-    resp = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=15`,
-      apiKey
-    );
-    data = await resp.json();
-    if (data.response?.length > 0) {
-      const sorted = data.response.sort((a,b) => new Date(a.fixture.date) - new Date(b.fixture.date));
-      state.matches = sorted.map(parseAPIMatch);
-      document.getElementById('match-loading').style.display = 'none';
-      renderMatches(state.matches);
-      return true;
-    }
-
-    // Stap 3: laatste gespeelde wedstrijden
-    resp = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=12`,
-      apiKey
-    );
-    data = await resp.json();
-    if (data.response?.length > 0) {
-      const sorted = data.response.sort((a,b) => new Date(b.fixture.date) - new Date(a.fixture.date));
-      state.matches = sorted.map(parseAPIMatch);
-      document.getElementById('match-loading').style.display = 'none';
-      renderMatches(state.matches);
-      return true;
-    }
     return false;
   } catch(e) { return false; }
 }
 
-async function loadUpcomingMatches() {} // niet meer nodig
+async function debugAPI() {
+  const apiKey = state.settings.footballKey;
+  const out = document.getElementById('debugOutput');
+  out.style.display = 'block';
+  out.textContent = '⟳ Testen...';
+
+  if (!apiKey) { out.textContent = '⚠ Geen API-Football key ingevuld'; return; }
+
+  const leagueId = COMP_IDS[state.activeComp];
+  const today = new Date();
+  const dateFrom = today.toISOString().split('T')[0];
+  const dateTo = new Date(today.getTime() + 7 * 86400000).toISOString().split('T')[0];
+  let log = `Competitie: ${state.activeComp} (ID: ${leagueId})\nVandaag: ${dateFrom}\nTot: ${dateTo}\n\n`;
+
+  try {
+    // Test seizoen 2024
+    let r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2024&from=${dateFrom}&to=${dateTo}`, apiKey);
+    let d = await r.json();
+    log += `Seizoen 2024 (${dateFrom}→${dateTo}): ${d.response?.length || 0} wedstrijden\n`;
+    if (d.response?.length > 0) {
+      d.response.slice(0,3).forEach(f => {
+        log += `  → ${f.fixture.date.split('T')[0]} ${f.teams.home.name} vs ${f.teams.away.name}\n`;
+      });
+    }
+    if (d.errors) log += `  Errors: ${JSON.stringify(d.errors)}\n`;
+
+    // Test seizoen 2025
+    r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`, apiKey);
+    d = await r.json();
+    log += `\nSeizoen 2025 (${dateFrom}→${dateTo}): ${d.response?.length || 0} wedstrijden\n`;
+    if (d.response?.length > 0) {
+      d.response.slice(0,3).forEach(f => {
+        log += `  → ${f.fixture.date.split('T')[0]} ${f.teams.home.name} vs ${f.teams.away.name}\n`;
+      });
+    }
+
+    // Test next=5
+    r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=5`, apiKey);
+    d = await r.json();
+    log += `\nNext=5: ${d.response?.length || 0} wedstrijden\n`;
+    if (d.response?.length > 0) {
+      d.response.forEach(f => {
+        log += `  → ${f.fixture.date.split('T')[0]} ${f.teams.home.name} vs ${f.teams.away.name}\n`;
+      });
+    }
+
+    out.textContent = log;
+  } catch(e) {
+    out.textContent = log + '\nFOUT: ' + e.message;
+  }
+}
+
+
 
 function renderMatches(matches) {
   const list = document.getElementById('matchList');
