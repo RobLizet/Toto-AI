@@ -19,9 +19,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 .widget {
-  background: rgba(255,255,255,.93);
-  border-radius: 24px; padding: 1.3rem 1.1rem;
-  width: 100%; max-width: 400px;
+  background: rgba(255,255,255,.93); border-radius: 24px;
+  padding: 1.3rem 1.1rem; width: 100%; max-width: 400px;
   box-shadow: 0 20px 60px rgba(15,23,42,.15);
   border: 1px solid rgba(219,39,119,.15);
 }
@@ -33,7 +32,7 @@ body {
 .logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem;
   background: linear-gradient(135deg, #db2777, #7c3aed);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.datum { font-family: 'IBM Plex Mono', monospace; font-size: .56rem; color: #475569; text-align: right; }
+.datum { font-family: 'IBM Plex Mono', monospace; font-size: .56rem; color: #475569; }
 .tip-label { font-family: 'IBM Plex Mono', monospace; font-size: .55rem;
   color: #be185d; font-weight: 700; letter-spacing: .08em; margin-bottom: .4rem; }
 .match-name { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: .2rem; }
@@ -82,17 +81,8 @@ body {
 .dots span:nth-child(2) { animation-delay: .2s; }
 .dots span:nth-child(3) { animation-delay: .4s; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
-.no-key { background: rgba(219,39,119,.06); border: 1px solid rgba(219,39,119,.2);
-  border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
-  font-family: 'IBM Plex Mono', monospace; font-size: .6rem;
-  color: #be185d; line-height: 1.7; text-align: center; }
-.key-input { width: 100%; border: 1px solid rgba(15,23,42,.15);
-  border-radius: 10px; padding: .6rem .8rem; font-size: .75rem;
-  font-family: 'IBM Plex Mono', monospace; margin-bottom: .5rem; outline: none; }
-.key-btn { width: 100%; background: rgba(219,39,119,.1); border: 1px solid rgba(219,39,119,.3);
-  color: #be185d; border-radius: 10px; padding: .55rem;
-  font-family: 'IBM Plex Mono', monospace; font-size: .62rem; font-weight: 700;
-  cursor: pointer; margin-bottom: 1rem; }
+.status-msg { font-family: 'IBM Plex Mono', monospace; font-size: .55rem;
+  color: #475569; text-align: center; margin-bottom: .5rem; }
 </style>
 </head>
 <body>
@@ -104,7 +94,7 @@ body {
   <div id="content">
     <div class="loading">
       <div class="dots"><span></span><span></span><span></span></div>
-      <div style="margin-top:.5rem;">Laden...</div>
+      <div style="margin-top:.5rem;">Echte wedstrijden ophalen...</div>
     </div>
   </div>
 </div>
@@ -118,89 +108,119 @@ function proxyUrl(url) { return `${PROXY}?url=${encodeURIComponent(url)}`; }
 
 document.getElementById('datumEl').textContent = new Date().toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'});
 
-async function getAnthropicKey() {
-  // Eerst localStorage van de app proberen
+async function getKeys() {
+  let anthropicKey = '', footballKey = '';
   try {
     const state = JSON.parse(localStorage.getItem('totoai_state') || '{}');
-    if (state.settings?.anthropicKey) return state.settings.anthropicKey;
+    anthropicKey = state.settings?.anthropicKey || '';
+    footballKey = state.settings?.footballKey || '';
   } catch(e) {}
-  // Dan Firebase
-  try {
-    const r = await fetch(`${FB_DB}/settings.json?auth=${FB_KEY}`);
-    const d = await r.json();
-    if (d?.anthropicKey) return d.anthropicKey;
-  } catch(e) {}
-  return null;
+  if (!anthropicKey || !footballKey) {
+    try {
+      const r = await fetch(`${FB_DB}/settings.json?auth=${FB_KEY}`);
+      const d = await r.json();
+      anthropicKey = anthropicKey || d?.anthropicKey || '';
+      footballKey = footballKey || d?.footballKey || '';
+    } catch(e) {}
+  }
+  return { anthropicKey, footballKey };
 }
 
 async function loadTip() {
   const content = document.getElementById('content');
 
-  // Check opgeslagen tip — ook van gisteren is prima
-  const saved = localStorage.getItem('totoai_daily_tip');
+  // Check opgeslagen tip van vandaag
+  const saved = localStorage.getItem('totoai_widget_tip');
   if (saved) {
     try {
-      const { tip } = JSON.parse(saved);
-      if (tip?.match) { renderTip(tip); return; }
+      const { tip, date } = JSON.parse(saved);
+      if (date === new Date().toDateString() && tip?.match) {
+        renderTip(tip);
+        return;
+      }
     } catch(e) {}
   }
 
-  // Genereer nieuwe tip via AI
-  const apiKey = await getAnthropicKey();
-  if (!apiKey) {
-    showKeyForm();
+  // Haal keys op
+  const { anthropicKey, footballKey } = await getKeys();
+  if (!anthropicKey || !footballKey) {
+    content.innerHTML = `
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#be185d;
+        background:rgba(219,39,119,.06);border:1px solid rgba(219,39,119,.2);
+        border-radius:12px;padding:1rem;text-align:center;margin-bottom:1rem;line-height:1.7;">
+        🔑 Open de TOTO AI app en sla je API keys op bij Instellingen
+      </div>
+      <a href="https://roblizet.github.io/Toto-AI/" class="open-btn">📱 OPEN TOTO AI</a>`;
     return;
   }
 
-  content.innerHTML = `
-    <div class="loading">
-      <div class="dots"><span></span><span></span><span></span></div>
-      <div style="margin-top:.5rem;">AI genereert beste tip...</div>
-    </div>`;
+  // Haal echte wedstrijden op
+  content.innerHTML = `<div class="loading"><div class="dots"><span></span><span></span><span></span></div><div style="margin-top:.5rem;">Wedstrijden laden...</div></div>`;
+
+  let matchesCtx = '';
+  try {
+    // Populaire competities ophalen
+    const leagues = [39, 88, 78, 61, 135, 2]; // PL, Eredivisie, Bundesliga, L1, SA, CL
+    const today = new Date();
+    const dateFrom = today.toISOString().split('T')[0];
+    const dateTo = new Date(today.getTime() + 3*86400000).toISOString().split('T')[0];
+
+    const results = await Promise.all(leagues.map(async lid => {
+      try {
+        const r = await fetch(proxyUrl(`https://v3.football.api-sports.io/fixtures?league=${lid}&season=2025&from=${dateFrom}&to=${dateTo}`), {
+          headers: { 'x-apisports-key': footballKey, 'x-rapidapi-key': footballKey, 'x-rapidapi-host': 'v3.football.api-sports.io' }
+        });
+        const d = await r.json();
+        return d.response || [];
+      } catch(e) { return []; }
+    }));
+
+    const allMatches = results.flat().slice(0, 20);
+    if (allMatches.length > 0) {
+      matchesCtx = allMatches.map(f => {
+        const dt = new Date(f.fixture.date).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'});
+        return `${f.teams.home.name} vs ${f.teams.away.name} | ${f.league.name} | ${dt}`;
+      }).join('\n');
+    }
+  } catch(e) {}
+
+  if (!matchesCtx) {
+    content.innerHTML = `
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#475569;
+        text-align:center;padding:1rem;margin-bottom:1rem;">
+        Geen wedstrijden gevonden voor de komende 3 dagen
+      </div>
+      <a href="https://roblizet.github.io/Toto-AI/" class="open-btn">⚽ OPEN TOTO AI</a>`;
+    return;
+  }
+
+  // Genereer tip op basis van ECHTE wedstrijden
+  content.innerHTML = `<div class="loading"><div class="dots"><span></span><span></span><span></span></div><div style="margin-top:.5rem;">AI analyseert echte wedstrijden...</div></div>`;
 
   try {
     const vandaag = new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
     const r = await fetch(proxyUrl('https://api.anthropic.com/v1/messages'), {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
+      headers: { 'Content-Type':'application/json', 'x-api-key':anthropicKey, 'anthropic-version':'2023-06-01' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 400,
-        system: `Je bent een top sporttipster. Geef de beste voetbeltip van vandaag. Reageer ALLEEN in dit JSON formaat, geen extra tekst:
+        model: 'claude-sonnet-4-5', max_tokens: 400,
+        system: `Je bent een top sporttipster. Kies de BESTE tip uit de opgegeven echte wedstrijden. Gebruik ALLEEN wedstrijden die in de lijst staan. Reageer ALLEEN in dit JSON formaat:
 {"match":"Team A vs Team B","datum":"za 20 apr 18:00","pick":"1","pickLabel":"Team A wint","markt":"Uitslag","odds":"2.10","kans":68,"sterren":4,"redenering":"Max 60 woorden concrete uitleg."}`,
-        messages: [{role:'user',content:`Datum: ${vandaag}\n\nGeef de beste voetbeltip van vandaag/dit weekend uit de Eredivisie, Premier League, Bundesliga, Ligue 1, Serie A of Champions League. Kies de meest zekere tip met goede value.`}]
+        messages: [{role:'user',content:`Datum vandaag: ${vandaag}\n\nBeschikbare ECHTE wedstrijden:\n${matchesCtx}\n\nKies de beste tip uit deze lijst. Geef realistische odds en kansen.`}]
       })
     });
     const d = await r.json();
     let raw = d.content[0].text.trim().replace(/```json|```/g,'').trim();
     const tip = JSON.parse(raw);
-    localStorage.setItem('totoai_daily_tip', JSON.stringify({ tip, date: new Date().toDateString() }));
+
+    // Sla op voor vandaag
+    localStorage.setItem('totoai_widget_tip', JSON.stringify({ tip, date: new Date().toDateString() }));
     renderTip(tip);
   } catch(e) {
     content.innerHTML = `
-      <div class="no-key">⚠ Fout bij laden: ${e.message}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#dc2626;padding:.8rem;text-align:center;">⚠ ${e.message}</div>
       <a href="https://roblizet.github.io/Toto-AI/" class="open-btn">⚽ OPEN TOTO AI</a>`;
   }
-}
-
-function showKeyForm() {
-  const content = document.getElementById('content');
-  content.innerHTML = `
-    <div class="no-key">🔑 Vul je Anthropic API key in om tips te genereren</div>
-    <input class="key-input" id="keyInput" type="password" placeholder="sk-ant-...">
-    <button class="key-btn" onclick="saveKey()">OPSLAAN & TIP LADEN</button>
-    <a href="https://roblizet.github.io/Toto-AI/" class="open-btn">📱 OPEN APP</a>`;
-}
-
-function saveKey() {
-  const key = document.getElementById('keyInput').value.trim();
-  if (!key.startsWith('sk-ant')) { alert('Ongeldige key'); return; }
-  try {
-    const state = JSON.parse(localStorage.getItem('totoai_state') || '{}');
-    state.settings = { ...(state.settings||{}), anthropicKey: key };
-    localStorage.setItem('totoai_state', JSON.stringify(state));
-  } catch(e) {}
-  loadTip();
 }
 
 function renderTip(tip) {
@@ -234,7 +254,7 @@ function renderTip(tip) {
     </div>
     <div class="reden">${tip.redenering||''}</div>
     <a href="https://roblizet.github.io/Toto-AI/" class="open-btn">⚽ OPEN TOTO AI APP</a>
-    <button class="refresh-btn" onclick="localStorage.removeItem('totoai_daily_tip');location.reload()">🔄 NIEUWE TIP GENEREREN</button>
+    <button class="refresh-btn" onclick="localStorage.removeItem('totoai_widget_tip');location.reload()">🔄 NIEUWE TIP GENEREREN</button>
   `;
 }
 
