@@ -1089,8 +1089,10 @@ function apiFetch(url, apiKey, timeoutMs=8000) {
   }).finally(() => clearTimeout(timer));
 }
 
-// Anthropic fetch via proxy
+// Anthropic fetch via proxy met timeout
 function anthropicFetch(apiKey, body) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000); // 30 sec voor AI
   return fetch(proxyUrl('https://api.anthropic.com/v1/messages'), {
     method: 'POST',
     headers: {
@@ -1098,8 +1100,9 @@ function anthropicFetch(apiKey, body) {
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01'
     },
-    body: JSON.stringify(body)
-  });
+    body: JSON.stringify(body),
+    signal: controller.signal
+  }).finally(() => clearTimeout(timer));
 }
 
 function showLoadingMsg(msg, color) {
@@ -1703,7 +1706,7 @@ async function fetchInjuries(teamId, fixtureId) {
   try {
     const r = await apiFetch(
       `https://v3.football.api-sports.io/injuries?team=${teamId}&fixture=${fixtureId}`,
-      state.settings.footballKey
+      state.settings.footballKey, 5000
     );
     const d = await r.json();
     return d.response || [];
@@ -1715,7 +1718,7 @@ async function fetchPredictions(fixtureId) {
   try {
     const r = await apiFetch(
       `https://v3.football.api-sports.io/predictions?fixture=${fixtureId}`,
-      state.settings.footballKey
+      state.settings.footballKey, 5000
     );
     const d = await r.json();
     return d.response?.[0] || null;
@@ -1835,48 +1838,39 @@ async function runAnalyse() {
   btn.disabled = true;
   btn.textContent = '⟳ DATA OPHALEN...';
 
-  // Haal alle data parallel op
   let h2hTxt = '', homeFormTxt = '', awayFormTxt = '', homeStatsTxt = '', awayStatsTxt = '';
   let homeBlessuresTxt = '', awayBlessuresTxt = '', predTxt = '';
 
-  if (state.settings.footballKey && homeId && awayId) {
-    btn.textContent = '⟳ DATA OPHALEN...';
-    const fixtureId = m.id;
+  try {
+    if (state.settings.footballKey && homeId && awayId) {
+      const fixtureId = m.id;
+      const withTimeout = (p, ms=6000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
 
-    // Maximaal 12 seconden wachten op alle data
-    const withTimeout = (promise, ms=8000) => Promise.race([
-      promise,
-      new Promise(resolve => setTimeout(() => resolve(null), ms))
-    ]);
+      const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred] = await Promise.all([
+        withTimeout(fetchH2H(homeId, awayId)),
+        withTimeout(fetchTeamForm(homeId, leagueId)),
+        withTimeout(fetchTeamForm(awayId, leagueId)),
+        withTimeout(fetchTeamStats(homeId, leagueId)),
+        withTimeout(fetchTeamStats(awayId, leagueId)),
+        withTimeout(fetchInjuries(homeId, fixtureId), 4000),
+        withTimeout(fetchInjuries(awayId, fixtureId), 4000),
+        withTimeout(fetchPredictions(fixtureId), 4000)
+      ]);
 
-    const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred] = await Promise.all([
-      withTimeout(fetchH2H(homeId, awayId)),
-      withTimeout(fetchTeamForm(homeId, leagueId)),
-      withTimeout(fetchTeamForm(awayId, leagueId)),
-      withTimeout(fetchTeamStats(homeId, leagueId)),
-      withTimeout(fetchTeamStats(awayId, leagueId)),
-      withTimeout(fetchInjuries(homeId, fixtureId)),
-      withTimeout(fetchInjuries(awayId, fixtureId)),
-      withTimeout(fetchPredictions(fixtureId))
-    ]);
-
-    h2hTxt = formatH2H(h2h||[], m.home, m.away);
-    homeFormTxt = formatForm(homeForm||[], homeId, m.home);
-    awayFormTxt = formatForm(awayForm||[], awayId, m.away);
-    homeStatsTxt = formatStats(hStats, m.home);
-    awayStatsTxt = formatStats(aStats, m.away);
-    homeBlessuresTxt = formatInjuries(homeInj||[], m.home);
-    awayBlessuresTxt = formatInjuries(awayInj||[], m.away);
-    predTxt = formatPredictions(pred);
-  } else if (!homeId || !awayId) {
-    h2hTxt = 'Team IDs niet beschikbaar voor deze wedstrijd.';
-    homeFormTxt = awayFormTxt = 'Geen vormdata beschikbaar.';
-    homeBlessuresTxt = awayBlessuresTxt = 'Geen blessuredata beschikbaar.';
-  } else {
-    h2hTxt = 'Geen API-Football key — voeg toe bij Instellingen.';
-    homeFormTxt = awayFormTxt = 'Geen vormdata.';
-    homeBlessuresTxt = awayBlessuresTxt = 'Geen blessuredata.';
+      h2hTxt = formatH2H(h2h||[], m.home, m.away);
+      homeFormTxt = formatForm(homeForm||[], homeId, m.home);
+      awayFormTxt = formatForm(awayForm||[], awayId, m.away);
+      homeStatsTxt = formatStats(hStats, m.home);
+      awayStatsTxt = formatStats(aStats, m.away);
+      homeBlessuresTxt = formatInjuries(homeInj||[], m.home);
+      awayBlessuresTxt = formatInjuries(awayInj||[], m.away);
+      predTxt = formatPredictions(pred);
+    }
+  } catch(e) {
+    console.warn('Data ophalen gedeeltelijk mislukt:', e.message);
   }
+
+  // Altijd doorgaan met analyse, ook als data ophalen mislukte
 
   btn.textContent = '⟳ AI ANALYSEERT...';
 
