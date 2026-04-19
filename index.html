@@ -514,7 +514,7 @@ body{
       <div class="topbar-sub">VOETBAL ANALYSE · AI ENTITEITEN · COMBI TIPS</div>
     </div>
     <div class="topbar-right">
-      <div class="live-badge"><span class="live-dot"></span> LIVE DATA</div>
+      <div class="live-badge" id="liveBadge"><span class="live-dot"></span> LIVE DATA</div>
       <div class="version-badge">v1.0</div>
     </div>
   </div>
@@ -945,6 +945,7 @@ body{
 
 let state = {
   activeComp: 'eredivisie',
+  activeTab: 'wedstrijden',
   selectedMatch: null,
   matches: [],
   combiBuilder: [], // { matchId, home, away, pick, pickLabel, odds, date }
@@ -976,7 +977,11 @@ window.addEventListener('load', () => {
   try { updateWalletUI(); } catch(e) { console.error('updateWalletUI:', e); }
   // Laad keys uit Firebase, dan wedstrijden
   loadFromFirebase().finally(() => {
-    try { loadMatches(state.activeComp); } catch(e) { console.error('loadMatches:', e); }
+    try {
+      loadMatches(state.activeComp).then(() => {
+        startLivePolling();
+      });
+    } catch(e) { console.error('loadMatches:', e); }
   });
   try { registerSW(); } catch(e) { console.error('registerSW:', e); }
 });
@@ -1015,6 +1020,147 @@ function switchTab(name) {
     btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
   }
   if (name === 'wallet') updateWalletUI();
+  state.activeTab = name;
+  // Start/stop live polling op basis van actieve tab
+  if (name === 'wedstrijden') {
+    startLivePolling();
+  } else {
+    stopLivePolling();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// LIVE SCORES AUTO-UPDATE
+// ═══════════════════════════════════════════════════════
+let liveInterval = null;
+let liveCountdown = 60;
+let countdownInterval = null;
+
+function startLivePolling() {
+  stopLivePolling(); // Reset eerst
+  checkAndPollLive();
+}
+
+function stopLivePolling() {
+  if (liveInterval) { clearInterval(liveInterval); liveInterval = null; }
+  if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
+  updateLiveBadge(false);
+}
+
+async function checkAndPollLive() {
+  const hasLive = state.matches.some(m => m.isLive);
+  if (!hasLive) {
+    // Geen live wedstrijden — check elke 3 minuten of er nieuwe zijn
+    updateLiveBadge(false);
+    liveInterval = setTimeout(async () => {
+      if (state.activeTab === 'wedstrijden') {
+        await refreshLiveScores();
+        checkAndPollLive();
+      }
+    }, 3 * 60 * 1000);
+    return;
+  }
+
+  // Live wedstrijden aanwezig — elke 60 seconden updaten
+  updateLiveBadge(true);
+  liveCountdown = 60;
+  startCountdown();
+  liveInterval = setInterval(async () => {
+    if (state.activeTab !== 'wedstrijden') return;
+    await refreshLiveScores();
+    // Hercheck of er nog live zijn
+    const stillLive = state.matches.some(m => m.isLive);
+    if (!stillLive) {
+      stopLivePolling();
+      checkAndPollLive();
+    }
+  }, 60 * 1000);
+}
+
+function startCountdown() {
+  if (countdownInterval) clearInterval(countdownInterval);
+  liveCountdown = 60;
+  updateCountdownBadge();
+  countdownInterval = setInterval(() => {
+    liveCountdown--;
+    if (liveCountdown <= 0) liveCountdown = 60;
+    updateCountdownBadge();
+  }, 1000);
+}
+
+function updateLiveBadge(isLive) {
+  const badge = document.getElementById('liveBadge');
+  if (!badge) return;
+  if (isLive) {
+    badge.innerHTML = `<span class="live-dot"></span> LIVE <span id="liveCountdown" style="font-size:.5rem;opacity:.7;">60s</span>`;
+    badge.style.borderColor = 'rgba(220,38,38,.4)';
+    badge.style.color = '#dc2626';
+    badge.style.background = 'rgba(220,38,38,.08)';
+  } else {
+    badge.innerHTML = `<span class="live-dot"></span> LIVE DATA`;
+    badge.style.borderColor = '';
+    badge.style.color = '';
+    badge.style.background = '';
+  }
+}
+
+function updateCountdownBadge() {
+  const el = document.getElementById('liveCountdown');
+  if (el) el.textContent = liveCountdown + 's';
+}
+
+async function refreshLiveScores() {
+  const apiKey = state.settings.footballKey;
+  if (!apiKey) return;
+  const leagueId = COMP_IDS[state.activeComp];
+  try {
+    // Haal live wedstrijden op
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=${leagueId}&live=all`,
+      apiKey
+    );
+    const d = await r.json();
+    if (!d.response?.length) {
+      // Geen live — update scores van recent gespeelde
+      const r2 = await apiFetch(
+        `https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=5`,
+        apiKey
+      );
+      const d2 = await r2.json();
+      if (d2.response?.length) updateMatchScores(d2.response);
+      return;
+    }
+    updateMatchScores(d.response);
+  } catch(e) {}
+}
+
+function updateMatchScores(fixtures) {
+  let changed = false;
+  fixtures.forEach(f => {
+    const match = state.matches.find(m => m.id === f.fixture.id);
+    if (!match) return;
+    const status = f.fixture.status.short;
+    const isLive = ['1H','HT','2H','ET','BT','P'].includes(status);
+    const isDone = ['FT','AET','PEN'].includes(status);
+    const newScore = (isLive || isDone) ? `${f.goals.home??0}-${f.goals.away??0}` : null;
+    const newMin = f.fixture.status.elapsed;
+
+    if (match.score !== newScore || match.isLive !== isLive ||
+        match.isDone !== isDone || match.liveMin !== newMin) {
+      match.score = newScore;
+      match.isLive = isLive;
+      match.isDone = isDone;
+      match.liveMin = newMin;
+      changed = true;
+    }
+  });
+  if (changed) {
+    renderMatches(state.matches);
+    // Herstel geselecteerde wedstrijd markering
+    if (state.selectedMatch) {
+      document.getElementById('match-' + state.selectedMatch.id)?.classList.add('selected');
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1473,7 +1619,7 @@ function renderMatches(matches) {
     card.onclick = () => selectMatch(m);
 
     const statusHtml = m.isLive
-      ? `<span class="match-status-pill status-live">🔴 LIVE</span>`
+      ? `<span class="match-status-pill status-live">🔴 ${m.liveMin ? m.liveMin+"'" : 'LIVE'}</span>`
       : m.isDone
         ? `<span class="match-status-pill status-done">GESPEELD</span>`
         : `<span class="match-status-pill status-soon">📅 GEPLAND</span>`;
@@ -2512,10 +2658,11 @@ async function checkBetResult(betId) {
   const betDate = parseBetDate(bet.date);
   let allResolved = true;
 
-  // Haal alle recent gespeelde wedstrijden op voor die datum
+  // Haal wedstrijden op voor die datum — alle competities
   let fixturesPool = [];
   try {
     if (betDate) {
+      // Datum zoekactie pakt ALLE competities van die dag
       const r = await apiFetch(
         `https://v3.football.api-sports.io/fixtures?date=${betDate}`,
         apiKey
@@ -2523,13 +2670,15 @@ async function checkBetResult(betId) {
       const d = await r.json();
       fixturesPool = d.response || [];
     }
-    // Voeg ook last=20 toe als extra pool
-    const r2 = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?last=20`,
-      apiKey
-    );
-    const d2 = await r2.json();
-    fixturesPool = [...fixturesPool, ...(d2.response||[])];
+    // Als datum niet werkt of geen resultaten: ook last=50 proberen
+    if (fixturesPool.length < 5) {
+      const r2 = await apiFetch(
+        `https://v3.football.api-sports.io/fixtures?last=50`,
+        apiKey
+      );
+      const d2 = await r2.json();
+      fixturesPool = [...fixturesPool, ...(d2.response||[])];
+    }
   } catch(e) {}
 
   for (const leg of legs) {
@@ -2547,20 +2696,36 @@ async function checkBetResult(betId) {
         }
       }
 
-      // Dan op teamnaam in de pool
+      // Dan op teamnaam in de pool — flexibele matching
       if (!fixture && leg.home && leg.away) {
-        const homeLower = leg.home.toLowerCase();
-        const awayLower = leg.away.toLowerCase();
+        const normalize = s => s.toLowerCase()
+          .replace(/\s+(fc|sc|ac|vfb|fsv|bsc|sv|cf|rc|us|as)\s*/g, ' ')
+          .replace(/\s+/g, ' ').trim();
+        const homN = normalize(leg.home);
+        const awaN = normalize(leg.away);
+
         fixture = fixturesPool.find(f => {
-          const fh = f.teams.home.name.toLowerCase();
-          const fa = f.teams.away.name.toLowerCase();
-          return (fh.includes(homeLower.substring(0,5)) || homeLower.includes(fh.substring(0,5))) &&
-                 (fa.includes(awayLower.substring(0,5)) || awayLower.includes(fa.substring(0,5))) &&
-                 ['FT','AET','PEN'].includes(f.fixture.status.short);
+          const fh = normalize(f.teams.home.name);
+          const fa = normalize(f.teams.away.name);
+          const status = f.fixture.status.short;
+          const finished = ['FT','AET','PEN','1H','HT','2H','ET','P'].includes(status);
+          if (!finished) return false;
+
+          // Check of namen overlappen (eerste 4 tekens of bevat)
+          const homeMatch = fh.includes(homN.substring(0,5)) || homN.includes(fh.substring(0,5)) ||
+                           fh.split(' ')[0] === homN.split(' ')[0];
+          const awayMatch = fa.includes(awaN.substring(0,5)) || awaN.includes(fa.substring(0,5)) ||
+                           fa.split(' ')[0] === awaN.split(' ')[0];
+          return homeMatch && awayMatch;
         });
       }
 
       if (!fixture || !['FT','AET','PEN'].includes(fixture.fixture.status.short)) {
+        // Wedstrijd nog bezig of niet gevonden
+        const liveStatuses = ['1H','HT','2H','ET','BT','P'];
+        if (fixture && liveStatuses.includes(fixture.fixture.status.short)) {
+          leg.legStatus = 'live'; // markeer als live, niet als win/lose
+        }
         allResolved = false;
         continue;
       }
@@ -2594,13 +2759,18 @@ async function checkBetResult(betId) {
   if (bet.type === 'combi') {
     const anyLose = legs.some(l => l.legStatus === 'lose');
     const allWin = legs.every(l => l.legStatus === 'win');
+    const allResolved2 = legs.every(l => l.legStatus === 'win' || l.legStatus === 'lose');
+
     if (anyLose && bet.status === 'pending') {
+      // Eén leg verloren = combi verloren
       bet.status = 'lose';
-    } else if (allWin && bet.status === 'pending') {
+    } else if (allWin && allResolved2 && bet.status === 'pending') {
+      // Alle legs gewonnen én allemaal afgerond
       bet.status = 'win';
       state.wallet.balance += bet.payout;
       state.wallet.totalWon += bet.payout;
     }
+    // Anders: nog niet alle legs gespeeld, status blijft pending
   } else {
     const leg = legs[0];
     bet.score = leg.score;
@@ -2624,20 +2794,21 @@ async function checkBetResult(betId) {
 function cycleCombiBetStatus(id) {
   const bet = state.wallet.bets.find(b => b.id === id);
   if (!bet || bet.type !== 'combi') return;
-  const wasWin = bet.status === 'win';
   if (bet.status === 'pending') {
     bet.status = 'win';
     bet.legs.forEach(l => l.legStatus = 'win');
     state.wallet.balance += bet.payout;
     state.wallet.totalWon += bet.payout;
   } else if (bet.status === 'win') {
-    bet.status = 'lose';
-    bet.legs.forEach(l => l.legStatus = 'lose');
+    // Undo win → terug naar open
+    bet.status = 'pending';
+    bet.legs.forEach(l => { l.legStatus = 'pending'; l.score = null; });
     state.wallet.balance -= bet.payout;
     state.wallet.totalWon -= bet.payout;
   } else {
+    // lose → open
     bet.status = 'pending';
-    bet.legs.forEach(l => l.legStatus = 'pending');
+    bet.legs.forEach(l => { l.legStatus = 'pending'; l.score = null; });
   }
   saveState();
   updateWalletUI();
@@ -2651,16 +2822,15 @@ function cycleBetStatus(id) {
     state.wallet.balance += bet.payout;
     state.wallet.totalWon += bet.payout;
   } else if (bet.status === 'win') {
-    bet.status = 'lose';
+    // Undo win → terug naar open
+    bet.status = 'pending';
+    bet.score = null;
     state.wallet.balance -= bet.payout;
     state.wallet.totalWon -= bet.payout;
   } else {
+    // lose → open
     bet.status = 'pending';
-    state.wallet.balance += bet.amount;
-    state.wallet.totalStaked -= bet.amount;
-    // Re-add stake to pending
-    state.wallet.balance -= bet.amount;
-    state.wallet.totalStaked += bet.amount;
+    bet.score = null;
   }
   saveState();
   updateWalletUI();
