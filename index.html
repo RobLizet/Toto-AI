@@ -2254,7 +2254,11 @@ Reageer UITSLUITEND in dit JSON formaat:
       {"match":"Team C vs Team D","datum":"zo 20 apr 18:30","pick":"1","pickLabel":"Team C wint","markt":"Uitslag","odds":2.10,"vertrouwen":7},
       {"match":"Team E vs Team F","datum":"zo 20 apr 16:00","pick":"BTTS-J","pickLabel":"Beide scoren","markt":"BTTS","odds":1.70,"vertrouwen":7}
     ],
-    "redenering":"Uitleg max 80 woorden"
+    "redenering":"Uitleg max 80 woorden waarom deze 3 legs goed samengaan",
+    "synergie":"Leg uit hoe de 3 legs elkaar versterken of onafhankelijk zijn — max 60 woorden",
+    "risico":"Belangrijkste risicofactor voor deze combi — max 40 woorden",
+    "kansBerekening":"Bijv: 72% × 68% × 75% = 37% theoretische kans",
+    "valueScore":7
   }
 }
 BELANGRIJK: Combi PRECIES 3 legs. Kies markten met hoogste zekerheid — soms is O/U of BTTS veiliger dan 1/X/2!`,
@@ -2334,28 +2338,67 @@ function renderTop3EnCombi(result) {
   // Sla combi op zodat we hem in builder kunnen zetten
   window._lastAICombi = legs;
 
+  // Value score kleur
+  const valueKleur = (v) => v >= 8 ? '#16a34a' : v >= 6 ? '#d97706' : '#dc2626';
+  const valueStars = (v) => '⭐'.repeat(Math.min(v||0, 5));
+
   card.innerHTML = `
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#d63384;letter-spacing:.08em;margin-bottom:.7rem;">🏆 TOP 3 TIPS VAN DE DAG</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#be185d;letter-spacing:.08em;margin-bottom:.7rem;">🏆 TOP 3 TIPS VAN DE DAG</div>
     ${top3Html}
     <div style="height:1px;background:rgba(28,35,48,.08);margin:1rem 0;"></div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#d63384;letter-spacing:.08em;margin-bottom:.6rem;">⚡ AI COMBI TIP — 3 WEDSTRIJDEN</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#be185d;letter-spacing:.08em;margin-bottom:.6rem;">⚡ AI COMBI TIP — 3 WEDSTRIJDEN</div>
     ${legsHtml}
-    <div style="font-size:.76rem;color:#374151;line-height:1.65;margin:.6rem 0 .8rem;">${combi.redenering||''}</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,154,193,.1);border:1px solid rgba(255,154,193,.25);border-radius:10px;padding:.65rem .9rem;margin-bottom:.7rem;">
+
+    <!-- COMBI ANALYSE -->
+    <div style="background:rgba(255,255,255,.85);border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:.85rem;margin:.7rem 0;">
+
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#475569;font-weight:700;letter-spacing:.05em;margin-bottom:.6rem;">🧠 COMBI ANALYSE</div>
+
+      <div style="font-size:.84rem;line-height:1.75;color:#0f172a;margin-bottom:.75rem;">${combi.redenering||''}</div>
+
+      ${combi.synergie ? `
+      <div style="background:rgba(37,99,235,.06);border-left:3px solid #2563eb;border-radius:0 8px 8px 0;padding:.55rem .7rem;margin-bottom:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#2563eb;font-weight:700;margin-bottom:.2rem;">🔗 SYNERGIE</div>
+        <div style="font-size:.78rem;color:#1e293b;line-height:1.6;">${combi.synergie}</div>
+      </div>` : ''}
+
+      ${combi.risico ? `
+      <div style="background:rgba(220,38,38,.05);border-left:3px solid #dc2626;border-radius:0 8px 8px 0;padding:.55rem .7rem;margin-bottom:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#dc2626;font-weight:700;margin-bottom:.2rem;">⚠️ RISICO</div>
+        <div style="font-size:.78rem;color:#1e293b;line-height:1.6;">${combi.risico}</div>
+      </div>` : ''}
+
+      ${combi.kansBerekening ? `
+      <div style="background:rgba(22,163,74,.05);border-left:3px solid #16a34a;border-radius:0 8px 8px 0;padding:.55rem .7rem;margin-bottom:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#16a34a;font-weight:700;margin-bottom:.2rem;">📊 KANS BEREKENING</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:#1e293b;">${combi.kansBerekening}</div>
+      </div>` : ''}
+
+      ${combi.valueScore ? `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#475569;font-weight:700;">VALUE SCORE</div>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <span style="font-size:.75rem;">${valueStars(Math.round(combi.valueScore/2))}</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${valueKleur(combi.valueScore)};">${combi.valueScore}/10</span>
+        </div>
+      </div>` : ''}
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(219,39,119,.08);border:1px solid rgba(219,39,119,.2);border-radius:10px;padding:.65rem .9rem;margin-bottom:.7rem;">
       <div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#374151;">TOTALE QUOTE</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#111827;">${totalOdds.toFixed(2)}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#475569;">TOTALE QUOTE</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#0f172a;">${totalOdds.toFixed(2)}</div>
       </div>
       <div style="text-align:center;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#374151;">KANS</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#f39c12;">${kansStr}%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#475569;">KANS</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#d97706;">${kansStr}%</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#374151;">BIJ €${defaultBet}</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#2ecc71;">€${payout}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#475569;">BIJ €${defaultBet}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#16a34a;">€${payout}</div>
       </div>
     </div>
-    <button onclick="loadAICombiIntoBuilder()" style="width:100%;background:linear-gradient(135deg,rgba(255,154,193,.3),rgba(167,139,250,.3));border:1px solid rgba(255,154,193,.4);color:#111827;font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:700;padding:.7rem;border-radius:10px;cursor:pointer;letter-spacing:.05em;">
+    <button onclick="loadAICombiIntoBuilder()" style="width:100%;background:linear-gradient(135deg,rgba(219,39,119,.2),rgba(124,58,237,.2));border:1px solid rgba(219,39,119,.35);color:#0f172a;font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:700;padding:.7rem;border-radius:10px;cursor:pointer;letter-spacing:.05em;">
       🎰 ZET DEZE COMBI IN DE BUILDER
     </button>`;
   card.style.display = 'block';
