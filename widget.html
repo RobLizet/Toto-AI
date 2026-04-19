@@ -4,81 +4,95 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TOTO AI · Tip van de Dag</title>
-<meta name="theme-color" content="#ffd7e6">
+<meta name="theme-color" content="#fce7f3">
+<link rel="apple-touch-icon" href="widget-icon.svg">
+<link rel="icon" type="image/svg+xml" href="widget-icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   background: linear-gradient(135deg, #fce7f3, #ede9fe, #e0f2fe);
-  min-height: 100vh;
-  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh; font-family: 'DM Sans', sans-serif;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  padding: 1rem;
+  align-items: center; justify-content: flex-start;
+  padding: 1.2rem 1rem 4rem;
   -webkit-font-smoothing: antialiased;
 }
 .widget {
-  background: rgba(255,255,255,.92);
-  border-radius: 24px;
-  padding: 1.4rem 1.2rem;
-  width: 100%; max-width: 380px;
+  background: rgba(255,255,255,.93);
+  border-radius: 24px; padding: 1.3rem 1.1rem;
+  width: 100%; max-width: 400px;
   box-shadow: 0 20px 60px rgba(15,23,42,.15);
   border: 1px solid rgba(219,39,119,.15);
 }
 .widget-header {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: .8rem;
+  margin-bottom: 1rem; padding-bottom: .8rem;
   border-bottom: 1px solid rgba(15,23,42,.08);
 }
-.logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem;
+.logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem;
   background: linear-gradient(135deg, #db2777, #7c3aed);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.datum { font-family: 'IBM Plex Mono', monospace; font-size: .58rem; color: #475569; }
+.datum { font-family: 'IBM Plex Mono', monospace; font-size: .56rem; color: #475569; text-align: right; }
 .tip-label { font-family: 'IBM Plex Mono', monospace; font-size: .55rem;
-  color: #be185d; font-weight: 700; letter-spacing: .08em; margin-bottom: .5rem; }
-.match-name { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: .3rem; }
-.match-time { font-family: 'IBM Plex Mono', monospace; font-size: .6rem; color: #7c3aed; margin-bottom: .8rem; }
+  color: #be185d; font-weight: 700; letter-spacing: .08em; margin-bottom: .4rem; }
+.match-name { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: .2rem; }
+.match-time { font-family: 'IBM Plex Mono', monospace; font-size: .58rem; color: #7c3aed; margin-bottom: .75rem; }
 .pick-box {
-  background: linear-gradient(135deg, rgba(219,39,119,.08), rgba(124,58,237,.06));
+  background: linear-gradient(135deg, rgba(219,39,119,.07), rgba(124,58,237,.05));
   border: 1px solid rgba(219,39,119,.2); border-radius: 14px;
-  padding: .9rem 1rem; margin-bottom: .8rem;
+  padding: .85rem 1rem; margin-bottom: .75rem;
 }
 .pick-label { font-family: 'IBM Plex Mono', monospace; font-size: .52rem;
-  color: #be185d; font-weight: 700; margin-bottom: .3rem; }
+  color: #be185d; font-weight: 700; margin-bottom: .25rem; }
 .pick-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: #0f172a; }
 .pick-markt { font-family: 'IBM Plex Mono', monospace; font-size: .55rem; color: #475569; margin-top: .15rem; }
-.stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .5rem; margin-bottom: .8rem; }
-.stat { text-align: center; background: rgba(255,255,255,.8);
+.stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .45rem; margin-bottom: .75rem; }
+.stat { text-align: center; background: rgba(255,255,255,.85);
   border-radius: 10px; padding: .5rem .3rem; border: 1px solid rgba(15,23,42,.07); }
 .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; }
 .stat-lbl { font-family: 'IBM Plex Mono', monospace; font-size: .45rem; color: #475569; margin-top: 1px; }
-.kans-bar { margin-bottom: .8rem; }
+.kans-bar { margin-bottom: .75rem; }
 .kans-lbl { font-family: 'IBM Plex Mono', monospace; font-size: .52rem;
   color: #475569; display: flex; justify-content: space-between; margin-bottom: .3rem; }
 .kans-track { height: 10px; background: rgba(0,0,0,.07); border-radius: 999px; overflow: hidden; }
-.kans-fill { height: 100%; border-radius: 999px;
-  background: linear-gradient(90deg, #16a34a, #22c55e); }
-.reden { font-size: .8rem; line-height: 1.65; color: #334155;
-  background: rgba(241,245,249,.8); border-radius: 10px; padding: .65rem .8rem;
-  margin-bottom: 1rem; }
+.kans-fill { height: 100%; border-radius: 999px; transition: width .8s ease; }
+.reden { font-size: .82rem; line-height: 1.7; color: #334155;
+  background: rgba(241,245,249,.8); border-radius: 10px;
+  padding: .65rem .8rem; margin-bottom: 1rem; }
 .open-btn {
   display: block; width: 100%; text-align: center;
   background: linear-gradient(135deg, rgba(219,39,119,.85), rgba(124,58,237,.85));
   color: #fff; border: none; border-radius: 14px;
-  font-family: 'IBM Plex Mono', monospace; font-size: .7rem; font-weight: 700;
+  font-family: 'IBM Plex Mono', monospace; font-size: .68rem; font-weight: 700;
   padding: .75rem; cursor: pointer; letter-spacing: .05em;
-  text-decoration: none;
+  text-decoration: none; margin-bottom: .5rem;
 }
-.loading { text-align: center; padding: 2rem; color: #475569;
+.refresh-btn {
+  display: block; width: 100%; text-align: center;
+  background: rgba(255,255,255,.8); border: 1px solid rgba(15,23,42,.1);
+  color: #475569; border-radius: 14px;
+  font-family: 'IBM Plex Mono', monospace; font-size: .62rem; font-weight: 700;
+  padding: .6rem; cursor: pointer;
+}
+.loading { text-align: center; padding: 2rem 1rem; color: #475569;
   font-family: 'IBM Plex Mono', monospace; font-size: .65rem; }
 .dots span { display: inline-block; width: 6px; height: 6px; background: #db2777;
   border-radius: 50%; animation: blink 1s infinite; margin: 0 2px; }
 .dots span:nth-child(2) { animation-delay: .2s; }
 .dots span:nth-child(3) { animation-delay: .4s; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
-.no-tip { text-align: center; padding: 1.5rem 1rem; color: #475569;
-  font-family: 'IBM Plex Mono', monospace; font-size: .65rem; line-height: 1.7; }
+.no-key { background: rgba(219,39,119,.06); border: 1px solid rgba(219,39,119,.2);
+  border-radius: 12px; padding: 1rem; margin-bottom: 1rem;
+  font-family: 'IBM Plex Mono', monospace; font-size: .6rem;
+  color: #be185d; line-height: 1.7; text-align: center; }
+.key-input { width: 100%; border: 1px solid rgba(15,23,42,.15);
+  border-radius: 10px; padding: .6rem .8rem; font-size: .75rem;
+  font-family: 'IBM Plex Mono', monospace; margin-bottom: .5rem; outline: none; }
+.key-btn { width: 100%; background: rgba(219,39,119,.1); border: 1px solid rgba(219,39,119,.3);
+  color: #be185d; border-radius: 10px; padding: .55rem;
+  font-family: 'IBM Plex Mono', monospace; font-size: .62rem; font-weight: 700;
+  cursor: pointer; margin-bottom: 1rem; }
 </style>
 </head>
 <body>
@@ -90,62 +104,115 @@ body {
   <div id="content">
     <div class="loading">
       <div class="dots"><span></span><span></span><span></span></div>
-      <div style="margin-top:.5rem;">Beste tip laden...</div>
+      <div style="margin-top:.5rem;">Laden...</div>
     </div>
   </div>
 </div>
 
 <script>
-// Haal opgeslagen tip op uit localStorage
 const PROXY = 'https://toto-proxy.zweetzakken.workers.dev';
+const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
+const FB_KEY = 'AIzaSyB7K4SXPdxHSPIvFyXOfY2bpehcNnjRM-M';
 
-function proxyUrl(url) {
-  return `${PROXY}?url=${encodeURIComponent(url)}`;
+function proxyUrl(url) { return `${PROXY}?url=${encodeURIComponent(url)}`; }
+
+document.getElementById('datumEl').textContent = new Date().toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'});
+
+async function getAnthropicKey() {
+  // Eerst localStorage van de app proberen
+  try {
+    const state = JSON.parse(localStorage.getItem('totoai_state') || '{}');
+    if (state.settings?.anthropicKey) return state.settings.anthropicKey;
+  } catch(e) {}
+  // Dan Firebase
+  try {
+    const r = await fetch(`${FB_DB}/settings.json?auth=${FB_KEY}`);
+    const d = await r.json();
+    if (d?.anthropicKey) return d.anthropicKey;
+  } catch(e) {}
+  return null;
 }
-
-function getDatum() {
-  return new Date().toLocaleDateString('nl-NL', {weekday:'long', day:'numeric', month:'long'});
-}
-
-document.getElementById('datumEl').textContent = getDatum();
 
 async function loadTip() {
   const content = document.getElementById('content');
 
-  // Probeer opgeslagen tip van vandaag
+  // Check opgeslagen tip — ook van gisteren is prima
   const saved = localStorage.getItem('totoai_daily_tip');
   if (saved) {
     try {
-      const { tip, date } = JSON.parse(saved);
-      const today = new Date().toDateString();
-      if (date === today && tip) {
-        renderTip(tip);
-        return;
-      }
+      const { tip } = JSON.parse(saved);
+      if (tip?.match) { renderTip(tip); return; }
     } catch(e) {}
   }
 
-  // Geen tip opgeslagen — vraag om app te openen
+  // Genereer nieuwe tip via AI
+  const apiKey = await getAnthropicKey();
+  if (!apiKey) {
+    showKeyForm();
+    return;
+  }
+
   content.innerHTML = `
-    <div class="no-tip">
-      📱 Open de <b>TOTO AI</b> app en genereer tips in het <b>⚡ TIPS</b> tabblad.<br><br>
-      De beste tip van de dag verschijnt hier automatisch.
-    </div>
-    <a href="https://roblizet.github.io/Toto-AI/" class="open-btn">⚡ OPEN TOTO AI</a>
-  `;
+    <div class="loading">
+      <div class="dots"><span></span><span></span><span></span></div>
+      <div style="margin-top:.5rem;">AI genereert beste tip...</div>
+    </div>`;
+
+  try {
+    const vandaag = new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const r = await fetch(proxyUrl('https://api.anthropic.com/v1/messages'), {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 400,
+        system: `Je bent een top sporttipster. Geef de beste voetbeltip van vandaag. Reageer ALLEEN in dit JSON formaat, geen extra tekst:
+{"match":"Team A vs Team B","datum":"za 20 apr 18:00","pick":"1","pickLabel":"Team A wint","markt":"Uitslag","odds":"2.10","kans":68,"sterren":4,"redenering":"Max 60 woorden concrete uitleg."}`,
+        messages: [{role:'user',content:`Datum: ${vandaag}\n\nGeef de beste voetbeltip van vandaag/dit weekend uit de Eredivisie, Premier League, Bundesliga, Ligue 1, Serie A of Champions League. Kies de meest zekere tip met goede value.`}]
+      })
+    });
+    const d = await r.json();
+    let raw = d.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const tip = JSON.parse(raw);
+    localStorage.setItem('totoai_daily_tip', JSON.stringify({ tip, date: new Date().toDateString() }));
+    renderTip(tip);
+  } catch(e) {
+    content.innerHTML = `
+      <div class="no-key">⚠ Fout bij laden: ${e.message}</div>
+      <a href="https://roblizet.github.io/Toto-AI/" class="open-btn">⚽ OPEN TOTO AI</a>`;
+  }
+}
+
+function showKeyForm() {
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="no-key">🔑 Vul je Anthropic API key in om tips te genereren</div>
+    <input class="key-input" id="keyInput" type="password" placeholder="sk-ant-...">
+    <button class="key-btn" onclick="saveKey()">OPSLAAN & TIP LADEN</button>
+    <a href="https://roblizet.github.io/Toto-AI/" class="open-btn">📱 OPEN APP</a>`;
+}
+
+function saveKey() {
+  const key = document.getElementById('keyInput').value.trim();
+  if (!key.startsWith('sk-ant')) { alert('Ongeldige key'); return; }
+  try {
+    const state = JSON.parse(localStorage.getItem('totoai_state') || '{}');
+    state.settings = { ...(state.settings||{}), anthropicKey: key };
+    localStorage.setItem('totoai_state', JSON.stringify(state));
+  } catch(e) {}
+  loadTip();
 }
 
 function renderTip(tip) {
   const kleur = tip.kans >= 70 ? '#16a34a' : tip.kans >= 55 ? '#d97706' : '#dc2626';
-  const content = document.getElementById('content');
-  content.innerHTML = `
+  document.getElementById('content').innerHTML = `
     <div class="tip-label">🎯 TIP VAN DE DAG</div>
-    <div class="match-name">${tip.match || '—'}</div>
-    <div class="match-time">📅 ${tip.datum || ''}</div>
+    <div class="match-name">${tip.match||'—'}</div>
+    <div class="match-time">📅 ${tip.datum||''}</div>
     <div class="pick-box">
-      <div class="pick-label">BESTE PICK</div>
+      <div class="pick-label">BESTE PICK · ${tip.markt||'Uitslag'}</div>
       <div class="pick-value">${tip.pick} — ${tip.pickLabel}</div>
-      <div class="pick-markt">${tip.markt || ''} · Quote: <b>${tip.odds}</b></div>
+      <div class="pick-markt">Quote: <b>${tip.odds}</b></div>
     </div>
     <div class="stats">
       <div class="stat">
@@ -157,7 +224,7 @@ function renderTip(tip) {
         <div class="stat-lbl">QUOTE</div>
       </div>
       <div class="stat">
-        <div class="stat-val" style="color:#7c3aed">${'⭐'.repeat(tip.sterren||3)}</div>
+        <div class="stat-val" style="color:#7c3aed">${'⭐'.repeat(Math.min(tip.sterren||3,5))}</div>
         <div class="stat-lbl">RATING</div>
       </div>
     </div>
@@ -165,8 +232,9 @@ function renderTip(tip) {
       <div class="kans-lbl"><span>KANS VAN SLAGEN</span><span style="color:${kleur};font-weight:700">${tip.kans}%</span></div>
       <div class="kans-track"><div class="kans-fill" style="width:${tip.kans}%;background:linear-gradient(90deg,${kleur},${kleur}99)"></div></div>
     </div>
-    <div class="reden">${tip.redenering || ''}</div>
+    <div class="reden">${tip.redenering||''}</div>
     <a href="https://roblizet.github.io/Toto-AI/" class="open-btn">⚽ OPEN TOTO AI APP</a>
+    <button class="refresh-btn" onclick="localStorage.removeItem('totoai_daily_tip');location.reload()">🔄 NIEUWE TIP GENEREREN</button>
   `;
 }
 
