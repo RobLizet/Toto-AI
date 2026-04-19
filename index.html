@@ -2480,7 +2480,6 @@ function updateWalletUI() {
   }).join('');
 }
 
-// Auto check uitslag via API
 async function checkBetResult(betId) {
   const bet = state.wallet.bets.find(b => b.id === betId);
   if (!bet || !state.settings.footballKey) {
@@ -2497,45 +2496,80 @@ async function checkBetResult(betId) {
     fixtureId: bet.fixtureId
   }];
 
+  // Converteer datum nl-NL (19-4-2026) naar API formaat (2026-04-19)
+  function parseBetDate(dateStr) {
+    if (!dateStr) return null;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const d = parts[0].padStart(2,'0');
+      const m = parts[1].padStart(2,'0');
+      const y = parts[2];
+      return `${y}-${m}-${d}`;
+    }
+    return null;
+  }
+
+  const betDate = parseBetDate(bet.date);
   let allResolved = true;
+
+  // Haal alle recent gespeelde wedstrijden op voor die datum
+  let fixturesPool = [];
+  try {
+    if (betDate) {
+      const r = await apiFetch(
+        `https://v3.football.api-sports.io/fixtures?date=${betDate}`,
+        apiKey
+      );
+      const d = await r.json();
+      fixturesPool = d.response || [];
+    }
+    // Voeg ook last=20 toe als extra pool
+    const r2 = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?last=20`,
+      apiKey
+    );
+    const d2 = await r2.json();
+    fixturesPool = [...fixturesPool, ...(d2.response||[])];
+  } catch(e) {}
 
   for (const leg of legs) {
     try {
-      // Zoek op teamnamen als we geen fixtureId hebben
-      const fixtureId = leg.fixtureId || bet.fixtureId;
       let fixture = null;
 
-      if (fixtureId) {
-        const r = await apiFetch(
-          `https://v3.football.api-sports.io/fixtures?id=${fixtureId}`, apiKey
-        );
-        const d = await r.json();
-        fixture = d.response?.[0];
-      } else if (leg.home && leg.away) {
-        // Zoek op teamnaam + datum
-        const dateStr = bet.date ? bet.date.split('-').reverse().join('-') : new Date().toISOString().split('T')[0];
-        const r = await apiFetch(
-          `https://v3.football.api-sports.io/fixtures?season=2025&last=50`, apiKey
-        );
-        const d = await r.json();
-        fixture = d.response?.find(f =>
-          (f.teams.home.name.includes(leg.home) || leg.home.includes(f.teams.home.name.split(' ')[0])) &&
-          (f.teams.away.name.includes(leg.away) || leg.away.includes(f.teams.away.name.split(' ')[0])) &&
-          ['FT','AET','PEN'].includes(f.fixture.status.short)
-        );
+      // Eerst op fixtureId
+      if (leg.fixtureId || bet.fixtureId) {
+        const fid = leg.fixtureId || bet.fixtureId;
+        fixture = fixturesPool.find(f => f.fixture.id === fid);
+        if (!fixture) {
+          const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?id=${fid}`, apiKey);
+          const d = await r.json();
+          fixture = d.response?.[0];
+        }
       }
 
-      if (!fixture) { allResolved = false; continue; }
+      // Dan op teamnaam in de pool
+      if (!fixture && leg.home && leg.away) {
+        const homeLower = leg.home.toLowerCase();
+        const awayLower = leg.away.toLowerCase();
+        fixture = fixturesPool.find(f => {
+          const fh = f.teams.home.name.toLowerCase();
+          const fa = f.teams.away.name.toLowerCase();
+          return (fh.includes(homeLower.substring(0,5)) || homeLower.includes(fh.substring(0,5))) &&
+                 (fa.includes(awayLower.substring(0,5)) || awayLower.includes(fa.substring(0,5))) &&
+                 ['FT','AET','PEN'].includes(f.fixture.status.short);
+        });
+      }
 
-      const status = fixture.fixture.status.short;
-      if (!['FT','AET','PEN'].includes(status)) { allResolved = false; continue; }
+      if (!fixture || !['FT','AET','PEN'].includes(fixture.fixture.status.short)) {
+        allResolved = false;
+        continue;
+      }
 
       const hg = fixture.goals.home ?? 0;
       const ag = fixture.goals.away ?? 0;
       const score = `${hg}-${ag}`;
       leg.score = score;
 
-      // Bepaal of bet gewonnen is
       const pick = leg.pick;
       let won = false;
       if (pick === '1') won = hg > ag;
@@ -2544,11 +2578,11 @@ async function checkBetResult(betId) {
       else if (pick === '1X') won = hg >= ag;
       else if (pick === 'X2') won = ag >= hg;
       else if (pick === '12') won = hg !== ag;
-      else if (pick === 'O2.5') won = (hg + ag) > 2.5;
-      else if (pick === 'U2.5') won = (hg + ag) < 2.5;
-      else if (pick === 'O1.5') won = (hg + ag) > 1.5;
-      else if (pick === 'U1.5') won = (hg + ag) < 1.5;
-      else if (pick === 'O3.5') won = (hg + ag) > 3.5;
+      else if (pick === 'O2.5') won = (hg+ag) > 2.5;
+      else if (pick === 'U2.5') won = (hg+ag) < 2.5;
+      else if (pick === 'O1.5') won = (hg+ag) > 1.5;
+      else if (pick === 'U1.5') won = (hg+ag) < 1.5;
+      else if (pick === 'O3.5') won = (hg+ag) > 3.5;
       else if (pick === 'BTTS-J') won = hg > 0 && ag > 0;
       else if (pick === 'BTTS-N') won = hg === 0 || ag === 0;
 
@@ -2558,12 +2592,11 @@ async function checkBetResult(betId) {
   }
 
   if (bet.type === 'combi') {
-    // Combi: alle legs moeten win zijn
-    const allWin = legs.every(l => l.legStatus === 'win');
     const anyLose = legs.some(l => l.legStatus === 'lose');
-    if (anyLose) {
+    const allWin = legs.every(l => l.legStatus === 'win');
+    if (anyLose && bet.status === 'pending') {
       bet.status = 'lose';
-    } else if (allWin) {
+    } else if (allWin && bet.status === 'pending') {
       bet.status = 'win';
       state.wallet.balance += bet.payout;
       state.wallet.totalWon += bet.payout;
@@ -2571,11 +2604,11 @@ async function checkBetResult(betId) {
   } else {
     const leg = legs[0];
     bet.score = leg.score;
-    if (leg.legStatus === 'win') {
+    if (leg.legStatus === 'win' && bet.status === 'pending') {
       bet.status = 'win';
       state.wallet.balance += bet.payout;
       state.wallet.totalWon += bet.payout;
-    } else if (leg.legStatus === 'lose') {
+    } else if (leg.legStatus === 'lose' && bet.status === 'pending') {
       bet.status = 'lose';
     }
   }
@@ -2584,7 +2617,7 @@ async function checkBetResult(betId) {
   updateWalletUI();
 
   if (!allResolved) {
-    alert('Sommige uitslagen nog niet beschikbaar — wedstrijd mogelijk nog niet gespeeld of niet gevonden.');
+    alert('Sommige uitslagen niet gevonden — tik op ⏳ OPEN om handmatig in te stellen.');
   }
 }
 
