@@ -175,7 +175,10 @@ async function loadTip() {
       } catch(e) { return []; }
     }));
 
-    const allMatches = results.flat().slice(0, 20);
+    const now = new Date();
+    const allMatches = results.flat()
+      .filter(f => new Date(f.fixture.date) > now) // alleen toekomstige wedstrijden
+      .slice(0, 20);
     if (allMatches.length > 0) {
       matchesCtx = allMatches.map(f => {
         const dt = new Date(f.fixture.date).toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Amsterdam'});
