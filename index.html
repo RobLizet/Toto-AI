@@ -1645,6 +1645,7 @@ function confirmBet() {
   const bet = {
     id: Date.now(),
     matchName: `${pendingBet.match.home} vs ${pendingBet.match.away}`,
+    fixtureId: pendingBet.match.id, // voor automatisch uitslag ophalen
     pick: pendingBet.pick,
     pickLabel: pendingBet.pickLabel,
     odds: pendingBet.odds,
@@ -2434,10 +2435,9 @@ function updateWalletUI() {
   }
   list.innerHTML = w.bets.map(b => {
     if (b.type === 'combi') {
-      // Combi weergave
       const legsHtml = b.legs.map((l, i) => `
         <div class="combi-bet-leg leg-${l.legStatus||'pending'}">
-          <span>${l.home} vs ${l.away} — ${l.pick} (${l.odds.toFixed(2)})</span>
+          <span>${l.home} vs ${l.away} — ${l.pick} (${l.odds.toFixed(2)})${l.score ? ` <b style="color:#0f172a;">[${l.score}]</b>` : ''}</span>
           <button class="combi-leg-status-btn" onclick="cycleCombiLegStatus(${b.id},${i})">${
             l.legStatus === 'win' ? '✓' : l.legStatus === 'lose' ? '✗' : '⏳'
           }</button>
@@ -2451,22 +2451,25 @@ function updateWalletUI() {
           <div class="combi-bet-legs">${legsHtml}</div>
           <div class="combi-bet-footer">
             <span class="combi-bet-amount">Inzet: €${b.amount.toFixed(2)} → max €${b.payout.toFixed(2)}</span>
-            <span class="combi-bet-result ${b.status}" onclick="cycleCombiBetStatus(${b.id})">${
-              b.status === 'win' ? '✓ WIN +€'+(b.payout-b.amount).toFixed(2) :
-              b.status === 'lose' ? '✗ VERLIES' : '⏳ OPEN'
-            }</span>
+            <div style="display:flex;align-items:center;gap:.4rem;">
+              ${b.status === 'pending' ? `<button onclick="checkBetResult(${b.id})" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#2563eb;border-radius:6px;padding:2px 7px;cursor:pointer;">🔍 CHECK</button>` : ''}
+              <span class="combi-bet-result ${b.status}" onclick="cycleCombiBetStatus(${b.id})">${
+                b.status === 'win' ? '✓ WIN +€'+(b.payout-b.amount).toFixed(2) :
+                b.status === 'lose' ? '✗ VERLIES' : '⏳ OPEN'
+              }</span>
+            </div>
           </div>
         </div>`;
     } else {
-      // Losse inzet
       return `
         <div class="bet-row">
           <div class="bet-info">
-            <div class="bet-match-name">${b.matchName}</div>
+            <div class="bet-match-name">${b.matchName}${b.score ? ` <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#0f172a;font-weight:700;">[${b.score}]</span>` : ''}</div>
             <div class="bet-meta">${b.pick} — ${b.pickLabel} @ ${b.odds} · ${b.date}</div>
           </div>
-          <div>
+          <div style="text-align:right;">
             <div class="bet-amt">€${b.amount.toFixed(2)}</div>
+            ${b.status === 'pending' ? `<button onclick="checkBetResult(${b.id})" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#2563eb;border-radius:6px;padding:2px 7px;cursor:pointer;margin-bottom:2px;display:block;width:100%;">🔍 CHECK UITSLAG</button>` : ''}
             <div class="bet-res ${b.status}" onclick="cycleBetStatus(${b.id})">${
               b.status === 'win' ? '✓ WIN +€'+(b.payout-b.amount).toFixed(2) :
               b.status === 'lose' ? '✗ VERLIES' : '⏳ OPEN'
@@ -2475,6 +2478,114 @@ function updateWalletUI() {
         </div>`;
     }
   }).join('');
+}
+
+// Auto check uitslag via API
+async function checkBetResult(betId) {
+  const bet = state.wallet.bets.find(b => b.id === betId);
+  if (!bet || !state.settings.footballKey) {
+    alert('API-Football key nodig om uitslag op te halen');
+    return;
+  }
+
+  const apiKey = state.settings.footballKey;
+  const legs = bet.type === 'combi' ? bet.legs : [{
+    home: bet.matchName?.split(' vs ')?.[0]?.trim(),
+    away: bet.matchName?.split(' vs ')?.[1]?.trim(),
+    pick: bet.pick,
+    odds: parseFloat(bet.odds),
+    fixtureId: bet.fixtureId
+  }];
+
+  let allResolved = true;
+
+  for (const leg of legs) {
+    try {
+      // Zoek op teamnamen als we geen fixtureId hebben
+      const fixtureId = leg.fixtureId || bet.fixtureId;
+      let fixture = null;
+
+      if (fixtureId) {
+        const r = await apiFetch(
+          `https://v3.football.api-sports.io/fixtures?id=${fixtureId}`, apiKey
+        );
+        const d = await r.json();
+        fixture = d.response?.[0];
+      } else if (leg.home && leg.away) {
+        // Zoek op teamnaam + datum
+        const dateStr = bet.date ? bet.date.split('-').reverse().join('-') : new Date().toISOString().split('T')[0];
+        const r = await apiFetch(
+          `https://v3.football.api-sports.io/fixtures?season=2025&last=50`, apiKey
+        );
+        const d = await r.json();
+        fixture = d.response?.find(f =>
+          (f.teams.home.name.includes(leg.home) || leg.home.includes(f.teams.home.name.split(' ')[0])) &&
+          (f.teams.away.name.includes(leg.away) || leg.away.includes(f.teams.away.name.split(' ')[0])) &&
+          ['FT','AET','PEN'].includes(f.fixture.status.short)
+        );
+      }
+
+      if (!fixture) { allResolved = false; continue; }
+
+      const status = fixture.fixture.status.short;
+      if (!['FT','AET','PEN'].includes(status)) { allResolved = false; continue; }
+
+      const hg = fixture.goals.home ?? 0;
+      const ag = fixture.goals.away ?? 0;
+      const score = `${hg}-${ag}`;
+      leg.score = score;
+
+      // Bepaal of bet gewonnen is
+      const pick = leg.pick;
+      let won = false;
+      if (pick === '1') won = hg > ag;
+      else if (pick === '2') won = ag > hg;
+      else if (pick === 'X') won = hg === ag;
+      else if (pick === '1X') won = hg >= ag;
+      else if (pick === 'X2') won = ag >= hg;
+      else if (pick === '12') won = hg !== ag;
+      else if (pick === 'O2.5') won = (hg + ag) > 2.5;
+      else if (pick === 'U2.5') won = (hg + ag) < 2.5;
+      else if (pick === 'O1.5') won = (hg + ag) > 1.5;
+      else if (pick === 'U1.5') won = (hg + ag) < 1.5;
+      else if (pick === 'O3.5') won = (hg + ag) > 3.5;
+      else if (pick === 'BTTS-J') won = hg > 0 && ag > 0;
+      else if (pick === 'BTTS-N') won = hg === 0 || ag === 0;
+
+      leg.legStatus = won ? 'win' : 'lose';
+
+    } catch(e) { allResolved = false; }
+  }
+
+  if (bet.type === 'combi') {
+    // Combi: alle legs moeten win zijn
+    const allWin = legs.every(l => l.legStatus === 'win');
+    const anyLose = legs.some(l => l.legStatus === 'lose');
+    if (anyLose) {
+      bet.status = 'lose';
+    } else if (allWin) {
+      bet.status = 'win';
+      state.wallet.balance += bet.payout;
+      state.wallet.totalWon += bet.payout;
+    }
+  } else {
+    const leg = legs[0];
+    bet.score = leg.score;
+    if (leg.legStatus === 'win') {
+      bet.status = 'win';
+      state.wallet.balance += bet.payout;
+      state.wallet.totalWon += bet.payout;
+    } else if (leg.legStatus === 'lose') {
+      bet.status = 'lose';
+    }
+  }
+
+  saveState();
+  updateWalletUI();
+
+  if (!allResolved) {
+    alert('Sommige uitslagen nog niet beschikbaar — wedstrijd mogelijk nog niet gespeeld of niet gevonden.');
+  }
 }
 
 function cycleCombiBetStatus(id) {
