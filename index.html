@@ -1339,9 +1339,12 @@ function parseAPIMatch(f) {
     id: fix.id,
     source: 'apif',
     comp: f.league.name,
+    compLogo: f.league.logo || '',
     time: timeStr, date: dateStr,
     home: home.name, away: away.name,
     homeId: home.id, awayId: away.id,
+    homeLogo: home.logo || '',
+    awayLogo: away.logo || '',
     homeForm, awayForm,
     homeOdds, drawOdds, awayOdds,
     homePct, drawPct, awayPct,
@@ -1638,19 +1641,25 @@ function renderMatches(matches) {
       ? `<div class="score-txt">${m.score}</div>`
       : `<div class="vs-txt">VS</div>`;
 
+    const homeLogo = m.homeLogo ? `<img src="${m.homeLogo}" style="width:32px;height:32px;object-fit:contain;margin-bottom:.3rem;" onerror="this.style.display='none'">` : '';
+    const awayLogo = m.awayLogo ? `<img src="${m.awayLogo}" style="width:32px;height:32px;object-fit:contain;margin-bottom:.3rem;" onerror="this.style.display='none'">` : '';
+    const compLogo = m.compLogo ? `<img src="${m.compLogo}" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;margin-right:3px;" onerror="this.style.display='none'">` : '';
+
     card.innerHTML = `
       <div class="match-top">
-        <span class="match-comp-name">${m.comp}</span>
+        <span class="match-comp-name">${compLogo}${m.comp}</span>
         <span class="match-time">${m.date ? m.date + ' ' : ''}${m.time}${m.liveMin ? ' <span style="color:var(--red)">'+m.liveMin+"'"+'</span>' : ''}</span>
         ${statusHtml}
       </div>
       <div class="match-teams">
         <div class="team-block team-home">
+          ${homeLogo}
           <div class="team-name">${shortName(m.home)}</div>
           <div class="team-form">${homeFormHtml}</div>
         </div>
         <div class="vs-col">${centerContent}</div>
         <div class="team-block team-away">
+          ${awayLogo}
           <div class="team-name">${shortName(m.away)}</div>
           <div class="team-form">${awayFormHtml}</div>
         </div>
@@ -2199,6 +2208,24 @@ Geef in exact dit JSON formaat, geen extra tekst:
       ${tipsHtml}` : ''}
     `;
     tipChip.className = 'entity-chip done';
+
+    // Sla beste tip op voor de widget
+    try {
+      localStorage.setItem('totoai_daily_tip', JSON.stringify({
+        tip: {
+          match: `${m.home} vs ${m.away}`,
+          datum: wedstrijdDatum,
+          pick: tip.pick,
+          pickLabel: tip.pickLabel,
+          markt: tip.markt || 'Uitslag',
+          odds: tip.odds,
+          kans: tip.kans,
+          sterren: tip.sterren,
+          redenering: tip.redenering
+        },
+        date: new Date().toDateString()
+      }));
+    } catch(e) {}
   } catch(e) {
     tipBody.textContent = '⚠ Fout: ' + e.message;
     tipChip.className = 'entity-chip err';
