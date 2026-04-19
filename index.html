@@ -1075,15 +1075,18 @@ function fdFetch(url, token) {
   });
 }
 
-// API-Football fetch via proxy
-function apiFetch(url, apiKey) {
+// API-Football fetch via proxy met timeout
+function apiFetch(url, apiKey, timeoutMs=8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   return fetch(proxyUrl(url), {
     headers: {
       'x-apisports-key': apiKey,
       'x-rapidapi-key': apiKey,
       'x-rapidapi-host': 'v3.football.api-sports.io'
-    }
-  });
+    },
+    signal: controller.signal
+  }).finally(() => clearTimeout(timer));
 }
 
 // Anthropic fetch via proxy
@@ -1825,8 +1828,9 @@ async function runAnalyse() {
   const bet = document.getElementById('betAmount').value;
   const btn = document.getElementById('analyseBtn');
   const leagueId = COMP_IDS[state.activeComp];
-  const homeId = m.raw?.teams?.home?.id;
-  const awayId = m.raw?.teams?.away?.id;
+  // Haal team IDs op — werkt voor zowel API-Football als football-data.org
+  const homeId = m.homeId || m.raw?.teams?.home?.id || m.raw?.homeTeam?.id;
+  const awayId = m.awayId || m.raw?.teams?.away?.id || m.raw?.awayTeam?.id;
 
   btn.disabled = true;
   btn.textContent = '⟳ DATA OPHALEN...';
@@ -1836,30 +1840,42 @@ async function runAnalyse() {
   let homeBlessuresTxt = '', awayBlessuresTxt = '', predTxt = '';
 
   if (state.settings.footballKey && homeId && awayId) {
-    btn.textContent = '⟳ DATA OPHALEN (blessures, vorm, H2H)...';
+    btn.textContent = '⟳ DATA OPHALEN...';
     const fixtureId = m.id;
-    const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred] = await Promise.all([
-      fetchH2H(homeId, awayId),
-      fetchTeamForm(homeId, leagueId),
-      fetchTeamForm(awayId, leagueId),
-      fetchTeamStats(homeId, leagueId),
-      fetchTeamStats(awayId, leagueId),
-      fetchInjuries(homeId, fixtureId),
-      fetchInjuries(awayId, fixtureId),
-      fetchPredictions(fixtureId)
+
+    // Maximaal 12 seconden wachten op alle data
+    const withTimeout = (promise, ms=8000) => Promise.race([
+      promise,
+      new Promise(resolve => setTimeout(() => resolve(null), ms))
     ]);
-    h2hTxt = formatH2H(h2h, m.home, m.away);
-    homeFormTxt = formatForm(homeForm, homeId, m.home);
-    awayFormTxt = formatForm(awayForm, awayId, m.away);
+
+    const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred] = await Promise.all([
+      withTimeout(fetchH2H(homeId, awayId)),
+      withTimeout(fetchTeamForm(homeId, leagueId)),
+      withTimeout(fetchTeamForm(awayId, leagueId)),
+      withTimeout(fetchTeamStats(homeId, leagueId)),
+      withTimeout(fetchTeamStats(awayId, leagueId)),
+      withTimeout(fetchInjuries(homeId, fixtureId)),
+      withTimeout(fetchInjuries(awayId, fixtureId)),
+      withTimeout(fetchPredictions(fixtureId))
+    ]);
+
+    h2hTxt = formatH2H(h2h||[], m.home, m.away);
+    homeFormTxt = formatForm(homeForm||[], homeId, m.home);
+    awayFormTxt = formatForm(awayForm||[], awayId, m.away);
     homeStatsTxt = formatStats(hStats, m.home);
     awayStatsTxt = formatStats(aStats, m.away);
-    homeBlessuresTxt = formatInjuries(homeInj, m.home);
-    awayBlessuresTxt = formatInjuries(awayInj, m.away);
+    homeBlessuresTxt = formatInjuries(homeInj||[], m.home);
+    awayBlessuresTxt = formatInjuries(awayInj||[], m.away);
     predTxt = formatPredictions(pred);
-  } else {
-    h2hTxt = 'Geen API-Football key — H2H data niet beschikbaar.';
-    homeFormTxt = awayFormTxt = 'Geen form data — voeg API-Football key toe in Instellingen.';
+  } else if (!homeId || !awayId) {
+    h2hTxt = 'Team IDs niet beschikbaar voor deze wedstrijd.';
+    homeFormTxt = awayFormTxt = 'Geen vormdata beschikbaar.';
     homeBlessuresTxt = awayBlessuresTxt = 'Geen blessuredata beschikbaar.';
+  } else {
+    h2hTxt = 'Geen API-Football key — voeg toe bij Instellingen.';
+    homeFormTxt = awayFormTxt = 'Geen vormdata.';
+    homeBlessuresTxt = awayBlessuresTxt = 'Geen blessuredata.';
   }
 
   btn.textContent = '⟳ AI ANALYSEERT...';
@@ -1942,41 +1958,96 @@ ${predTxt ? 'API STATISTISCH MODEL:\n' + predTxt : ''}
 
   try {
     const tipResp = await anthropicFetch(apiKey, {
-      model: 'claude-sonnet-4-5', max_tokens: 600,
-      system: `Je bent een top sporttipster. Geef een ultieme tip voor deze wedstrijd in exact dit JSON formaat, geen extra tekst:
-{"pick":"1","pickLabel":"[Thuisteam] wint","odds":"2.10","kans":72,"sterren":4,"redenering":"Max 60 woorden uitleg waarom dit de beste tip is.","alternatief":{"pick":"X","pickLabel":"Gelijkspel","odds":"3.20","kans":45}}`,
-      messages: [{role:'user', content:`${ctx}\n\nVorm: ${vormText?.substring(0,150)||''}\nKansen: ${kansText?.substring(0,150)||''}\nAdvies: ${risicoText?.substring(0,100)||''}`}]
+      model: 'claude-sonnet-4-5', max_tokens: 900,
+      system: `Je bent een top sporttipster. Analyseer de wedstrijd grondig en geef de BESTE tip — niet alleen 1/X/2 maar ook andere markten als die meer value bieden. Kies uit:
+- Wedstrijduitslag: "1" (thuis wint), "X" (gelijk), "2" (uit wint)
+- Doelpunten: "O2.5" (meer dan 2.5 goals), "U2.5" (minder dan 2.5 goals), "O1.5", "U1.5", "O3.5"
+- Beide teams scoren: "BTTS-J" (ja), "BTTS-N" (nee)
+- Handicap: "AH-1" (thuis -1), "AH+1" (uit +1)
+- Dubbele kans: "1X" (thuis of gelijk), "X2" (gelijk of uit), "12" (geen gelijk)
+
+Geef in exact dit JSON formaat, geen extra tekst:
+{
+  "pick":"O2.5",
+  "pickLabel":"Meer dan 2.5 doelpunten",
+  "markt":"Doelpunten",
+  "odds":"1.85",
+  "kans":68,
+  "sterren":4,
+  "redenering":"Max 70 woorden uitleg gebaseerd op concrete data (gemiddeld X goals per wedstrijd, aanvalsvorm etc).",
+  "tips":[
+    {"pick":"1","pickLabel":"Thuis wint","markt":"Uitslag","odds":"2.10","kans":55,"reden":"Korte reden"},
+    {"pick":"BTTS-J","pickLabel":"Beide scoren","markt":"BTTS","odds":"1.70","kans":62,"reden":"Korte reden"},
+    {"pick":"O2.5","pickLabel":"Meer dan 2.5 goals","markt":"Doelpunten","odds":"1.85","kans":68,"reden":"Korte reden"}
+  ]
+}`,
+      messages: [{role:'user', content:`${ctx}\n\nVorm: ${vormText?.substring(0,200)||''}\nStats: ${statsText?.substring(0,200)||''}\nKansen: ${kansText?.substring(0,200)||''}`}]
     });
     const tipData = await tipResp.json();
     let raw = tipData.content[0].text.trim().replace(/```json|```/g,'').trim();
     const tip = JSON.parse(raw);
 
     const sterren = '⭐'.repeat(tip.sterren||3) + '☆'.repeat(5-(tip.sterren||3));
-    const kleur = tip.kans >= 70 ? '#2ecc71' : tip.kans >= 55 ? '#f39c12' : '#e74c3c';
+    const kleur = tip.kans >= 70 ? '#16a34a' : tip.kans >= 55 ? '#d97706' : '#dc2626';
     const breedte = Math.min(100, Math.max(10, tip.kans||50));
 
+    const marktKleur = (markt) => {
+      const m = (markt||'').toLowerCase();
+      if (m.includes('doel') || m.includes('goal')) return '#2563eb';
+      if (m.includes('btts')) return '#7c3aed';
+      if (m.includes('handicap')) return '#ea580c';
+      if (m.includes('dubbel')) return '#0891b2';
+      return '#be185d';
+    };
+
+    const tipsHtml = (tip.tips || []).map(t => `
+      <div style="display:flex;align-items:center;gap:.6rem;padding:.5rem .7rem;
+        background:rgba(255,255,255,.6);border-radius:8px;margin-bottom:.3rem;
+        border:1px solid rgba(15,23,42,.07);">
+        <div style="flex:1;">
+          <div style="font-size:.78rem;font-weight:700;color:#0f172a;">${t.pickLabel}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:${marktKleur(t.markt)};margin-top:1px;">
+            ${t.markt} · ${t.kans}% kans
+          </div>
+          <div style="font-size:.68rem;color:#475569;margin-top:2px;">${t.reden||''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#16a34a;">${t.odds}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:${marktKleur(t.markt)};font-weight:700;">${t.pick}</div>
+        </div>
+      </div>`).join('');
+
     tipBody.innerHTML = `
-      <div style="background:rgba(255,154,193,.08);border-radius:10px;padding:.8rem;margin-bottom:.7rem;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#d63384;letter-spacing:.05em;">
+      <div style="background:linear-gradient(135deg,rgba(219,39,119,.06),rgba(124,58,237,.06));
+        border-radius:12px;padding:.85rem;margin-bottom:.8rem;border:1px solid rgba(219,39,119,.15);">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:${marktKleur(tip.markt)};
+          font-weight:700;letter-spacing:.05em;margin-bottom:.3rem;">🏆 BESTE TIP · ${tip.markt||'Uitslag'}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#0f172a;letter-spacing:.03em;">
           ${tip.pick} — ${tip.pickLabel}
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:#374151;margin:.2rem 0;">
-          Quote: <b style="color:#111827;">${tip.odds}</b> &nbsp;·&nbsp; ${sterren}
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#374151;margin:.3rem 0;">
+          Quote: <b style="color:#0f172a;font-size:.75rem;">${tip.odds}</b> &nbsp;·&nbsp; ${sterren}
         </div>
       </div>
-      <div style="margin-bottom:.8rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#374151;margin-bottom:.3rem;display:flex;justify-content:space-between;">
-          <span>KANS VAN SLAGEN</span><span style="color:${kleur};font-weight:700;">${tip.kans}%</span>
+      <div style="margin-bottom:.85rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#374151;
+          margin-bottom:.35rem;display:flex;justify-content:space-between;align-items:center;">
+          <span>KANS VAN SLAGEN</span>
+          <span style="color:${kleur};font-weight:700;font-size:.65rem;">${tip.kans}%</span>
         </div>
-        <div style="background:rgba(0,0,0,.08);border-radius:999px;height:10px;overflow:hidden;">
-          <div style="background:linear-gradient(90deg,${kleur},${kleur}88);width:${breedte}%;height:100%;border-radius:999px;transition:width .8s ease;"></div>
+        <div style="background:rgba(0,0,0,.07);border-radius:999px;height:12px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg,${kleur},${kleur}99);width:${breedte}%;
+            height:100%;border-radius:999px;transition:width .8s ease;"></div>
         </div>
       </div>
-      <div style="font-size:.78rem;line-height:1.6;color:#1f2937;margin-bottom:.7rem;">${tip.redenering}</div>
-      ${tip.alternatief ? `
-      <div style="background:rgba(167,139,250,.08);border-radius:8px;padding:.5rem .7rem;font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#374151;">
-        💡 Alternatief: <b>${tip.alternatief.pick} — ${tip.alternatief.pickLabel}</b> @ ${tip.alternatief.odds} (${tip.alternatief.kans}% kans)
-      </div>` : ''}
+      <div style="font-size:.82rem;line-height:1.7;color:#1e293b;margin-bottom:.9rem;
+        padding:.7rem .8rem;background:rgba(255,255,255,.7);border-radius:8px;">
+        ${tip.redenering}
+      </div>
+      ${tip.tips?.length ? `
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#475569;
+        font-weight:700;letter-spacing:.05em;margin-bottom:.4rem;">📊 ALLE MARKTEN</div>
+      ${tipsHtml}` : ''}
     `;
     tipChip.className = 'entity-chip done';
   } catch(e) {
@@ -2011,25 +2082,34 @@ async function generateCombiTip() {
   try {
     const resp = await anthropicFetch(apiKey, {
       model: 'claude-sonnet-4-5',
-      max_tokens: 1800,
-      system: `Je bent een ervaren sportweddenschappen analist. Analyseer de wedstrijden en geef TOP 3 losse tips + exact 1 combi van PRECIES 3 wedstrijden. Educatief/fictief. Reageer UITSLUITEND in dit JSON formaat, geen extra tekst:
+      max_tokens: 2000,
+      system: `Je bent een ervaren sportweddenschappen analist. Geef TOP 3 losse tips + exact 1 combi van PRECIES 3 wedstrijden. Educatief/fictief.
+
+Je kunt ALLE markten gebruiken — niet alleen 1/X/2:
+- Uitslag: "1", "X", "2"
+- Doelpunten: "O2.5" (meer dan 2.5), "U2.5" (minder), "O1.5", "O3.5"  
+- Beide teams scoren: "BTTS-J" (ja), "BTTS-N" (nee)
+- Dubbele kans: "1X", "X2", "12"
+- Handicap: "AH-1", "AH+1"
+
+Reageer UITSLUITEND in dit JSON formaat:
 {
   "top3": [
-    {"match":"Team A vs Team B","datum":"za 19 apr 20:00","pick":"1","pickLabel":"Team A wint","odds":2.10,"vertrouwen":8,"reden":"Max 30 woorden"},
-    {"match":"Team C vs Team D","datum":"zo 20 apr 18:30","pick":"X","pickLabel":"Gelijkspel","odds":3.20,"vertrouwen":7,"reden":"Max 30 woorden"},
-    {"match":"Team E vs Team F","datum":"zo 20 apr 16:00","pick":"2","pickLabel":"Team F wint","odds":2.80,"vertrouwen":6,"reden":"Max 30 woorden"}
+    {"match":"Team A vs Team B","datum":"za 19 apr 20:00","pick":"O2.5","pickLabel":"Meer dan 2.5 doelpunten","markt":"Doelpunten","odds":1.85,"vertrouwen":8,"reden":"Beide teams scoren gemiddeld 2+ goals, verdediging zwak"},
+    {"match":"Team C vs Team D","datum":"zo 20 apr 18:30","pick":"1","pickLabel":"Team C wint","markt":"Uitslag","odds":2.10,"vertrouwen":7,"reden":"Sterk thuis dit seizoen, 5 wins op rij"},
+    {"match":"Team E vs Team F","datum":"zo 20 apr 16:00","pick":"BTTS-J","pickLabel":"Beide teams scoren","markt":"BTTS","odds":1.70,"vertrouwen":7,"reden":"Beide teams scoren in 80% van duels"}
   ],
   "combi": {
     "legs":[
-      {"match":"Team A vs Team B","datum":"za 19 apr 20:00","pick":"1","pickLabel":"Team A wint","odds":2.10,"vertrouwen":8},
-      {"match":"Team C vs Team D","datum":"zo 20 apr 18:30","pick":"X","pickLabel":"Gelijkspel","odds":3.20,"vertrouwen":7},
-      {"match":"Team E vs Team F","datum":"zo 20 apr 16:00","pick":"2","pickLabel":"Team F wint","odds":2.80,"vertrouwen":6}
+      {"match":"Team A vs Team B","datum":"za 19 apr 20:00","pick":"O2.5","pickLabel":"Meer dan 2.5 goals","markt":"Doelpunten","odds":1.85,"vertrouwen":8},
+      {"match":"Team C vs Team D","datum":"zo 20 apr 18:30","pick":"1","pickLabel":"Team C wint","markt":"Uitslag","odds":2.10,"vertrouwen":7},
+      {"match":"Team E vs Team F","datum":"zo 20 apr 16:00","pick":"BTTS-J","pickLabel":"Beide scoren","markt":"BTTS","odds":1.70,"vertrouwen":7}
     ],
-    "redenering":"Uitleg max 80 woorden waarom deze 3 combigoed samengaan"
+    "redenering":"Uitleg max 80 woorden"
   }
 }
-BELANGRIJK: De combi MOET altijd exact 3 legs hebben. Kies wedstrijden met de hoogste zekerheid en goede combinatie.`,
-      messages: [{role:'user', content:`Datum vandaag: ${vandaag}\n\nBeschikbare wedstrijden:\n${matchesCtx || 'Geen wedstrijden geladen — gebruik actuele topwedstrijden Europa dit weekend'}\n\nGeef TOP 3 beste losse bets + een combi van PRECIES 3 wedstrijden. Prioriteit: veilige bets, realistische odds tussen 1.50-2.50, thuisvoordeel, goede vorm.`}]
+BELANGRIJK: Combi PRECIES 3 legs. Kies markten met hoogste zekerheid — soms is O/U of BTTS veiliger dan 1/X/2!`,
+      messages: [{role:'user', content:`Datum vandaag: ${vandaag}\n\nBeschikbare wedstrijden:\n${matchesCtx || 'Geen wedstrijden geladen — gebruik actuele topwedstrijden Europa dit weekend'}\n\nGeef TOP 3 tips (gebruik beste markt per wedstrijd) + combi van PRECIES 3 legs. Mix van markten is toegestaan en gewenst.`}]
     });
     const data = await resp.json();
     let raw = data.content[0].text.trim().replace(/```json|```/g,'').trim();
@@ -2050,27 +2130,36 @@ function renderTop3EnCombi(result) {
   const card = document.getElementById('combiCard');
 
   const stars = n => '⭐'.repeat(Math.min(n,5));
-  const confColor = n => n >= 8 ? '#2ecc71' : n >= 6 ? '#f39c12' : '#e74c3c';
-  const confBg = n => n >= 8 ? 'rgba(46,204,113,.1)' : n >= 6 ? 'rgba(243,156,18,.1)' : 'rgba(231,76,60,.1)';
+  const confColor = n => n >= 8 ? '#16a34a' : n >= 6 ? '#d97706' : '#dc2626';
+  const confBg = n => n >= 8 ? 'rgba(22,163,74,.1)' : n >= 6 ? 'rgba(217,119,6,.1)' : 'rgba(220,38,38,.08)';
+  const marktKleur = m => {
+    const s = (m||'').toLowerCase();
+    if (s.includes('doel') || s.includes('goal') || s.includes('2.5') || s.includes('1.5')) return '#2563eb';
+    if (s.includes('btts')) return '#7c3aed';
+    if (s.includes('handicap')) return '#ea580c';
+    if (s.includes('dubbel')) return '#0891b2';
+    return '#be185d';
+  };
 
   // TOP 3
   const top3Html = (result.top3 || []).map((t,i) => `
-    <div style="background:rgba(255,255,255,.6);border:1px solid rgba(28,35,48,.08);border-radius:12px;padding:.7rem .9rem;margin-bottom:.5rem;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
+    <div style="background:rgba(255,255,255,.82);border:1px solid rgba(28,35,48,.08);border-radius:12px;padding:.75rem .9rem;margin-bottom:.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.35rem;">
         <div style="flex:1;">
-          <div style="font-size:.85rem;font-weight:700;color:#111827;">${i+1}. ${t.match}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#a78bfa;margin-top:2px;">📅 ${t.datum||''}</div>
+          <div style="font-size:.88rem;font-weight:700;color:#0f172a;">${i+1}. ${t.match}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#7c3aed;margin-top:2px;">📅 ${t.datum||''}</div>
         </div>
         <div style="text-align:right;margin-left:.8rem;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#2ecc71;">${parseFloat(t.odds).toFixed(2)}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:${confColor(t.vertrouwen)};">${t.vertrouwen}/10</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#16a34a;">${parseFloat(t.odds).toFixed(2)}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:${confColor(t.vertrouwen)};font-weight:700;">${t.vertrouwen}/10</div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;background:${confBg(t.vertrouwen)};color:${confColor(t.vertrouwen)};border:1px solid ${confColor(t.vertrouwen)}44;padding:2px 8px;border-radius:4px;font-weight:700;">${t.pick} — ${t.pickLabel}</span>
-        <span style="font-size:.7rem;">${stars(Math.round(t.vertrouwen/2))}</span>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;flex-wrap:wrap;">
+        ${t.markt ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;background:rgba(${t.markt.includes('Doel')||t.markt.includes('2.5')?'37,99,235':'219,39,119'},.1);color:${marktKleur(t.markt)};border:1px solid ${marktKleur(t.markt)}33;padding:2px 7px;border-radius:4px;font-weight:700;">${t.markt}</span>` : ''}
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;background:${confBg(t.vertrouwen)};color:${confColor(t.vertrouwen)};border:1px solid ${confColor(t.vertrouwen)}44;padding:2px 9px;border-radius:4px;font-weight:700;">${t.pick} — ${t.pickLabel}</span>
+        <span style="font-size:.72rem;">${stars(Math.round(t.vertrouwen/2))}</span>
       </div>
-      <div style="font-size:.76rem;color:#374151;line-height:1.5;">${t.reden}</div>
+      <div style="font-size:.78rem;color:#374151;line-height:1.55;">${t.reden}</div>
     </div>`).join('');
 
   // COMBI
@@ -2081,13 +2170,16 @@ function renderTop3EnCombi(result) {
   const kansStr = legs.length === 3 ? Math.round(legs.reduce((a,l) => a * ((l.vertrouwen||7)/10), 1) * 100) : '—';
 
   const legsHtml = legs.map((l,i) => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:.55rem .7rem;background:rgba(255,255,255,.5);border-radius:8px;margin-bottom:.35rem;border:1px solid rgba(28,35,48,.07);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .75rem;background:rgba(255,255,255,.7);border-radius:10px;margin-bottom:.4rem;border:1px solid rgba(28,35,48,.08);">
       <div style="flex:1;">
-        <div style="font-size:.8rem;font-weight:700;color:#111827;">${i+1}. ${l.match}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#a78bfa;">📅 ${l.datum||''}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#d63384;margin-top:2px;font-weight:700;">${l.pick} — ${l.pickLabel}</div>
+        <div style="font-size:.82rem;font-weight:700;color:#0f172a;">${i+1}. ${l.match}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#7c3aed;">📅 ${l.datum||''}</div>
+        <div style="display:flex;align-items:center;gap:.4rem;margin-top:3px;">
+          ${l.markt ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:${marktKleur(l.markt)};font-weight:700;background:${marktKleur(l.markt)}15;padding:1px 6px;border-radius:3px;">${l.markt}</span>` : ''}
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#be185d;font-weight:700;">${l.pick} — ${l.pickLabel}</span>
+        </div>
       </div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#2ecc71;margin-left:.8rem;">${parseFloat(l.odds).toFixed(2)}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#16a34a;margin-left:.8rem;">${parseFloat(l.odds).toFixed(2)}</div>
     </div>`).join('');
 
   // Sla combi op zodat we hem in builder kunnen zetten
