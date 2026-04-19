@@ -1865,6 +1865,34 @@ async function fetchTeamStats(teamId, leagueId) {
   } catch(e) { return null; }
 }
 
+async function fetchStandings(leagueId) {
+  if (!leagueId || !state.settings.footballKey) return null;
+  try {
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/standings?league=${leagueId}&season=2025`,
+      state.settings.footballKey, 6000
+    );
+    const d = await r.json();
+    return d.response?.[0]?.league?.standings?.[0] || null;
+  } catch(e) { return null; }
+}
+
+function formatStandings(standings, homeName, awayName) {
+  if (!standings?.length) return '';
+  const homeEntry = standings.find(t =>
+    t.team.name.toLowerCase().includes(homeName.toLowerCase().substring(0,5)) ||
+    homeName.toLowerCase().includes(t.team.name.toLowerCase().substring(0,5))
+  );
+  const awayEntry = standings.find(t =>
+    t.team.name.toLowerCase().includes(awayName.toLowerCase().substring(0,5)) ||
+    awayName.toLowerCase().includes(t.team.name.toLowerCase().substring(0,5))
+  );
+  let txt = '';
+  if (homeEntry) txt += `${homeName}: ${homeEntry.rank}e — ${homeEntry.points}pt | W${homeEntry.all.win} G${homeEntry.all.draw} V${homeEntry.all.lose} | vorm:${homeEntry.form||'?'} | thuis:W${homeEntry.home?.win||0}G${homeEntry.home?.draw||0}V${homeEntry.home?.lose||0}\n`;
+  if (awayEntry) txt += `${awayName}: ${awayEntry.rank}e — ${awayEntry.points}pt | W${awayEntry.all.win} G${awayEntry.all.draw} V${awayEntry.all.lose} | vorm:${awayEntry.form||'?'} | uit:W${awayEntry.away?.win||0}G${awayEntry.away?.draw||0}V${awayEntry.away?.lose||0}\n`;
+  return txt ? `\nACTUELE RANGLIJST POSITIE:\n${txt}` : '';
+}
+
 async function fetchInjuries(teamId, fixtureId) {
   if (!teamId || !state.settings.footballKey) return [];
   try {
@@ -2003,14 +2031,14 @@ async function runAnalyse() {
   btn.textContent = '⟳ DATA OPHALEN...';
 
   let h2hTxt = '', homeFormTxt = '', awayFormTxt = '', homeStatsTxt = '', awayStatsTxt = '';
-  let homeBlessuresTxt = '', awayBlessuresTxt = '', predTxt = '';
+  let homeBlessuresTxt = '', awayBlessuresTxt = '', predTxt = '', standingsTxt = '';
 
   try {
     if (state.settings.footballKey && homeId && awayId) {
       const fixtureId = m.id;
       const withTimeout = (p, ms=6000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
 
-      const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred] = await Promise.all([
+      const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred, standings] = await Promise.all([
         withTimeout(fetchH2H(homeId, awayId)),
         withTimeout(fetchTeamForm(homeId, leagueId)),
         withTimeout(fetchTeamForm(awayId, leagueId)),
@@ -2018,7 +2046,8 @@ async function runAnalyse() {
         withTimeout(fetchTeamStats(awayId, leagueId)),
         withTimeout(fetchInjuries(homeId, fixtureId), 4000),
         withTimeout(fetchInjuries(awayId, fixtureId), 4000),
-        withTimeout(fetchPredictions(fixtureId), 4000)
+        withTimeout(fetchPredictions(fixtureId), 4000),
+        withTimeout(fetchStandings(leagueId), 5000)
       ]);
 
       h2hTxt = formatH2H(h2h||[], m.home, m.away);
@@ -2029,6 +2058,7 @@ async function runAnalyse() {
       homeBlessuresTxt = formatInjuries(homeInj||[], m.home);
       awayBlessuresTxt = formatInjuries(awayInj||[], m.away);
       predTxt = formatPredictions(pred);
+      standingsTxt = formatStandings(standings, m.home, m.away);
     }
   } catch(e) {
     console.warn('Data ophalen gedeeltelijk mislukt:', e.message);
@@ -2060,13 +2090,13 @@ ${locatieInfo}
 QUOTES: 1=${m.homeOdds} | X=${m.drawOdds} | 2=${m.awayOdds}
 RISICOPROFIEL: ${risk} | INZET: €${bet}
 ${isNeutral ? 'LET OP: Dit is een finaleduels op neutrale locatie — thuisvoordeel speelt GEEN rol!' : ''}
-
+${standingsTxt}
 BLESSURES & SCHORSINGEN:
 ${homeBlessuresTxt}
 ${awayBlessuresTxt}
 
 ${predTxt ? 'API STATISTISCH MODEL:\n' + predTxt : ''}
-`.trim();
+BELANGRIJK: Gebruik de actuele ranglijstpositie bij je analyse. Noem teams nooit degradatiekandidaat als ze hoog staan, of titelkandidaat als ze laag staan.`.trim();
 
   const nl = 'Analyseer in het Nederlands. Wees concreet, gebruik echte cijfers uit de data. Noem blessures als die relevant zijn.';
 
@@ -2246,13 +2276,34 @@ async function generateCombiTip() {
   }
   const btn = document.getElementById('combiGenBtn');
   btn.disabled = true;
-  btn.textContent = '⟳ TOP 3 + COMBI BEREKENEN...';
+  btn.textContent = '⟳ RANGLIJSTEN OPHALEN...';
 
   const matchesCtx = state.matches.slice(0,15).map(m => {
     const datum = m.date ? `${m.date} ${m.time}` : m.time;
     return `ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${datum} | quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
   }).join('\n');
 
+  // Haal actuele ranglijst op voor de actieve competitie
+  let standingsCtx = '';
+  if (state.settings.footballKey) {
+    try {
+      const leagueId = COMP_IDS[state.activeComp];
+      const r = await apiFetch(
+        `https://v3.football.api-sports.io/standings?league=${leagueId}&season=2025`,
+        state.settings.footballKey
+      );
+      const d = await r.json();
+      const standings = d.response?.[0]?.league?.standings?.[0];
+      if (standings?.length) {
+        standingsCtx = `\nACTUELE STAND ${state.activeComp.toUpperCase()} (seizoen 2025/26):\n` +
+          standings.slice(0,10).map(t =>
+            `${t.rank}. ${t.team.name} — ${t.points}pt | W:${t.all.win} G:${t.all.draw} V:${t.all.lose} | vorm:${t.form||'?'}`
+          ).join('\n');
+      }
+    } catch(e) {}
+  }
+
+  btn.textContent = '⟳ TOP 3 + COMBI BEREKENEN...';
   const vandaag = new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
   try {
@@ -2289,7 +2340,7 @@ Reageer UITSLUITEND in dit JSON formaat:
   }
 }
 BELANGRIJK: Combi PRECIES 3 legs. Kies markten met hoogste zekerheid — soms is O/U of BTTS veiliger dan 1/X/2!`,
-      messages: [{role:'user', content:`Datum vandaag: ${vandaag}\n\nBeschikbare wedstrijden:\n${matchesCtx || 'Geen wedstrijden geladen — gebruik actuele topwedstrijden Europa dit weekend'}\n\nGeef TOP 3 tips (gebruik beste markt per wedstrijd) + combi van PRECIES 3 legs. Mix van markten is toegestaan en gewenst.`}]
+      messages: [{role:'user', content:`Datum vandaag: ${vandaag}\n\nBeschikbare wedstrijden:\n${matchesCtx || 'Geen wedstrijden geladen'}\n${standingsCtx}\n\nGeef TOP 3 tips (gebruik beste markt per wedstrijd) + combi van PRECIES 3 legs. Gebruik de actuele stand voor correcte inschatting van teamprestaties. Mix van markten is toegestaan en gewenst.`}]
     });
     const data = await resp.json();
     let raw = data.content[0].text.trim().replace(/```json|```/g,'').trim();
