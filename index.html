@@ -1496,6 +1496,7 @@ function parseAPIMatch(f) {
     time: timeStr, date: dateStr,
     home: home.name, away: away.name,
     homeId: home.id, awayId: away.id,
+    leagueId: f.league.id,
     homeLogo: home.logo || '',
     awayLogo: away.logo || '',
     homeForm, awayForm,
@@ -2279,9 +2280,10 @@ async function runAnalyse() {
   const risk = document.getElementById('riskProfile').value;
   const bet = document.getElementById('betAmount').value;
   const btn = document.getElementById('analyseBtn');
-  const leagueId = m.raw?.league?.id || COMP_IDS[state.activeComp];
+  const leagueId = m.leagueId || m.raw?.league?.id || COMP_IDS[state.activeComp];
   const homeId = m.homeId || m.raw?.teams?.home?.id || m.raw?.homeTeam?.id;
   const awayId = m.awayId || m.raw?.teams?.away?.id || m.raw?.awayTeam?.id;
+  console.log('Analyse:', m.home, 'vs', m.away, '| leagueId:', leagueId, '| homeId:', homeId, '| awayId:', awayId, '| footballKey:', !!state.settings.footballKey);
 
   btn.disabled = true;
   btn.textContent = '⟳ DATA OPHALEN...';
