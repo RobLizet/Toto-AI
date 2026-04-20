@@ -1394,7 +1394,7 @@ async function anthropicFetchWithRetry(apiKey, body, maxRetries=2) {
       const resp = await anthropicFetch(apiKey, body);
       const data = await resp.json();
       if (data.error?.type === 'overloaded_error' && i < maxRetries) {
-        await new Promise(r => setTimeout(r, 3000 + i*2000));
+        await new Promise(r => setTimeout(r, 5000 + i*3000));
         continue;
       }
       return data;
@@ -2096,31 +2096,38 @@ async function fetchTopScorers(leagueId) {
   } catch(e) { return null; }
 }
 
-function formatH2H(fixtures, homeName, awayName) {
-  if (!fixtures?.length) return 'Geen H2H data beschikbaar.';
-  return 'H2H laatste ' + fixtures.length + ' onderlinge duels:\n' +
-    fixtures.slice(0,8).map(f => {
-      const d = f.fixture.date.split('T')[0];
-      const hg = f.goals.home ?? '?', ag = f.goals.away ?? '?';
-      const ht = f.teams.home.name, at = f.teams.away.name;
-      const winner = f.teams.home.winner ? ht : f.teams.away.winner ? at : 'Gelijk';
-      return d + ': ' + ht + ' ' + hg + '-' + ag + ' ' + at + ' (' + winner + ')';
-    }).join('\n');
+function formatH2H(fixtures, home, away) {
+  if (!fixtures || fixtures.length === 0) return 'Geen H2H data beschikbaar.';
+  let homeWins = 0, awayWins = 0, draws = 0;
+  const lines = fixtures.slice(0,10).map(f => {
+    const ht = f.teams.home.name, at = f.teams.away.name;
+    const hg = f.goals.home ?? '?', ag = f.goals.away ?? '?';
+    const dt = new Date(f.fixture.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'});
+    if (f.teams.home.winner) homeWins++; else if (f.teams.away.winner) awayWins++; else draws++;
+    const w = f.teams.home.winner ? ht : f.teams.away.winner ? at : 'Gelijk';
+    return `${dt}: ${ht} ${hg}-${ag} ${at} → ${w}`;
+  });
+  const summary = `SAMENVATTING laatste ${fixtures.length} duels: ${home} won ${homeWins}x | Gelijk ${draws}x | ${away} won ${awayWins}x`;
+  return summary + '\n\n' + lines.join('\n');
 }
 
 function formatForm(fixtures, teamId, teamName) {
-  if (!fixtures?.length) return 'Geen recente uitslagen beschikbaar voor ' + teamName + '.';
-  return teamName + ' laatste ' + Math.min(fixtures.length,8) + ' wedstrijden:\n' +
-    fixtures.slice(0,8).map(f => {
-      const d = f.fixture.date.split('T')[0];
-      const isHome = f.teams.home.id === teamId;
-      const teamGoals = isHome ? f.goals.home : f.goals.away;
-      const oppGoals = isHome ? f.goals.away : f.goals.home;
-      const opp = isHome ? f.teams.away.name : f.teams.home.name;
-      const venue = isHome ? 'T' : 'U';
-      const result = teamGoals > oppGoals ? 'W' : teamGoals < oppGoals ? 'V' : 'G';
-      return d + ' [' + venue + '] vs ' + opp + ': ' + teamGoals + '-' + oppGoals + ' (' + result + ') - ' + f.league.name;
-    }).join('\n');
+  if (!fixtures || fixtures.length === 0) return 'Geen vorm data beschikbaar.';
+  const results = fixtures.slice(0,8).map(f => {
+    const isHome = f.teams.home.id === teamId;
+    const team = isHome ? f.teams.home : f.teams.away;
+    const opp = isHome ? f.teams.away.name : f.teams.home.name;
+    const gFor = isHome ? (f.goals.home ?? 0) : (f.goals.away ?? 0);
+    const gAg = isHome ? (f.goals.away ?? 0) : (f.goals.home ?? 0);
+    const res = team.winner === true ? '✓WIN' : team.winner === false ? '✗VER' : '=GEL';
+    const loc = isHome ? 'Thuis' : 'Uit';
+    const dt = new Date(f.fixture.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+    const comp = f.league.name;
+    return `${dt} [${loc}] vs ${opp} (${comp}): ${gFor}-${gAg} ${res}`;
+  });
+  const wins = results.filter(r => r.includes('✓WIN')).length;
+  const summary = `VORM ${teamName}: ${wins}/${fixtures.slice(0,8).length} gewonnen`;
+  return summary + '\n' + results.join('\n');
 }
 
 function formatLineups(lineups, homeName, awayName) {
@@ -2299,7 +2306,7 @@ async function callEntity(apiKey, system, userMsg, entityId, cardId, bodyId) {
   body.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
   try {
     const data = await anthropicFetchWithRetry(apiKey, {
-      model: 'claude-sonnet-4-5', max_tokens: 1024, system,
+      model: 'claude-sonnet-4-5', max_tokens: 600, system,
       messages: [{role:'user', content:userMsg}]
     });
     if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
