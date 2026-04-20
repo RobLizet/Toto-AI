@@ -452,6 +452,10 @@ body{
   color:var(--ink);font-family:'Bebas Neue',sans-serif;font-size:1.5rem;
   padding:.75rem 1rem;margin-bottom:.8rem;outline:none;letter-spacing:.05em;}
 .modal-input:focus{border-color:rgba(255,154,193,.5);}
+.market-btn{font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+  padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  border:1px solid var(--stroke);background:rgba(255,255,255,.7);color:var(--sub);transition:all .15s;}
+.market-btn.active{background:rgba(219,39,119,.12);border-color:rgba(219,39,119,.4);color:#be185d;}
 .modal-payout-preview{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--orange);
   text-align:center;margin-bottom:.9rem;}
 .modal-btns{display:flex;gap:.6rem;}
@@ -1049,6 +1053,45 @@ body{
     <h3>💶 Inzet Plaatsen</h3>
     <div class="modal-match-name" id="modalMatchName">—</div>
     <div class="modal-pick-info" id="modalPickInfo">—</div>
+
+    <!-- Extra markten -->
+    <div style="margin:.6rem 0;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
+        font-weight:700;margin-bottom:.4rem;">MARKT</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.3rem;" id="marketBtns">
+        <button onclick="selectMarket('1X2')" id="mb-1X2"
+          class="market-btn active">1/X/2</button>
+        <button onclick="selectMarket('O25')" id="mb-O25"
+          class="market-btn">O2.5</button>
+        <button onclick="selectMarket('U25')" id="mb-U25"
+          class="market-btn">U2.5</button>
+        <button onclick="selectMarket('O15')" id="mb-O15"
+          class="market-btn">O1.5</button>
+        <button onclick="selectMarket('O35')" id="mb-O35"
+          class="market-btn">O3.5</button>
+        <button onclick="selectMarket('BTTSJ')" id="mb-BTTSJ"
+          class="market-btn">BTTS-J</button>
+        <button onclick="selectMarket('BTTSN')" id="mb-BTTSN"
+          class="market-btn">BTTS-N</button>
+        <button onclick="selectMarket('1X')" id="mb-1X"
+          class="market-btn">1X</button>
+        <button onclick="selectMarket('X2')" id="mb-X2"
+          class="market-btn">X2</button>
+      </div>
+    </div>
+
+    <!-- Pick keuze voor geselecteerde markt -->
+    <div id="marketPickRow" style="display:none;margin-bottom:.5rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
+        font-weight:700;margin-bottom:.4rem;">PICK & QUOTE</div>
+      <div style="display:flex;gap:.4rem;align-items:center;">
+        <input class="modal-input" id="customPickLabel" type="text" placeholder="Bijv. Meer dan 2.5 goals"
+          style="flex:1;font-size:.72rem;">
+        <input class="modal-input" id="customOdds" type="number" step="0.01" min="1.01"
+          placeholder="Quote" style="width:80px;font-size:.72rem;" oninput="updatePayoutPreview()">
+      </div>
+    </div>
+
     <input class="modal-input" id="modalBetInput" type="number" value="10" min="1" oninput="updatePayoutPreview()">
     <div class="modal-payout-preview" id="payoutPreview">Mogelijke uitbetaling: —</div>
     <div class="modal-btns">
@@ -2166,22 +2209,61 @@ function selectMatch(match) {
 // INZET MODAL
 // ═══════════════════════════════════════════════════════
 function openBetModal(e, matchId, pick, pickLabel, odds) {
-  e.stopPropagation();
+  if (e) e.stopPropagation();
   const match = state.matches.find(m => String(m.id) === String(matchId));
   if (!match) return;
-  pendingBet = { match, pick, pickLabel, odds: parseFloat(odds) };
-  document.getElementById('modalMatchName').textContent = `${match.home} vs ${match.away}`;
-  document.getElementById('modalPickInfo').textContent = `Keuze: ${pick} — ${pickLabel} @ ${odds}`;
+  pendingBet = { match, pick, pickLabel, odds: parseFloat(odds), markt: '1X2',
+    _origPick: pick, _origPickLabel: pickLabel, _origOdds: parseFloat(odds) };
+  document.getElementById('modalMatchName').textContent = match.home + ' vs ' + match.away;
+  document.getElementById('modalPickInfo').textContent = 'Keuze: ' + pick + ' — ' + pickLabel + ' @ ' + odds;
   document.getElementById('modalBetInput').value = state.settings.defaultBet || 10;
+  document.getElementById('marketPickRow').style.display = 'none';
+  document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mb-1X2') && document.getElementById('mb-1X2').classList.add('active');
   updatePayoutPreview();
   document.getElementById('betModal').classList.add('show');
+}
+
+function selectMarket(markt) {
+  if (!pendingBet) return;
+  pendingBet.markt = markt;
+  document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mb-' + markt) && document.getElementById('mb-' + markt).classList.add('active');
+  const pickRow = document.getElementById('marketPickRow');
+  const pickInfo = document.getElementById('modalPickInfo');
+  if (markt === '1X2') {
+    pendingBet.pick = pendingBet._origPick;
+    pendingBet.pickLabel = pendingBet._origPickLabel;
+    pendingBet.odds = pendingBet._origOdds;
+    pickInfo.textContent = 'Keuze: ' + pendingBet.pick + ' — ' + pendingBet.pickLabel + ' @ ' + pendingBet.odds;
+    pickRow.style.display = 'none';
+  } else {
+    const labels = {
+      'O25':'Meer dan 2.5 goals','U25':'Minder dan 2.5 goals',
+      'O15':'Meer dan 1.5 goals','O35':'Meer dan 3.5 goals',
+      'BTTSJ':'Beide teams scoren - Ja','BTTSN':'Beide teams scoren - Nee',
+      '1X':'Thuis of gelijk (1X)','X2':'Gelijk of uit (X2)'
+    };
+    document.getElementById('customPickLabel').value = labels[markt] || '';
+    document.getElementById('customOdds').value = '';
+    pickInfo.textContent = 'Markt: ' + markt;
+    pickRow.style.display = 'block';
+    pendingBet.pick = markt;
+    pendingBet.pickLabel = labels[markt] || markt;
+    pendingBet.odds = null;
+  }
+  updatePayoutPreview();
 }
 
 function updatePayoutPreview() {
   if (!pendingBet) return;
   const amt = parseFloat(document.getElementById('modalBetInput').value) || 0;
-  const payout = (amt * pendingBet.odds).toFixed(2);
-  document.getElementById('payoutPreview').textContent = `Mogelijke uitbetaling: €${payout} (winst: €${(payout - amt).toFixed(2)})`;
+  const odds = pendingBet.markt !== '1X2'
+    ? parseFloat(document.getElementById('customOdds')?.value) || 0
+    : pendingBet.odds;
+  if (!odds) { document.getElementById('payoutPreview').textContent = 'Vul quote in'; return; }
+  const payout = (amt * odds).toFixed(2);
+  document.getElementById('payoutPreview').textContent = 'Mogelijke uitbetaling: €' + payout + ' (winst: €' + (payout - amt).toFixed(2) + ')';
 }
 
 function closeBetModal() {
@@ -2193,19 +2275,29 @@ function confirmBet() {
   if (!pendingBet) return;
   const amt = parseFloat(document.getElementById('modalBetInput').value);
   if (!amt || amt <= 0) return;
-  if (amt > state.wallet.balance) {
-    alert('Onvoldoende saldo!');
-    return;
+  if (amt > state.wallet.balance) { alert('Onvoldoende saldo!'); return; }
+  let finalOdds = pendingBet.odds;
+  let finalPick = pendingBet.pick;
+  let finalPickLabel = pendingBet.pickLabel;
+  if (pendingBet.markt !== '1X2') {
+    finalOdds = parseFloat(document.getElementById('customOdds').value);
+    finalPickLabel = document.getElementById('customPickLabel').value.trim() || pendingBet.pickLabel;
+    if (!finalOdds || finalOdds < 1.01) { alert('Vul een geldige quote in!'); return; }
   }
+  const marktLabels = {
+    '1X2':'Uitslag','O25':'Over 2.5','U25':'Under 2.5','O15':'Over 1.5',
+    'O35':'Over 3.5','BTTSJ':'BTTS-J','BTTSN':'BTTS-N','1X':'1X','X2':'X2'
+  };
   const bet = {
     id: Date.now(),
-    matchName: `${pendingBet.match.home} vs ${pendingBet.match.away}`,
-    fixtureId: pendingBet.match.id, // voor automatisch uitslag ophalen
-    pick: pendingBet.pick,
-    pickLabel: pendingBet.pickLabel,
-    odds: pendingBet.odds,
+    matchName: pendingBet.match.home + ' vs ' + pendingBet.match.away,
+    fixtureId: pendingBet.match.id,
+    pick: finalPick,
+    pickLabel: finalPickLabel,
+    markt: marktLabels[pendingBet.markt] || pendingBet.markt,
+    odds: finalOdds,
     amount: amt,
-    payout: parseFloat((amt * pendingBet.odds).toFixed(2)),
+    payout: parseFloat((amt * finalOdds).toFixed(2)),
     status: 'pending',
     date: new Date().toLocaleDateString('nl-NL')
   };
@@ -2704,6 +2796,8 @@ Geef in exact dit JSON formaat, geen extra tekst:
   "odds":"1.85",
   "kans":68,
   "sterren":4,
+  "confidence":7,
+  "confidenceReden":"Korte uitleg waarom je meer/minder zeker bent (databeschikbaarheid, form consistentie etc.) — max 20 woorden",
   "redenering":"Max 70 woorden uitleg gebaseerd op concrete data (gemiddeld X goals per wedstrijd, aanvalsvorm etc).",
   "tips":[
     {"pick":"1","pickLabel":"Thuis wint","markt":"Uitslag","odds":"2.10","kans":55,"reden":"Korte reden"},
@@ -2720,6 +2814,10 @@ Geef in exact dit JSON formaat, geen extra tekst:
     const sterren = '⭐'.repeat(tip.sterren||3) + '☆'.repeat(5-(tip.sterren||3));
     const kleur = tip.kans >= 70 ? '#16a34a' : tip.kans >= 55 ? '#d97706' : '#dc2626';
     const breedte = Math.min(100, Math.max(10, tip.kans||50));
+    const conf = tip.confidence || 5;
+    const confKleur = conf >= 8 ? '#16a34a' : conf >= 6 ? '#d97706' : '#dc2626';
+    const confLabel = conf >= 8 ? 'HOOG' : conf >= 6 ? 'GEMIDDELD' : 'LAAG';
+    const confBar = Math.round((conf/10)*100);
 
     const marktKleur = (markt) => {
       const m = (markt||'').toLowerCase();
@@ -2773,6 +2871,28 @@ Geef in exact dit JSON formaat, geen extra tekst:
       <div style="font-size:.82rem;line-height:1.7;color:#1e293b;margin-bottom:.9rem;
         padding:.7rem .8rem;background:rgba(255,255,255,.7);border-radius:8px;">
         ${tip.redenering}
+      </div>
+      <!-- CONFIDENCE SCORE -->
+      <div style="background:rgba(255,255,255,.8);border:1px solid rgba(15,23,42,.08);
+        border-radius:10px;padding:.65rem .8rem;margin-bottom:.8rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+            color:#475569;letter-spacing:.04em;">🎯 CONFIDENCE SCORE</div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+              padding:2px 8px;border-radius:4px;background:${confKleur}15;color:${confKleur};">
+              ${confLabel}
+            </span>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${confKleur};">
+              ${conf}/10
+            </span>
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,.07);border-radius:999px;height:8px;overflow:hidden;margin-bottom:.35rem;">
+          <div style="background:linear-gradient(90deg,${confKleur},${confKleur}88);
+            width:${confBar}%;height:100%;border-radius:999px;transition:width .8s ease;"></div>
+        </div>
+        ${tip.confidenceReden ? `<div style="font-size:.72rem;color:#64748b;font-style:italic;">${tip.confidenceReden}</div>` : ''}
       </div>
       ${tip.tips?.length ? `
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#475569;
