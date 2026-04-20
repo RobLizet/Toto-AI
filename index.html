@@ -1730,7 +1730,32 @@ async function debugAPI() {
   const today = new Date();
   const dateFrom = new Date(today.getTime() - 3*86400000).toISOString().split('T')[0];
   const dateTo   = new Date(today.getTime() + 7*86400000).toISOString().split('T')[0];
-  let log = `Competitie: ${state.activeComp}\nAPI-Football ID: ${leagueId}\nfd.org code: ${fdCode||'geen'}\nVenster: ${dateFrom} → ${dateTo}\n\n`;
+  let log = `Competitie: ${state.activeComp}\nAPI-Football ID: ${leagueId}\nVenster: ${dateFrom} → ${dateTo}\n\n`;
+
+  // Geselecteerde wedstrijd info
+  if (state.selectedMatch) {
+    const m = state.selectedMatch;
+    log += `GESELECTEERDE WEDSTRIJD:\n`;
+    log += `  ${m.home} vs ${m.away}\n`;
+    log += `  fixtureId: ${m.id}\n`;
+    log += `  homeId: ${m.homeId} | awayId: ${m.awayId}\n`;
+    log += `  leagueId (uit wedstrijd): ${m.leagueId || m.raw?.league?.id || 'NIET GEVONDEN'}\n`;
+    log += `  rawSource: ${m.rawSource}\n\n`;
+
+    // Test direct of data beschikbaar is
+    if (apiKey && m.homeId) {
+      try {
+        const lId = m.leagueId || m.raw?.league?.id || leagueId;
+        const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${lId}&season=2025&last=5&team=${m.homeId}`, apiKey);
+        const d = await r.json();
+        log += `Vorm ${m.home}: ${d.response?.length||0} wedstrijden gevonden\n`;
+        d.response?.slice(0,3).forEach(f => log += `  → ${f.fixture.date.split('T')[0]}: ${f.teams.home.name} ${f.goals.home}-${f.goals.away} ${f.teams.away.name}\n`);
+      } catch(e) { log += `Vorm fout: ${e.message}\n`; }
+      log += '\n';
+    }
+  } else {
+    log += 'Geen wedstrijd geselecteerd\n\n';
+  }
 
   // Test football-data.org
   if (fdKey && fdCode) {
