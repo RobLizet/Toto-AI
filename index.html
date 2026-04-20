@@ -583,7 +583,7 @@ body{
           background:var(--card);border:1px solid var(--stroke);
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;">🌙</button>
-        <div class="version-badge">v2.0</div>
+        <div class="version-badge">v2.1</div>
       </div>
     </div>
   </div>
@@ -1096,7 +1096,7 @@ body{
         </div>
         <div>
           <div class="sr-label" style="margin-bottom:.25rem;">Bookmaker</div>
-          <input class="modal-input" id="trBookmaker" type="text" placeholder="TOTO, Unibet...">
+          <input class="modal-input" id="trBookmaker" type="text" placeholder="Jacks, Unibet...">
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
@@ -1972,19 +1972,23 @@ function renderMatches(matches) {
           <span class="odds-val" style="${m.awayOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.awayOdds}</span>
         </div>
       </div>
-      ${m.homeOdds === '—' ? `
-      <div class="manual-odds-row" id="manual-odds-${m.id}">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#475569;
-          margin-bottom:.5rem;font-weight:700;letter-spacing:.04em;">
-          ✏️ QUOTES HANDMATIG INVULLEN
-        </div>
+      <div style="padding:.3rem .9rem .1rem;text-align:right;">
+        <button onclick="toggleManualOdds('${m.id}');event.stopPropagation();"
+          style="background:none;border:none;font-family:'IBM Plex Mono',monospace;
+          font-size:.5rem;color:var(--sub);cursor:pointer;text-decoration:underline;">
+          ✏️ ${m.homeOdds === '—' ? 'Quotes invullen' : 'Andere quotes gebruiken'}
+        </button>
+      </div>
+      <div class="manual-odds-row" id="manual-odds-${m.id}" style="display:none;padding:.5rem .9rem .7rem;">
         <div style="margin-bottom:.4rem;">
           <select id="mob-${m.id}" onclick="event.stopPropagation()"
             style="width:100%;padding:.38rem .6rem;border:1px solid var(--stroke);
             border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-            font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);margin-bottom:.4rem;">
+            font-weight:700;color:var(--ink);background:rgba(255,255,255,.9);">
+            <option value="Jacks">Jacks</option>
             <option value="Unibet">Unibet</option>
             <option value="TOTO">TOTO</option>
+            <option value="Jacks">Jacks</option>
             <option value="Betway">Betway</option>
             <option value="Bet365">Bet365</option>
             <option value="888sport">888sport</option>
@@ -1994,26 +1998,29 @@ function renderMatches(matches) {
             <option value="Anders">Anders</option>
           </select>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.4rem;">
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#475569;margin-bottom:2px;">1 THUIS</div>
-            <input type="number" step="0.01" min="1.01" placeholder="2.10"
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">1 THUIS</div>
+            <input type="number" step="0.01" min="1.01"
+              placeholder="${m.homeOdds !== '—' ? m.homeOdds : '2.10'}"
               id="mo1-${m.id}" onclick="event.stopPropagation()"
               style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);
               border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;
               font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
           </div>
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#475569;margin-bottom:2px;">X GELIJK</div>
-            <input type="number" step="0.01" min="1.01" placeholder="3.40"
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">X GELIJK</div>
+            <input type="number" step="0.01" min="1.01"
+              placeholder="${m.drawOdds !== '—' ? m.drawOdds : '3.40'}"
               id="mox-${m.id}" onclick="event.stopPropagation()"
               style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);
               border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;
               font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
           </div>
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#475569;margin-bottom:2px;">2 UIT</div>
-            <input type="number" step="0.01" min="1.01" placeholder="2.80"
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">2 UIT</div>
+            <input type="number" step="0.01" min="1.01"
+              placeholder="${m.awayOdds !== '—' ? m.awayOdds : '2.80'}"
               id="mo2-${m.id}" onclick="event.stopPropagation()"
               style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);
               border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;
@@ -2021,13 +2028,13 @@ function renderMatches(matches) {
           </div>
         </div>
         <button onclick="applyManualOdds('${m.id}');event.stopPropagation();"
-          style="width:100%;margin-top:.45rem;padding:.5rem;border-radius:8px;
+          style="width:100%;padding:.5rem;border-radius:8px;
           background:rgba(219,39,119,.1);border:1px solid rgba(219,39,119,.3);
           font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
           color:#be185d;cursor:pointer;">
           ✓ OPSLAAN & GEBRUIKEN
         </button>
-      </div>` : ''}
+      </div>
       <div class="add-combi-row" id="combi-row-${m.id}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;padding:.4rem .9rem .6rem;">
         <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">+1</div>
         <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')">+X</div>
@@ -2040,6 +2047,12 @@ function renderMatches(matches) {
 function handleOddsBet(e, matchId, pick, pickLabel, odds) {
   if (odds === '—') return;
   openBetModal(e, matchId, pick, pickLabel, odds);
+}
+
+function toggleManualOdds(matchId) {
+  const row = document.getElementById('manual-odds-' + matchId);
+  if (!row) return;
+  row.style.display = row.style.display === 'none' ? 'block' : 'none';
 }
 
 function applyManualOdds(matchId) {
