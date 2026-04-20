@@ -369,6 +369,29 @@ body{
 .empty-state{text-align:center;padding:2rem;font-family:'IBM Plex Mono',monospace;
   font-size:.65rem;color:var(--muted);letter-spacing:.08em;}
 
+/* ── TRACKER ── */
+.tracker-filter{font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+  padding:.35rem .75rem;border-radius:999px;border:1px solid var(--stroke);
+  background:rgba(255,255,255,.7);color:var(--sub);cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.tracker-filter.active{background:linear-gradient(135deg,rgba(219,39,119,.12),rgba(124,58,237,.1));
+  border-color:rgba(219,39,119,.35);color:#be185d;}
+.tracker-row{background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
+  border-radius:14px;padding:.75rem .9rem;margin-bottom:.5rem;box-shadow:0 2px 8px rgba(15,23,42,.05);}
+.tracker-match{font-size:.9rem;font-weight:700;color:#0f172a;margin-bottom:.2rem;}
+.tracker-meta{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#475569;
+  display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.4rem;}
+.tracker-source{font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+  padding:2px 8px;border-radius:4px;}
+.src-analyse{background:rgba(37,99,235,.1);color:#2563eb;border:1px solid rgba(37,99,235,.2);}
+.src-combi{background:rgba(219,39,119,.1);color:#be185d;border:1px solid rgba(219,39,119,.2);}
+.src-widget{background:rgba(124,58,237,.1);color:#7c3aed;border:1px solid rgba(124,58,237,.2);}
+.src-eigen{background:rgba(15,23,42,.06);color:#475569;border:1px solid rgba(15,23,42,.12);}
+.tracker-footer{display:flex;justify-content:space-between;align-items:center;margin-top:.4rem;}
+.tracker-result{font-family:'Bebas Neue',sans-serif;font-size:1rem;cursor:pointer;}
+.tracker-result.win{color:#16a34a;}
+.tracker-result.lose{color:#dc2626;}
+.tracker-result.pending{color:#d97706;}
+
 /* ── INZET MODAL ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(28,35,48,.35);
   backdrop-filter:blur(8px);z-index:1000;align-items:flex-end;justify-content:center;}
@@ -553,6 +576,9 @@ body{
       </button>
       <button class="tab-btn" onclick="switchTab('wallet')" id="tab-btn-wallet">
         <span class="tab-icon">💶</span><span class="tab-label">WALLET</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('tracker')" id="tab-btn-tracker">
+        <span class="tab-icon">📒</span><span class="tab-label">TRACKER</span>
       </button>
       <button class="tab-btn" onclick="switchTab('instellingen')" id="tab-btn-instellingen">
         <span class="tab-icon">⚙️</span><span class="tab-label">INSTELLINGEN</span>
@@ -766,14 +792,55 @@ body{
       <div class="wa-btn" onclick="openWithdrawModal()">
         <span class="icon">💸</span><div class="lbl">Opnemen</div>
       </div>
+      <div class="wa-btn" onclick="autoCheckAllBets()">
+        <span class="icon">🔍</span><div class="lbl">Alles checken</div>
+      </div>
       <div class="wa-btn" onclick="resetWallet()">
         <span class="icon">🔄</span><div class="lbl">Reset</div>
       </div>
     </div>
+    <div id="autoCheckStatus" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:.5rem .8rem;border-radius:8px;margin-bottom:.6rem;"></div>
 
     <div class="section-label">Inzetgeschiedenis</div>
     <div class="bet-history-list" id="betHistoryList">
       <div class="empty-state">Nog geen inzetten geplaatst</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB: ECHTE WEDDENSCHAP TRACKER
+  ══════════════════════════════════════ -->
+  <div id="tab-tracker" class="tab-content">
+
+    <!-- Stats strip -->
+    <div id="trackerStats" class="wallet-strip" style="grid-template-columns:repeat(4,1fr);">
+      <div class="w-item bal"><div class="lbl">Ingezet</div><div class="val" id="trStaked">€0</div></div>
+      <div class="w-item pnl"><div class="lbl">Winst/V</div><div class="val" id="trPnl">€0</div></div>
+      <div class="w-item bets"><div class="lbl">Bets</div><div class="val" id="trBets">0</div></div>
+      <div class="w-item rate"><div class="lbl">ROI</div><div class="val" id="trRoi">—</div></div>
+    </div>
+
+    <!-- Nieuwe weddenschap toevoegen -->
+    <button onclick="openTrackerModal()" style="width:100%;
+      background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.85));
+      border:none;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:.7rem;
+      font-weight:700;padding:.75rem;border-radius:14px;cursor:pointer;
+      letter-spacing:.05em;margin-bottom:1rem;">
+      ➕ ECHTE WEDDENSCHAP TOEVOEGEN
+    </button>
+
+    <!-- Filter knoppen -->
+    <div style="display:flex;gap:.4rem;margin-bottom:.8rem;overflow-x:auto;padding-bottom:.2rem;">
+      <button onclick="setTrackerFilter('all')" id="tf-all" class="tracker-filter active">Alle</button>
+      <button onclick="setTrackerFilter('open')" id="tf-open" class="tracker-filter">Open</button>
+      <button onclick="setTrackerFilter('win')" id="tf-win" class="tracker-filter">Gewonnen</button>
+      <button onclick="setTrackerFilter('lose')" id="tf-lose" class="tracker-filter">Verloren</button>
+      <button onclick="setTrackerFilter('analyse')" id="tf-analyse" class="tracker-filter">Analyse</button>
+      <button onclick="setTrackerFilter('combi')" id="tf-combi" class="tracker-filter">Combi</button>
+    </div>
+
+    <div id="trackerList">
+      <div class="empty-state">Nog geen echte weddenschappen bijgehouden</div>
     </div>
   </div>
 
@@ -926,6 +993,90 @@ body{
 </div>
 
 <!-- DEPOSIT MODAL -->
+<!-- TRACKER MODAL -->
+<div class="modal-overlay" id="trackerModal">
+  <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
+    <h3>📒 Echte Weddenschap</h3>
+    <div style="display:flex;flex-direction:column;gap:.6rem;">
+
+      <div>
+        <div class="sr-label" style="margin-bottom:.25rem;">Wedstrijd</div>
+        <input class="modal-input" id="trMatch" type="text" placeholder="bijv. Ajax vs PSV">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Datum</div>
+          <input class="modal-input" id="trDate" type="date">
+        </div>
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Bookmaker</div>
+          <input class="modal-input" id="trBookmaker" type="text" placeholder="TOTO, Unibet...">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Pick</div>
+          <input class="modal-input" id="trPick" type="text" placeholder="bijv. 1, O2.5, BTTS-J">
+        </div>
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Markt</div>
+          <select class="modal-input" id="trMarkt">
+            <option value="Uitslag">1/X/2 Uitslag</option>
+            <option value="Doelpunten">Over/Under doelpunten</option>
+            <option value="BTTS">Beide teams scoren</option>
+            <option value="Handicap">Handicap</option>
+            <option value="Dubbele kans">Dubbele kans</option>
+            <option value="Combi">Combi</option>
+            <option value="Anders">Anders</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Quote</div>
+          <input class="modal-input" id="trOdds" type="number" step="0.01" placeholder="bijv. 2.10">
+        </div>
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Inzet (€)</div>
+          <input class="modal-input" id="trStakeInput" type="number" placeholder="bijv. 10">
+        </div>
+      </div>
+
+      <div>
+        <div class="sr-label" style="margin-bottom:.25rem;">Gebaseerd op</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;">
+          <button onclick="selectTrackerSource('analyse')" id="trs-analyse"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(37,99,235,.3);background:rgba(37,99,235,.06);color:#2563eb;">
+            🤖 Wedstrijd analyse
+          </button>
+          <button onclick="selectTrackerSource('combi')" id="trs-combi"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(219,39,119,.3);background:rgba(219,39,119,.06);color:#be185d;">
+            ⚡ Combi tip AI
+          </button>
+          <button onclick="selectTrackerSource('widget')" id="trs-widget"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(124,58,237,.3);background:rgba(124,58,237,.06);color:#7c3aed;">
+            📱 Widget tip
+          </button>
+          <button onclick="selectTrackerSource('eigen')" id="trs-eigen"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(15,23,42,.15);background:rgba(15,23,42,.04);color:#475569;">
+            ✏️ Eigen keuze
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="sr-label" style="margin-bottom:.25rem;">Notitie (optioneel)</div>
+        <input class="modal-input" id="trNote" type="text" placeholder="Extra uitleg...">
+      </div>
+
+      <div class="modal-btns">
+        <button class="modal-confirm" onclick="confirmTracker()">OPSLAAN</button>
+        <button class="modal-cancel" onclick="closeModal('trackerModal')">ANNULEREN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="depositModal">
   <div class="modal-box">
     <h3>💰 Saldo Storten</h3>
@@ -939,20 +1090,19 @@ body{
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════
-
 let state = {
   activeComp: 'eredivisie',
   activeTab: 'wedstrijden',
   selectedMatch: null,
   matches: [],
-  combiBuilder: [], // { matchId, home, away, pick, pickLabel, odds, date }
+  combiBuilder: [],
   wallet: {
     balance: 500,
     totalStaked: 0,
     totalWon: 0,
+    bets: []
+  },
+  tracker: {
     bets: []
   },
   settings: {
@@ -1020,6 +1170,7 @@ function switchTab(name) {
     btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
   }
   if (name === 'wallet') updateWalletUI();
+  if (name === 'tracker') { renderTracker(); updateTrackerStats(); }
   state.activeTab = name;
   // Start/stop live polling op basis van actieve tab
   if (name === 'wedstrijden') {
@@ -3225,6 +3376,7 @@ async function loadFromFirebase() {
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
     wallet: state.wallet,
+    tracker: state.tracker,
     settings: state.settings
   }));
 }
@@ -3232,13 +3384,212 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem('totoai_state') || '{}');
     if (saved.wallet) state.wallet = saved.wallet;
+    if (saved.tracker) state.tracker = saved.tracker;
     if (saved.settings) state.settings = { ...state.settings, ...saved.settings };
   } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════════
-// SERVICE WORKER
+// AUTO CHECK ALLE OPEN BETS
 // ═══════════════════════════════════════════════════════
+async function autoCheckAllBets() {
+  const openBets = state.wallet.bets.filter(b => b.status === 'pending');
+  if (!openBets.length) {
+    showAutoCheckStatus('Geen open weddenschappen', '#475569');
+    return;
+  }
+  showAutoCheckStatus(`⟳ ${openBets.length} weddenschappen checken...`, '#d97706');
+  let checked = 0, updated = 0;
+  for (const bet of openBets) {
+    try {
+      await checkBetResult(bet.id);
+      checked++;
+      if (bet.status !== 'pending') updated++;
+    } catch(e) {}
+  }
+  showAutoCheckStatus(`✓ ${checked} gecheckt · ${updated} bijgewerkt`, '#16a34a');
+  updateWalletUI();
+}
+
+function showAutoCheckStatus(msg, color) {
+  const el = document.getElementById('autoCheckStatus');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color = color;
+  el.style.background = color === '#16a34a' ? 'rgba(22,163,74,.08)' : 'rgba(15,23,42,.05)';
+  el.style.border = `1px solid ${color}33`;
+  el.textContent = msg;
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+// ═══════════════════════════════════════════════════════
+// ECHTE WEDDENSCHAP TRACKER
+// ═══════════════════════════════════════════════════════
+let trackerSource = 'eigen';
+let trackerFilter = 'all';
+
+function openTrackerModal() {
+  // Vul datum in als vandaag
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('trDate').value = today;
+  document.getElementById('trMatch').value = '';
+  document.getElementById('trBookmaker').value = '';
+  document.getElementById('trPick').value = '';
+  document.getElementById('trOdds').value = '';
+  document.getElementById('trStakeInput').value = state.settings.defaultBet || 10;
+  document.getElementById('trNote').value = '';
+  trackerSource = 'eigen';
+  // Als er een wedstrijd geselecteerd is, pre-fill
+  if (state.selectedMatch) {
+    document.getElementById('trMatch').value = `${state.selectedMatch.home} vs ${state.selectedMatch.away}`;
+  }
+  selectTrackerSource('eigen');
+  document.getElementById('trackerModal').classList.add('show');
+}
+
+function selectTrackerSource(src) {
+  trackerSource = src;
+  ['analyse','combi','widget','eigen'].forEach(s => {
+    const btn = document.getElementById('trs-' + s);
+    if (!btn) return;
+    btn.style.opacity = s === src ? '1' : '0.45';
+    btn.style.fontWeight = s === src ? '900' : '700';
+  });
+}
+
+function confirmTracker() {
+  const match = document.getElementById('trMatch').value.trim();
+  const date = document.getElementById('trDate').value;
+  const bookmaker = document.getElementById('trBookmaker').value.trim();
+  const pick = document.getElementById('trPick').value.trim();
+  const markt = document.getElementById('trMarkt').value;
+  const odds = parseFloat(document.getElementById('trOdds').value);
+  const stake = parseFloat(document.getElementById('trStakeInput').value);
+  const note = document.getElementById('trNote').value.trim();
+
+  if (!match || !pick || !odds || !stake) {
+    alert('Vul minimaal wedstrijd, pick, quote en inzet in');
+    return;
+  }
+
+  const bet = {
+    id: Date.now(),
+    match, date, bookmaker, pick, markt,
+    odds, stake,
+    payout: parseFloat((stake * odds).toFixed(2)),
+    source: trackerSource,
+    note,
+    status: 'pending',
+    score: null
+  };
+
+  state.tracker.bets.unshift(bet);
+  saveState();
+  closeModal('trackerModal');
+  renderTracker();
+  updateTrackerStats();
+}
+
+function setTrackerFilter(filter) {
+  trackerFilter = filter;
+  document.querySelectorAll('.tracker-filter').forEach(b => b.classList.remove('active'));
+  document.getElementById('tf-' + filter)?.classList.add('active');
+  renderTracker();
+}
+
+function cycleTrackerStatus(id) {
+  const bet = state.tracker.bets.find(b => b.id === id);
+  if (!bet) return;
+  if (bet.status === 'pending') {
+    bet.status = 'win';
+  } else if (bet.status === 'win') {
+    bet.status = 'lose';
+  } else {
+    bet.status = 'pending';
+  }
+  saveState();
+  renderTracker();
+  updateTrackerStats();
+}
+
+function deleteTrackerBet(id) {
+  if (!confirm('Weddenschap verwijderen?')) return;
+  state.tracker.bets = state.tracker.bets.filter(b => b.id !== id);
+  saveState();
+  renderTracker();
+  updateTrackerStats();
+}
+
+const sourceLabel = { analyse:'🤖 Analyse', combi:'⚡ Combi', widget:'📱 Widget', eigen:'✏️ Eigen' };
+const sourceClass = { analyse:'src-analyse', combi:'src-combi', widget:'src-widget', eigen:'src-eigen' };
+
+function renderTracker() {
+  const list = document.getElementById('trackerList');
+  let bets = state.tracker.bets || [];
+  if (trackerFilter !== 'all') {
+    if (['win','lose','pending'].includes(trackerFilter)) {
+      bets = bets.filter(b => b.status === trackerFilter);
+    } else if (trackerFilter === 'open') {
+      bets = bets.filter(b => b.status === 'pending');
+    } else {
+      bets = bets.filter(b => b.source === trackerFilter);
+    }
+  }
+  if (!bets.length) {
+    list.innerHTML = '<div class="empty-state">Geen weddenschappen gevonden</div>';
+    return;
+  }
+  list.innerHTML = bets.map(b => {
+    const statusTxt = b.status === 'win'
+      ? `✓ WIN +€${(b.payout - b.stake).toFixed(2)}`
+      : b.status === 'lose' ? `✗ VERLIES -€${b.stake.toFixed(2)}` : '⏳ OPEN';
+    const winLoseBg = b.status === 'win'
+      ? 'border-left:3px solid #16a34a;'
+      : b.status === 'lose' ? 'border-left:3px solid #dc2626;' : '';
+    return `
+      <div class="tracker-row" style="${winLoseBg}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="tracker-match">${b.match}</div>
+          <button onclick="deleteTrackerBet(${b.id})" style="background:none;border:none;color:#94a3b8;font-size:.9rem;cursor:pointer;padding:0 0 0 .5rem;">✕</button>
+        </div>
+        <div class="tracker-meta">
+          <span>📅 ${b.date}</span>
+          ${b.bookmaker ? `<span>🏦 ${b.bookmaker}</span>` : ''}
+          <span class="tracker-source ${sourceClass[b.source]||'src-eigen'}">${sourceLabel[b.source]||b.source}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;flex-wrap:wrap;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;
+            background:rgba(15,23,42,.06);border:1px solid rgba(15,23,42,.1);
+            padding:2px 8px;border-radius:4px;color:#0f172a;">${b.pick}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#475569;">${b.markt}</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#16a34a;">${b.odds}</span>
+        </div>
+        ${b.note ? `<div style="font-size:.72rem;color:#64748b;font-style:italic;margin-bottom:.4rem;">"${b.note}"</div>` : ''}
+        <div class="tracker-footer">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#475569;">
+            Inzet: €${b.stake.toFixed(2)} → max €${b.payout.toFixed(2)}
+          </span>
+          <span class="tracker-result ${b.status}" onclick="cycleTrackerStatus(${b.id})">${statusTxt}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function updateTrackerStats() {
+  const bets = state.tracker.bets || [];
+  const staked = bets.reduce((s,b) => s + (b.stake||0), 0);
+  const won = bets.filter(b => b.status === 'win').reduce((s,b) => s + (b.payout - b.stake), 0);
+  const lost = bets.filter(b => b.status === 'lose').reduce((s,b) => s + b.stake, 0);
+  const pnl = won - lost;
+  const roi = staked > 0 ? ((pnl / staked) * 100).toFixed(1) : '—';
+  const el = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+  el('trStaked', `€${staked.toFixed(0)}`);
+  el('trPnl', `${pnl >= 0 ? '+' : ''}€${pnl.toFixed(2)}`);
+  el('trBets', bets.length);
+  el('trRoi', roi !== '—' ? roi + '%' : '—');
+  const pnlEl = document.getElementById('trPnl');
+  if (pnlEl) pnlEl.style.color = pnl >= 0 ? '#16a34a' : '#dc2626';
+}
 function registerSW() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/Toto-AI/sw.js', { scope: '/Toto-AI/' }).catch(() => {});
