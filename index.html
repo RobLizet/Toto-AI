@@ -293,8 +293,10 @@ body{
 .t-advies{background:rgba(124,58,237,.1);color:#6d28d9;border:1px solid rgba(124,58,237,.25);}
 .t-combi{background:rgba(219,39,119,.1);color:#be185d;border:1px solid rgba(219,39,119,.25);}
 .card-title-txt{font-size:.88rem;font-weight:700;flex:1;color:var(--ink);}
-.card-body{padding:1rem 1.1rem;font-size:.94rem;line-height:2.0;color:#0f172a;
-  font-family:'DM Sans',sans-serif;white-space:pre-wrap;min-height:50px;font-weight:400;}
+.card-body{padding:1rem 1.1rem;font-size:.9rem;line-height:1.8;color:#0f172a;
+  font-family:'DM Sans',sans-serif;min-height:50px;font-weight:400;}
+.card-body strong{font-weight:700;color:#0f172a;}
+.card-body em{font-style:italic;color:#334155;}
 .dots{display:inline-flex;gap:5px;}
 .dots span{width:5px;height:5px;background:#db2777;border-radius:50%;animation:blink 1s infinite;}
 .dots span:nth-child(2){animation-delay:.2s;}
@@ -2235,13 +2237,33 @@ async function callEntity(apiKey, system, userMsg, entityId, cardId, bodyId) {
     const data = await resp.json();
     const text = data.content[0].text;
     chip.className = 'entity-chip done';
-    body.textContent = text;
+    body.innerHTML = renderMarkdown(text);
     return text;
   } catch(e) {
     chip.className = 'entity-chip err';
     body.textContent = '⚠ Fout: ' + e.message;
     return '';
   }
+}
+
+// Markdown renderer voor analyseteksten
+function renderMarkdown(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    // Headers
+    .replace(/^### (.+)$/gm,'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:700;color:#be185d;letter-spacing:.05em;text-transform:uppercase;margin:.8rem 0 .2rem;">$1</div>')
+    .replace(/^## (.+)$/gm,'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.65rem;font-weight:700;color:#7c3aed;letter-spacing:.04em;margin:.9rem 0 .25rem;border-bottom:1px solid rgba(124,58,237,.15);padding-bottom:.2rem;">$1</div>')
+    .replace(/^# (.+)$/gm,'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#0f172a;margin:.8rem 0 .3rem;">$1</div>')
+    // Bold en italic
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    // Bullet lists
+    .replace(/^[-•] (.+)$/gm,'<div style="display:flex;gap:.4rem;margin:.2rem 0;"><span style="color:#be185d;flex-shrink:0;">•</span><span>$1</span></div>')
+    // Nummering
+    .replace(/^(\d+)\. (.+)$/gm,'<div style="display:flex;gap:.4rem;margin:.2rem 0;"><span style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:#7c3aed;flex-shrink:0;min-width:1rem;">$1.</span><span>$2</span></div>')
+    // Lege regels naar breaks
+    .replace(/\n\n/g,'<br><br>')
+    .replace(/\n/g,'<br>');
 }
 
 async function runAnalyse() {
@@ -2257,8 +2279,7 @@ async function runAnalyse() {
   const risk = document.getElementById('riskProfile').value;
   const bet = document.getElementById('betAmount').value;
   const btn = document.getElementById('analyseBtn');
-  const leagueId = COMP_IDS[state.activeComp];
-  // Haal team IDs op — werkt voor zowel API-Football als football-data.org
+  const leagueId = m.raw?.league?.id || COMP_IDS[state.activeComp];
   const homeId = m.homeId || m.raw?.teams?.home?.id || m.raw?.homeTeam?.id;
   const awayId = m.awayId || m.raw?.teams?.away?.id || m.raw?.awayTeam?.id;
 
@@ -2343,7 +2364,7 @@ ${predTxt ? 'API STATISTISCH MODEL:\n' + predTxt : ''}
 
 INSTRUCTIE: Gebruik ALLEEN bovenstaande data in je analyse. Verzin geen statistieken. Als data ontbreekt, zeg dat dan expliciet. Baseer teamkwaliteit op de actuele ranglijst, NIET op historische reputatie.`.trim();
 
-  const nl = 'Analyseer in het Nederlands. Gebruik ALLEEN de meegeleverde data — verzin geen statistieken. Als iets niet beschikbaar is, zeg dat expliciet. Gebruik de actuele ranglijst voor teamkwaliteit, niet je eigen aannames.';
+  const nl = 'Analyseer in het Nederlands. Gebruik markdown headers (##) en **bold** voor structuur. Gebruik ALLEEN de meegeleverde data. Als data ontbreekt: zeg dit kort en ga door met wat WEL beschikbaar is (bijv. bookmakerquotes, competitienaam). Verzin nooit statistieken. Gebruik de actuele ranglijst voor teamkwaliteit.';
 
   const vormText = await callEntity(apiKey,
     `Je bent een voetbal vormexpert. ${nl} Max 220 woorden.`,
