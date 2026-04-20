@@ -1865,6 +1865,92 @@ async function fetchTeamStats(teamId, leagueId) {
   } catch(e) { return null; }
 }
 
+async function fetchLineups(fixtureId) {
+  if (!fixtureId || !state.settings.footballKey) return null;
+  try {
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures/lineups?fixture=${fixtureId}`,
+      state.settings.footballKey, 5000
+    );
+    const d = await r.json();
+    return d.response?.length ? d.response : null;
+  } catch(e) { return null; }
+}
+
+async function fetchFixtureStats(fixtureId) {
+  if (!fixtureId || !state.settings.footballKey) return null;
+  try {
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures/statistics?fixture=${fixtureId}`,
+      state.settings.footballKey, 5000
+    );
+    const d = await r.json();
+    return d.response?.length ? d.response : null;
+  } catch(e) { return null; }
+}
+
+async function fetchTopScorers(leagueId) {
+  if (!leagueId || !state.settings.footballKey) return null;
+  try {
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=2025`,
+      state.settings.footballKey, 5000
+    );
+    const d = await r.json();
+    return d.response?.slice(0,10) || null;
+  } catch(e) { return null; }
+}
+
+function formatLineups(lineups, homeName, awayName) {
+  if (!lineups?.length) return '';
+  let txt = '\nOPSTELLINGEN (indien beschikbaar):\n';
+  lineups.forEach(t => {
+    const isHome = t.team.name.toLowerCase().includes(homeName.toLowerCase().substring(0,5)) ||
+                   homeName.toLowerCase().includes(t.team.name.toLowerCase().substring(0,5));
+    const label = isHome ? homeName : awayName;
+    txt += `${label} (${t.formation||'?'}):\n`;
+    if (t.startXI?.length) {
+      txt += t.startXI.map(p => `  ${p.player.pos||'?'} ${p.player.name} (#${p.player.number})`).join('\n') + '\n';
+    }
+    if (t.coach?.name) txt += `  Coach: ${t.coach.name}\n`;
+  });
+  return txt;
+}
+
+function formatFixtureStats(stats, homeName, awayName) {
+  if (!stats?.length) return '';
+  let txt = '\nWEDSTRIJD STATISTIEKEN:\n';
+  stats.forEach(t => {
+    const isHome = t.team.name.toLowerCase().includes(homeName.toLowerCase().substring(0,5)) ||
+                   homeName.toLowerCase().includes(t.team.name.toLowerCase().substring(0,5));
+    const label = isHome ? homeName : awayName;
+    const xg = t.statistics?.find(s => s.type === 'expected_goals')?.value;
+    const shots = t.statistics?.find(s => s.type === 'Total Shots')?.value;
+    const onTarget = t.statistics?.find(s => s.type === 'Shots on Goal')?.value;
+    const poss = t.statistics?.find(s => s.type === 'Ball Possession')?.value;
+    const passes = t.statistics?.find(s => s.type === 'Total passes')?.value;
+    txt += `${label}: xG=${xg||'?'} | Schoten=${shots||'?'} (doel:${onTarget||'?'}) | Balbezit=${poss||'?'} | Passes=${passes||'?'}\n`;
+  });
+  return txt;
+}
+
+function formatTopScorers(scorers, homeName, awayName) {
+  if (!scorers?.length) return '';
+  const homeNorm = homeName.toLowerCase().substring(0,5);
+  const awayNorm = awayName.toLowerCase().substring(0,5);
+  const relevant = scorers.filter(s => {
+    const club = s.statistics?.[0]?.team?.name?.toLowerCase() || '';
+    return club.includes(homeNorm) || homeNorm.includes(club.substring(0,5)) ||
+           club.includes(awayNorm) || awayNorm.includes(club.substring(0,5));
+  });
+  if (!relevant.length) return '';
+  return '\nSLEUTELSPELERS (topscorers in deze wedstrijd):\n' +
+    relevant.map(s => {
+      const st = s.statistics[0];
+      return `⚽ ${s.player.name} (${st.team.name}) — ${st.goals.total||0} goals, ${st.goals.assists||0} assists`;
+    }).join('\n') + '\n';
+}
+
 async function fetchStandings(leagueId) {
   if (!leagueId || !state.settings.footballKey) return null;
   try {
@@ -1879,18 +1965,16 @@ async function fetchStandings(leagueId) {
 
 function formatStandings(standings, homeName, awayName) {
   if (!standings?.length) return '';
-  const homeEntry = standings.find(t =>
-    t.team.name.toLowerCase().includes(homeName.toLowerCase().substring(0,5)) ||
-    homeName.toLowerCase().includes(t.team.name.toLowerCase().substring(0,5))
+  const find = name => standings.find(t =>
+    t.team.name.toLowerCase().includes(name.toLowerCase().substring(0,5)) ||
+    name.toLowerCase().includes(t.team.name.toLowerCase().substring(0,5))
   );
-  const awayEntry = standings.find(t =>
-    t.team.name.toLowerCase().includes(awayName.toLowerCase().substring(0,5)) ||
-    awayName.toLowerCase().includes(t.team.name.toLowerCase().substring(0,5))
-  );
+  const homeEntry = find(homeName);
+  const awayEntry = find(awayName);
   let txt = '';
-  if (homeEntry) txt += `${homeName}: ${homeEntry.rank}e — ${homeEntry.points}pt | W${homeEntry.all.win} G${homeEntry.all.draw} V${homeEntry.all.lose} | vorm:${homeEntry.form||'?'} | thuis:W${homeEntry.home?.win||0}G${homeEntry.home?.draw||0}V${homeEntry.home?.lose||0}\n`;
-  if (awayEntry) txt += `${awayName}: ${awayEntry.rank}e — ${awayEntry.points}pt | W${awayEntry.all.win} G${awayEntry.all.draw} V${awayEntry.all.lose} | vorm:${awayEntry.form||'?'} | uit:W${awayEntry.away?.win||0}G${awayEntry.away?.draw||0}V${awayEntry.away?.lose||0}\n`;
-  return txt ? `\nACTUELE RANGLIJST POSITIE:\n${txt}` : '';
+  if (homeEntry) txt += `${homeName}: ${homeEntry.rank}e — ${homeEntry.points}pt | W${homeEntry.all.win} G${homeEntry.all.draw} V${homeEntry.all.lose} | doelsaldo:${homeEntry.goalsDiff>0?'+':''}${homeEntry.goalsDiff} | vorm:${homeEntry.form||'?'} | thuis:W${homeEntry.home?.win||0}G${homeEntry.home?.draw||0}V${homeEntry.home?.lose||0} (${homeEntry.home?.goals?.for||0} voor/${homeEntry.home?.goals?.against||0} tegen)\n`;
+  if (awayEntry) txt += `${awayName}: ${awayEntry.rank}e — ${awayEntry.points}pt | W${awayEntry.all.win} G${awayEntry.all.draw} V${awayEntry.all.lose} | doelsaldo:${awayEntry.goalsDiff>0?'+':''}${awayEntry.goalsDiff} | vorm:${awayEntry.form||'?'} | uit:W${awayEntry.away?.win||0}G${awayEntry.away?.draw||0}V${awayEntry.away?.lose||0} (${awayEntry.away?.goals?.for||0} voor/${awayEntry.away?.goals?.against||0} tegen)\n`;
+  return txt ? `\nACTUELE RANGLIJST:\n${txt}` : '';
 }
 
 async function fetchInjuries(teamId, fixtureId) {
@@ -2032,13 +2116,14 @@ async function runAnalyse() {
 
   let h2hTxt = '', homeFormTxt = '', awayFormTxt = '', homeStatsTxt = '', awayStatsTxt = '';
   let homeBlessuresTxt = '', awayBlessuresTxt = '', predTxt = '', standingsTxt = '';
+  let lineupsTxt = '', fixtureStatsTxt = '', topScorersTxt = '';
 
   try {
     if (state.settings.footballKey && homeId && awayId) {
       const fixtureId = m.id;
       const withTimeout = (p, ms=6000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
 
-      const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred, standings] = await Promise.all([
+      const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred, standings, lineups, fixStats, topScorers] = await Promise.all([
         withTimeout(fetchH2H(homeId, awayId)),
         withTimeout(fetchTeamForm(homeId, leagueId)),
         withTimeout(fetchTeamForm(awayId, leagueId)),
@@ -2047,7 +2132,10 @@ async function runAnalyse() {
         withTimeout(fetchInjuries(homeId, fixtureId), 4000),
         withTimeout(fetchInjuries(awayId, fixtureId), 4000),
         withTimeout(fetchPredictions(fixtureId), 4000),
-        withTimeout(fetchStandings(leagueId), 5000)
+        withTimeout(fetchStandings(leagueId), 5000),
+        withTimeout(fetchLineups(fixtureId), 5000),
+        withTimeout(fetchFixtureStats(fixtureId), 5000),
+        withTimeout(fetchTopScorers(leagueId), 5000)
       ]);
 
       h2hTxt = formatH2H(h2h||[], m.home, m.away);
@@ -2059,6 +2147,9 @@ async function runAnalyse() {
       awayBlessuresTxt = formatInjuries(awayInj||[], m.away);
       predTxt = formatPredictions(pred);
       standingsTxt = formatStandings(standings, m.home, m.away);
+      lineupsTxt = formatLineups(lineups||[], m.home, m.away);
+      fixtureStatsTxt = formatFixtureStats(fixStats||[], m.home, m.away);
+      topScorersTxt = formatTopScorers(topScorers||[], m.home, m.away);
     }
   } catch(e) {
     console.warn('Data ophalen gedeeltelijk mislukt:', e.message);
@@ -2089,44 +2180,47 @@ DATUM/TIJD: ${wedstrijdDatum}
 ${locatieInfo}
 QUOTES: 1=${m.homeOdds} | X=${m.drawOdds} | 2=${m.awayOdds}
 RISICOPROFIEL: ${risk} | INZET: €${bet}
-${isNeutral ? 'LET OP: Dit is een finaleduels op neutrale locatie — thuisvoordeel speelt GEEN rol!' : ''}
+${isNeutral ? 'LET OP: Neutrale locatie — geen thuisvoordeel!' : ''}
 ${standingsTxt}
+${topScorersTxt}
 BLESSURES & SCHORSINGEN:
 ${homeBlessuresTxt}
 ${awayBlessuresTxt}
-
+${lineupsTxt ? lineupsTxt : '(Opstellingen nog niet beschikbaar — wedstrijd nog niet begonnen)'}
+${fixtureStatsTxt ? fixtureStatsTxt : ''}
 ${predTxt ? 'API STATISTISCH MODEL:\n' + predTxt : ''}
-BELANGRIJK: Gebruik de actuele ranglijstpositie bij je analyse. Noem teams nooit degradatiekandidaat als ze hoog staan, of titelkandidaat als ze laag staan.`.trim();
 
-  const nl = 'Analyseer in het Nederlands. Wees concreet, gebruik echte cijfers uit de data. Noem blessures als die relevant zijn.';
+INSTRUCTIE: Gebruik ALLEEN bovenstaande data in je analyse. Verzin geen statistieken. Als data ontbreekt, zeg dat dan expliciet. Baseer teamkwaliteit op de actuele ranglijst, NIET op historische reputatie.`.trim();
+
+  const nl = 'Analyseer in het Nederlands. Gebruik ALLEEN de meegeleverde data — verzin geen statistieken. Als iets niet beschikbaar is, zeg dat expliciet. Gebruik de actuele ranglijst voor teamkwaliteit, niet je eigen aannames.';
 
   const vormText = await callEntity(apiKey,
-    `Je bent een voetbal vormexpert. Gebruik de meegeleverde echte data. ${nl} Max 220 woorden.`,
-    `${ctx}\n\nVORM ${m.home} (laatste 8):\n${homeFormTxt}\n\nVORM ${m.away} (laatste 8):\n${awayFormTxt}\n\nAnalyseer: huidige momentum, thuisrecord vs uitrecord, doelpuntentrend, vertrouwen, impact van blessures op vorm, wie heeft betere vorm en waarom.`,
+    `Je bent een voetbal vormexpert. ${nl} Max 220 woorden.`,
+    `${ctx}\n\nVORM ${m.home} (laatste 8):\n${homeFormTxt}\n\nVORM ${m.away} (laatste 8):\n${awayFormTxt}\n\nAnalyseer: huidige momentum, thuisrecord vs uitrecord, doelpuntentrend, vertrouwen, impact blessures op vorm. Baseer alles op de data hierboven.`,
     'vorm','vorm','vorm'
   );
 
   const statsText = await callEntity(apiKey,
-    `Je bent een voetbalstatisticus. Gebruik de meegeleverde echte data. ${nl} Max 220 woorden.`,
-    `${ctx}\n\nH2H HISTORIE:\n${h2hTxt}\n\n${homeStatsTxt}\n\n${awayStatsTxt}\n\nAnalyseer: H2H patroon, wie domineert historisch, doelpunten patroon (over/under 2.5, BTTS), seizoensstatistieken vergelijking, impact afwezige spelers op statistieken.`,
+    `Je bent een voetbalstatisticus. ${nl} Max 220 woorden.`,
+    `${ctx}\n\nH2H HISTORIE:\n${h2hTxt}\n\n${homeStatsTxt}\n\n${awayStatsTxt}\n\nAnalyseer: H2H patroon, doelpunten patroon (over/under 2.5, BTTS), seizoensstatistieken. Vermeld alleen cijfers die in de data staan.`,
     'stats','stats','stats'
   );
 
   const tactiekText = await callEntity(apiKey,
     `Je bent een voetbal tactisch analist. ${nl} Max 220 woorden.`,
-    `${ctx}\n\nVorm context: ${vormText?.substring(0,300)||''}\nStats context: ${statsText?.substring(0,200)||''}\n\nAnalyseer: verwachte speelstijlen, sleutelspelers om te volgen, hoe blessures de tactiek beïnvloeden, middenveld strijd, verdedigingslinie kwaliteit, aanvalskracht, tactisch match-up voordeel.`,
+    `${ctx}\n\n${lineupsTxt || 'Opstellingen niet beschikbaar'}\n\nVorm context: ${vormText?.substring(0,300)||''}\nStats context: ${statsText?.substring(0,200)||''}\n\nAnalyseer: speelstijlen op basis van beschikbare data, sleutelspelers, impact blessures op tactiek. Zeg duidelijk als je iets niet weet.`,
     'tactiek','tactiek','tactiek'
   );
 
   const kansText = await callEntity(apiKey,
-    `Je bent een sportweddenschappen kansen-analist. Geef concrete percentages en value bets. ${nl} Max 250 woorden.`,
-    `${ctx}\n\nAPI MODEL:\n${predTxt||'Niet beschikbaar'}\n\nAnalyse samenvatting:\nVorm: ${vormText?.substring(0,200)||''}\nStats/H2H: ${statsText?.substring(0,200)||''}\n\nGeef:\n1. Winstkansen % (thuis/gelijk/uit) op basis van ALLE data inclusief blessures\n2. Vergelijk met bookmaker quotes — is er VALUE?\n3. Verwachte uitslag\n4. Over/under 2.5 doelpunten advies (impact blessures op scorend vermogen meenemen)\n5. Beide teams scoren (ja/nee)\n6. Betrouwbaarheidsscore 1-10`,
+    `Je bent een sportweddenschappen kansen-analist. ${nl} Geef concrete percentages gebaseerd op de data. Max 250 woorden.`,
+    `${ctx}\n\nAPI MODEL:\n${predTxt||'Niet beschikbaar'}\n\nAnalyse:\nVorm: ${vormText?.substring(0,200)||''}\nStats/H2H: ${statsText?.substring(0,200)||''}\n\nGeef:\n1. Winstkansen % gebaseerd op ranglijst + vorm + H2H\n2. Vergelijk met bookmaker quotes\n3. Verwachte uitslag\n4. Over/under 2.5 advies\n5. Beide teams scoren (ja/nee)\n6. Betrouwbaarheidsscore 1-10\n\nAls data ontbreekt: vermeld dit bij je inschatting.`,
     'kans','kans','kans'
   );
 
   const risicoText = await callEntity(apiKey,
     `Je bent een risicoanalist voor sportweddenschappen. ${nl} Max 200 woorden.`,
-    `${ctx}\n\nKansen analyse: ${kansText?.substring(0,250)||''}\n\nGeef: risicoscore 1-10, impact van blessures/schorsingen op uitkomst, overige onzekerheden (motivatie/vermoeidheid), beste én slechtste scenario, aanbeveling: WEL of NIET spelen en waarom.`,
+    `${ctx}\n\n${fixtureStatsTxt||''}\nKansen: ${kansText?.substring(0,250)||''}\n\nGeef: risicoscore 1-10, concrete risicofactoren uit de data, aanbeveling WEL of NIET spelen.`,
     'risico','risico','risico'
   );
 
