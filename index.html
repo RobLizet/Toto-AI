@@ -26,6 +26,44 @@
   --text:var(--ink);--border:var(--stroke);--gold:#d97706;
   --coffee:#db2777;--surface:rgba(255,255,255,0.95);
 }
+
+/* ── DARK MODE ── */
+body.dark {
+  --bg1:#0d0f14;--bg2:#111318;--bg3:#0f1219;
+  --ink:#f1f5f9;--muted:#94a3b8;--sub:#64748b;
+  --card:rgba(30,35,48,0.90);--card2:rgba(25,30,42,0.80);
+  --stroke:rgba(255,255,255,0.08);
+  --shadow:0 18px 50px rgba(0,0,0,0.4);
+  --shadow2:0 4px 16px rgba(0,0,0,0.25);
+  --rose:#2d1520;--lavender:#1e1535;--sky:#0f1f2e;
+  --surface:rgba(20,24,36,0.98);
+}
+body.dark {
+  background:
+    radial-gradient(1200px 700px at 20% -10%,rgba(219,39,119,.08),transparent 55%),
+    radial-gradient(1000px 650px at 85% 5%,rgba(37,99,235,.07),transparent 60%),
+    radial-gradient(900px 700px at 40% 120%,rgba(124,58,237,.07),transparent 60%),
+    linear-gradient(180deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+}
+body.dark .match-card,
+body.dark .result-card,
+body.dark .settings-section,
+body.dark .combi-bet-row,
+body.dark .bet-row,
+body.dark .tracker-row,
+body.dark .wallet-strip,
+body.dark .tab-nav-wrap { background:var(--card); }
+body.dark .match-card { border-color:var(--stroke); }
+body.dark .card-head { background:rgba(255,255,255,.04); }
+body.dark .modal-box { background:linear-gradient(180deg,#1a1d28,#151826); }
+body.dark .modal-input { background:rgba(255,255,255,.06);color:var(--ink);border-color:var(--stroke); }
+body.dark .odds-btn { background:rgba(255,255,255,.06);border-color:var(--stroke); }
+body.dark .comp-chip { background:rgba(255,255,255,.06);border-color:var(--stroke); }
+body.dark .comp-chip.active { background:rgba(219,39,119,.15); }
+body.dark .tab-btn { background:rgba(255,255,255,.05);border-color:var(--stroke); }
+body.dark .tab-btn.active { background:linear-gradient(135deg,rgba(219,39,119,.2),rgba(37,99,235,.15)); }
+body.dark .tab-nav { background:transparent; }
+body.dark input,body.dark select { background:rgba(255,255,255,.06);color:var(--ink); }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{
@@ -540,7 +578,13 @@ body{
     </div>
     <div class="topbar-right">
       <div class="live-badge" id="liveBadge"><span class="live-dot"></span> LIVE DATA</div>
-      <div class="version-badge">v1.0</div>
+      <div style="display:flex;align-items:center;gap:.4rem;">
+        <button onclick="toggleDark()" id="darkToggle" style="
+          background:var(--card);border:1px solid var(--stroke);
+          border-radius:999px;padding:3px 8px;cursor:pointer;
+          font-size:.8rem;box-shadow:var(--shadow2);line-height:1;">🌙</button>
+        <div class="version-badge">v2.0</div>
+      </div>
     </div>
   </div>
 
@@ -1154,6 +1198,7 @@ let deferredInstall = null;
 window.addEventListener('load', () => {
   try { loadState(); } catch(e) { console.error('loadState:', e); }
   try { applySettings(); } catch(e) { console.error('applySettings:', e); }
+  try { applyDarkMode(); } catch(e) {}
   try { updateWalletUI(); } catch(e) { console.error('updateWalletUI:', e); }
   // Laad keys uit Firebase, dan wedstrijden
   loadFromFirebase().finally(() => {
@@ -3863,6 +3908,23 @@ function renderWalletChart() {
 function registerSW() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/Toto-AI/sw.js', { scope: '/Toto-AI/' }).catch(() => {});
+  }
+}
+
+function toggleDark() {
+  const isDark = document.body.classList.toggle('dark');
+  const btn = document.getElementById('darkToggle');
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('totoai_dark', isDark ? '1' : '0');
+}
+
+function applyDarkMode() {
+  const saved = localStorage.getItem('totoai_dark');
+  // Standaard altijd licht — alleen dark als je zelf op 🌙 hebt getikt
+  if (saved === '1') {
+    document.body.classList.add('dark');
+    const btn = document.getElementById('darkToggle');
+    if (btn) btn.textContent = '☀️';
   }
 }
 </script>
