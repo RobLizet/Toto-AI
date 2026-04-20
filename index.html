@@ -787,6 +787,34 @@ body{
       </div>
     </div>
 
+    <!-- SALDO GRAFIEK -->
+    <div style="background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
+      border-radius:16px;padding:.9rem 1rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,23,42,.05);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+          color:#475569;letter-spacing:.05em;">📈 SALDO VERLOOP</div>
+        <div style="display:flex;gap:.3rem;">
+          <button onclick="setChartView('saldo')" id="cv-saldo"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+            padding:2px 8px;border-radius:999px;cursor:pointer;
+            border:1px solid rgba(219,39,119,.4);background:rgba(219,39,119,.1);color:#be185d;">
+            Saldo
+          </button>
+          <button onclick="setChartView('pnl')" id="cv-pnl"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+            padding:2px 8px;border-radius:999px;cursor:pointer;
+            border:1px solid rgba(15,23,42,.12);background:transparent;color:#475569;">
+            W/V
+          </button>
+        </div>
+      </div>
+      <canvas id="walletChart" height="140" style="width:100%;display:block;"></canvas>
+      <div id="chartEmpty" style="display:none;text-align:center;padding:1.5rem;
+        font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#94a3b8;">
+        Nog geen afgeronde weddenschappen
+      </div>
+    </div>
+
     <div class="wallet-actions-row">
       <div class="wa-btn" onclick="openDepositModal()">
         <span class="icon">💰</span><div class="lbl">Storten</div>
@@ -3048,6 +3076,8 @@ function updateWalletUI() {
   document.getElementById('totalWon').textContent = fmt(w.totalWon);
   document.getElementById('hitRate').textContent = hitRate;
 
+  renderWalletChart();
+
   const list = document.getElementById('betHistoryList');
   if (w.bets.length === 0) {
     list.innerHTML = '<div class="empty-state">Nog geen inzetten geplaatst</div>';
@@ -3690,6 +3720,146 @@ function updateTrackerStats() {
   const pnlEl = document.getElementById('trPnl');
   if (pnlEl) pnlEl.style.color = pnl >= 0 ? '#16a34a' : '#dc2626';
 }
+
+// ═══════════════════════════════════════════════════════
+// WALLET GRAFIEK
+// ═══════════════════════════════════════════════════════
+let chartView = 'saldo';
+
+function setChartView(view) {
+  chartView = view;
+  ['saldo','pnl'].forEach(v => {
+    const btn = document.getElementById('cv-' + v);
+    if (!btn) return;
+    if (v === view) {
+      btn.style.background = 'rgba(219,39,119,.1)';
+      btn.style.borderColor = 'rgba(219,39,119,.4)';
+      btn.style.color = '#be185d';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.borderColor = 'rgba(15,23,42,.12)';
+      btn.style.color = '#475569';
+    }
+  });
+  renderWalletChart();
+}
+
+function renderWalletChart() {
+  const canvas = document.getElementById('walletChart');
+  const emptyEl = document.getElementById('chartEmpty');
+  if (!canvas) return;
+
+  const startBalance = state.settings.startBalance || 500;
+  const settled = [...state.wallet.bets].reverse().filter(b => b.status !== 'pending');
+
+  if (settled.length === 0) {
+    canvas.style.display = 'none';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  canvas.style.display = 'block';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  // Bereken saldo na elke bet
+  let running = startBalance;
+  const points = [{ label: 'Start', value: chartView === 'saldo' ? startBalance : 0, result: 'start' }];
+  settled.forEach(b => {
+    if (b.status === 'win') running += (b.payout - b.amount);
+    else running -= b.amount;
+    points.push({
+      label: b.matchName?.split(' vs ')?.[0] || '?',
+      value: chartView === 'saldo' ? running : running - startBalance,
+      result: b.status
+    });
+  });
+
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth - 32;
+  const H = 140;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const vals = points.map(p => p.value);
+  const minV = Math.min(...vals);
+  const maxV = Math.max(...vals);
+  const range = maxV - minV || 1;
+  const pad = { top: 16, bottom: 20, left: 44, right: 10 };
+  const chartW = W - pad.left - pad.right;
+  const chartH = H - pad.top - pad.bottom;
+
+  const xPos = i => pad.left + (i / Math.max(points.length - 1, 1)) * chartW;
+  const yPos = v => pad.top + chartH - ((v - minV) / range) * chartH;
+
+  // Baseline
+  const baseY = yPos(chartView === 'pnl' ? 0 : startBalance);
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(15,23,42,.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.left, baseY);
+  ctx.lineTo(pad.left + chartW, baseY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const lastVal = points[points.length - 1].value;
+  const isPos = chartView === 'pnl' ? lastVal >= 0 : lastVal >= startBalance;
+  const lineColor = isPos ? '#16a34a' : '#dc2626';
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + chartH);
+  grad.addColorStop(0, isPos ? 'rgba(22,163,74,.22)' : 'rgba(220,38,38,.18)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(points[0].value));
+  points.forEach((p, i) => { if (i > 0) ctx.lineTo(xPos(i), yPos(p.value)); });
+  ctx.lineTo(xPos(points.length - 1), H - pad.bottom);
+  ctx.lineTo(xPos(0), H - pad.bottom);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Lijn
+  ctx.beginPath();
+  ctx.moveTo(xPos(0), yPos(points[0].value));
+  points.forEach((p, i) => { if (i > 0) ctx.lineTo(xPos(i), yPos(p.value)); });
+  ctx.strokeStyle = lineColor;
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Punten
+  points.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(xPos(i), yPos(p.value), 4, 0, Math.PI * 2);
+    ctx.fillStyle = p.result === 'win' ? '#16a34a' : p.result === 'lose' ? '#dc2626' : '#7c3aed';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // Y-labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '9px IBM Plex Mono, monospace';
+  ctx.textAlign = 'right';
+  [minV, maxV].forEach(v => {
+    ctx.fillText('€' + Math.round(v), pad.left - 4, yPos(v) + 3);
+  });
+
+  // Laatste waarde
+  const lx = xPos(points.length - 1), ly = yPos(lastVal);
+  ctx.fillStyle = lineColor;
+  ctx.font = 'bold 10px IBM Plex Mono, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText((lastVal >= 0 ? '+' : '') + '€' + Math.round(lastVal), lx, ly - 8);
+}
+
 function registerSW() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/Toto-AI/sw.js', { scope: '/Toto-AI/' }).catch(() => {});
