@@ -2096,6 +2096,33 @@ async function fetchTopScorers(leagueId) {
   } catch(e) { return null; }
 }
 
+function formatH2H(fixtures, homeName, awayName) {
+  if (!fixtures?.length) return 'Geen H2H data beschikbaar.';
+  return 'H2H laatste ' + fixtures.length + ' onderlinge duels:\n' +
+    fixtures.slice(0,8).map(f => {
+      const d = f.fixture.date.split('T')[0];
+      const hg = f.goals.home ?? '?', ag = f.goals.away ?? '?';
+      const ht = f.teams.home.name, at = f.teams.away.name;
+      const winner = f.teams.home.winner ? ht : f.teams.away.winner ? at : 'Gelijk';
+      return d + ': ' + ht + ' ' + hg + '-' + ag + ' ' + at + ' (' + winner + ')';
+    }).join('\n');
+}
+
+function formatForm(fixtures, teamId, teamName) {
+  if (!fixtures?.length) return 'Geen recente uitslagen beschikbaar voor ' + teamName + '.';
+  return teamName + ' laatste ' + Math.min(fixtures.length,8) + ' wedstrijden:\n' +
+    fixtures.slice(0,8).map(f => {
+      const d = f.fixture.date.split('T')[0];
+      const isHome = f.teams.home.id === teamId;
+      const teamGoals = isHome ? f.goals.home : f.goals.away;
+      const oppGoals = isHome ? f.goals.away : f.goals.home;
+      const opp = isHome ? f.teams.away.name : f.teams.home.name;
+      const venue = isHome ? 'T' : 'U';
+      const result = teamGoals > oppGoals ? 'W' : teamGoals < oppGoals ? 'V' : 'G';
+      return d + ' [' + venue + '] vs ' + opp + ': ' + teamGoals + '-' + oppGoals + ' (' + result + ') - ' + f.league.name;
+    }).join('\n');
+}
+
 function formatLineups(lineups, homeName, awayName) {
   if (!lineups?.length) return '';
   let txt = '\nOPSTELLINGEN (indien beschikbaar):\n';
