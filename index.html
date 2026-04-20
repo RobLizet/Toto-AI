@@ -768,6 +768,18 @@ body{
       ⚽ ANALYSEER WEDSTRIJD
     </button>
 
+    <div id="sofascoreLink" style="display:none;margin-top:.5rem;">
+      <a id="sofascoreBtn" href="#" target="_blank" rel="noopener" style="
+        display:flex;align-items:center;justify-content:center;gap:.5rem;
+        width:100%;padding:.55rem;border-radius:12px;
+        background:rgba(3,91,188,.08);border:1px solid rgba(3,91,188,.25);
+        font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+        color:#035bbc;text-decoration:none;letter-spacing:.03em;">
+        <img src="https://www.sofascore.com/favicon.ico" style="width:14px;height:14px;border-radius:2px;" onerror="this.style.display='none'">
+        BEKIJK OP SOFASCORE →
+      </a>
+    </div>
+
     <!-- Resultaten -->
     <div class="results" id="resultCards">
       <div class="result-card" id="rc-vorm" style="display:none">
@@ -1960,6 +1972,62 @@ function renderMatches(matches) {
           <span class="odds-val" style="${m.awayOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.awayOdds}</span>
         </div>
       </div>
+      ${m.homeOdds === '—' ? `
+      <div class="manual-odds-row" id="manual-odds-${m.id}">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#475569;
+          margin-bottom:.5rem;font-weight:700;letter-spacing:.04em;">
+          ✏️ QUOTES HANDMATIG INVULLEN
+        </div>
+        <div style="margin-bottom:.4rem;">
+          <select id="mob-${m.id}" onclick="event.stopPropagation()"
+            style="width:100%;padding:.38rem .6rem;border:1px solid var(--stroke);
+            border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+            font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);margin-bottom:.4rem;">
+            <option value="Unibet">Unibet</option>
+            <option value="TOTO">TOTO</option>
+            <option value="Betway">Betway</option>
+            <option value="Bet365">Bet365</option>
+            <option value="888sport">888sport</option>
+            <option value="Bwin">Bwin</option>
+            <option value="Ladbrokes">Ladbrokes</option>
+            <option value="Sofascore">Sofascore</option>
+            <option value="Anders">Anders</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#475569;margin-bottom:2px;">1 THUIS</div>
+            <input type="number" step="0.01" min="1.01" placeholder="2.10"
+              id="mo1-${m.id}" onclick="event.stopPropagation()"
+              style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);
+              border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;
+              font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#475569;margin-bottom:2px;">X GELIJK</div>
+            <input type="number" step="0.01" min="1.01" placeholder="3.40"
+              id="mox-${m.id}" onclick="event.stopPropagation()"
+              style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);
+              border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;
+              font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#475569;margin-bottom:2px;">2 UIT</div>
+            <input type="number" step="0.01" min="1.01" placeholder="2.80"
+              id="mo2-${m.id}" onclick="event.stopPropagation()"
+              style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);
+              border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;
+              font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
+          </div>
+        </div>
+        <button onclick="applyManualOdds('${m.id}');event.stopPropagation();"
+          style="width:100%;margin-top:.45rem;padding:.5rem;border-radius:8px;
+          background:rgba(219,39,119,.1);border:1px solid rgba(219,39,119,.3);
+          font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+          color:#be185d;cursor:pointer;">
+          ✓ OPSLAAN & GEBRUIKEN
+        </button>
+      </div>` : ''}
       <div class="add-combi-row" id="combi-row-${m.id}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;padding:.4rem .9rem .6rem;">
         <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">+1</div>
         <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')">+X</div>
@@ -1970,8 +2038,34 @@ function renderMatches(matches) {
 }
 
 function handleOddsBet(e, matchId, pick, pickLabel, odds) {
-  if (odds === '—') return; // geen odds beschikbaar
+  if (odds === '—') return;
   openBetModal(e, matchId, pick, pickLabel, odds);
+}
+
+function applyManualOdds(matchId) {
+  const m = state.matches.find(x => String(x.id) === String(matchId));
+  if (!m) return;
+  const h = parseFloat(document.getElementById('mo1-' + matchId)?.value);
+  const d = parseFloat(document.getElementById('mox-' + matchId)?.value);
+  const a = parseFloat(document.getElementById('mo2-' + matchId)?.value);
+  const bookmaker = document.getElementById('mob-' + matchId)?.value || 'Handmatig';
+  if (!h || !d || !a || h < 1.01 || d < 1.01 || a < 1.01) {
+    alert('Vul alle 3 quotes in (minimaal 1.01)');
+    return;
+  }
+  m.homeOdds = h.toFixed(2);
+  m.drawOdds = d.toFixed(2);
+  m.awayOdds = a.toFixed(2);
+  m.oddsSource = bookmaker;
+  // Herbereken kansen
+  const tot = 1/h + 1/d + 1/a;
+  m.homePct = Math.round((1/h/tot)*100);
+  m.drawPct = Math.round((1/d/tot)*100);
+  m.awayPct = Math.round((1/a/tot)*100);
+  if (state.selectedMatch?.id === m.id) state.selectedMatch = m;
+  renderMatches(state.matches);
+  // Toon bevestiging
+  showFirebaseStatus(`✓ Quotes van ${bookmaker} opgeslagen`, '#16a34a');
 }
 
 function handleCombiAdd(e, matchId, pick, pickLabel, odds) {
@@ -2036,6 +2130,23 @@ function selectMatch(match) {
   document.getElementById('selectedMatchName').textContent = `${match.home} vs ${match.away}`;
   document.getElementById('selectedMatchInfo').style.display = 'block';
   document.getElementById('noMatchWarning').style.display = 'none';
+
+  // Sofascore link
+  const ssLink = document.getElementById('sofascoreLink');
+  const ssBtn = document.getElementById('sofascoreBtn');
+  if (ssLink && ssBtn) {
+    const slug = (match.home + '-' + match.away)
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'') // verwijder accenten
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    // Sofascore direct match URL — werkt als fixtureId overeenkomt
+    const url = `https://www.sofascore.com/football/match/${slug}/${match.id}`;
+    ssBtn.href = url;
+    // Update label met teamnamen
+    ssBtn.querySelector ? null : null;
+    ssBtn.innerHTML = `<img src="https://www.sofascore.com/favicon.ico" style="width:14px;height:14px;border-radius:2px;vertical-align:middle;" onerror="this.style.display='none'"> &nbsp;SOFASCORE: ${match.home} vs ${match.away} →`;
+    ssLink.style.display = 'block';
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2502,7 +2613,7 @@ WEDSTRIJD: ${m.home} vs ${m.away}
 COMPETITIE: ${m.comp}
 DATUM/TIJD: ${wedstrijdDatum}
 ${locatieInfo}
-QUOTES: 1=${m.homeOdds} | X=${m.drawOdds} | 2=${m.awayOdds}
+QUOTES: 1=${m.homeOdds} | X=${m.drawOdds} | 2=${m.awayOdds}${m.oddsSource ? ` (bron: ${m.oddsSource})` : ''}
 RISICOPROFIEL: ${risk} | INZET: €${bet}
 ${isNeutral ? 'LET OP: Neutrale locatie — geen thuisvoordeel!' : ''}
 ${standingsTxt}
