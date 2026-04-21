@@ -1030,6 +1030,24 @@ body{
         </div>
         <input class="sr-input sr-input-border" id="settDefaultBet" type="number" value="10" min="1" max="500">
       </div>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Standaard bookmaker</div>
+          <div class="sr-sub">Standaard geselecteerd bij quotes</div>
+        </div>
+        <select class="sr-input sr-input-border" id="settDefaultBookmaker"
+          style="width:120px;font-size:.72rem;">
+          <option value="Jacks">Jacks</option>
+          <option value="Unibet">Unibet</option>
+          <option value="TOTO">TOTO</option>
+          <option value="Betway">Betway</option>
+          <option value="Bet365">Bet365</option>
+          <option value="888sport">888sport</option>
+          <option value="Bwin">Bwin</option>
+          <option value="Ladbrokes">Ladbrokes</option>
+          <option value="Anders">Anders</option>
+        </select>
+      </div>
       <div style="margin-top:.6rem;">
         <button onclick="resetWallet()" style="width:100%;background:rgba(220,38,38,.08);
           border:1px solid rgba(220,38,38,.25);color:#dc2626;font-family:'IBM Plex Mono',monospace;
@@ -1276,7 +1294,9 @@ let state = {
     fdKey: '',
     defaultComp: 'eredivisie',
     startBalance: 500,
-    defaultBet: 10
+    defaultBet: 10,
+    defaultBookmaker: 'Jacks',
+    oddsSource: 'manual'
   }
 };
 
@@ -2058,22 +2078,20 @@ function renderMatches(matches) {
           ✏️ ${m.homeOdds === '—' ? 'Quotes invullen' : 'Andere quotes gebruiken'}
         </button>
       </div>
-      <div class="manual-odds-row" id="manual-odds-${m.id}" style="display:none;padding:.5rem .9rem .7rem;">
-        <div style="margin-bottom:.4rem;">
+      <div class="manual-odds-row" id="manual-odds-${m.id}" style="display:block;padding:.5rem .9rem .7rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">
           <select id="mob-${m.id}" onclick="event.stopPropagation()"
-            style="width:100%;padding:.38rem .6rem;border:1px solid var(--stroke);
-            border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+            style="flex:1;padding:.35rem .5rem;border:1px solid var(--stroke);
+            border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.6rem;
             font-weight:700;color:var(--ink);background:rgba(255,255,255,.9);">
-            <option value="Jacks">Jacks</option>
+            <option value="Jacks" ${state?.settings?.defaultBookmaker === 'Jacks' ? 'selected' : ''}>Jacks</option>
             <option value="Unibet">Unibet</option>
             <option value="TOTO">TOTO</option>
-            <option value="Jacks">Jacks</option>
             <option value="Betway">Betway</option>
             <option value="Bet365">Bet365</option>
             <option value="888sport">888sport</option>
             <option value="Bwin">Bwin</option>
             <option value="Ladbrokes">Ladbrokes</option>
-            <option value="Sofascore">Sofascore</option>
             <option value="Anders">Anders</option>
           </select>
         </div>
@@ -2081,8 +2099,8 @@ function renderMatches(matches) {
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">1 THUIS</div>
             <input type="number" step="0.01" min="1.01"
-              placeholder="${m.homeOdds !== '—' ? m.homeOdds : '2.10'}"
               id="mo1-${m.id}" onclick="event.stopPropagation()"
+              placeholder="${m.homeOdds !== '—' ? m.homeOdds : '—'}"
               style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);
               border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;
               font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
@@ -2090,8 +2108,8 @@ function renderMatches(matches) {
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">X GELIJK</div>
             <input type="number" step="0.01" min="1.01"
-              placeholder="${m.drawOdds !== '—' ? m.drawOdds : '3.40'}"
               id="mox-${m.id}" onclick="event.stopPropagation()"
+              placeholder="${m.drawOdds !== '—' ? m.drawOdds : '—'}"
               style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);
               border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;
               font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
@@ -2099,8 +2117,8 @@ function renderMatches(matches) {
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">2 UIT</div>
             <input type="number" step="0.01" min="1.01"
-              placeholder="${m.awayOdds !== '—' ? m.awayOdds : '2.80'}"
               id="mo2-${m.id}" onclick="event.stopPropagation()"
+              placeholder="${m.awayOdds !== '—' ? m.awayOdds : '—'}"
               style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);
               border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;
               font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
@@ -3717,6 +3735,7 @@ function saveSettings() {
     state.settings.defaultComp  = document.getElementById('settDefaultComp').value;
     state.settings.startBalance = parseInt(document.getElementById('settStartBalance').value) || 500;
     state.settings.defaultBet   = parseInt(document.getElementById('settDefaultBet').value) || 10;
+    state.settings.defaultBookmaker = document.getElementById('settDefaultBookmaker')?.value || 'Jacks';
     saveState();
     // Zichtbare bevestiging bovenaan instellingen
     showFirebaseStatus('✅ Opgeslagen!', '#16a34a');
@@ -3750,6 +3769,8 @@ function applySettings() {
   document.getElementById('settStartBalance').value   = state.settings.startBalance || 500;
   document.getElementById('settDefaultBet').value     = state.settings.defaultBet || 10;
   document.getElementById('betAmount').value          = state.settings.defaultBet || 10;
+  const bmEl = document.getElementById('settDefaultBookmaker');
+  if (bmEl) bmEl.value = state.settings.defaultBookmaker || 'Jacks';
   const balEl = document.getElementById('currentBalanceDisplay');
   if (balEl) balEl.textContent = '€' + (state.wallet.balance || 0).toFixed(2).replace('.',',');
   if (state.settings.anthropicKey) {
