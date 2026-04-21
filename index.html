@@ -1046,9 +1046,9 @@ body{
       <h4>💾 Back-up & Herstel</h4>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);
         line-height:1.6;margin-bottom:.8rem;">
-        Sla je wallet, tracker en instellingen op als bestand. Importeer later om alles te herstellen.
+        Sla je wallet, tracker en instellingen op als bestand of in de cloud (Firebase).
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
         <button onclick="exportBackup()" style="
           background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);
           color:#2563eb;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
@@ -1062,6 +1062,12 @@ body{
           📤 IMPORTEREN
         </button>
       </div>
+      <button onclick="saveToFirebase().then(()=>showBackupStatus('☁️ Cloud back-up opgeslagen!','#16a34a')).catch(e=>showBackupStatus('⚠ '+e.message,'#dc2626'))" style="
+        width:100%;background:rgba(219,39,119,.08);border:1px solid rgba(219,39,119,.25);
+        color:#be185d;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+        font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
+        ☁️ CLOUD BACK-UP (FIREBASE)
+      </button>
       <input type="file" id="importFile" accept=".json" style="display:none"
         onchange="importBackup(event)">
       <div id="backupStatus" style="display:none;margin-top:.5rem;font-family:'IBM Plex Mono',
@@ -2118,7 +2124,11 @@ function renderMatches(matches) {
 }
 
 function handleOddsBet(e, matchId, pick, pickLabel, odds) {
-  if (odds === '—') return;
+  if (odds === '—') {
+    const row = document.getElementById('manual-odds-' + matchId);
+    if (row) { row.style.display = 'block'; e.stopPropagation(); }
+    return;
+  }
   openBetModal(e, matchId, pick, pickLabel, odds);
 }
 
@@ -2130,7 +2140,7 @@ function toggleManualOdds(matchId) {
 
 function applyManualOdds(matchId) {
   const m = state.matches.find(x => String(x.id) === String(matchId));
-  if (!m) return;
+  if (!m) { alert('Wedstrijd niet gevonden.'); return; }
   const h = parseFloat(document.getElementById('mo1-' + matchId)?.value);
   const d = parseFloat(document.getElementById('mox-' + matchId)?.value);
   const a = parseFloat(document.getElementById('mo2-' + matchId)?.value);
@@ -2148,10 +2158,11 @@ function applyManualOdds(matchId) {
   m.homePct = Math.round((1/h/tot)*100);
   m.drawPct = Math.round((1/d/tot)*100);
   m.awayPct = Math.round((1/a/tot)*100);
-  if (state.selectedMatch?.id === m.id) state.selectedMatch = m;
+  if (state.selectedMatch?.id == matchId) state.selectedMatch = m;
   renderMatches(state.matches);
-  // Toon bevestiging
-  showFirebaseStatus(`✓ Quotes van ${bookmaker} opgeslagen`, '#16a34a');
+  const row = document.getElementById('manual-odds-' + matchId);
+  if (row) row.style.display = 'none';
+  showFirebaseStatus('✓ Quotes van ' + bookmaker + ' opgeslagen', '#16a34a');
 }
 
 function handleCombiAdd(e, matchId, pick, pickLabel, odds) {
@@ -3775,7 +3786,6 @@ function showFirebaseStatus(msg, color) {
 }
 
 async function saveToFirebase() {
-  // Sla alleen API keys op — NIET de wallet (die blijft lokaal)
   const payload = {
     anthropicKey: state.settings.anthropicKey || '',
     footballKey:  state.settings.footballKey  || '',
@@ -3792,6 +3802,21 @@ async function saveToFirebase() {
     body: JSON.stringify(payload)
   });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+  // Sla ook wallet + tracker op als cloud back-up
+  const backupPayload = {
+    wallet: state.wallet,
+    tracker: state.tracker,
+    version: '2.1',
+    backupDate: new Date().toISOString()
+  };
+  const backupUrl = `${FB_DB}/backup.json?auth=${FB_KEY}`;
+  await fetch(backupUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(backupPayload)
+  });
+
   return resp.json();
 }
 
@@ -3808,7 +3833,23 @@ async function loadFromFirebase() {
     if (d.defaultComp)  state.settings.defaultComp  = d.defaultComp;
     if (d.defaultBet)   state.settings.defaultBet   = d.defaultBet;
     if (d.startBalance) state.settings.startBalance = d.startBalance;
-    // Sla ook lokaal op als backup
+
+    // Herstel ook wallet + tracker als lokaal leeg is
+    try {
+      const backupUrl = `${FB_DB}/backup.json?auth=${FB_KEY}`;
+      const backupResp = await fetch(backupUrl);
+      if (backupResp.ok) {
+        const b = await backupResp.json();
+        if (b?.wallet && state.wallet.bets.length === 0) {
+          state.wallet = b.wallet;
+          showFirebaseStatus('🔥 Wallet hersteld vanuit cloud back-up', '#16a34a');
+        }
+        if (b?.tracker && (!state.tracker?.bets?.length)) {
+          state.tracker = b.tracker;
+        }
+      }
+    } catch(e) {}
+
     saveState();
     applySettings();
     showFirebaseStatus('🔥 Keys geladen vanuit Firebase', '#2ecc71');
