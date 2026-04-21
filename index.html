@@ -46,6 +46,96 @@ radial-gradient(1000px 650px at 85% 5%,rgba(37,99,235,.07),transparent 60%),
 radial-gradient(900px 700px at 40% 120%,rgba(124,58,237,.07),transparent 60%),
 linear-gradient(180deg,var(–bg1),var(–bg2) 55%,var(–bg3));
 }
+
+/* ── MINT THEMA (rustig groen, oogvriendelijk) ── */
+body.mint {
+–bg1:#f0fdf4;–bg2:#ecfdf5;–bg3:#f7fee7;
+–ink:#064e3b;–muted:#475569;–sub:#64748b;
+–card:rgba(255,255,255,0.85);–card2:rgba(255,255,255,0.70);
+–stroke:rgba(5,78,59,0.10);
+–accent:#059669;
+–rose:#d1fae5;–lavender:#e0f2fe;–sky:#ccfbf1;
+}
+body.mint {
+background:
+radial-gradient(1200px 700px at 20% -10%,rgba(52,211,153,.18),transparent 55%),
+radial-gradient(1000px 650px at 85% 5%,rgba(167,243,208,.22),transparent 60%),
+radial-gradient(900px 700px at 40% 120%,rgba(134,239,172,.20),transparent 60%),
+linear-gradient(180deg,var(–bg1),var(–bg2) 55%,var(–bg3));
+}
+body.mint .tab-nav-wrap {
+background:linear-gradient(180deg,rgba(240,253,244,.98) 80%,transparent);
+}
+body.mint .tab-btn.active {
+background:linear-gradient(135deg,rgba(209,250,229,.95),rgba(204,251,241,.9),rgba(187,247,208,.9));
+border-color:rgba(5,150,105,.35);
+box-shadow:0 4px 16px rgba(5,150,105,.15);
+}
+body.mint .tab-btn.active .tab-label { color:#047857; }
+body.mint .topbar-logo,
+body.mint .combi-header,
+body.mint .value-banner-title,
+body.mint .modal-box h3,
+body.mint .wallet-big .amount,
+body.mint .made-by {
+background:linear-gradient(135deg,#059669 0%,#0891b2 60%,#0284c7 100%);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+body.mint .comp-chip.active {
+background:linear-gradient(135deg,rgba(209,250,229,.8),rgba(204,251,241,.65));
+border-color:rgba(5,150,105,.4);
+}
+body.mint .comp-chip.active .cname { color:#047857; }
+body.mint .w-item.bal .val { color:#047857; }
+body.mint .match-card.selected {
+background:linear-gradient(135deg,rgba(209,250,229,.7),rgba(204,251,241,.6));
+border-color:rgba(5,150,105,.4);
+}
+
+/* ── CRÈME THEMA (warm beige, zachte ogen) ── */
+body.cream {
+–bg1:#fdf6e3;–bg2:#faf3dd;–bg3:#fef9e7;
+–ink:#3d2817;–muted:#6b5d4f;–sub:#8a7a6a;
+–card:rgba(255,252,240,0.88);–card2:rgba(253,247,220,0.72);
+–stroke:rgba(61,40,23,0.10);
+–accent:#b45309;
+–rose:#fef3c7;–lavender:#fed7aa;–sky:#fde68a;
+}
+body.cream {
+background:
+radial-gradient(1200px 700px at 20% -10%,rgba(251,191,36,.15),transparent 55%),
+radial-gradient(1000px 650px at 85% 5%,rgba(253,230,138,.22),transparent 60%),
+radial-gradient(900px 700px at 40% 120%,rgba(254,215,170,.18),transparent 60%),
+linear-gradient(180deg,var(–bg1),var(–bg2) 55%,var(–bg3));
+}
+body.cream .tab-nav-wrap {
+background:linear-gradient(180deg,rgba(253,246,227,.98) 80%,transparent);
+}
+body.cream .tab-btn.active {
+background:linear-gradient(135deg,rgba(254,243,199,.95),rgba(253,230,138,.9),rgba(254,215,170,.9));
+border-color:rgba(180,83,9,.35);
+box-shadow:0 4px 16px rgba(180,83,9,.15);
+}
+body.cream .tab-btn.active .tab-label { color:#92400e; }
+body.cream .topbar-logo,
+body.cream .combi-header,
+body.cream .value-banner-title,
+body.cream .modal-box h3,
+body.cream .wallet-big .amount,
+body.cream .made-by {
+background:linear-gradient(135deg,#b45309 0%,#c2410c 60%,#dc2626 100%);
+-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+body.cream .comp-chip.active {
+background:linear-gradient(135deg,rgba(254,243,199,.8),rgba(253,230,138,.65));
+border-color:rgba(180,83,9,.4);
+}
+body.cream .comp-chip.active .cname { color:#92400e; }
+body.cream .w-item.bal .val { color:#92400e; }
+body.cream .match-card.selected {
+background:linear-gradient(135deg,rgba(254,243,199,.7),rgba(253,230,138,.6));
+border-color:rgba(180,83,9,.4);
+}
 body.dark .match-card,
 body.dark .result-card,
 body.dark .settings-section,
@@ -690,10 +780,11 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
         <a href="help.html" style="background:var(--card);border:1px solid var(--stroke);
           border-radius:999px;padding:3px 8px;font-size:.8rem;box-shadow:var(--shadow2);
           text-decoration:none;line-height:1;" title="Uitleg & Gids">❓</a>
-        <button onclick="toggleDark()" id="darkToggle" style="
+        <button onclick="cycleTheme()" id="themeToggle" style="
           background:var(--card);border:1px solid var(--stroke);
           border-radius:999px;padding:3px 8px;cursor:pointer;
-          font-size:.8rem;box-shadow:var(--shadow2);line-height:1;">🌙</button>
+          font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
+          title="Wissel thema: licht → mint → crème → donker">🌙</button>
         <div class="version-badge">v2.2</div>
       </div>
     </div>
@@ -1503,7 +1594,7 @@ let deferredInstall = null;
 window.addEventListener('load', () => {
   try { loadState(); } catch(e) { console.error('loadState:', e); }
   try { applySettings(); } catch(e) { console.error('applySettings:', e); }
-  try { applyDarkMode(); } catch(e) {}
+  try { applyTheme(); } catch(e) {}
   try { updateWalletUI(); } catch(e) { console.error('updateWalletUI:', e); }
   try { updateNotifUI(); } catch(e) {}  // VALUE
   // Laad keys uit Firebase, dan wedstrijden
@@ -2375,12 +2466,36 @@ async function scanValueAll() {
 
   const btn = document.getElementById('scanValueBtn');
   btn.disabled = true;
-  btn.textContent = '⟳ SCANNEN...';
+  btn.textContent = '⟳ STAND OPHALEN...';
 
   // Toon uitleg bij eerste keer
   if (!state.settings.valueExplainerSeen) {
     document.getElementById('valueExplainer').style.display = 'block';
   }
+
+  // ── ACTUELE RANGLIJST + VORM OPHALEN ──
+  // Cruciaal: Claude's kennis kan verouderd zijn (bv. Telstar als degradant zien
+  // terwijl ze gepromoveerd zijn). De actuele stand geeft de ware teamkwaliteit.
+  let standingsCtx = '';
+  if (state.settings.footballKey) {
+    try {
+      const leagueId = COMP_IDS[state.activeComp];
+      const r = await apiFetch(
+        `https://v3.football.api-sports.io/standings?league=${leagueId}&season=2025`,
+        state.settings.footballKey, 6000
+      );
+      const d = await r.json();
+      const standings = d.response?.[0]?.league?.standings?.[0];
+      if (standings?.length) {
+        standingsCtx = `\n\nACTUELE STAND ${state.activeComp.toUpperCase()} (seizoen 2025/26):\n` +
+          standings.map(t =>
+            `${t.rank}. ${t.team.name} — ${t.points}pt | W${t.all.win} G${t.all.draw} V${t.all.lose} | DS:${t.goalsDiff>0?'+':''}${t.goalsDiff} | vorm:${t.form||'?'}`
+          ).join('\n');
+      }
+    } catch(e) {}
+  }
+
+  btn.textContent = '⟳ SCANNEN...';
 
   const ctx = candidates.map((m, i) =>
     `${i+1}. ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${m.date||''} ${m.time} | Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`
@@ -2390,21 +2505,28 @@ async function scanValueAll() {
     const data = await anthropicFetchWithRetry(apiKey, {
       model: 'claude-sonnet-4-5',
       max_tokens: 2500,
-      system: `Je bent een value-betting analist. Voor elke wedstrijd geef je je eerlijke inschatting van de winstkans voor de BESTE pick (1/X/2), op basis van teamkwaliteit, vorm, competitie en thuisvoordeel.
+      system: `Je bent een value-betting analist. Voor elke wedstrijd geef je je eerlijke inschatting van de winstkans voor de BESTE pick (1/X/2).
+
+KRITIEK BELANGRIJK:
+- Gebruik UITSLUITEND de meegeleverde ACTUELE STAND voor teamkwaliteit — NIET je eigen kennis.
+- Promoties/degradaties zijn al verwerkt in de stand: als een team in de Eredivisie-stand staat, speelt het daar nu, ook als je dacht dat ze lager speelden.
+- Ranglijstpositie + vorm + doelsaldo zijn je belangrijkste signalen voor kwaliteit.
+- De bookmaker quotes geven ook een hint over teamkwaliteit: lage quote = sterker team.
 
 Reageer UITSLUITEND in dit JSON formaat (geen markdown, geen extra tekst):
 {"scans":[
-  {"id":"123","pick":"1","pickLabel":"Ajax wint","aiKans":58,"reason":"Korte reden max 15 woorden"},
+  {"id":"123","pick":"1","pickLabel":"Ajax wint","aiKans":58,"reason":"Max 15 woorden, verwijs naar stand/vorm"},
   ...
 ]}
 
-BELANGRIJK:
+REGELS:
 - pick MOET "1", "X" of "2" zijn
-- aiKans = jouw eerlijke inschatting (0-100)
-- Wees REALISTISCH: 85%+ alleen bij echt dominante teams
+- aiKans = eerlijke inschatting 0-100
+- Wees REALISTISCH: 85%+ alleen bij echt dominante teams (top-3 thuis tegen onderkant)
 - Focus op welke pick MEESTE VALUE biedt, niet per se de favoriet
-- Value = kans waarbij (aiKans/100 × quote) > 1.0`,
-      messages: [{ role:'user', content:`Analyseer deze ${candidates.length} wedstrijden:\n\n${ctx}` }]
+- Value = wanneer (aiKans/100 × quote) > 1.0
+- Als een team niet in de stand staat: zeg dat en gebruik alleen de quote als signaal`,
+      messages: [{ role:'user', content:`Analyseer deze ${candidates.length} wedstrijden:\n\n${ctx}${standingsCtx}` }]
     });
 
     if (data.error) throw new Error(data.error.message);
@@ -3975,19 +4097,72 @@ function registerSW() {
   }
 }
 
-function toggleDark() {
-  const isDark = document.body.classList.toggle('dark');
-  const btn = document.getElementById('darkToggle');
-  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
-  localStorage.setItem('totoai_dark', isDark ? '1' : '0');
+// ═══════════════════════════════════════════════════════
+// THEMA SYSTEEM — 4 thema's: licht / mint / crème / donker
+// ═══════════════════════════════════════════════════════
+const THEMES = ['light', 'mint', 'cream', 'dark'];
+const THEME_ICONS = { light: '🌙', mint: '🌿', cream: '🍶', dark: '☀️' };
+const THEME_NAMES = { light: 'Licht', mint: 'Mint', cream: 'Crème', dark: 'Donker' };
+
+function cycleTheme() {
+  const current = localStorage.getItem('totoai_theme') || 'light';
+  const idx = THEMES.indexOf(current);
+  const next = THEMES[(idx + 1) % THEMES.length];
+  localStorage.setItem('totoai_theme', next);
+  applyTheme();
+  // Kort popup-label zodat je weet welk thema nu actief is
+  showThemeHint(next);
 }
 
-function applyDarkMode() {
-  if (localStorage.getItem('totoai_dark') === '1') {
-    document.body.classList.add('dark');
-    const btn = document.getElementById('darkToggle');
-    if (btn) btn.textContent = '☀️';
+function applyTheme() {
+  const theme = localStorage.getItem('totoai_theme') || migrateOldDarkPref();
+  document.body.classList.remove('dark', 'mint', 'cream');
+  if (theme === 'dark') document.body.classList.add('dark');
+  else if (theme === 'mint') document.body.classList.add('mint');
+  else if (theme === 'cream') document.body.classList.add('cream');
+  // light = standaard (geen class)
+
+  // Update icoon — toont het VOLGENDE thema als hint van wat je krijgt bij klik
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    const idx = THEMES.indexOf(theme);
+    const next = THEMES[(idx + 1) % THEMES.length];
+    btn.textContent = THEME_ICONS[next];
+    btn.title = `Huidig: ${THEME_NAMES[theme]} — tik voor ${THEME_NAMES[next]}`;
   }
+}
+
+/** Migreer oude dark-only setting naar nieuwe 4-themas systeem */
+function migrateOldDarkPref() {
+  const oldDark = localStorage.getItem('totoai_dark');
+  if (oldDark === '1') {
+    localStorage.setItem('totoai_theme', 'dark');
+    localStorage.removeItem('totoai_dark');
+    return 'dark';
+  }
+  return 'light';
+}
+
+function showThemeHint(theme) {
+  let hint = document.getElementById('themeHint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'themeHint';
+    hint.style.cssText = `
+      position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+      background:var(--card);border:1px solid var(--stroke);
+      border-radius:14px;padding:.9rem 1.4rem;
+      font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:700;
+      color:var(--ink);box-shadow:var(--shadow);backdrop-filter:blur(10px);
+      z-index:10000;opacity:0;transition:opacity .25s;pointer-events:none;
+      letter-spacing:.05em;
+    `;
+    document.body.appendChild(hint);
+  }
+  hint.textContent = `${THEME_ICONS[theme]} ${THEME_NAMES[theme].toUpperCase()} THEMA`;
+  requestAnimationFrame(() => { hint.style.opacity = '1'; });
+  clearTimeout(window._themeHintTimer);
+  window._themeHintTimer = setTimeout(() => { hint.style.opacity = '0'; }, 1200);
 }
 </script>
 
