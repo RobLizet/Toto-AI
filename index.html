@@ -1902,7 +1902,6 @@ async function fetchOddsForMatches(leagueId, apiKey) {
     // Sla bookmaker odds op in state voor gebruik in UI
     state.bookmakerOdds = { ...state.bookmakerOdds, ...bookmakerOddsMap };
 
-    // Update matches met echte odds
     let updated = false;
     state.matches = state.matches.map(m => {
       const o = oddsMap[m.id];
@@ -1920,7 +1919,34 @@ async function fetchOddsForMatches(leagueId, apiKey) {
       };
     });
 
-    if (updated) renderMatches(state.matches);
+    if (updated) {
+      renderMatches(state.matches);
+    }
+
+    // Update bookmaker tabellen voor wedstrijden die nog — hebben
+    Object.keys(bookmakerOddsMap).forEach(fixtureId => {
+      const bms = bookmakerOddsMap[fixtureId];
+      if (!bms?.length) return;
+      const tableEl = document.getElementById('bm-table-' + fixtureId);
+      if (!tableEl) return;
+      tableEl.innerHTML = `
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);font-weight:700;margin-bottom:.35rem;letter-spacing:.04em;">📊 BOOKMAKER QUOTES — tik om te gebruiken</div>
+        ${bms.slice(0,8).map(bm => `
+          <div onclick="applyBookmakerOdds('${fixtureId}','${bm.name}',${bm.home},${bm.draw},${bm.away});event.stopPropagation();"
+            style="display:grid;grid-template-columns:1fr auto auto auto;gap:.5rem;align-items:center;
+            padding:.4rem .6rem;border-radius:8px;cursor:pointer;margin-bottom:.2rem;
+            background:rgba(255,255,255,.8);border:1px solid rgba(15,23,42,.07);">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${bm.name}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#16a34a;min-width:40px;text-align:center;">${bm.home.toFixed(2)}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#d97706;min-width:40px;text-align:center;">${bm.draw.toFixed(2)}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#dc2626;min-width:40px;text-align:center;">${bm.away.toFixed(2)}</div>
+          </div>`).join('')}
+      `;
+      // Toon het invoerveld ook als er bookmaker data is maar nog geen odds in knoppen
+      const row = document.getElementById('manual-odds-' + fixtureId);
+      const match = state.matches.find(x => String(x.id) === String(fixtureId));
+      if (row && match?.homeOdds === '—') row.style.display = 'block';
+    });
   } catch(e) { /* odds zijn optioneel */ }
 }
 
@@ -1978,6 +2004,27 @@ async function debugAPI() {
     } catch(e) { log += `fd.org fout: ${e.message}\n\n`; }
   } else {
     log += `fd.org: geen key ingevuld\n\n`;
+  }
+
+  // Test odds voor geselecteerde wedstrijd
+  if (apiKey && state.selectedMatch) {
+    const fid = state.selectedMatch.id;
+    log += `ODDS CHECK fixture ${fid}:\n`;
+    try {
+      const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fid}`, apiKey);
+      const d = await r.json();
+      log += `  Resultaten: ${d.response?.length || 0}\n`;
+      if (d.response?.length) {
+        d.response[0].bookmakers?.slice(0,5).forEach(bm => {
+          const mw = bm.bets?.find(b => b.name === 'Match Winner');
+          if (mw) log += `  ${bm.name}: ${mw.values[0]?.odd} / ${mw.values[1]?.odd} / ${mw.values[2]?.odd}\n`;
+        });
+      } else {
+        log += `  Geen odds beschikbaar in API voor dit fixture\n`;
+        log += `  errors: ${JSON.stringify(d.errors)}\n`;
+      }
+    } catch(e) { log += `  Fout: ${e.message}\n`; }
+    log += '\n';
   }
 
   // Test API-Football
@@ -2085,54 +2132,43 @@ function renderMatches(matches) {
         </button>
       </div>
       <div class="manual-odds-row" id="manual-odds-${m.id}" style="display:${m.homeOdds === '—' ? 'block' : 'none'};padding:.5rem .9rem .7rem;">
-        ${(state.bookmakerOdds?.[m.id]?.length) ? `
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);font-weight:700;margin-bottom:.35rem;letter-spacing:.04em;">📊 BOOKMAKER QUOTES — tik om te gebruiken</div>
-        ${(state.bookmakerOdds[m.id]||[]).slice(0,8).map(bm => `
-          <div onclick="applyBookmakerOdds('${m.id}','${bm.name}',${bm.home},${bm.draw},${bm.away});event.stopPropagation();"
-            style="display:grid;grid-template-columns:1fr auto auto auto;gap:.5rem;align-items:center;
-            padding:.4rem .6rem;border-radius:8px;cursor:pointer;margin-bottom:.2rem;
-            background:rgba(255,255,255,.8);border:1px solid rgba(15,23,42,.07);">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;color:var(--ink);">${bm.name}</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#16a34a;min-width:38px;text-align:center;">${bm.home.toFixed(2)}</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#d97706;min-width:38px;text-align:center;">${bm.draw.toFixed(2)}</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#dc2626;min-width:38px;text-align:center;">${bm.away.toFixed(2)}</div>
-          </div>`).join('')}
-        ` : `
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);font-weight:700;margin-bottom:.35rem;">✏️ QUOTES HANDMATIG INVULLEN</div>
-        <div style="margin-bottom:.4rem;">
-          <select id="mob-${m.id}" onclick="event.stopPropagation()"
-            style="width:100%;padding:.35rem .5rem;border:1px solid var(--stroke);
-            border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-            font-weight:700;color:var(--ink);background:rgba(255,255,255,.9);">
-            <option value="Jacks">Jacks</option>
-            <option value="Unibet">Unibet</option>
-            <option value="TOTO">TOTO</option>
-            <option value="Betway">Betway</option>
-            <option value="Bet365">Bet365</option>
-            <option value="Anders">Anders</option>
-          </select>
+        <div id="bm-table-${m.id}">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);margin-bottom:.35rem;">✏️ QUOTES HANDMATIG INVULLEN</div>
+          <div style="margin-bottom:.4rem;">
+            <select id="mob-${m.id}" onclick="event.stopPropagation()"
+              style="width:100%;padding:.35rem .5rem;border:1px solid var(--stroke);
+              border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+              font-weight:700;color:var(--ink);background:rgba(255,255,255,.9);">
+              <option value="Jacks">Jacks</option>
+              <option value="Unibet">Unibet</option>
+              <option value="TOTO">TOTO</option>
+              <option value="Betway">Betway</option>
+              <option value="Bet365">Bet365</option>
+              <option value="Anders">Anders</option>
+            </select>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.4rem;">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">1 THUIS</div>
+              <input type="number" step="0.01" min="1.01" id="mo1-${m.id}" onclick="event.stopPropagation()" placeholder="2.10"
+                style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">X GELIJK</div>
+              <input type="number" step="0.01" min="1.01" id="mox-${m.id}" onclick="event.stopPropagation()" placeholder="3.40"
+                style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">2 UIT</div>
+              <input type="number" step="0.01" min="1.01" id="mo2-${m.id}" onclick="event.stopPropagation()" placeholder="2.80"
+                style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
+            </div>
+          </div>
+          <button onclick="applyManualOdds('${m.id}');event.stopPropagation();"
+            style="width:100%;padding:.5rem;border-radius:8px;background:rgba(219,39,119,.1);border:1px solid rgba(219,39,119,.3);font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:#be185d;cursor:pointer;">
+            ✓ OPSLAAN & GEBRUIKEN
+          </button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.4rem;">
-          <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">1 THUIS</div>
-            <input type="number" step="0.01" min="1.01" id="mo1-${m.id}" onclick="event.stopPropagation()" placeholder="2.10"
-              style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
-          </div>
-          <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">X GELIJK</div>
-            <input type="number" step="0.01" min="1.01" id="mox-${m.id}" onclick="event.stopPropagation()" placeholder="3.40"
-              style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
-          </div>
-          <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">2 UIT</div>
-            <input type="number" step="0.01" min="1.01" id="mo2-${m.id}" onclick="event.stopPropagation()" placeholder="2.80"
-              style="width:100%;padding:.38rem .4rem;border:1px solid rgba(219,39,119,.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.78rem;font-weight:700;color:#0f172a;background:rgba(255,255,255,.9);text-align:center;">
-          </div>
-        </div>
-        <button onclick="applyManualOdds('${m.id}');event.stopPropagation();"
-          style="width:100%;padding:.5rem;border-radius:8px;background:rgba(219,39,119,.1);border:1px solid rgba(219,39,119,.3);font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:#be185d;cursor:pointer;">
-          ✓ OPSLAAN & GEBRUIKEN
-        </button>`}
       </div>
       <div class="add-combi-row" id="combi-row-${m.id}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;padding:.4rem .9rem .6rem;">
         <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">+1</div>
