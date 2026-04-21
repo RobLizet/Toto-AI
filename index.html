@@ -717,6 +717,26 @@ body{
       padding:.7rem 1rem;margin-bottom:.9rem;line-height:1.7;">
       💡 AI selecteert de beste tips uit de geladen wedstrijden. Ga eerst naar <b>⚽ Wedstrijden</b> en laad een competitie.
     </div>
+
+    <!-- VALUE SCANNER -->
+    <div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(37,99,235,.06));
+      border:1px solid rgba(22,163,74,.25);border-radius:16px;padding:.9rem 1rem;margin-bottom:.9rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;
+        color:#15803d;letter-spacing:.05em;margin-bottom:.3rem;">💎 VALUE SCANNER</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
+        line-height:1.6;margin-bottom:.7rem;">
+        AI analyseert alle wedstrijden tegelijk en zoekt kansen waar de echte kans hoger is dan de bookmaker inschat.
+      </div>
+      <button onclick="runValueScan()" id="valueScanBtn"
+        style="width:100%;padding:.6rem;border-radius:10px;
+        background:linear-gradient(135deg,#16a34a,#15803d);border:none;
+        font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:700;
+        color:#fff;cursor:pointer;letter-spacing:.04em;">
+        🔍 SCAN ALLE WEDSTRIJDEN OP VALUE
+      </button>
+      <div id="valueScanResults" style="margin-top:.7rem;"></div>
+    </div>
+
     <button class="combi-gen-btn" id="combiGenBtn" onclick="generateCombiTip()">
       ⚡ GENEREER TOP 3 TIPS + COMBI
     </button>
@@ -3065,6 +3085,91 @@ Geef in exact dit JSON formaat, geen extra tekst:
 
   btn.disabled = false;
   btn.textContent = '⚽ ANALYSEER OPNIEUW';
+}
+
+// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// VALUE SCANNER
+// ═══════════════════════════════════════════════════════
+async function runValueScan() {
+  const apiKey = state.settings.anthropicKey;
+  if (!apiKey) { alert('Voer eerst je Anthropic API key in bij Instellingen'); return; }
+
+  const matches = state.matches.filter(m => m.homeOdds !== '—');
+  if (matches.length === 0) {
+    alert('Laad eerst wedstrijden met quotes (ga naar Wedstrijden)');
+    return;
+  }
+
+  const btn = document.getElementById('valueScanBtn');
+  const results = document.getElementById('valueScanResults');
+  btn.textContent = '⟳ BEZIG MET SCANNEN...';
+  btn.disabled = true;
+  results.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);text-align:center;padding:.7rem;">
+    <span class="dots"><span></span><span></span><span></span></span>&nbsp; AI analyseert ${matches.length} wedstrijden...
+  </div>`;
+
+  const matchList = matches.map((m, i) => {
+    const h = parseFloat(m.homeOdds), d = parseFloat(m.drawOdds), a = parseFloat(m.awayOdds);
+    const tot = 1/h + 1/d + 1/a;
+    return `${i+1}. ${m.home} vs ${m.away}
+   Quotes: 1=${m.homeOdds}(${Math.round(1/h/tot*100)}%) X=${m.drawOdds}(${Math.round(1/d/tot*100)}%) 2=${m.awayOdds}(${Math.round(1/a/tot*100)}%)`;
+  }).join('\n');
+
+  try {
+    const resp = await anthropicFetchWithRetry(apiKey, {
+      model: 'claude-sonnet-4-5', max_tokens: 1500,
+      system: `Je bent een value betting expert. Zoek value bets in deze wedstrijden.
+Value = jouw inschatting echte kans is HOGER dan bookmaker implied kans.
+Geef ALLEEN JSON array terug, geen andere tekst:
+[{"match":"A vs B","pick":"1","pickLabel":"A wint","bookOdds":"2.50","bookImplied":40,"aiKans":55,"valueGap":15,"redenering":"max 20 woorden","sterkte":"sterk"}]
+sterkte: sterk(>10% gap), matig(5-10%), klein(<5%). Lege array als geen value.`,
+      messages: [{ role: 'user', content: `Analyseer op value:\n\n${matchList}` }]
+    });
+
+    const raw = resp.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const valueBets = JSON.parse(raw);
+
+    if (!valueBets.length) {
+      results.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;
+        color:var(--sub);text-align:center;padding:.8rem;background:rgba(255,255,255,.6);
+        border-radius:10px;border:1px solid var(--stroke);">
+        Geen duidelijke value bets gevonden in de huidige wedstrijden.
+      </div>`;
+    } else {
+      const kleuren = { sterk:'#16a34a', matig:'#d97706', klein:'#2563eb' };
+      const badges = { sterk:'🔥 STERK', matig:'⚡ MATIG', klein:'💡 KLEIN' };
+      results.innerHTML = `
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+          color:#15803d;margin-bottom:.5rem;letter-spacing:.04em;">💎 ${valueBets.length} VALUE BET${valueBets.length>1?'S':''} GEVONDEN</div>
+        ${valueBets.map(v => {
+          const kleur = kleuren[v.sterkte] || '#16a34a';
+          const badge = badges[v.sterkte] || '💡';
+          return `<div style="background:rgba(255,255,255,.88);border:1px solid ${kleur}44;
+            border-left:3px solid ${kleur};border-radius:10px;padding:.7rem .85rem;margin-bottom:.5rem;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;color:var(--ink);flex:1;">${v.match}</div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;
+                padding:2px 7px;border-radius:4px;background:${kleur}18;color:${kleur};margin-left:.4rem;">${badge}</span>
+            </div>
+            <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.3rem;">
+              <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${v.pick} — ${v.pickLabel}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:700;color:#be185d;">@ ${v.bookOdds}</span>
+            </div>
+            <div style="display:flex;gap:.8rem;margin-bottom:.3rem;flex-wrap:wrap;">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);">Bookmaker: <b style="color:#dc2626;">${v.bookImplied}%</b></span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);">AI: <b style="color:#16a34a;">${v.aiKans}%</b></span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;color:${kleur};">+${v.valueGap}% VALUE</span>
+            </div>
+            <div style="font-size:.78rem;color:#334155;line-height:1.5;">${v.redenering}</div>
+          </div>`;
+        }).join('')}`;
+    }
+  } catch(e) {
+    results.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#dc2626;padding:.5rem;">Fout: ${e.message}</div>`;
+  }
+  btn.textContent = '🔍 SCAN OPNIEUW';
+  btn.disabled = false;
 }
 
 // ═══════════════════════════════════════════════════════
