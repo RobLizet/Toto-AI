@@ -1041,6 +1041,33 @@ body{
 
     <button class="save-settings-btn" onclick="saveSettings()">✓ INSTELLINGEN OPSLAAN</button>
 
+    <!-- BACK-UP SECTIE -->
+    <div class="settings-section">
+      <h4>💾 Back-up & Herstel</h4>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);
+        line-height:1.6;margin-bottom:.8rem;">
+        Sla je wallet, tracker en instellingen op als bestand. Importeer later om alles te herstellen.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <button onclick="exportBackup()" style="
+          background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);
+          color:#2563eb;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+          font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
+          📥 EXPORTEREN
+        </button>
+        <button onclick="document.getElementById('importFile').click()" style="
+          background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.3);
+          color:#15803d;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+          font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
+          📤 IMPORTEREN
+        </button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none"
+        onchange="importBackup(event)">
+      <div id="backupStatus" style="display:none;margin-top:.5rem;font-family:'IBM Plex Mono',
+        monospace;font-size:.58rem;padding:.4rem .7rem;border-radius:8px;"></div>
+    </div>
+
     <div class="disclaimer">
       TOTO AI is een fictieve testapp voor persoonlijk gebruik.<br>
       Alle analyses zijn AI-gegenereerd en geen gokadvies.<br>
@@ -4011,6 +4038,75 @@ function updateTrackerStats() {
   el('trRoi', roi !== '—' ? roi + '%' : '—');
   const pnlEl = document.getElementById('trPnl');
   if (pnlEl) pnlEl.style.color = pnl >= 0 ? '#16a34a' : '#dc2626';
+}
+
+function exportBackup() {
+  const backup = {
+    version: '2.1',
+    exportDate: new Date().toISOString(),
+    wallet: state.wallet,
+    tracker: state.tracker,
+    settings: {
+      // Exporteer alles BEHALVE API keys (veiligheid)
+      defaultComp: state.settings.defaultComp,
+      startBalance: state.settings.startBalance,
+      defaultBet: state.settings.defaultBet
+    }
+  };
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const datum = new Date().toLocaleDateString('nl-NL').replace(/\//g,'-');
+  a.href = url;
+  a.download = `totoai-backup-${datum}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showBackupStatus('✅ Back-up gedownload!', '#16a34a');
+}
+
+function importBackup(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (!backup.version || !backup.wallet) {
+        showBackupStatus('⚠ Ongeldig back-up bestand', '#dc2626');
+        return;
+      }
+      if (!confirm(`Back-up van ${new Date(backup.exportDate).toLocaleDateString('nl-NL')} importeren?\n\nDit overschrijft je huidige wallet en tracker.`)) return;
+
+      // Herstel wallet en tracker
+      if (backup.wallet) state.wallet = backup.wallet;
+      if (backup.tracker) state.tracker = backup.tracker;
+      if (backup.settings) {
+        state.settings.defaultComp = backup.settings.defaultComp || state.settings.defaultComp;
+        state.settings.startBalance = backup.settings.startBalance || state.settings.startBalance;
+        state.settings.defaultBet = backup.settings.defaultBet || state.settings.defaultBet;
+      }
+      saveState();
+      applySettings();
+      updateWalletUI();
+      showBackupStatus(`✅ Back-up hersteld! ${backup.wallet.bets?.length || 0} weddenschappen geladen.`, '#16a34a');
+    } catch(err) {
+      showBackupStatus('⚠ Fout bij importeren: ' + err.message, '#dc2626');
+    }
+    event.target.value = ''; // reset file input
+  };
+  reader.readAsText(file);
+}
+
+function showBackupStatus(msg, color) {
+  const el = document.getElementById('backupStatus');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color = color;
+  el.style.background = color === '#16a34a' ? 'rgba(22,163,74,.08)' : 'rgba(220,38,38,.08)';
+  el.style.border = `1px solid ${color}33`;
+  el.textContent = msg;
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
 }
 
 // ═══════════════════════════════════════════════════════
