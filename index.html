@@ -1868,38 +1868,32 @@ async function loadFromAPIFootball(comp, apiKey) {
 // Haal odds op voor alle geladen wedstrijden en update de kaarten
 async function fetchOddsForMatches(leagueId, apiKey) {
   try {
-    // Probeer zonder bookmaker filter — pakt best beschikbare
-    const resp = await apiFetch(
-      `https://v3.football.api-sports.io/odds?league=${leagueId}&season=2025`,
-      apiKey
-    );
-    const data = await resp.json();
-    if (!data.response?.length) return;
-
-    // Maak een map van fixture_id -> beste odds
+    // Haal odds per fixture op — betrouwbaarder dan via league
     const oddsMap = {};
-    const bookmakerOddsMap = {}; // alle bookmakers per fixture
-    data.response.forEach(o => {
-      const fixtureId = o.fixture?.id;
-      if (!fixtureId) return;
-      bookmakerOddsMap[fixtureId] = [];
-
-      for (const bm of (o.bookmakers || [])) {
-        const matchWinner = bm.bets?.find(b => b.name === 'Match Winner');
-        if (matchWinner?.values?.length >= 3) {
-          const home = parseFloat(matchWinner.values[0]?.odd);
-          const draw = parseFloat(matchWinner.values[1]?.odd);
-          const away = parseFloat(matchWinner.values[2]?.odd);
-          if (home > 1 && draw > 1 && away > 1) {
-            bookmakerOddsMap[fixtureId].push({ name: bm.name, home, draw, away });
-            if (!oddsMap[fixtureId]) {
-              oddsMap[fixtureId] = { home, draw, away };
+    const bookmakerOddsMap = {};
+    const fixtureIds = state.matches.map(m => m.id).filter(Boolean);
+    for (const fid of fixtureIds.slice(0, 10)) {
+      try {
+        const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fid}`, apiKey);
+        const d = await r.json();
+        if (!d.response?.length) continue;
+        bookmakerOddsMap[fid] = [];
+        for (const bm of (d.response[0]?.bookmakers || [])) {
+          const mw = bm.bets?.find(b => b.name === 'Match Winner');
+          if (mw?.values?.length >= 3) {
+            const home = parseFloat(mw.values[0]?.odd);
+            const draw = parseFloat(mw.values[1]?.odd);
+            const away = parseFloat(mw.values[2]?.odd);
+            if (home > 1 && draw > 1 && away > 1) {
+              bookmakerOddsMap[fid].push({ name: bm.name, home, draw, away });
+              if (!oddsMap[fid]) oddsMap[fid] = { home, draw, away };
             }
           }
         }
-      }
-    });
-    // Sla bookmaker odds op in state voor gebruik in UI
+      } catch(e) {}
+    }
+    const data = { response: [] }; // dummy zodat code hieronder werkt
+
     state.bookmakerOdds = { ...state.bookmakerOdds, ...bookmakerOddsMap };
 
     let updated = false;
