@@ -822,7 +822,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v2.3</div>
+        <div class="version-badge">v2.4</div>
       </div>
     </div>
   </div>
@@ -879,9 +879,19 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 
   <div id="tab-wedstrijden" class="tab-content active">
     <div class="section-label">Competitie
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);font-weight:400;margin-left:.3rem;">
-        tik om te laden · lang indrukken om toe te voegen aan multi-scan
-      </span>
+      <button onclick="toggleMultiMode()" id="multiModeBtn"
+        style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+        padding:3px 10px;border-radius:999px;cursor:pointer;margin-left:.3rem;
+        background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.3);color:#15803d;">
+        📌 MULTI-SCAN SELECTEREN
+      </button>
+    </div>
+    <!-- Uitleg die verschijnt als multi-mode actief is -->
+    <div id="multiModeHint" style="display:none;font-family:'IBM Plex Mono',monospace;
+      font-size:.58rem;color:#15803d;background:rgba(22,163,74,.06);
+      border:1px solid rgba(22,163,74,.2);border-radius:10px;
+      padding:.5rem .8rem;margin-bottom:.6rem;line-height:1.6;">
+      ✓ Tik op competities om toe te voegen · tik nogmaals om te verwijderen · tik 📌 om klaar te zijn
     </div>
     <!-- Multi-scan knop — verschijnt zodra er favorieten geselecteerd zijn -->
     <div id="multiScanBar" style="display:none;background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(37,99,235,.08));
@@ -910,31 +920,31 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       </div>
     </div>
     <div class="comp-grid">
-      <div class="comp-chip active" onclick="selectComp('eredivisie')" oncontextmenu="toggleFavComp('eredivisie');return false;" id="comp-eredivisie">
+      <div class="comp-chip active" onclick="handleCompTap('eredivisie')" id="comp-eredivisie">
         <span class="flag">🇳🇱</span><div class="cname">Eredivisie</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('kkd')" oncontextmenu="toggleFavComp('kkd');return false;" id="comp-kkd">
+      <div class="comp-chip" onclick="handleCompTap('kkd')" id="comp-kkd">
         <span class="flag">🇳🇱</span><div class="cname">Keuken Kampioen</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('beker')" oncontextmenu="toggleFavComp('beker');return false;" id="comp-beker">
+      <div class="comp-chip" onclick="handleCompTap('beker')" id="comp-beker">
         <span class="flag">🏆</span><div class="cname">KNVB Beker</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('premier')" oncontextmenu="toggleFavComp('premier');return false;" id="comp-premier">
+      <div class="comp-chip" onclick="handleCompTap('premier')" id="comp-premier">
         <span class="flag">🇬🇧</span><div class="cname">Premier League</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('bundesliga')" oncontextmenu="toggleFavComp('bundesliga');return false;" id="comp-bundesliga">
+      <div class="comp-chip" onclick="handleCompTap('bundesliga')" id="comp-bundesliga">
         <span class="flag">🇩🇪</span><div class="cname">Bundesliga</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('ligue1')" oncontextmenu="toggleFavComp('ligue1');return false;" id="comp-ligue1">
+      <div class="comp-chip" onclick="handleCompTap('ligue1')" id="comp-ligue1">
         <span class="flag">🇫🇷</span><div class="cname">Ligue 1</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('seriea')" oncontextmenu="toggleFavComp('seriea');return false;" id="comp-seriea">
+      <div class="comp-chip" onclick="handleCompTap('seriea')" id="comp-seriea">
         <span class="flag">🇮🇹</span><div class="cname">Serie A</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('champions')" oncontextmenu="toggleFavComp('champions');return false;" id="comp-champions">
+      <div class="comp-chip" onclick="handleCompTap('champions')" id="comp-champions">
         <span class="flag">⭐</span><div class="cname">Champions League</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('nations')" oncontextmenu="toggleFavComp('nations');return false;" id="comp-nations">
+      <div class="comp-chip" onclick="handleCompTap('nations')" id="comp-nations">
         <span class="flag">🌍</span><div class="cname">Nations League</div>
       </div>
     </div>
@@ -1972,24 +1982,47 @@ function clearFavoriteComps() {
   updateFavCompUI();
 }
 
-let _lpTimer = null;
+// Multi-mode: aan = tik op chip voegt toe aan favorieten
+// uit = tik op chip laadt de competitie
+let _multiMode = false;
+
+function toggleMultiMode() {
+  _multiMode = !_multiMode;
+  const btn = document.getElementById('multiModeBtn');
+  const hint = document.getElementById('multiModeHint');
+  if (_multiMode) {
+    btn.textContent = '✓ KLAAR';
+    btn.style.background = 'rgba(22,163,74,.2)';
+    btn.style.borderColor = 'rgba(22,163,74,.5)';
+    btn.style.color = '#15803d';
+    if (hint) hint.style.display = 'block';
+  } else {
+    btn.textContent = '📌 MULTI-SCAN SELECTEREN';
+    btn.style.background = 'rgba(22,163,74,.1)';
+    btn.style.borderColor = 'rgba(22,163,74,.3)';
+    btn.style.color = '#15803d';
+    if (hint) hint.style.display = 'none';
+  }
+}
+
+function handleCompTap(comp) {
+  if (_multiMode) {
+    // Multi-mode: togglefav + vibratie
+    toggleFavComp(comp);
+    if (navigator.vibrate) navigator.vibrate(40);
+  } else {
+    // Normaal: laad wedstrijden
+    selectComp(comp);
+  }
+}
+
 function initLongPress() {
-  document.querySelectorAll('.comp-chip').forEach(chip => {
-    chip.addEventListener('touchstart', e => {
-      const comp = chip.id.replace('comp-', '');
-      _lpTimer = setTimeout(() => {
-        toggleFavComp(comp);
-        if (navigator.vibrate) navigator.vibrate(60);
-      }, 500);
-    }, { passive: true });
-    chip.addEventListener('touchend', () => clearTimeout(_lpTimer));
-    chip.addEventListener('touchmove', () => clearTimeout(_lpTimer));
-  });
+  // Niet meer nodig — vervangen door toggleMultiMode knop
 }
 
 async function runMultiScan() {
   const favs = state.favoriteComps || [];
-  if (favs.length < 2) { alert('Druk minimaal 2 competities lang in voor multi-scan.'); return; }
+  if (favs.length < 2) { alert('Selecteer minimaal 2 competities via 📌 MULTI-SCAN SELECTEREN.'); return; }
   if (!state.settings.anthropicKey) { alert('Vul eerst je Anthropic API key in.'); return; }
 
   const btn = document.getElementById('multiScanBtn');
