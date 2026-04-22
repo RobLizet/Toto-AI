@@ -2045,10 +2045,26 @@ async function runMultiScan() {
     if (apifKey) loaded = await loadFromAPIFootball(comp, apifKey);
     if (!loaded && fdKey && fdCode) loaded = await loadFromFD(fdCode, fdKey, comp);
 
-    await new Promise(r => setTimeout(r, 300));
     if (!state.matches.length) continue;
 
+    // ── WACHT OP ODDS ──
+    // loadFromAPIFootball roept fetchOddsForMatches aan zonder await (fire & forget).
+    // We moeten expliciet wachten zodat de odds binnen zijn vóór de scan.
+    btn.textContent = `⟳ ${i+1}/${favs.length} quotes ophalen...`;
+    if (apifKey) {
+      const leagueId = COMP_IDS[comp];
+      await fetchOddsForMatches(leagueId, apifKey);
+    }
+
+    // Controleer of er nu wedstrijden met quotes zijn
+    const withOdds = state.matches.filter(m => m.homeOdds !== '—' && parseFloat(m.homeOdds) > 1);
+    if (!withOdds.length) {
+      console.log(`${comp}: geen odds beschikbaar, overgeslagen`);
+      continue;
+    }
+
     // Value scan voor deze competitie
+    btn.textContent = `⟳ ${i+1}/${favs.length} ${COMP_NAMES[comp]?.split(' ').slice(1).join(' ') || comp} scannen...`;
     await scanValueAll();
 
     if (state.valueScans?.length) {
