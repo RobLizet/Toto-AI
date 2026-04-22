@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
@@ -30,46 +29,46 @@
 
 /* ── DARK MODE ── */
 body.dark {
-–bg1:#0d0f14;–bg2:#111318;–bg3:#0f1219;
-–ink:#f1f5f9;–muted:#94a3b8;–sub:#64748b;
-–card:rgba(30,35,48,0.90);–card2:rgba(25,30,42,0.80);
-–stroke:rgba(255,255,255,0.08);
-–shadow:0 18px 50px rgba(0,0,0,0.4);
-–shadow2:0 4px 16px rgba(0,0,0,0.25);
-–rose:#2d1520;–lavender:#1e1535;–sky:#0f1f2e;
-–surface:rgba(20,24,36,0.98);
+  --bg1:#0d0f14;--bg2:#111318;--bg3:#0f1219;
+  --ink:#f1f5f9;--muted:#94a3b8;--sub:#64748b;
+  --card:rgba(30,35,48,0.90);--card2:rgba(25,30,42,0.80);
+  --stroke:rgba(255,255,255,0.08);
+  --shadow:0 18px 50px rgba(0,0,0,0.4);
+  --shadow2:0 4px 16px rgba(0,0,0,0.25);
+  --rose:#2d1520;--lavender:#1e1535;--sky:#0f1f2e;
+  --surface:rgba(20,24,36,0.98);
 }
 body.dark {
-background:
-radial-gradient(1200px 700px at 20% -10%,rgba(219,39,119,.08),transparent 55%),
-radial-gradient(1000px 650px at 85% 5%,rgba(37,99,235,.07),transparent 60%),
-radial-gradient(900px 700px at 40% 120%,rgba(124,58,237,.07),transparent 60%),
-linear-gradient(180deg,var(–bg1),var(–bg2) 55%,var(–bg3));
+  background:
+    radial-gradient(1200px 700px at 20% -10%,rgba(219,39,119,.08),transparent 55%),
+    radial-gradient(1000px 650px at 85% 5%,rgba(37,99,235,.07),transparent 60%),
+    radial-gradient(900px 700px at 40% 120%,rgba(124,58,237,.07),transparent 60%),
+    linear-gradient(180deg,var(--bg1),var(--bg2) 55%,var(--bg3));
 }
 
 /* ── MINT THEMA (rustig groen, oogvriendelijk) ── */
 body.mint {
-–bg1:#f0fdf4;–bg2:#ecfdf5;–bg3:#f7fee7;
-–ink:#064e3b;–muted:#475569;–sub:#64748b;
-–card:rgba(255,255,255,0.85);–card2:rgba(255,255,255,0.70);
-–stroke:rgba(5,78,59,0.10);
-–accent:#059669;
-–rose:#d1fae5;–lavender:#e0f2fe;–sky:#ccfbf1;
+  --bg1:#f0fdf4;--bg2:#ecfdf5;--bg3:#f7fee7;
+  --ink:#064e3b;--muted:#475569;--sub:#64748b;
+  --card:rgba(255,255,255,0.85);--card2:rgba(255,255,255,0.70);
+  --stroke:rgba(5,78,59,0.10);
+  --accent:#059669;
+  --rose:#d1fae5;--lavender:#e0f2fe;--sky:#ccfbf1;
 }
 body.mint {
-background:
-radial-gradient(1200px 700px at 20% -10%,rgba(52,211,153,.18),transparent 55%),
-radial-gradient(1000px 650px at 85% 5%,rgba(167,243,208,.22),transparent 60%),
-radial-gradient(900px 700px at 40% 120%,rgba(134,239,172,.20),transparent 60%),
-linear-gradient(180deg,var(–bg1),var(–bg2) 55%,var(–bg3));
+  background:
+    radial-gradient(1200px 700px at 20% -10%,rgba(52,211,153,.18),transparent 55%),
+    radial-gradient(1000px 650px at 85% 5%,rgba(167,243,208,.22),transparent 60%),
+    radial-gradient(900px 700px at 40% 120%,rgba(134,239,172,.20),transparent 60%),
+    linear-gradient(180deg,var(--bg1),var(--bg2) 55%,var(--bg3));
 }
 body.mint .tab-nav-wrap {
-background:linear-gradient(180deg,rgba(240,253,244,.98) 80%,transparent);
+  background:linear-gradient(180deg,rgba(240,253,244,.98) 80%,transparent);
 }
 body.mint .tab-btn.active {
-background:linear-gradient(135deg,rgba(209,250,229,.95),rgba(204,251,241,.9),rgba(187,247,208,.9));
-border-color:rgba(5,150,105,.35);
-box-shadow:0 4px 16px rgba(5,150,105,.15);
+  background:linear-gradient(135deg,rgba(209,250,229,.95),rgba(204,251,241,.9),rgba(187,247,208,.9));
+  border-color:rgba(5,150,105,.35);
+  box-shadow:0 4px 16px rgba(5,150,105,.15);
 }
 body.mint .tab-btn.active .tab-label { color:#047857; }
 body.mint .topbar-logo,
@@ -78,43 +77,43 @@ body.mint .value-banner-title,
 body.mint .modal-box h3,
 body.mint .wallet-big .amount,
 body.mint .made-by {
-background:linear-gradient(135deg,#059669 0%,#0891b2 60%,#0284c7 100%);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  background:linear-gradient(135deg,#059669 0%,#0891b2 60%,#0284c7 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 body.mint .comp-chip.active {
-background:linear-gradient(135deg,rgba(209,250,229,.8),rgba(204,251,241,.65));
-border-color:rgba(5,150,105,.4);
+  background:linear-gradient(135deg,rgba(209,250,229,.8),rgba(204,251,241,.65));
+  border-color:rgba(5,150,105,.4);
 }
 body.mint .comp-chip.active .cname { color:#047857; }
 body.mint .w-item.bal .val { color:#047857; }
 body.mint .match-card.selected {
-background:linear-gradient(135deg,rgba(209,250,229,.7),rgba(204,251,241,.6));
-border-color:rgba(5,150,105,.4);
+  background:linear-gradient(135deg,rgba(209,250,229,.7),rgba(204,251,241,.6));
+  border-color:rgba(5,150,105,.4);
 }
 
 /* ── CRÈME THEMA (warm beige, zachte ogen) ── */
 body.cream {
-–bg1:#fdf6e3;–bg2:#faf3dd;–bg3:#fef9e7;
-–ink:#3d2817;–muted:#6b5d4f;–sub:#8a7a6a;
-–card:rgba(255,252,240,0.88);–card2:rgba(253,247,220,0.72);
-–stroke:rgba(61,40,23,0.10);
-–accent:#b45309;
-–rose:#fef3c7;–lavender:#fed7aa;–sky:#fde68a;
+  --bg1:#fdf6e3;--bg2:#faf3dd;--bg3:#fef9e7;
+  --ink:#3d2817;--muted:#6b5d4f;--sub:#8a7a6a;
+  --card:rgba(255,252,240,0.88);--card2:rgba(253,247,220,0.72);
+  --stroke:rgba(61,40,23,0.10);
+  --accent:#b45309;
+  --rose:#fef3c7;--lavender:#fed7aa;--sky:#fde68a;
 }
 body.cream {
-background:
-radial-gradient(1200px 700px at 20% -10%,rgba(251,191,36,.15),transparent 55%),
-radial-gradient(1000px 650px at 85% 5%,rgba(253,230,138,.22),transparent 60%),
-radial-gradient(900px 700px at 40% 120%,rgba(254,215,170,.18),transparent 60%),
-linear-gradient(180deg,var(–bg1),var(–bg2) 55%,var(–bg3));
+  background:
+    radial-gradient(1200px 700px at 20% -10%,rgba(251,191,36,.15),transparent 55%),
+    radial-gradient(1000px 650px at 85% 5%,rgba(253,230,138,.22),transparent 60%),
+    radial-gradient(900px 700px at 40% 120%,rgba(254,215,170,.18),transparent 60%),
+    linear-gradient(180deg,var(--bg1),var(--bg2) 55%,var(--bg3));
 }
 body.cream .tab-nav-wrap {
-background:linear-gradient(180deg,rgba(253,246,227,.98) 80%,transparent);
+  background:linear-gradient(180deg,rgba(253,246,227,.98) 80%,transparent);
 }
 body.cream .tab-btn.active {
-background:linear-gradient(135deg,rgba(254,243,199,.95),rgba(253,230,138,.9),rgba(254,215,170,.9));
-border-color:rgba(180,83,9,.35);
-box-shadow:0 4px 16px rgba(180,83,9,.15);
+  background:linear-gradient(135deg,rgba(254,243,199,.95),rgba(253,230,138,.9),rgba(254,215,170,.9));
+  border-color:rgba(180,83,9,.35);
+  box-shadow:0 4px 16px rgba(180,83,9,.15);
 }
 body.cream .tab-btn.active .tab-label { color:#92400e; }
 body.cream .topbar-logo,
@@ -123,18 +122,18 @@ body.cream .value-banner-title,
 body.cream .modal-box h3,
 body.cream .wallet-big .amount,
 body.cream .made-by {
-background:linear-gradient(135deg,#b45309 0%,#c2410c 60%,#dc2626 100%);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  background:linear-gradient(135deg,#b45309 0%,#c2410c 60%,#dc2626 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
 }
 body.cream .comp-chip.active {
-background:linear-gradient(135deg,rgba(254,243,199,.8),rgba(253,230,138,.65));
-border-color:rgba(180,83,9,.4);
+  background:linear-gradient(135deg,rgba(254,243,199,.8),rgba(253,230,138,.65));
+  border-color:rgba(180,83,9,.4);
 }
 body.cream .comp-chip.active .cname { color:#92400e; }
 body.cream .w-item.bal .val { color:#92400e; }
 body.cream .match-card.selected {
-background:linear-gradient(135deg,rgba(254,243,199,.7),rgba(253,230,138,.6));
-border-color:rgba(180,83,9,.4);
+  background:linear-gradient(135deg,rgba(254,243,199,.7),rgba(253,230,138,.6));
+  border-color:rgba(180,83,9,.4);
 }
 body.dark .match-card,
 body.dark .result-card,
@@ -143,130 +142,130 @@ body.dark .combi-bet-row,
 body.dark .bet-row,
 body.dark .tracker-row,
 body.dark .wallet-strip,
-body.dark .tab-nav-wrap { background:var(–card); }
-body.dark .match-card { border-color:var(–stroke); }
+body.dark .tab-nav-wrap { background:var(--card); }
+body.dark .match-card { border-color:var(--stroke); }
 body.dark .card-head { background:rgba(255,255,255,.04); }
 body.dark .modal-box { background:linear-gradient(180deg,#1a1d28,#151826); }
-body.dark .modal-input { background:rgba(255,255,255,.06);color:var(–ink);border-color:var(–stroke); }
-body.dark .odds-btn { background:rgba(255,255,255,.06);border-color:var(–stroke); }
-body.dark .comp-chip { background:rgba(255,255,255,.06);border-color:var(–stroke); }
+body.dark .modal-input { background:rgba(255,255,255,.06);color:var(--ink);border-color:var(--stroke); }
+body.dark .odds-btn { background:rgba(255,255,255,.06);border-color:var(--stroke); }
+body.dark .comp-chip { background:rgba(255,255,255,.06);border-color:var(--stroke); }
 body.dark .comp-chip.active { background:rgba(219,39,119,.15); }
-body.dark .tab-btn { background:rgba(255,255,255,.05);border-color:var(–stroke); }
+body.dark .tab-btn { background:rgba(255,255,255,.05);border-color:var(--stroke); }
 body.dark .tab-btn.active { background:linear-gradient(135deg,rgba(219,39,119,.2),rgba(37,99,235,.15)); }
 body.dark .tab-nav { background:transparent; }
-body.dark input,body.dark select { background:rgba(255,255,255,.06);color:var(–ink); }
+body.dark input,body.dark select { background:rgba(255,255,255,.06);color:var(--ink); }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{
-background:
-radial-gradient(1200px 700px at 20% -10%,rgba(255,168,217,.22),transparent 55%),
-radial-gradient(1000px 650px at 85% 5%,rgba(143,209,255,.22),transparent 60%),
-radial-gradient(900px 700px at 40% 120%,rgba(191,164,255,.20),transparent 60%),
-linear-gradient(180deg,var(–bg1),var(–bg2) 55%,var(–bg3));
-color:var(–ink);
-font-family:‘DM Sans’,sans-serif;
-font-size:16px;
-line-height:1.6;
-min-height:100vh;overflow-x:hidden;
--webkit-font-smoothing:antialiased;
--moz-osx-font-smoothing:grayscale;
+  background:
+    radial-gradient(1200px 700px at 20% -10%,rgba(255,168,217,.22),transparent 55%),
+    radial-gradient(1000px 650px at 85% 5%,rgba(143,209,255,.22),transparent 60%),
+    radial-gradient(900px 700px at 40% 120%,rgba(191,164,255,.20),transparent 60%),
+    linear-gradient(180deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+  color:var(--ink);
+  font-family:'DM Sans',sans-serif;
+  font-size:16px;
+  line-height:1.6;
+  min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 .app{position:relative;z-index:1;max-width:860px;margin:0 auto;
-padding:1.2rem 1rem 6rem;
-padding-top:max(1.2rem,env(safe-area-inset-top));
-padding-bottom:max(6rem,env(safe-area-inset-bottom));
+  padding:1.2rem 1rem 6rem;
+  padding-top:max(1.2rem,env(safe-area-inset-top));
+  padding-bottom:max(6rem,env(safe-area-inset-bottom));
 }
 
 /* ── INSTALL BANNER ── */
 #installBanner{display:none;background:rgba(255,154,193,.12);border:1px solid rgba(255,154,193,.35);
-border-radius:14px;padding:.7rem 1rem;margin-bottom:1rem;align-items:center;gap:.8rem;
-backdrop-filter:blur(10px);}
+  border-radius:14px;padding:.7rem 1rem;margin-bottom:1rem;align-items:center;gap:.8rem;
+  backdrop-filter:blur(10px);}
 #installBanner.show{display:flex;}
-#installBanner p{font-family:‘IBM Plex Mono’,monospace;font-size:.65rem;color:var(–ink);flex:1;line-height:1.4;}
+#installBanner p{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--ink);flex:1;line-height:1.4;}
 #installBanner p span{color:#d63384;}
 .install-btn{background:linear-gradient(135deg,rgba(255,154,193,.8),rgba(107,182,255,.8));
-color:#fff;border:none;border-radius:999px;
-font-family:‘IBM Plex Mono’,monospace;font-size:.62rem;font-weight:700;
-padding:6px 14px;cursor:pointer;white-space:nowrap;box-shadow:var(–shadow2);}
-.dismiss-btn{background:transparent;border:none;color:var(–muted);cursor:pointer;font-size:1rem;}
+  color:#fff;border:none;border-radius:999px;
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;
+  padding:6px 14px;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow2);}
+.dismiss-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:1rem;}
 
 /* ── TOPBAR ── */
 .topbar{display:flex;align-items:flex-start;gap:.8rem;margin-bottom:1.4rem;
-padding-bottom:1rem;border-bottom:1px solid var(–stroke);}
-.topbar-logo{font-family:‘Bebas Neue’,sans-serif;font-size:2.2rem;letter-spacing:.08em;line-height:1;
-background:linear-gradient(135deg,#ff9ac1 0%,#a78bfa 60%,#6bb6ff 100%);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.made-by{font-family:‘Dancing Script’,cursive;font-size:.95rem;
-background:linear-gradient(135deg,#ff9ac1,#a78bfa);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;
-background-clip:text;margin-top:1px;}
-.topbar-sub{font-family:‘IBM Plex Mono’,monospace;font-size:.56rem;color:var(–muted);
-letter-spacing:.1em;line-height:1.7;margin-top:2px;}
+  padding-bottom:1rem;border-bottom:1px solid var(--stroke);}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:.08em;line-height:1;
+  background:linear-gradient(135deg,#ff9ac1 0%,#a78bfa 60%,#6bb6ff 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.made-by{font-family:'Dancing Script',cursive;font-size:.95rem;
+  background:linear-gradient(135deg,#ff9ac1,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;margin-top:1px;}
+.topbar-sub{font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--muted);
+  letter-spacing:.1em;line-height:1.7;margin-top:2px;}
 .topbar-right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:.4rem;}
-.live-badge{font-family:‘IBM Plex Mono’,monospace;font-size:.55rem;color:var(–green);
-border:1px solid rgba(46,204,113,.3);padding:4px 9px;border-radius:999px;
-background:rgba(46,204,113,.08);display:flex;align-items:center;gap:.3rem;
-box-shadow:var(–shadow2);}
-.live-dot{width:5px;height:5px;border-radius:50%;background:var(–green);animation:blink .9s infinite;}
-.version-badge{font-family:‘IBM Plex Mono’,monospace;font-size:.5rem;color:var(–muted);
-border:1px solid var(–stroke);padding:3px 9px;border-radius:999px;
-background:var(–card);box-shadow:var(–shadow2);}
+.live-badge{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--green);
+  border:1px solid rgba(46,204,113,.3);padding:4px 9px;border-radius:999px;
+  background:rgba(46,204,113,.08);display:flex;align-items:center;gap:.3rem;
+  box-shadow:var(--shadow2);}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink .9s infinite;}
+.version-badge{font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);
+  border:1px solid var(--stroke);padding:3px 9px;border-radius:999px;
+  background:var(--card);box-shadow:var(--shadow2);}
 
 /* ── WALLET STRIP ── */
 .wallet-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;
-background:rgba(255,255,255,.82);border:1px solid var(–stroke);
-border-radius:16px;padding:.8rem .9rem;margin-bottom:1.2rem;
-box-shadow:var(–shadow2);}
-.w-item .lbl{font-family:‘IBM Plex Mono’,monospace;font-size:.58rem;color:var(–sub);
-letter-spacing:.05em;text-transform:uppercase;margin-bottom:.2rem;font-weight:600;}
-.w-item .val{font-family:‘Bebas Neue’,sans-serif;font-size:1.3rem;letter-spacing:.03em;}
+  background:rgba(255,255,255,.82);border:1px solid var(--stroke);
+  border-radius:16px;padding:.8rem .9rem;margin-bottom:1.2rem;
+  box-shadow:var(--shadow2);}
+.w-item .lbl{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);
+  letter-spacing:.05em;text-transform:uppercase;margin-bottom:.2rem;font-weight:600;}
+.w-item .val{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.03em;}
 .w-item.bal .val{color:#be185d;}
-.w-item.pnl .val{color:var(–green);}
+.w-item.pnl .val{color:var(--green);}
 .w-item.bets .val{color:#2563eb;}
 .w-item.rate .val{color:#7c3aed;}
 
 /* ── TAB NAV ── */
 .tab-nav-wrap{
-position:sticky;top:0;z-index:100;
-margin:0 -1rem 1.2rem;
-padding:0 1rem;
-background:linear-gradient(180deg,rgba(254,246,240,.98) 80%,transparent);
-backdrop-filter:blur(12px);
--webkit-backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:100;
+  margin:0 -1rem 1.2rem;
+  padding:0 1rem;
+  background:linear-gradient(180deg,rgba(254,246,240,.98) 80%,transparent);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
 }
 .tab-nav{
-display:flex;gap:.4rem;
-overflow-x:auto;
-scroll-snap-type:x mandatory;
--webkit-overflow-scrolling:touch;
-padding:.5rem 0;
-scrollbar-width:none;
+  display:flex;gap:.4rem;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  padding:.5rem 0;
+  scrollbar-width:none;
 }
 .tab-nav::-webkit-scrollbar{display:none;}
 .tab-btn{
-flex-shrink:0;
-scroll-snap-align:start;
-display:flex;flex-direction:column;align-items:center;gap:.25rem;
-background:rgba(255,255,255,.85);
-border:1.5px solid var(–stroke);
-color:var(–sub);
-min-width:75px;
-max-width:90px;
-padding:.6rem .6rem;
-border-radius:14px;
-cursor:pointer;
-transition:all .2s;
-box-shadow:0 2px 8px rgba(15,23,42,.06);
+  flex-shrink:0;
+  scroll-snap-align:start;
+  display:flex;flex-direction:column;align-items:center;gap:.25rem;
+  background:rgba(255,255,255,.85);
+  border:1.5px solid var(--stroke);
+  color:var(--sub);
+  min-width:75px;
+  max-width:90px;
+  padding:.6rem .6rem;
+  border-radius:14px;
+  cursor:pointer;
+  transition:all .2s;
+  box-shadow:0 2px 8px rgba(15,23,42,.06);
 }
 .tab-btn:hover{border-color:rgba(219,39,119,.3);background:rgba(255,255,255,.95);}
 .tab-icon{font-size:1.3rem;line-height:1;}
-.tab-label{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;font-weight:700;
-letter-spacing:.02em;white-space:nowrap;text-align:center;}
+.tab-label{font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+  letter-spacing:.02em;white-space:nowrap;text-align:center;}
 .tab-btn.active{
-background:linear-gradient(135deg,rgba(252,231,243,.95),rgba(224,242,254,.9),rgba(237,233,254,.9));
-border-color:rgba(219,39,119,.35);
-color:var(–ink);
-box-shadow:0 4px 16px rgba(219,39,119,.15);
+  background:linear-gradient(135deg,rgba(252,231,243,.95),rgba(224,242,254,.9),rgba(237,233,254,.9));
+  border-color:rgba(219,39,119,.35);
+  color:var(--ink);
+  box-shadow:0 4px 16px rgba(219,39,119,.15);
 }
 .tab-btn.active .tab-label{color:#be185d;}
 
@@ -275,96 +274,96 @@ box-shadow:0 4px 16px rgba(219,39,119,.15);
 .tab-content.active{display:block;}
 
 /* ── SECTION LABEL ── */
-.section-label{font-family:‘IBM Plex Mono’,monospace;font-size:.62rem;color:var(–sub);
-letter-spacing:.12em;text-transform:uppercase;margin:1rem 0 .55rem;font-weight:600;
-display:flex;align-items:center;gap:.5rem;}
-.section-label::after{content:’’;flex:1;height:1px;background:var(–stroke);}
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--sub);
+  letter-spacing:.12em;text-transform:uppercase;margin:1rem 0 .55rem;font-weight:600;
+  display:flex;align-items:center;gap:.5rem;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--stroke);}
 
 /* ── COMPETITIE CHIPS ── */
 .comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-bottom:1rem;}
-.comp-chip{background:rgba(255,255,255,.78);border:1px solid var(–stroke);border-radius:14px;
-padding:.55rem .4rem;text-align:center;cursor:pointer;transition:all .2s;
-box-shadow:0 2px 8px rgba(15,23,42,.06);position:relative;}
+.comp-chip{background:rgba(255,255,255,.78);border:1px solid var(--stroke);border-radius:14px;
+  padding:.55rem .4rem;text-align:center;cursor:pointer;transition:all .2s;
+  box-shadow:0 2px 8px rgba(15,23,42,.06);position:relative;}
 .comp-chip .flag{font-size:1.2rem;display:block;margin-bottom:.3rem;}
-.comp-chip .cname{font-family:‘IBM Plex Mono’,monospace;font-size:.6rem;color:var(–muted);
-letter-spacing:.02em;line-height:1.3;font-weight:600;}
+.comp-chip .cname{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);
+  letter-spacing:.02em;line-height:1.3;font-weight:600;}
 .comp-chip.active{border-color:rgba(219,39,119,.4);
-background:linear-gradient(135deg,rgba(252,231,243,.8),rgba(224,242,254,.65));}
+  background:linear-gradient(135deg,rgba(252,231,243,.8),rgba(224,242,254,.65));}
 .comp-chip.active .cname{color:#be185d;}
 /* Multi-selectie: aangevinkt met groen vinkje */
 .comp-chip.fav{border-color:rgba(22,163,74,.45);
-background:linear-gradient(135deg,rgba(22,163,74,.12),rgba(22,163,74,.05));}
+  background:linear-gradient(135deg,rgba(22,163,74,.12),rgba(22,163,74,.05));}
 .comp-chip.fav .cname{color:#15803d;}
-.comp-chip.fav::after{content:‘✓’;position:absolute;top:3px;right:5px;
-font-size:.6rem;color:#15803d;font-weight:800;}
+.comp-chip.fav::after{content:'✓';position:absolute;top:3px;right:5px;
+  font-size:.6rem;color:#15803d;font-weight:800;}
 
 /* ── WEDSTRIJD KAARTEN ── */
 .match-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem;}
-.match-card{background:rgba(255,255,255,.82);border:1px solid var(–stroke);border-radius:16px;
-overflow:hidden;transition:all .2s;cursor:pointer;
-box-shadow:var(–shadow2);backdrop-filter:blur(12px);
-position:relative;} /* VALUE: voor positionering badge */
-.match-card:hover{box-shadow:var(–shadow);transform:translateY(-1px);}
+.match-card{background:rgba(255,255,255,.82);border:1px solid var(--stroke);border-radius:16px;
+  overflow:hidden;transition:all .2s;cursor:pointer;
+  box-shadow:var(--shadow2);backdrop-filter:blur(12px);
+  position:relative;} /* VALUE: voor positionering badge */
+.match-card:hover{box-shadow:var(--shadow);transform:translateY(-1px);}
 .match-card.selected{border-color:rgba(219,39,119,.4);
-background:linear-gradient(135deg,rgba(252,231,243,.7),rgba(224,242,254,.6));}
+  background:linear-gradient(135deg,rgba(252,231,243,.7),rgba(224,242,254,.6));}
 .match-card.value-glow{box-shadow:0 0 0 2px rgba(22,163,74,.3),0 4px 16px rgba(22,163,74,.2);}
 .match-top{display:flex;align-items:center;padding:.45rem .9rem;
-border-bottom:1px solid var(–stroke);background:rgba(255,255,255,.3);}
-.match-comp-name{font-family:‘IBM Plex Mono’,monospace;font-size:.6rem;color:var(–sub);
-letter-spacing:.04em;flex:1;font-weight:600;}
-.match-time{font-family:‘IBM Plex Mono’,monospace;font-size:.6rem;color:#7c3aed;font-weight:700;}
-.match-status-pill{font-family:‘IBM Plex Mono’,monospace;font-size:.54rem;
-padding:3px 9px;border-radius:999px;margin-left:.5rem;font-weight:700;}
+  border-bottom:1px solid var(--stroke);background:rgba(255,255,255,.3);}
+.match-comp-name{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);
+  letter-spacing:.04em;flex:1;font-weight:600;}
+.match-time{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#7c3aed;font-weight:700;}
+.match-status-pill{font-family:'IBM Plex Mono',monospace;font-size:.54rem;
+  padding:3px 9px;border-radius:999px;margin-left:.5rem;font-weight:700;}
 .status-soon{background:rgba(124,58,237,.1);color:#7c3aed;border:1px solid rgba(124,58,237,.25);}
-.status-live{background:rgba(220,38,38,.08);color:var(–red);border:1px solid rgba(220,38,38,.2);
-animation:pulse 1.5s infinite;}
-.status-done{background:rgba(71,85,105,.07);color:var(–sub);border:1px solid var(–stroke);}
+.status-live{background:rgba(220,38,38,.08);color:var(--red);border:1px solid rgba(220,38,38,.2);
+  animation:pulse 1.5s infinite;}
+.status-done{background:rgba(71,85,105,.07);color:var(--sub);border:1px solid var(--stroke);}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 .match-teams{display:flex;align-items:center;justify-content:space-between;padding:.8rem .9rem;}
 .team-block{flex:1;}
 .team-away{text-align:right;}
-.team-name{font-size:.95rem;font-weight:800;line-height:1.2;color:var(–ink);letter-spacing:-.01em;
-overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
-word-break:break-word;}
+.team-name{font-size:.95rem;font-weight:800;line-height:1.2;color:var(--ink);letter-spacing:-.01em;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
+  word-break:break-word;}
 .team-form{display:flex;gap:2px;margin-top:.35rem;}
 .team-away .team-form{justify-content:flex-end;}
 .form-dot{width:9px;height:9px;border-radius:3px;}
-.form-dot.W{background:var(–green);}
-.form-dot.D{background:var(–yellow);}
-.form-dot.L{background:var(–red);}
+.form-dot.W{background:var(--green);}
+.form-dot.D{background:var(--yellow);}
+.form-dot.L{background:var(--red);}
 .vs-col{padding:0 .8rem;text-align:center;flex-shrink:0;}
-.vs-txt{font-family:‘IBM Plex Mono’,monospace;font-size:.6rem;color:var(–sub);font-weight:600;}
-.score-txt{font-family:‘Bebas Neue’,sans-serif;font-size:1.4rem;color:var(–ink);}
+.vs-txt{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);font-weight:600;}
+.score-txt{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--ink);}
 
 /* AI kans balken */
 .ai-probs{display:flex;align-items:center;gap:.4rem;padding:.5rem .9rem;
-border-top:1px solid var(–stroke);}
+  border-top:1px solid var(--stroke);}
 .prob-seg{flex:1;}
 .prob-bar-bg{height:5px;background:rgba(28,35,48,.07);border-radius:3px;overflow:hidden;margin-bottom:2px;}
 .prob-bar-fill{height:100%;border-radius:3px;}
-.prob-bar-fill.w{background:var(–green);}
-.prob-bar-fill.d{background:var(–yellow);}
-.prob-bar-fill.l{background:var(–red);}
-.prob-pct{font-family:‘IBM Plex Mono’,monospace;font-size:.58rem;text-align:center;font-weight:700;}
-.prob-pct.w{color:var(–green);}
-.prob-pct.d{color:var(–yellow);}
-.prob-pct.l{color:var(–red);}
+.prob-bar-fill.w{background:var(--green);}
+.prob-bar-fill.d{background:var(--yellow);}
+.prob-bar-fill.l{background:var(--red);}
+.prob-pct{font-family:'IBM Plex Mono',monospace;font-size:.58rem;text-align:center;font-weight:700;}
+.prob-pct.w{color:var(--green);}
+.prob-pct.d{color:var(--yellow);}
+.prob-pct.l{color:var(--red);}
 
 /* Quote knoppen */
 .match-odds{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;
-padding:.6rem .9rem;border-top:1px solid var(–stroke);}
-.odds-btn{background:rgba(255,255,255,.85);border:1px solid var(–stroke);border-radius:10px;
-padding:.55rem .3rem;text-align:center;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(15,23,42,.05);}
-.odds-btn:hover{border-color:rgba(219,39,119,.35);box-shadow:var(–shadow2);}
+  padding:.6rem .9rem;border-top:1px solid var(--stroke);}
+.odds-btn{background:rgba(255,255,255,.85);border:1px solid var(--stroke);border-radius:10px;
+  padding:.55rem .3rem;text-align:center;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(15,23,42,.05);}
+.odds-btn:hover{border-color:rgba(219,39,119,.35);box-shadow:var(--shadow2);}
 .odds-btn.picked{background:linear-gradient(135deg,rgba(252,231,243,.85),rgba(224,242,254,.75));
-border-color:rgba(219,39,119,.4);}
+  border-color:rgba(219,39,119,.4);}
 .odds-btn.value-pick{background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.05));
-border-color:rgba(22,163,74,.45);position:relative;}
-.odds-btn.value-pick::after{content:‘⚡’;position:absolute;top:-6px;right:-4px;
-font-size:.85rem;filter:drop-shadow(0 0 4px rgba(22,163,74,.6));}
-.odds-lbl{font-family:‘IBM Plex Mono’,monospace;font-size:.55rem;color:var(–sub);
-letter-spacing:.04em;display:block;margin-bottom:.2rem;font-weight:700;}
-.odds-val{font-family:‘Bebas Neue’,sans-serif;font-size:1.15rem;letter-spacing:.04em;color:var(–ink);}
+  border-color:rgba(22,163,74,.45);position:relative;}
+.odds-btn.value-pick::after{content:'⚡';position:absolute;top:-6px;right:-4px;
+  font-size:.85rem;filter:drop-shadow(0 0 4px rgba(22,163,74,.6));}
+.odds-lbl{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
+  letter-spacing:.04em;display:block;margin-bottom:.2rem;font-weight:700;}
+.odds-val{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:.04em;color:var(--ink);}
 .odds-btn.picked .odds-val{color:#be185d;}
 .odds-btn.value-pick .odds-val{color:#15803d;}
 
@@ -372,155 +371,155 @@ letter-spacing:.04em;display:block;margin-bottom:.2rem;font-weight:700;}
 /* Value badge: naast de comp-naam boven in de card, niet overlappend met GEPLAND pill */
 .match-card.has-value .match-top { padding-top: 1.8rem; }
 .value-badge{
-position:absolute;top:6px;left:10px;z-index:10;
-font-family:‘IBM Plex Mono’,monospace;font-size:.54rem;font-weight:800;
-padding:3px 10px;border-radius:999px;letter-spacing:.05em;
-box-shadow:0 4px 12px rgba(0,0,0,.15);
-white-space:nowrap;
+  position:absolute;top:6px;left:10px;z-index:10;
+  font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:800;
+  padding:3px 10px;border-radius:999px;letter-spacing:.05em;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  white-space:nowrap;
 }
 .value-badge.high{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;
-animation:valuePulse 2s ease-in-out infinite;
-box-shadow:0 4px 14px rgba(22,163,74,.45);}
+  animation:valuePulse 2s ease-in-out infinite;
+  box-shadow:0 4px 14px rgba(22,163,74,.45);}
 .value-badge.med{background:linear-gradient(135deg,#d97706,#b45309);color:#fff;}
 .value-badge.low{background:rgba(100,116,139,.9);color:#fff;}
 .value-badge.neg{background:rgba(220,38,38,.75);color:#fff;}
 
 @keyframes valuePulse{
-0%,100%{transform:scale(1);box-shadow:0 4px 14px rgba(22,163,74,.45);}
-50%{transform:scale(1.08);box-shadow:0 6px 20px rgba(22,163,74,.7);}
+  0%,100%{transform:scale(1);box-shadow:0 4px 14px rgba(22,163,74,.45);}
+  50%{transform:scale(1.08);box-shadow:0 6px 20px rgba(22,163,74,.7);}
 }
 
 /* Value scan knop */
 .scan-value-btn{
-font-family:‘IBM Plex Mono’,monospace;font-size:.58rem;font-weight:800;
-background:linear-gradient(135deg,rgba(22,163,74,.18),rgba(124,58,237,.15));
-border:1px solid rgba(22,163,74,.4);color:#15803d;
-border-radius:999px;padding:4px 12px;cursor:pointer;
-letter-spacing:.05em;margin-left:.3rem;
-box-shadow:0 2px 8px rgba(22,163,74,.15);
-transition:all .2s;
+  font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:800;
+  background:linear-gradient(135deg,rgba(22,163,74,.18),rgba(124,58,237,.15));
+  border:1px solid rgba(22,163,74,.4);color:#15803d;
+  border-radius:999px;padding:4px 12px;cursor:pointer;
+  letter-spacing:.05em;margin-left:.3rem;
+  box-shadow:0 2px 8px rgba(22,163,74,.15);
+  transition:all .2s;
 }
 .scan-value-btn:hover:not(:disabled){transform:translateY(-1px);
-box-shadow:0 4px 12px rgba(22,163,74,.25);}
+  box-shadow:0 4px 12px rgba(22,163,74,.25);}
 .scan-value-btn:disabled{opacity:.5;cursor:not-allowed;}
 
 /* Value resultaten banner */
 .value-banner{
-background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(124,58,237,.06));
-border:1px solid rgba(22,163,74,.25);border-radius:14px;
-padding:.85rem 1rem;margin-bottom:.9rem;
-box-shadow:var(–shadow2);
+  background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(124,58,237,.06));
+  border:1px solid rgba(22,163,74,.25);border-radius:14px;
+  padding:.85rem 1rem;margin-bottom:.9rem;
+  box-shadow:var(--shadow2);
 }
 .value-banner-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;}
-.value-banner-title{font-family:‘Bebas Neue’,sans-serif;font-size:1.1rem;
-letter-spacing:.08em;color:#15803d;display:flex;align-items:center;gap:.4rem;}
-.value-banner-meta{font-family:‘IBM Plex Mono’,monospace;font-size:.55rem;color:var(–sub);}
+.value-banner-title{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;
+  letter-spacing:.08em;color:#15803d;display:flex;align-items:center;gap:.4rem;}
+.value-banner-meta{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);}
 .value-row{display:flex;align-items:center;gap:.6rem;padding:.55rem .7rem;
-background:rgba(255,255,255,.75);border-radius:10px;margin-bottom:.35rem;
-border:1px solid rgba(15,23,42,.06);cursor:pointer;transition:all .15s;}
+  background:rgba(255,255,255,.75);border-radius:10px;margin-bottom:.35rem;
+  border:1px solid rgba(15,23,42,.06);cursor:pointer;transition:all .15s;}
 .value-row:hover{transform:translateX(2px);border-color:rgba(22,163,74,.3);}
 .value-row-match{flex:1;min-width:0;}
-.value-row-name{font-size:.78rem;font-weight:700;color:var(–ink);
-overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.value-row-pick{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;color:#7c3aed;margin-top:2px;}
-.value-row-val{font-family:‘Bebas Neue’,sans-serif;font-size:1.3rem;margin-left:.4rem;flex-shrink:0;}
+.value-row-name{font-size:.78rem;font-weight:700;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.value-row-pick{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#7c3aed;margin-top:2px;}
+.value-row-val{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin-left:.4rem;flex-shrink:0;}
 .value-row-val.high{color:#15803d;}
 .value-row-val.med{color:#b45309;}
 .value-row-val.low{color:#64748b;}
 .value-row-val.neg{color:#dc2626;}
-.value-row-odds{font-family:‘IBM Plex Mono’,monospace;font-size:.68rem;
-color:var(–ink);font-weight:700;text-align:right;min-width:45px;}
+.value-row-odds{font-family:'IBM Plex Mono',monospace;font-size:.68rem;
+  color:var(--ink);font-weight:700;text-align:right;min-width:45px;}
 
 /* Value uitleg kaart */
 .value-explainer{
-background:rgba(255,255,255,.82);border:1px solid var(–stroke);
-border-radius:14px;padding:.9rem 1rem;margin-bottom:.9rem;
-box-shadow:var(–shadow2);
+  background:rgba(255,255,255,.82);border:1px solid var(--stroke);
+  border-radius:14px;padding:.9rem 1rem;margin-bottom:.9rem;
+  box-shadow:var(--shadow2);
 }
-.value-explainer h5{font-family:‘Bebas Neue’,sans-serif;font-size:1.05rem;
-letter-spacing:.08em;color:#15803d;margin-bottom:.4rem;}
-.value-explainer p{font-size:.78rem;line-height:1.7;color:var(–ink);margin-bottom:.4rem;}
+.value-explainer h5{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;
+  letter-spacing:.08em;color:#15803d;margin-bottom:.4rem;}
+.value-explainer p{font-size:.78rem;line-height:1.7;color:var(--ink);margin-bottom:.4rem;}
 .value-explainer .example{
-background:rgba(22,163,74,.06);border-left:3px solid #16a34a;
-padding:.5rem .7rem;border-radius:0 8px 8px 0;font-size:.72rem;
-font-family:‘IBM Plex Mono’,monospace;line-height:1.7;color:#1e293b;
-margin-top:.4rem;
+  background:rgba(22,163,74,.06);border-left:3px solid #16a34a;
+  padding:.5rem .7rem;border-radius:0 8px 8px 0;font-size:.72rem;
+  font-family:'IBM Plex Mono',monospace;line-height:1.7;color:#1e293b;
+  margin-top:.4rem;
 }
 .value-explainer .formula{
-font-family:‘IBM Plex Mono’,monospace;font-size:.74rem;
-background:rgba(15,23,42,.05);padding:.5rem .7rem;border-radius:8px;
-color:var(–ink);letter-spacing:.02em;margin:.4rem 0;
+  font-family:'IBM Plex Mono',monospace;font-size:.74rem;
+  background:rgba(15,23,42,.05);padding:.5rem .7rem;border-radius:8px;
+  color:var(--ink);letter-spacing:.02em;margin:.4rem 0;
 }
 
 /* Notificatie toggle in instellingen */
-.notif-status{font-family:‘IBM Plex Mono’,monospace;font-size:.58rem;font-weight:700;}
+.notif-status{font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;}
 .notif-status.on{color:#16a34a;}
 .notif-status.off{color:#dc2626;}
-.notif-btn{font-family:‘IBM Plex Mono’,monospace;font-size:.58rem;font-weight:700;
-padding:5px 12px;border-radius:999px;cursor:pointer;border:none;}
+.notif-btn{font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;
+  padding:5px 12px;border-radius:999px;cursor:pointer;border:none;}
 .notif-btn.enable{background:linear-gradient(135deg,rgba(22,163,74,.85),rgba(21,128,61,.85));color:#fff;}
-.notif-btn.disable{background:rgba(71,85,105,.15);color:var(–sub);}
+.notif-btn.disable{background:rgba(71,85,105,.15);color:var(--sub);}
 /* ═══ EINDE VALUE DETECTIE ═══ */
 
 /* ── API KEY BALK ── */
-.api-bar{background:rgba(255,255,255,.65);border:1px solid var(–stroke);
-border-radius:14px;padding:.75rem 1rem;margin-bottom:1rem;
-box-shadow:var(–shadow2);backdrop-filter:blur(10px);}
-.api-bar-label{font-family:‘IBM Plex Mono’,monospace;font-size:.62rem;color:var(–muted);
-letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem;display:block;}
+.api-bar{background:rgba(255,255,255,.65);border:1px solid var(--stroke);
+  border-radius:14px;padding:.75rem 1rem;margin-bottom:1rem;
+  box-shadow:var(--shadow2);backdrop-filter:blur(10px);}
+.api-bar-label{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);
+  letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem;display:block;}
 .api-row{display:flex;gap:.5rem;align-items:center;}
-.api-input{flex:1;background:transparent;border:none;color:var(–ink);
-font-family:‘IBM Plex Mono’,monospace;font-size:.75rem;outline:none;min-width:0;}
+.api-input{flex:1;background:transparent;border:none;color:var(--ink);
+  font-family:'IBM Plex Mono',monospace;font-size:.75rem;outline:none;min-width:0;}
 .api-save{background:linear-gradient(135deg,rgba(255,154,193,.9),rgba(167,139,250,.9));
-color:#fff;border:none;border-radius:999px;
-font-family:‘IBM Plex Mono’,monospace;font-size:.6rem;font-weight:700;
-padding:5px 13px;cursor:pointer;white-space:nowrap;box-shadow:var(–shadow2);}
-.api-status{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;margin-top:.3rem;}
-.api-status.ok{color:var(–green);}
-.api-status.err{color:var(–red);}
+  color:#fff;border:none;border-radius:999px;
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+  padding:5px 13px;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow2);}
+.api-status{font-family:'IBM Plex Mono',monospace;font-size:.52rem;margin-top:.3rem;}
+.api-status.ok{color:var(--green);}
+.api-status.err{color:var(--red);}
 
 /* ── INZET CONFIG ── */
 .bet-config{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.9rem;}
-.cfg-box{background:rgba(255,255,255,.65);border:1px solid var(–stroke);border-radius:14px;
-padding:.75rem .9rem;box-shadow:var(–shadow2);}
-.cfg-box label{font-family:‘IBM Plex Mono’,monospace;font-size:.51rem;color:var(–muted);
-letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:.35rem;}
-.cfg-box select,.cfg-box input{width:100%;background:transparent;border:none;color:var(–ink);
-font-family:‘IBM Plex Mono’,monospace;font-size:.9rem;font-weight:700;outline:none;}
+.cfg-box{background:rgba(255,255,255,.65);border:1px solid var(--stroke);border-radius:14px;
+  padding:.75rem .9rem;box-shadow:var(--shadow2);}
+.cfg-box label{font-family:'IBM Plex Mono',monospace;font-size:.51rem;color:var(--muted);
+  letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:.35rem;}
+.cfg-box select,.cfg-box input{width:100%;background:transparent;border:none;color:var(--ink);
+  font-family:'IBM Plex Mono',monospace;font-size:.9rem;font-weight:700;outline:none;}
 .cfg-box select option{background:#fff;}
 
 /* ── ANALYSE KNOP ── */
 .analyse-btn{width:100%;background:linear-gradient(135deg,rgba(255,154,193,.25),rgba(167,139,250,.25),rgba(107,182,255,.25));
-border:1px solid rgba(255,154,193,.4);color:var(–ink);
-font-family:‘Bebas Neue’,sans-serif;font-size:1.2rem;letter-spacing:.15em;padding:.75rem;
-border-radius:14px;cursor:pointer;transition:all .2s;margin-bottom:1rem;
-box-shadow:var(–shadow2);}
-.analyse-btn:hover:not(:disabled){box-shadow:var(–shadow);transform:translateY(-1px);}
+  border:1px solid rgba(255,154,193,.4);color:var(--ink);
+  font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:.15em;padding:.75rem;
+  border-radius:14px;cursor:pointer;transition:all .2s;margin-bottom:1rem;
+  box-shadow:var(--shadow2);}
+.analyse-btn:hover:not(:disabled){box-shadow:var(--shadow);transform:translateY(-1px);}
 .analyse-btn:disabled{opacity:.4;cursor:not-allowed;}
 
 /* ── ENTITIES ── */
 .entity-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.8rem;}
-.entity-chip{display:flex;align-items:center;gap:.3rem;font-family:‘IBM Plex Mono’,monospace;
-font-size:.62rem;padding:5px 11px;border-radius:999px;border:1px solid var(–stroke);
-color:var(–muted);background:rgba(255,255,255,.6);transition:all .25s;box-shadow:0 2px 8px rgba(12,18,30,.05);}
-.entity-chip .led{width:5px;height:5px;border-radius:50%;background:var(–muted);flex-shrink:0;}
+.entity-chip{display:flex;align-items:center;gap:.3rem;font-family:'IBM Plex Mono',monospace;
+  font-size:.62rem;padding:5px 11px;border-radius:999px;border:1px solid var(--stroke);
+  color:var(--muted);background:rgba(255,255,255,.6);transition:all .25s;box-shadow:0 2px 8px rgba(12,18,30,.05);}
+.entity-chip .led{width:5px;height:5px;border-radius:50%;background:var(--muted);flex-shrink:0;}
 .entity-chip.running{border-color:rgba(255,154,193,.5);color:#d63384;background:rgba(255,215,230,.3);}
 .entity-chip.running .led{background:#ff9ac1;box-shadow:0 0 6px #ff9ac1;animation:blink .7s infinite;}
-.entity-chip.done{border-color:rgba(46,204,113,.3);color:var(–green);background:rgba(46,204,113,.05);}
-.entity-chip.done .led{background:var(–green);}
-.entity-chip.err{border-color:rgba(231,76,60,.3);color:var(–red);}
+.entity-chip.done{border-color:rgba(46,204,113,.3);color:var(--green);background:rgba(46,204,113,.05);}
+.entity-chip.done .led{background:var(--green);}
+.entity-chip.err{border-color:rgba(231,76,60,.3);color:var(--red);}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
 
 /* ── RESULTAAT CARDS ── */
 .results{display:none;flex-direction:column;gap:.7rem;margin-bottom:1rem;}
 .results.visible{display:flex;}
-.result-card{background:rgba(255,255,255,.88);border:1px solid var(–stroke);border-radius:16px;
-overflow:hidden;animation:fadeUp .3s ease both;box-shadow:var(–shadow2);}
+.result-card{background:rgba(255,255,255,.88);border:1px solid var(--stroke);border-radius:16px;
+  overflow:hidden;animation:fadeUp .3s ease both;box-shadow:var(--shadow2);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);}}
 .card-head{display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;
-border-bottom:1px solid var(–stroke);background:rgba(248,250,252,.9);}
-.card-tag{font-family:‘IBM Plex Mono’,monospace;font-size:.58rem;letter-spacing:.07em;
-padding:3px 9px;border-radius:999px;white-space:nowrap;font-weight:700;}
+  border-bottom:1px solid var(--stroke);background:rgba(248,250,252,.9);}
+.card-tag{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.07em;
+  padding:3px 9px;border-radius:999px;white-space:nowrap;font-weight:700;}
 .t-vorm{background:rgba(37,99,235,.1);color:#1d4ed8;border:1px solid rgba(37,99,235,.25);}
 .t-stats{background:rgba(234,88,12,.1);color:#c2410c;border:1px solid rgba(234,88,12,.25);}
 .t-tactiek{background:rgba(217,119,6,.1);color:#b45309;border:1px solid rgba(217,119,6,.25);}
@@ -528,9 +527,9 @@ padding:3px 9px;border-radius:999px;white-space:nowrap;font-weight:700;}
 .t-risico{background:rgba(220,38,38,.08);color:#b91c1c;border:1px solid rgba(220,38,38,.2);}
 .t-advies{background:rgba(124,58,237,.1);color:#6d28d9;border:1px solid rgba(124,58,237,.25);}
 .t-combi{background:rgba(219,39,119,.1);color:#be185d;border:1px solid rgba(219,39,119,.25);}
-.card-title-txt{font-size:.88rem;font-weight:700;flex:1;color:var(–ink);}
+.card-title-txt{font-size:.88rem;font-weight:700;flex:1;color:var(--ink);}
 .card-body{padding:1rem 1.1rem;font-size:.9rem;line-height:1.8;color:#0f172a;
-font-family:‘DM Sans’,sans-serif;min-height:50px;font-weight:400;}
+  font-family:'DM Sans',sans-serif;min-height:50px;font-weight:400;}
 .card-body strong{font-weight:700;color:#0f172a;}
 .card-body em{font-style:italic;color:#334155;}
 .dots{display:inline-flex;gap:5px;}
@@ -540,258 +539,256 @@ font-family:‘DM Sans’,sans-serif;min-height:50px;font-weight:400;}
 
 /* ── DAGELIJKSE COMBI TIP ── */
 .combi-card{background:linear-gradient(135deg,rgba(255,215,230,.55),rgba(214,240,255,.45),rgba(239,228,255,.45));
-border:1px solid rgba(255,154,193,.3);border-radius:18px;padding:1rem;margin-bottom:1rem;
-box-shadow:var(–shadow2);backdrop-filter:blur(10px);}
-.combi-header{font-family:‘Bebas Neue’,sans-serif;font-size:1.25rem;
-background:linear-gradient(135deg,#ff9ac1,#a78bfa);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-letter-spacing:.1em;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem;}
+  border:1px solid rgba(255,154,193,.3);border-radius:18px;padding:1rem;margin-bottom:1rem;
+  box-shadow:var(--shadow2);backdrop-filter:blur(10px);}
+.combi-header{font-family:'Bebas Neue',sans-serif;font-size:1.25rem;
+  background:linear-gradient(135deg,#ff9ac1,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:.1em;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem;}
 .combi-legs{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.75rem;}
 .combi-leg{display:flex;justify-content:space-between;align-items:center;
-background:rgba(255,255,255,.55);border:1px solid var(–stroke);border-radius:12px;padding:.5rem .75rem;
-box-shadow:0 4px 12px rgba(12,18,30,.05);}
+  background:rgba(255,255,255,.55);border:1px solid var(--stroke);border-radius:12px;padding:.5rem .75rem;
+  box-shadow:0 4px 12px rgba(12,18,30,.05);}
 .leg-left{flex:1;}
-.leg-match-name{font-size:.78rem;font-weight:700;margin-bottom:.1rem;color:var(–ink);}
-.leg-pick{font-family:‘IBM Plex Mono’,monospace;font-size:.53rem;color:#a78bfa;}
-.leg-odds-val{font-family:‘Bebas Neue’,sans-serif;font-size:1.1rem;color:var(–green);margin-left:.8rem;}
+.leg-match-name{font-size:.78rem;font-weight:700;margin-bottom:.1rem;color:var(--ink);}
+.leg-pick{font-family:'IBM Plex Mono',monospace;font-size:.53rem;color:#a78bfa;}
+.leg-odds-val{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--green);margin-left:.8rem;}
 .combi-footer{display:flex;justify-content:space-between;align-items:center;
-background:rgba(255,255,255,.55);border:1px solid var(–stroke);
-border-radius:12px;padding:.6rem .85rem;box-shadow:0 4px 12px rgba(12,18,30,.05);}
-.combi-foot-lbl{font-family:‘IBM Plex Mono’,monospace;font-size:.53rem;color:var(–muted);}
-.combi-totaal{font-family:‘Bebas Neue’,sans-serif;font-size:1.7rem;
-background:linear-gradient(135deg,#ff9ac1,#a78bfa);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-letter-spacing:.05em;}
-.combi-payout{font-family:‘IBM Plex Mono’,monospace;font-size:.62rem;color:var(–orange);}
+  background:rgba(255,255,255,.55);border:1px solid var(--stroke);
+  border-radius:12px;padding:.6rem .85rem;box-shadow:0 4px 12px rgba(12,18,30,.05);}
+.combi-foot-lbl{font-family:'IBM Plex Mono',monospace;font-size:.53rem;color:var(--muted);}
+.combi-totaal{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;
+  background:linear-gradient(135deg,#ff9ac1,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:.05em;}
+.combi-payout{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--orange);}
 .combi-gen-btn{width:100%;
-background:linear-gradient(135deg,rgba(255,154,193,.2),rgba(167,139,250,.2),rgba(107,182,255,.2));
-border:1px solid rgba(255,154,193,.4);color:var(–ink);
-font-family:‘Bebas Neue’,sans-serif;font-size:1.1rem;letter-spacing:.12em;padding:.65rem;
-border-radius:14px;cursor:pointer;transition:all .2s;margin-bottom:1rem;
-box-shadow:var(–shadow2);}
-.combi-gen-btn:hover:not(:disabled){box-shadow:var(–shadow);transform:translateY(-1px);}
+  background:linear-gradient(135deg,rgba(255,154,193,.2),rgba(167,139,250,.2),rgba(107,182,255,.2));
+  border:1px solid rgba(255,154,193,.4);color:var(--ink);
+  font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.12em;padding:.65rem;
+  border-radius:14px;cursor:pointer;transition:all .2s;margin-bottom:1rem;
+  box-shadow:var(--shadow2);}
+.combi-gen-btn:hover:not(:disabled){box-shadow:var(--shadow);transform:translateY(-1px);}
 .combi-gen-btn:disabled{opacity:.4;cursor:not-allowed;}
 
 /* ── WALLET TAB ── */
 .wallet-big{text-align:center;padding:1.5rem 0 1rem;}
-.wallet-big .lbl{font-family:‘IBM Plex Mono’,monospace;font-size:.58rem;color:var(–muted);
-letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem;}
-.wallet-big .amount{font-family:‘Bebas Neue’,sans-serif;font-size:3rem;letter-spacing:.04em;
-background:linear-gradient(135deg,#ff9ac1,#a78bfa,#6bb6ff);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.wallet-big .sub{font-family:‘IBM Plex Mono’,monospace;font-size:.56rem;color:var(–muted);}
+.wallet-big .lbl{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--muted);
+  letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem;}
+.wallet-big .amount{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:.04em;
+  background:linear-gradient(135deg,#ff9ac1,#a78bfa,#6bb6ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.wallet-big .sub{font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--muted);}
 .wallet-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:1rem;}
-.w-stat-box{background:rgba(255,255,255,.65);border:1px solid var(–stroke);border-radius:14px;
-padding:.7rem .6rem;text-align:center;box-shadow:var(–shadow2);}
-.w-stat-box .s-lbl{font-family:‘IBM Plex Mono’,monospace;font-size:.48rem;color:var(–muted);
-letter-spacing:.08em;text-transform:uppercase;margin-bottom:.25rem;}
-.w-stat-box .s-val{font-family:‘Bebas Neue’,sans-serif;font-size:1.1rem;letter-spacing:.04em;}
+.w-stat-box{background:rgba(255,255,255,.65);border:1px solid var(--stroke);border-radius:14px;
+  padding:.7rem .6rem;text-align:center;box-shadow:var(--shadow2);}
+.w-stat-box .s-lbl{font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--muted);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:.25rem;}
+.w-stat-box .s-val{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.04em;}
 .wallet-actions-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:1rem;}
-.wa-btn{background:rgba(255,255,255,.65);border:1px solid var(–stroke);border-radius:14px;
-padding:.7rem .5rem;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(–shadow2);}
-.wa-btn:hover{box-shadow:var(–shadow);transform:translateY(-1px);}
+.wa-btn{background:rgba(255,255,255,.65);border:1px solid var(--stroke);border-radius:14px;
+  padding:.7rem .5rem;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--shadow2);}
+.wa-btn:hover{box-shadow:var(--shadow);transform:translateY(-1px);}
 .wa-btn .icon{font-size:1.1rem;display:block;margin-bottom:.2rem;}
-.wa-btn .lbl{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;color:var(–muted);}
+.wa-btn .lbl{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--muted);}
 .bet-history-list{display:flex;flex-direction:column;gap:.45rem;}
 .bet-row{display:flex;align-items:center;gap:.6rem;padding:.6rem .85rem;
-background:rgba(255,255,255,.65);border:1px solid var(–stroke);border-radius:12px;
-box-shadow:0 4px 12px rgba(12,18,30,.05);}
+  background:rgba(255,255,255,.65);border:1px solid var(--stroke);border-radius:12px;
+  box-shadow:0 4px 12px rgba(12,18,30,.05);}
 .bet-info{flex:1;}
-.bet-match-name{font-size:.78rem;font-weight:600;margin-bottom:.1rem;color:var(–ink);}
-.bet-meta{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;color:var(–muted);}
-.bet-amt{font-family:‘IBM Plex Mono’,monospace;font-size:.62rem;color:var(–muted);text-align:right;}
-.bet-res{font-family:‘Bebas Neue’,sans-serif;font-size:.95rem;letter-spacing:.04em;margin-left:.4rem;}
-.bet-res.win{color:var(–green);}
-.bet-res.lose{color:var(–red);}
-.bet-res.pending{color:var(–yellow);}
-.empty-state{text-align:center;padding:2rem;font-family:‘IBM Plex Mono’,monospace;
-font-size:.65rem;color:var(–muted);letter-spacing:.08em;}
+.bet-match-name{font-size:.78rem;font-weight:600;margin-bottom:.1rem;color:var(--ink);}
+.bet-meta{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--muted);}
+.bet-amt{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);text-align:right;}
+.bet-res{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:.04em;margin-left:.4rem;}
+.bet-res.win{color:var(--green);}
+.bet-res.lose{color:var(--red);}
+.bet-res.pending{color:var(--yellow);}
+.empty-state{text-align:center;padding:2rem;font-family:'IBM Plex Mono',monospace;
+  font-size:.65rem;color:var(--muted);letter-spacing:.08em;}
 
 /* ── VALUE BACKTEST ── */
 .bt-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.8rem;}
-.bt-box{background:rgba(255,255,255,.75);border:1px solid var(–stroke);border-radius:12px;
-padding:.6rem .5rem;text-align:center;box-shadow:var(–shadow2);}
-.bt-box .lbl{font-family:‘IBM Plex Mono’,monospace;font-size:.48rem;color:var(–sub);
-text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;}
-.bt-box .val{font-family:‘Bebas Neue’,sans-serif;font-size:1.1rem;letter-spacing:.03em;}
+.bt-box{background:rgba(255,255,255,.75);border:1px solid var(--stroke);border-radius:12px;
+  padding:.6rem .5rem;text-align:center;box-shadow:var(--shadow2);}
+.bt-box .lbl{font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;}
+.bt-box .val{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.03em;}
 .bt-row{background:rgba(255,255,255,.82);border:1px solid rgba(15,23,42,.07);
-border-radius:12px;padding:.6rem .8rem;margin-bottom:.4rem;
-box-shadow:0 2px 8px rgba(15,23,42,.04);}
+  border-radius:12px;padding:.6rem .8rem;margin-bottom:.4rem;
+  box-shadow:0 2px 8px rgba(15,23,42,.04);}
 .bt-row.bt-win{border-left:3px solid #16a34a;}
 .bt-row.bt-lose{border-left:3px solid #dc2626;}
 .bt-row.bt-pending{border-left:3px solid #d97706;}
-.bt-match{font-size:.82rem;font-weight:700;color:var(–ink);margin-bottom:.2rem;}
-.bt-meta{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;color:var(–sub);
-display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.3rem;}
+.bt-match{font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:.2rem;}
+.bt-meta{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);
+  display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.3rem;}
 .bt-footer{display:flex;justify-content:space-between;align-items:center;}
-.bt-result{font-family:‘Bebas Neue’,sans-serif;font-size:.95rem;cursor:pointer;}
+.bt-result{font-family:'Bebas Neue',sans-serif;font-size:.95rem;cursor:pointer;}
 .bt-result.win{color:#16a34a;}
 .bt-result.lose{color:#dc2626;}
 .bt-result.pending{color:#d97706;}
 .bt-chart-wrap{background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
-border-radius:14px;padding:.8rem .9rem;margin-bottom:.8rem;
-box-shadow:0 2px 8px rgba(15,23,42,.05);}
-.bt-empty{text-align:center;padding:2rem 1rem;font-family:‘IBM Plex Mono’,monospace;
-font-size:.62rem;color:var(–muted);line-height:1.8;}
-.tracker-filter{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;font-weight:700;
-padding:.35rem .75rem;border-radius:999px;border:1px solid var(–stroke);
-background:rgba(255,255,255,.7);color:var(–sub);cursor:pointer;white-space:nowrap;flex-shrink:0;}
+  border-radius:14px;padding:.8rem .9rem;margin-bottom:.8rem;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);}
+.bt-empty{text-align:center;padding:2rem 1rem;font-family:'IBM Plex Mono',monospace;
+  font-size:.62rem;color:var(--muted);line-height:1.8;}
+.tracker-filter{font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+  padding:.35rem .75rem;border-radius:999px;border:1px solid var(--stroke);
+  background:rgba(255,255,255,.7);color:var(--sub);cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .tracker-filter.active{background:linear-gradient(135deg,rgba(219,39,119,.12),rgba(124,58,237,.1));
-border-color:rgba(219,39,119,.35);color:#be185d;}
+  border-color:rgba(219,39,119,.35);color:#be185d;}
 .tracker-row{background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
-border-radius:14px;padding:.75rem .9rem;margin-bottom:.5rem;box-shadow:0 2px 8px rgba(15,23,42,.05);}
+  border-radius:14px;padding:.75rem .9rem;margin-bottom:.5rem;box-shadow:0 2px 8px rgba(15,23,42,.05);}
 .tracker-match{font-size:.9rem;font-weight:700;color:#0f172a;margin-bottom:.2rem;}
-.tracker-meta{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;color:#475569;
-display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.4rem;}
-.tracker-source{font-family:‘IBM Plex Mono’,monospace;font-size:.5rem;font-weight:700;
-padding:2px 8px;border-radius:4px;}
+.tracker-meta{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#475569;
+  display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.4rem;}
+.tracker-source{font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+  padding:2px 8px;border-radius:4px;}
 .src-analyse{background:rgba(37,99,235,.1);color:#2563eb;border:1px solid rgba(37,99,235,.2);}
 .src-combi{background:rgba(219,39,119,.1);color:#be185d;border:1px solid rgba(219,39,119,.2);}
 .src-widget{background:rgba(124,58,237,.1);color:#7c3aed;border:1px solid rgba(124,58,237,.2);}
 .src-eigen{background:rgba(15,23,42,.06);color:#475569;border:1px solid rgba(15,23,42,.12);}
 .tracker-footer{display:flex;justify-content:space-between;align-items:center;margin-top:.4rem;}
-.tracker-result{font-family:‘Bebas Neue’,sans-serif;font-size:1rem;cursor:pointer;}
+.tracker-result{font-family:'Bebas Neue',sans-serif;font-size:1rem;cursor:pointer;}
 .tracker-result.win{color:#16a34a;}
 .tracker-result.lose{color:#dc2626;}
 .tracker-result.pending{color:#d97706;}
 
 /* ── INZET MODAL ── */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(28,35,48,.35);
-backdrop-filter:blur(8px);z-index:1000;align-items:flex-end;justify-content:center;}
+  backdrop-filter:blur(8px);z-index:1000;align-items:flex-end;justify-content:center;}
 .modal-overlay.show{display:flex;}
 .modal-box{background:linear-gradient(180deg,rgba(255,247,240,.98),rgba(244,241,255,.98));
-border:1px solid var(–stroke);border-radius:24px 24px 0 0;
-width:100%;max-width:860px;padding:1.5rem 1.2rem;
-padding-bottom:max(1.5rem,env(safe-area-inset-bottom));
-animation:slideUp .28s ease;box-shadow:0 -20px 60px rgba(12,18,30,.12);}
+  border:1px solid var(--stroke);border-radius:24px 24px 0 0;
+  width:100%;max-width:860px;padding:1.5rem 1.2rem;
+  padding-bottom:max(1.5rem,env(safe-area-inset-bottom));
+  animation:slideUp .28s ease;box-shadow:0 -20px 60px rgba(12,18,30,.12);}
 @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
-.modal-box h3{font-family:‘Bebas Neue’,sans-serif;font-size:1.4rem;letter-spacing:.1em;
-margin-bottom:.8rem;
-background:linear-gradient(135deg,#ff9ac1,#a78bfa);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.modal-match-name{font-family:‘IBM Plex Mono’,monospace;font-size:.65rem;color:#a78bfa;margin-bottom:1rem;}
-.modal-pick-info{font-family:‘IBM Plex Mono’,monospace;font-size:.65rem;color:var(–muted);margin-bottom:.8rem;}
-.modal-input{width:100%;background:rgba(255,255,255,.8);border:1px solid var(–stroke);border-radius:12px;
-color:var(–ink);font-family:‘Bebas Neue’,sans-serif;font-size:1.5rem;
-padding:.75rem 1rem;margin-bottom:.8rem;outline:none;letter-spacing:.05em;}
+.modal-box h3{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.1em;
+  margin-bottom:.8rem;
+  background:linear-gradient(135deg,#ff9ac1,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.modal-match-name{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:#a78bfa;margin-bottom:1rem;}
+.modal-pick-info{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--muted);margin-bottom:.8rem;}
+.modal-input{width:100%;background:rgba(255,255,255,.8);border:1px solid var(--stroke);border-radius:12px;
+  color:var(--ink);font-family:'Bebas Neue',sans-serif;font-size:1.5rem;
+  padding:.75rem 1rem;margin-bottom:.8rem;outline:none;letter-spacing:.05em;}
 .modal-input:focus{border-color:rgba(255,154,193,.5);}
-.market-btn{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;font-weight:700;
-padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;
-border:1px solid var(–stroke);background:rgba(255,255,255,.7);color:var(–sub);transition:all .15s;}
+.market-btn{font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+  padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  border:1px solid var(--stroke);background:rgba(255,255,255,.7);color:var(--sub);transition:all .15s;}
 .market-btn.active{background:rgba(219,39,119,.12);border-color:rgba(219,39,119,.4);color:#be185d;}
-.modal-payout-preview{font-family:‘IBM Plex Mono’,monospace;font-size:.65rem;color:var(–orange);
-text-align:center;margin-bottom:.9rem;}
+.modal-payout-preview{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--orange);
+  text-align:center;margin-bottom:.9rem;}
 .modal-btns{display:flex;gap:.6rem;}
 .modal-confirm{flex:1;background:linear-gradient(135deg,rgba(255,154,193,.9),rgba(167,139,250,.9));
-color:#fff;border:none;border-radius:999px;
-font-family:‘IBM Plex Mono’,monospace;font-size:.75rem;font-weight:700;
-padding:.75rem;cursor:pointer;box-shadow:var(–shadow2);}
-.modal-cancel{flex:1;background:rgba(255,255,255,.7);color:var(–muted);
-border:1px solid var(–stroke);border-radius:999px;
-font-family:‘IBM Plex Mono’,monospace;font-size:.75rem;
-padding:.75rem;cursor:pointer;}
+  color:#fff;border:none;border-radius:999px;
+  font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;
+  padding:.75rem;cursor:pointer;box-shadow:var(--shadow2);}
+.modal-cancel{flex:1;background:rgba(255,255,255,.7);color:var(--muted);
+  border:1px solid var(--stroke);border-radius:999px;
+  font-family:'IBM Plex Mono',monospace;font-size:.75rem;
+  padding:.75rem;cursor:pointer;}
 
 /* ── INSTELLINGEN TAB ── */
-.settings-section{background:rgba(255,255,255,.82);border:1px solid var(–stroke);border-radius:16px;
-padding:.9rem 1rem;margin-bottom:.8rem;box-shadow:var(–shadow2);}
-.settings-section h4{font-family:‘IBM Plex Mono’,monospace;font-size:.65rem;color:var(–sub);
-letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;font-weight:700;}
+.settings-section{background:rgba(255,255,255,.82);border:1px solid var(--stroke);border-radius:16px;
+  padding:.9rem 1rem;margin-bottom:.8rem;box-shadow:var(--shadow2);}
+.settings-section h4{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--sub);
+  letter-spacing:.08em;text-transform:uppercase;margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem;font-weight:700;}
 .settings-row{display:flex;align-items:center;justify-content:space-between;gap:.8rem;
-padding:.6rem 0;border-bottom:1px solid var(–stroke);}
+  padding:.6rem 0;border-bottom:1px solid var(--stroke);}
 .settings-row:last-child{border:none;padding-bottom:0;}
-.sr-label{font-size:.8rem;font-weight:700;color:var(–ink);line-height:1.3;flex-shrink:0;}
-.sr-sub{font-family:‘IBM Plex Mono’,monospace;font-size:.6rem;color:var(–sub);margin-top:2px;line-height:1.4;}
+.sr-label{font-size:.8rem;font-weight:700;color:var(--ink);line-height:1.3;flex-shrink:0;}
+.sr-sub{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);margin-top:2px;line-height:1.4;}
 .sr-input{background:transparent;border:none;color:#7c3aed;
-font-family:‘IBM Plex Mono’,monospace;font-size:.82rem;outline:none;text-align:right;width:160px;}
-.sr-input-border{background:rgba(255,255,255,.85);border:1px solid var(–stroke);border-radius:8px;
-padding:.4rem .7rem;}
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;outline:none;text-align:right;width:160px;}
+.sr-input-border{background:rgba(255,255,255,.85);border:1px solid var(--stroke);border-radius:8px;
+  padding:.4rem .7rem;}
 .sr-input-border:focus{border-color:rgba(219,39,119,.4);}
 .save-settings-btn{width:100%;
-background:linear-gradient(135deg,rgba(255,154,193,.85),rgba(167,139,250,.85));
-color:#fff;border:none;border-radius:999px;
-font-family:‘IBM Plex Mono’,monospace;font-size:.72rem;font-weight:700;
-padding:.8rem;cursor:pointer;margin-top:.5rem;box-shadow:var(–shadow2);}
+  background:linear-gradient(135deg,rgba(255,154,193,.85),rgba(167,139,250,.85));
+  color:#fff;border:none;border-radius:999px;
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:700;
+  padding:.8rem;cursor:pointer;margin-top:.5rem;box-shadow:var(--shadow2);}
 /* ── COMBI BUILDER BALK ── */
 .combi-builder{
-position:sticky;bottom:0;left:0;right:0;z-index:50;
-background:linear-gradient(180deg,transparent,rgba(255,247,240,.6) 20%,rgba(255,247,240,.97));
-padding:.6rem 0 .3rem;margin-top:.5rem;
+  position:sticky;bottom:0;left:0;right:0;z-index:50;
+  background:linear-gradient(180deg,transparent,rgba(255,247,240,.6) 20%,rgba(255,247,240,.97));
+  padding:.6rem 0 .3rem;margin-top:.5rem;
 }
 .combi-builder-inner{
-background:rgba(255,255,255,.85);border:1px solid rgba(255,154,193,.35);
-border-radius:18px;padding:.7rem .9rem;
-box-shadow:0 8px 30px rgba(255,154,193,.2);backdrop-filter:blur(12px);
+  background:rgba(255,255,255,.85);border:1px solid rgba(255,154,193,.35);
+  border-radius:18px;padding:.7rem .9rem;
+  box-shadow:0 8px 30px rgba(255,154,193,.2);backdrop-filter:blur(12px);
 }
 .combi-builder-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;}
-.combi-builder-title{font-family:‘IBM Plex Mono’,monospace;font-size:.6rem;font-weight:700;
-color:#d63384;letter-spacing:.1em;text-transform:uppercase;}
-.combi-builder-odds{font-family:‘Bebas Neue’,sans-serif;font-size:1.4rem;
-background:linear-gradient(135deg,#ff9ac1,#a78bfa);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.combi-builder-title{font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+  color:#d63384;letter-spacing:.1em;text-transform:uppercase;}
+.combi-builder-odds{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;
+  background:linear-gradient(135deg,#ff9ac1,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .combi-builder-legs{display:flex;flex-direction:column;gap:.3rem;margin-bottom:.55rem;}
 .combi-builder-leg{display:flex;align-items:center;gap:.5rem;
-background:rgba(255,215,230,.25);border:1px solid rgba(255,154,193,.2);
-border-radius:10px;padding:.4rem .7rem;}
-.cbl-match{flex:1;font-size:.75rem;font-weight:600;color:var(–ink);}
-.cbl-pick{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;color:#a78bfa;}
-.cbl-odds{font-family:‘Bebas Neue’,sans-serif;font-size:1rem;color:var(–green);margin:0 .3rem;}
-.cbl-remove{background:none;border:none;color:var(–red);cursor:pointer;
-font-size:.9rem;padding:0 2px;opacity:.7;flex-shrink:0;}
+  background:rgba(255,215,230,.25);border:1px solid rgba(255,154,193,.2);
+  border-radius:10px;padding:.4rem .7rem;}
+.cbl-match{flex:1;font-size:.75rem;font-weight:600;color:var(--ink);}
+.cbl-pick{font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#a78bfa;}
+.cbl-odds{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--green);margin:0 .3rem;}
+.cbl-remove{background:none;border:none;color:var(--red);cursor:pointer;
+  font-size:.9rem;padding:0 2px;opacity:.7;flex-shrink:0;}
 .combi-builder-actions{display:flex;gap:.5rem;}
 .combi-place-btn{flex:1;background:linear-gradient(135deg,rgba(255,154,193,.9),rgba(167,139,250,.9));
-color:#fff;border:none;border-radius:999px;
-font-family:‘IBM Plex Mono’,monospace;font-size:.68rem;font-weight:700;
-padding:.55rem;cursor:pointer;box-shadow:var(–shadow2);}
-.combi-clear-btn{background:rgba(255,255,255,.7);color:var(–muted);
-border:1px solid var(–stroke);border-radius:999px;
-font-family:‘IBM Plex Mono’,monospace;font-size:.65rem;
-padding:.55rem .9rem;cursor:pointer;}
-.combi-empty{font-family:‘IBM Plex Mono’,monospace;font-size:.58rem;color:var(–muted);
-text-align:center;padding:.2rem 0;}
+  color:#fff;border:none;border-radius:999px;
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:700;
+  padding:.55rem;cursor:pointer;box-shadow:var(--shadow2);}
+.combi-clear-btn{background:rgba(255,255,255,.7);color:var(--muted);
+  border:1px solid var(--stroke);border-radius:999px;
+  font-family:'IBM Plex Mono',monospace;font-size:.65rem;
+  padding:.55rem .9rem;cursor:pointer;}
+.combi-empty{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--muted);
+  text-align:center;padding:.2rem 0;}
 
 /* add-to-combi button on match cards */
 .add-combi-btn{display:flex;align-items:center;justify-content:center;gap:.3rem;
-margin:.4rem .9rem .6rem;padding:.45rem;
-background:linear-gradient(135deg,rgba(255,215,230,.4),rgba(214,240,255,.4));
-border:1px dashed rgba(255,154,193,.4);border-radius:10px;
-cursor:pointer;transition:all .2s;
-font-family:‘IBM Plex Mono’,monospace;font-size:.55rem;color:#d63384;font-weight:700;}
+  margin:.4rem .9rem .6rem;padding:.45rem;
+  background:linear-gradient(135deg,rgba(255,215,230,.4),rgba(214,240,255,.4));
+  border:1px dashed rgba(255,154,193,.4);border-radius:10px;
+  cursor:pointer;transition:all .2s;
+  font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#d63384;font-weight:700;}
 .add-combi-btn:hover{background:linear-gradient(135deg,rgba(255,215,230,.7),rgba(214,240,255,.7));}
 .add-combi-btn.in-combi{background:linear-gradient(135deg,rgba(46,204,113,.12),rgba(46,204,113,.06));
-border-color:rgba(46,204,113,.35);color:var(–green);}
+  border-color:rgba(46,204,113,.35);color:var(--green);}
 
 /* combi bet history row */
 .combi-bet-row{background:rgba(255,255,255,.65);border:1px solid rgba(255,154,193,.25);
-border-radius:14px;padding:.7rem .9rem;margin-bottom:.45rem;
-box-shadow:0 4px 12px rgba(255,154,193,.1);}
+  border-radius:14px;padding:.7rem .9rem;margin-bottom:.45rem;
+  box-shadow:0 4px 12px rgba(255,154,193,.1);}
 .combi-bet-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;}
-.combi-bet-label{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;
-color:#d63384;font-weight:700;letter-spacing:.08em;}
-.combi-bet-odds{font-family:‘Bebas Neue’,sans-serif;font-size:1.1rem;
-background:linear-gradient(135deg,#ff9ac1,#a78bfa);
--webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.combi-bet-label{font-family:'IBM Plex Mono',monospace;font-size:.52rem;
+  color:#d63384;font-weight:700;letter-spacing:.08em;}
+.combi-bet-odds{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;
+  background:linear-gradient(135deg,#ff9ac1,#a78bfa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .combi-bet-legs{display:flex;flex-direction:column;gap:.2rem;margin-bottom:.4rem;}
-.combi-bet-leg{font-size:.73rem;color:var(–muted);
-padding:.2rem .4rem;border-left:2px solid rgba(255,154,193,.4);}
-.combi-bet-leg.leg-win{border-left-color:var(–green);color:var(–green);}
-.combi-bet-leg.leg-lose{border-left-color:var(–red);color:var(–red);}
+.combi-bet-leg{font-size:.73rem;color:var(--muted);
+  padding:.2rem .4rem;border-left:2px solid rgba(255,154,193,.4);}
+.combi-bet-leg.leg-win{border-left-color:var(--green);color:var(--green);}
+.combi-bet-leg.leg-lose{border-left-color:var(--red);color:var(--red);}
 .combi-bet-footer{display:flex;justify-content:space-between;align-items:center;}
-.combi-bet-amount{font-family:‘IBM Plex Mono’,monospace;font-size:.6rem;color:var(–muted);}
-.combi-bet-result{font-family:‘Bebas Neue’,sans-serif;font-size:.95rem;cursor:pointer;}
-.combi-bet-result.win{color:var(–green);}
-.combi-bet-result.lose{color:var(–red);}
-.combi-bet-result.pending{color:var(–yellow);}
-.combi-leg-status-btn{font-family:‘IBM Plex Mono’,monospace;font-size:.45rem;
-background:rgba(255,255,255,.6);border:1px solid var(–stroke);
-border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-left:.3rem;}
+.combi-bet-amount{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);}
+.combi-bet-result{font-family:'Bebas Neue',sans-serif;font-size:.95rem;cursor:pointer;}
+.combi-bet-result.win{color:var(--green);}
+.combi-bet-result.lose{color:var(--red);}
+.combi-bet-result.pending{color:var(--yellow);}
+.combi-leg-status-btn{font-family:'IBM Plex Mono',monospace;font-size:.45rem;
+  background:rgba(255,255,255,.6);border:1px solid var(--stroke);
+  border-radius:999px;padding:2px 6px;cursor:pointer;color:var(--muted);margin-left:.3rem;}
 </style>
-
 </head>
 <body>
 <div class="app">
 
   <!-- INSTALL BANNER -->
-
   <div id="installBanner">
     <p>📲 <span>Installeer als app</span> — zet op je homescreen!</p>
     <button class="install-btn" onclick="installPWA()">INSTALLEER</button>
@@ -799,7 +796,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   </div>
 
   <!-- TOPBAR -->
-
   <div class="topbar">
     <div class="logo-wrap">
       <div class="topbar-logo">TOTO AI</div>
@@ -828,7 +824,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   </div>
 
   <!-- WALLET MINI STRIP -->
-
   <div class="wallet-strip">
     <div class="w-item bal">
       <div class="lbl">Saldo</div>
@@ -849,7 +844,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   </div>
 
   <!-- TAB NAVIGATIE -->
-
   <div class="tab-nav-wrap">
     <div class="tab-nav">
       <button class="tab-btn active" onclick="switchTab('wedstrijden')" id="tab-btn-wedstrijden">
@@ -876,7 +870,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   <!-- ══════════════════════════════════════
        TAB 1: WEDSTRIJDEN
   ══════════════════════════════════════ -->
-
   <div id="tab-wedstrijden" class="tab-content active">
     <div class="section-label">Competitie
       <button onclick="toggleMultiMode()" id="multiModeBtn"
@@ -949,69 +942,65 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       </div>
     </div>
 
-```
-<div class="section-label">
-  Wedstrijden vandaag t/m overmorgen
-  <button onclick="debugAPI()" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;
-    background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:#a78bfa;
-    border-radius:999px;padding:2px 8px;cursor:pointer;margin-left:.3rem;">🔍 DEBUG</button>
-  <!-- VALUE: scan-knop naast DEBUG -->
-  <button onclick="scanValueAll()" id="scanValueBtn" class="scan-value-btn">
-    ⚡ SCAN VALUE
-  </button>
-</div>
-
-<!-- VALUE: uitleg card (wordt alleen getoond bij eerste keer) -->
-<div id="valueExplainer" class="value-explainer" style="display:none;">
-  <h5>⚡ WAT IS VALUE?</h5>
-  <p><b>Value</b> = wanneer de AI een hogere winstkans schat dan de bookmaker. Dan heb je op lange termijn statistisch voordeel.</p>
-  <div class="formula">value % = (AI_kans × quote − 1) × 100</div>
-  <p style="margin-top:.5rem;">Voorbeeld: AI zegt Ajax wint met 60% kans, bookmaker geeft quote 2.10</p>
-  <div class="example">
-    0,60 × 2,10 = 1,26<br>
-    → (1,26 − 1) × 100 = <b style="color:#15803d;">+26% value</b> 🔥
-  </div>
-  <p style="margin-top:.5rem;">Kleuren: <span style="color:#15803d;font-weight:700;">⚡ groen ≥15%</span> sterk · <span style="color:#b45309;font-weight:700;">oranje 5–15%</span> licht · <span style="color:#64748b;font-weight:700;">grijs 0–5%</span> fair · <span style="color:#dc2626;font-weight:700;">rood &lt;0%</span> geen value.</p>
-  <button onclick="hideValueExplainer()" style="margin-top:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.55rem;background:none;border:none;color:var(--sub);cursor:pointer;text-decoration:underline;">✕ Niet meer tonen</button>
-</div>
-
-<!-- VALUE: resultaten banner -->
-<div id="valueBanner" class="value-banner" style="display:none;"></div>
-
-<div id="debugOutput" style="display:none;background:rgba(255,255,255,.6);border:1px solid var(--stroke);
-  border-radius:10px;padding:.7rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;
-  font-size:.52rem;color:var(--ink);line-height:1.7;white-space:pre-wrap;word-break:break-all;
-  max-height:200px;overflow-y:auto;"></div>
-<div id="match-loading" style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);padding:.8rem 0;">
-  ⟳ Wedstrijden laden...
-</div>
-<div class="match-list" id="matchList"></div>
-
-<!-- COMBI BUILDER BALK -->
-<div class="combi-builder" id="combiBuilder" style="display:none;">
-  <div class="combi-builder-inner">
-    <div class="combi-builder-header">
-      <span class="combi-builder-title">🎰 Mijn Combi (<span id="cbLegCount">0</span> legs)</span>
-      <span class="combi-builder-odds" id="cbTotalOdds">1.00</span>
+    <div class="section-label">
+      Wedstrijden vandaag t/m overmorgen
+      <button onclick="debugAPI()" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;
+        background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:#a78bfa;
+        border-radius:999px;padding:2px 8px;cursor:pointer;margin-left:.3rem;">🔍 DEBUG</button>
+      <!-- VALUE: scan-knop naast DEBUG -->
+      <button onclick="scanValueAll()" id="scanValueBtn" class="scan-value-btn">
+        ⚡ SCAN VALUE
+      </button>
     </div>
-    <div class="combi-builder-legs" id="cbLegs">
-      <div class="combi-empty">Klik op een wedstrijd om toe te voegen</div>
-    </div>
-    <div class="combi-builder-actions">
-      <button class="combi-place-btn" onclick="openCombiPlaceModal()">💶 INZET PLAATSEN</button>
-      <button class="combi-clear-btn" onclick="clearCombiBuilder()">✕ WISSEN</button>
-    </div>
-  </div>
-</div>
-</div>
-```
 
+    <!-- VALUE: uitleg card (wordt alleen getoond bij eerste keer) -->
+    <div id="valueExplainer" class="value-explainer" style="display:none;">
+      <h5>⚡ WAT IS VALUE?</h5>
+      <p><b>Value</b> = wanneer de AI een hogere winstkans schat dan de bookmaker. Dan heb je op lange termijn statistisch voordeel.</p>
+      <div class="formula">value % = (AI_kans × quote − 1) × 100</div>
+      <p style="margin-top:.5rem;">Voorbeeld: AI zegt Ajax wint met 60% kans, bookmaker geeft quote 2.10</p>
+      <div class="example">
+        0,60 × 2,10 = 1,26<br>
+        → (1,26 − 1) × 100 = <b style="color:#15803d;">+26% value</b> 🔥
+      </div>
+      <p style="margin-top:.5rem;">Kleuren: <span style="color:#15803d;font-weight:700;">⚡ groen ≥15%</span> sterk · <span style="color:#b45309;font-weight:700;">oranje 5–15%</span> licht · <span style="color:#64748b;font-weight:700;">grijs 0–5%</span> fair · <span style="color:#dc2626;font-weight:700;">rood &lt;0%</span> geen value.</p>
+      <button onclick="hideValueExplainer()" style="margin-top:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.55rem;background:none;border:none;color:var(--sub);cursor:pointer;text-decoration:underline;">✕ Niet meer tonen</button>
+    </div>
+
+    <!-- VALUE: resultaten banner -->
+    <div id="valueBanner" class="value-banner" style="display:none;"></div>
+
+    <div id="debugOutput" style="display:none;background:rgba(255,255,255,.6);border:1px solid var(--stroke);
+      border-radius:10px;padding:.7rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;
+      font-size:.52rem;color:var(--ink);line-height:1.7;white-space:pre-wrap;word-break:break-all;
+      max-height:200px;overflow-y:auto;"></div>
+    <div id="match-loading" style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);padding:.8rem 0;">
+      ⟳ Wedstrijden laden...
+    </div>
+    <div class="match-list" id="matchList"></div>
+
+    <!-- COMBI BUILDER BALK -->
+    <div class="combi-builder" id="combiBuilder" style="display:none;">
+      <div class="combi-builder-inner">
+        <div class="combi-builder-header">
+          <span class="combi-builder-title">🎰 Mijn Combi (<span id="cbLegCount">0</span> legs)</span>
+          <span class="combi-builder-odds" id="cbTotalOdds">1.00</span>
+        </div>
+        <div class="combi-builder-legs" id="cbLegs">
+          <div class="combi-empty">Klik op een wedstrijd om toe te voegen</div>
+        </div>
+        <div class="combi-builder-actions">
+          <button class="combi-place-btn" onclick="openCombiPlaceModal()">💶 INZET PLAATSEN</button>
+          <button class="combi-clear-btn" onclick="clearCombiBuilder()">✕ WISSEN</button>
+        </div>
+      </div>
+    </div>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════
        TAB 3: TIPS & COMBI
   ══════════════════════════════════════ -->
-
   <div id="tab-tips" class="tab-content">
     <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);
       background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:12px;
@@ -1027,7 +1016,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   <!-- ══════════════════════════════════════
        TAB 5: ANALYSE
   ══════════════════════════════════════ -->
-
   <div id="tab-analyse" class="tab-content">
     <div id="selectedMatchInfo" style="background:rgba(255,154,193,.08);border:1px solid rgba(255,154,193,.25);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#a78bfa;display:none;">
       Geselecteerde wedstrijd: <span id="selectedMatchName" style="color:#d63384;font-weight:700;"></span>
@@ -1036,104 +1024,100 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       ⚠ Selecteer eerst een wedstrijd in het tabblad Wedstrijden
     </div>
 
-```
-<!-- API key balk -->
-<div class="api-bar">
-  <span class="api-bar-label">🔑 Anthropic API Key</span>
-  <div class="api-row">
-    <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." value="">
-    <button class="api-save" onclick="saveApiKey()">OPSLAAN</button>
-  </div>
-  <div class="api-status" id="apiStatus"></div>
-</div>
+    <!-- API key balk -->
+    <div class="api-bar">
+      <span class="api-bar-label">🔑 Anthropic API Key</span>
+      <div class="api-row">
+        <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." value="">
+        <button class="api-save" onclick="saveApiKey()">OPSLAAN</button>
+      </div>
+      <div class="api-status" id="apiStatus"></div>
+    </div>
 
-<!-- Inzet config -->
-<div class="bet-config">
-  <div class="cfg-box">
-    <label>Fictieve inzet (€)</label>
-    <input type="number" id="betAmount" value="10" min="1" max="500" style="font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:700;background:transparent;border:none;color:var(--text);outline:none;width:100%;">
-  </div>
-  <div class="cfg-box">
-    <label>Risicoprofiel</label>
-    <select id="riskProfile">
-      <option value="laag">🟢 Laag risico</option>
-      <option value="gemiddeld" selected>🟡 Gemiddeld</option>
-      <option value="hoog">🔴 Hoog risico</option>
-    </select>
-  </div>
-</div>
+    <!-- Inzet config -->
+    <div class="bet-config">
+      <div class="cfg-box">
+        <label>Fictieve inzet (€)</label>
+        <input type="number" id="betAmount" value="10" min="1" max="500" style="font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:700;background:transparent;border:none;color:var(--text);outline:none;width:100%;">
+      </div>
+      <div class="cfg-box">
+        <label>Risicoprofiel</label>
+        <select id="riskProfile">
+          <option value="laag">🟢 Laag risico</option>
+          <option value="gemiddeld" selected>🟡 Gemiddeld</option>
+          <option value="hoog">🔴 Hoog risico</option>
+        </select>
+      </div>
+    </div>
 
-<!-- Entiteiten status -->
-<div class="entity-row" id="entityRow">
-  <div class="entity-chip" id="ec-vorm"><span class="led"></span>VORM ANALIST</div>
-  <div class="entity-chip" id="ec-stats"><span class="led"></span>STATISTIEKEN</div>
-  <div class="entity-chip" id="ec-tactiek"><span class="led"></span>TACTIEK</div>
-  <div class="entity-chip" id="ec-kans"><span class="led"></span>KANSEN</div>
-  <div class="entity-chip" id="ec-risico"><span class="led"></span>RISICO</div>
-  <div class="entity-chip" id="ec-advies"><span class="led"></span>BET ADVIES</div>
-  <div class="entity-chip" id="ec-tip"><span class="led"></span>🎯 AI TIP</div>
-</div>
+    <!-- Entiteiten status -->
+    <div class="entity-row" id="entityRow">
+      <div class="entity-chip" id="ec-vorm"><span class="led"></span>VORM ANALIST</div>
+      <div class="entity-chip" id="ec-stats"><span class="led"></span>STATISTIEKEN</div>
+      <div class="entity-chip" id="ec-tactiek"><span class="led"></span>TACTIEK</div>
+      <div class="entity-chip" id="ec-kans"><span class="led"></span>KANSEN</div>
+      <div class="entity-chip" id="ec-risico"><span class="led"></span>RISICO</div>
+      <div class="entity-chip" id="ec-advies"><span class="led"></span>BET ADVIES</div>
+      <div class="entity-chip" id="ec-tip"><span class="led"></span>🎯 AI TIP</div>
+    </div>
 
-<button class="analyse-btn" id="analyseBtn" onclick="runAnalyse()">
-  ⚽ ANALYSEER WEDSTRIJD
-</button>
+    <button class="analyse-btn" id="analyseBtn" onclick="runAnalyse()">
+      ⚽ ANALYSEER WEDSTRIJD
+    </button>
 
-<div id="sofascoreLink" style="display:none;margin-top:.5rem;">
-  <a id="sofascoreBtn" href="#" target="_blank" rel="noopener" style="
-    display:flex;align-items:center;justify-content:center;gap:.5rem;
-    width:100%;padding:.55rem;border-radius:12px;
-    background:rgba(3,91,188,.08);border:1px solid rgba(3,91,188,.25);
-    font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
-    color:#035bbc;text-decoration:none;letter-spacing:.03em;">
-    <img src="https://www.sofascore.com/favicon.ico" style="width:14px;height:14px;border-radius:2px;" onerror="this.style.display='none'">
-    BEKIJK OP SOFASCORE →
-  </a>
-</div>
+    <div id="sofascoreLink" style="display:none;margin-top:.5rem;">
+      <a id="sofascoreBtn" href="#" target="_blank" rel="noopener" style="
+        display:flex;align-items:center;justify-content:center;gap:.5rem;
+        width:100%;padding:.55rem;border-radius:12px;
+        background:rgba(3,91,188,.08);border:1px solid rgba(3,91,188,.25);
+        font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+        color:#035bbc;text-decoration:none;letter-spacing:.03em;">
+        <img src="https://www.sofascore.com/favicon.ico" style="width:14px;height:14px;border-radius:2px;" onerror="this.style.display='none'">
+        BEKIJK OP SOFASCORE →
+      </a>
+    </div>
 
-<!-- Resultaten -->
-<div class="results" id="resultCards">
-  <div class="result-card" id="rc-vorm" style="display:none">
-    <div class="card-head"><span class="card-tag t-vorm">VORM</span><span class="card-title-txt">Vorm & Recent Resultaten</span></div>
-    <div class="card-body" id="rb-vorm"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
-  <div class="result-card" id="rc-stats" style="display:none">
-    <div class="card-head"><span class="card-tag t-stats">STATISTIEKEN</span><span class="card-title-txt">Hoofd-aan-hoofd & Cijfers</span></div>
-    <div class="card-body" id="rb-stats"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
-  <div class="result-card" id="rc-tactiek" style="display:none">
-    <div class="card-head"><span class="card-tag t-tactiek">TACTIEK</span><span class="card-title-txt">Tactische Analyse</span></div>
-    <div class="card-body" id="rb-tactiek"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
-  <div class="result-card" id="rc-kans" style="display:none">
-    <div class="card-head"><span class="card-tag t-kans">KANSEN</span><span class="card-title-txt">Winstkansen & Waarschijnlijkheden</span></div>
-    <div class="card-body" id="rb-kans"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
-  <div class="result-card" id="rc-risico" style="display:none">
-    <div class="card-head"><span class="card-tag t-risico">RISICO</span><span class="card-title-txt">Risicobeoordeling</span></div>
-    <div class="card-body" id="rb-risico"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
-  <div class="result-card" id="rc-advies" style="display:none">
-    <div class="card-head"><span class="card-tag t-advies">BET ADVIES</span><span class="card-title-txt">Strategie & Inzet Advies</span></div>
-    <div class="card-body" id="rb-advies"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
-  <div class="result-card" id="rc-tip" style="display:none;border:2px solid rgba(255,154,193,.4);background:linear-gradient(135deg,rgba(255,215,230,.25),rgba(214,240,255,.2));">
-    <div class="card-head"><span class="card-tag" style="background:linear-gradient(135deg,#ff9ac1,#a78bfa);color:#fff;">🎯 AI TIP</span><span class="card-title-txt" style="color:#d63384;font-weight:700;">Beste Tip + Kans van Slagen</span></div>
-    <div class="card-body" id="rb-tip"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
-</div>
+    <!-- Resultaten -->
+    <div class="results" id="resultCards">
+      <div class="result-card" id="rc-vorm" style="display:none">
+        <div class="card-head"><span class="card-tag t-vorm">VORM</span><span class="card-title-txt">Vorm & Recent Resultaten</span></div>
+        <div class="card-body" id="rb-vorm"><span class="dots"><span></span><span></span><span></span></span></div>
+      </div>
+      <div class="result-card" id="rc-stats" style="display:none">
+        <div class="card-head"><span class="card-tag t-stats">STATISTIEKEN</span><span class="card-title-txt">Hoofd-aan-hoofd & Cijfers</span></div>
+        <div class="card-body" id="rb-stats"><span class="dots"><span></span><span></span><span></span></span></div>
+      </div>
+      <div class="result-card" id="rc-tactiek" style="display:none">
+        <div class="card-head"><span class="card-tag t-tactiek">TACTIEK</span><span class="card-title-txt">Tactische Analyse</span></div>
+        <div class="card-body" id="rb-tactiek"><span class="dots"><span></span><span></span><span></span></span></div>
+      </div>
+      <div class="result-card" id="rc-kans" style="display:none">
+        <div class="card-head"><span class="card-tag t-kans">KANSEN</span><span class="card-title-txt">Winstkansen & Waarschijnlijkheden</span></div>
+        <div class="card-body" id="rb-kans"><span class="dots"><span></span><span></span><span></span></span></div>
+      </div>
+      <div class="result-card" id="rc-risico" style="display:none">
+        <div class="card-head"><span class="card-tag t-risico">RISICO</span><span class="card-title-txt">Risicobeoordeling</span></div>
+        <div class="card-body" id="rb-risico"><span class="dots"><span></span><span></span><span></span></span></div>
+      </div>
+      <div class="result-card" id="rc-advies" style="display:none">
+        <div class="card-head"><span class="card-tag t-advies">BET ADVIES</span><span class="card-title-txt">Strategie & Inzet Advies</span></div>
+        <div class="card-body" id="rb-advies"><span class="dots"><span></span><span></span><span></span></span></div>
+      </div>
+      <div class="result-card" id="rc-tip" style="display:none;border:2px solid rgba(255,154,193,.4);background:linear-gradient(135deg,rgba(255,215,230,.25),rgba(214,240,255,.2));">
+        <div class="card-head"><span class="card-tag" style="background:linear-gradient(135deg,#ff9ac1,#a78bfa);color:#fff;">🎯 AI TIP</span><span class="card-title-txt" style="color:#d63384;font-weight:700;">Beste Tip + Kans van Slagen</span></div>
+        <div class="card-body" id="rb-tip"><span class="dots"><span></span><span></span><span></span></span></div>
+      </div>
+    </div>
 
-<div class="disclaimer">
-  ⚠ FICTIEVE APP — Uitsluitend voor educatieve doeleinden. Geen echte gok-adviezen.
-  Gebruik geen echt geld op basis van AI-analyses. 18+
-</div>
-```
-
+    <div class="disclaimer">
+      ⚠ FICTIEVE APP — Uitsluitend voor educatieve doeleinden. Geen echte gok-adviezen.
+      Gebruik geen echt geld op basis van AI-analyses. 18+
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════
        TAB 3: WALLET
   ══════════════════════════════════════ -->
-
   <div id="tab-wallet" class="tab-content">
     <div class="wallet-big">
       <div class="lbl">Fictief Saldo</div>
@@ -1141,435 +1125,419 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       <div class="sub">Virtueel geld — geen echte waarde</div>
     </div>
 
-```
-<div class="wallet-grid">
-  <div class="w-stat-box">
-    <div class="s-lbl">Totaal ingezet</div>
-    <div class="s-val" id="totalStaked" style="color:var(--orange);">€0</div>
-  </div>
-  <div class="w-stat-box">
-    <div class="s-lbl">Totaal gewonnen</div>
-    <div class="s-val" id="totalWon" style="color:var(--green);">€0</div>
-  </div>
-  <div class="w-stat-box">
-    <div class="s-lbl">Hitrate</div>
-    <div class="s-val" id="hitRate" style="color:#a78bfa;">—</div>
-  </div>
-</div>
-
-<!-- SALDO GRAFIEK -->
-<div style="background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
-  border-radius:16px;padding:.9rem 1rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,23,42,.05);">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
-      color:#475569;letter-spacing:.05em;">📈 SALDO VERLOOP</div>
-    <div style="display:flex;gap:.3rem;">
-      <button onclick="setChartView('saldo')" id="cv-saldo"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
-        padding:2px 8px;border-radius:999px;cursor:pointer;
-        border:1px solid rgba(219,39,119,.4);background:rgba(219,39,119,.1);color:#be185d;">
-        Saldo
-      </button>
-      <button onclick="setChartView('pnl')" id="cv-pnl"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
-        padding:2px 8px;border-radius:999px;cursor:pointer;
-        border:1px solid rgba(15,23,42,.12);background:transparent;color:#475569;">
-        W/V
-      </button>
+    <div class="wallet-grid">
+      <div class="w-stat-box">
+        <div class="s-lbl">Totaal ingezet</div>
+        <div class="s-val" id="totalStaked" style="color:var(--orange);">€0</div>
+      </div>
+      <div class="w-stat-box">
+        <div class="s-lbl">Totaal gewonnen</div>
+        <div class="s-val" id="totalWon" style="color:var(--green);">€0</div>
+      </div>
+      <div class="w-stat-box">
+        <div class="s-lbl">Hitrate</div>
+        <div class="s-val" id="hitRate" style="color:#a78bfa;">—</div>
+      </div>
     </div>
-  </div>
-  <canvas id="walletChart" height="140" style="width:100%;display:block;"></canvas>
-  <div id="chartEmpty" style="display:none;text-align:center;padding:1.5rem;
-    font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#94a3b8;">
-    Nog geen afgeronde weddenschappen
-  </div>
-</div>
 
-<div class="wallet-actions-row">
-  <div class="wa-btn" onclick="openDepositModal()">
-    <span class="icon">💰</span><div class="lbl">Storten</div>
-  </div>
-  <div class="wa-btn" onclick="openWithdrawModal()">
-    <span class="icon">💸</span><div class="lbl">Opnemen</div>
-  </div>
-  <div class="wa-btn" onclick="autoCheckAllBets()">
-    <span class="icon">🔍</span><div class="lbl">Alles checken</div>
-  </div>
-  <div class="wa-btn" onclick="resetWallet()">
-    <span class="icon">🔄</span><div class="lbl">Reset</div>
-  </div>
-</div>
-<div id="autoCheckStatus" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:.5rem .8rem;border-radius:8px;margin-bottom:.6rem;"></div>
+    <!-- SALDO GRAFIEK -->
+    <div style="background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
+      border-radius:16px;padding:.9rem 1rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,23,42,.05);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+          color:#475569;letter-spacing:.05em;">📈 SALDO VERLOOP</div>
+        <div style="display:flex;gap:.3rem;">
+          <button onclick="setChartView('saldo')" id="cv-saldo"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+            padding:2px 8px;border-radius:999px;cursor:pointer;
+            border:1px solid rgba(219,39,119,.4);background:rgba(219,39,119,.1);color:#be185d;">
+            Saldo
+          </button>
+          <button onclick="setChartView('pnl')" id="cv-pnl"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+            padding:2px 8px;border-radius:999px;cursor:pointer;
+            border:1px solid rgba(15,23,42,.12);background:transparent;color:#475569;">
+            W/V
+          </button>
+        </div>
+      </div>
+      <canvas id="walletChart" height="140" style="width:100%;display:block;"></canvas>
+      <div id="chartEmpty" style="display:none;text-align:center;padding:1.5rem;
+        font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#94a3b8;">
+        Nog geen afgeronde weddenschappen
+      </div>
+    </div>
 
-<div class="section-label">Inzetgeschiedenis</div>
-<div class="bet-history-list" id="betHistoryList">
-  <div class="empty-state">Nog geen inzetten geplaatst</div>
-</div>
-```
+    <div class="wallet-actions-row">
+      <div class="wa-btn" onclick="openDepositModal()">
+        <span class="icon">💰</span><div class="lbl">Storten</div>
+      </div>
+      <div class="wa-btn" onclick="openWithdrawModal()">
+        <span class="icon">💸</span><div class="lbl">Opnemen</div>
+      </div>
+      <div class="wa-btn" onclick="autoCheckAllBets()">
+        <span class="icon">🔍</span><div class="lbl">Alles checken</div>
+      </div>
+      <div class="wa-btn" onclick="resetWallet()">
+        <span class="icon">🔄</span><div class="lbl">Reset</div>
+      </div>
+    </div>
+    <div id="autoCheckStatus" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:.5rem .8rem;border-radius:8px;margin-bottom:.6rem;"></div>
 
+    <div class="section-label">Inzetgeschiedenis</div>
+    <div class="bet-history-list" id="betHistoryList">
+      <div class="empty-state">Nog geen inzetten geplaatst</div>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════
        TAB: ECHTE WEDDENSCHAP TRACKER
   ══════════════════════════════════════ -->
-
   <div id="tab-tracker" class="tab-content">
 
-```
-<!-- ⚡ VALUE BACKTEST SECTIE -->
-<div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
-  border:1px solid rgba(22,163,74,.2);border-radius:16px;padding:.9rem;margin-bottom:1rem;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.08em;
-      color:#15803d;">⚡ VALUE SCAN BACKTEST</div>
-    <div style="display:flex;gap:.4rem;">
-      <button onclick="checkAllBacktestPicks()" style="font-family:'IBM Plex Mono',monospace;
-        font-size:.52rem;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;
-        background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);color:#15803d;">
-        🔍 CHECK ALLES
-      </button>
-      <button onclick="clearBacktest()" style="font-family:'IBM Plex Mono',monospace;
-        font-size:.52rem;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;
-        background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);color:#dc2626;">
-        🗑️ WISSEN
-      </button>
-    </div>
-  </div>
+    <!-- ⚡ VALUE BACKTEST SECTIE -->
+    <div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
+      border:1px solid rgba(22,163,74,.2);border-radius:16px;padding:.9rem;margin-bottom:1rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.08em;
+          color:#15803d;">⚡ VALUE SCAN BACKTEST</div>
+        <div style="display:flex;gap:.4rem;">
+          <button onclick="checkAllBacktestPicks()" style="font-family:'IBM Plex Mono',monospace;
+            font-size:.52rem;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;
+            background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);color:#15803d;">
+            🔍 CHECK ALLES
+          </button>
+          <button onclick="clearBacktest()" style="font-family:'IBM Plex Mono',monospace;
+            font-size:.52rem;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;
+            background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);color:#dc2626;">
+            🗑️ WISSEN
+          </button>
+        </div>
+      </div>
 
-  <!-- Stats strip backtest -->
-  <div class="bt-strip" id="btStrip">
-    <div class="bt-box">
-      <div class="lbl">Picks</div>
-      <div class="val" id="btTotal" style="color:#0f172a;">0</div>
-    </div>
-    <div class="bt-box">
-      <div class="lbl">Hitrate</div>
-      <div class="val" id="btHitrate" style="color:#7c3aed;">—</div>
-    </div>
-    <div class="bt-box">
-      <div class="lbl">ROI</div>
-      <div class="val" id="btRoi" style="color:#15803d;">—</div>
-    </div>
-    <div class="bt-box">
-      <div class="lbl">Gem. value</div>
-      <div class="val" id="btAvgVal" style="color:#d97706;">—</div>
-    </div>
-  </div>
+      <!-- Stats strip backtest -->
+      <div class="bt-strip" id="btStrip">
+        <div class="bt-box">
+          <div class="lbl">Picks</div>
+          <div class="val" id="btTotal" style="color:#0f172a;">0</div>
+        </div>
+        <div class="bt-box">
+          <div class="lbl">Hitrate</div>
+          <div class="val" id="btHitrate" style="color:#7c3aed;">—</div>
+        </div>
+        <div class="bt-box">
+          <div class="lbl">ROI</div>
+          <div class="val" id="btRoi" style="color:#15803d;">—</div>
+        </div>
+        <div class="bt-box">
+          <div class="lbl">Gem. value</div>
+          <div class="val" id="btAvgVal" style="color:#d97706;">—</div>
+        </div>
+      </div>
 
-  <!-- Grafiek backtest vs break-even -->
-  <div class="bt-chart-wrap" id="btChartWrap" style="display:none;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;
-        color:#475569;letter-spacing:.04em;">📈 CUMULATIEF RESULTAAT</div>
-      <div style="display:flex;gap:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;">
-        <span style="color:#15803d;">▬ Jouw picks</span>
-        <span style="color:#94a3b8;">▬ Break-even</span>
+      <!-- Grafiek backtest vs break-even -->
+      <div class="bt-chart-wrap" id="btChartWrap" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;
+            color:#475569;letter-spacing:.04em;">📈 CUMULATIEF RESULTAAT</div>
+          <div style="display:flex;gap:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;">
+            <span style="color:#15803d;">▬ Jouw picks</span>
+            <span style="color:#94a3b8;">▬ Break-even</span>
+          </div>
+        </div>
+        <canvas id="btChart" height="120" style="width:100%;display:block;"></canvas>
+      </div>
+
+      <!-- Backtest picks lijst -->
+      <div id="btList">
+        <div class="bt-empty">
+          Nog geen value-picks bijgehouden.<br>
+          Draai een ⚡ Value Scan — picks met ≥5% value worden automatisch hier opgeslagen.
+        </div>
       </div>
     </div>
-    <canvas id="btChart" height="120" style="width:100%;display:block;"></canvas>
-  </div>
 
-  <!-- Backtest picks lijst -->
-  <div id="btList">
-    <div class="bt-empty">
-      Nog geen value-picks bijgehouden.<br>
-      Draai een ⚡ Value Scan — picks met ≥5% value worden automatisch hier opgeslagen.
+    <!-- Stats strip -->
+    <div id="trackerStats" class="wallet-strip" style="grid-template-columns:repeat(4,1fr);">
+      <div class="w-item bal"><div class="lbl">Ingezet</div><div class="val" id="trStaked">€0</div></div>
+      <div class="w-item pnl"><div class="lbl">Winst/V</div><div class="val" id="trPnl">€0</div></div>
+      <div class="w-item bets"><div class="lbl">Bets</div><div class="val" id="trBets">0</div></div>
+      <div class="w-item rate"><div class="lbl">ROI</div><div class="val" id="trRoi">—</div></div>
     </div>
-  </div>
-</div>
 
-<!-- Stats strip -->
-<div id="trackerStats" class="wallet-strip" style="grid-template-columns:repeat(4,1fr);">
-  <div class="w-item bal"><div class="lbl">Ingezet</div><div class="val" id="trStaked">€0</div></div>
-  <div class="w-item pnl"><div class="lbl">Winst/V</div><div class="val" id="trPnl">€0</div></div>
-  <div class="w-item bets"><div class="lbl">Bets</div><div class="val" id="trBets">0</div></div>
-  <div class="w-item rate"><div class="lbl">ROI</div><div class="val" id="trRoi">—</div></div>
-</div>
+    <!-- Nieuwe weddenschap toevoegen -->
+    <button onclick="openTrackerModal()" style="width:100%;
+      background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.85));
+      border:none;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:.7rem;
+      font-weight:700;padding:.75rem;border-radius:14px;cursor:pointer;
+      letter-spacing:.05em;margin-bottom:1rem;">
+      ➕ ECHTE WEDDENSCHAP TOEVOEGEN
+    </button>
 
-<!-- Nieuwe weddenschap toevoegen -->
-<button onclick="openTrackerModal()" style="width:100%;
-  background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.85));
-  border:none;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:.7rem;
-  font-weight:700;padding:.75rem;border-radius:14px;cursor:pointer;
-  letter-spacing:.05em;margin-bottom:1rem;">
-  ➕ ECHTE WEDDENSCHAP TOEVOEGEN
-</button>
+    <!-- Filter knoppen -->
+    <div style="display:flex;gap:.4rem;margin-bottom:.8rem;overflow-x:auto;padding-bottom:.2rem;">
+      <button onclick="setTrackerFilter('all')" id="tf-all" class="tracker-filter active">Alle</button>
+      <button onclick="setTrackerFilter('open')" id="tf-open" class="tracker-filter">Open</button>
+      <button onclick="setTrackerFilter('win')" id="tf-win" class="tracker-filter">Gewonnen</button>
+      <button onclick="setTrackerFilter('lose')" id="tf-lose" class="tracker-filter">Verloren</button>
+      <button onclick="setTrackerFilter('analyse')" id="tf-analyse" class="tracker-filter">Analyse</button>
+      <button onclick="setTrackerFilter('combi')" id="tf-combi" class="tracker-filter">Combi</button>
+    </div>
 
-<!-- Filter knoppen -->
-<div style="display:flex;gap:.4rem;margin-bottom:.8rem;overflow-x:auto;padding-bottom:.2rem;">
-  <button onclick="setTrackerFilter('all')" id="tf-all" class="tracker-filter active">Alle</button>
-  <button onclick="setTrackerFilter('open')" id="tf-open" class="tracker-filter">Open</button>
-  <button onclick="setTrackerFilter('win')" id="tf-win" class="tracker-filter">Gewonnen</button>
-  <button onclick="setTrackerFilter('lose')" id="tf-lose" class="tracker-filter">Verloren</button>
-  <button onclick="setTrackerFilter('analyse')" id="tf-analyse" class="tracker-filter">Analyse</button>
-  <button onclick="setTrackerFilter('combi')" id="tf-combi" class="tracker-filter">Combi</button>
-</div>
-
-<div id="trackerList">
-  <div class="empty-state">Nog geen echte weddenschappen bijgehouden</div>
-</div>
-```
-
+    <div id="trackerList">
+      <div class="empty-state">Nog geen echte weddenschappen bijgehouden</div>
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════
        TAB 4: INSTELLINGEN
   ══════════════════════════════════════ -->
-
   <div id="tab-instellingen" class="tab-content">
 
-```
-<!-- FIREBASE STATUS BALK -->
-<div id="firebaseStatus" style="display:none;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.25);border-radius:12px;padding:.65rem 1rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;"></div>
+    <!-- FIREBASE STATUS BALK -->
+    <div id="firebaseStatus" style="display:none;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.25);border-radius:12px;padding:.65rem 1rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;"></div>
 
-<!-- VALUE: notificaties sectie -->
-<div class="settings-section">
-  <h4>⚡ Value Notificaties</h4>
-  <div style="font-size:.75rem;color:var(--sub);line-height:1.6;margin-bottom:.6rem;">
-    Krijg een push-melding bij <b>sterke value</b> (≥<span id="notifThresholdDesc">15</span>%) zodra je de Value Scan draait.
-  </div>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">Status</div>
-      <div class="sr-sub" id="notifStatusSub">Nog niet ingesteld</div>
+    <!-- VALUE: notificaties sectie -->
+    <div class="settings-section">
+      <h4>⚡ Value Notificaties</h4>
+      <div style="font-size:.75rem;color:var(--sub);line-height:1.6;margin-bottom:.6rem;">
+        Krijg een push-melding bij <b>sterke value</b> (≥<span id="notifThresholdDesc">15</span>%) zodra je de Value Scan draait.
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Status</div>
+          <div class="sr-sub" id="notifStatusSub">Nog niet ingesteld</div>
+        </div>
+        <button class="notif-btn enable" id="notifBtn" onclick="toggleNotifications()">
+          AANZETTEN
+        </button>
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Drempel</div>
+          <div class="sr-sub">Bij welk % value krijg je melding?</div>
+        </div>
+        <select class="sr-input sr-input-border" id="notifThreshold" style="width:90px;">
+          <option value="10">≥ 10%</option>
+          <option value="15" selected>≥ 15%</option>
+          <option value="20">≥ 20%</option>
+          <option value="25">≥ 25%</option>
+          <option value="30">≥ 30%</option>
+        </select>
+      </div>
     </div>
-    <button class="notif-btn enable" id="notifBtn" onclick="toggleNotifications()">
-      AANZETTEN
-    </button>
-  </div>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">Drempel</div>
-      <div class="sr-sub">Bij welk % value krijg je melding?</div>
-    </div>
-    <select class="sr-input sr-input-border" id="notifThreshold" style="width:90px;">
-      <option value="10">≥ 10%</option>
-      <option value="15" selected>≥ 15%</option>
-      <option value="20">≥ 20%</option>
-      <option value="25">≥ 25%</option>
-      <option value="30">≥ 30%</option>
-    </select>
-  </div>
-</div>
 
-<div class="settings-section">
-  <h4>🔥 Firebase</h4>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">Status</div>
-      <div class="sr-sub">toto-ai-397cb · europe-west1</div>
+    <div class="settings-section">
+      <h4>🔥 Firebase</h4>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Status</div>
+          <div class="sr-sub">toto-ai-397cb · europe-west1</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:#2ecc71;font-weight:700;">✓ VERBONDEN</div>
+      </div>
+      <div class="settings-row">
+        <div style="flex:1;">
+          <div class="sr-label">Keys opslaan</div>
+          <div class="sr-sub">API keys worden automatisch gesynchroniseerd</div>
+        </div>
+      </div>
+      <div style="margin-top:.5rem;">
+        <button onclick="saveToFirebase().then(()=>showFirebaseStatus('🔥 Gesynchroniseerd!','#2ecc71')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#e74c3c'))"
+          style="background:linear-gradient(135deg,rgba(255,154,193,.2),rgba(167,139,250,.2));border:1px solid rgba(255,154,193,.3);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;padding:.45rem 1rem;border-radius:999px;cursor:pointer;">
+          🔄 NU SYNCHRONISEREN
+        </button>
+      </div>
     </div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:#2ecc71;font-weight:700;">✓ VERBONDEN</div>
-  </div>
-  <div class="settings-row">
-    <div style="flex:1;">
-      <div class="sr-label">Keys opslaan</div>
-      <div class="sr-sub">API keys worden automatisch gesynchroniseerd</div>
-    </div>
-  </div>
-  <div style="margin-top:.5rem;">
-    <button onclick="saveToFirebase().then(()=>showFirebaseStatus('🔥 Gesynchroniseerd!','#2ecc71')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#e74c3c'))"
-      style="background:linear-gradient(135deg,rgba(255,154,193,.2),rgba(167,139,250,.2));border:1px solid rgba(255,154,193,.3);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;padding:.45rem 1rem;border-radius:999px;cursor:pointer;">
-      🔄 NU SYNCHRONISEREN
-    </button>
-  </div>
-</div>
 
-<div class="settings-section">
-  <h4>🔑 API Keys</h4>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">API-Football Key</div>
-      <div class="sr-sub">⭐ Primair — alle competities + H2H</div>
+    <div class="settings-section">
+      <h4>🔑 API Keys</h4>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">API-Football Key</div>
+          <div class="sr-sub">⭐ Primair — alle competities + H2H</div>
+        </div>
+        <input class="sr-input sr-input-border" id="settFootballKey" type="password" placeholder="RapidAPI key..." value="">
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">football-data.org Key</div>
+          <div class="sr-sub">Backup — Eredivisie, PL, BL, CL</div>
+        </div>
+        <input class="sr-input sr-input-border" id="settFdKey" type="password" placeholder="fd-org token..." value="">
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Anthropic API Key</div>
+          <div class="sr-sub">Voor AI analyses (claude-sonnet)</div>
+        </div>
+        <input class="sr-input sr-input-border" id="settAnthropicKey" type="password" placeholder="sk-ant-..." value="">
+      </div>
     </div>
-    <input class="sr-input sr-input-border" id="settFootballKey" type="password" placeholder="RapidAPI key..." value="">
-  </div>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">football-data.org Key</div>
-      <div class="sr-sub">Backup — Eredivisie, PL, BL, CL</div>
-    </div>
-    <input class="sr-input sr-input-border" id="settFdKey" type="password" placeholder="fd-org token..." value="">
-  </div>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">Anthropic API Key</div>
-      <div class="sr-sub">Voor AI analyses (claude-sonnet)</div>
-    </div>
-    <input class="sr-input sr-input-border" id="settAnthropicKey" type="password" placeholder="sk-ant-..." value="">
-  </div>
-</div>
 
-<div class="settings-section">
-  <h4>⚽ Standaard Competitie</h4>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">Favoriete competitie</div>
-      <div class="sr-sub">Wordt standaard geopend</div>
+    <div class="settings-section">
+      <h4>⚽ Standaard Competitie</h4>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Favoriete competitie</div>
+          <div class="sr-sub">Wordt standaard geopend</div>
+        </div>
+        <select class="sr-input sr-input-border" id="settDefaultComp" style="background:rgba(255,255,255,.8);">
+          <option value="eredivisie">🇳🇱 Eredivisie</option>
+          <option value="kkd">🇳🇱 Keuken Kampioen</option>
+          <option value="beker">🏆 KNVB Beker</option>
+          <option value="premier">🇬🇧 Premier League</option>
+          <option value="bundesliga">🇩🇪 Bundesliga</option>
+          <option value="ligue1">🇫🇷 Ligue 1</option>
+          <option value="seriea">🇮🇹 Serie A</option>
+          <option value="champions">⭐ Champions League</option>
+          <option value="nations">🌍 Nations League</option>
+        </select>
+      </div>
     </div>
-    <select class="sr-input sr-input-border" id="settDefaultComp" style="background:rgba(255,255,255,.8);">
-      <option value="eredivisie">🇳🇱 Eredivisie</option>
-      <option value="kkd">🇳🇱 Keuken Kampioen</option>
-      <option value="beker">🏆 KNVB Beker</option>
-      <option value="premier">🇬🇧 Premier League</option>
-      <option value="bundesliga">🇩🇪 Bundesliga</option>
-      <option value="ligue1">🇫🇷 Ligue 1</option>
-      <option value="seriea">🇮🇹 Serie A</option>
-      <option value="champions">⭐ Champions League</option>
-      <option value="nations">🌍 Nations League</option>
-    </select>
-  </div>
-</div>
 
-<div class="settings-section">
-  <h4>💶 Wallet Instellingen</h4>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">Startbedrag fictief saldo</div>
-      <div class="sr-sub">Huidig saldo: <span id="currentBalanceDisplay" style="color:#be185d;font-weight:700;"></span></div>
+    <div class="settings-section">
+      <h4>💶 Wallet Instellingen</h4>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Startbedrag fictief saldo</div>
+          <div class="sr-sub">Huidig saldo: <span id="currentBalanceDisplay" style="color:#be185d;font-weight:700;"></span></div>
+        </div>
+        <input class="sr-input sr-input-border" id="settStartBalance" type="number" value="500" min="10" max="10000">
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Standaard inzet (€)</div>
+          <div class="sr-sub">Vooraf ingevuld bij inzetten</div>
+        </div>
+        <input class="sr-input sr-input-border" id="settDefaultBet" type="number" value="10" min="1" max="500">
+      </div>
+      <div class="settings-row">
+        <div>
+          <div class="sr-label">Standaard bookmaker</div>
+          <div class="sr-sub">Standaard geselecteerd bij quotes</div>
+        </div>
+        <select class="sr-input sr-input-border" id="settDefaultBookmaker"
+          style="width:120px;font-size:.72rem;">
+          <option value="Jacks">Jacks</option>
+          <option value="Unibet">Unibet</option>
+          <option value="TOTO">TOTO</option>
+          <option value="Betway">Betway</option>
+          <option value="Bet365">Bet365</option>
+          <option value="888sport">888sport</option>
+          <option value="Bwin">Bwin</option>
+          <option value="Ladbrokes">Ladbrokes</option>
+          <option value="Anders">Anders</option>
+        </select>
+      </div>
+      <div style="margin-top:.6rem;">
+        <button onclick="resetWallet()" style="width:100%;background:rgba(220,38,38,.08);
+          border:1px solid rgba(220,38,38,.25);color:#dc2626;font-family:'IBM Plex Mono',monospace;
+          font-size:.65rem;font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
+          🔄 WALLET RESETTEN NAAR INGEVOERD BEDRAG
+        </button>
+      </div>
     </div>
-    <input class="sr-input sr-input-border" id="settStartBalance" type="number" value="500" min="10" max="10000">
-  </div>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">Standaard inzet (€)</div>
-      <div class="sr-sub">Vooraf ingevuld bij inzetten</div>
+
+    <button class="save-settings-btn" onclick="saveSettings()">✓ INSTELLINGEN OPSLAAN</button>
+
+    <!-- BACK-UP SECTIE -->
+    <div class="settings-section">
+      <h4>💾 Back-up & Herstel</h4>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);
+        line-height:1.6;margin-bottom:.8rem;">
+        Sla je wallet, tracker en instellingen op als bestand of in de cloud (Firebase).
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
+        <button onclick="exportBackup()" style="
+          background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);
+          color:#2563eb;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+          font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
+          📥 EXPORTEREN
+        </button>
+        <button onclick="document.getElementById('importFile').click()" style="
+          background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.3);
+          color:#15803d;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+          font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
+          📤 IMPORTEREN
+        </button>
+      </div>
+      <button onclick="saveToFirebase().then(()=>showBackupStatus('☁️ Cloud back-up opgeslagen!','#16a34a')).catch(e=>showBackupStatus('⚠ '+e.message,'#dc2626'))" style="
+        width:100%;background:rgba(219,39,119,.08);border:1px solid rgba(219,39,119,.25);
+        color:#be185d;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+        font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
+        ☁️ CLOUD BACK-UP (FIREBASE)
+      </button>
+      <input type="file" id="importFile" accept=".json" style="display:none"
+        onchange="importBackup(event)">
+      <div id="backupStatus" style="display:none;margin-top:.5rem;font-family:'IBM Plex Mono',
+        monospace;font-size:.58rem;padding:.4rem .7rem;border-radius:8px;"></div>
     </div>
-    <input class="sr-input sr-input-border" id="settDefaultBet" type="number" value="10" min="1" max="500">
-  </div>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">Standaard bookmaker</div>
-      <div class="sr-sub">Standaard geselecteerd bij quotes</div>
+
+    <div class="disclaimer">
+      TOTO AI is een fictieve testapp voor persoonlijk gebruik.<br>
+      Alle analyses zijn AI-gegenereerd en geen gokadvies.<br>
+      Made by Rob Borghouts · Powered by Anthropic Claude + football-data.org + API-Football
     </div>
-    <select class="sr-input sr-input-border" id="settDefaultBookmaker"
-      style="width:120px;font-size:.72rem;">
-      <option value="Jacks">Jacks</option>
-      <option value="Unibet">Unibet</option>
-      <option value="TOTO">TOTO</option>
-      <option value="Betway">Betway</option>
-      <option value="Bet365">Bet365</option>
-      <option value="888sport">888sport</option>
-      <option value="Bwin">Bwin</option>
-      <option value="Ladbrokes">Ladbrokes</option>
-      <option value="Anders">Anders</option>
-    </select>
-  </div>
-  <div style="margin-top:.6rem;">
-    <button onclick="resetWallet()" style="width:100%;background:rgba(220,38,38,.08);
-      border:1px solid rgba(220,38,38,.25);color:#dc2626;font-family:'IBM Plex Mono',monospace;
-      font-size:.65rem;font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
-      🔄 WALLET RESETTEN NAAR INGEVOERD BEDRAG
-    </button>
-  </div>
-</div>
-
-<button class="save-settings-btn" onclick="saveSettings()">✓ INSTELLINGEN OPSLAAN</button>
-
-<!-- BACK-UP SECTIE -->
-<div class="settings-section">
-  <h4>💾 Back-up & Herstel</h4>
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);
-    line-height:1.6;margin-bottom:.8rem;">
-    Sla je wallet, tracker en instellingen op als bestand of in de cloud (Firebase).
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
-    <button onclick="exportBackup()" style="
-      background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);
-      color:#2563eb;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-      font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
-      📥 EXPORTEREN
-    </button>
-    <button onclick="document.getElementById('importFile').click()" style="
-      background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.3);
-      color:#15803d;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-      font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
-      📤 IMPORTEREN
-    </button>
-  </div>
-  <button onclick="saveToFirebase().then(()=>showBackupStatus('☁️ Cloud back-up opgeslagen!','#16a34a')).catch(e=>showBackupStatus('⚠ '+e.message,'#dc2626'))" style="
-    width:100%;background:rgba(219,39,119,.08);border:1px solid rgba(219,39,119,.25);
-    color:#be185d;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-    font-weight:700;padding:.6rem;border-radius:10px;cursor:pointer;">
-    ☁️ CLOUD BACK-UP (FIREBASE)
-  </button>
-  <input type="file" id="importFile" accept=".json" style="display:none"
-    onchange="importBackup(event)">
-  <div id="backupStatus" style="display:none;margin-top:.5rem;font-family:'IBM Plex Mono',
-    monospace;font-size:.58rem;padding:.4rem .7rem;border-radius:8px;"></div>
-</div>
-
-<div class="disclaimer">
-  TOTO AI is een fictieve testapp voor persoonlijk gebruik.<br>
-  Alle analyses zijn AI-gegenereerd en geen gokadvies.<br>
-  Made by Rob Borghouts · Powered by Anthropic Claude + football-data.org + API-Football
-</div>
-```
-
   </div>
 
 </div><!-- /app -->
 
 <!-- INZET MODAL -->
-
 <div class="modal-overlay" id="betModal">
   <div class="modal-box">
     <h3>💶 Inzet Plaatsen</h3>
     <div class="modal-match-name" id="modalMatchName">—</div>
     <div class="modal-pick-info" id="modalPickInfo">—</div>
 
-```
-<!-- Extra markten -->
-<div style="margin:.6rem 0;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
-    font-weight:700;margin-bottom:.4rem;">MARKT</div>
-  <div style="display:flex;flex-wrap:wrap;gap:.3rem;" id="marketBtns">
-    <button onclick="selectMarket('1X2')" id="mb-1X2"
-      class="market-btn active">1/X/2</button>
-    <button onclick="selectMarket('O25')" id="mb-O25"
-      class="market-btn">O2.5</button>
-    <button onclick="selectMarket('U25')" id="mb-U25"
-      class="market-btn">U2.5</button>
-    <button onclick="selectMarket('O15')" id="mb-O15"
-      class="market-btn">O1.5</button>
-    <button onclick="selectMarket('O35')" id="mb-O35"
-      class="market-btn">O3.5</button>
-    <button onclick="selectMarket('BTTSJ')" id="mb-BTTSJ"
-      class="market-btn">BTTS-J</button>
-    <button onclick="selectMarket('BTTSN')" id="mb-BTTSN"
-      class="market-btn">BTTS-N</button>
-    <button onclick="selectMarket('1X')" id="mb-1X"
-      class="market-btn">1X</button>
-    <button onclick="selectMarket('X2')" id="mb-X2"
-      class="market-btn">X2</button>
-  </div>
-</div>
+    <!-- Extra markten -->
+    <div style="margin:.6rem 0;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
+        font-weight:700;margin-bottom:.4rem;">MARKT</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.3rem;" id="marketBtns">
+        <button onclick="selectMarket('1X2')" id="mb-1X2"
+          class="market-btn active">1/X/2</button>
+        <button onclick="selectMarket('O25')" id="mb-O25"
+          class="market-btn">O2.5</button>
+        <button onclick="selectMarket('U25')" id="mb-U25"
+          class="market-btn">U2.5</button>
+        <button onclick="selectMarket('O15')" id="mb-O15"
+          class="market-btn">O1.5</button>
+        <button onclick="selectMarket('O35')" id="mb-O35"
+          class="market-btn">O3.5</button>
+        <button onclick="selectMarket('BTTSJ')" id="mb-BTTSJ"
+          class="market-btn">BTTS-J</button>
+        <button onclick="selectMarket('BTTSN')" id="mb-BTTSN"
+          class="market-btn">BTTS-N</button>
+        <button onclick="selectMarket('1X')" id="mb-1X"
+          class="market-btn">1X</button>
+        <button onclick="selectMarket('X2')" id="mb-X2"
+          class="market-btn">X2</button>
+      </div>
+    </div>
 
-<!-- Pick keuze voor geselecteerde markt -->
-<div id="marketPickRow" style="display:none;margin-bottom:.5rem;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
-    font-weight:700;margin-bottom:.4rem;">PICK & QUOTE</div>
-  <div style="display:flex;gap:.4rem;align-items:center;">
-    <input class="modal-input" id="customPickLabel" type="text" placeholder="Bijv. Meer dan 2.5 goals"
-      style="flex:1;font-size:.72rem;">
-    <input class="modal-input" id="customOdds" type="number" step="0.01" min="1.01"
-      placeholder="Quote" style="width:80px;font-size:.72rem;" oninput="updatePayoutPreview()">
-  </div>
-</div>
+    <!-- Pick keuze voor geselecteerde markt -->
+    <div id="marketPickRow" style="display:none;margin-bottom:.5rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
+        font-weight:700;margin-bottom:.4rem;">PICK & QUOTE</div>
+      <div style="display:flex;gap:.4rem;align-items:center;">
+        <input class="modal-input" id="customPickLabel" type="text" placeholder="Bijv. Meer dan 2.5 goals"
+          style="flex:1;font-size:.72rem;">
+        <input class="modal-input" id="customOdds" type="number" step="0.01" min="1.01"
+          placeholder="Quote" style="width:80px;font-size:.72rem;" oninput="updatePayoutPreview()">
+      </div>
+    </div>
 
-<input class="modal-input" id="modalBetInput" type="number" value="10" min="1" oninput="updatePayoutPreview()">
-<div class="modal-payout-preview" id="payoutPreview">Mogelijke uitbetaling: —</div>
-<div class="modal-btns">
-  <button class="modal-confirm" onclick="confirmBet()">INZET BEVESTIGEN</button>
-  <button class="modal-cancel" onclick="closeBetModal()">ANNULEREN</button>
-</div>
-```
-
+    <input class="modal-input" id="modalBetInput" type="number" value="10" min="1" oninput="updatePayoutPreview()">
+    <div class="modal-payout-preview" id="payoutPreview">Mogelijke uitbetaling: —</div>
+    <div class="modal-btns">
+      <button class="modal-confirm" onclick="confirmBet()">INZET BEVESTIGEN</button>
+      <button class="modal-cancel" onclick="closeBetModal()">ANNULEREN</button>
+    </div>
   </div>
 </div>
 
 <!-- COMBI INZET MODAL -->
-
 <div class="modal-overlay" id="combiPlaceModal">
   <div class="modal-box">
     <h3>🎰 Combi Inzet</h3>
@@ -1590,92 +1558,87 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 </div>
 
 <!-- DEPOSIT MODAL -->
-
 <!-- TRACKER MODAL -->
-
 <div class="modal-overlay" id="trackerModal">
   <div class="modal-box" style="max-height:90vh;overflow-y:auto;">
     <h3>📒 Echte Weddenschap</h3>
     <div style="display:flex;flex-direction:column;gap:.6rem;">
 
-```
-  <div>
-    <div class="sr-label" style="margin-bottom:.25rem;">Wedstrijd</div>
-    <input class="modal-input" id="trMatch" type="text" placeholder="bijv. Ajax vs PSV">
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
-    <div>
-      <div class="sr-label" style="margin-bottom:.25rem;">Datum</div>
-      <input class="modal-input" id="trDate" type="date">
-    </div>
-    <div>
-      <div class="sr-label" style="margin-bottom:.25rem;">Bookmaker</div>
-      <input class="modal-input" id="trBookmaker" type="text" placeholder="Jacks, Unibet...">
-    </div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
-    <div>
-      <div class="sr-label" style="margin-bottom:.25rem;">Pick</div>
-      <input class="modal-input" id="trPick" type="text" placeholder="bijv. 1, O2.5, BTTS-J">
-    </div>
-    <div>
-      <div class="sr-label" style="margin-bottom:.25rem;">Markt</div>
-      <select class="modal-input" id="trMarkt">
-        <option value="Uitslag">1/X/2 Uitslag</option>
-        <option value="Doelpunten">Over/Under doelpunten</option>
-        <option value="BTTS">Beide teams scoren</option>
-        <option value="Handicap">Handicap</option>
-        <option value="Dubbele kans">Dubbele kans</option>
-        <option value="Combi">Combi</option>
-        <option value="Anders">Anders</option>
-      </select>
-    </div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
-    <div>
-      <div class="sr-label" style="margin-bottom:.25rem;">Quote</div>
-      <input class="modal-input" id="trOdds" type="number" step="0.01" placeholder="bijv. 2.10">
-    </div>
-    <div>
-      <div class="sr-label" style="margin-bottom:.25rem;">Inzet (€)</div>
-      <input class="modal-input" id="trStakeInput" type="number" placeholder="bijv. 10">
-    </div>
-  </div>
+      <div>
+        <div class="sr-label" style="margin-bottom:.25rem;">Wedstrijd</div>
+        <input class="modal-input" id="trMatch" type="text" placeholder="bijv. Ajax vs PSV">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Datum</div>
+          <input class="modal-input" id="trDate" type="date">
+        </div>
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Bookmaker</div>
+          <input class="modal-input" id="trBookmaker" type="text" placeholder="Jacks, Unibet...">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Pick</div>
+          <input class="modal-input" id="trPick" type="text" placeholder="bijv. 1, O2.5, BTTS-J">
+        </div>
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Markt</div>
+          <select class="modal-input" id="trMarkt">
+            <option value="Uitslag">1/X/2 Uitslag</option>
+            <option value="Doelpunten">Over/Under doelpunten</option>
+            <option value="BTTS">Beide teams scoren</option>
+            <option value="Handicap">Handicap</option>
+            <option value="Dubbele kans">Dubbele kans</option>
+            <option value="Combi">Combi</option>
+            <option value="Anders">Anders</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Quote</div>
+          <input class="modal-input" id="trOdds" type="number" step="0.01" placeholder="bijv. 2.10">
+        </div>
+        <div>
+          <div class="sr-label" style="margin-bottom:.25rem;">Inzet (€)</div>
+          <input class="modal-input" id="trStakeInput" type="number" placeholder="bijv. 10">
+        </div>
+      </div>
 
-  <div>
-    <div class="sr-label" style="margin-bottom:.25rem;">Gebaseerd op</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;">
-      <button onclick="selectTrackerSource('analyse')" id="trs-analyse"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(37,99,235,.3);background:rgba(37,99,235,.06);color:#2563eb;">
-        🤖 Wedstrijd analyse
-      </button>
-      <button onclick="selectTrackerSource('combi')" id="trs-combi"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(219,39,119,.3);background:rgba(219,39,119,.06);color:#be185d;">
-        ⚡ Combi tip AI
-      </button>
-      <button onclick="selectTrackerSource('widget')" id="trs-widget"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(124,58,237,.3);background:rgba(124,58,237,.06);color:#7c3aed;">
-        📱 Widget tip
-      </button>
-      <button onclick="selectTrackerSource('eigen')" id="trs-eigen"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(15,23,42,.15);background:rgba(15,23,42,.04);color:#475569;">
-        ✏️ Eigen keuze
-      </button>
+      <div>
+        <div class="sr-label" style="margin-bottom:.25rem;">Gebaseerd op</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;">
+          <button onclick="selectTrackerSource('analyse')" id="trs-analyse"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(37,99,235,.3);background:rgba(37,99,235,.06);color:#2563eb;">
+            🤖 Wedstrijd analyse
+          </button>
+          <button onclick="selectTrackerSource('combi')" id="trs-combi"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(219,39,119,.3);background:rgba(219,39,119,.06);color:#be185d;">
+            ⚡ Combi tip AI
+          </button>
+          <button onclick="selectTrackerSource('widget')" id="trs-widget"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(124,58,237,.3);background:rgba(124,58,237,.06);color:#7c3aed;">
+            📱 Widget tip
+          </button>
+          <button onclick="selectTrackerSource('eigen')" id="trs-eigen"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.5rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(15,23,42,.15);background:rgba(15,23,42,.04);color:#475569;">
+            ✏️ Eigen keuze
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="sr-label" style="margin-bottom:.25rem;">Notitie (optioneel)</div>
+        <input class="modal-input" id="trNote" type="text" placeholder="Extra uitleg...">
+      </div>
+
+      <div class="modal-btns">
+        <button class="modal-confirm" onclick="confirmTracker()">OPSLAAN</button>
+        <button class="modal-cancel" onclick="closeModal('trackerModal')">ANNULEREN</button>
+      </div>
     </div>
-  </div>
-
-  <div>
-    <div class="sr-label" style="margin-bottom:.25rem;">Notitie (optioneel)</div>
-    <input class="modal-input" id="trNote" type="text" placeholder="Extra uitleg...">
-  </div>
-
-  <div class="modal-btns">
-    <button class="modal-confirm" onclick="confirmTracker()">OPSLAAN</button>
-    <button class="modal-cancel" onclick="closeModal('trackerModal')">ANNULEREN</button>
-  </div>
-</div>
-```
-
   </div>
 </div>
 
@@ -5467,6 +5430,5 @@ function showThemeHint(theme) {
   window._themeHintTimer = setTimeout(() => { hint.style.opacity = '0'; }, 1400);
 }
 </script>
-
 </body>
 </html>
