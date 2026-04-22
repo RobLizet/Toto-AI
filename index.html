@@ -2093,7 +2093,7 @@ function renderMultiScanResults(picks, numComps) {
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;margin-left:.5rem;flex-shrink:0;">
             <div class="value-row-val ${cls}">${sign}${Math.round(s.value)}%</div>
             <div class="value-row-odds">${s.odds.toFixed(2)}</div>
-            <button onclick="addValuePickToCombi('${s.match.id}','${s.pick}','${s.pickLabel.replace(/'/g,"\\'")}',${s.odds})"
+            <button onclick="addValuePickToCombi('${s.match.id}','${s.pick}','${s.pickLabel.replace(/'/g,"\\'")}',${s.odds},'${(s.match.home||'').replace(/'/g,"\\'")}','${(s.match.away||'').replace(/'/g,"\\'")}' )"
               id="msrBtn-${s.match.id}"
               style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;
               padding:3px 8px;border-radius:999px;cursor:pointer;white-space:nowrap;
@@ -4276,9 +4276,8 @@ function loadAICombiIntoBuilder() {
  * Voeg een value-scan pick direct toe aan de combi-builder
  * vanuit de multi-scan banner — zonder naar de wedstrijd te navigeren.
  */
-function addValuePickToCombi(matchId, pick, pickLabel, odds) {
+function addValuePickToCombi(matchId, pick, pickLabel, odds, home, away) {
   // Zoek de match in state.matches (huidige competitie)
-  // of maak een dummy match aan als we al naar een andere comp zijn gegaan
   let match = state.matches.find(m => String(m.id) === String(matchId));
 
   // Als match niet in huidige lijst: zoek in alle scan-resultaten
@@ -4287,16 +4286,17 @@ function addValuePickToCombi(matchId, pick, pickLabel, odds) {
     if (scan) match = scan.match;
   }
 
+  const existing = state.combiBuilder.findIndex(l => String(l.matchId) === String(matchId));
+
   if (!match) {
-    // Geen match gevonden — gebruik pickLabel om door te gaan
-    const existing = state.combiBuilder.findIndex(l => String(l.matchId) === String(matchId));
+    // Geen match in state — gebruik meegegeven namen (home/away uit banner)
     if (existing >= 0) {
       state.combiBuilder.splice(existing, 1);
     } else {
       if (state.combiBuilder.length >= 8) { alert('Max 8 legs!'); return; }
       state.combiBuilder.push({
         matchId: String(matchId),
-        home: '?', away: '?',
+        home: home || '?', away: away || '?',
         pick, pickLabel, odds: parseFloat(odds), date: ''
       });
     }
