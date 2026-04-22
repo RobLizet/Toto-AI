@@ -2414,54 +2414,113 @@ function selectMatch(match) {
     ssBtn.innerHTML = `<img src="https://www.sofascore.com/favicon.ico" style="width:14px;height:14px;border-radius:2px;vertical-align:middle;" onerror="this.style.display='none'"> &nbsp;SOFASCORE: ${match.home} vs ${match.away} →`;
     ssLink.style.display = 'block';
   }
+}(e); }
+}
+// =========================
+// CONFIG
+// =========================
+const API_KEY = "JOUW_API_KEY";
+
+// =========================
+// ODDS API
+// =========================
+async function fetchOdds() {
+  const url = `https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey=${API_KEY}&regions=eu&markets=h2h`;
+
+  const res = await fetch(url);
+  return await res.json();
 }
 
 // =========================
-// VALUE ENGINE V2
+// BESTE ODDS PAKKEN
 // =========================
+function getBestOddsFromApi(apiMatch, pick) {
+  let best = 0;
 
-// Value berekening
+  apiMatch.bookmakers.forEach(b => {
+    const market = b.markets.find(m => m.key === "h2h");
+    if (!market) return;
+
+    market.outcomes.forEach(o => {
+      if (
+        (pick === "1" && o.name === apiMatch.home_team) ||
+        (pick === "2" && o.name === apiMatch.away_team) ||
+        (pick === "X" && o.name === "Draw")
+      ) {
+        if (o.price > best) best = o.price;
+      }
+    });
+  });
+
+  return best || null;
+}
+
+// =========================
+// VALUE LOGICA
+// =========================
 function calcValue(kans, odds) {
-  if (!kans || !odds) return null;
   return (kans / 100 * odds - 1) * 100;
 }
 
-// Implied probability bookmaker
 function impliedProb(odds) {
   return 1 / odds;
 }
 
-// Pak juiste odds per pick
-function getOddsByPick(match, pick) {
-  if (pick === '1') return parseFloat(match.homeOdds);
-  if (pick === 'X') return parseFloat(match.drawOdds);
-  if (pick === '2') return parseFloat(match.awayOdds);
-  return null;
-}
-
-// Corrigeer AI kans (belangrijk)
 function adjustKans(kans) {
-  if (!kans) return null;
   return Math.max(0, Math.min(100, kans * 0.92));
 }
 
-// Hoofd scan functie
-function scanValueAll(matches, signals) {
-  let scans = signals.map(s => {
-    const match = matches.find(m => m.id === s.matchId);
-    if (!match) return null;
+// =========================
+// KELLY
+// =========================
+function calcKelly(kans, odds) {
+  const p = kans / 100;
+  const b = odds - 1;
 
-    const odds = getOddsByPick(match, s.pick);
+  const kelly = ((p * b) - (1 - p)) / b;
+
+  return Math.max(0, kelly * 0.5); // halve Kelly
+}
+
+// =========================
+// MATCH KOPPELEN
+// =========================
+function findApiMatch(localMatch, apiData) {
+  return apiData.find(m =>
+    m.home_team.toLowerCase().includes(localMatch.home.toLowerCase()) &&
+    m.away_team.toLowerCase().includes(localMatch.away.toLowerCase())
+  );
+}
+
+// =========================
+// SCAN ENGINE
+// =========================
+async function scanValueAll(matches, signals) {
+  const apiData = await fetchOdds();
+
+  let scans = signals.map(s => {
+    const localMatch = matches.find(m => m.id === s.matchId);
+    if (!localMatch) return null;
+
+    const apiMatch = findApiMatch(localMatch, apiData);
+    if (!apiMatch) return null;
+
+    const odds = getBestOddsFromApi(apiMatch, s.pick);
     if (!odds) return null;
 
-    // AI kans corrigeren
     const adjustedKans = adjustKans(s.aiKans);
 
-    // Value berekenen
     const value = calcValue(adjustedKans, odds);
-
-    // Edge check (belangrijk)
     const edge = (adjustedKans / 100) - impliedProb(odds);
+    const kelly = calcKelly(adjustedKans, odds);
+
+    // PUSH bij sterke value
+    if (value >= 15) {
+      sendPush(`🔥 Value Bet!
+${localMatch.home} vs ${localMatch.away}
+Pick: ${s.pick}
+Value: ${value.toFixed(1)}%`);
+    }
 
     return {
       ...s,
@@ -2469,285 +2528,26 @@ function scanValueAll(matches, signals) {
       adjustedKans,
       value,
       edge,
-      match
+      kelly,
+      match: localMatch
     };
   })
-  // filters
+
   .filter(x => x && x.value >= 5 && x.edge >= 0.02)
-
-  // sorteer beste bovenaan
   .sort((a, b) => b.value - a.value)
-
-  // top 10 tonen
   .slice(0, 10);
 
   return scans;
 }
 
-/**
- * Scan alle wedstrijden in één AI-call en markeer value-picks.
- * Haalt per wedstrijd beste pick + AI-kans op, vergelijkt met bookmaker odds.
- */
-async function scanValueAll() {
-  const apiKey = state.settings.anthropicKey;
-  if (!apiKey) {
-    alert('Vul eerst je Anthropic API key in bij ⚙️ Instellingen!');
-    return;
-  }
+// =========================
+// PUSH (BASIS)
+// =========================
+function sendPush(message) {
+  console.log("PUSH:", message);
 
-  // Alleen wedstrijden met echte quotes + nog niet gespeeld
-  const candidates = state.matches.filter(m =>
-    m.homeOdds !== '—' && !m.isDone && parseFloat(m.homeOdds) > 1
-  ).slice(0, 10);
-
-  if (!candidates.length) {
-    alert('Geen wedstrijden met quotes gevonden. Laad eerst een competitie of vul quotes in.');
-    return;
-  }
-
-  const btn = document.getElementById('scanValueBtn');
-  btn.disabled = true;
-  btn.textContent = '⟳ STAND OPHALEN...';
-
-  // Toon uitleg bij eerste keer
-  if (!state.settings.valueExplainerSeen) {
-    document.getElementById('valueExplainer').style.display = 'block';
-  }
-
-  // ── ACTUELE RANGLIJST + VORM OPHALEN ──
-  // Cruciaal: Claude's kennis kan verouderd zijn (bv. Telstar als degradant zien
-  // terwijl ze gepromoveerd zijn). De actuele stand geeft de ware teamkwaliteit.
-  let standingsCtx = '';
-  if (state.settings.footballKey) {
-    try {
-      const leagueId = COMP_IDS[state.activeComp];
-      const r = await apiFetch(
-        `https://v3.football.api-sports.io/standings?league=${leagueId}&season=2025`,
-        state.settings.footballKey, 6000
-      );
-      const d = await r.json();
-      const standings = d.response?.[0]?.league?.standings?.[0];
-      if (standings?.length) {
-        standingsCtx = `\n\nACTUELE STAND ${state.activeComp.toUpperCase()} (seizoen 2025/26):\n` +
-          standings.map(t =>
-            `${t.rank}. ${t.team.name} — ${t.points}pt | W${t.all.win} G${t.all.draw} V${t.all.lose} | DS:${t.goalsDiff>0?'+':''}${t.goalsDiff} | vorm:${t.form||'?'}`
-          ).join('\n');
-      }
-    } catch(e) {}
-  }
-
-  btn.textContent = '⟳ SCANNEN...';
-
-  const ctx = candidates.map((m, i) =>
-    `${i+1}. ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${m.date||''} ${m.time} | Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`
-  ).join('\n');
-
-  try {
-    const data = await anthropicFetchWithRetry(apiKey, {
-      model: 'claude-sonnet-4-5',
-      max_tokens: 2500,
-      system: `Je bent een value-betting analist. Voor elke wedstrijd geef je je eerlijke inschatting van de winstkans voor de BESTE pick (1/X/2).
-
-KRITIEK BELANGRIJK:
-- Gebruik UITSLUITEND de meegeleverde ACTUELE STAND voor teamkwaliteit — NIET je eigen kennis.
-- Promoties/degradaties zijn al verwerkt in de stand: als een team in de Eredivisie-stand staat, speelt het daar nu, ook als je dacht dat ze lager speelden.
-- Ranglijstpositie + vorm + doelsaldo zijn je belangrijkste signalen voor kwaliteit.
-- De bookmaker quotes geven ook een hint over teamkwaliteit: lage quote = sterker team.
-
-Reageer UITSLUITEND in dit JSON formaat (geen markdown, geen extra tekst):
-{"scans":[
-  {"id":"123","pick":"1","pickLabel":"Ajax wint","aiKans":58,"reason":"Max 15 woorden, verwijs naar stand/vorm"},
-  ...
-]}
-
-REGELS:
-- pick MOET "1", "X" of "2" zijn
-- aiKans = eerlijke inschatting 0-100
-- Wees REALISTISCH: 85%+ alleen bij echt dominante teams (top-3 thuis tegen onderkant)
-- Focus op welke pick MEESTE VALUE biedt, niet per se de favoriet
-- Value = wanneer (aiKans/100 × quote) > 1.0
-- Als een team niet in de stand staat: zeg dat en gebruik alleen de quote als signaal`,
-      messages: [{ role:'user', content:`Analyseer deze ${candidates.length} wedstrijden:\n\n${ctx}${standingsCtx}` }]
-    });
-
-    if (data.error) throw new Error(data.error.message);
-    const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
-    const result = JSON.parse(raw);
-
-    // Bereken value per scan
-    const scans = (result.scans || []).map(s => {
-      const match = candidates.find(m => String(m.id) === String(s.id));
-      if (!match) return null;
-      let odds;
-      if (s.pick === '1') odds = parseFloat(match.homeOdds);
-      else if (s.pick === 'X') odds = parseFloat(match.drawOdds);
-      else if (s.pick === '2') odds = parseFloat(match.awayOdds);
-      if (!odds || odds <= 1) return null;
-
-      const value = calcValue(s.aiKans, odds);
-      return {
-        id: s.id, match, pick: s.pick, pickLabel: s.pickLabel,
-        kans: s.aiKans, odds, value, reason: s.reason || ''
-      };
-    }).filter(x => x !== null);
-
-    state.valueScans = scans;
-
-    // Koppel aan matches voor rendering
-    scans.forEach(s => {
-      if (s.match) {
-        s.match.valueData = {
-          pct: s.value, pick: s.pick, pickLabel: s.pickLabel,
-          kans: s.kans, odds: s.odds, reason: s.reason
-        };
-      }
-    });
-
-    // Sorteer: hoogste value bovenaan
-    scans.sort((a, b) => (b.value || -999) - (a.value || -999));
-
-    renderMatches(state.matches);
-    renderValueBanner(scans);
-
-    // Push notificaties voor sterke value
-    if (state.settings.notifEnabled && 'Notification' in window && Notification.permission === 'granted') {
-      const threshold = state.settings.notifThreshold || 20;
-      const strong = scans.filter(s => s.value >= threshold);
-      strong.slice(0, 3).forEach((s, i) => {
-        setTimeout(() => sendValueNotification(s), i * 500);
-      });
-    }
-
-  } catch(e) {
-    alert('Value scan mislukt: ' + e.message);
-  }
-
-  btn.disabled = false;
-  btn.textContent = '⚡ SCAN VALUE';
+  // later koppelen aan Firebase
 }
-
-function renderValueBanner(scans) {
-  const banner = document.getElementById('valueBanner');
-  if (!scans?.length) { banner.style.display = 'none'; return; }
-
-  const top = scans.slice(0, 6);
-  const highCount = scans.filter(s => s.value >= 15).length;
-  const medCount = scans.filter(s => s.value >= 5 && s.value < 15).length;
-  const noneCount = scans.length - highCount - medCount;
-
-  banner.innerHTML = `
-    <div class="value-banner-header">
-      <div class="value-banner-title">⚡ VALUE SCAN</div>
-      <div class="value-banner-meta">
-        <span style="color:#15803d;font-weight:700;">${highCount} sterk</span> ·
-        <span style="color:#b45309;font-weight:700;">${medCount} licht</span> ·
-        ${noneCount} geen
-      </div>
-    </div>
-    ${top.map(s => {
-      const cls = valueClass(s.value);
-      const sign = s.value > 0 ? '+' : '';
-      return `
-        <div class="value-row" onclick="scrollToMatch('${s.match.id}')">
-          <div class="value-row-match">
-            <div class="value-row-name">${shortName(s.match.home)} vs ${shortName(s.match.away)}</div>
-            <div class="value-row-pick">${s.pickLabel} · AI ${s.kans}% · ${s.reason}</div>
-          </div>
-          <div class="value-row-odds">${s.odds.toFixed(2)}</div>
-          <div class="value-row-val ${cls}">${sign}${Math.round(s.value)}%</div>
-        </div>`;
-    }).join('')}
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed rgba(15,23,42,.1);">
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);">
-        ⚡ Value matches zijn gemarkeerd in de lijst hieronder
-      </span>
-      <button onclick="hideValueBanner()" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.9rem;padding:0 .3rem;">✕</button>
-    </div>`;
-  banner.style.display = 'block';
-}
-
-function hideValueBanner() {
-  document.getElementById('valueBanner').style.display = 'none';
-}
-function hideValueExplainer() {
-  document.getElementById('valueExplainer').style.display = 'none';
-  state.settings.valueExplainerSeen = true;
-  saveState();
-}
-function scrollToMatch(matchId) {
-  const el = document.getElementById('match-' + matchId);
-  if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
-}
-
-// ═══════════════════════════════════════════════════════
-// 🔔 PUSH NOTIFICATIES
-// ═══════════════════════════════════════════════════════
-async function toggleNotifications() {
-  if (!('Notification' in window)) { alert('Je browser ondersteunt geen notificaties.'); return; }
-  if (state.settings.notifEnabled) {
-    state.settings.notifEnabled = false;
-    saveState(); updateNotifUI(); return;
-  }
-  if (Notification.permission === 'granted') {
-    state.settings.notifEnabled = true;
-    saveState(); updateNotifUI();
-    new Notification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/icon-192.png' });
-    return;
-  }
-  if (Notification.permission === 'denied') {
-    alert('Notificaties zijn geblokkeerd. Zet ze aan via je browser-instellingen.');
-    return;
-  }
-  const result = await Notification.requestPermission();
-  if (result === 'granted') {
-    state.settings.notifEnabled = true;
-    saveState(); updateNotifUI();
-    new Notification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/icon-192.png' });
-  }
-}
-
-function updateNotifUI() {
-  const btn = document.getElementById('notifBtn');
-  const sub = document.getElementById('notifStatusSub');
-  const thresh = document.getElementById('notifThreshold');
-  if (!btn) return;
-
-  const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
-  if (perm === 'unsupported') {
-    btn.textContent = 'NIET ONDERSTEUND'; btn.className = 'notif-btn disable'; btn.disabled = true;
-    if (sub) sub.textContent = 'Browser ondersteunt dit niet';
-    return;
-  }
-  if (perm === 'denied') {
-    btn.textContent = 'GEBLOKKEERD'; btn.className = 'notif-btn disable';
-    if (sub) sub.textContent = 'Zet aan via browser instellingen';
-    return;
-  }
-  if (state.settings.notifEnabled && perm === 'granted') {
-    btn.textContent = 'UITZETTEN'; btn.className = 'notif-btn disable';
-    if (sub) sub.innerHTML = '<span class="notif-status on">✓ Actief</span> — melding vanaf ' + (state.settings.notifThreshold||20) + '% value';
-  } else {
-    btn.textContent = 'AANZETTEN'; btn.className = 'notif-btn enable';
-    if (sub) sub.innerHTML = '<span class="notif-status off">Uit</span> — klik AANZETTEN voor meldingen';
-  }
-  if (thresh) thresh.value = state.settings.notifThreshold || 20;
-}
-
-function sendValueNotification(scan) {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  const sign = scan.value > 0 ? '+' : '';
-  const title = `⚡ ${sign}${Math.round(scan.value)}% VALUE — ${scan.pickLabel}`;
-  const body = `${shortName(scan.match.home)} vs ${shortName(scan.match.away)} · quote ${scan.odds.toFixed(2)} · AI ${scan.kans}%`;
-  try {
-    const n = new Notification(title, {
-      body, icon:'/icon-192.png', badge:'/icon-192.png',
-      tag: 'value-' + scan.match.id,
-      requireInteraction: scan.value >= 25
-    });
-    n.onclick = () => { window.focus(); scrollToMatch(scan.match.id); n.close(); };
-  } catch(e) { console.warn(e); }
-}
-
 // ═══════════════════════════════════════════════════════
 // INZET MODAL
 // ═══════════════════════════════════════════════════════
