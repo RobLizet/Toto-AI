@@ -2757,63 +2757,109 @@ async function scanValueAll() {
     const data = await anthropicFetchWithRetry(apiKey, {
       model: 'claude-sonnet-4-5',
       max_tokens: 2500,
-      temperature: 0,  // Deterministisch — zelfde input geeft zelfde output
+      temperature: 0,
       system: `Je bent een value-betting analist. Voor ELKE wedstrijd geef je de winstkans van ALLE 3 uitkomsten (1, X, 2) die samen 100% zijn.
 
 KRITIEK BELANGRIJK:
 - Gebruik UITSLUITEND de meegeleverde data (stand, vorm, H2H, blessures) — NIET je eigen kennis.
-- Promoties/degradaties zijn al verwerkt in de stand: als een team in de stand staat, speelt het daar nu.
-- Ranglijst + vorm + H2H + blessures zijn je signalen.
+- Promoties/degradaties zijn verwerkt in de stand.
 - kans1 + kansX + kans2 = 100 (± 1 afrondingsfout toegestaan)
-- Wees CONSISTENT: baseer kansen op data, niet op gevoel
 
-BELANGRIJK voor confidence-aanpassing:
-- Als vorm sterk afwijkt van ranglijst (bv. team 2e maar 1W3V laatste 5): verlaag je confidence-delta
-- Als H2H eenduidig is (zelfde winnaar in 4/5 duels): verhoog zekerheid
-- Als beide teams fit zijn en data compleet: zekerder
-- Als veel blessures: onzekerder
-- Geef je aangepaste confidence (0-10) gebaseerd op data-kwaliteit en signaal-duidelijkheid
+⚠️ ANTI-BIAS REGELS — DIT IS HET BELANGRIJKSTE:
+Je hebt de neiging gelijkspelkansen te overschatten. Gebruik deze vaste maxima:
+
+RANGLIJSTVERSCHIL (positie verschil):
+- 0-3 plaatsen:   kansX max 35%
+- 4-7 plaatsen:   kansX max 28%
+- 8-12 plaatsen:  kansX max 22%
+- >12 plaatsen:   kansX max 16%
+
+Als een team DOMINANT is (top-3, goede vorm, thuis): kans1 ≥ 50%, niet lager.
+Als een team ZWAK is (onderkant, slechte vorm, uit): kans2 ≤ 20%.
+Gelijkspel is NOOIT de meest waarschijnlijke uitkomst als ranglijstverschil > 5.
+
+CALIBRATIE: Vergelijk je kansen met de bookmaker-impliciete kansen (1/odds).
+Als jouw kansX meer dan 8 procentpunt hoger is dan 1/oddsX van de bookmaker:
+reduceer kansX met het verschil en verdeel over kans1 en kans2.
 
 Reageer UITSLUITEND in dit JSON formaat (geen markdown, geen extra tekst):
 {"scans":[
-  {"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":7,"reason":"Max 15 woorden"},
+  {"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":7,"reason":"Max 15 woorden, concreet"},
   ...
 ]}
 
 REGELS:
-- kans per uitkomst = eerlijke inschatting (0-100)
-- Wees REALISTISCH: 70%+ alleen bij dominant + vorm + H2H samen
-- Som kans1 + kansX + kans2 moet ~100 zijn
-- confidence = zekerheid van deze inschatting (0-10, 10 = zeer zeker)
-- reason verwijst concreet naar data (vorm-letters, H2H stats, ranglijst positie)`,
-      messages: [{ role:'user', content:`Analyseer deze ${candidates.length} wedstrijden. Data per wedstrijd staat eronder:\n\n${ctx}${standingsCtx}` }]
+- Wees REALISTISCH: 70%+ alleen bij top-3 thuis + goede vorm + H2H voordeel samen
+- Som moet ~100 zijn
+- confidence = zekerheid 0-10 gebaseerd op data-kwaliteit
+- reason verwijst naar concrete data (ranglijstposities, vorm-letters, H2H)`,
+      messages: [{ role:'user', content:`Analyseer deze ${candidates.length} wedstrijden:\n\n${ctx}${standingsCtx}` }]
     });
 
     if (data.error) throw new Error(data.error.message);
     const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
     const result = JSON.parse(raw);
 
-    // Per wedstrijd: bereken value voor alle 3 picks met BESTE bookmaker odds,
-    // kies dan de pick met hoogste value.
+    // Per wedstrijd: bereken value voor alle 3 picks met BESTE bookmaker odds
     const scans = (result.scans || []).map(s => {
       const match = candidates.find(m => String(m.id) === String(s.id));
       if (!match) return null;
 
-      // Normaliseer kansen zodat ze 100 zijn (AI kan soms 98 of 102 geven)
+      // Normaliseer kansen naar 100
       const sum = (s.kans1||0) + (s.kansX||0) + (s.kans2||0);
-      if (sum < 80 || sum > 120) return null; // AI heeft iets geks gedaan
-      const norm = k => Math.round((k / sum) * 100);
-      const k1 = norm(s.kans1 || 0);
-      const kX = norm(s.kansX || 0);
-      const k2 = norm(s.kans2 || 0);
+      if (sum < 80 || sum > 120) return null;
+      let k1 = Math.round((s.kans1||0) / sum * 100);
+      let kX = Math.round((s.kansX||0) / sum * 100);
+      let k2 = Math.round((s.kans2||0) / sum * 100);
 
-      // Combineer data-confidence (van matchDataMap) met AI-confidence
-      // Neem het minimum van beide — als AI onzeker is ondanks data, is het laag
+      // ── CODE-SIDE CALIBRATIE ──
+      // Vergelijk AI-kans met bookmaker-impliciete kans voor gelijkspel.
+      // Als AI systematisch hoger zit op gelijkspel dan de markt impliceert,
+      // trek het verschil terug richting markt (shrinkage = 60%).
+      const drawOddsNum = parseFloat(match.drawOdds);
+      const homeOddsNum = parseFloat(match.homeOdds);
+      const awayOddsNum = parseFloat(match.awayOdds);
+
+      if (drawOddsNum > 1 && homeOddsNum > 1 && awayOddsNum > 1) {
+        // Bookmaker-impliciete kansen (gecorrigeerd voor marge)
+        const mktSum = 1/homeOddsNum + 1/drawOddsNum + 1/awayOddsNum;
+        const mktDraw = Math.round((1/drawOddsNum) / mktSum * 100);
+        const mktHome = Math.round((1/homeOddsNum) / mktSum * 100);
+
+        // Als AI-gelijkspel meer dan 8pt hoger dan markt: shrink naar markt
+        const drawDiff = kX - mktDraw;
+        if (drawDiff > 8) {
+          const correction = Math.round(drawDiff * 0.6); // 60% richting markt
+          kX -= correction;
+          // Verdeel correctie over thuis/uit op basis van marktverhouding
+          const homeShare = mktHome / (100 - mktDraw);
+          k1 += Math.round(correction * homeShare);
+          k2 += correction - Math.round(correction * homeShare);
+        }
+
+        // Domination check: als thuisclub >10 plaatsen beter én goede quote
+        // dan minimale thuiskans handhaven
+        if (homeOddsNum < 1.8 && k1 < 50) {
+          const boost = 50 - k1;
+          k1 = 50;
+          kX = Math.max(10, kX - Math.round(boost * 0.7));
+          k2 = Math.max(5, k2 - Math.round(boost * 0.3));
+        }
+
+        // Herkalibreer zodat som weer 100 is
+        const newSum = k1 + kX + k2;
+        if (newSum !== 100) {
+          const diff = 100 - newSum;
+          k1 += diff; // restant op thuiskans
+        }
+      }
+
+      // Confidence combineren
       const dataConf = matchDataMap[s.id]?.confidence || 4;
       const aiConf = Math.max(1, Math.min(10, parseInt(s.confidence) || 5));
       const confidence = Math.round((dataConf + aiConf) / 2);
 
-      // Bereken value voor ELKE pick met BESTE bookmaker quote
+      // Value berekenen voor alle 3 picks
       const picks = [
         { pick:'1', pickLabel:`${match.home} wint`, kans:k1, oddsInfo:getBestOdds(match, '1') },
         { pick:'X', pickLabel:`Gelijkspel`,         kans:kX, oddsInfo:getBestOdds(match, 'X') },
@@ -2827,7 +2873,7 @@ REGELS:
         p.kelly = halfKelly(p.kans, p.odds);
       });
 
-      // Kies pick met HOOGSTE value (zolang kans realistisch is)
+      // Kies pick met hoogste value
       picks.sort((a, b) => (b.value||-999) - (a.value||-999));
       const best = picks[0];
       if (!best) return null;
@@ -2835,13 +2881,10 @@ REGELS:
       return {
         id: s.id, match,
         pick: best.pick, pickLabel: best.pickLabel,
-        kans: best.kans,
-        odds: best.odds,
+        kans: best.kans, odds: best.odds,
         bookmaker: best.bookmaker,
-        value: best.value,
-        kelly: best.kelly,
-        confidence,          // 0-10 score
-        allPicks: picks,     // alle 3 voor detail weergave
+        value: best.value, kelly: best.kelly,
+        confidence, allPicks: picks,
         reason: s.reason || ''
       };
     }).filter(x => x !== null);
