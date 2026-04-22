@@ -284,13 +284,19 @@ display:flex;align-items:center;gap:.5rem;}
 .comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.45rem;margin-bottom:1rem;}
 .comp-chip{background:rgba(255,255,255,.78);border:1px solid var(–stroke);border-radius:14px;
 padding:.55rem .4rem;text-align:center;cursor:pointer;transition:all .2s;
-box-shadow:0 2px 8px rgba(15,23,42,.06);}
+box-shadow:0 2px 8px rgba(15,23,42,.06);position:relative;}
 .comp-chip .flag{font-size:1.2rem;display:block;margin-bottom:.3rem;}
 .comp-chip .cname{font-family:‘IBM Plex Mono’,monospace;font-size:.6rem;color:var(–muted);
 letter-spacing:.02em;line-height:1.3;font-weight:600;}
 .comp-chip.active{border-color:rgba(219,39,119,.4);
 background:linear-gradient(135deg,rgba(252,231,243,.8),rgba(224,242,254,.65));}
 .comp-chip.active .cname{color:#be185d;}
+/* Multi-selectie: aangevinkt met groen vinkje */
+.comp-chip.fav{border-color:rgba(22,163,74,.45);
+background:linear-gradient(135deg,rgba(22,163,74,.12),rgba(22,163,74,.05));}
+.comp-chip.fav .cname{color:#15803d;}
+.comp-chip.fav::after{content:‘✓’;position:absolute;top:3px;right:5px;
+font-size:.6rem;color:#15803d;font-weight:800;}
 
 /* ── WEDSTRIJD KAARTEN ── */
 .match-list{display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem;}
@@ -872,33 +878,63 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   ══════════════════════════════════════ -->
 
   <div id="tab-wedstrijden" class="tab-content active">
-    <div class="section-label">Competitie</div>
+    <div class="section-label">Competitie
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);font-weight:400;margin-left:.3rem;">
+        tik om te laden · lang indrukken om toe te voegen aan multi-scan
+      </span>
+    </div>
+    <!-- Multi-scan knop — verschijnt zodra er favorieten geselecteerd zijn -->
+    <div id="multiScanBar" style="display:none;background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(37,99,235,.08));
+      border:1px solid rgba(22,163,74,.3);border-radius:12px;padding:.6rem .9rem;
+      margin-bottom:.7rem;display:none;align-items:center;justify-content:space-between;gap:.6rem;">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:#15803d;">
+          ⚡ MULTI-SCAN ACTIEF
+        </div>
+        <div id="multiScanComps" style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);margin-top:2px;"></div>
+      </div>
+      <div style="display:flex;gap:.4rem;">
+        <button onclick="runMultiScan()" id="multiScanBtn"
+          style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;
+          background:linear-gradient(135deg,rgba(22,163,74,.85),rgba(21,128,61,.85));
+          color:#fff;border:none;border-radius:999px;padding:6px 14px;cursor:pointer;
+          white-space:nowrap;box-shadow:var(--shadow2);">
+          ⚡ SCAN ALLES
+        </button>
+        <button onclick="clearFavoriteComps()"
+          style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;
+          background:none;border:1px solid var(--stroke);color:var(--sub);
+          border-radius:999px;padding:4px 10px;cursor:pointer;">
+          ✕
+        </button>
+      </div>
+    </div>
     <div class="comp-grid">
-      <div class="comp-chip active" onclick="selectComp('eredivisie')" id="comp-eredivisie">
+      <div class="comp-chip active" onclick="selectComp('eredivisie')" oncontextmenu="toggleFavComp('eredivisie');return false;" id="comp-eredivisie">
         <span class="flag">🇳🇱</span><div class="cname">Eredivisie</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('kkd')" id="comp-kkd">
+      <div class="comp-chip" onclick="selectComp('kkd')" oncontextmenu="toggleFavComp('kkd');return false;" id="comp-kkd">
         <span class="flag">🇳🇱</span><div class="cname">Keuken Kampioen</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('beker')" id="comp-beker">
+      <div class="comp-chip" onclick="selectComp('beker')" oncontextmenu="toggleFavComp('beker');return false;" id="comp-beker">
         <span class="flag">🏆</span><div class="cname">KNVB Beker</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('premier')" id="comp-premier">
+      <div class="comp-chip" onclick="selectComp('premier')" oncontextmenu="toggleFavComp('premier');return false;" id="comp-premier">
         <span class="flag">🇬🇧</span><div class="cname">Premier League</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('bundesliga')" id="comp-bundesliga">
+      <div class="comp-chip" onclick="selectComp('bundesliga')" oncontextmenu="toggleFavComp('bundesliga');return false;" id="comp-bundesliga">
         <span class="flag">🇩🇪</span><div class="cname">Bundesliga</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('ligue1')" id="comp-ligue1">
+      <div class="comp-chip" onclick="selectComp('ligue1')" oncontextmenu="toggleFavComp('ligue1');return false;" id="comp-ligue1">
         <span class="flag">🇫🇷</span><div class="cname">Ligue 1</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('seriea')" id="comp-seriea">
+      <div class="comp-chip" onclick="selectComp('seriea')" oncontextmenu="toggleFavComp('seriea');return false;" id="comp-seriea">
         <span class="flag">🇮🇹</span><div class="cname">Serie A</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('champions')" id="comp-champions">
+      <div class="comp-chip" onclick="selectComp('champions')" oncontextmenu="toggleFavComp('champions');return false;" id="comp-champions">
         <span class="flag">⭐</span><div class="cname">Champions League</div>
       </div>
-      <div class="comp-chip" onclick="selectComp('nations')" id="comp-nations">
+      <div class="comp-chip" onclick="selectComp('nations')" oncontextmenu="toggleFavComp('nations');return false;" id="comp-nations">
         <span class="flag">🌍</span><div class="cname">Nations League</div>
       </div>
     </div>
@@ -1280,7 +1316,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 <div class="settings-section">
   <h4>⚡ Value Notificaties</h4>
   <div style="font-size:.75rem;color:var(--sub);line-height:1.6;margin-bottom:.6rem;">
-    Krijg een push-melding bij <b>sterke value</b> (≥20%) zodra je de Value Scan draait.
+    Krijg een push-melding bij <b>sterke value</b> (≥<span id="notifThresholdDesc">15</span>%) zodra je de Value Scan draait.
   </div>
   <div class="settings-row">
     <div>
@@ -1693,7 +1729,9 @@ window.addEventListener('load', () => {
   try { applySettings(); } catch(e) { console.error('applySettings:', e); }
   try { applyTheme(); } catch(e) {}
   try { updateWalletUI(); } catch(e) { console.error('updateWalletUI:', e); }
-  try { updateNotifUI(); } catch(e) {}  // VALUE
+  try { updateNotifUI(); } catch(e) {}
+  try { initLongPress(); } catch(e) {}       // multi-comp long press
+  try { updateFavCompUI(); } catch(e) {}     // herstel favoriete comps
   // Laad keys uit Firebase, dan wedstrijden
   loadFromFirebase().finally(() => {
     try {
@@ -1890,8 +1928,179 @@ function selectComp(comp) {
 }
 
 // ═══════════════════════════════════════════════════════
-// API CONFIGURATIE
+// MULTI-COMPETITIE SELECTIE + SCAN
+// Lang indrukken (touchstart >500ms) = toevoegen aan favorieten
 // ═══════════════════════════════════════════════════════
+const COMP_NAMES = {
+  eredivisie:'🇳🇱 Eredivisie', kkd:'🇳🇱 Keuken Kampioen', beker:'🏆 KNVB Beker',
+  premier:'🇬🇧 Premier League', bundesliga:'🇩🇪 Bundesliga', ligue1:'🇫🇷 Ligue 1',
+  seriea:'🇮🇹 Serie A', champions:'⭐ Champions League', nations:'🌍 Nations League'
+};
+
+function toggleFavComp(comp) {
+  if (!state.favoriteComps) state.favoriteComps = [];
+  const idx = state.favoriteComps.indexOf(comp);
+  if (idx >= 0) state.favoriteComps.splice(idx, 1);
+  else state.favoriteComps.push(comp);
+  saveState();
+  updateFavCompUI();
+}
+
+function updateFavCompUI() {
+  const favs = state.favoriteComps || [];
+  document.querySelectorAll('.comp-chip').forEach(chip => {
+    const comp = chip.id.replace('comp-', '');
+    if (favs.includes(comp)) chip.classList.add('fav');
+    else chip.classList.remove('fav');
+  });
+  const bar = document.getElementById('multiScanBar');
+  const compsLabel = document.getElementById('multiScanComps');
+  if (!bar) return;
+  if (favs.length >= 1) {
+    bar.style.display = 'flex';
+    if (compsLabel) compsLabel.textContent = favs.length >= 2
+      ? favs.map(c => COMP_NAMES[c]?.split(' ').slice(1).join(' ') || c).join(' · ')
+      : (COMP_NAMES[favs[0]] || favs[0]) + ' — druk nog een comp lang in voor multi-scan';
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function clearFavoriteComps() {
+  state.favoriteComps = [];
+  saveState();
+  updateFavCompUI();
+}
+
+let _lpTimer = null;
+function initLongPress() {
+  document.querySelectorAll('.comp-chip').forEach(chip => {
+    chip.addEventListener('touchstart', e => {
+      const comp = chip.id.replace('comp-', '');
+      _lpTimer = setTimeout(() => {
+        toggleFavComp(comp);
+        if (navigator.vibrate) navigator.vibrate(60);
+      }, 500);
+    }, { passive: true });
+    chip.addEventListener('touchend', () => clearTimeout(_lpTimer));
+    chip.addEventListener('touchmove', () => clearTimeout(_lpTimer));
+  });
+}
+
+async function runMultiScan() {
+  const favs = state.favoriteComps || [];
+  if (favs.length < 2) { alert('Druk minimaal 2 competities lang in voor multi-scan.'); return; }
+  if (!state.settings.anthropicKey) { alert('Vul eerst je Anthropic API key in.'); return; }
+
+  const btn = document.getElementById('multiScanBtn');
+  btn.disabled = true;
+  const allValuePicks = [];
+
+  for (let i = 0; i < favs.length; i++) {
+    const comp = favs[i];
+    btn.textContent = `⟳ ${i+1}/${favs.length} ${COMP_NAMES[comp]?.split(' ').slice(1).join(' ') || comp}`;
+    state.activeComp = comp;
+    state.matches = []; state.valueScans = [];
+    document.querySelectorAll('.comp-chip').forEach(c => c.classList.remove('active'));
+    document.getElementById('comp-' + comp)?.classList.add('active');
+
+    // Laad matches
+    const apifKey = state.settings.footballKey;
+    const fdKey = state.settings.fdKey;
+    const fdCode = FD_CODES[comp];
+    let loaded = false;
+    if (apifKey) loaded = await loadFromAPIFootball(comp, apifKey);
+    if (!loaded && fdKey && fdCode) loaded = await loadFromFD(fdCode, fdKey, comp);
+
+    await new Promise(r => setTimeout(r, 300));
+    if (!state.matches.length) continue;
+
+    // Value scan voor deze competitie
+    await scanValueAll();
+
+    if (state.valueScans?.length) {
+      allValuePicks.push(...state.valueScans
+        .filter(s => s.value >= 5)
+        .map(s => ({ ...s, compName: COMP_NAMES[comp] || comp })));
+    }
+  }
+
+  allValuePicks.sort((a, b) => (b.value||0) - (a.value||0));
+  renderMultiScanResults(allValuePicks, favs.length);
+  btn.disabled = false;
+  btn.textContent = '⚡ SCAN ALLES';
+}
+
+function renderMultiScanResults(picks, numComps) {
+  const banner = document.getElementById('valueBanner');
+  if (!banner) return;
+
+  if (!picks.length) {
+    banner.innerHTML = `
+      <div class="value-banner-header">
+        <div class="value-banner-title">⚡ MULTI-SCAN (${numComps} comp.)</div>
+        <div class="value-banner-meta">Geen value ≥5% gevonden</div>
+      </div>
+      <div style="text-align:center;padding:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);">
+        Bookmakers zitten goed in de markt vandaag.<br>Probeer later of andere competities.
+      </div>
+      <div style="text-align:right;">
+        <button onclick="hideValueBanner()" style="background:none;border:none;color:var(--sub);cursor:pointer;">✕</button>
+      </div>`;
+    banner.style.display = 'block';
+    return;
+  }
+
+  const highCount = picks.filter(p => p.value >= 15).length;
+  const medCount = picks.filter(p => p.value >= 5 && p.value < 15).length;
+
+  banner.innerHTML = `
+    <div class="value-banner-header">
+      <div class="value-banner-title">⚡ MULTI-SCAN — ${numComps} competities</div>
+      <div class="value-banner-meta">
+        <span style="color:#15803d;font-weight:700;">${highCount} sterk</span> ·
+        <span style="color:#b45309;font-weight:700;">${medCount} licht</span>
+      </div>
+    </div>
+    ${picks.slice(0, 8).map(s => {
+      const cls = s.value >= 15 ? 'high' : s.value >= 5 ? 'med' : 'low';
+      const sign = s.value > 0 ? '+' : '';
+      const bankroll = state.wallet?.balance || 500;
+      const kellyEuros = ((s.kelly||0) / 100 * bankroll).toFixed(2);
+      const inCombi = state.combiBuilder.some(l => String(l.matchId) === String(s.match.id));
+      return `
+        <div class="value-row" id="msr-${s.match.id}" style="cursor:default;">
+          <div class="value-row-match" onclick="openValueAnalysis('${s.match.id}')" style="cursor:pointer;flex:1;" title="Tik voor analyse">
+            <div class="value-row-name">${s.poissonUsed?'📐 ':''}${shortName(s.match.home)} vs ${shortName(s.match.away)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#7c3aed;">${s.compName}</div>
+            <div class="value-row-pick">${s.pickLabel} · ${s.kans}%${s.poissonUsed?' (P+AI)':' (AI)'} · ${s.reason}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-top:2px;">
+              📊 ${s.bookmaker} · 🎯 ½ Kelly: ${(s.kelly||0).toFixed(1)}% (€${kellyEuros}) · 🎲 ${s.confidence||'?'}/10
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;margin-left:.5rem;flex-shrink:0;">
+            <div class="value-row-val ${cls}">${sign}${Math.round(s.value)}%</div>
+            <div class="value-row-odds">${s.odds.toFixed(2)}</div>
+            <button onclick="addValuePickToCombi('${s.match.id}','${s.pick}','${s.pickLabel.replace(/'/g,"\\'")}',${s.odds})"
+              id="msrBtn-${s.match.id}"
+              style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;
+              padding:3px 8px;border-radius:999px;cursor:pointer;white-space:nowrap;
+              border:1px solid ${inCombi?'rgba(22,163,74,.4)':'rgba(219,39,119,.35)'};
+              background:${inCombi?'rgba(22,163,74,.12)':'rgba(255,215,230,.4)'};
+              color:${inCombi?'#15803d':'#d63384'};">
+              ${inCombi ? '✓ IN COMBI' : '+ COMBI'}
+            </button>
+          </div>
+        </div>`;
+    }).join('')}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed rgba(15,23,42,.1);">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);">
+        Tik naam → analyse · tik + COMBI → builder
+      </span>
+      <button onclick="hideValueBanner()" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.9rem;">✕</button>
+    </div>`;
+  banner.style.display = 'block';
+}
 const FD_CODES = {
   eredivisie: 'DED', kkd: null, bundesliga: 'BL1', premier: 'PL',
   beker: 'KBR', champions: 'CL', ligue1: 'FL1', seriea: 'SA', nations: null
@@ -3336,7 +3545,13 @@ function updateNotifUI() {
   const btn = document.getElementById('notifBtn');
   const sub = document.getElementById('notifStatusSub');
   const thresh = document.getElementById('notifThreshold');
+  const desc = document.getElementById('notifThresholdDesc');
   if (!btn) return;
+
+  const currentThreshold = state.settings.notifThreshold || 15;
+
+  // Update beschrijvingstekst dynamisch
+  if (desc) desc.textContent = currentThreshold;
 
   const perm = ('Notification' in window) ? Notification.permission : 'unsupported';
   if (perm === 'unsupported') {
@@ -3351,12 +3566,12 @@ function updateNotifUI() {
   }
   if (state.settings.notifEnabled && perm === 'granted') {
     btn.textContent = 'UITZETTEN'; btn.className = 'notif-btn disable';
-    if (sub) sub.innerHTML = '<span class="notif-status on">✓ Actief</span> — melding vanaf ' + (state.settings.notifThreshold||15) + '% value';
+    if (sub) sub.innerHTML = '<span class="notif-status on">✓ Actief</span> — melding vanaf ' + currentThreshold + '% value';
   } else {
     btn.textContent = 'AANZETTEN'; btn.className = 'notif-btn enable';
     if (sub) sub.innerHTML = '<span class="notif-status off">Uit</span> — klik AANZETTEN voor meldingen';
   }
-  if (thresh) thresh.value = state.settings.notifThreshold || 20;
+  if (thresh) thresh.value = currentThreshold;
 }
 
 function sendValueNotification(scan) {
@@ -4043,6 +4258,53 @@ function loadAICombiIntoBuilder() {
 // ═══════════════════════════════════════════════════════
 // COMBI BUILDER
 // ═══════════════════════════════════════════════════════
+/**
+ * Voeg een value-scan pick direct toe aan de combi-builder
+ * vanuit de multi-scan banner — zonder naar de wedstrijd te navigeren.
+ */
+function addValuePickToCombi(matchId, pick, pickLabel, odds) {
+  // Zoek de match in state.matches (huidige competitie)
+  // of maak een dummy match aan als we al naar een andere comp zijn gegaan
+  let match = state.matches.find(m => String(m.id) === String(matchId));
+
+  // Als match niet in huidige lijst: zoek in alle scan-resultaten
+  if (!match) {
+    const scan = state.valueScans?.find(s => String(s.match?.id) === String(matchId));
+    if (scan) match = scan.match;
+  }
+
+  if (!match) {
+    // Geen match gevonden — gebruik pickLabel om door te gaan
+    const existing = state.combiBuilder.findIndex(l => String(l.matchId) === String(matchId));
+    if (existing >= 0) {
+      state.combiBuilder.splice(existing, 1);
+    } else {
+      if (state.combiBuilder.length >= 8) { alert('Max 8 legs!'); return; }
+      state.combiBuilder.push({
+        matchId: String(matchId),
+        home: '?', away: '?',
+        pick, pickLabel, odds: parseFloat(odds), date: ''
+      });
+    }
+  } else {
+    toggleCombiLeg(matchId, pick, pickLabel, parseFloat(odds));
+  }
+
+  // Update knop in banner direct
+  const btn = document.getElementById('msrBtn-' + matchId);
+  if (btn) {
+    const inCombi = state.combiBuilder.some(l => String(l.matchId) === String(matchId));
+    btn.textContent = inCombi ? '✓ IN COMBI' : '+ COMBI';
+    btn.style.borderColor = inCombi ? 'rgba(22,163,74,.4)' : 'rgba(219,39,119,.35)';
+    btn.style.background = inCombi ? 'rgba(22,163,74,.12)' : 'rgba(255,215,230,.4)';
+    btn.style.color = inCombi ? '#15803d' : '#d63384';
+  }
+
+  // Toon combi-builder
+  updateCombiBuilder();
+  document.getElementById('combiBuilder').style.display = 'block';
+}
+
 function toggleCombiLeg(matchId, pick, pickLabel, odds) {
   const match = state.matches.find(m => String(m.id) === String(matchId));
   if (!match) return;
@@ -4921,7 +5183,9 @@ async function loadFromFirebase() {
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
     wallet:state.wallet, tracker:state.tracker,
-    valueBacktest:state.valueBacktest, settings:state.settings
+    valueBacktest:state.valueBacktest,
+    favoriteComps:state.favoriteComps || [],
+    settings:state.settings
   }));
 }
 function loadState() {
@@ -4930,6 +5194,7 @@ function loadState() {
     if (s.wallet) state.wallet = s.wallet;
     if (s.tracker) state.tracker = s.tracker;
     if (s.valueBacktest) state.valueBacktest = s.valueBacktest;
+    if (s.favoriteComps) state.favoriteComps = s.favoriteComps;
     if (s.settings) state.settings = { ...state.settings, ...s.settings };
   } catch(e) {}
 }
@@ -5135,20 +5400,20 @@ function showThemeHint(theme) {
     hint = document.createElement('div');
     hint.id = 'themeHint';
     hint.style.cssText = `
-      position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+      position:fixed;top:70px;right:12px;
       background:var(--card);border:1px solid var(--stroke);
-      border-radius:14px;padding:.9rem 1.4rem;
-      font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:700;
-      color:var(--ink);box-shadow:var(--shadow);backdrop-filter:blur(10px);
-      z-index:10000;opacity:0;transition:opacity .25s;pointer-events:none;
-      letter-spacing:.05em;
+      border-radius:10px;padding:.5rem .9rem;
+      font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:700;
+      color:var(--ink);box-shadow:var(--shadow2);backdrop-filter:blur(10px);
+      z-index:10000;opacity:0;transition:opacity .2s;pointer-events:none;
+      letter-spacing:.04em;white-space:nowrap;
     `;
     document.body.appendChild(hint);
   }
-  hint.textContent = `${THEME_ICONS[theme]} ${THEME_NAMES[theme].toUpperCase()} THEMA`;
+  hint.textContent = `${THEME_ICONS[theme]} ${THEME_NAMES[theme]}`;
   requestAnimationFrame(() => { hint.style.opacity = '1'; });
   clearTimeout(window._themeHintTimer);
-  window._themeHintTimer = setTimeout(() => { hint.style.opacity = '0'; }, 1200);
+  window._themeHintTimer = setTimeout(() => { hint.style.opacity = '0'; }, 1400);
 }
 </script>
 
