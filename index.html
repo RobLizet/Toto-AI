@@ -2416,31 +2416,72 @@ function selectMatch(match) {
   }
 }
 
-// ═══════════════════════════════════════════════════════
-// ⚡ VALUE DETECTIE — Core
-// ═══════════════════════════════════════════════════════
-/**
- * Value% = (AI_kans × odds − 1) × 100
- * Voorbeeld: AI 60% kans, odds 2.10  →  (0.60 × 2.10 − 1) × 100 = +26%
- */
-function calcValue(aiKans, odds) {
-  if (aiKans == null || !odds) return null;
-  const kans = aiKans / 100;
-  const o = parseFloat(odds);
-  if (!o || o <= 1) return null;
-  return (kans * o - 1) * 100;
+// =========================
+// VALUE ENGINE V2
+// =========================
+
+// Value berekening
+function calcValue(kans, odds) {
+  if (!kans || !odds) return null;
+  return (kans / 100 * odds - 1) * 100;
 }
-function valueClass(v) {
-  if (v == null) return 'low';
-  if (v >= 15) return 'high';
-  if (v >= 5) return 'med';
-  if (v >= 0) return 'low';
-  return 'neg';
+
+// Implied probability bookmaker
+function impliedProb(odds) {
+  return 1 / odds;
 }
-function valueLabel(v) {
-  if (v == null) return '?';
-  const sign = v > 0 ? '+' : '';
-  return `⚡ ${sign}${Math.round(v)}% VALUE`;
+
+// Pak juiste odds per pick
+function getOddsByPick(match, pick) {
+  if (pick === '1') return parseFloat(match.homeOdds);
+  if (pick === 'X') return parseFloat(match.drawOdds);
+  if (pick === '2') return parseFloat(match.awayOdds);
+  return null;
+}
+
+// Corrigeer AI kans (belangrijk)
+function adjustKans(kans) {
+  if (!kans) return null;
+  return Math.max(0, Math.min(100, kans * 0.92));
+}
+
+// Hoofd scan functie
+function scanValueAll(matches, signals) {
+  let scans = signals.map(s => {
+    const match = matches.find(m => m.id === s.matchId);
+    if (!match) return null;
+
+    const odds = getOddsByPick(match, s.pick);
+    if (!odds) return null;
+
+    // AI kans corrigeren
+    const adjustedKans = adjustKans(s.aiKans);
+
+    // Value berekenen
+    const value = calcValue(adjustedKans, odds);
+
+    // Edge check (belangrijk)
+    const edge = (adjustedKans / 100) - impliedProb(odds);
+
+    return {
+      ...s,
+      odds,
+      adjustedKans,
+      value,
+      edge,
+      match
+    };
+  })
+  // filters
+  .filter(x => x && x.value >= 5 && x.edge >= 0.02)
+
+  // sorteer beste bovenaan
+  .sort((a, b) => b.value - a.value)
+
+  // top 10 tonen
+  .slice(0, 10);
+
+  return scans;
 }
 
 /**
