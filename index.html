@@ -1648,7 +1648,8 @@ let state = {
   matches: [],
   combiBuilder: [],
   bookmakerOdds: {},
-  valueScans: [],  // VALUE: scan resultaten
+  valueScans: [],    // VALUE: scan resultaten
+  openingOdds: {},   // marktbeweging: opening quotes per fixture
   wallet: {
     balance: 500,
     totalStaked: 0,
@@ -1876,8 +1877,8 @@ function selectComp(comp) {
   document.querySelectorAll('.comp-chip').forEach(c => c.classList.remove('active'));
   document.getElementById('comp-' + comp).classList.add('active');
   state.activeComp = comp;
-  // VALUE: reset scan bij andere competitie
   state.valueScans = [];
+  state.openingOdds = {};  // reset opening odds bij nieuwe competitie
   state.matches.forEach(m => { if (m) m.valueData = null; });
   hideValueBanner();
   loadMatches(comp);
@@ -2159,6 +2160,7 @@ async function loadFromAPIFootball(comp, apiKey) {
       state.matches = unique.map(parseAPIMatch);
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
+      saveOpeningOdds(state.matches); // marktbeweging: sla openingslijn op
       fetchOddsForMatches(leagueId, apiKey);
       return true;
     }
@@ -2378,9 +2380,11 @@ function renderMatches(matches) {
         </div>
       </div>
       ${m.valueData ? `<div onclick="event.stopPropagation();openValueAnalysis('${m.id}')" title="Tik voor volledige AI analyse" style="padding:.5rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#15803d;background:rgba(22,163,74,.05);border-top:1px solid rgba(22,163,74,.15);line-height:1.6;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='rgba(22,163,74,.1)'" onmouseout="this.style.background='rgba(22,163,74,.05)'">
-        <div>⚡ <b>${m.valueData.pickLabel}</b> — AI: ${m.valueData.kans}% kans @ <b>${m.valueData.odds?.toFixed(2)||'?'}</b> · ${m.valueData.reason||''}</div>
+        <div>⚡ <b>${m.valueData.pickLabel}</b> — AI+Poisson: ${m.valueData.kans}% @ <b>${m.valueData.odds?.toFixed(2)||'?'}</b>${m.valueData.poissonUsed ? ` <span style="color:#2563eb;font-size:.5rem;">📐</span>` : ''} · ${m.valueData.reason||''}</div>
+        ${m.valueData.market ? `<div style="color:#7c3aed;margin-top:2px;font-size:.52rem;">${m.valueData.market.label}</div>` : ''}
+        ${m.valueData.poissonUsed ? `<div style="color:#2563eb;margin-top:2px;font-size:.5rem;">📐 Poisson: 1=${m.valueData.poissonK1}% X=${m.valueData.poissonKX}% 2=${m.valueData.poissonK2}%</div>` : ''}
         <div style="color:var(--sub);margin-top:3px;font-size:.52rem;display:flex;justify-content:space-between;align-items:center;gap:.4rem;flex-wrap:wrap;">
-          <span>📊 <b style="color:#0f172a;">${m.valueData.bookmaker||'?'}</b> · 🎯 ½ Kelly: <b style="color:#15803d;">${m.valueData.kelly?.toFixed(1)||'0'}%</b>${m.valueData.confidence ? ` · 🎲 data: <b style="color:${m.valueData.confidence>=7?'#15803d':m.valueData.confidence>=5?'#b45309':'#dc2626'};">${m.valueData.confidence}/10</b>` : ''}</span>
+          <span>📊 <b style="color:#0f172a;">${m.valueData.bookmaker||'?'}</b> · 🎯 ½ Kelly: <b style="color:#15803d;">${m.valueData.kelly?.toFixed(1)||'0'}%</b>${m.valueData.confidence ? ` · 🎲 <b style="color:${m.valueData.confidence>=7?'#15803d':m.valueData.confidence>=5?'#b45309':'#dc2626'};">${m.valueData.confidence}/10</b>` : ''}</span>
           <span style="color:#15803d;font-weight:700;">🤖 Tik voor analyse →</span>
         </div>
       </div>` : ''}
@@ -2643,6 +2647,165 @@ function formatFormCompact(fixtures, teamId, teamName) {
   return `${letters} (${gFor}-${gAg}, scoorde ${scored}/${fixtures.length})`;
 }
 
+// ═══════════════════════════════════════════════════════
+// 📐 POISSON MODEL — wiskundige basiskansen
+// ═══════════════════════════════════════════════════════
+/**
+ * Poisson-kans: P(k goals) = (λ^k × e^-λ) / k!
+ */
+function poissonProb(lambda, k) {
+  if (lambda <= 0) return k === 0 ? 1 : 0;
+  let prob = Math.exp(-lambda);
+  for (let i = 1; i <= k; i++) prob *= lambda / i;
+  return prob;
+}
+
+/**
+ * Bereken match-uitkomst kansen via Poisson-verdeling.
+ * Geeft { p1, pX, p2 } als decimalen (som = ~1.0)
+ *
+ * @param {number} lambdaHome — verwachte goals thuisploeg
+ * @param {number} lambdaAway — verwachte goals uitploeg
+ * @param {number} maxGoals   — max goals per team om te berekenen (standaard 6)
+ */
+function poissonMatchProbs(lambdaHome, lambdaAway, maxGoals = 6) {
+  let p1 = 0, pX = 0, p2 = 0;
+  for (let h = 0; h <= maxGoals; h++) {
+    for (let a = 0; a <= maxGoals; a++) {
+      const prob = poissonProb(lambdaHome, h) * poissonProb(lambdaAway, a);
+      if (h > a) p1 += prob;
+      else if (h === a) pX += prob;
+      else p2 += prob;
+    }
+  }
+  return { p1, pX, p2 };
+}
+
+/**
+ * Extraheer Poisson-parameters uit team-statistieken van API-Football.
+ * Retourneert { avgScoredHome, avgScoredAway, avgConcHome, avgConcAway }
+ * of null als data ontbreekt.
+ */
+function extractTeamGoalStats(stats) {
+  if (!stats?.goals) return null;
+  const gf = stats.goals.for?.average;
+  const ga = stats.goals.against?.average;
+  if (!gf || !ga) return null;
+  return {
+    avgScoredHome: parseFloat(gf.home) || null,
+    avgScoredAway: parseFloat(gf.away) || null,
+    avgScoredTotal: parseFloat(gf.total) || null,
+    avgConcHome: parseFloat(ga.home) || null,
+    avgConcAway: parseFloat(ga.away) || null,
+    avgConcTotal: parseFloat(ga.total) || null,
+  };
+}
+
+/**
+ * Bereken Poisson-kansen voor een wedstrijd.
+ * Gebruikt thuis/uit splitsing voor nauwkeurigheid.
+ * Competitiegemiddelde = 1.35 goals/team/duel (Eredivisie/PL gemiddelde).
+ *
+ * @returns {{ k1:number, kX:number, k2:number, valid:boolean }}
+ */
+function calcPoissonKansen(homeStats, awayStats, leagueAvg = 1.35) {
+  if (!homeStats || !awayStats) return { k1:null, kX:null, k2:null, valid:false };
+
+  // Verwachte goals thuis = aanvalskracht thuis × verdedigingszwakte uit tegenstander / competitiegemiddelde
+  const homeAttack = homeStats.avgScoredHome || homeStats.avgScoredTotal || leagueAvg;
+  const awayDefence = awayStats.avgConcAway || awayStats.avgConcTotal || leagueAvg;
+  const awayAttack = awayStats.avgScoredAway || awayStats.avgScoredTotal || leagueAvg;
+  const homeDefence = homeStats.avgConcHome || homeStats.avgConcTotal || leagueAvg;
+
+  const lambdaHome = (homeAttack * awayDefence) / leagueAvg;
+  const lambdaAway = (awayAttack * homeDefence) / leagueAvg;
+
+  // Sanity check — vermijd extreme waarden
+  if (lambdaHome <= 0 || lambdaAway <= 0 || lambdaHome > 6 || lambdaAway > 6) {
+    return { k1:null, kX:null, k2:null, valid:false };
+  }
+
+  const { p1, pX, p2 } = poissonMatchProbs(lambdaHome, lambdaAway);
+
+  return {
+    k1: Math.round(p1 * 100),
+    kX: Math.round(pX * 100),
+    k2: Math.round(p2 * 100),
+    lambdaHome: parseFloat(lambdaHome.toFixed(2)),
+    lambdaAway: parseFloat(lambdaAway.toFixed(2)),
+    valid: true
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// 📈 MARKTBEWEGING — opening vs huidige quote
+// ═══════════════════════════════════════════════════════
+/**
+ * Sla opening-odds op bij eerste keer laden van een competitie.
+ * state.openingOdds[fixtureId] = { home, draw, away, savedAt }
+ */
+function saveOpeningOdds(matches) {
+  if (!state.openingOdds) state.openingOdds = {};
+  const now = Date.now();
+  matches.forEach(m => {
+    // Alleen opslaan als we echte odds hebben en nog geen opening hebben
+    if (m.homeOdds === '—' || state.openingOdds[m.id]) return;
+    state.openingOdds[m.id] = {
+      home: parseFloat(m.homeOdds),
+      draw: parseFloat(m.drawOdds),
+      away: parseFloat(m.awayOdds),
+      savedAt: now
+    };
+  });
+}
+
+/**
+ * Analyseer marktbeweging voor een wedstrijd.
+ * Returns: { direction, pick, pct, label, confDelta }
+ *  direction = 'home'|'draw'|'away'|'none'
+ *  pct = procentuele quotebeweging (negatief = quote daalde = geld stroomt op die kant)
+ *  confDelta = aanpassing confidence score (-2 tot +2)
+ */
+function analyzeMarketMovement(matchId, currentHome, currentDraw, currentAway) {
+  if (!state.openingOdds?.[matchId]) return { direction:'none', confDelta:0, label:'' };
+
+  const op = state.openingOdds[matchId];
+  if (!op.home || !op.draw || !op.away) return { direction:'none', confDelta:0, label:'' };
+
+  // Quote-beweging in % (negatief = daalt = geld stroomt op die kant = sharp signal)
+  const homeMove = ((currentHome - op.home) / op.home) * 100;
+  const drawMove = ((currentDraw - op.draw) / op.draw) * 100;
+  const awayMove = ((currentAway - op.away) / op.away) * 100;
+
+  // Grootste beweging bepalen (meest significant)
+  const moves = [
+    { pick:'1', move: homeMove, label:'Thuis' },
+    { pick:'X', move: drawMove, label:'Gelijk' },
+    { pick:'2', move: awayMove, label:'Uit' },
+  ];
+
+  // Zoek sterkste neerwaartse beweging (geld stroomt er naartoe)
+  const sharpest = moves.reduce((a, b) => b.move < a.move ? b : a);
+
+  // Alleen rapporteren als beweging significant is (>3%)
+  if (Math.abs(sharpest.move) < 3) return { direction:'none', confDelta:0, label:'' };
+
+  const pct = Math.abs(sharpest.move).toFixed(1);
+  const direction = sharpest.pick;
+
+  // Is dit steam (quote daalt sterk = sharp money)?
+  const isSteam = sharpest.move < -5;
+  const isReverse = sharpest.move > 5;
+
+  const label = isSteam
+    ? `📉 ${sharpest.label} -${pct}% (sharp money)`
+    : `📈 ${sharpest.label} +${pct}% (publiek slingert af)`;
+
+  const confDelta = isSteam ? 2 : isReverse ? -1 : 0;
+
+  return { direction, pick: sharpest.pick, pct: parseFloat(pct), isSteam, label, confDelta };
+}
+
 /**
  * Scan alle wedstrijden in één AI-call.
  * Gebruikt temperature=0 + 3-uitkomst model (1/X/2 sommeert tot 100%)
@@ -2697,31 +2860,52 @@ async function scanValueAll() {
   // Ook de confidence-score is hierop gebaseerd: meer data = hogere confidence.
   btn.textContent = '⟳ DATA VERZAMELEN...';
   const matchDataMap = {};
+  const leagueId = COMP_IDS[state.activeComp];
+
   if (state.settings.footballKey) {
     const wt = (p, ms=5000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
-    // Parallel ophalen — timeout per call
+
+    // Parallel ophalen per wedstrijd — inclusief team stats voor Poisson
     await Promise.all(candidates.map(async m => {
       if (!m.homeId || !m.awayId) {
-        matchDataMap[m.id] = { confidence: 3 }; // lage confidence: geen team IDs
+        matchDataMap[m.id] = { confidence: 3 };
         return;
       }
       try {
-        const [h2h, homeForm, awayForm, homeInj, awayInj] = await Promise.all([
+        const [h2h, homeForm, awayForm, homeInj, awayInj, hStats, aStats] = await Promise.all([
           wt(fetchH2H(m.homeId, m.awayId), 5000),
           wt(fetchTeamForm(m.homeId), 5000),
           wt(fetchTeamForm(m.awayId), 5000),
           wt(fetchInjuries(m.homeId, m.id), 4000),
-          wt(fetchInjuries(m.awayId, m.id), 4000)
+          wt(fetchInjuries(m.awayId, m.id), 4000),
+          wt(fetchTeamStats(m.homeId, leagueId), 5000),  // voor Poisson
+          wt(fetchTeamStats(m.awayId, leagueId), 5000),  // voor Poisson
         ]);
-        // Bereken confidence score op basis van hoeveel data we hebben (0-10)
-        let conf = 4; // basis: we hebben ranglijst
+
+        // Confidence score berekenen
+        let conf = 4;
         if (h2h?.length >= 3) conf += 2;
         else if (h2h?.length) conf += 1;
         if (homeForm?.length >= 5 && awayForm?.length >= 5) conf += 2;
         else if (homeForm?.length && awayForm?.length) conf += 1;
         if (homeInj !== null && awayInj !== null) conf += 1;
-        if (m.isLive || m.liveMin) conf += 1; // live data is betrouwbaarder
-        conf = Math.min(10, conf);
+        if (m.isLive || m.liveMin) conf += 1;
+
+        // ── POISSON BEREKENING ──
+        const homeGoalStats = hStats ? extractTeamGoalStats(hStats) : null;
+        const awayGoalStats = aStats ? extractTeamGoalStats(aStats) : null;
+        const poisson = calcPoissonKansen(homeGoalStats, awayGoalStats);
+        if (poisson.valid) conf = Math.min(10, conf + 1); // extra confidence bij Poisson-data
+
+        // ── MARKTBEWEGING ──
+        const market = analyzeMarketMovement(
+          m.id,
+          parseFloat(m.homeOdds) || 0,
+          parseFloat(m.drawOdds) || 0,
+          parseFloat(m.awayOdds) || 0
+        );
+
+        conf = Math.min(10, Math.max(1, conf + (market.confDelta || 0)));
 
         matchDataMap[m.id] = {
           h2h: h2h?.length ? formatH2HCompact(h2h.slice(0,5), m.home, m.away) : '',
@@ -2729,6 +2913,8 @@ async function scanValueAll() {
           awayForm: awayForm?.length ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away) : '',
           homeInj: homeInj?.length ? `${homeInj.length}x out` : 'fit',
           awayInj: awayInj?.length ? `${awayInj.length}x out` : 'fit',
+          poisson,         // Poisson-kansen als wiskundig anker
+          market,          // marktbeweging signaal
           confidence: conf
         };
       } catch(e) {
@@ -2736,20 +2922,25 @@ async function scanValueAll() {
       }
     }));
   } else {
-    // Geen API key: elke match krijgt lage confidence
     candidates.forEach(m => { matchDataMap[m.id] = { confidence: 3 }; });
   }
 
   btn.textContent = '⟳ SCANNEN...';
 
-  // Build context per match met alle verzamelde data
+  // Build context per match — Poisson als wiskundig anker voor de AI
   const ctx = candidates.map((m, i) => {
     const d = matchDataMap[m.id] || {};
+    const p = d.poisson;
     let line = `${i+1}. ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${m.date||''} ${m.time} | Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
+    // Poisson als primair anker — staat bovenaan zodat AI het als basis ziet
+    if (p?.valid) {
+      line += `\n   📐 Poisson-model: 1=${p.k1}% X=${p.kX}% 2=${p.k2}% (λ_thuis=${p.lambdaHome} λ_uit=${p.lambdaAway})`;
+    }
     if (d.homeForm) line += `\n   Vorm ${m.home}: ${d.homeForm}`;
     if (d.awayForm) line += `\n   Vorm ${m.away}: ${d.awayForm}`;
     if (d.h2h) line += `\n   H2H: ${d.h2h}`;
     if (d.homeInj || d.awayInj) line += `\n   Blessures: ${m.home}=${d.homeInj||'?'}, ${m.away}=${d.awayInj||'?'}`;
+    if (d.market?.direction !== 'none') line += `\n   Markt: ${d.market.label}`;
     return line;
   }).join('\n\n');
 
@@ -2760,104 +2951,108 @@ async function scanValueAll() {
       temperature: 0,
       system: `Je bent een value-betting analist. Voor ELKE wedstrijd geef je de winstkans van ALLE 3 uitkomsten (1, X, 2) die samen 100% zijn.
 
-KRITIEK BELANGRIJK:
-- Gebruik UITSLUITEND de meegeleverde data (stand, vorm, H2H, blessures) — NIET je eigen kennis.
-- Promoties/degradaties zijn verwerkt in de stand.
-- kans1 + kansX + kans2 = 100 (± 1 afrondingsfout toegestaan)
+WERKWIJZE — volg deze volgorde strikt:
+1. START met het Poisson-model als wiskundig anker (staat bij elke wedstrijd vermeld)
+2. PAS AAN op basis van context: blessures, H2H-patroon, motivatie, marktbeweging
+3. Maximale aanpassing: ±8 procentpunt per uitkomst t.o.v. Poisson
+4. Als geen Poisson beschikbaar: gebruik ranglijst + bookmaker-impliciete kansen als anker
 
-⚠️ ANTI-BIAS REGELS — DIT IS HET BELANGRIJKSTE:
-Je hebt de neiging gelijkspelkansen te overschatten. Gebruik deze vaste maxima:
+KRITIEKE REGELS:
+- Poisson is gebaseerd op seizoensstatistieken — betrouwbaarder dan gevoel
+- Gelijkspelkans uit Poisson is al gecalibreerd — verhoog NIET zonder concrete reden
+- Marktbeweging "📉 sharp money" = professionele betters zetten op die kant → zwaar wegen
+- Blessures: per key-speler out → +2-3% voordeel tegenstander
+- H2H eenduidig (4/5 wins zelfde team) → max +5% correctie
+- NOOIT kansX hoger dan kans1 bij ranglijstverschil > 5 en thuis speelvoordeel
 
-RANGLIJSTVERSCHIL (positie verschil):
-- 0-3 plaatsen:   kansX max 35%
-- 4-7 plaatsen:   kansX max 28%
-- 8-12 plaatsen:  kansX max 22%
-- >12 plaatsen:   kansX max 16%
-
-Als een team DOMINANT is (top-3, goede vorm, thuis): kans1 ≥ 50%, niet lager.
-Als een team ZWAK is (onderkant, slechte vorm, uit): kans2 ≤ 20%.
-Gelijkspel is NOOIT de meest waarschijnlijke uitkomst als ranglijstverschil > 5.
-
-CALIBRATIE: Vergelijk je kansen met de bookmaker-impliciete kansen (1/odds).
-Als jouw kansX meer dan 8 procentpunt hoger is dan 1/oddsX van de bookmaker:
-reduceer kansX met het verschil en verdeel over kans1 en kans2.
-
-Reageer UITSLUITEND in dit JSON formaat (geen markdown, geen extra tekst):
+Reageer UITSLUITEND in dit JSON formaat:
 {"scans":[
-  {"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":7,"reason":"Max 15 woorden, concreet"},
+  {"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":7,"reason":"Max 15 woorden"},
   ...
 ]}
 
-REGELS:
-- Wees REALISTISCH: 70%+ alleen bij top-3 thuis + goede vorm + H2H voordeel samen
-- Som moet ~100 zijn
-- confidence = zekerheid 0-10 gebaseerd op data-kwaliteit
-- reason verwijst naar concrete data (ranglijstposities, vorm-letters, H2H)`,
-      messages: [{ role:'user', content:`Analyseer deze ${candidates.length} wedstrijden:\n\n${ctx}${standingsCtx}` }]
+confidence = zekerheid 0-10 (Poisson beschikbaar + consistente H2H = hoog, alleen ranglijst = laag)`,
+      messages: [{ role:'user', content:`Analyseer ${candidates.length} wedstrijden. Gebruik Poisson als anker, pas aan voor context:\n\n${ctx}${standingsCtx}` }]
     });
 
     if (data.error) throw new Error(data.error.message);
     const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
     const result = JSON.parse(raw);
 
-    // Per wedstrijd: bereken value voor alle 3 picks met BESTE bookmaker odds
     const scans = (result.scans || []).map(s => {
       const match = candidates.find(m => String(m.id) === String(s.id));
       if (!match) return null;
 
-      // Normaliseer kansen naar 100
+      // Normaliseer AI-kansen naar 100
       const sum = (s.kans1||0) + (s.kansX||0) + (s.kans2||0);
       if (sum < 80 || sum > 120) return null;
-      let k1 = Math.round((s.kans1||0) / sum * 100);
-      let kX = Math.round((s.kansX||0) / sum * 100);
-      let k2 = Math.round((s.kans2||0) / sum * 100);
+      let aiK1 = Math.round((s.kans1||0) / sum * 100);
+      let aiKX = Math.round((s.kansX||0) / sum * 100);
+      let aiK2 = Math.round((s.kans2||0) / sum * 100);
 
-      // ── CODE-SIDE CALIBRATIE ──
-      // Vergelijk AI-kans met bookmaker-impliciete kans voor gelijkspel.
-      // Als AI systematisch hoger zit op gelijkspel dan de markt impliceert,
-      // trek het verschil terug richting markt (shrinkage = 60%).
-      const drawOddsNum = parseFloat(match.drawOdds);
-      const homeOddsNum = parseFloat(match.homeOdds);
-      const awayOddsNum = parseFloat(match.awayOdds);
+      // ── BLEND: POISSON + AI ──
+      // Poisson = wiskundig anker (seizoensstatistieken, geen bias)
+      // AI = context-correctie (blessures, H2H, motivatie)
+      // Gewicht: 65% Poisson + 35% AI (als Poisson beschikbaar)
+      const poisson = matchDataMap[s.id]?.poisson;
+      let k1, kX, k2;
+      if (poisson?.valid) {
+        k1 = Math.round(0.65 * poisson.k1 + 0.35 * aiK1);
+        kX = Math.round(0.65 * poisson.kX + 0.35 * aiKX);
+        k2 = Math.round(0.65 * poisson.k2 + 0.35 * aiK2);
+        // Herkalibreer
+        const blendSum = k1 + kX + k2;
+        if (blendSum !== 100) k1 += (100 - blendSum);
+      } else {
+        // Geen Poisson: gebruik AI maar met market-calibratie als vangrail
+        k1 = aiK1; kX = aiKX; k2 = aiK2;
 
-      if (drawOddsNum > 1 && homeOddsNum > 1 && awayOddsNum > 1) {
-        // Bookmaker-impliciete kansen (gecorrigeerd voor marge)
-        const mktSum = 1/homeOddsNum + 1/drawOddsNum + 1/awayOddsNum;
-        const mktDraw = Math.round((1/drawOddsNum) / mktSum * 100);
-        const mktHome = Math.round((1/homeOddsNum) / mktSum * 100);
-
-        // Als AI-gelijkspel meer dan 8pt hoger dan markt: shrink naar markt
-        const drawDiff = kX - mktDraw;
-        if (drawDiff > 8) {
-          const correction = Math.round(drawDiff * 0.6); // 60% richting markt
-          kX -= correction;
-          // Verdeel correctie over thuis/uit op basis van marktverhouding
-          const homeShare = mktHome / (100 - mktDraw);
-          k1 += Math.round(correction * homeShare);
-          k2 += correction - Math.round(correction * homeShare);
-        }
-
-        // Domination check: als thuisclub >10 plaatsen beter én goede quote
-        // dan minimale thuiskans handhaven
-        if (homeOddsNum < 1.8 && k1 < 50) {
-          const boost = 50 - k1;
-          k1 = 50;
-          kX = Math.max(10, kX - Math.round(boost * 0.7));
-          k2 = Math.max(5, k2 - Math.round(boost * 0.3));
-        }
-
-        // Herkalibreer zodat som weer 100 is
-        const newSum = k1 + kX + k2;
-        if (newSum !== 100) {
-          const diff = 100 - newSum;
-          k1 += diff; // restant op thuiskans
+        // Market-calibratie (vangrail als Poisson ontbreekt)
+        const drawOddsNum = parseFloat(match.drawOdds);
+        const homeOddsNum = parseFloat(match.homeOdds);
+        const awayOddsNum = parseFloat(match.awayOdds);
+        if (drawOddsNum > 1 && homeOddsNum > 1 && awayOddsNum > 1) {
+          const mktSum = 1/homeOddsNum + 1/drawOddsNum + 1/awayOddsNum;
+          const mktDraw = Math.round((1/drawOddsNum) / mktSum * 100);
+          const mktHome = Math.round((1/homeOddsNum) / mktSum * 100);
+          const drawDiff = kX - mktDraw;
+          if (drawDiff > 8) {
+            const correction = Math.round(drawDiff * 0.6);
+            kX -= correction;
+            const homeShare = mktHome / (100 - mktDraw);
+            k1 += Math.round(correction * homeShare);
+            k2 += correction - Math.round(correction * homeShare);
+          }
+          if (homeOddsNum < 1.8 && k1 < 50) {
+            const boost = 50 - k1;
+            k1 = 50;
+            kX = Math.max(10, kX - Math.round(boost * 0.7));
+            k2 = Math.max(5, k2 - Math.round(boost * 0.3));
+          }
+          const ns = k1 + kX + k2;
+          if (ns !== 100) k1 += (100 - ns);
         }
       }
 
-      // Confidence combineren
+      // ── MARKTBEWEGING CORRECTIE ──
+      // Als sharp money op een bepaalde kant stroomt: pas kansen 3% aan die richting
+      const market = matchDataMap[s.id]?.market;
+      if (market?.isSteam && market.direction) {
+        const adj = 3;
+        if (market.direction === '1') { k1 += adj; kX -= adj; }
+        else if (market.direction === 'X') { kX += adj; k1 -= adj; }
+        else if (market.direction === '2') { k2 += adj; kX -= adj; }
+        // Herkalibreer
+        k1 = Math.max(5, k1); kX = Math.max(5, kX); k2 = Math.max(5, k2);
+        const ms = k1 + kX + k2;
+        if (ms !== 100) k1 += (100 - ms);
+      }
+
+      // Confidence: data-confidence + AI-confidence + Poisson bonus
       const dataConf = matchDataMap[s.id]?.confidence || 4;
       const aiConf = Math.max(1, Math.min(10, parseInt(s.confidence) || 5));
-      const confidence = Math.round((dataConf + aiConf) / 2);
+      const poissonBonus = poisson?.valid ? 1 : 0;
+      const confidence = Math.min(10, Math.round((dataConf + aiConf) / 2) + poissonBonus);
 
       // Value berekenen voor alle 3 picks
       const picks = [
@@ -2885,6 +3080,9 @@ REGELS:
         bookmaker: best.bookmaker,
         value: best.value, kelly: best.kelly,
         confidence, allPicks: picks,
+        poissonUsed: poisson?.valid || false,
+        poissonK1: poisson?.k1, poissonKX: poisson?.kX, poissonK2: poisson?.k2,
+        market: market?.direction !== 'none' ? market : null,
         reason: s.reason || ''
       };
     }).filter(x => x !== null);
@@ -2903,6 +3101,9 @@ REGELS:
           bookmaker: s.bookmaker,
           kelly: s.kelly,
           confidence: s.confidence,
+          poissonUsed: s.poissonUsed,
+          poissonK1: s.poissonK1, poissonKX: s.poissonKX, poissonK2: s.poissonK2,
+          market: s.market,
           reason: s.reason
         };
       }
@@ -3010,13 +3211,15 @@ function renderValueBanner(displayScans, totalScanned) {
       const defaultBet = state.settings.defaultBet || 10;
       const bankroll = state.wallet?.balance || defaultBet * 50;
       const kellyEuros = (s.kelly / 100 * bankroll).toFixed(2);
+      const poissonBadge = s.poissonUsed ? `<span style="color:#2563eb;font-weight:700;">📐</span> ` : '';
+      const marketBadge = s.market?.isSteam ? `<span style="color:#7c3aed;">📉 ${s.market.label.split('(')[0].trim()}</span>` : '';
       return `
         <div class="value-row" onclick="openValueAnalysis('${s.match.id}')" title="Tik voor volledige AI analyse">
           <div class="value-row-match">
-            <div class="value-row-name">${shortName(s.match.home)} vs ${shortName(s.match.away)}</div>
-            <div class="value-row-pick">${s.pickLabel} · AI ${s.kans}% · ${s.reason}</div>
+            <div class="value-row-name">${poissonBadge}${shortName(s.match.home)} vs ${shortName(s.match.away)}</div>
+            <div class="value-row-pick">${s.pickLabel} · ${s.kans}%${s.poissonUsed?' (P+AI)':' (AI)'} · ${s.reason}</div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-top:2px;">
-              📊 ${s.bookmaker} · 🎯 ½ Kelly: ${s.kelly.toFixed(1)}% (€${kellyEuros})${s.confidence ? ` · 🎲 ${s.confidence}/10` : ''}
+              📊 ${s.bookmaker} · 🎯 ½ Kelly: ${s.kelly.toFixed(1)}% (€${kellyEuros})${s.confidence ? ` · 🎲 ${s.confidence}/10` : ''}${marketBadge ? ' · '+marketBadge : ''}
             </div>
           </div>
           <div class="value-row-odds">${s.odds.toFixed(2)}</div>
