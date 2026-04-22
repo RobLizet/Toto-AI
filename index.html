@@ -4992,37 +4992,103 @@ function renderBacktestChart(settled) {
 async function checkBacktestPick(pickId) {
   if (!state.valueBacktest) return;
   const p = state.valueBacktest.picks.find(x => String(x.id) === String(pickId));
-  if (!p || !state.settings.footballKey) {
-    alert('API-Football key nodig om uitslag op te halen.');
+  if (!p) return;
+  if (!state.settings.footballKey) {
+    alert('API-Football key nodig in ⚙️ Instellingen.');
     return;
   }
-  // Hergebruik bestaande checkBetResult logica via dummy bet-object
-  const dummyBet = {
-    id: '__bt__',
-    type: 'single',
-    matchName: p.matchName,
-    fixtureId: p.fixtureId,
-    pick: p.pick,
-    odds: p.odds,
-    amount: 1,
-    payout: p.odds,
-    status: 'pending',
-    date: p.date
-  };
-  state.wallet.bets.push(dummyBet);
-  await checkBetResult('__bt__');
-  const resolved = state.wallet.bets.find(b => b.id === '__bt__');
-  if (resolved) {
-    p.status = resolved.status !== 'pending' ? resolved.status : p.status;
-    p.score = resolved.score || p.score;
-    // Verwijder het dummy bet weer
-    state.wallet.bets = state.wallet.bets.filter(b => b.id !== '__bt__');
-    // Herstel wallet (checkBetResult heeft balance aangepast)
-    if (resolved.status === 'win') {
-      state.wallet.balance -= resolved.payout;
-      state.wallet.totalWon -= resolved.payout;
+
+  // Toon laden
+  const btn = document.querySelector(`button[onclick*="${pickId}"]`);
+  if (btn) btn.textContent = '⟳';
+
+  try {
+    const apiKey = state.settings.footballKey;
+    let fix = null;
+
+    // Probeer eerst direct op fixtureId
+    if (p.fixtureId) {
+      const r = await apiFetch(
+        `https://v3.football.api-sports.io/fixtures?id=${p.fixtureId}`, apiKey, 8000
+      );
+      const d = await r.json();
+      fix = d.response?.[0] || null;
     }
+
+    // Fallback: zoek op datum
+    if (!fix && p.matchDateObj) {
+      const parts = p.matchDateObj.split('-');
+      const isoDate = parts.length === 3
+        ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`
+        : p.matchDateObj;
+      const r2 = await apiFetch(
+        `https://v3.football.api-sports.io/fixtures?date=${isoDate}`, apiKey, 8000
+      );
+      const d2 = await r2.json();
+      const normalize = s => (s||'').toLowerCase().replace(/\s+/g,' ').trim();
+      const hn = normalize(p.matchName?.split(' vs ')?.[0] || '');
+      const an = normalize(p.matchName?.split(' vs ')?.[1] || '');
+      fix = (d2.response||[]).find(f => {
+        if (!['FT','AET','PEN'].includes(f.fixture.status.short)) return false;
+        const fh = normalize(f.teams.home.name);
+        const fa = normalize(f.teams.away.name);
+        return (fh.includes(hn.substring(0,5)) || hn.includes(fh.substring(0,5))) &&
+               (fa.includes(an.substring(0,5)) || an.includes(fa.substring(0,5)));
+      });
+    }
+
+    // Fallback 2: laatste 50 wedstrijden
+    if (!fix) {
+      const r3 = await apiFetch(
+        `https://v3.football.api-sports.io/fixtures?last=50`, apiKey, 8000
+      );
+      const d3 = await r3.json();
+      const normalize = s => (s||'').toLowerCase().replace(/\s+/g,' ').trim();
+      const hn = normalize(p.matchName?.split(' vs ')?.[0] || '');
+      const an = normalize(p.matchName?.split(' vs ')?.[1] || '');
+      fix = (d3.response||[]).find(f => {
+        if (!['FT','AET','PEN'].includes(f.fixture.status.short)) return false;
+        const fh = normalize(f.teams.home.name);
+        const fa = normalize(f.teams.away.name);
+        return (fh.includes(hn.substring(0,5)) || hn.includes(fh.substring(0,5))) &&
+               (fa.includes(an.substring(0,5)) || an.includes(fa.substring(0,5)));
+      });
+    }
+
+    if (!fix) {
+      showFirebaseStatus(`⚠ ${p.matchName}: uitslag niet gevonden`, '#d97706');
+      if (btn) btn.textContent = '🔍 CHECK';
+      return;
+    }
+
+    if (!['FT','AET','PEN'].includes(fix.fixture.status.short)) {
+      showFirebaseStatus(`⏳ ${p.matchName}: nog niet gespeeld`, '#475569');
+      if (btn) btn.textContent = '🔍 CHECK';
+      return;
+    }
+
+    const hg = fix.goals.home ?? 0;
+    const ag = fix.goals.away ?? 0;
+    p.score = `${hg}-${ag}`;
+
+    let won = false;
+    if (p.pick === '1') won = hg > ag;
+    else if (p.pick === '2') won = ag > hg;
+    else if (p.pick === 'X') won = hg === ag;
+    else if (p.pick === '1X') won = hg >= ag;
+    else if (p.pick === 'X2') won = ag >= hg;
+
+    p.status = won ? 'win' : 'lose';
+    showFirebaseStatus(
+      `${won ? '✓ WIN' : '✗ VERLIES'}: ${p.matchName} ${p.score}`,
+      won ? '#15803d' : '#dc2626'
+    );
+
+  } catch(e) {
+    showFirebaseStatus(`⚠ Fout: ${e.message}`, '#dc2626');
+    if (btn) btn.textContent = '🔍 CHECK';
   }
+
   saveState();
   renderBacktest();
 }
