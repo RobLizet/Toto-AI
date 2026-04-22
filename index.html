@@ -363,9 +363,10 @@ letter-spacing:.04em;display:block;margin-bottom:.2rem;font-weight:700;}
 .odds-btn.value-pick .odds-val{color:#15803d;}
 
 /* ═══ VALUE DETECTIE ═══ */
-/* Value badge bovenop match card — toont value% voor beste pick */
+/* Value badge: naast de comp-naam boven in de card, niet overlappend met GEPLAND pill */
+.match-card.has-value .match-top { padding-top: 1.8rem; }
 .value-badge{
-position:absolute;top:-7px;right:12px;z-index:10;
+position:absolute;top:6px;left:10px;z-index:10;
 font-family:‘IBM Plex Mono’,monospace;font-size:.54rem;font-weight:800;
 padding:3px 10px;border-radius:999px;letter-spacing:.05em;
 box-shadow:0 4px 12px rgba(0,0,0,.15);
@@ -600,7 +601,32 @@ box-shadow:0 4px 12px rgba(12,18,30,.05);}
 .empty-state{text-align:center;padding:2rem;font-family:‘IBM Plex Mono’,monospace;
 font-size:.65rem;color:var(–muted);letter-spacing:.08em;}
 
-/* ── TRACKER ── */
+/* ── VALUE BACKTEST ── */
+.bt-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.8rem;}
+.bt-box{background:rgba(255,255,255,.75);border:1px solid var(–stroke);border-radius:12px;
+padding:.6rem .5rem;text-align:center;box-shadow:var(–shadow2);}
+.bt-box .lbl{font-family:‘IBM Plex Mono’,monospace;font-size:.48rem;color:var(–sub);
+text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem;}
+.bt-box .val{font-family:‘Bebas Neue’,sans-serif;font-size:1.1rem;letter-spacing:.03em;}
+.bt-row{background:rgba(255,255,255,.82);border:1px solid rgba(15,23,42,.07);
+border-radius:12px;padding:.6rem .8rem;margin-bottom:.4rem;
+box-shadow:0 2px 8px rgba(15,23,42,.04);}
+.bt-row.bt-win{border-left:3px solid #16a34a;}
+.bt-row.bt-lose{border-left:3px solid #dc2626;}
+.bt-row.bt-pending{border-left:3px solid #d97706;}
+.bt-match{font-size:.82rem;font-weight:700;color:var(–ink);margin-bottom:.2rem;}
+.bt-meta{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;color:var(–sub);
+display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.3rem;}
+.bt-footer{display:flex;justify-content:space-between;align-items:center;}
+.bt-result{font-family:‘Bebas Neue’,sans-serif;font-size:.95rem;cursor:pointer;}
+.bt-result.win{color:#16a34a;}
+.bt-result.lose{color:#dc2626;}
+.bt-result.pending{color:#d97706;}
+.bt-chart-wrap{background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
+border-radius:14px;padding:.8rem .9rem;margin-bottom:.8rem;
+box-shadow:0 2px 8px rgba(15,23,42,.05);}
+.bt-empty{text-align:center;padding:2rem 1rem;font-family:‘IBM Plex Mono’,monospace;
+font-size:.62rem;color:var(–muted);line-height:1.8;}
 .tracker-filter{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;font-weight:700;
 padding:.35rem .75rem;border-radius:999px;border:1px solid var(–stroke);
 background:rgba(255,255,255,.7);color:var(–sub);cursor:pointer;white-space:nowrap;flex-shrink:0;}
@@ -785,7 +811,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v2.2</div>
+        <div class="version-badge">v2.3</div>
       </div>
     </div>
   </div>
@@ -1139,6 +1165,68 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   <div id="tab-tracker" class="tab-content">
 
 ```
+<!-- ⚡ VALUE BACKTEST SECTIE -->
+<div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
+  border:1px solid rgba(22,163,74,.2);border-radius:16px;padding:.9rem;margin-bottom:1rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:.08em;
+      color:#15803d;">⚡ VALUE SCAN BACKTEST</div>
+    <div style="display:flex;gap:.4rem;">
+      <button onclick="checkAllBacktestPicks()" style="font-family:'IBM Plex Mono',monospace;
+        font-size:.52rem;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;
+        background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);color:#15803d;">
+        🔍 CHECK ALLES
+      </button>
+      <button onclick="clearBacktest()" style="font-family:'IBM Plex Mono',monospace;
+        font-size:.52rem;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;
+        background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);color:#dc2626;">
+        🗑️ WISSEN
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats strip backtest -->
+  <div class="bt-strip" id="btStrip">
+    <div class="bt-box">
+      <div class="lbl">Picks</div>
+      <div class="val" id="btTotal" style="color:#0f172a;">0</div>
+    </div>
+    <div class="bt-box">
+      <div class="lbl">Hitrate</div>
+      <div class="val" id="btHitrate" style="color:#7c3aed;">—</div>
+    </div>
+    <div class="bt-box">
+      <div class="lbl">ROI</div>
+      <div class="val" id="btRoi" style="color:#15803d;">—</div>
+    </div>
+    <div class="bt-box">
+      <div class="lbl">Gem. value</div>
+      <div class="val" id="btAvgVal" style="color:#d97706;">—</div>
+    </div>
+  </div>
+
+  <!-- Grafiek backtest vs break-even -->
+  <div class="bt-chart-wrap" id="btChartWrap" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;
+        color:#475569;letter-spacing:.04em;">📈 CUMULATIEF RESULTAAT</div>
+      <div style="display:flex;gap:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;">
+        <span style="color:#15803d;">▬ Jouw picks</span>
+        <span style="color:#94a3b8;">▬ Break-even</span>
+      </div>
+    </div>
+    <canvas id="btChart" height="120" style="width:100%;display:block;"></canvas>
+  </div>
+
+  <!-- Backtest picks lijst -->
+  <div id="btList">
+    <div class="bt-empty">
+      Nog geen value-picks bijgehouden.<br>
+      Draai een ⚡ Value Scan — picks met ≥5% value worden automatisch hier opgeslagen.
+    </div>
+  </div>
+</div>
+
 <!-- Stats strip -->
 <div id="trackerStats" class="wallet-strip" style="grid-template-columns:repeat(4,1fr);">
   <div class="w-item bal"><div class="lbl">Ingezet</div><div class="val" id="trStaked">€0</div></div>
@@ -1570,6 +1658,9 @@ let state = {
   tracker: {
     bets: []
   },
+  valueBacktest: {
+    picks: []   // automatisch bijgehouden value-scan picks voor backtesting
+  },
   settings: {
     anthropicKey: '',
     footballKey: '',
@@ -1642,7 +1733,7 @@ function switchTab(name) {
     btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
   }
   if (name === 'wallet') updateWalletUI();
-  if (name === 'tracker') { renderTracker(); updateTrackerStats(); }
+  if (name === 'tracker') { renderTracker(); updateTrackerStats(); renderBacktest(); }
   state.activeTab = name;
   if (name === 'wedstrijden') {
     startLivePolling();
@@ -2228,6 +2319,7 @@ function renderMatches(matches) {
       const cls = valueClass(v);
       valueBadgeHtml = `<div class="value-badge ${cls}" title="${m.valueData.pickLabel} — AI ${m.valueData.kans}% vs quote ${m.valueData.odds?.toFixed(2)||'?'}">${valueLabel(v)}</div>`;
       if (cls === 'high' || cls === 'med') card.classList.add('value-glow');
+      card.classList.add('has-value'); // voor extra padding top row
     }
 
     const statusHtml = m.isLive
@@ -2285,9 +2377,12 @@ function renderMatches(matches) {
           <span class="odds-val" style="${m.awayOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.awayOdds}</span>
         </div>
       </div>
-      ${m.valueData ? `<div style="padding:.5rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#15803d;background:rgba(22,163,74,.05);border-top:1px solid rgba(22,163,74,.15);line-height:1.6;">
+      ${m.valueData ? `<div onclick="event.stopPropagation();openValueAnalysis('${m.id}')" title="Tik voor volledige AI analyse" style="padding:.5rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#15803d;background:rgba(22,163,74,.05);border-top:1px solid rgba(22,163,74,.15);line-height:1.6;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='rgba(22,163,74,.1)'" onmouseout="this.style.background='rgba(22,163,74,.05)'">
         <div>⚡ <b>${m.valueData.pickLabel}</b> — AI: ${m.valueData.kans}% kans @ <b>${m.valueData.odds?.toFixed(2)||'?'}</b> · ${m.valueData.reason||''}</div>
-        <div style="color:var(--sub);margin-top:3px;font-size:.52rem;">📊 beste quote: <b style="color:#0f172a;">${m.valueData.bookmaker||'?'}</b> · 🎯 ½ Kelly inzet: <b style="color:#15803d;">${m.valueData.kelly?.toFixed(1)||'0'}%</b> van bankroll</div>
+        <div style="color:var(--sub);margin-top:3px;font-size:.52rem;display:flex;justify-content:space-between;align-items:center;gap:.4rem;flex-wrap:wrap;">
+          <span>📊 <b style="color:#0f172a;">${m.valueData.bookmaker||'?'}</b> · 🎯 ½ Kelly: <b style="color:#15803d;">${m.valueData.kelly?.toFixed(1)||'0'}%</b>${m.valueData.confidence ? ` · 🎲 data: <b style="color:${m.valueData.confidence>=7?'#15803d':m.valueData.confidence>=5?'#b45309':'#dc2626'};">${m.valueData.confidence}/10</b>` : ''}</span>
+          <span style="color:#15803d;font-weight:700;">🤖 Tik voor analyse →</span>
+        </div>
       </div>` : ''}
       <div style="padding:.3rem .9rem .1rem;text-align:right;">
         <button onclick="toggleManualOdds('${m.id}');event.stopPropagation();"
@@ -2501,6 +2596,54 @@ function getBestOdds(match, pick) {
 }
 
 /**
+ * Compacte H2H samenvatting — max 1 regel, bespaart tokens in scan.
+ * Output: "H won 3/5 (avg 2.1 goals/duel)"
+ */
+function formatH2HCompact(fixtures, homeName, awayName) {
+  if (!fixtures?.length) return '';
+  let hw=0, aw=0, dr=0, totalGoals=0;
+  fixtures.forEach(f => {
+    if (f.teams.home.winner === true) hw++;
+    else if (f.teams.away.winner === true) aw++;
+    else dr++;
+    totalGoals += (f.goals.home ?? 0) + (f.goals.away ?? 0);
+  });
+  // Bepaal welk team de thuisploeg is in onze huidige wedstrijd — tel zijn wins in H2H
+  // Simpel: tel alle wins per team ongeacht home/away in h2h
+  let homeTeamWins = 0, awayTeamWins = 0;
+  const homeN = homeName.toLowerCase().substring(0,5);
+  const awayN = awayName.toLowerCase().substring(0,5);
+  fixtures.forEach(f => {
+    const winnerTeam = f.teams.home.winner ? f.teams.home.name : f.teams.away.winner ? f.teams.away.name : null;
+    if (!winnerTeam) return;
+    const wn = winnerTeam.toLowerCase();
+    if (wn.includes(homeN) || homeN.includes(wn.substring(0,5))) homeTeamWins++;
+    else if (wn.includes(awayN) || awayN.includes(wn.substring(0,5))) awayTeamWins++;
+  });
+  const avg = (totalGoals / fixtures.length).toFixed(1);
+  return `${fixtures.length} duels: ${homeName.split(' ')[0]} ${homeTeamWins}w, ${awayName.split(' ')[0]} ${awayTeamWins}w, ${dr}gelijk (gem ${avg} goals)`;
+}
+
+/**
+ * Compacte vorm samenvatting — WWDLW formaat met goals.
+ * Output: "WWDLW (11-7, 4/5 goals)"
+ */
+function formatFormCompact(fixtures, teamId, teamName) {
+  if (!fixtures?.length) return '';
+  let letters = '', gFor = 0, gAg = 0, scored = 0;
+  fixtures.forEach(f => {
+    const isHome = f.teams.home.id === teamId;
+    const team = isHome ? f.teams.home : f.teams.away;
+    const tFor = isHome ? (f.goals.home ?? 0) : (f.goals.away ?? 0);
+    const tAg = isHome ? (f.goals.away ?? 0) : (f.goals.home ?? 0);
+    gFor += tFor; gAg += tAg;
+    if (tFor > 0) scored++;
+    letters += team.winner === true ? 'W' : team.winner === false ? 'L' : 'D';
+  });
+  return `${letters} (${gFor}-${gAg}, scoorde ${scored}/${fixtures.length})`;
+}
+
+/**
  * Scan alle wedstrijden in één AI-call.
  * Gebruikt temperature=0 + 3-uitkomst model (1/X/2 sommeert tot 100%)
  * voor deterministische, reproduceerbare resultaten.
@@ -2549,11 +2692,66 @@ async function scanValueAll() {
     } catch(e) {}
   }
 
+  // ── H2H + VORM + BLESSURES OPHALEN (parallel per wedstrijd) ──
+  // Verrijkt de scan met concrete data zodat AI minder hoeft te gokken.
+  // Ook de confidence-score is hierop gebaseerd: meer data = hogere confidence.
+  btn.textContent = '⟳ DATA VERZAMELEN...';
+  const matchDataMap = {};
+  if (state.settings.footballKey) {
+    const wt = (p, ms=5000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
+    // Parallel ophalen — timeout per call
+    await Promise.all(candidates.map(async m => {
+      if (!m.homeId || !m.awayId) {
+        matchDataMap[m.id] = { confidence: 3 }; // lage confidence: geen team IDs
+        return;
+      }
+      try {
+        const [h2h, homeForm, awayForm, homeInj, awayInj] = await Promise.all([
+          wt(fetchH2H(m.homeId, m.awayId), 5000),
+          wt(fetchTeamForm(m.homeId), 5000),
+          wt(fetchTeamForm(m.awayId), 5000),
+          wt(fetchInjuries(m.homeId, m.id), 4000),
+          wt(fetchInjuries(m.awayId, m.id), 4000)
+        ]);
+        // Bereken confidence score op basis van hoeveel data we hebben (0-10)
+        let conf = 4; // basis: we hebben ranglijst
+        if (h2h?.length >= 3) conf += 2;
+        else if (h2h?.length) conf += 1;
+        if (homeForm?.length >= 5 && awayForm?.length >= 5) conf += 2;
+        else if (homeForm?.length && awayForm?.length) conf += 1;
+        if (homeInj !== null && awayInj !== null) conf += 1;
+        if (m.isLive || m.liveMin) conf += 1; // live data is betrouwbaarder
+        conf = Math.min(10, conf);
+
+        matchDataMap[m.id] = {
+          h2h: h2h?.length ? formatH2HCompact(h2h.slice(0,5), m.home, m.away) : '',
+          homeForm: homeForm?.length ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home) : '',
+          awayForm: awayForm?.length ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away) : '',
+          homeInj: homeInj?.length ? `${homeInj.length}x out` : 'fit',
+          awayInj: awayInj?.length ? `${awayInj.length}x out` : 'fit',
+          confidence: conf
+        };
+      } catch(e) {
+        matchDataMap[m.id] = { confidence: 4 };
+      }
+    }));
+  } else {
+    // Geen API key: elke match krijgt lage confidence
+    candidates.forEach(m => { matchDataMap[m.id] = { confidence: 3 }; });
+  }
+
   btn.textContent = '⟳ SCANNEN...';
 
-  const ctx = candidates.map((m, i) =>
-    `${i+1}. ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${m.date||''} ${m.time} | Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`
-  ).join('\n');
+  // Build context per match met alle verzamelde data
+  const ctx = candidates.map((m, i) => {
+    const d = matchDataMap[m.id] || {};
+    let line = `${i+1}. ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${m.date||''} ${m.time} | Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
+    if (d.homeForm) line += `\n   Vorm ${m.home}: ${d.homeForm}`;
+    if (d.awayForm) line += `\n   Vorm ${m.away}: ${d.awayForm}`;
+    if (d.h2h) line += `\n   H2H: ${d.h2h}`;
+    if (d.homeInj || d.awayInj) line += `\n   Blessures: ${m.home}=${d.homeInj||'?'}, ${m.away}=${d.awayInj||'?'}`;
+    return line;
+  }).join('\n\n');
 
   try {
     const data = await anthropicFetchWithRetry(apiKey, {
@@ -2563,24 +2761,32 @@ async function scanValueAll() {
       system: `Je bent een value-betting analist. Voor ELKE wedstrijd geef je de winstkans van ALLE 3 uitkomsten (1, X, 2) die samen 100% zijn.
 
 KRITIEK BELANGRIJK:
-- Gebruik UITSLUITEND de meegeleverde ACTUELE STAND voor teamkwaliteit — NIET je eigen kennis.
-- Promoties/degradaties zijn al verwerkt in de stand: als een team in de Eredivisie-stand staat, speelt het daar nu.
-- Ranglijstpositie + vorm + doelsaldo zijn je belangrijkste signalen.
+- Gebruik UITSLUITEND de meegeleverde data (stand, vorm, H2H, blessures) — NIET je eigen kennis.
+- Promoties/degradaties zijn al verwerkt in de stand: als een team in de stand staat, speelt het daar nu.
+- Ranglijst + vorm + H2H + blessures zijn je signalen.
 - kans1 + kansX + kans2 = 100 (± 1 afrondingsfout toegestaan)
-- Wees CONSISTENT: baseer kansen op feitelijke data, niet op gevoel
+- Wees CONSISTENT: baseer kansen op data, niet op gevoel
+
+BELANGRIJK voor confidence-aanpassing:
+- Als vorm sterk afwijkt van ranglijst (bv. team 2e maar 1W3V laatste 5): verlaag je confidence-delta
+- Als H2H eenduidig is (zelfde winnaar in 4/5 duels): verhoog zekerheid
+- Als beide teams fit zijn en data compleet: zekerder
+- Als veel blessures: onzekerder
+- Geef je aangepaste confidence (0-10) gebaseerd op data-kwaliteit en signaal-duidelijkheid
 
 Reageer UITSLUITEND in dit JSON formaat (geen markdown, geen extra tekst):
 {"scans":[
-  {"id":"123","kans1":45,"kansX":30,"kans2":25,"reason":"Max 15 woorden, verwijs naar stand/vorm"},
+  {"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":7,"reason":"Max 15 woorden"},
   ...
 ]}
 
 REGELS:
-- aiKans = eerlijke inschatting per uitkomst
-- Wees REALISTISCH: 70%+ alleen bij dominante teams
-- Somma: kans1 + kansX + kans2 moet ~100 zijn
-- Als een team niet in de stand staat: zeg dat in de reason`,
-      messages: [{ role:'user', content:`Analyseer deze ${candidates.length} wedstrijden:\n\n${ctx}${standingsCtx}` }]
+- kans per uitkomst = eerlijke inschatting (0-100)
+- Wees REALISTISCH: 70%+ alleen bij dominant + vorm + H2H samen
+- Som kans1 + kansX + kans2 moet ~100 zijn
+- confidence = zekerheid van deze inschatting (0-10, 10 = zeer zeker)
+- reason verwijst concreet naar data (vorm-letters, H2H stats, ranglijst positie)`,
+      messages: [{ role:'user', content:`Analyseer deze ${candidates.length} wedstrijden. Data per wedstrijd staat eronder:\n\n${ctx}${standingsCtx}` }]
     });
 
     if (data.error) throw new Error(data.error.message);
@@ -2600,6 +2806,12 @@ REGELS:
       const k1 = norm(s.kans1 || 0);
       const kX = norm(s.kansX || 0);
       const k2 = norm(s.kans2 || 0);
+
+      // Combineer data-confidence (van matchDataMap) met AI-confidence
+      // Neem het minimum van beide — als AI onzeker is ondanks data, is het laag
+      const dataConf = matchDataMap[s.id]?.confidence || 4;
+      const aiConf = Math.max(1, Math.min(10, parseInt(s.confidence) || 5));
+      const confidence = Math.round((dataConf + aiConf) / 2);
 
       // Bereken value voor ELKE pick met BESTE bookmaker quote
       const picks = [
@@ -2628,6 +2840,7 @@ REGELS:
         bookmaker: best.bookmaker,
         value: best.value,
         kelly: best.kelly,
+        confidence,          // 0-10 score
         allPicks: picks,     // alle 3 voor detail weergave
         reason: s.reason || ''
       };
@@ -2646,10 +2859,49 @@ REGELS:
           kans: s.kans, odds: s.odds,
           bookmaker: s.bookmaker,
           kelly: s.kelly,
+          confidence: s.confidence,
           reason: s.reason
         };
       }
     });
+
+    // ── AUTO-SAVE BACKTEST PICKS (≥5% value) ──
+    // Sla alleen op als de pick nog niet bestaat (zelfde matchId+pick combo)
+    const newPicks = scans.filter(s => s.value >= 5);
+    let savedCount = 0;
+    if (!state.valueBacktest) state.valueBacktest = { picks: [] };
+    newPicks.forEach(s => {
+      const alreadySaved = state.valueBacktest.picks.some(p =>
+        String(p.matchId) === String(s.match.id) && p.pick === s.pick
+      );
+      if (!alreadySaved) {
+        state.valueBacktest.picks.unshift({
+          id: Date.now() + Math.random(),
+          matchId: String(s.match.id),
+          matchName: `${s.match.home} vs ${s.match.away}`,
+          fixtureId: s.match.id,
+          date: s.match.date || new Date().toLocaleDateString('nl-NL'),
+          matchDateObj: s.match.date || '',
+          pick: s.pick,
+          pickLabel: s.pickLabel,
+          aiKans: s.kans,
+          odds: s.odds,
+          bookmaker: s.bookmaker,
+          value: parseFloat(s.value.toFixed(1)),
+          kelly: parseFloat((s.kelly||0).toFixed(1)),
+          confidence: s.confidence || 5,
+          reason: s.reason || '',
+          status: 'pending',
+          score: null,
+          scanDate: new Date().toLocaleString('nl-NL')
+        });
+        savedCount++;
+      }
+    });
+    if (savedCount > 0) {
+      saveState();
+      showFirebaseStatus(`⚡ ${savedCount} value-pick${savedCount > 1?'s':''} opgeslagen in Backtest`, '#15803d');
+    }
 
     // Sorteer op value en filter voor banner: alleen ≥5%
     scans.sort((a, b) => (b.value||-999) - (a.value||-999));
@@ -2716,12 +2968,12 @@ function renderValueBanner(displayScans, totalScanned) {
       const bankroll = state.wallet?.balance || defaultBet * 50;
       const kellyEuros = (s.kelly / 100 * bankroll).toFixed(2);
       return `
-        <div class="value-row" onclick="scrollToMatch('${s.match.id}')">
+        <div class="value-row" onclick="openValueAnalysis('${s.match.id}')" title="Tik voor volledige AI analyse">
           <div class="value-row-match">
             <div class="value-row-name">${shortName(s.match.home)} vs ${shortName(s.match.away)}</div>
             <div class="value-row-pick">${s.pickLabel} · AI ${s.kans}% · ${s.reason}</div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-top:2px;">
-              📊 ${s.bookmaker} · 🎯 ½ Kelly: ${s.kelly.toFixed(1)}% (€${kellyEuros})
+              📊 ${s.bookmaker} · 🎯 ½ Kelly: ${s.kelly.toFixed(1)}% (€${kellyEuros})${s.confidence ? ` · 🎲 ${s.confidence}/10` : ''}
             </div>
           </div>
           <div class="value-row-odds">${s.odds.toFixed(2)}</div>
@@ -2748,6 +3000,21 @@ function hideValueExplainer() {
 function scrollToMatch(matchId) {
   const el = document.getElementById('match-' + matchId);
   if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+/**
+ * Klik op value-row of value-info in card:
+ * Selecteer wedstrijd, switch naar Analyse tab, en start analyse.
+ */
+function openValueAnalysis(matchId) {
+  const match = state.matches.find(m => String(m.id) === String(matchId));
+  if (!match) return;
+  selectMatch(match);
+  switchTab('analyse');
+  // Run analyse automatisch (met korte delay zodat UI eerst update)
+  setTimeout(() => {
+    if (typeof runAnalyse === 'function') runAnalyse();
+  }, 300);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3922,6 +4189,255 @@ function updateTrackerStats() {
 }
 
 // ═══════════════════════════════════════════════════════
+// ⚡ VALUE BACKTEST — render, stats, check, grafiek
+// ═══════════════════════════════════════════════════════
+function renderBacktest() {
+  if (!state.valueBacktest) state.valueBacktest = { picks: [] };
+  const picks = state.valueBacktest.picks || [];
+  const list = document.getElementById('btList');
+  if (!list) return;
+
+  updateBacktestStats();
+
+  if (!picks.length) {
+    list.innerHTML = `<div class="bt-empty">
+      Nog geen value-picks bijgehouden.<br>
+      Draai een ⚡ Value Scan — picks met ≥5% value worden automatisch hier opgeslagen.
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = picks.map(p => {
+    const statusTxt = p.status === 'win'
+      ? `✓ WIN (+€${((p.odds - 1) * 1).toFixed(2)} per €1)`
+      : p.status === 'lose' ? '✗ VERLIES' : '⏳ OPEN';
+    const confColor = p.confidence >= 7 ? '#15803d' : p.confidence >= 5 ? '#b45309' : '#dc2626';
+    const valColor = p.value >= 15 ? '#15803d' : p.value >= 5 ? '#b45309' : '#64748b';
+
+    return `
+    <div class="bt-row bt-${p.status||'pending'}">
+      <div class="bt-match">${p.matchName}</div>
+      <div class="bt-meta">
+        <span>📅 ${p.date}</span>
+        <span style="font-weight:700;color:${valColor}">⚡ +${p.value}%</span>
+        <span>🎯 ${p.pickLabel} @ ${p.odds}</span>
+        <span style="color:${confColor}">🎲 ${p.confidence}/10</span>
+        <span style="color:var(--sub);">📊 ${p.bookmaker||'?'}</span>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);
+        margin-bottom:.35rem;line-height:1.5;">
+        AI ${p.aiKans}% kans · ½ Kelly ${p.kelly}% · ${p.reason||''}
+        ${p.score ? `<b style="color:var(--ink);"> [${p.score}]</b>` : ''}
+      </div>
+      <div class="bt-footer">
+        <div style="display:flex;gap:.4rem;align-items:center;">
+          ${p.status === 'pending' ? `
+            <button onclick="checkBacktestPick('${p.id}')" style="font-family:'IBM Plex Mono',monospace;
+              font-size:.48rem;font-weight:700;background:rgba(37,99,235,.1);
+              border:1px solid rgba(37,99,235,.3);color:#2563eb;border-radius:6px;
+              padding:2px 7px;cursor:pointer;">🔍 CHECK</button>` : ''}
+          <button onclick="deleteBacktestPick('${p.id}')" style="background:none;border:none;
+            color:#94a3b8;font-size:.8rem;cursor:pointer;padding:0;">✕</button>
+        </div>
+        <div class="bt-result ${p.status||'pending'}" onclick="cycleBacktestStatus('${p.id}')">${statusTxt}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updateBacktestStats() {
+  if (!state.valueBacktest) return;
+  const picks = state.valueBacktest.picks || [];
+  const settled = picks.filter(p => p.status === 'win' || p.status === 'lose');
+  const wins = picks.filter(p => p.status === 'win').length;
+  const hitrate = settled.length > 0 ? Math.round(wins / settled.length * 100) + '%' : '—';
+
+  // ROI berekend op flat €1 inzet per pick (eerlijkste maatstaf)
+  let profit = 0;
+  settled.forEach(p => {
+    if (p.status === 'win') profit += (p.odds - 1);
+    else profit -= 1;
+  });
+  const roi = settled.length > 0 ? ((profit / settled.length) * 100).toFixed(1) + '%' : '—';
+
+  const avgVal = picks.length > 0
+    ? (picks.reduce((s,p) => s + (p.value||0), 0) / picks.length).toFixed(1) + '%'
+    : '—';
+
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  set('btTotal', picks.length);
+  set('btHitrate', hitrate);
+  set('btRoi', roi !== '—' ? (parseFloat(roi) >= 0 ? '+' : '') + roi : '—');
+  set('btAvgVal', avgVal !== '—' ? '+' + avgVal : '—');
+
+  const roiEl = document.getElementById('btRoi');
+  if (roiEl && roi !== '—') roiEl.style.color = parseFloat(roi) >= 0 ? '#15803d' : '#dc2626';
+
+  // Toon/verberg grafiek
+  renderBacktestChart(settled);
+}
+
+function renderBacktestChart(settled) {
+  const wrap = document.getElementById('btChartWrap');
+  const canvas = document.getElementById('btChart');
+  if (!wrap || !canvas) return;
+  if (settled.length < 2) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth - 32;
+  const H = 120;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  // Cumulatief resultaat per pick (vlak €1 inzet)
+  const points = [0];
+  settled.forEach(p => {
+    const last = points[points.length - 1];
+    points.push(last + (p.status === 'win' ? (p.odds - 1) : -1));
+  });
+
+  const vals = points;
+  const minV = Math.min(...vals, -0.5);
+  const maxV = Math.max(...vals, 0.5);
+  const range = maxV - minV;
+  const pad = { top:14, bottom:16, left:40, right:8 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+  const xP = i => pad.left + (i / Math.max(points.length - 1, 1)) * cw;
+  const yP = v => pad.top + ch - ((v - minV) / range) * ch;
+
+  // Break-even lijn
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(148,163,184,.5)';
+  ctx.lineWidth = 1;
+  const zeroY = yP(0);
+  ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(pad.left + cw, zeroY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Fill
+  const lastVal = points[points.length - 1];
+  const isPos = lastVal >= 0;
+  const lineColor = isPos ? '#15803d' : '#dc2626';
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+  grad.addColorStop(0, isPos ? 'rgba(21,128,61,.2)' : 'rgba(220,38,38,.15)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(xP(0), yP(points[0]));
+  points.forEach((v, i) => { if (i > 0) ctx.lineTo(xP(i), yP(v)); });
+  ctx.lineTo(xP(points.length - 1), H - pad.bottom);
+  ctx.lineTo(xP(0), H - pad.bottom);
+  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+
+  // Lijn
+  ctx.beginPath();
+  ctx.moveTo(xP(0), yP(points[0]));
+  points.forEach((v, i) => { if (i > 0) ctx.lineTo(xP(i), yP(v)); });
+  ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+
+  // Punten
+  settled.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(xP(i + 1), yP(points[i + 1]), 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = p.status === 'win' ? '#15803d' : '#dc2626';
+    ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '9px IBM Plex Mono, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText((lastVal >= 0 ? '+' : '') + lastVal.toFixed(2) + ' €/pick', pad.left - 4, yP(lastVal) + 3);
+
+  // Y-as labels
+  [minV, maxV].forEach(v => {
+    ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1), pad.left - 4, yP(v) + 3);
+  });
+}
+
+/** Auto-resolve backtest pick via API uitslag */
+async function checkBacktestPick(pickId) {
+  if (!state.valueBacktest) return;
+  const p = state.valueBacktest.picks.find(x => String(x.id) === String(pickId));
+  if (!p || !state.settings.footballKey) {
+    alert('API-Football key nodig om uitslag op te halen.');
+    return;
+  }
+  // Hergebruik bestaande checkBetResult logica via dummy bet-object
+  const dummyBet = {
+    id: '__bt__',
+    type: 'single',
+    matchName: p.matchName,
+    fixtureId: p.fixtureId,
+    pick: p.pick,
+    odds: p.odds,
+    amount: 1,
+    payout: p.odds,
+    status: 'pending',
+    date: p.date
+  };
+  state.wallet.bets.push(dummyBet);
+  await checkBetResult('__bt__');
+  const resolved = state.wallet.bets.find(b => b.id === '__bt__');
+  if (resolved) {
+    p.status = resolved.status !== 'pending' ? resolved.status : p.status;
+    p.score = resolved.score || p.score;
+    // Verwijder het dummy bet weer
+    state.wallet.bets = state.wallet.bets.filter(b => b.id !== '__bt__');
+    // Herstel wallet (checkBetResult heeft balance aangepast)
+    if (resolved.status === 'win') {
+      state.wallet.balance -= resolved.payout;
+      state.wallet.totalWon -= resolved.payout;
+    }
+  }
+  saveState();
+  renderBacktest();
+}
+
+/** Check alle openstaande backtest picks in één keer */
+async function checkAllBacktestPicks() {
+  if (!state.valueBacktest) return;
+  const open = state.valueBacktest.picks.filter(p => p.status === 'pending');
+  if (!open.length) { showFirebaseStatus('Geen open backtest picks', '#475569'); return; }
+  showFirebaseStatus(`⟳ ${open.length} picks checken...`, '#d97706');
+  let resolved = 0;
+  for (const p of open) {
+    await checkBacktestPick(p.id);
+    if (p.status !== 'pending') resolved++;
+  }
+  showFirebaseStatus(`✓ ${resolved}/${open.length} opgelost`, '#15803d');
+  renderBacktest();
+}
+
+function cycleBacktestStatus(pickId) {
+  if (!state.valueBacktest) return;
+  const p = state.valueBacktest.picks.find(x => String(x.id) === String(pickId));
+  if (!p) return;
+  p.status = p.status === 'pending' ? 'win' : p.status === 'win' ? 'lose' : 'pending';
+  if (p.status === 'pending') p.score = null;
+  saveState();
+  renderBacktest();
+}
+
+function deleteBacktestPick(pickId) {
+  if (!state.valueBacktest) return;
+  state.valueBacktest.picks = state.valueBacktest.picks.filter(p => String(p.id) !== String(pickId));
+  saveState();
+  renderBacktest();
+}
+
+function clearBacktest() {
+  if (!confirm('Alle backtest picks verwijderen?')) return;
+  state.valueBacktest = { picks: [] };
+  saveState();
+  renderBacktest();
+}
+
+// ═══════════════════════════════════════════════════════
 // SETTINGS + FIREBASE + BACKUP
 // ═══════════════════════════════════════════════════════
 function saveApiKey() {
@@ -4009,7 +4525,7 @@ async function saveToFirebase() {
   });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
-  const backupPayload = { wallet:state.wallet, tracker:state.tracker, version:'2.2', backupDate:new Date().toISOString() };
+  const backupPayload = { wallet:state.wallet, tracker:state.tracker, valueBacktest:state.valueBacktest, version:'2.3', backupDate:new Date().toISOString() };
   await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`, {
     method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(backupPayload)
   });
@@ -4039,6 +4555,7 @@ async function loadFromFirebase() {
           showFirebaseStatus('🔥 Wallet hersteld','#16a34a');
         }
         if (b?.tracker && !state.tracker?.bets?.length) state.tracker = b.tracker;
+        if (b?.valueBacktest && !state.valueBacktest?.picks?.length) state.valueBacktest = b.valueBacktest;
       }
     } catch(e) {}
     saveState();
@@ -4050,7 +4567,8 @@ async function loadFromFirebase() {
 
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
-    wallet:state.wallet, tracker:state.tracker, settings:state.settings
+    wallet:state.wallet, tracker:state.tracker,
+    valueBacktest:state.valueBacktest, settings:state.settings
   }));
 }
 function loadState() {
@@ -4058,14 +4576,16 @@ function loadState() {
     const s = JSON.parse(localStorage.getItem('totoai_state') || '{}');
     if (s.wallet) state.wallet = s.wallet;
     if (s.tracker) state.tracker = s.tracker;
+    if (s.valueBacktest) state.valueBacktest = s.valueBacktest;
     if (s.settings) state.settings = { ...state.settings, ...s.settings };
   } catch(e) {}
 }
 
 function exportBackup() {
   const backup = {
-    version:'2.2', exportDate:new Date().toISOString(),
+    version:'2.3', exportDate:new Date().toISOString(),
     wallet:state.wallet, tracker:state.tracker,
+    valueBacktest:state.valueBacktest,
     settings: {
       defaultComp:state.settings.defaultComp,
       startBalance:state.settings.startBalance,
@@ -4093,6 +4613,7 @@ function importBackup(event) {
       if (!confirm(`Back-up van ${new Date(b.exportDate).toLocaleDateString('nl-NL')} importeren?`)) return;
       if (b.wallet) state.wallet = b.wallet;
       if (b.tracker) state.tracker = b.tracker;
+      if (b.valueBacktest) state.valueBacktest = b.valueBacktest;
       if (b.settings) Object.assign(state.settings, b.settings);
       saveState(); applySettings(); updateWalletUI();
       showBackupStatus(`✅ Hersteld! ${b.wallet.bets?.length||0} weddenschappen`, '#16a34a');
