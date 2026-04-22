@@ -1917,19 +1917,22 @@ function apiFetch(url, apiKey, timeoutMs=8000) {
   }).finally(() => clearTimeout(timer));
 }
 
-async function anthropicFetchWithRetry(apiKey, body, maxRetries=2) {
+async function anthropicFetchWithRetry(apiKey, body, maxRetries=3) {
   for (let i=0; i<=maxRetries; i++) {
     try {
       const resp = await anthropicFetch(apiKey, body);
       const data = await resp.json();
       if (data.error?.type === 'overloaded_error' && i < maxRetries) {
-        await new Promise(r => setTimeout(r, 5000 + i*3000));
+        // Langere wachttijden: 15s, 30s, 45s — geeft servers meer tijd
+        const wait = 15000 + i * 15000;
+        console.log(`Anthropic overloaded, poging ${i+1}/${maxRetries}, wacht ${wait/1000}s...`);
+        await new Promise(r => setTimeout(r, wait));
         continue;
       }
       return data;
     } catch(e) {
       if (i === maxRetries) throw e;
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 3000));
     }
   }
 }
@@ -3069,37 +3072,34 @@ confidence = zekerheid 0-10 (Poisson beschikbaar + consistente H2H = hoog, allee
       });
 
       // ── GELIJKSPEL SANITY CHECKS ──
-      // Probleem: AI overschat gelijkspel subtiel, waardoor X vaak als beste pick
-      // uitkomt ook bij onevenwichtige wedstrijden.
-
       const homeOddsF = parseFloat(match.homeOdds) || 99;
       const awayOddsF = parseFloat(match.awayOdds) || 99;
+      const favoriteOdds = Math.min(homeOddsF, awayOddsF);
       const drawPick = picks.find(p => p.pick === 'X');
       const homePick = picks.find(p => p.pick === '1');
       const awayPick = picks.find(p => p.pick === '2');
 
+      // Regel 0: Extreme favoriet (odds < 1.50) → hele wedstrijd overslaan.
+      // Bij PSV 1.18, Ajax 1.22 etc. is geen van de picks betrouwbaar value:
+      // - Thuiswinst: te laag geprijsd, nauwelijks value mogelijk
+      // - Gelijkspel/uitwinst: onrealistisch hoge value door extreme kansen
+      if (favoriteOdds < 1.50) return null;
+
       if (drawPick) {
         // Regel 1: Duidelijke favoriet (odds < 2.20) → gelijkspel mag niet beste pick zijn.
-        // Verlaag draw value zodat winnaar-pick wint in de sortering.
-        const favoriteOdds = Math.min(homeOddsF, awayOddsF);
         if (favoriteOdds < 2.20 && drawPick.value > 0) {
-          drawPick.value = Math.min(drawPick.value, 3); // max 3% value voor gelijkspel bij favoriet
+          drawPick.value = Math.min(drawPick.value, 3);
         }
 
         // Regel 2: Gelijkspel value > 15% is statistisch onwaarschijnlijk.
-        // Bookmakers prijzen gelijkspelen zelden zo ver mis.
-        // Cap op 12% maar alleen als er ook een andere pick met value is.
         const otherHasValue = (homePick?.value > 5) || (awayPick?.value > 5);
         if (drawPick.value > 15 && otherHasValue) {
           drawPick.value = 12;
         }
 
-        // Regel 3: Als gelijkspel gewonnen heeft van thuiswinst, maar thuiswinst
-        // ook value heeft en thuisclub kans > 45%: kies thuiswinst.
-        // Vermijdt "gelijkspel 6% value vs thuiswinst 5% value" → neem thuiswinst.
+        // Regel 3: Thuiswinst preferentie bij vergelijkbare value en dominante thuisploeg.
         if (drawPick.value > 0 && homePick?.value > 0 && k1 > 45) {
           if (drawPick.value - homePick.value < 4) {
-            // Verschil te klein bij dominante thuisploeg — thuiswinst betrouwbaarder
             drawPick.value = homePick.value - 1;
           }
         }
@@ -3640,19 +3640,36 @@ async function callEntity(apiKey, system, userMsg, entityId, cardId, bodyId) {
   card.style.display = 'block';
   document.getElementById('resultCards').classList.add('visible');
   body.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+
+  // Overload-melding na 8 seconden als het nog steeds bezig is
+  const overloadTimer = setTimeout(() => {
+    if (chip.className.includes('running')) {
+      body.innerHTML = '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:#d97706;">⟳ Anthropic servers druk — even geduld, automatisch opnieuw proberen...</span>';
+    }
+  }, 8000);
+
   try {
     const data = await anthropicFetchWithRetry(apiKey, {
       model: 'claude-sonnet-4-5', max_tokens: 600, system,
       messages: [{role:'user', content:userMsg}]
     });
+    clearTimeout(overloadTimer);
     if (data.error) throw new Error(data.error.message || 'onbekend');
     const text = data.content[0].text;
     chip.className = 'entity-chip done';
     body.innerHTML = renderMarkdown(text);
     return text;
   } catch(e) {
+    clearTimeout(overloadTimer);
     chip.className = 'entity-chip err';
-    body.textContent = '⚠ Fout: ' + e.message;
+    const isOverload = e.message?.toLowerCase().includes('overload');
+    body.innerHTML = isOverload
+      ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#d97706;line-height:1.7;">
+           ⚠ Anthropic servers overbelast.<br>
+           Wacht 5-10 minuten en probeer opnieuw.<br>
+           <span style="color:var(--sub);">'s Avonds na 20:00 werkt beter.</span>
+         </div>`
+      : `⚠ Fout: ${e.message}`;
     return '';
   }
 }
