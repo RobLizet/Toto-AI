@@ -3068,7 +3068,44 @@ confidence = zekerheid 0-10 (Poisson beschikbaar + consistente H2H = hoog, allee
         p.kelly = halfKelly(p.kans, p.odds);
       });
 
-      // Kies pick met hoogste value
+      // ── GELIJKSPEL SANITY CHECKS ──
+      // Probleem: AI overschat gelijkspel subtiel, waardoor X vaak als beste pick
+      // uitkomt ook bij onevenwichtige wedstrijden.
+
+      const homeOddsF = parseFloat(match.homeOdds) || 99;
+      const awayOddsF = parseFloat(match.awayOdds) || 99;
+      const drawPick = picks.find(p => p.pick === 'X');
+      const homePick = picks.find(p => p.pick === '1');
+      const awayPick = picks.find(p => p.pick === '2');
+
+      if (drawPick) {
+        // Regel 1: Duidelijke favoriet (odds < 2.20) → gelijkspel mag niet beste pick zijn.
+        // Verlaag draw value zodat winnaar-pick wint in de sortering.
+        const favoriteOdds = Math.min(homeOddsF, awayOddsF);
+        if (favoriteOdds < 2.20 && drawPick.value > 0) {
+          drawPick.value = Math.min(drawPick.value, 3); // max 3% value voor gelijkspel bij favoriet
+        }
+
+        // Regel 2: Gelijkspel value > 15% is statistisch onwaarschijnlijk.
+        // Bookmakers prijzen gelijkspelen zelden zo ver mis.
+        // Cap op 12% maar alleen als er ook een andere pick met value is.
+        const otherHasValue = (homePick?.value > 5) || (awayPick?.value > 5);
+        if (drawPick.value > 15 && otherHasValue) {
+          drawPick.value = 12;
+        }
+
+        // Regel 3: Als gelijkspel gewonnen heeft van thuiswinst, maar thuiswinst
+        // ook value heeft en thuisclub kans > 45%: kies thuiswinst.
+        // Vermijdt "gelijkspel 6% value vs thuiswinst 5% value" → neem thuiswinst.
+        if (drawPick.value > 0 && homePick?.value > 0 && k1 > 45) {
+          if (drawPick.value - homePick.value < 4) {
+            // Verschil te klein bij dominante thuisploeg — thuiswinst betrouwbaarder
+            drawPick.value = homePick.value - 1;
+          }
+        }
+      }
+
+      // Kies pick met hoogste value na sanity checks
       picks.sort((a, b) => (b.value||-999) - (a.value||-999));
       const best = picks[0];
       if (!best) return null;
@@ -4074,6 +4111,19 @@ function confirmCombiBet() {
   const amt = parseFloat(document.getElementById('combiModalBetInput').value);
   if (!amt || amt <= 0) return;
   if (amt > state.wallet.balance) { alert('Onvoldoende saldo!'); return; }
+
+  // ── DUPLICATE CHECK ──
+  // Voorkom dat dezelfde combi twee keer opgeslagen wordt (bijv. dubbel klikken)
+  const legKey = legs.map(l => `${l.matchId}:${l.pick}`).sort().join('|');
+  const isDuplicate = state.wallet.bets.some(b => {
+    if (b.type !== 'combi' || b.status !== 'pending') return false;
+    const existingKey = (b.legs||[]).map(l => `${l.matchId}:${l.pick}`).sort().join('|');
+    return existingKey === legKey;
+  });
+  if (isDuplicate) {
+    if (!confirm('Je hebt deze combi al openstaan. Toch nog een keer inzetten?')) return;
+  }
+
   const total = legs.reduce((a,l) => a * l.odds, 1);
   const bet = {
     id: Date.now(), type:'combi',
@@ -4121,7 +4171,11 @@ function updateWalletUI() {
   const pnl = w.totalWon - w.totalStaked;
   const wins = w.bets.filter(b => b.status === 'win').length;
   const settled = w.bets.filter(b => b.status !== 'pending').length;
-  const hitRate = settled > 0 ? Math.round(wins/settled*100) + '%' : '—';
+  const open = w.bets.filter(b => b.status === 'pending').length;
+  // Toon sample size zodat 100% bij 1/1 niet misleidend is
+  const hitRate = settled > 0
+    ? Math.round(wins/settled*100) + '%' + (settled < 10 ? ` (${settled})` : '')
+    : '—';
 
   document.getElementById('miniBalance').textContent = fmt(w.balance);
   document.getElementById('miniPnl').textContent = (pnl >= 0 ? '+' : '') + fmt(pnl);
@@ -4151,7 +4205,10 @@ function updateWalletUI() {
         </div>
         <div class="combi-bet-legs">${legsHtml}</div>
         <div class="combi-bet-footer">
-          <span class="combi-bet-amount">€${b.amount.toFixed(2)} → €${b.payout.toFixed(2)}</span>
+          <div style="display:flex;align-items:center;gap:.5rem;">
+            <span class="combi-bet-amount">€${b.amount.toFixed(2)} → €${b.payout.toFixed(2)}</span>
+            <button onclick="deleteBet(${b.id})" style="background:none;border:none;color:#94a3b8;font-size:.8rem;cursor:pointer;padding:0;" title="Verwijder deze weddenschap">✕</button>
+          </div>
           <span class="combi-bet-result ${b.status}" onclick="cycleCombiBetStatus(${b.id})">${b.status === 'win'?'✓ +€'+(b.payout-b.amount).toFixed(2):b.status === 'lose'?'✗ VERLIES':'⏳ OPEN'}</span>
         </div></div>`;
     } else {
@@ -4161,7 +4218,10 @@ function updateWalletUI() {
           <div class="bet-meta">${b.pick} — ${b.pickLabel} @ ${b.odds} · ${b.date}</div>
         </div>
         <div style="text-align:right;">
-          <div class="bet-amt">€${b.amount.toFixed(2)}</div>
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:.4rem;margin-bottom:2px;">
+            <div class="bet-amt">€${b.amount.toFixed(2)}</div>
+            <button onclick="deleteBet(${b.id})" style="background:none;border:none;color:#94a3b8;font-size:.8rem;cursor:pointer;padding:0;" title="Verwijder">✕</button>
+          </div>
           ${b.status === 'pending' ? `<button onclick="checkBetResult(${b.id})" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#2563eb;border-radius:6px;padding:2px 7px;cursor:pointer;display:block;width:100%;">🔍 CHECK</button>` : ''}
           <div class="bet-res ${b.status}" onclick="cycleBetStatus(${b.id})">${b.status === 'win'?'✓ +€'+(b.payout-b.amount).toFixed(2):b.status === 'lose'?'✗':'⏳ OPEN'}</div>
         </div></div>`;
@@ -4258,6 +4318,31 @@ function cycleCombiBetStatus(id) {
   else if (b.status === 'win') { b.status = 'pending'; b.legs.forEach(l => { l.legStatus = 'pending'; l.score = null; }); state.wallet.balance -= b.payout; state.wallet.totalWon -= b.payout; }
   else { b.status = 'pending'; b.legs.forEach(l => { l.legStatus = 'pending'; l.score = null; }); }
   saveState(); updateWalletUI();
+}
+
+function deleteBet(id) {
+  const bet = state.wallet.bets.find(b => b.id === id);
+  if (!bet) return;
+  const label = bet.type === 'combi'
+    ? `Combi (${bet.legs?.length||0} legs) €${bet.amount?.toFixed(2)}`
+    : `${bet.matchName} — ${bet.pick}`;
+  if (!confirm(`Verwijderen: ${label}?`)) return;
+
+  // Herstel saldo als bet nog open staat (geld was al afgeschreven)
+  if (bet.status === 'pending') {
+    state.wallet.balance += bet.amount;
+    state.wallet.totalStaked -= bet.amount;
+  }
+  // Als bet gewonnen was en wordt verwijderd: undo winst
+  if (bet.status === 'win') {
+    state.wallet.balance -= bet.payout;
+    state.wallet.totalWon -= bet.payout;
+    // Staked was al verrekend bij plaatsen, dus die laten we staan
+  }
+
+  state.wallet.bets = state.wallet.bets.filter(b => b.id !== id);
+  saveState();
+  updateWalletUI();
 }
 
 function cycleBetStatus(id) {
