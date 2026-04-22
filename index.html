@@ -806,6 +806,11 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
         <a href="help.html" style="background:var(--card);border:1px solid var(--stroke);
           border-radius:999px;padding:3px 8px;font-size:.8rem;box-shadow:var(--shadow2);
           text-decoration:none;line-height:1;" title="Uitleg & Gids">❓</a>
+        <a href="https://www.jacks.nl" target="_blank" rel="noopener" style="
+          background:var(--card);border:1px solid var(--stroke);
+          border-radius:999px;padding:3px 8px;font-size:.75rem;box-shadow:var(--shadow2);
+          text-decoration:none;line-height:1;font-family:'IBM Plex Mono',monospace;
+          font-weight:700;color:#e63329;" title="Open Jacks">🃏</a>
         <button onclick="cycleTheme()" id="themeToggle" style="
           background:var(--card);border:1px solid var(--stroke);
           border-radius:999px;padding:3px 8px;cursor:pointer;
@@ -1293,8 +1298,8 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
     </div>
     <select class="sr-input sr-input-border" id="notifThreshold" style="width:90px;">
       <option value="10">≥ 10%</option>
-      <option value="15">≥ 15%</option>
-      <option value="20" selected>≥ 20%</option>
+      <option value="15" selected>≥ 15%</option>
+      <option value="20">≥ 20%</option>
       <option value="25">≥ 25%</option>
       <option value="30">≥ 30%</option>
     </select>
@@ -1672,7 +1677,7 @@ let state = {
     defaultBookmaker: 'Jacks',
     oddsSource: 'manual',
     notifEnabled: false,       // VALUE: notificaties aan/uit
-    notifThreshold: 20,        // VALUE: drempel %
+    notifThreshold: 15,        // VALUE: drempel %
     valueExplainerSeen: false  // VALUE: uitleg eenmaal getoond
   }
 };
@@ -3346,7 +3351,7 @@ function updateNotifUI() {
   }
   if (state.settings.notifEnabled && perm === 'granted') {
     btn.textContent = 'UITZETTEN'; btn.className = 'notif-btn disable';
-    if (sub) sub.innerHTML = '<span class="notif-status on">✓ Actief</span> — melding vanaf ' + (state.settings.notifThreshold||20) + '% value';
+    if (sub) sub.innerHTML = '<span class="notif-status on">✓ Actief</span> — melding vanaf ' + (state.settings.notifThreshold||15) + '% value';
   } else {
     btn.textContent = 'AANZETTEN'; btn.className = 'notif-btn enable';
     if (sub) sub.innerHTML = '<span class="notif-status off">Uit</span> — klik AANZETTEN voor meldingen';
