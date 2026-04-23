@@ -2645,13 +2645,74 @@ function renderMatches(matches) {
           <span class="odds-val" style="${m.awayOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.awayOdds}</span>
         </div>
       </div>
-      ${m.valueData ? `<div onclick="event.stopPropagation();openValueAnalysis('${m.id}')" title="Tik voor volledige AI analyse" style="padding:.5rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#15803d;background:rgba(22,163,74,.05);border-top:1px solid rgba(22,163,74,.15);line-height:1.6;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='rgba(22,163,74,.1)'" onmouseout="this.style.background='rgba(22,163,74,.05)'">
-        <div>⚡ <b>${m.valueData.pickLabel}</b> — AI+Poisson: ${m.valueData.kans}% @ <b>${m.valueData.odds?.toFixed(2)||'?'}</b>${m.valueData.poissonUsed ? ` <span style="color:#2563eb;font-size:.5rem;">📐</span>` : ''} · ${m.valueData.reason||''}</div>
-        ${m.valueData.market ? `<div style="color:#7c3aed;margin-top:2px;font-size:.52rem;">${m.valueData.market.label}</div>` : ''}
-        ${m.valueData.poissonUsed ? `<div style="color:#2563eb;margin-top:2px;font-size:.5rem;">📐 Poisson: 1=${m.valueData.poissonK1}% X=${m.valueData.poissonKX}% 2=${m.valueData.poissonK2}%</div>` : ''}
-        <div style="color:var(--sub);margin-top:3px;font-size:.52rem;display:flex;justify-content:space-between;align-items:center;gap:.4rem;flex-wrap:wrap;">
-          <span>📊 <b style="color:#0f172a;">${m.valueData.bookmaker||'?'}</b> · 🎯 ½ Kelly: <b style="color:#15803d;">${m.valueData.kelly?.toFixed(1)||'0'}%</b>${m.valueData.confidence ? ` · 🎲 <b style="color:${m.valueData.confidence>=7?'#15803d':m.valueData.confidence>=5?'#b45309':'#dc2626'};">${m.valueData.confidence}/10</b>` : ''}</span>
-          <span style="color:#15803d;font-weight:700;">🤖 Tik voor analyse →</span>
+      ${m.valueData ? `
+      <!-- VALUE INFO BLOCK — duidelijk zichtbaar -->
+      <div onclick="event.stopPropagation();openValueAnalysis('${m.id}')"
+        style="padding:.6rem .9rem .7rem;background:rgba(22,163,74,.06);
+        border-top:2px solid rgba(22,163,74,.2);cursor:pointer;
+        transition:background .15s;"
+        onmouseover="this.style.background='rgba(22,163,74,.12)'"
+        onmouseout="this.style.background='rgba(22,163,74,.06)'">
+
+        <!-- Rij 1: Pick + grote value badge -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:800;color:#15803d;">
+            ⚡ ${m.valueData.pickLabel}
+          </div>
+          <div style="display:flex;align-items:center;gap:.4rem;">
+            ${m.valueData.injWarning ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;color:#dc2626;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.3);border-radius:6px;padding:2px 6px;">⚠ blessures</span>` : ''}
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:.05em;
+              color:${m.valueData.pct>=15?'#15803d':m.valueData.pct>=5?'#b45309':'#64748b'};">
+              +${Math.round(m.valueData.pct)}%
+            </span>
+          </div>
+        </div>
+
+        <!-- Rij 2: Odds + Confidence + Poisson badges -->
+        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.35rem;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#0f172a;letter-spacing:.03em;">
+            @ ${m.valueData.odds?.toFixed(2)||'?'}
+          </span>
+          <!-- Confidence badge — groot en gekleurd -->
+          ${m.valueData.confidence ? `
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;
+            padding:3px 8px;border-radius:999px;
+            background:${m.valueData.confidence>=7?'rgba(22,163,74,.15)':m.valueData.confidence>=5?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)'};
+            border:1px solid ${m.valueData.confidence>=7?'rgba(22,163,74,.4)':m.valueData.confidence>=5?'rgba(217,119,6,.35)':'rgba(220,38,38,.3)'};
+            color:${m.valueData.confidence>=7?'#15803d':m.valueData.confidence>=5?'#b45309':'#dc2626'};">
+            🎲 ${m.valueData.confidence}/10
+          </span>` : ''}
+          <!-- Poisson badge -->
+          ${m.valueData.poissonUsed ? `
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;
+            padding:3px 8px;border-radius:999px;
+            background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.3);color:#2563eb;">
+            📐 P+AI
+          </span>` : `
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;
+            padding:2px 6px;border-radius:999px;
+            background:rgba(100,116,139,.08);border:1px solid rgba(100,116,139,.2);color:#64748b;">
+            AI only
+          </span>`}
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#0f172a;font-weight:700;">
+            📊 ${m.valueData.bookmaker||'?'}
+          </span>
+        </div>
+
+        <!-- Rij 3: Poisson kansen detail -->
+        ${m.valueData.poissonUsed ? `
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#2563eb;margin-bottom:.3rem;">
+          📐 1=${m.valueData.poissonK1}% · X=${m.valueData.poissonKX}% · 2=${m.valueData.poissonK2}%
+        </div>` : ''}
+
+        <!-- Rij 4: Markt + reden -->
+        ${m.valueData.market ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#7c3aed;margin-bottom:.2rem;">${m.valueData.market.label}</div>` : ''}
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);line-height:1.5;">
+          ${m.valueData.reason||''} · 🎯 ½ Kelly: <b style="color:#15803d;">${m.valueData.kelly?.toFixed(1)||'0'}%</b>
+        </div>
+
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#15803d;font-weight:700;margin-top:.3rem;text-align:right;">
+          🤖 Tik voor volledige analyse →
         </div>
       </div>` : ''}
       <div style="padding:.3rem .9rem .1rem;text-align:right;">
@@ -4074,6 +4135,37 @@ async function runAnalyse() {
     }
   } catch(e) { console.warn('Data ophalen:', e.message); }
 
+  // ── POISSON VOOR ANALYSE ──
+  let poissonAnaliseTxt = '';
+  try {
+    const hGs = hStats ? extractTeamGoalStats(hStats) : null;
+    const aGs = aStats ? extractTeamGoalStats(aStats) : null;
+    if (hGs && aGs) {
+      const calcInjFactor = (injuries) => {
+        if (!injuries?.length) return { attackFactor:1.0, defenseFactor:1.0 };
+        let ap=0, dp=0;
+        injuries.forEach(inj => {
+          const pos = inj.player?.pos || '';
+          if (pos==='F') ap+=0.08;
+          else if (pos==='M') { ap+=0.04; dp+=0.04; }
+          else if (pos==='D') dp+=0.09;
+          else if (pos==='G') dp+=0.12;
+        });
+        return { attackFactor: Math.max(0.6, 1-Math.min(ap,0.4)), defenseFactor: Math.max(0.6, 1-Math.min(dp,0.4)) };
+      };
+      const hInj = calcInjFactor(homeInj);
+      const aInj = calcInjFactor(awayInj);
+      const pois = calcPoissonKansen(hGs, aGs, 1.35, hInj, aInj);
+      if (pois.valid) {
+        poissonAnaliseTxt = `
+📐 POISSON MODEL (seizoensstatistieken + blessure-correctie):
+${m.home} wint: ${pois.k1}% | Gelijkspel: ${pois.kX}% | ${m.away} wint: ${pois.k2}%
+Verwachte goals: ${m.home} λ=${pois.lambdaHome} | ${m.away} λ=${pois.lambdaAway}${pois.injLabel||''}
+Bookmaker impliceert: 1=${Math.round(100/(parseFloat(m.homeOdds)||2))}% X=${Math.round(100/(parseFloat(m.drawOdds)||3))}% 2=${Math.round(100/(parseFloat(m.awayOdds)||2))}%`;
+      }
+    }
+  } catch(e) {}
+
   btn.textContent = '⟳ AI ANALYSEERT...';
 
   const wedstrijdDatum = m.date ? `${m.date} om ${m.time}` : m.time;
@@ -4111,13 +4203,13 @@ INSTRUCTIE: Gebruik ALLEEN deze data. Verzin geen stats.`.trim();
     `${ctx}\n\n${lineupsTxt||'Geen opstellingen'}\nVorm: ${vormText?.substring(0,300)||''}\n\nAnalyseer speelstijl, sleutelspelers, tactische impact blessures.`,
     'tactiek','tactiek','tactiek');
   const kansText = await callEntity(apiKey, `Je bent kansen-analist. ${nl} Geef percentages.`,
-    `${ctx}\n\nAPI: ${predTxt||'—'}\nVorm: ${vormText?.substring(0,200)||''}\nStats: ${statsText?.substring(0,200)||''}\n\nGeef: 1) winstkansen % 2) vs bookmaker quotes 3) verwachte score 4) O/U 2.5 5) BTTS 6) vertrouwen 1-10`,
+    `${ctx}\n\n${poissonAnaliseTxt ? poissonAnaliseTxt + '\n\n' : ''}API: ${predTxt||'—'}\nVorm: ${vormText?.substring(0,200)||''}\nStats: ${statsText?.substring(0,200)||''}\n\nGeef: 1) winstkansen % (gebruik Poisson als anker indien beschikbaar) 2) vs bookmaker quotes 3) verwachte score 4) O/U 2.5 5) BTTS 6) vertrouwen 1-10`,
     'kans','kans','kans');
   const risicoText = await callEntity(apiKey, `Je bent risicoanalist. ${nl}`,
     `${ctx}\n\nKansen: ${kansText?.substring(0,250)||''}\n\nGeef risicoscore 1-10, factoren, advies.`,
     'risico','risico','risico');
   await callEntity(apiKey, `Je bent bet adviseur. ${nl}`,
-    `${ctx}\n\nRisico: ${risicoText?.substring(0,200)||''}\nKansen: ${kansText?.substring(0,200)||''}\n\nGeef: 1) BESTE BET 2) Waarom 3) Inzetstrategie €${bet} 4) Alternatieven 5) TOP TIP. Fictief/educatief.`,
+    `${ctx}\n\n${poissonAnaliseTxt ? poissonAnaliseTxt + '\n\n' : ''}Risico: ${risicoText?.substring(0,200)||''}\nKansen: ${kansText?.substring(0,200)||''}\n\nGeef: 1) BESTE BET (gebruik Poisson als basis) 2) Waarom 3) Inzetstrategie €${bet} 4) Alternatieven 5) TOP TIP. Fictief/educatief.`,
     'advies','advies','advies');
 
   // 🎯 AI TIP met value berekening
@@ -5572,6 +5664,14 @@ function migrateOldDarkPref() {
     localStorage.setItem('totoai_theme', 'dark');
     localStorage.removeItem('totoai_dark');
     return 'dark';
+  }
+  // Migratie: bestaande gebruikers met 'light' upgraden naar 'mint'
+  // Eenmalig — als 'totoai_migrated_mint' nog niet gezet is
+  const current = localStorage.getItem('totoai_theme');
+  if (current === 'light' && !localStorage.getItem('totoai_migrated_mint')) {
+    localStorage.setItem('totoai_theme', 'mint');
+    localStorage.setItem('totoai_migrated_mint', '1');
+    return 'mint';
   }
   return 'mint';
 }
