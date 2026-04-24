@@ -1,422 +1,462 @@
 <!DOCTYPE html>
+
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TOTO AI — Uitleg & Gids</title>
-<meta name="theme-color" content="#fce7f3">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>TOTO AI — Help & Gids</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: linear-gradient(135deg, #fce7f3, #ede9fe, #e0f2fe);
-  min-height: 100vh;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 16px;
-  color: #0f172a;
-  -webkit-font-smoothing: antialiased;
-}
-.app { max-width: 600px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+  :root {
+    --mint: #d1fae5;
+    --mint2: #a7f3d0;
+    --green: #059669;
+    --green2: #15803d;
+    --ink: #0f172a;
+    --sub: #475569;
+    --muted: #94a3b8;
+    --card: #fff;
+    --bg: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 40%, #f0f9ff 100%);
+    --stroke: rgba(15,23,42,.08);
+    --shadow: 0 4px 20px rgba(15,23,42,.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
 
-/* Header */
+/* HEADER */
 .header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 1rem 0 1.2rem;
-  border-bottom: 1px solid rgba(15,23,42,.08);
-  margin-bottom: 1.5rem;
+background: linear-gradient(135deg, #064e3b, #065f46);
+padding: 2rem 1.2rem 1.5rem;
+position: relative;
+overflow: hidden;
 }
-.logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;
-  background: linear-gradient(135deg, #db2777, #7c3aed);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.back-btn {
-  display: flex; align-items: center; gap: .4rem;
-  font-family: 'IBM Plex Mono', monospace; font-size: .6rem; font-weight: 700;
-  color: #be185d; text-decoration: none;
-  background: rgba(219,39,119,.08); border: 1px solid rgba(219,39,119,.25);
-  padding: .4rem .8rem; border-radius: 999px;
+.header::before {
+content: ‘’;
+position: absolute; inset: 0;
+background: radial-gradient(ellipse at 80% 0%, rgba(16,185,129,.3), transparent 60%);
+}
+.header-back {
+display: inline-flex; align-items: center; gap: .4rem;
+font-family: ‘IBM Plex Mono’, monospace; font-size: .65rem; font-weight: 700;
+color: rgba(255,255,255,.7); text-decoration: none;
+background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+border-radius: 999px; padding: 4px 12px; margin-bottom: 1rem;
+position: relative;
+}
+.header-title {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 2.8rem; letter-spacing: .08em;
+color: #fff; line-height: 1; position: relative;
+}
+.header-sub {
+font-family: ‘IBM Plex Mono’, monospace; font-size: .65rem;
+color: rgba(255,255,255,.6); margin-top: .4rem; position: relative;
+}
+.version-tag {
+display: inline-block;
+background: rgba(16,185,129,.3); border: 1px solid rgba(16,185,129,.5);
+color: #6ee7b7; font-family: ‘IBM Plex Mono’, monospace;
+font-size: .55rem; font-weight: 700; border-radius: 999px;
+padding: 2px 8px; margin-left: .5rem; vertical-align: middle;
 }
 
-/* Sectie */
-.section { margin-bottom: 1.8rem; }
+/* CONTENT */
+.content { padding: 1rem 1rem; max-width: 600px; margin: 0 auto; }
+
+/* SECTION */
+.section { margin-bottom: 1.2rem; }
 .section-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem;
-  color: #0f172a; letter-spacing: .05em; margin-bottom: .8rem;
-  display: flex; align-items: center; gap: .5rem;
+font-family: ‘Bebas Neue’, sans-serif; font-size: 1.1rem;
+letter-spacing: .1em; color: var(–green2);
+display: flex; align-items: center; gap: .4rem;
+padding: .5rem 0 .4rem; border-bottom: 2px solid var(–mint2);
+margin-bottom: .7rem;
 }
+
+/* CARD */
 .card {
-  background: rgba(255,255,255,.88); border: 1px solid rgba(15,23,42,.08);
-  border-radius: 16px; padding: 1rem 1.1rem; margin-bottom: .6rem;
-  box-shadow: 0 2px 8px rgba(15,23,42,.05);
+background: var(–card); border: 1px solid var(–stroke);
+border-radius: 16px; padding: .9rem 1rem;
+box-shadow: var(–shadow); margin-bottom: .6rem;
 }
 .card-title {
-  font-family: 'IBM Plex Mono', monospace; font-size: .68rem; font-weight: 700;
-  color: #be185d; letter-spacing: .04em; margin-bottom: .4rem;
-  display: flex; align-items: center; gap: .4rem;
+font-family: ‘IBM Plex Mono’, monospace; font-size: .68rem;
+font-weight: 700; color: var(–ink); margin-bottom: .4rem;
+display: flex; align-items: center; gap: .35rem;
 }
-.card-text { font-size: .88rem; line-height: 1.75; color: #334155; }
-.card-text b { color: #0f172a; font-weight: 700; }
+.card p {
+font-size: .82rem; color: var(–sub); line-height: 1.65;
+}
+.card p + p { margin-top: .4rem; }
 
-/* Tags */
-.tag {
-  display: inline-block; font-family: 'IBM Plex Mono', monospace;
-  font-size: .52rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;
-  margin: 2px;
+/* STEPS */
+.steps { list-style: none; }
+.steps li {
+display: flex; gap: .7rem; align-items: flex-start;
+padding: .5rem 0; border-bottom: 1px solid rgba(15,23,42,.05);
+font-size: .82rem; color: var(–sub); line-height: 1.6;
 }
-.tag-green { background: rgba(22,163,74,.1); color: #15803d; border: 1px solid rgba(22,163,74,.25); }
-.tag-orange { background: rgba(217,119,6,.1); color: #b45309; border: 1px solid rgba(217,119,6,.25); }
-.tag-red { background: rgba(220,38,38,.08); color: #b91c1c; border: 1px solid rgba(220,38,38,.2); }
-.tag-blue { background: rgba(37,99,235,.1); color: #1d4ed8; border: 1px solid rgba(37,99,235,.25); }
-.tag-purple { background: rgba(124,58,237,.1); color: #6d28d9; border: 1px solid rgba(124,58,237,.25); }
-.tag-pink { background: rgba(219,39,119,.1); color: #be185d; border: 1px solid rgba(219,39,119,.25); }
+.steps li:last-child { border-bottom: none; }
+.step-num {
+font-family: ‘Bebas Neue’, sans-serif; font-size: 1rem;
+color: var(–green); min-width: 1.4rem; padding-top: 1px;
+}
 
-/* Markt tabel */
-.markt-row {
-  display: flex; align-items: flex-start; gap: .8rem;
-  padding: .6rem 0; border-bottom: 1px solid rgba(15,23,42,.06);
+/* BADGE */
+.badge {
+display: inline-flex; align-items: center; gap: .25rem;
+font-family: ‘IBM Plex Mono’, monospace; font-size: .58rem;
+font-weight: 700; border-radius: 999px; padding: 2px 8px;
+margin: 2px;
 }
-.markt-row:last-child { border: none; padding-bottom: 0; }
-.markt-code {
-  font-family: 'IBM Plex Mono', monospace; font-size: .65rem; font-weight: 700;
-  color: #be185d; min-width: 60px; padding-top: 2px;
-}
-.markt-uitleg { font-size: .84rem; line-height: 1.6; color: #334155; }
-.markt-uitleg b { color: #0f172a; }
+.badge-green { background: rgba(22,163,74,.12); border: 1px solid rgba(22,163,74,.3); color: #15803d; }
+.badge-orange { background: rgba(217,119,6,.1); border: 1px solid rgba(217,119,6,.3); color: #b45309; }
+.badge-blue { background: rgba(37,99,235,.1); border: 1px solid rgba(37,99,235,.3); color: #2563eb; }
+.badge-red { background: rgba(220,38,38,.08); border: 1px solid rgba(220,38,38,.25); color: #dc2626; }
+.badge-purple { background: rgba(124,58,237,.1); border: 1px solid rgba(124,58,237,.3); color: #7c3aed; }
 
-/* Tip */
-.tip-box {
-  background: rgba(219,39,119,.06); border: 1px solid rgba(219,39,119,.2);
-  border-radius: 10px; padding: .7rem .9rem; margin-top: .6rem;
-  font-size: .8rem; line-height: 1.65; color: #475569;
+/* TABLE */
+.table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.table th {
+font-family: ‘IBM Plex Mono’, monospace; font-size: .58rem;
+color: var(–muted); text-transform: uppercase; letter-spacing: .05em;
+padding: .4rem .6rem; text-align: left; border-bottom: 1px solid var(–stroke);
 }
-.tip-box strong { color: #be185d; }
+.table td { padding: .45rem .6rem; border-bottom: 1px solid rgba(15,23,42,.04); color: var(–sub); }
+.table tr:last-child td { border-bottom: none; }
 
-/* Divider */
-.divider {
-  height: 1px; background: rgba(15,23,42,.07); margin: 1.5rem 0;
+/* FORMULA */
+.formula {
+background: rgba(15,23,42,.04); border: 1px solid var(–stroke);
+border-radius: 10px; padding: .6rem .9rem;
+font-family: ‘IBM Plex Mono’, monospace; font-size: .72rem;
+color: var(–ink); margin: .5rem 0; line-height: 1.7;
+}
+.formula b { color: var(–green2); }
+
+/* HIGHLIGHT BOX */
+.highlight {
+background: linear-gradient(135deg, rgba(5,150,105,.08), rgba(37,99,235,.06));
+border: 1px solid rgba(5,150,105,.2); border-radius: 12px;
+padding: .8rem 1rem; margin: .5rem 0;
+font-size: .82rem; color: var(–sub); line-height: 1.6;
+}
+.highlight strong { color: var(–green2); }
+
+/* WARNING BOX */
+.warning {
+background: rgba(217,119,6,.07); border: 1px solid rgba(217,119,6,.25);
+border-radius: 12px; padding: .7rem .9rem; margin: .5rem 0;
+font-size: .78rem; color: #92400e; line-height: 1.6;
+}
+
+/* FILTER CHECKLIST */
+.checklist { list-style: none; }
+.checklist li {
+display: flex; align-items: flex-start; gap: .5rem;
+padding: .35rem 0; font-size: .82rem; color: var(–sub); line-height: 1.5;
+}
+.check-icon { font-size: .9rem; min-width: 1.2rem; margin-top: 1px; }
+
+/* TABS NAV */
+.tabs-grid {
+display: grid; grid-template-columns: 1fr 1fr;
+gap: .5rem; margin-top: .4rem;
+}
+.tab-item {
+background: var(–card); border: 1px solid var(–stroke);
+border-radius: 12px; padding: .6rem .7rem;
+box-shadow: 0 2px 8px rgba(15,23,42,.04);
+}
+.tab-item .ti { font-size: 1.1rem; margin-bottom: .2rem; }
+.tab-item .tn { font-family: ‘IBM Plex Mono’, monospace; font-size: .58rem; font-weight: 700; color: var(–ink); }
+.tab-item .td { font-size: .72rem; color: var(–sub); margin-top: .15rem; line-height: 1.4; }
+
+/* FOOTER */
+.footer {
+text-align: center; padding: 1.5rem 1rem;
+font-family: ‘IBM Plex Mono’, monospace; font-size: .58rem;
+color: var(–muted);
 }
 </style>
+
 </head>
 <body>
-<div class="app">
 
-  <div class="header">
-    <div class="logo">TOTO AI</div>
-    <a href="https://roblizet.github.io/Toto-AI/" class="back-btn">← TERUG NAAR APP</a>
-  </div>
+<div class="header">
+  <a href="index.html" class="header-back">← Terug naar app</a>
+  <div class="header-title">TOTO AI <span class="version-tag">v2.4</span></div>
+  <div class="header-sub">Made by Rob Borghouts · Voetbal Analyse & Value Betting</div>
+</div>
 
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#475569;
-    background:rgba(255,255,255,.7);border-radius:12px;padding:.75rem 1rem;margin-bottom:1.5rem;
-    line-height:1.7;">
-    ⚠️ TOTO AI is een <b>fictieve, educatieve app</b>. Alle analyses zijn AI-gegenereerd.
-    Gebruik dit nooit als enige basis voor echte weddenschappen. Gok verantwoord. 18+
-  </div>
+<div class="content">
 
-  <!-- TABS UITLEG -->
+  <!-- ═══ WAT IS DIT? ═══ -->
+
   <div class="section">
-    <div class="section-title">📱 De Tabs</div>
-
+    <div class="section-title">⚡ Wat is TOTO AI?</div>
     <div class="card">
-      <div class="card-title">⚽ WEDSTRIJDEN</div>
-      <div class="card-text">
-        Hier zie je alle <b>komende en live wedstrijden</b> van de gekozen competitie.
-        Tik op een competitie bovenin om te wisselen.
-        Live wedstrijden staan bovenaan met een <b>🔴 badge + minuut</b> (bijv. 🔴 67').
-        De score wordt elke 60 seconden bijgewerkt.<br><br>
-        Tik op een wedstrijd om hem te <b>selecteren voor analyse</b>.
-        Onder elke wedstrijd staan de bookmakerquotes en kansbalken.
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🤖 ANALYSE</div>
-      <div class="card-text">
-        Selecteer eerst een wedstrijd, dan tik je op <b>ANALYSEER WEDSTRIJD</b>.
-        De AI haalt echte data op (vorm, H2H, ranglijst, blessures) en geeft 6 analyses:<br><br>
-        <span class="tag tag-blue">VORM</span> Recente resultaten &amp; momentum<br>
-        <span class="tag tag-orange">STATISTIEKEN</span> H2H &amp; seizoenscijfers<br>
-        <span class="tag tag-orange">TACTIEK</span> Speelstijlen &amp; sleutelspelers<br>
-        <span class="tag tag-green">KANSEN</span> Winstkansen % &amp; value bets<br>
-        <span class="tag tag-red">RISICO</span> Risicoscore &amp; onzekerheden<br>
-        <span class="tag tag-purple">BET ADVIES</span> Concrete strategie &amp; inzetadvies<br>
-        <span class="tag tag-pink">🎯 AI TIP</span> Beste tip + confidence score
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">⚡ TIPS</div>
-      <div class="card-text">
-        Tik op <b>GENEREER TOP 3 TIPS + COMBI</b> voor een overzicht van de beste tips
-        uit alle geladen wedstrijden. Je krijgt:<br><br>
-        • <b>Top 3 losse tips</b> — elk met markt, quote en vertrouwenscore<br>
-        • <b>Combi van 3 legs</b> — met synergie analyse, risico en kansberekening<br>
-        • <b>Value score</b> — hoe goed de combi is ten opzichte van het risico
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">💶 WALLET</div>
-      <div class="card-text">
-        Fictief saldo om bij te houden hoe goed de AI tips presteren.
-        <b>Geen echt geld</b> — puur voor oefening en inzicht.<br><br>
-        • <b>Saldo verloop grafiek</b> — toont winst/verlies per weddenschap<br>
-        • <b>Alles checken</b> — haalt automatisch uitslagen op voor open bets<br>
-        • <b>Tik op ⏳ OPEN</b> om handmatig win/verlies in te stellen
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">📒 TRACKER</div>
-      <div class="card-text">
-        Bijhouden van je <b>echte weddenschappen</b> bij een bookmaker.
-        Per weddenschap sla je op:<br><br>
-        • Wedstrijd, datum, bookmaker (Unibet, Jacks, TOTO etc.)<br>
-        • Pick, markt en quote<br>
-        • <b>Bron:</b> 🤖 Analyse / ⚡ Combi tip / 📱 Widget / ✏️ Eigen keuze<br>
-        • ROI berekening over alle bets
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">⚙️ INSTELLINGEN</div>
-      <div class="card-text">
-        Hier sla je je <b>API keys</b> op (worden gesynchroniseerd via Firebase),
-        stel je je startbedrag en standaard inzet in, en kun je de wallet resetten.
-      </div>
+      <p>TOTO AI is een persoonlijke voetbalanalyse-app die <strong>value bets</strong> detecteert — wedstrijden waarbij de kans op winst hoger is dan de bookmaker inschat. De app combineert een <strong>Poisson statistisch model</strong> met <strong>AI-analyse</strong> om kansen te berekenen en vergelijkt die met de marktquotes.</p>
+      <p style="margin-top:.5rem;font-size:.75rem;color:#94a3b8;">⚠️ Fictief / educatief gebruik. Goк met beleid. 18+</p>
     </div>
   </div>
 
-  <div class="divider"></div>
+  <!-- ═══ SNEL STARTEN ═══ -->
 
-  <!-- MARKTEN UITLEG -->
   <div class="section">
-    <div class="section-title">🎯 Weddenschapmarkten</div>
-
+    <div class="section-title">🚀 Snel starten</div>
     <div class="card">
-      <div class="card-title">UITSLAG (1/X/2)</div>
-      <div class="markt-row">
-        <div class="markt-code">1</div>
-        <div class="markt-uitleg"><b>Thuisteam wint</b> — de meest voorkomende weddenschap. Quote onder 2.00 = favoriet.</div>
-      </div>
-      <div class="markt-row">
-        <div class="markt-code">X</div>
-        <div class="markt-uitleg"><b>Gelijkspel</b> — vaak de hoogste quote van de drie. Lastig te voorspellen.</div>
-      </div>
-      <div class="markt-row">
-        <div class="markt-code">2</div>
-        <div class="markt-uitleg"><b>Uitteam wint</b> — uitploeg wint. Hogere quote door uitteam nadeel.</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">DOELPUNTEN (OVER/UNDER)</div>
-      <div class="markt-row">
-        <div class="markt-code">O1.5</div>
-        <div class="markt-uitleg"><b>Meer dan 1.5 goals</b> — wedstrijd eindigt met 2 of meer doelpunten totaal. Wint als er minstens 2 goals vallen.</div>
-      </div>
-      <div class="markt-row">
-        <div class="markt-code">O2.5</div>
-        <div class="markt-uitleg"><b>Meer dan 2.5 goals</b> — minstens 3 doelpunten totaal (beide teams samen). Populaire markt.</div>
-      </div>
-      <div class="markt-row">
-        <div class="markt-code">U2.5</div>
-        <div class="markt-uitleg"><b>Minder dan 2.5 goals</b> — maximaal 2 doelpunten totaal. Goed voor defensieve wedstrijden.</div>
-      </div>
-      <div class="markt-row">
-        <div class="markt-code">O3.5</div>
-        <div class="markt-uitleg"><b>Meer dan 3.5 goals</b> — minstens 4 doelpunten. Hogere quote, meer risico.</div>
-      </div>
-      <div class="tip-box">
-        <strong>💡 Tip:</strong> Het getal (1.5, 2.5, 3.5) is altijd een halve om gelijkspel
-        op het aantal goals te voorkomen. "Over 2.5" wint bij 3+ goals, verliest bij 0, 1 of 2 goals.
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">BTTS — BEIDE TEAMS SCOREN</div>
-      <div class="markt-row">
-        <div class="markt-code">BTTS-J</div>
-        <div class="markt-uitleg"><b>Ja — beide teams scoren</b> — zowel thuis als uit scoort minstens 1 goal. De einduitslag doet er niet toe.</div>
-      </div>
-      <div class="markt-row">
-        <div class="markt-code">BTTS-N</div>
-        <div class="markt-uitleg"><b>Nee — niet beide teams scoren</b> — minstens één team houdt een clean sheet (0 goals).</div>
-      </div>
-      <div class="tip-box">
-        <strong>💡 Voorbeeld:</strong> Ajax 2-1 PSV → BTTS-J wint ✓<br>
-        Ajax 3-0 PSV → BTTS-N wint ✓ (PSV scoorde niet)
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">DUBBELE KANS</div>
-      <div class="markt-row">
-        <div class="markt-code">1X</div>
-        <div class="markt-uitleg"><b>Thuis wint OF gelijkspel</b> — je wint als het thuisteam niet verliest. Veiliger, lagere quote.</div>
-      </div>
-      <div class="markt-row">
-        <div class="markt-code">X2</div>
-        <div class="markt-uitleg"><b>Gelijkspel OF uitteam wint</b> — je wint als het thuisteam niet wint. Goed als je denkt dat de thuisploeg tegenvalt.</div>
-      </div>
-      <div class="markt-row">
-        <div class="markt-code">12</div>
-        <div class="markt-uitleg"><b>Thuis wint OF uitteam wint</b> — geen gelijkspel. Je verliest alleen bij een gelijke stand.</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">HANDICAP (AZIATISCH)</div>
-      <div class="markt-row">
-        <div class="markt-code">AH -1</div>
-        <div class="markt-uitleg"><b>Thuisteam geeft 1 goal voor</b> — thuisteam moet met 2+ goals verschil winnen. Hogere quote dan gewone 1.</div>
-      </div>
-      <div class="markt-row">
-        <div class="markt-code">AH +1</div>
-        <div class="markt-uitleg"><b>Uitteam krijgt 1 goal cadeau</b> — uitteam wint, of verliest met maximaal 1 goal verschil.</div>
-      </div>
+      <ul class="steps">
+        <li><span class="step-num">1</span><span>Voer je <strong>API keys</strong> in via ⚙️ Instellingen — Anthropic key (voor AI) en API-Football key (voor data)</span></li>
+        <li><span class="step-num">2</span><span>Kies een <strong>competitie</strong> (bijv. Eredivisie) — wedstrijden laden automatisch</span></li>
+        <li><span class="step-num">3</span><span>Tik <strong>⚡ SCAN VALUE</strong> — de app analyseert alle wedstrijden en toont picks met value</span></li>
+        <li><span class="step-num">4</span><span>Tik op een wedstrijd voor <strong>volledige AI analyse</strong> — 7 entiteiten draaien parallel</span></li>
+        <li><span class="step-num">5</span><span>Voeg picks toe aan de <strong>Wallet</strong> of <strong>Combi builder</strong> om bij te houden</span></li>
+      </ul>
     </div>
   </div>
 
-  <div class="divider"></div>
+  <!-- ═══ VALUE SCAN ═══ -->
 
-  <!-- QUOTES UITLEG -->
   <div class="section">
-    <div class="section-title">💰 Quotes & Kansen</div>
-
+    <div class="section-title">📐 Hoe werkt de Value Scan?</div>
     <div class="card">
-      <div class="card-title">WAT IS EEN QUOTE?</div>
-      <div class="card-text">
-        Een quote (ook wel odds of coëfficiënt) geeft aan hoeveel je terugkrijgt per ingezette euro.
-        <br><br>
-        <b>Quote 2.00</b> → €10 inzet = €20 terug (€10 winst)<br>
-        <b>Quote 1.50</b> → €10 inzet = €15 terug (€5 winst)<br>
-        <b>Quote 3.50</b> → €10 inzet = €35 terug (€25 winst)<br><br>
-        Hoe lager de quote, hoe groter de kans dat de bookmaker denkt dat het gaat winnen.
-        Quote 1.20 = grote favoriet, quote 5.00 = outsider.
+      <div class="card-title">⚡ Value formule</div>
+      <div class="formula">
+        <b>value%</b> = (AI_kans × odds − 1) × 100<br>
+        <span style="color:var(--muted);font-size:.65rem;">Voorbeeld: 60% kans × 2.10 odds = 1.26 → +26% value</span>
+      </div>
+      <div style="margin-top:.6rem;display:flex;flex-wrap:wrap;gap:.3rem;">
+        <span class="badge badge-green">⚡ ≥15% sterk</span>
+        <span class="badge badge-orange">⚡ 5-15% licht</span>
+        <span class="badge" style="background:rgba(100,116,139,.08);border:1px solid rgba(100,116,139,.2);color:#64748b;">0-5% fair</span>
+        <span class="badge badge-red">&lt;0% geen value</span>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">IMPLICIETE KANS BEREKENEN</div>
-      <div class="card-text">
-        Je kunt de kans berekenen die de bookmaker aan een uitkomst geeft:<br><br>
-        <b>Kans % = (1 / quote) × 100</b><br><br>
-        Quote 2.00 → 1/2.00 × 100 = <b>50%</b> kans<br>
-        Quote 1.50 → 1/1.50 × 100 = <b>67%</b> kans<br>
-        Quote 4.00 → 1/4.00 × 100 = <b>25%</b> kans<br><br>
-        De kansbalken in de app berekenen dit automatisch voor 1, X en 2.
-      </div>
-    </div>
+```
+<div class="card">
+  <div class="card-title">📐 Poisson model</div>
+  <p>De scan haalt seizoensstatistieken op per team en berekent verwachte doelpunten (lambda). Hieruit volgen de winstkansen via een Poisson-verdeling — volledig wiskundig, zonder AI-bias.</p>
+  <div class="formula" style="margin-top:.5rem;">
+    <b>λ_thuis</b> = aanvalskracht × verdedigingszwakte tegenstander / competitiegemiddelde
+  </div>
+  <p style="margin-top:.4rem;">Eindkans = <strong>65% Poisson + 35% AI</strong>. De AI corrigeert alleen voor context: blessures, H2H, motivatie.</p>
+</div>
 
-    <div class="card">
-      <div class="card-title">VALUE BET</div>
-      <div class="card-text">
-        Een <b>value bet</b> is een weddenschap waarbij jij denkt dat de echte kans
-        hoger is dan de bookmaker inschat.<br><br>
-        <b>Voorbeeld:</b> Bookmaker geeft quote 3.00 op een gelijkspel (= 33% kans).
-        Als de AI inschat dat de kans 45% is, dan is dit een value bet —
-        de bookmaker betaalt te veel voor iets dat vaker voorkomt dan hij denkt.
-      </div>
-      <div class="tip-box">
-        <strong>💡 Tip:</strong> Op lange termijn win je alleen structureel als je
-        consequent value bets vindt. Eén gewonnen bet zegt weinig.
-      </div>
-    </div>
+<div class="card">
+  <div class="card-title">🩹 Blessure-correctie</div>
+  <p>Per geblesseerde speler wordt de lambda automatisch aangepast:</p>
+  <table class="table" style="margin-top:.4rem;">
+    <tr><th>Positie</th><th>Effect</th></tr>
+    <tr><td>⬛ Keeper</td><td>−12% verdediging</td></tr>
+    <tr><td>🔵 Verdediger</td><td>−9% verdediging</td></tr>
+    <tr><td>🟡 Middenvelder</td><td>−4% aanval + verdediging</td></tr>
+    <tr><td>🔴 Aanvaller</td><td>−8% aanval</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-title">🎲 Confidence score</div>
+  <p>Elke pick krijgt een score van 0-10 op basis van beschikbare data:</p>
+  <table class="table" style="margin-top:.4rem;">
+    <tr><th>Data</th><th>Punten</th></tr>
+    <tr><td>Basis (ranglijst)</td><td>+4</td></tr>
+    <tr><td>H2H (≥3 duels)</td><td>+2</td></tr>
+    <tr><td>Vorm beide teams (5 duels)</td><td>+2</td></tr>
+    <tr><td>Blessuredata compleet</td><td>+1</td></tr>
+    <tr><td>Poisson beschikbaar</td><td>+1</td></tr>
+    <tr><td>Sharp money (📉)</td><td>+2</td></tr>
+  </table>
+  <div style="margin-top:.5rem;display:flex;gap:.3rem;flex-wrap:wrap;">
+    <span class="badge badge-green">🎲 7-10 betrouwbaar</span>
+    <span class="badge badge-orange">🎲 5-6 matig</span>
+    <span class="badge badge-red">🎲 &lt;5 weinig data</span>
+  </div>
+</div>
+```
+
   </div>
 
-  <div class="divider"></div>
+  <!-- ═══ FILTER ═══ -->
 
-  <!-- CONFIDENCE SCORE -->
   <div class="section">
-    <div class="section-title">🎯 Confidence Score</div>
-
+    <div class="section-title">🎯 Wanneer inzetten?</div>
     <div class="card">
-      <div class="card-title">WAT BETEKENT DE CONFIDENCE SCORE?</div>
-      <div class="card-text">
-        De confidence score (1-10) geeft aan <b>hoe zeker de AI is</b> van zijn tip,
-        op basis van de beschikbare data.<br><br>
-        <span class="tag tag-green">8-10 HOOG</span> Veel data beschikbaar, duidelijk patroon, teams in consistente vorm<br><br>
-        <span class="tag tag-orange">5-7 GEMIDDELD</span> Redelijke data, maar onzekerheden aanwezig (blessures, weinig H2H)<br><br>
-        <span class="tag tag-red">1-4 LAAG</span> Weinig data, inconsistente vorm, moeilijk te voorspellen wedstrijd
+      <p style="margin-bottom:.5rem;">Zet alleen in als <strong>drie van vijf</strong> groen zijn:</p>
+      <ul class="checklist">
+        <li><span class="check-icon">✅</span><span><strong>Value ≥10%</strong> — liefst ≥15%</span></li>
+        <li><span class="check-icon">✅</span><span><strong>Confidence ≥7/10</strong> — genoeg data</span></li>
+        <li><span class="check-icon">✅</span><span><strong>Poisson aanwezig</strong> (📐 P+AI badge)</span></li>
+        <li><span class="check-icon">✅</span><span><strong>Odds 1.80—3.50</strong> — sweet spot</span></li>
+        <li><span class="check-icon">✅</span><span><strong>Reden verwijst naar concrete data</strong> — niet alleen "ranglijst"</span></li>
+      </ul>
+      <div class="highlight" style="margin-top:.6rem;">
+        <strong>Vier of vijf groen?</strong> Serieuze pick. <strong>Twee of minder?</strong> Overslaan.
       </div>
-      <div class="tip-box">
-        <strong>💡 Advies:</strong> Gebruik alleen tips met een confidence score van
-        <strong>6 of hoger</strong> voor echte weddenschappen. Een lage score betekent
-        dat de AI weinig houvast heeft aan concrete data.
-      </div>
+    </div>
+    <div class="warning">
+      ⚠️ <strong>Value >55% is gecapped</strong> — te hoge waarden wijzen op datafout (verouderde stats, ontbrekende blessures). Controleer altijd handmatig.
     </div>
   </div>
 
-  <div class="divider"></div>
+  <!-- ═══ HALF KELLY ═══ -->
 
-  <!-- ROI UITLEG -->
   <div class="section">
-    <div class="section-title">📊 Statistieken & ROI</div>
-
+    <div class="section-title">💰 Half Kelly & Bankroll</div>
     <div class="card">
-      <div class="card-title">ROI — RETURN ON INVESTMENT</div>
-      <div class="card-text">
-        ROI geeft aan hoeveel procent winst of verlies je maakt ten opzichte van
-        je totale inzet.<br><br>
-        <b>ROI% = (winst - verlies) / totaal ingezet × 100</b><br><br>
-        <b>+10% ROI</b> → Voor elke €100 ingezet maak je €10 winst<br>
-        <b>-15% ROI</b> → Voor elke €100 ingezet verlies je €15<br>
-        <b>0% ROI</b> → Quitte gespeeld<br><br>
-        Professionele tipsters halen gemiddeld 5-10% ROI op lange termijn.
-        Dat klinkt laag maar is uitstekend in de sportwereld.
+      <div class="card-title">Kelly formule</div>
+      <div class="formula">
+        <b>Kelly%</b> = (kans × odds − 1) / (odds − 1) × 50%<br>
+        <span style="color:var(--muted);font-size:.65rem;">Max 25% van bankroll per pick (ingebouwde cap)</span>
       </div>
+      <p style="margin-top:.4rem;">Half Kelly geeft 75% van de groei van full Kelly met de helft van de variance. Professionele value-betters gebruiken altijd half Kelly of minder.</p>
     </div>
-
     <div class="card">
-      <div class="card-title">HITRATE</div>
-      <div class="card-text">
-        Percentage gewonnen weddenschappen.<br><br>
-        <b>Hitrate 60%</b> → 6 van de 10 bets gewonnen<br><br>
-        Let op: een hoge hitrate zegt niet alles. Als je altijd lage quotes (1.30)
-        speelt win je vaak maar verdien je weinig. Een lagere hitrate met hogere
-        quotes kan winstgevender zijn.
-      </div>
+      <div class="card-title">Praktische vuistregels</div>
+      <table class="table">
+        <tr><th>Kelly%</th><th>Betekenis</th></tr>
+        <tr><td>0%</td><td>Geen value — niet inzetten</td></tr>
+        <tr><td>1—3%</td><td>Lichte value — kleine inzet</td></tr>
+        <tr><td>3—6%</td><td>Goede value — normale inzet</td></tr>
+        <tr><td>>6%</td><td>Sterk — maar controleer blessures</td></tr>
+      </table>
     </div>
   </div>
 
-  <div class="divider"></div>
+  <!-- ═══ MULTI-SCAN ═══ -->
 
-  <!-- DATA UITLEG -->
   <div class="section">
-    <div class="section-title">📡 Data & API</div>
-
+    <div class="section-title">🌍 Multi-Scan</div>
     <div class="card">
-      <div class="card-title">WAAR KOMT DE DATA VANDAAN?</div>
-      <div class="card-text">
-        De app gebruikt twee databronnen:<br><br>
-        <b>API-Football</b> — wedstrijden, uitslagen, vorm, statistieken,
-        blessures, ranglijsten, live scores, opstellingen<br><br>
-        <b>Anthropic Claude</b> — de AI die alle data analyseert en
-        tips genereert op basis van de aangeleverde informatie<br><br>
-        De AI verzint <b>geen</b> statistieken — hij analyseert alleen
-        wat de API aanlevert. Als data ontbreekt zegt hij dat expliciet.
-      </div>
+      <ul class="steps">
+        <li><span class="step-num">1</span><span>Tik <span class="badge badge-green" style="font-size:.6rem;">📌 MULTI-SCAN SELECTEREN</span> boven de competities</span></li>
+        <li><span class="step-num">2</span><span>Tik op de competities die je wilt scannen — ze krijgen een groen ✓</span></li>
+        <li><span class="step-num">3</span><span>Tik <strong>✓ KLAAR</strong> — de groene balk verschijnt met ⚡ SCAN ALLES</span></li>
+        <li><span class="step-num">4</span><span>Tik <strong>⚡ SCAN ALLES</strong> — alle competities worden achtereenvolgens gescand</span></li>
+        <li><span class="step-num">5</span><span>Tik <strong>+ COMBI</strong> bij picks in de banner om ze direct toe te voegen aan de combi-builder</span></li>
+      </ul>
     </div>
+  </div>
 
+  <!-- ═══ BACKTEST ═══ -->
+
+  <div class="section">
+    <div class="section-title">📊 Value Backtest Tracker</div>
     <div class="card">
-      <div class="card-title">WAAROM SOMS GEEN DATA?</div>
-      <div class="card-text">
-        Niet alle competities en wedstrijden hebben evenveel data in de API:<br><br>
-        • <b>Blessures</b> — alleen beschikbaar voor grote competities<br>
-        • <b>Opstellingen</b> — pas beschikbaar ~1 uur voor aftrap<br>
-        • <b>Voorspellingen</b> — niet altijd beschikbaar voor kleinere competities<br>
-        • <b>Quotes</b> — kunnen ontbreken voor vroege wedstrijden<br><br>
-        Als quotes ontbreken kun je ze handmatig invullen vanuit
-        Unibet, Jacks, TOTO of een andere bookmaker.
+      <p>Elke value pick (≥5%) wordt <strong>automatisch opgeslagen</strong> in de Tracker tab. Na elke gespeelde wedstrijd tik je op <strong>🔍 CHECK</strong> om de uitslag op te halen.</p>
+      <p style="margin-top:.4rem;">De tracker berekent dan automatisch:</p>
+      <ul class="steps" style="margin-top:.3rem;">
+        <li><span class="step-num">→</span><span><strong>Hitrate</strong> — % gewonnen van afgeronde picks</span></li>
+        <li><span class="step-num">→</span><span><strong>ROI</strong> — rendement op flat €1 inzet per pick</span></li>
+        <li><span class="step-num">→</span><span><strong>Grafiek</strong> — cumulatief resultaat vs break-even lijn</span></li>
+      </ul>
+      <div class="highlight" style="margin-top:.5rem;">
+        <strong>Pas na ~50 picks</strong> zie je een betrouwbaar patroon. Na 200 picks weet je zeker of de scanner edge heeft.
       </div>
     </div>
   </div>
 
-  <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.58rem;
-    color:#94a3b8;padding:1rem 0 2rem;">
-    TOTO AI v2.0 · Made by Rob Borghouts<br>
-    Powered by Anthropic Claude + API-Football
+  <!-- ═══ TABS ═══ -->
+
+  <div class="section">
+    <div class="section-title">📱 Tabs uitleg</div>
+    <div class="tabs-grid">
+      <div class="tab-item">
+        <div class="ti">⚽</div>
+        <div class="tn">WEDSTRIJDEN</div>
+        <div class="td">Wedstrijden laden, value scan draaien, quotes bekijken</div>
+      </div>
+      <div class="tab-item">
+        <div class="ti">🤖</div>
+        <div class="tn">ANALYSE</div>
+        <div class="td">7 AI entiteiten: Vorm, Stats, Tactiek, Kansen, Risico, Advies, Tip</div>
+      </div>
+      <div class="tab-item">
+        <div class="ti">⚡</div>
+        <div class="tn">TIPS</div>
+        <div class="td">Value scan resultaten en combi-builder</div>
+      </div>
+      <div class="tab-item">
+        <div class="ti">💶</div>
+        <div class="tn">WALLET</div>
+        <div class="td">Fictief saldo, inzetgeschiedenis, hitrate</div>
+      </div>
+      <div class="tab-item">
+        <div class="ti">📒</div>
+        <div class="tn">TRACKER</div>
+        <div class="td">Value backtest + echte weddenschappen bijhouden</div>
+      </div>
+      <div class="tab-item">
+        <div class="ti">⚙️</div>
+        <div class="tn">INSTELLINGEN</div>
+        <div class="td">API keys, notificaties, thema, bankroll</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ API KEYS ═══ -->
+
+  <div class="section">
+    <div class="section-title">🔑 API Keys</div>
+    <div class="card">
+      <table class="table">
+        <tr><th>Key</th><th>Waar aanmaken</th><th>Waarvoor</th></tr>
+        <tr><td><strong>Anthropic</strong></td><td>console.anthropic.com</td><td>AI analyses, value scan</td></tr>
+        <tr><td><strong>API-Football</strong></td><td>api-football.com</td><td>Live data, stats, blessures</td></tr>
+        <tr><td><strong>Football-Data</strong></td><td>football-data.org</td><td>Backup data (gratis)</td></tr>
+      </table>
+      <div class="warning" style="margin-top:.6rem;">
+        ⚠️ Plak nooit een API key in een chatgesprek of WhatsApp. Voer hem direct in via ⚙️ Instellingen.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VEELGESTELDE VRAGEN ═══ -->
+
+  <div class="section">
+    <div class="section-title">❓ Veelgestelde vragen</div>
+
+```
+<div class="card">
+  <div class="card-title">Waarom vindt de scan soms niks?</div>
+  <p>Bookmakers zitten soms gewoon goed in de markt. Geen picks = geen value. Dat is goed nieuws — de scanner doet zijn werk door <em>niet</em> slechte picks te tonen.</p>
+</div>
+
+<div class="card">
+  <div class="card-title">Wat betekent "Fout: Overloaded"?</div>
+  <p>Anthropic's servers zijn tijdelijk druk. De app probeert automatisch 3x opnieuw (na 15s/30s/45s). Werkt het nog steeds niet? Probeer het later — 's avonds na 20:00 is rustiger.</p>
+</div>
+
+<div class="card">
+  <div class="card-title">Waarom staat Jacks niet in de bookmaker-lijst bij een wedstrijd?</div>
+  <p>Jacks is een Nederlandse bookmaker en zit niet in de API-Football database. Tik op <strong>"✏️ Andere quotes gebruiken"</strong> en vul de Jacks-quotes handmatig in. Jacks staat wel als standaard in de handmatige dropdown.</p>
+</div>
+
+<div class="card">
+  <div class="card-title">Wat is de beste combi-strategie?</div>
+  <p>Combineer alleen picks uit <em>verschillende</em> competities (onafhankelijk). Kies legs met odds 1.60—2.50. Maximaal 3 legs. Gebruik alleen picks die de value scan heeft goedgekeurd.</p>
+</div>
+
+<div class="card">
+  <div class="card-title">Klopt de hitrate van 100%?</div>
+  <p>Bij weinig afgeronde picks kan 1/1 = 100% geven. De app toont het sample size bij &lt;10 picks: "100% (1)". Pas na 20+ afgeronde picks is de hitrate betekenisvol.</p>
+</div>
+```
+
   </div>
 
 </div>
+
+<div class="footer">
+  TOTO AI v2.4 · Made by Rob Borghouts · Fictief / educatief gebruik · 18+
+</div>
+
 </body>
 </html>
