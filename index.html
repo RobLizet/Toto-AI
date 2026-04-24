@@ -822,7 +822,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v2.4</div>
+        <div class="version-badge">v2.5</div>
       </div>
     </div>
   </div>
@@ -1065,12 +1065,12 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 
 <!-- Entiteiten status -->
 <div class="entity-row" id="entityRow">
+  <div class="entity-chip" id="ec-kans"><span class="led"></span>KANSEN</div>
+  <div class="entity-chip" id="ec-advies"><span class="led"></span>BET ADVIES</div>
   <div class="entity-chip" id="ec-vorm"><span class="led"></span>VORM ANALIST</div>
   <div class="entity-chip" id="ec-stats"><span class="led"></span>STATISTIEKEN</div>
   <div class="entity-chip" id="ec-tactiek"><span class="led"></span>TACTIEK</div>
-  <div class="entity-chip" id="ec-kans"><span class="led"></span>KANSEN</div>
   <div class="entity-chip" id="ec-risico"><span class="led"></span>RISICO</div>
-  <div class="entity-chip" id="ec-advies"><span class="led"></span>BET ADVIES</div>
   <div class="entity-chip" id="ec-tip"><span class="led"></span>🎯 AI TIP</div>
 </div>
 
@@ -1092,6 +1092,18 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 
 <!-- Resultaten -->
 <div class="results" id="resultCards">
+  <div class="result-card" id="rc-kans" style="display:none">
+    <div class="card-head"><span class="card-tag t-kans">KANSEN</span><span class="card-title-txt">Winstkansen & Waarschijnlijkheden</span></div>
+    <div class="card-body" id="rb-kans"><span class="dots"><span></span><span></span><span></span></span></div>
+  </div>
+  <div class="result-card" id="rc-advies" style="display:none">
+    <div class="card-head"><span class="card-tag t-advies">BET ADVIES</span><span class="card-title-txt">Strategie & Inzet Advies</span></div>
+    <div class="card-body" id="rb-advies"><span class="dots"><span></span><span></span><span></span></span></div>
+  </div>
+  <div class="result-card" id="rc-tip" style="display:none;border:2px solid rgba(255,154,193,.4);background:linear-gradient(135deg,rgba(255,215,230,.25),rgba(214,240,255,.2));">
+    <div class="card-head"><span class="card-tag" style="background:linear-gradient(135deg,#ff9ac1,#a78bfa);color:#fff;">🎯 AI TIP</span><span class="card-title-txt" style="color:#d63384;font-weight:700;">Beste Tip + Kans van Slagen</span></div>
+    <div class="card-body" id="rb-tip"><span class="dots"><span></span><span></span><span></span></span></div>
+  </div>
   <div class="result-card" id="rc-vorm" style="display:none">
     <div class="card-head"><span class="card-tag t-vorm">VORM</span><span class="card-title-txt">Vorm & Recent Resultaten</span></div>
     <div class="card-body" id="rb-vorm"><span class="dots"><span></span><span></span><span></span></span></div>
@@ -1104,21 +1116,9 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
     <div class="card-head"><span class="card-tag t-tactiek">TACTIEK</span><span class="card-title-txt">Tactische Analyse</span></div>
     <div class="card-body" id="rb-tactiek"><span class="dots"><span></span><span></span><span></span></span></div>
   </div>
-  <div class="result-card" id="rc-kans" style="display:none">
-    <div class="card-head"><span class="card-tag t-kans">KANSEN</span><span class="card-title-txt">Winstkansen & Waarschijnlijkheden</span></div>
-    <div class="card-body" id="rb-kans"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
   <div class="result-card" id="rc-risico" style="display:none">
     <div class="card-head"><span class="card-tag t-risico">RISICO</span><span class="card-title-txt">Risicobeoordeling</span></div>
     <div class="card-body" id="rb-risico"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
-  <div class="result-card" id="rc-advies" style="display:none">
-    <div class="card-head"><span class="card-tag t-advies">BET ADVIES</span><span class="card-title-txt">Strategie & Inzet Advies</span></div>
-    <div class="card-body" id="rb-advies"><span class="dots"><span></span><span></span><span></span></span></div>
-  </div>
-  <div class="result-card" id="rc-tip" style="display:none;border:2px solid rgba(255,154,193,.4);background:linear-gradient(135deg,rgba(255,215,230,.25),rgba(214,240,255,.2));">
-    <div class="card-head"><span class="card-tag" style="background:linear-gradient(135deg,#ff9ac1,#a78bfa);color:#fff;">🎯 AI TIP</span><span class="card-title-txt" style="color:#d63384;font-weight:700;">Beste Tip + Kans van Slagen</span></div>
-    <div class="card-body" id="rb-tip"><span class="dots"><span></span><span></span><span></span></span></div>
   </div>
 </div>
 
