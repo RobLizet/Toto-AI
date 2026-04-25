@@ -1111,7 +1111,7 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v3.2</div>
+        <div class="version-badge">v3.3</div>
       </div>
     </div>
   </div>
@@ -4082,15 +4082,12 @@ function openValueAnalysis(matchId) {
 function sendPickNotification(title, body, tag) {
   if (!state.settings.notifEnabled) return;
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  try {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification(title, { body, icon:'/Toto-AI/icon-192.png', tag, renotify:true, vibrate:[200,100,200] });
-      }).catch(() => new Notification(title, { body, icon:'/Toto-AI/icon-192.png', tag }));
-    } else {
-      new Notification(title, { body, icon:'/Toto-AI/icon-192.png', tag });
-    }
-  } catch(e) {}
+  // Android vereist altijd ServiceWorker voor notificaties
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(reg => {
+      reg.showNotification(title, { body, icon:'/Toto-AI/icon-192.png', tag, renotify:true, vibrate:[200,100,200] });
+    }).catch(() => {}); // stil falen op Android zonder SW
+  }
 }
 
 async function toggleNotifications() {
@@ -4102,7 +4099,7 @@ async function toggleNotifications() {
   if (Notification.permission === 'granted') {
     state.settings.notifEnabled = true;
     saveState(); updateNotifUI();
-    new Notification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/icon-192.png' });
+    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/Toto-AI/icon-192.png' })).catch(()=>{});
     return;
   }
   if (Notification.permission === 'denied') {
@@ -4113,7 +4110,7 @@ async function toggleNotifications() {
   if (result === 'granted') {
     state.settings.notifEnabled = true;
     saveState(); updateNotifUI();
-    new Notification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/icon-192.png' });
+    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/Toto-AI/icon-192.png' })).catch(()=>{});
   }
 }
 
@@ -4155,14 +4152,16 @@ function sendValueNotification(scan) {
   const sign = scan.value > 0 ? '+' : '';
   const title = `⚡ ${sign}${Math.round(scan.value)}% VALUE — ${scan.pickLabel}`;
   const body = `${shortName(scan.match.home)} vs ${shortName(scan.match.away)} · quote ${scan.odds.toFixed(2)} · AI ${scan.kans}%`;
-  try {
-    const n = new Notification(title, {
-      body, icon:'/icon-192.png', badge:'/icon-192.png',
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready.then(reg => {
+    reg.showNotification(title, {
+      body, icon:'/Toto-AI/icon-192.png', badge:'/Toto-AI/icon-192.png',
       tag: 'value-' + scan.match.id,
-      requireInteraction: scan.value >= 25
+      renotify: true,
+      requireInteraction: scan.value >= 25,
+      vibrate: [200, 100, 200]
     });
-    n.onclick = () => { window.focus(); scrollToMatch(scan.match.id); n.close(); };
-  } catch(e) { console.warn(e); }
+  }).catch(e => console.warn('Notif SW:', e));
 }
 
 // ═══════════════════════════════════════════════════════
