@@ -1144,7 +1144,7 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v3.5</div>
+        <div class="version-badge">v3.6</div>
       </div>
     </div>
   </div>
@@ -1662,6 +1662,18 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
       <option value="25">≥ 25%</option>
       <option value="30">≥ 30%</option>
     </select>
+  </div>
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Test notificatie</div>
+      <div class="sr-sub" id="notifTestResult">Stuur een testmelding naar je telefoon</div>
+    </div>
+    <button onclick="testNotification()"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;
+      padding:.35rem .9rem;border-radius:999px;cursor:pointer;white-space:nowrap;
+      background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.3);color:#1d4ed8;">
+      🔔 TEST
+    </button>
   </div>
 </div>
 
@@ -4162,6 +4174,45 @@ function sendPickNotification(title, body, tag) {
   }
 }
 
+
+async function testNotification() {
+  const resultEl = document.getElementById('notifTestResult');
+  const setResult = (msg, color) => { if (resultEl) { resultEl.textContent = msg; resultEl.style.color = color; } };
+
+  if (!('Notification' in window)) {
+    setResult('⚠ Browser ondersteunt geen notificaties', '#dc2626'); return;
+  }
+  if (Notification.permission === 'denied') {
+    setResult('⚠ Geblokkeerd — zet aan via browser instellingen', '#dc2626'); return;
+  }
+  if (Notification.permission !== 'granted') {
+    setResult('⏳ Toestemming vragen...', '#f59e0b');
+    const result = await Notification.requestPermission();
+    if (result !== 'granted') {
+      setResult('⚠ Geen toestemming gegeven', '#dc2626'); return;
+    }
+  }
+  if (!('serviceWorker' in navigator)) {
+    setResult('⚠ ServiceWorker niet beschikbaar', '#dc2626'); return;
+  }
+  setResult('⏳ Versturen...', '#2563eb');
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('🔔 TOTO AI Test', {
+      body: 'Notificaties werken! 🏆 Triple Lock · 🔑 Double Lock · ✅ Bet resultaten',
+      icon: '/Toto-AI/icon-192.png',
+      badge: '/Toto-AI/icon-192.png',
+      vibrate: [200, 100, 200, 100, 200],
+      tag: 'test-notif',
+      renotify: true
+    });
+    setResult('✅ Verstuurd! Check je meldingen', '#16a34a');
+    // Reset na 5 sec
+    setTimeout(() => { if (resultEl) { resultEl.textContent = 'Stuur een testmelding naar je telefoon'; resultEl.style.color = ''; } }, 5000);
+  } catch(e) {
+    setResult('⚠ Fout: ' + e.message, '#dc2626');
+  }
+}
 async function toggleNotifications() {
   if (!('Notification' in window)) { alert('Je browser ondersteunt geen notificaties.'); return; }
   if (state.settings.notifEnabled) {
