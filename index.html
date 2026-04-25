@@ -6590,7 +6590,12 @@ function renderWalletChart() {
 // ═══════════════════════════════════════════════════════
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/Toto-AI/sw.js', {scope:'/Toto-AI/'}).catch(() => {});
+    navigator.serviceWorker.register('/Toto-AI/sw.js', {scope:'/Toto-AI/', updateViaCache:'none'})
+      .then(reg => {
+        // Check voor updates bij elke pagina-laad
+        reg.update();
+        console.log('[App] SW geregistreerd, update gecheckt');
+      }).catch(() => {});
   }
 }
 
