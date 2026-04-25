@@ -822,7 +822,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v2.5</div>
+        <div class="version-badge">v2.6</div>
       </div>
     </div>
   </div>
@@ -949,7 +949,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       </div>
     </div>
 
-```
 <div class="section-label">
   Wedstrijden vandaag t/m overmorgen
   <button onclick="debugAPI()" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;
@@ -1004,7 +1003,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   </div>
 </div>
 </div>
-```
 
   </div>
 
@@ -1036,7 +1034,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       ⚠ Selecteer eerst een wedstrijd in het tabblad Wedstrijden
     </div>
 
-```
 <!-- API key balk -->
 <div class="api-bar">
   <span class="api-bar-label">🔑 Anthropic API Key</span>
@@ -1126,7 +1123,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   ⚠ FICTIEVE APP — Uitsluitend voor educatieve doeleinden. Geen echte gok-adviezen.
   Gebruik geen echt geld op basis van AI-analyses. 18+
 </div>
-```
 
   </div>
 
@@ -1141,7 +1137,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       <div class="sub">Virtueel geld — geen echte waarde</div>
     </div>
 
-```
 <div class="wallet-grid">
   <div class="w-stat-box">
     <div class="s-lbl">Totaal ingezet</div>
@@ -1205,7 +1200,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 <div class="bet-history-list" id="betHistoryList">
   <div class="empty-state">Nog geen inzetten geplaatst</div>
 </div>
-```
 
   </div>
 
@@ -1215,7 +1209,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 
   <div id="tab-tracker" class="tab-content">
 
-```
 <!-- ⚡ VALUE BACKTEST SECTIE -->
 <div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
   border:1px solid rgba(22,163,74,.2);border-radius:16px;padding:.9rem;margin-bottom:1rem;">
@@ -1308,7 +1301,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 <div id="trackerList">
   <div class="empty-state">Nog geen echte weddenschappen bijgehouden</div>
 </div>
-```
 
   </div>
 
@@ -1318,7 +1310,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 
   <div id="tab-instellingen" class="tab-content">
 
-```
 <!-- FIREBASE STATUS BALK -->
 <div id="firebaseStatus" style="display:none;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.25);border-radius:12px;padding:.65rem 1rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;"></div>
 
@@ -1504,7 +1495,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   Alle analyses zijn AI-gegenereerd en geen gokadvies.<br>
   Made by Rob Borghouts · Powered by Anthropic Claude + football-data.org + API-Football
 </div>
-```
 
   </div>
 
@@ -1518,7 +1508,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
     <div class="modal-match-name" id="modalMatchName">—</div>
     <div class="modal-pick-info" id="modalPickInfo">—</div>
 
-```
 <!-- Extra markten -->
 <div style="margin:.6rem 0;">
   <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
@@ -1563,7 +1552,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   <button class="modal-confirm" onclick="confirmBet()">INZET BEVESTIGEN</button>
   <button class="modal-cancel" onclick="closeBetModal()">ANNULEREN</button>
 </div>
-```
 
   </div>
 </div>
@@ -1598,7 +1586,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
     <h3>📒 Echte Weddenschap</h3>
     <div style="display:flex;flex-direction:column;gap:.6rem;">
 
-```
   <div>
     <div class="sr-label" style="margin-bottom:.25rem;">Wedstrijd</div>
     <input class="modal-input" id="trMatch" type="text" placeholder="bijv. Ajax vs PSV">
@@ -1674,7 +1661,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
     <button class="modal-cancel" onclick="closeModal('trackerModal')">ANNULEREN</button>
   </div>
 </div>
-```
 
   </div>
 </div>
@@ -4728,24 +4714,33 @@ async function checkBetResult(betId) {
   const legs = bet.type === 'combi' ? bet.legs : [{home:bet.matchName?.split(' vs ')?.[0], away:bet.matchName?.split(' vs ')?.[1], pick:bet.pick, fixtureId:bet.fixtureId}];
   function parseBetDate(s) {
     if (!s) return null;
+    // Support DD-M-YYYY, D-MM-YYYY, DD-MM-YYYY and YYYY-MM-DD
     const p = s.split('-');
-    if (p.length === 3) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+    if (p.length === 3) {
+      // If first part is 4 digits it's already YYYY-MM-DD
+      if (p[0].length === 4) return s;
+      // Otherwise assume DD-MM-YYYY
+      return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+    }
     return null;
   }
   const betDate = parseBetDate(bet.date);
   let fixturesPool = [];
   try {
+    const fetches = [];
     if (betDate) {
-      const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${betDate}`, apiKey);
-      const d = await r.json();
-      fixturesPool = d.response || [];
+      fetches.push(apiFetch(`https://v3.football.api-sports.io/fixtures?date=${betDate}`, apiKey).then(r=>r.json()).catch(()=>({response:[]})));
     }
-    if (fixturesPool.length < 5) {
-      const r2 = await apiFetch(`https://v3.football.api-sports.io/fixtures?last=50`, apiKey);
-      const d2 = await r2.json();
-      fixturesPool = [...fixturesPool, ...(d2.response||[])];
+    fetches.push(apiFetch(`https://v3.football.api-sports.io/fixtures?last=100`, apiKey).then(r=>r.json()).catch(()=>({response:[]})));
+    const results = await Promise.all(fetches);
+    const seen = new Set();
+    for (const d of results) {
+      for (const f of (d.response||[])) {
+        if (!seen.has(f.fixture.id)) { seen.add(f.fixture.id); fixturesPool.push(f); }
+      }
     }
-  } catch(e) {}
+    console.log('[CheckBet] Pool size:', fixturesPool.length, 'for date:', betDate);
+  } catch(e) { console.error('[CheckBet] fetch error:', e); }
 
   for (const leg of legs) {
     try {
@@ -4755,12 +4750,20 @@ async function checkBetResult(betId) {
         fix = fixturesPool.find(f => f.fixture.id === fid);
       }
       if (!fix && leg.home && leg.away) {
-        const n = s => s.toLowerCase().replace(/\s+/g,' ').trim();
-        const hn = n(leg.home), an = n(leg.away);
-        fix = fixturesPool.find(f => {
-          if (!['FT','AET','PEN'].includes(f.fixture.status.short)) return false;
-          return n(f.teams.home.name).includes(hn.substring(0,5)) && n(f.teams.away.name).includes(an.substring(0,5));
+        const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+        const words = s => norm(s).split(' ').filter(w => w.length > 2);
+        const hn = norm(leg.home), an = norm(leg.away);
+        const hwds = words(leg.home), awds = words(leg.away);
+        const finishedPool = fixturesPool.filter(f => ['FT','AET','PEN'].includes(f.fixture.status.short));
+        console.log('[CheckBet] Looking for:', leg.home, 'vs', leg.away, '| finished in pool:', finishedPool.length);
+        fix = finishedPool.find(f => {
+          const fh = norm(f.teams.home.name), fa = norm(f.teams.away.name);
+          const homeMatch = hwds.some(w => fh.includes(w)) || fh.includes(hn.substring(0,5));
+          const awayMatch = awds.some(w => fa.includes(w)) || fa.includes(an.substring(0,5));
+          if (homeMatch || awayMatch) console.log('[CheckBet] Candidate:', f.teams.home.name, 'vs', f.teams.away.name, '| homeMatch:', homeMatch, 'awayMatch:', awayMatch);
+          return homeMatch && awayMatch;
         });
+        if (!fix) console.warn('[CheckBet] No match found for', leg.home, 'vs', leg.away);
       }
       if (!fix || !['FT','AET','PEN'].includes(fix.fixture.status.short)) continue;
       const hg = fix.goals.home ?? 0, ag = fix.goals.away ?? 0;
@@ -4840,9 +4843,17 @@ function deleteBet(id) {
 function cycleBetStatus(id) {
   const b = state.wallet.bets.find(x => x.id === id);
   if (!b) return;
-  if (b.status === 'pending') { b.status = 'win'; state.wallet.balance += b.payout; state.wallet.totalWon += b.payout; }
-  else if (b.status === 'win') { b.status = 'pending'; b.score = null; state.wallet.balance -= b.payout; state.wallet.totalWon -= b.payout; }
-  else { b.status = 'pending'; b.score = null; }
+  // pending → win → lose → pending
+  if (b.status === 'pending') {
+    b.status = 'win'; state.wallet.balance += b.payout; state.wallet.totalWon += b.payout;
+  } else if (b.status === 'win') {
+    // undo win, set to lose
+    state.wallet.balance -= b.payout; state.wallet.totalWon -= b.payout;
+    b.status = 'lose'; b.score = null;
+  } else {
+    // lose → pending
+    b.status = 'pending'; b.score = null;
+  }
   saveState(); updateWalletUI();
 }
 
@@ -4873,7 +4884,12 @@ async function autoCheckAllBets() {
   showAutoCheckStatus(`⟳ ${open.length} checken...`, '#d97706');
   let checked = 0, upd = 0;
   for (const bet of open) {
-    try { await checkBetResult(bet.id); checked++; if (bet.status !== 'pending') upd++; } catch(e) {}
+    try {
+      const prevStatus = bet.status;
+      await checkBetResult(bet.id);
+      checked++;
+      if (bet.status !== prevStatus) upd++;
+    } catch(e) {}
   }
   showAutoCheckStatus(`✓ ${checked} gecheckt · ${upd} bijgewerkt`, '#16a34a');
   updateWalletUI();
@@ -4991,7 +5007,7 @@ function renderTracker() {
       <div class="tracker-footer">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#475569;">€${b.stake.toFixed(2)} → €${b.payout.toFixed(2)}</span>
         <span class="tracker-result ${b.status}" onclick="cycleTrackerStatus(${b.id})">${statusTxt}</span>
-      </div></div>`;
+      </div></div></div>`;
   }).join('');
 }
 
