@@ -641,6 +641,7 @@ border-color:rgba(219,39,119,.35);color:#be185d;}
 .tracker-row{background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
 border-radius:14px;padding:.75rem .9rem;margin-bottom:.5rem;box-shadow:0 2px 8px rgba(15,23,42,.05);}
 .tracker-match{font-size:.9rem;font-weight:700;color:#0f172a;margin-bottom:.2rem;}
+.tr-score-badge{font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;background:rgba(15,23,42,.08);padding:1px 6px;border-radius:4px;margin-left:4px;}
 .tracker-meta{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;color:#475569;
 display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.4rem;}
 .tracker-source{font-family:‘IBM Plex Mono’,monospace;font-size:.5rem;font-weight:700;
@@ -984,10 +985,51 @@ body.dark .triple-lock-meta { color: #d97706; }
   font-size:1.6rem;
   letter-spacing:.05em;
 }
+
+/* ═══════════════════════════════════════
+   JS ERROR BANNER
+═══════════════════════════════════════ */
+#jsBanner {
+  display:none;
+  position:fixed;
+  top:0; left:0; right:0;
+  z-index:99999;
+  background:#dc2626;
+  color:#fff;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.6rem;
+  font-weight:700;
+  padding:.5rem 1rem .5rem 1rem;
+  line-height:1.5;
+  box-shadow:0 2px 12px rgba(0,0,0,.3);
+  cursor:pointer;
+}
+#jsBanner .jb-title {
+  font-size:.65rem;
+  letter-spacing:.05em;
+  margin-bottom:.15rem;
+}
+#jsBanner .jb-msg {
+  opacity:.9;
+  word-break:break-all;
+  font-weight:400;
+}
+#jsBanner .jb-close {
+  float:right;
+  font-size:1rem;
+  line-height:1;
+  margin-left:.5rem;
+  opacity:.8;
+}
 </style>
 
 </head>
 <body>
+<div id="jsBanner" onclick="this.style.display='none'">
+  <span class="jb-close">✕</span>
+  <div class="jb-title">⚠ App fout</div>
+  <div class="jb-msg" id="jsBannerMsg">—</div>
+</div>
 <div class="app">
 
   <!-- INSTALL BANNER -->
@@ -1022,7 +1064,7 @@ body.dark .triple-lock-meta { color: #d97706; }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v2.9</div>
+        <div class="version-badge">v3.1</div>
       </div>
     </div>
   </div>
@@ -5248,7 +5290,7 @@ function renderTracker() {
     const border = b.status === 'win' ? 'border-left:3px solid #16a34a;' : b.status === 'lose' ? 'border-left:3px solid #dc2626;' : '';
     return `<div class="tracker-row" style="${border}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div class="tracker-match">${b.match}${b.score ? \` <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;background:rgba(15,23,42,.08);padding:1px 6px;border-radius:4px;">${b.score}</span>\` : ''}</div>
+        <div class="tracker-match">${b.match}${b.score ? '<span class="tr-score-badge">' + b.score + '</span>' : ''}</div>
         <button onclick="deleteTrackerBet(${b.id})" style="background:none;border:none;color:#94a3b8;font-size:.9rem;cursor:pointer;">✕</button>
       </div>
       <div class="tracker-meta">
@@ -6130,5 +6172,24 @@ function showThemeHint(theme) {
 }
 </script>
 
+
+<script>
+// ── Global error catcher ──────────────────────────────
+window.addEventListener('error', function(e) {
+  const banner = document.getElementById('jsBanner');
+  const msg = document.getElementById('jsBannerMsg');
+  if (!banner || !msg) return;
+  const file = (e.filename || '').split('/').pop() || '?';
+  msg.textContent = (e.message || 'Onbekende fout') + ' (' + file + ':' + e.lineno + ')';
+  banner.style.display = 'block';
+});
+window.addEventListener('unhandledrejection', function(e) {
+  const banner = document.getElementById('jsBanner');
+  const msg = document.getElementById('jsBannerMsg');
+  if (!banner || !msg) return;
+  msg.textContent = 'Promise fout: ' + (e.reason?.message || String(e.reason) || '?');
+  banner.style.display = 'block';
+});
+</script>
 </body>
 </html>
