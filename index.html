@@ -1068,6 +1068,39 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
 .swipe-hint.win-hint  { left:0;background:rgba(22,163,74,.9);color:#fff; }
 .swipe-hint.lose-hint { right:0;background:rgba(220,38,38,.9);color:#fff; }
 .swipe-inner { transition:transform .2s; }
+
+/* ═══════════════════════════════════════
+   BRON-SPLIT GRAFIEK TABS
+═══════════════════════════════════════ */
+.chart-tab-row {
+  display:flex; gap:.25rem; flex-wrap:wrap; margin-bottom:.5rem;
+}
+.chart-tab {
+  font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+  padding:2px 9px;border-radius:999px;cursor:pointer;transition:all .15s;
+  border:1px solid rgba(15,23,42,.12);background:transparent;color:#475569;
+}
+.chart-tab.active {
+  border-color:rgba(219,39,119,.4);background:rgba(219,39,119,.1);color:#be185d;
+}
+/* auto-dark toggle pill in settings */
+.auto-dark-toggle {
+  display:flex;align-items:center;gap:.5rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+  cursor:pointer;
+}
+.toggle-pill {
+  width:38px;height:22px;border-radius:11px;
+  background:#e2e8f0;position:relative;transition:background .2s;flex-shrink:0;
+}
+.toggle-pill.on { background:rgba(219,39,119,.7); }
+.toggle-pill::after {
+  content:'';position:absolute;top:3px;left:3px;
+  width:16px;height:16px;border-radius:50%;
+  background:#fff;transition:left .2s;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.toggle-pill.on::after { left:19px; }
 </style>
 
 </head>
@@ -1111,7 +1144,7 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v3.3</div>
+        <div class="version-badge">v3.5</div>
       </div>
     </div>
   </div>
@@ -1444,23 +1477,19 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
 <!-- SALDO GRAFIEK -->
 <div style="background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
   border-radius:16px;padding:.9rem 1rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,23,42,.05);">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
     <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
       color:#475569;letter-spacing:.05em;">📈 SALDO VERLOOP</div>
     <div style="display:flex;gap:.3rem;">
-      <button onclick="setChartView('saldo')" id="cv-saldo"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
-        padding:2px 8px;border-radius:999px;cursor:pointer;
-        border:1px solid rgba(219,39,119,.4);background:rgba(219,39,119,.1);color:#be185d;">
-        Saldo
-      </button>
-      <button onclick="setChartView('pnl')" id="cv-pnl"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
-        padding:2px 8px;border-radius:999px;cursor:pointer;
-        border:1px solid rgba(15,23,42,.12);background:transparent;color:#475569;">
-        W/V
-      </button>
+      <button onclick="setChartView('saldo')" id="cv-saldo" class="chart-tab active">Saldo</button>
+      <button onclick="setChartView('pnl')"   id="cv-pnl"   class="chart-tab">W/V</button>
     </div>
+  </div>
+  <div class="chart-tab-row">
+    <button onclick="setChartSource('all')"      id="cs-all"      class="chart-tab active">Alles</button>
+    <button onclick="setChartSource('analyse')"  id="cs-analyse"  class="chart-tab">🤖 Analyse</button>
+    <button onclick="setChartSource('combi')"    id="cs-combi"    class="chart-tab">⚡ Combi</button>
+    <button onclick="setChartSource('eigen')"    id="cs-eigen"    class="chart-tab">✏️ Eigen</button>
   </div>
   <canvas id="walletChart" height="140" style="width:100%;display:block;"></canvas>
   <div id="chartEmpty" style="display:none;text-align:center;padding:1.5rem;
@@ -1636,6 +1665,38 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
   </div>
 </div>
 
+<!-- TRIPLE LOCK FILTER -->
+<div class="settings-section">
+  <h4>🏆 Triple Lock filter</h4>
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Minimum odds</div>
+      <div class="sr-sub">Toon alleen Triple/Double Lock vanaf deze quote</div>
+    </div>
+    <select class="sr-input sr-input-border" id="tripleMinOdds" onchange="saveSettings()">
+      <option value="1.0">Alles</option>
+      <option value="1.4">≥ 1.40</option>
+      <option value="1.6" selected>≥ 1.60</option>
+      <option value="1.8">≥ 1.80</option>
+      <option value="2.0">≥ 2.00</option>
+    </select>
+  </div>
+</div>
+
+<!-- AUTO DONKER THEMA -->
+<div class="settings-section">
+  <h4>🌙 Auto donker thema</h4>
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Automatisch donker na 20:00</div>
+      <div class="sr-sub">Schakelt 's ochtends om 8:00 terug</div>
+    </div>
+    <div class="auto-dark-toggle" onclick="toggleAutoDark()">
+      <div class="toggle-pill" id="autoDarkPill"></div>
+    </div>
+  </div>
+</div>
+
 <div class="settings-section">
   <h4>🔥 Firebase</h4>
   <div class="settings-row">
@@ -1651,10 +1712,15 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
       <div class="sr-sub">API keys worden automatisch gesynchroniseerd</div>
     </div>
   </div>
-  <div style="margin-top:.5rem;">
-    <button onclick="saveToFirebase().then(()=>showFirebaseStatus('🔥 Gesynchroniseerd!','#2ecc71')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#e74c3c'))"
+  <div id="fbBackupInfo" style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);margin-bottom:.5rem;"></div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+    <button onclick="saveToFirebase().then(()=>{showFirebaseStatus('🔥 Gesynchroniseerd!','#2ecc71');loadFbBackupInfo();}).catch(e=>showFirebaseStatus('⚠ '+e.message,'#e74c3c'))"
       style="background:linear-gradient(135deg,rgba(255,154,193,.2),rgba(167,139,250,.2));border:1px solid rgba(255,154,193,.3);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;padding:.45rem 1rem;border-radius:999px;cursor:pointer;">
-      🔄 NU SYNCHRONISEREN
+      ☁️ NU OPSLAAN
+    </button>
+    <button onclick="restoreFromFirebase()"
+      style="background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(21,128,61,.1));border:1px solid rgba(22,163,74,.3);color:#15803d;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;padding:.45rem 1rem;border-radius:999px;cursor:pointer;">
+      🔁 HERSTEL UIT CLOUD
     </button>
   </div>
 </div>
@@ -2016,6 +2082,8 @@ let deferredInstall = null;
 window.addEventListener('load', () => {
   try { loadState(); } catch(e) { console.error('loadState:', e); }
   startAutoCheckScheduler();
+  updateAutoDarkUI();
+  checkAutoDarkNow();
   try { applySettings(); } catch(e) { console.error('applySettings:', e); }
   try { applyTheme(); } catch(e) {}
   try { updateWalletUI(); } catch(e) { console.error('updateWalletUI:', e); }
@@ -2068,6 +2136,7 @@ function switchTab(name) {
   }
   if (name === 'wallet') updateWalletUI();
   if (name === 'tracker') { renderTracker(); updateTrackerStats(); renderBacktest(); }
+  if (name === 'instellingen') { loadFbBackupInfo(); }
   state.activeTab = name;
   if (name === 'wedstrijden') {
     startLivePolling();
@@ -2857,11 +2926,13 @@ function renderMatches(matches) {
 
   // ─── TRIPLE LOCK SECTIE ───────────────────────────────────────
   // Wedstrijden die aan alle 3 signalen voldoen: value≥5% + conf≥7 + poisson
+  const _minOdds = parseFloat(state.settings.tripleMinOdds || 1.6);
   const tripleMatches = matches.filter(m =>
     m.valueData &&
     m.valueData.pct >= 5 &&
     m.valueData.confidence >= 7 &&
-    m.valueData.poissonUsed === true
+    m.valueData.poissonUsed === true &&
+    (m.valueData.odds || 0) >= _minOdds
   );
   if (tripleMatches.length > 0) {
     const sec = document.createElement('div');
@@ -2897,6 +2968,7 @@ function renderMatches(matches) {
 
   // ─── DOUBLE LOCK SECTIE (2 van 3 signalen) ───────────────────
   const doubleMatches = matches.filter(m => {
+    if ((m.valueData?.odds||0) < _minOdds) return false;
     if (!m.valueData) return false;
     const hasValue   = m.valueData.pct >= 5;
     const hasConf    = m.valueData.confidence >= 7;
@@ -5804,6 +5876,7 @@ function saveSettings() {
   state.settings.defaultBet = parseInt(document.getElementById('settDefaultBet').value) || 10;
   state.settings.defaultBookmaker = document.getElementById('settDefaultBookmaker')?.value || 'Jacks';
   state.settings.notifThreshold = parseInt(document.getElementById('notifThreshold')?.value) || 20;
+  state.settings.tripleMinOdds = parseFloat(document.getElementById('tripleMinOdds')?.value) || 1.6;
   saveState();
   updateNotifUI();
   showFirebaseStatus('✅ Opgeslagen!', '#16a34a');
@@ -5832,6 +5905,8 @@ function applySettings() {
   if (bal) bal.textContent = '€' + (state.wallet.balance||0).toFixed(2).replace('.',',');
   const nt = document.getElementById('notifThreshold');
   if (nt) nt.value = state.settings.notifThreshold || 20;
+  const tmo = document.getElementById('tripleMinOdds');
+  if (tmo) tmo.value = state.settings.tripleMinOdds || 1.6;
   if (state.settings.anthropicKey) {
     document.getElementById('apiStatus').textContent = '✓ Key geladen';
     document.getElementById('apiStatus').className = 'api-status ok';
@@ -5860,6 +5935,8 @@ async function saveToFirebase() {
     startBalance: state.settings.startBalance || 500,
     notifEnabled: state.settings.notifEnabled || false,
     notifThreshold: state.settings.notifThreshold || 20,
+    tripleMinOdds: state.settings.tripleMinOdds || 1.6,
+    autoDark: state.settings.autoDark || false,
     updatedAt: new Date().toISOString()
   };
   const resp = await fetch(`${FB_DB}/settings.json?auth=${FB_KEY}`, {
@@ -5867,13 +5944,65 @@ async function saveToFirebase() {
   });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
-  const backupPayload = { wallet:state.wallet, tracker:state.tracker, valueBacktest:state.valueBacktest, version:'2.3', backupDate:new Date().toISOString() };
-  await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`, {
+  // Altijd wallet + tracker opslaan, ook als er al data is
+  const backupPayload = {
+    wallet: state.wallet,
+    tracker: state.tracker,
+    valueBacktest: state.valueBacktest,
+    version: '3.5',
+    backupDate: new Date().toISOString(),
+    walletBetCount: state.wallet.bets.length,
+    trackerBetCount: state.tracker.bets.length
+  };
+  const bresp = await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`, {
     method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(backupPayload)
   });
+  if (!bresp.ok) throw new Error(`Backup HTTP ${bresp.status}`);
   return resp.json();
 }
 
+
+async function restoreFromFirebase() {
+  if (!confirm('Wallet + Tracker herstellen vanuit de cloud?\nLokale data wordt overschreven als de cloud meer bets heeft.')) return;
+  showFirebaseStatus('🔄 Ophalen...', '#2563eb');
+  try {
+    const br = await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`);
+    if (!br.ok) throw new Error('Geen backup gevonden');
+    const b = await br.json();
+    if (!b) throw new Error('Backup leeg');
+    const fbWallet  = b.wallet?.bets?.length  || 0;
+    const fbTracker = b.tracker?.bets?.length || 0;
+    if (fbWallet === 0 && fbTracker === 0) {
+      showFirebaseStatus('⚠ Cloud backup is leeg', '#f59e0b'); return;
+    }
+    if (b.wallet)  state.wallet  = b.wallet;
+    if (b.tracker) state.tracker = b.tracker;
+    if (b.valueBacktest) state.valueBacktest = b.valueBacktest;
+    saveState();
+    updateWalletUI();
+    renderTracker();
+    updateTrackerStats();
+    showFirebaseStatus('✅ Hersteld: ' + fbWallet + ' wallet bets, ' + fbTracker + ' tracker bets', '#16a34a');
+    loadFbBackupInfo();
+  } catch(e) {
+    showFirebaseStatus('⚠ ' + e.message, '#e74c3c');
+  }
+}
+
+async function loadFbBackupInfo() {
+  const el = document.getElementById('fbBackupInfo');
+  if (!el) return;
+  try {
+    const br = await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`);
+    if (!br.ok) { el.textContent = 'Nog geen cloud backup'; return; }
+    const b = await br.json();
+    if (!b) { el.textContent = 'Nog geen cloud backup'; return; }
+    const date = b.backupDate ? new Date(b.backupDate).toLocaleString('nl-NL') : '?';
+    const wc   = b.walletBetCount  ?? b.wallet?.bets?.length  ?? '?';
+    const tc   = b.trackerBetCount ?? b.tracker?.bets?.length ?? '?';
+    el.textContent = '☁️ Laatste backup: ' + date + ' · ' + wc + ' wallet · ' + tc + ' tracker';
+  } catch(e) { el.textContent = 'Cloud info niet beschikbaar'; }
+}
 async function loadFromFirebase() {
   try {
     const resp = await fetch(`${FB_DB}/settings.json?auth=${FB_KEY}`);
@@ -5888,16 +6017,31 @@ async function loadFromFirebase() {
     if (d.startBalance) state.settings.startBalance = d.startBalance;
     if (d.notifEnabled !== undefined) state.settings.notifEnabled = d.notifEnabled;
     if (d.notifThreshold) state.settings.notifThreshold = d.notifThreshold;
+    if (d.tripleMinOdds) state.settings.tripleMinOdds = d.tripleMinOdds;
+    if (d.autoDark !== undefined) state.settings.autoDark = d.autoDark;
+    if (d._preAutoDarkTheme) state.settings._preAutoDarkTheme = d._preAutoDarkTheme;
     try {
       const br = await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`);
       if (br.ok) {
         const b = await br.json();
-        if (b?.wallet && state.wallet.bets.length === 0) {
-          state.wallet = b.wallet;
-          showFirebaseStatus('🔥 Wallet hersteld','#16a34a');
+        if (b?.wallet) {
+          const localCount = state.wallet.bets.length;
+          const fbCount = b.wallet.bets?.length || 0;
+          if (fbCount > localCount) {
+            state.wallet = b.wallet;
+            showFirebaseStatus('☁️ Wallet hersteld (' + fbCount + ' bets)','#16a34a');
+          }
         }
-        if (b?.tracker && !state.tracker?.bets?.length) state.tracker = b.tracker;
-        if (b?.valueBacktest && !state.valueBacktest?.picks?.length) state.valueBacktest = b.valueBacktest;
+        if (b?.tracker) {
+          const localT = state.tracker?.bets?.length || 0;
+          const fbT = b.tracker.bets?.length || 0;
+          if (fbT > localT) state.tracker = b.tracker;
+        }
+        if (b?.valueBacktest) {
+          const localBt = state.valueBacktest?.picks?.length || 0;
+          const fbBt = b.valueBacktest.picks?.length || 0;
+          if (fbBt > localBt) state.valueBacktest = b.valueBacktest;
+        }
       }
     } catch(e) {}
     saveState();
@@ -6114,6 +6258,55 @@ function initSwipeBets() {
     });
   });
 }
+
+// ═══════════════════════════════════════════════════════
+// AUTO DONKER THEMA — 20:00 donker, 08:00 terug
+// ═══════════════════════════════════════════════════════
+function toggleAutoDark() {
+  state.settings.autoDark = !state.settings.autoDark;
+  updateAutoDarkUI();
+  saveState();
+  if (state.settings.autoDark) checkAutoDarkNow();
+}
+
+function updateAutoDarkUI() {
+  const pill = document.getElementById('autoDarkPill');
+  if (!pill) return;
+  pill.classList.toggle('on', !!state.settings.autoDark);
+}
+
+function checkAutoDarkNow() {
+  if (!state.settings.autoDark) return;
+  const h = new Date().getHours();
+  const isDark = h >= 20 || h < 8;
+  const current = localStorage.getItem('totoai_theme') || 'mint';
+  if (isDark && current !== 'dark') {
+    state.settings._preAutoDarkTheme = current;
+    localStorage.setItem('totoai_theme', 'dark');
+    applyTheme();
+  } else if (!isDark && current === 'dark' && state.settings._preAutoDarkTheme) {
+    localStorage.setItem('totoai_theme', state.settings._preAutoDarkTheme);
+    state.settings._preAutoDarkTheme = null;
+    applyTheme();
+  }
+}
+
+// Check elke minuut of thema moet switchen
+setInterval(checkAutoDarkNow, 60 * 1000);
+
+
+// ═══════════════════════════════════════════════════════
+// AUTO-SYNC naar Firebase — debounced, na wallet/tracker wijziging
+// ═══════════════════════════════════════════════════════
+let _fbSyncTimer = null;
+function scheduleFirebaseSync() {
+  clearTimeout(_fbSyncTimer);
+  _fbSyncTimer = setTimeout(() => {
+    saveToFirebase()
+      .then(() => showAutoCheckBar('☁️ Opgeslagen', 1500))
+      .catch(() => {}); // stil falen
+  }, 3000); // 3 sec na laatste wijziging
+}
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
     wallet:state.wallet, tracker:state.tracker,
@@ -6121,6 +6314,10 @@ function saveState() {
     favoriteComps:state.favoriteComps || [],
     settings:state.settings
   }));
+  // Auto-sync naar Firebase na elke wijziging (debounced)
+  if (state.settings.footballKey || state.settings.anthropicKey) {
+    scheduleFirebaseSync();
+  }
 }
 function loadState() {
   try {
@@ -6142,7 +6339,10 @@ function exportBackup() {
       defaultComp:state.settings.defaultComp,
       startBalance:state.settings.startBalance,
       defaultBet:state.settings.defaultBet,
-      notifThreshold:state.settings.notifThreshold
+      notifThreshold:state.settings.notifThreshold,
+    tripleMinOdds:state.settings.tripleMinOdds,
+    autoDark:state.settings.autoDark,
+    _preAutoDarkTheme:state.settings._preAutoDarkTheme
     }
   };
   const blob = new Blob([JSON.stringify(backup,null,2)], {type:'application/json'});
@@ -6190,6 +6390,15 @@ function showBackupStatus(msg, color) {
 // WALLET CHART
 // ═══════════════════════════════════════════════════════
 let chartView = 'saldo';
+let chartSource = 'all';
+
+function setChartSource(src) {
+  chartSource = src;
+  document.querySelectorAll('[id^="cs-"]').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('cs-' + src);
+  if (el) el.classList.add('active');
+  renderWalletChart();
+}
 function setChartView(v) {
   chartView = v;
   ['saldo','pnl'].forEach(x => {
@@ -6206,8 +6415,13 @@ function renderWalletChart() {
   const emptyEl = document.getElementById('chartEmpty');
   if (!canvas) return;
   const sb = state.settings.startBalance || 500;
-  const settled = [...state.wallet.bets].reverse().filter(b => b.status !== 'pending');
-  if (!settled.length) { canvas.style.display = 'none'; if (emptyEl) emptyEl.style.display = 'block'; return; }
+  const allSettled = [...state.wallet.bets].reverse().filter(b => b.status !== 'pending');
+  const settled = chartSource === 'all' ? allSettled : allSettled.filter(b => (b.source||'eigen') === chartSource);
+  if (!settled.length) {
+    canvas.style.display = 'none';
+    if (emptyEl) { emptyEl.style.display = 'block'; emptyEl.textContent = chartSource === 'all' ? 'Nog geen afgeronde weddenschappen' : 'Geen bets voor deze bron'; }
+    return;
+  }
   canvas.style.display = 'block';
   if (emptyEl) emptyEl.style.display = 'none';
 
