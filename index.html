@@ -949,6 +949,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       </div>
     </div>
 
+```
 <div class="section-label">
   Wedstrijden vandaag t/m overmorgen
   <button onclick="debugAPI()" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;
@@ -1003,6 +1004,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   </div>
 </div>
 </div>
+```
 
   </div>
 
@@ -1034,6 +1036,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       ⚠ Selecteer eerst een wedstrijd in het tabblad Wedstrijden
     </div>
 
+```
 <!-- API key balk -->
 <div class="api-bar">
   <span class="api-bar-label">🔑 Anthropic API Key</span>
@@ -1123,6 +1126,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   ⚠ FICTIEVE APP — Uitsluitend voor educatieve doeleinden. Geen echte gok-adviezen.
   Gebruik geen echt geld op basis van AI-analyses. 18+
 </div>
+```
 
   </div>
 
@@ -1137,6 +1141,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       <div class="sub">Virtueel geld — geen echte waarde</div>
     </div>
 
+```
 <div class="wallet-grid">
   <div class="w-stat-box">
     <div class="s-lbl">Totaal ingezet</div>
@@ -1200,6 +1205,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 <div class="bet-history-list" id="betHistoryList">
   <div class="empty-state">Nog geen inzetten geplaatst</div>
 </div>
+```
 
   </div>
 
@@ -1209,6 +1215,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 
   <div id="tab-tracker" class="tab-content">
 
+```
 <!-- ⚡ VALUE BACKTEST SECTIE -->
 <div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
   border:1px solid rgba(22,163,74,.2);border-radius:16px;padding:.9rem;margin-bottom:1rem;">
@@ -1301,6 +1308,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 <div id="trackerList">
   <div class="empty-state">Nog geen echte weddenschappen bijgehouden</div>
 </div>
+```
 
   </div>
 
@@ -1310,6 +1318,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 
   <div id="tab-instellingen" class="tab-content">
 
+```
 <!-- FIREBASE STATUS BALK -->
 <div id="firebaseStatus" style="display:none;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.25);border-radius:12px;padding:.65rem 1rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;"></div>
 
@@ -1495,6 +1504,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   Alle analyses zijn AI-gegenereerd en geen gokadvies.<br>
   Made by Rob Borghouts · Powered by Anthropic Claude + football-data.org + API-Football
 </div>
+```
 
   </div>
 
@@ -1508,6 +1518,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
     <div class="modal-match-name" id="modalMatchName">—</div>
     <div class="modal-pick-info" id="modalPickInfo">—</div>
 
+```
 <!-- Extra markten -->
 <div style="margin:.6rem 0;">
   <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
@@ -1552,6 +1563,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   <button class="modal-confirm" onclick="confirmBet()">INZET BEVESTIGEN</button>
   <button class="modal-cancel" onclick="closeBetModal()">ANNULEREN</button>
 </div>
+```
 
   </div>
 </div>
@@ -1586,6 +1598,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
     <h3>📒 Echte Weddenschap</h3>
     <div style="display:flex;flex-direction:column;gap:.6rem;">
 
+```
   <div>
     <div class="sr-label" style="margin-bottom:.25rem;">Wedstrijd</div>
     <input class="modal-input" id="trMatch" type="text" placeholder="bijv. Ajax vs PSV">
@@ -1661,6 +1674,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
     <button class="modal-cancel" onclick="closeModal('trackerModal')">ANNULEREN</button>
   </div>
 </div>
+```
 
   </div>
 </div>
@@ -4977,7 +4991,7 @@ function renderTracker() {
       <div class="tracker-footer">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#475569;">€${b.stake.toFixed(2)} → €${b.payout.toFixed(2)}</span>
         <span class="tracker-result ${b.status}" onclick="cycleTrackerStatus(${b.id})">${statusTxt}</span>
-      </div></div></div>`;
+      </div></div>`;
   }).join('');
 }
 
