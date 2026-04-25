@@ -1101,6 +1101,14 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
   box-shadow:0 1px 3px rgba(0,0,0,.2);
 }
 .toggle-pill.on::after { left:19px; }
+
+/* WK 2026 chip dark mode */
+body.dark .wk-chip {
+  background: linear-gradient(135deg,rgba(120,53,15,.4),rgba(92,45,12,.3)) !important;
+  border-color: rgba(217,119,6,.5) !important;
+}
+body.dark .wk-chip .cname { color:#fde68a !important; }
+body.dark #wkCountdown { color:#d97706 !important; }
 </style>
 
 </head>
@@ -1144,7 +1152,7 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v3.6</div>
+        <div class="version-badge">v3.7</div>
       </div>
     </div>
   </div>
@@ -1268,6 +1276,11 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
       </div>
       <div class="comp-chip" onclick="handleCompTap('nations')" id="comp-nations">
         <span class="flag">🌍</span><div class="cname">Nations League</div>
+      </div>
+      <div class="comp-chip wk-chip" onclick="handleCompTap('wk2026')" id="comp-wk2026" style="grid-column:span 3;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(254,243,199,.8));border:2px solid rgba(217,119,6,.4);">
+        <span class="flag">🏆</span>
+        <div class="cname" style="color:#92400e;font-weight:800;">WK 2026 · USA/Canada/Mexico</div>
+        <div id="wkCountdown" style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#b45309;margin-top:2px;"></div>
       </div>
     </div>
 
@@ -2304,7 +2317,7 @@ function selectComp(comp) {
 // Lang indrukken (touchstart >500ms) = toevoegen aan favorieten
 // ═══════════════════════════════════════════════════════
 const COMP_NAMES = {
-  eredivisie:'🇳🇱 Eredivisie', kkd:'🇳🇱 Keuken Kampioen', beker:'🏆 KNVB Beker',
+  eredivisie:'🇳🇱 Eredivisie', kkd:'🇳🇱 Keuken Kampioen', beker:'🏆 KNVB Beker', wk2026:'🏆 WK 2026',
   premier:'🇬🇧 Premier League', bundesliga:'🇩🇪 Bundesliga', ligue1:'🇫🇷 Ligue 1',
   seriea:'🇮🇹 Serie A', champions:'⭐ Champions League', nations:'🌍 Nations League'
 };
@@ -2518,9 +2531,12 @@ const FD_CODES = {
 };
 const COMP_IDS = {
   eredivisie: 88, kkd: 89, bundesliga: 78, premier: 39,
-  beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5
+  beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5, wk2026: 1
 };
-function getCurrentSeason() { return 2025; }
+function getCurrentSeason(comp) {
+  if (comp === 'wk2026') return 2026;
+  return 2025;
+}
 
 const PROXY = 'https://toto-proxy.zweetzakken.workers.dev';
 function proxyUrl(url) { return `${PROXY}?url=${encodeURIComponent(url)}`; }
@@ -2766,7 +2782,7 @@ async function loadFromAPIFootball(comp, apiKey) {
     const [rLive, rNext, rDate] = await Promise.all([
       apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&live=all`, apiKey),
       apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=10`, apiKey),
-      apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`, apiKey)
+      apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${leagueId===1?2026:2025}&from=${dateFrom}&to=${dateTo}`, apiKey)
     ]);
     const [dLive, dNext, dDate] = await Promise.all([rLive.json(), rNext.json(), rDate.json()]);
 
@@ -2919,7 +2935,7 @@ async function debugAPI() {
 
   if (apiKey) {
     try {
-      let r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`, apiKey);
+      let r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${leagueId===1?2026:2025}&from=${dateFrom}&to=${dateTo}`, apiKey);
       let d = await r.json();
       log += `API-Football s2025: ${d.response?.length||0} wedstrijden\n`;
       d.response?.slice(0,3).forEach(f => log += `  → ${f.fixture.date.split('T')[0]}: ${f.teams.home.name} vs ${f.teams.away.name}\n`);
@@ -3972,13 +3988,17 @@ confidence = zekerheid 0-10 (Poisson beschikbaar + consistente H2H = hoog, allee
           sendPickNotification(
             '🏆 TRIPLE LOCK',
             s.match.home + ' vs ' + s.match.away + ' — ' + s.pickLabel + ' @ ' + (s.odds?.toFixed(2)||'?') + ' (+' + Math.round(s.value) + '% value)',
-            'triple-' + s.id
+            'triple-' + s.id,
+            s.match.id,
+            s.match.comp
           );
         } else if (score === 2) {
           sendPickNotification(
             '🔑 Double Lock',
             s.match.home + ' vs ' + s.match.away + ' — ' + s.pickLabel + ' @ ' + (s.odds?.toFixed(2)||'?'),
-            'double-' + s.id
+            'double-' + s.id,
+            s.match.id,
+            s.match.comp
           );
         }
       });
@@ -4163,14 +4183,20 @@ function openValueAnalysis(matchId) {
 // ═══════════════════════════════════════════════════════
 // 🔔 PUSH NOTIFICATIES
 // ═══════════════════════════════════════════════════════
-function sendPickNotification(title, body, tag) {
+function sendPickNotification(title, body, tag, matchId, comp) {
   if (!state.settings.notifEnabled) return;
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  // Android vereist altijd ServiceWorker voor notificaties
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.ready.then(reg => {
-      reg.showNotification(title, { body, icon:'/Toto-AI/icon-192.png', tag, renotify:true, vibrate:[200,100,200] });
-    }).catch(() => {}); // stil falen op Android zonder SW
+      const data = {};
+      if (matchId) data.matchId = matchId;
+      if (comp)    data.comp    = comp;
+      reg.showNotification(title, {
+        body, icon:'/Toto-AI/icon-192.png', tag,
+        renotify:true, vibrate:[200,100,200],
+        data
+      });
+    }).catch(() => {});
   }
 }
 
@@ -4436,7 +4462,7 @@ async function fetchTopScorers(leagueId) {
 async function fetchStandings(leagueId) {
   if (!leagueId || !state.settings.footballKey) return null;
   try {
-    const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=2025`, state.settings.footballKey, 6000);
+    const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${leagueId===1?2026:2025}`, state.settings.footballKey, 6000);
     const d = await r.json();
     return d.response?.[0]?.league?.standings?.[0] || null;
   } catch(e) { return null; }
@@ -4860,7 +4886,7 @@ async function generateCombiTip() {
   if (state.settings.footballKey) {
     try {
       const leagueId = COMP_IDS[state.activeComp];
-      const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=2025`, state.settings.footballKey);
+      const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${leagueId===1?2026:2025}`, state.settings.footballKey);
       const d = await r.json();
       const st = d.response?.[0]?.league?.standings?.[0];
       if (st?.length) {
@@ -6358,6 +6384,27 @@ function scheduleFirebaseSync() {
       .catch(() => {}); // stil falen
   }, 3000); // 3 sec na laatste wijziging
 }
+
+// ═══════════════════════════════════════════════════════
+// WK 2026 COUNTDOWN
+// ═══════════════════════════════════════════════════════
+function updateWKCountdown() {
+  const el = document.getElementById('wkCountdown');
+  if (!el) return;
+  const wkStart = new Date('2026-06-11T00:00:00');
+  const now = new Date();
+  const diff = wkStart - now;
+  if (diff <= 0) {
+    el.textContent = '🔴 WK IS BEZIG!';
+    return;
+  }
+  const days    = Math.floor(diff / (1000*60*60*24));
+  const hours   = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+  el.textContent = days + 'd ' + hours + 'u ' + minutes + 'm · Start 11 juni';
+}
+updateWKCountdown();
+setInterval(updateWKCountdown, 60000);
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
     wallet:state.wallet, tracker:state.tracker,
@@ -6642,6 +6689,30 @@ window.addEventListener('unhandledrejection', function(e) {
   msg.textContent = 'Promise fout: ' + (e.reason?.message || String(e.reason) || '?');
   banner.style.display = 'block';
 });
+// ═══════════════════════════════════════════════════════
+// NOTIFICATIE KLIK — open app op juiste wedstrijd
+// ═══════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'NOTIF_CLICK') {
+      const { matchId, comp } = e.data;
+      // Switch naar wedstrijden tab en selecteer de juiste comp
+      switchTab('wedstrijden');
+      if (comp && comp !== state.activeComp) {
+        selectComp(comp);
+      }
+      // Scroll naar de match card als die al geladen is
+      if (matchId) {
+        setTimeout(() => {
+          const el = document.getElementById('match-' + matchId);
+          if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+          else showAutoCheckBar('📍 Selecteer ' + (comp||'') + ' en zoek de wedstrijd', 3000);
+        }, 600);
+      }
+    }
+  });
+}
+
 </script>
 </body>
 </html>

@@ -1,53 +1,70 @@
-const CACHE = 'totoai-v4';
-const ASSETS = [
-  '/Toto-AI/',
-  '/Toto-AI/index.html',
-  '/Toto-AI/manifest.json'
-];
+// TOTO AI Service Worker v3.7
+// Handles push notifications + offline caching + notification click deeplinks
+
+const CACHE = 'totoai-v3';
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => {
-        console.log('Deleting old cache:', k);
-        return caches.delete(k);
-      }))
-    )
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  // Altijd netwerk voor API calls en fonts
-  const url = e.request.url;
-  if (url.includes('api.anthropic.com') ||
-      url.includes('api-sports.io') ||
-      url.includes('football-data.org') ||
-      url.includes('fonts.googleapis.com') ||
-      url.includes('fonts.gstatic.com')) {
-    return;
-  }
-  // Netwerk-eerst voor HTML (zodat updates altijd doorkomen)
-  if (url.includes('.html') || url.endsWith('/Toto-AI/') || url.endsWith('/Toto-AI')) {
-    e.respondWith(
-      fetch(e.request)
-        .then(resp => {
-          const clone = resp.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-          return resp;
-        })
-        .catch(() => caches.match(e.request))
-    );
-    return;
-  }
-  // Cache-eerst voor de rest
+  // Cache-first for same-origin assets, network-first for API calls
+  if (e.request.url.includes('api-sports') || e.request.url.includes('anthropic')) return;
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
+  );
+});
+
+// ═══════════════════════════════════════════════════════
+// NOTIFICATIE KLIK — open app op de juiste wedstrijd
+// ═══════════════════════════════════════════════════════
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+
+  const data     = e.notification.data || {};
+  const matchId  = data.matchId || null;
+  const comp     = data.comp    || null;
+
+  // Build URL with hash so the app knows what to open
+  const baseUrl = self.registration.scope; // e.g. https://zweet.../Toto-AI/
+  const url = matchId
+    ? `${baseUrl}#wedstrijd-${matchId}${comp ? '-' + comp : ''}`
+    : baseUrl;
+
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      // Focus existing window if open
+      for (const client of windowClients) {
+        if (client.url.startsWith(baseUrl) && 'focus' in client) {
+          client.focus();
+          // Send message to app to navigate
+          client.postMessage({
+            type: 'NOTIF_CLICK',
+            matchId,
+            comp
+          });
+          return;
+        }
+      }
+      // Open new window if app not open
+      if (clients.openWindow) {
+        return clients.openWindow(url).then(win => {
+          if (win && matchId) {
+            // Small delay for app to initialize, then send navigation message
+            setTimeout(() => {
+              win.postMessage({ type: 'NOTIF_CLICK', matchId, comp });
+            }, 1500);
+          }
+        });
+      }
+    })
   );
 });
