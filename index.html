@@ -784,6 +784,206 @@ padding:.2rem .4rem;border-left:2px solid rgba(255,154,193,.4);}
 .combi-leg-status-btn{font-family:‘IBM Plex Mono’,monospace;font-size:.45rem;
 background:rgba(255,255,255,.6);border:1px solid var(–stroke);
 border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-left:.3rem;}
+
+/* ═══════════════════════════════════════
+   TRIPLE LOCK — 3/3 signalen
+═══════════════════════════════════════ */
+.triple-lock-section {
+  margin-bottom: 1rem;
+}
+.triple-lock-header {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .62rem;
+  font-weight: 800;
+  color: #b45309;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+.triple-lock-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(180,83,9,.25);
+}
+.triple-lock-card {
+  background: linear-gradient(135deg, rgba(254,243,199,.7), rgba(255,237,213,.5));
+  border: 2px solid rgba(217,119,6,.5);
+  border-radius: 16px;
+  padding: .9rem 1rem;
+  margin-bottom: .6rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(217,119,6,.15), 0 4px 20px rgba(217,119,6,.15);
+  transition: transform .15s, box-shadow .15s;
+}
+.triple-lock-card:active { transform: scale(.98); }
+body.dark .triple-lock-card {
+  background: linear-gradient(135deg, rgba(120,53,15,.35), rgba(92,45,12,.25));
+  border-color: rgba(217,119,6,.5);
+}
+.triple-lock-glow {
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 80px; height: 80px;
+  background: radial-gradient(circle, rgba(251,191,36,.4), transparent 70%);
+  pointer-events: none;
+}
+.triple-lock-crown {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.triple-lock-match {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: .04em;
+  color: #78350f;
+  margin-bottom: .25rem;
+}
+body.dark .triple-lock-match { color: #fde68a; }
+.triple-lock-pick {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .68rem;
+  font-weight: 800;
+  color: #92400e;
+  margin-bottom: .45rem;
+}
+body.dark .triple-lock-pick { color: #fcd34d; }
+.triple-lock-badges {
+  display: flex;
+  gap: .35rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.tl-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .55rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: .04em;
+}
+.tl-badge.value  { background: rgba(22,163,74,.18); border: 1px solid rgba(22,163,74,.45); color: #15803d; }
+.tl-badge.conf   { background: rgba(37,99,235,.14); border: 1px solid rgba(37,99,235,.35); color: #1d4ed8; }
+.tl-badge.poisson{ background: rgba(124,58,237,.14); border: 1px solid rgba(124,58,237,.35); color: #6d28d9; }
+.tl-badge.odds   { background: rgba(15,23,42,.07);   border: 1px solid rgba(15,23,42,.15);  color: #0f172a; font-size:.62rem; }
+.tl-badge.kelly  { background: rgba(22,163,74,.1);   border: 1px solid rgba(22,163,74,.3);  color: #166534; }
+.triple-lock-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem;
+  color: #92400e;
+  margin-top: .4rem;
+  opacity: .8;
+}
+body.dark .triple-lock-meta { color: #d97706; }
+/* match-card triple-lock border upgrade */
+.match-card.is-triple-lock {
+  border: 2px solid rgba(217,119,6,.55) !important;
+  box-shadow: 0 0 0 3px rgba(251,191,36,.2), 0 6px 24px rgba(217,119,6,.2) !important;
+}
+
+/* ═══════════════════════════════════════
+   AUTO-CHECK STATUS BAR
+═══════════════════════════════════════ */
+#autoCheckBar {
+  display:none;
+  position:fixed;
+  bottom:72px; left:50%; transform:translateX(-50%);
+  background:rgba(15,23,42,.92);
+  color:#fff;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.6rem;
+  font-weight:700;
+  padding:.45rem 1.1rem;
+  border-radius:999px;
+  z-index:9999;
+  backdrop-filter:blur(8px);
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+  letter-spacing:.04em;
+  transition:opacity .3s;
+  white-space:nowrap;
+}
+
+/* ═══════════════════════════════════════
+   STREAK & ROI PER COMPETITIE
+═══════════════════════════════════════ */
+.stats-section {
+  margin-bottom:1.2rem;
+}
+.stats-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.5rem;
+}
+.stats-comp-card {
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:12px;
+  padding:.65rem .8rem;
+}
+.stats-comp-name {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.55rem;
+  font-weight:700;
+  color:var(--sub);
+  letter-spacing:.05em;
+  margin-bottom:.35rem;
+  text-transform:uppercase;
+}
+.stats-comp-roi {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.3rem;
+  letter-spacing:.04em;
+  line-height:1;
+}
+.stats-comp-roi.pos { color:#16a34a; }
+.stats-comp-roi.neg { color:#dc2626; }
+.stats-comp-roi.neu { color:var(--muted); }
+.stats-comp-meta {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.5rem;
+  color:var(--sub);
+  margin-top:.25rem;
+}
+.streak-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.55rem;
+  font-weight:800;
+  padding:2px 8px;
+  border-radius:999px;
+  margin-top:.3rem;
+}
+.streak-badge.hot  { background:rgba(22,163,74,.15); border:1px solid rgba(22,163,74,.3); color:#15803d; }
+.streak-badge.cold { background:rgba(220,38,38,.12); border:1px solid rgba(220,38,38,.25); color:#dc2626; }
+.streak-badge.neu  { background:rgba(100,116,139,.1); border:1px solid rgba(100,116,139,.2); color:#64748b; }
+.overall-streak {
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  padding:.75rem 1rem;
+  margin-bottom:.7rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.overall-streak-label {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.58rem;
+  font-weight:700;
+  color:var(--sub);
+}
+.overall-streak-val {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.6rem;
+  letter-spacing:.05em;
+}
 </style>
 
 </head>
@@ -822,7 +1022,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v2.6</div>
+        <div class="version-badge">v2.9</div>
       </div>
     </div>
   </div>
@@ -1195,6 +1395,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   </div>
 </div>
 <div id="autoCheckStatus" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:.5rem .8rem;border-radius:8px;margin-bottom:.6rem;"></div>
+<div id="autoCheckBar">🔄 Checking...</div>
 
 <div class="section-label">Inzetgeschiedenis</div>
 <div class="bet-history-list" id="betHistoryList">
@@ -1297,6 +1498,9 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   <button onclick="setTrackerFilter('analyse')" id="tf-analyse" class="tracker-filter">Analyse</button>
   <button onclick="setTrackerFilter('combi')" id="tf-combi" class="tracker-filter">Combi</button>
 </div>
+
+<!-- Streak + ROI sectie -->
+<div id="trackerSmartStats" class="stats-section" style="display:none;"></div>
 
 <div id="trackerList">
   <div class="empty-state">Nog geen echte weddenschappen bijgehouden</div>
@@ -1722,6 +1926,7 @@ let deferredInstall = null;
 // ═══════════════════════════════════════════════════════
 window.addEventListener('load', () => {
   try { loadState(); } catch(e) { console.error('loadState:', e); }
+  startAutoCheckScheduler();
   try { applySettings(); } catch(e) { console.error('applySettings:', e); }
   try { applyTheme(); } catch(e) {}
   try { updateWalletUI(); } catch(e) { console.error('updateWalletUI:', e); }
@@ -1788,6 +1993,7 @@ function switchTab(name) {
 let liveInterval = null;
 let liveCountdown = 60;
 let countdownInterval = null;
+let autoCheckInterval = null;
 
 function startLivePolling() {
   stopLivePolling();
@@ -2559,6 +2765,47 @@ async function debugAPI() {
 function renderMatches(matches) {
   const list = document.getElementById('matchList');
   list.innerHTML = '';
+
+  // ─── TRIPLE LOCK SECTIE ───────────────────────────────────────
+  // Wedstrijden die aan alle 3 signalen voldoen: value≥5% + conf≥7 + poisson
+  const tripleMatches = matches.filter(m =>
+    m.valueData &&
+    m.valueData.pct >= 5 &&
+    m.valueData.confidence >= 7 &&
+    m.valueData.poissonUsed === true
+  );
+  if (tripleMatches.length > 0) {
+    const sec = document.createElement('div');
+    sec.className = 'triple-lock-section';
+    sec.innerHTML = `
+      <div class="triple-lock-header">🔒 Triple Lock · ${tripleMatches.length} wedstrijd${tripleMatches.length > 1 ? 'en' : ''}</div>
+      ${tripleMatches.map(m => {
+        const v = m.valueData;
+        const confColor = v.confidence >= 8 ? '#1d4ed8' : '#2563eb';
+        return `<div class="triple-lock-card" onclick="selectMatch(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+          <div class="triple-lock-glow"></div>
+          <div style="display:flex;align-items:flex-start;gap:.6rem;">
+            <div class="triple-lock-crown">🏆</div>
+            <div style="flex:1;min-width:0;">
+              <div class="triple-lock-match">${m.home} vs ${m.away}</div>
+              <div class="triple-lock-pick">⚡ ${v.pickLabel} <span style="opacity:.6;">· ${m.comp} · ${m.time}</span></div>
+              <div class="triple-lock-badges">
+                <span class="tl-badge value">✓ +${Math.round(v.pct)}% VALUE</span>
+                <span class="tl-badge conf">🎲 ${v.confidence}/10 CONF</span>
+                <span class="tl-badge poisson">📐 POISSON</span>
+                <span class="tl-badge odds">@ ${v.odds?.toFixed(2)||'?'}</span>
+                <span class="tl-badge kelly">½K ${v.kelly?.toFixed(1)||'0'}%</span>
+              </div>
+              ${v.poissonUsed ? `<div class="triple-lock-meta">📐 1=${v.poissonK1}% · X=${v.poissonKX}% · 2=${v.poissonK2}%</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    `;
+    list.appendChild(sec);
+  }
+  // ─────────────────────────────────────────────────────────────
+
   matches.forEach(m => {
     if (!m.awayPct) m.awayPct = Math.max(0, 100 - m.homePct - m.drawPct);
     const card = document.createElement('div');
@@ -2574,6 +2821,7 @@ function renderMatches(matches) {
       valueBadgeHtml = `<div class="value-badge ${cls}" title="${m.valueData.pickLabel} — AI ${m.valueData.kans}% vs quote ${m.valueData.odds?.toFixed(2)||'?'}">${valueLabel(v)}</div>`;
       if (cls === 'high' || cls === 'med') card.classList.add('value-glow');
       card.classList.add('has-value'); // voor extra padding top row
+      if (m.valueData.confidence >= 7 && m.valueData.poissonUsed) card.classList.add('is-triple-lock');
     }
 
     const statusHtml = m.isLive
@@ -4701,7 +4949,7 @@ function updateWalletUI() {
             <button onclick="deleteBet(${b.id})" style="background:none;border:none;color:#94a3b8;font-size:.8rem;cursor:pointer;padding:0;" title="Verwijder">✕</button>
           </div>
           ${b.status === 'pending' ? `<button onclick="checkBetResult(${b.id})" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#2563eb;border-radius:6px;padding:2px 7px;cursor:pointer;display:block;width:100%;">🔍 CHECK</button>` : ''}
-          <div class="bet-res ${b.status}" onclick="cycleBetStatus(${b.id})">${b.status === 'win'?'✓ +€'+(b.payout-b.amount).toFixed(2):b.status === 'lose'?'✗':'⏳ OPEN'}</div>
+          <div class="bet-res ${b.status}" onclick="cycleBetStatus(${b.id})">${b.status === 'win'?'✓ +€'+(b.payout-b.amount).toFixed(2)+(b.score?' ['+b.score+']':''): b.status === 'lose'?'✗'+(b.score?' ['+b.score+']':''): '⏳ OPEN'}</div>
         </div></div>`;
     }
   }).join('');
@@ -4712,60 +4960,67 @@ async function checkBetResult(betId) {
   if (!bet || !state.settings.footballKey) { alert('API key nodig'); return; }
   const apiKey = state.settings.footballKey;
   const legs = bet.type === 'combi' ? bet.legs : [{home:bet.matchName?.split(' vs ')?.[0], away:bet.matchName?.split(' vs ')?.[1], pick:bet.pick, fixtureId:bet.fixtureId}];
+
   function parseBetDate(s) {
     if (!s) return null;
-    // Support DD-M-YYYY, D-MM-YYYY, DD-MM-YYYY and YYYY-MM-DD
     const p = s.split('-');
     if (p.length === 3) {
-      // If first part is 4 digits it's already YYYY-MM-DD
       if (p[0].length === 4) return s;
-      // Otherwise assume DD-MM-YYYY
       return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
     }
     return null;
   }
-  const betDate = parseBetDate(bet.date);
-  let fixturesPool = [];
-  try {
-    const fetches = [];
-    if (betDate) {
-      fetches.push(apiFetch(`https://v3.football.api-sports.io/fixtures?date=${betDate}`, apiKey).then(r=>r.json()).catch(()=>({response:[]})));
-    }
-    fetches.push(apiFetch(`https://v3.football.api-sports.io/fixtures?last=100`, apiKey).then(r=>r.json()).catch(()=>({response:[]})));
-    const results = await Promise.all(fetches);
-    const seen = new Set();
-    for (const d of results) {
-      for (const f of (d.response||[])) {
-        if (!seen.has(f.fixture.id)) { seen.add(f.fixture.id); fixturesPool.push(f); }
-      }
-    }
-    console.log('[CheckBet] Pool size:', fixturesPool.length, 'for date:', betDate);
-  } catch(e) { console.error('[CheckBet] fetch error:', e); }
+
+  // Helper: fetch a single fixture by ID directly
+  async function fetchFixtureById(fid) {
+    try {
+      const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?id=${fid}`, apiKey);
+      const d = await r.json();
+      return (d.response||[])[0] || null;
+    } catch(e) { return null; }
+  }
+
+  // Helper: fetch fixtures by date (all leagues)
+  async function fetchFixturesByDate(date) {
+    try {
+      const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, apiKey);
+      const d = await r.json();
+      return d.response || [];
+    } catch(e) { return []; }
+  }
 
   for (const leg of legs) {
     try {
       let fix = null;
-      if (leg.fixtureId || bet.fixtureId) {
-        const fid = leg.fixtureId || bet.fixtureId;
-        fix = fixturesPool.find(f => f.fixture.id === fid);
+      const fid = leg.fixtureId || bet.fixtureId;
+
+      // 1. Direct lookup by fixture ID (most reliable)
+      if (fid) {
+        fix = await fetchFixtureById(fid);
+        console.log('[CheckBet] Direct ID lookup', fid, '→', fix ? fix.fixture.status.short : 'not found');
       }
-      if (!fix && leg.home && leg.away) {
-        const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
-        const words = s => norm(s).split(' ').filter(w => w.length > 2);
-        const hn = norm(leg.home), an = norm(leg.away);
-        const hwds = words(leg.home), awds = words(leg.away);
-        const finishedPool = fixturesPool.filter(f => ['FT','AET','PEN'].includes(f.fixture.status.short));
-        console.log('[CheckBet] Looking for:', leg.home, 'vs', leg.away, '| finished in pool:', finishedPool.length);
-        fix = finishedPool.find(f => {
-          const fh = norm(f.teams.home.name), fa = norm(f.teams.away.name);
-          const homeMatch = hwds.some(w => fh.includes(w)) || fh.includes(hn.substring(0,5));
-          const awayMatch = awds.some(w => fa.includes(w)) || fa.includes(an.substring(0,5));
-          if (homeMatch || awayMatch) console.log('[CheckBet] Candidate:', f.teams.home.name, 'vs', f.teams.away.name, '| homeMatch:', homeMatch, 'awayMatch:', awayMatch);
-          return homeMatch && awayMatch;
-        });
-        if (!fix) console.warn('[CheckBet] No match found for', leg.home, 'vs', leg.away);
+
+      // 2. Fallback: search by date + team name
+      if (!fix || !['FT','AET','PEN'].includes(fix?.fixture?.status?.short)) {
+        const betDate = parseBetDate(bet.date);
+        if (betDate && leg.home && leg.away) {
+          const pool = await fetchFixturesByDate(betDate);
+          const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+          const words = s => norm(s).split(' ').filter(w => w.length > 2);
+          const hwds = words(leg.home), awds = words(leg.away);
+          console.log('[CheckBet] Date fallback pool size:', pool.length, 'for', leg.home, 'vs', leg.away);
+          fix = pool.find(f => {
+            if (!['FT','AET','PEN'].includes(f.fixture.status.short)) return false;
+            const fh = norm(f.teams.home.name), fa = norm(f.teams.away.name);
+            const homeMatch = hwds.some(w => fh.includes(w));
+            const awayMatch = awds.some(w => fa.includes(w));
+            return homeMatch && awayMatch;
+          });
+          if (!fix) console.warn('[CheckBet] Still not found:', leg.home, 'vs', leg.away);
+        }
       }
-      if (!fix || !['FT','AET','PEN'].includes(fix.fixture.status.short)) continue;
+
+      if (!fix || !['FT','AET','PEN'].includes(fix?.fixture?.status?.short)) continue;
       const hg = fix.goals.home ?? 0, ag = fix.goals.away ?? 0;
       leg.score = `${hg}-${ag}`;
       let won = false;
@@ -4801,7 +5056,9 @@ async function checkBetResult(betId) {
       bet.status = 'win';
       state.wallet.balance += bet.payout;
       state.wallet.totalWon += bet.payout;
-    } else if (leg.legStatus === 'lose' && bet.status === 'pending') bet.status = 'lose';
+    } else if (leg.legStatus === 'lose' && bet.status === 'pending') {
+      bet.status = 'lose';
+    }
   }
   saveState(); updateWalletUI();
 }
@@ -4986,11 +5243,12 @@ function renderTracker() {
   }
   if (!bets.length) { list.innerHTML = '<div class="empty-state">Geen weddenschappen</div>'; return; }
   list.innerHTML = bets.map(b => {
-    const statusTxt = b.status === 'win' ? `✓ +€${(b.payout-b.stake).toFixed(2)}` : b.status === 'lose' ? `✗ -€${b.stake.toFixed(2)}` : '⏳ OPEN';
+    const scoreBadge = b.score ? ` [${b.score}]` : '';
+    const statusTxt = b.status === 'win' ? `✓ +€${(b.payout-b.stake).toFixed(2)}${scoreBadge}` : b.status === 'lose' ? `✗ -€${b.stake.toFixed(2)}${scoreBadge}` : '⏳ OPEN';
     const border = b.status === 'win' ? 'border-left:3px solid #16a34a;' : b.status === 'lose' ? 'border-left:3px solid #dc2626;' : '';
     return `<div class="tracker-row" style="${border}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div class="tracker-match">${b.match}</div>
+        <div class="tracker-match">${b.match}${b.score ? \` <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;background:rgba(15,23,42,.08);padding:1px 6px;border-radius:4px;">${b.score}</span>\` : ''}</div>
         <button onclick="deleteTrackerBet(${b.id})" style="background:none;border:none;color:#94a3b8;font-size:.9rem;cursor:pointer;">✕</button>
       </div>
       <div class="tracker-meta">
@@ -5025,6 +5283,7 @@ function updateTrackerStats() {
   set('trRoi', roi !== '—' ? roi + '%' : '—');
   const el = document.getElementById('trPnl');
   if (el) el.style.color = pnl >= 0 ? '#16a34a' : '#dc2626';
+  renderSmartStats();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -5468,6 +5727,162 @@ async function loadFromFirebase() {
     showFirebaseStatus('🔥 Keys geladen','#2ecc71');
     return true;
   } catch(e) { return false; }
+}
+
+
+// ═══════════════════════════════════════════════════════
+// AUTO-CHECK: elke 15 min tussen 15:00 en 23:00
+// ═══════════════════════════════════════════════════════
+function startAutoCheckScheduler() {
+  if (autoCheckInterval) clearInterval(autoCheckInterval);
+  autoCheckInterval = setInterval(async () => {
+    const now = new Date();
+    const h = now.getHours();
+    if (h < 15 || h >= 23) return; // alleen 15:00–23:00
+    const open = (state.wallet.bets || []).filter(b => b.status === 'pending');
+    if (!open.length) return;
+    if (!state.settings.footballKey) return;
+    showAutoCheckBar('🔄 Auto-check bets...');
+    let upd = 0;
+    for (const bet of open) {
+      try {
+        const prev = bet.status;
+        await checkBetResult(bet.id);
+        if (bet.status !== prev) upd++;
+      } catch(e) {}
+    }
+    if (upd > 0) {
+      showAutoCheckBar(`✅ ${upd} bet${upd>1?'s':''} bijgewerkt!`, 4000);
+    } else {
+      showAutoCheckBar('✓ Geen updates', 2000);
+    }
+  }, 15 * 60 * 1000); // 15 minuten
+}
+
+function showAutoCheckBar(msg, duration=3000) {
+  const el = document.getElementById('autoCheckBar');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.opacity = '1';
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => {
+    el.style.opacity = '0';
+    setTimeout(() => { el.style.display = 'none'; el.style.opacity = '1'; }, 350);
+  }, duration);
+}
+
+// ═══════════════════════════════════════════════════════
+// STREAK TRACKER + ROI PER COMPETITIE
+// ═══════════════════════════════════════════════════════
+function calcStreakAndRoi() {
+  const bets = [...(state.tracker.bets || [])].reverse(); // oudste eerst
+  const settled = bets.filter(b => b.status === 'win' || b.status === 'lose');
+
+  // Huidige streak (meest recente bets)
+  let streak = 0, streakType = 'neu';
+  const recent = [...settled].reverse();
+  if (recent.length) {
+    streakType = recent[0].status;
+    for (const b of recent) {
+      if (b.status === streakType) streak++;
+      else break;
+    }
+  }
+
+  // ROI per competitie (via bookmaker als proxy, of markt)
+  // We groeperen op b.markt als competitie-proxy
+  const compMap = {};
+  for (const b of settled) {
+    const key = b.markt || 'Anders';
+    if (!compMap[key]) compMap[key] = { staked:0, pnl:0, wins:0, losses:0 };
+    compMap[key].staked += b.stake || 0;
+    if (b.status === 'win') {
+      compMap[key].pnl += (b.payout - b.stake);
+      compMap[key].wins++;
+    } else {
+      compMap[key].pnl -= b.stake;
+      compMap[key].losses++;
+    }
+  }
+
+  // Per source ROI (analyse / combi / eigen / widget)
+  const srcMap = {};
+  for (const b of settled) {
+    const key = b.source || 'eigen';
+    if (!srcMap[key]) srcMap[key] = { staked:0, pnl:0, wins:0, count:0, streak:0, streakType:'neu' };
+    srcMap[key].staked += b.stake || 0;
+    srcMap[key].count++;
+    if (b.status === 'win') {
+      srcMap[key].pnl += (b.payout - b.stake);
+      srcMap[key].wins++;
+    } else {
+      srcMap[key].pnl -= b.stake;
+    }
+  }
+  // Streak per source
+  for (const key of Object.keys(srcMap)) {
+    const srcBets = [...settled].reverse().filter(b => (b.source||'eigen') === key);
+    let s = 0, st = 'neu';
+    if (srcBets.length) {
+      st = srcBets[0].status;
+      for (const b of srcBets) { if (b.status === st) s++; else break; }
+    }
+    srcMap[key].streak = s;
+    srcMap[key].streakType = st;
+  }
+
+  return { streak, streakType, compMap, srcMap, totalSettled: settled.length };
+}
+
+function renderSmartStats() {
+  const el = document.getElementById('trackerSmartStats');
+  if (!el) return;
+  const bets = state.tracker.bets || [];
+  const settled = bets.filter(b => b.status !== 'pending');
+  if (settled.length < 2) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  const { streak, streakType, srcMap, totalSettled } = calcStreakAndRoi();
+
+  const streakEmoji = streakType === 'win' ? '🔥' : streakType === 'lose' ? '❄️' : '➖';
+  const streakClass = streakType === 'win' ? 'hot' : streakType === 'lose' ? 'cold' : 'neu';
+  const streakLabel = streakType === 'win' ? `${streak}x WIN op rij` : streakType === 'lose' ? `${streak}x VERLIES op rij` : 'Geen streak';
+
+  const srcLabels = { analyse:'🤖 Analyse', combi:'⚡ Combi AI', widget:'📱 Widget', eigen:'✏️ Eigen' };
+
+  const srcCards = Object.entries(srcMap).map(([key, d]) => {
+    const roi = d.staked > 0 ? ((d.pnl/d.staked)*100).toFixed(1) : null;
+    const roiClass = roi === null ? 'neu' : parseFloat(roi) >= 0 ? 'pos' : 'neg';
+    const hitRate = d.count > 0 ? Math.round((d.wins/d.count)*100) : 0;
+    const sEmoji = d.streakType === 'win' ? '🔥' : d.streakType === 'lose' ? '❄️' : '➖';
+    const sClass = d.streakType === 'win' ? 'hot' : d.streakType === 'lose' ? 'cold' : 'neu';
+    return `<div class="stats-comp-card">
+      <div class="stats-comp-name">${srcLabels[key]||key}</div>
+      <div class="stats-comp-roi ${roiClass}">${roi !== null ? (parseFloat(roi)>=0?'+':'')+roi+'%' : '—'}</div>
+      <div class="stats-comp-meta">${d.wins}W · ${d.count-d.wins}L · ${hitRate}% hit</div>
+      <div class="streak-badge ${sClass}">${sEmoji} ${d.streak}x ${d.streakType === 'win' ? 'WIN' : d.streakType === 'lose' ? 'VER.' : '–'}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="overall-streak">
+      <div>
+        <div class="overall-streak-label">Huidige streak</div>
+        <div class="overall-streak-val" style="color:${streakType==='win'?'#16a34a':streakType==='lose'?'#dc2626':'var(--muted)'}">
+          ${streakEmoji} ${streakLabel}
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div class="overall-streak-label">Settled</div>
+        <div class="overall-streak-val" style="color:var(--muted);font-size:1.2rem;">${totalSettled}</div>
+      </div>
+    </div>
+    ${srcCards.length ? `
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;color:var(--sub);letter-spacing:.1em;margin-bottom:.4rem;">ROI PER BRON</div>
+    <div class="stats-grid">${srcCards}</div>
+    ` : ''}
+  `;
 }
 
 function saveState() {
