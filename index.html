@@ -1667,6 +1667,71 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
   50%      { box-shadow: 0 0 0 8px rgba(22,163,74,0); }
 }
 .scanning { animation: scanPulse .8s infinite !important; }
+
+/* ═══════════════════════════════════════
+   SCAN VERBETERINGEN
+═══════════════════════════════════════ */
+.scan-sort-row {
+  display: flex;
+  gap: .3rem;
+  margin-bottom: .5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.sort-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .5rem;
+  font-weight: 800;
+  padding: 2px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid rgba(15,23,42,.12);
+  background: transparent;
+  color: #64748b;
+  transition: all .12s;
+}
+.sort-btn.active {
+  background: rgba(22,163,74,.12);
+  border-color: rgba(22,163,74,.4);
+  color: #15803d;
+}
+.scan-comp-filter {
+  display: flex;
+  gap: .3rem;
+  flex-wrap: wrap;
+  margin-bottom: .5rem;
+  padding: .5rem .75rem;
+  background: rgba(15,23,42,.03);
+  border-radius: 10px;
+  border: 1px solid var(--stroke);
+}
+.scan-comp-chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .5rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid rgba(15,23,42,.12);
+  background: transparent;
+  color: #64748b;
+  transition: all .12s;
+}
+.scan-comp-chip.on {
+  background: rgba(37,99,235,.1);
+  border-color: rgba(37,99,235,.35);
+  color: #1d4ed8;
+}
+.match-value-rank {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .46rem;
+  font-weight: 800;
+  color: #64748b;
+  opacity: .6;
+}
 </style>
 
 </head>
@@ -1711,7 +1776,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v6.5</div>
+        <div class="version-badge">v6.7</div>
       </div>
     </div>
   </div>
@@ -1870,11 +1935,20 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
   </button>
 </div>
 <div id="scanResultsPanel">
-  <div class="scan-results-header" onclick="document.getElementById('scanResultsList').style.display=document.getElementById('scanResultsList').style.display==='none'?'block':'none'">
+  <div class="scan-results-header" onclick="toggleScanResults()">
     <div class="scan-results-title" id="scanResultsTitle">⚡ SCAN RESULTATEN</div>
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#15803d;">▼</span>
+    <span id="scanResultsChevron" style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#15803d;">▼</span>
   </div>
-  <div id="scanResultsList"></div>
+  <div id="scanResultsBody">
+    <div class="scan-sort-row" style="padding:.4rem .75rem 0;">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);font-weight:700;">SORTEREN:</span>
+      <button class="sort-btn active" id="sort-value"   onclick="setScanSort('value')">⚡ Value %</button>
+      <button class="sort-btn"        id="sort-conf"    onclick="setScanSort('conf')">🎲 Confidence</button>
+      <button class="sort-btn"        id="sort-odds"    onclick="setScanSort('odds')">📊 Quote</button>
+      <button class="sort-btn"        id="sort-kelly"   onclick="setScanSort('kelly')">½K Kelly</button>
+    </div>
+    <div id="scanResultsList" style="padding-bottom:.3rem;"></div>
+  </div>
 </div>
 
 <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;align-items:center;">
@@ -1900,6 +1974,13 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
   </button>
   <div id="allCompsLoading" style="display:none;font-family:'IBM Plex Mono',monospace;
     font-size:.52rem;color:var(--sub);align-self:center;">⟳ Laden...</div>
+</div>
+<!-- Scan competitie filter -->
+<div id="scanCompFilterWrap" style="display:none;margin-bottom:.5rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:var(--sub);margin-bottom:.35rem;">
+    SCAN COMPETITIES <span style="opacity:.5;">(tik om uit/aan te zetten)</span>
+  </div>
+  <div class="scan-comp-filter" id="scanCompFilter"></div>
 </div>
 
 <!-- VALUE: uitleg card (wordt alleen getoond bij eerste keer) -->
@@ -2230,13 +2311,21 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
 </div>
 
 <!-- Nieuwe weddenschap toevoegen -->
-<button onclick="openTrackerModal()" style="width:100%;
-  background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.85));
-  border:none;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:.7rem;
-  font-weight:700;padding:.75rem;border-radius:14px;cursor:pointer;
-  letter-spacing:.05em;margin-bottom:1rem;">
-  ➕ ECHTE WEDDENSCHAP TOEVOEGEN
-</button>
+<div style="display:flex;gap:.5rem;margin-bottom:1rem;">
+  <button onclick="openTrackerModal()" style="flex:1;
+    background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.85));
+    border:none;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:.65rem;
+    font-weight:700;padding:.75rem;border-radius:14px;cursor:pointer;
+    letter-spacing:.05em;">
+    ➕ TOEVOEGEN
+  </button>
+  <button onclick="autoCheckTrackerBets()" style="
+    font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+    padding:.75rem 1rem;border-radius:14px;cursor:pointer;
+    background:rgba(37,99,235,.1);border:1.5px solid rgba(37,99,235,.3);color:#2563eb;">
+    🔍 CHECK ALLES
+  </button>
+</div>
 
 <!-- Filter knoppen -->
 <div style="display:flex;gap:.4rem;margin-bottom:.8rem;overflow-x:auto;padding-bottom:.2rem;">
@@ -3750,6 +3839,8 @@ async function loadTodayAllComps() {
     if (scanBtn) scanBtn.style.display = 'block';
     const tomorrowBtn = document.getElementById('scanTomorrowBtn');
     if (tomorrowBtn) tomorrowBtn.style.display = 'block';
+    // Build comp filter
+    buildScanCompFilter(state.matches);
 
     // Fetch odds for all loaded matches
     if (state.settings.footballKey) {
@@ -4877,9 +4968,12 @@ async function scanAllTodayValue(mode = 'today') {
   const todayStr = now.toISOString().split('T')[0];
   const tomorrowStr = new Date(now.getTime() + 86400000).toISOString().split('T')[0];
 
-  const allWithOdds = state.matches.filter(m =>
-    m.homeOdds !== '—' && !m.isDone && parseFloat(m.homeOdds) > 1
-  );
+  const allWithOdds = state.matches.filter(m => {
+    if (m.homeOdds === '—' || m.isDone || !(parseFloat(m.homeOdds) > 1)) return false;
+    // Apply comp filter if set
+    if (scanCompFilter.size > 0 && m.comp && !scanCompFilter.has(m.comp)) return false;
+    return true;
+  });
 
   // Debug: log candidates
   console.log('[ScanAll] Total with odds:', allWithOdds.length, 'mode:', mode);
@@ -5021,9 +5115,13 @@ Geef voor ALLE ${candidates.length} wedstrijden een resultaat.`;
   }));
   saveState();
 
-  // Save to backtest
+  // Save to backtest — alleen bekende competities (niet Deens/Noors/etc.)
+  const knownLeagueIds = new Set(Object.values(COMP_IDS));
   let savedCount = 0;
   scans.filter(s => s.value >= 5).forEach(s => {
+    // Skip unknown competitions
+    const leagueId = s.match.leagueId || s.match.raw?.league?.id;
+    if (leagueId && !knownLeagueIds.has(leagueId)) return;
     const exists = (state.valueBacktest?.picks||[]).some(p => String(p.matchId) === String(s.match.id));
     if (!exists) {
       if (!state.valueBacktest) state.valueBacktest = { picks:[] };
@@ -5051,10 +5149,11 @@ Geef voor ALLE ${candidates.length} wedstrijden een resultaat.`;
 
   // Render value results in matchList with Triple/Double Lock
   renderMatches(state.matches);
+  // Sorteer matchlist op value
+  setTimeout(sortMatchListByValue, 50);
 
-  // Toon scan resultaten panel (na renderMatches zodat het bovenaan blijft)
+  // Toon scan resultaten panel
   renderScanResults(scans);
-  // Scroll naar scan resultaten
   setTimeout(() => {
     const panel = document.getElementById('scanResultsPanel');
     if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -7200,7 +7299,10 @@ function renderTracker() {
       </div>
       ${b.note ? `<div style="font-size:.72rem;color:#64748b;font-style:italic;margin-bottom:.4rem;">"${b.note}"</div>` : ''}
       <div class="tracker-footer">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#475569;">€${b.stake.toFixed(2)} → €${b.payout.toFixed(2)}</span>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:#475569;">€${b.stake.toFixed(2)} → €${b.payout.toFixed(2)}</span>
+          ${b.status === 'pending' && b.fixtureId ? `<button onclick="event.stopPropagation();checkTrackerBetResult(${b.id})" style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#2563eb;border-radius:6px;padding:1px 5px;cursor:pointer;">🔍</button>` : ''}
+        </div>
         <span class="tracker-result ${b.status}" onclick="cycleTrackerStatus(${b.id})">${statusTxt}</span>
       </div></div></div>`;
   }).join('');
@@ -8240,8 +8342,14 @@ function renderScanResults(scans, restored = false) {
     scanTime:  s.scanTime || ''
   }));
 
-  // Sort: value hoog → laag
-  const sorted = [...normalized].sort((a,b) => b.value - a.value);
+  // Sort based on selected sort mode
+  const sortFn = {
+    value:  (a,b) => b.value - a.value,
+    conf:   (a,b) => b.confidence - a.confidence,
+    odds:   (a,b) => b.odds - a.odds,
+    kelly:  (a,b) => b.kelly - a.kelly
+  };
+  const sorted = [...normalized].sort(sortFn[scanSort] || sortFn.value);
   const valueCount = sorted.filter(s => s.value >= 5).length;
   const timeLabel = sorted[0]?.scanTime ? ` · ${sorted[0].scanTime}` : '';
   const restoredLabel = restored ? ' (vorige scan)' : '';
@@ -8451,6 +8559,148 @@ function showSkeletonCards(count = 4) {
       </div>
     </div>
   `).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// CHECK TRACKER BET RESULTAAT
+// ═══════════════════════════════════════════════════════
+async function checkTrackerBetResult(betId) {
+  const bet = state.tracker.bets.find(b => b.id === betId);
+  if (!bet || bet.status !== 'pending') return;
+  const apiKey = state.settings.footballKey;
+  if (!apiKey) return;
+
+  try {
+    // Direct fixture lookup
+    const fixtureId = bet.fixtureId;
+    if (!fixtureId) return;
+
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?id=${fixtureId}`,
+      apiKey, 6000
+    );
+    const d = await r.json();
+    const fix = d.response?.[0];
+    if (!fix) return;
+
+    const status = fix.fixture?.status?.short;
+    if (!['FT','AET','PEN'].includes(status)) return;
+
+    const hg = fix.goals?.home ?? 0;
+    const ag = fix.goals?.away ?? 0;
+    bet.score = `${hg}-${ag}`;
+
+    // Determine result
+    const pick = bet.pick;
+    let won = false;
+    if (pick === '1' || pick?.toLowerCase().includes('thuis')) won = hg > ag;
+    else if (pick === 'X' || pick?.toLowerCase().includes('gelijk')) won = hg === ag;
+    else if (pick === '2' || pick?.toLowerCase().includes('uit')) won = ag > hg;
+    else won = false; // Can't auto-determine for special markets
+
+    bet.status = won ? 'win' : 'lose';
+    saveState();
+    renderTracker();
+    updateTrackerStats();
+  } catch(e) {}
+}
+
+async function autoCheckTrackerBets() {
+  const apiKey = state.settings.footballKey;
+  if (!apiKey) return;
+  const open = state.tracker.bets.filter(b => b.status === 'pending' && b.fixtureId);
+  for (const bet of open) {
+    await checkTrackerBetResult(bet.id);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SCAN VERBETERINGEN — sort + comp filter
+// ═══════════════════════════════════════════════════════
+let scanSort = 'value';
+let scanCompFilter = new Set(); // empty = all
+
+function setScanSort(sort) {
+  scanSort = sort;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sort-' + sort)?.classList.add('active');
+  // Re-render with new sort
+  if (state.lastScanResults?.length) renderScanResults(state.lastScanResults);
+}
+
+function toggleScanResults() {
+  const body = document.getElementById('scanResultsBody');
+  const chev = document.getElementById('scanResultsChevron');
+  if (!body) return;
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? 'block' : 'none';
+  if (chev) chev.textContent = hidden ? '▼' : '▶';
+}
+
+function buildScanCompFilter(matches) {
+  const wrap = document.getElementById('scanCompFilterWrap');
+  const container = document.getElementById('scanCompFilter');
+  if (!wrap || !container) return;
+
+  // Get unique comps from loaded matches
+  const comps = [...new Set(matches.map(m => m.comp).filter(Boolean))].sort();
+  if (!comps.length) { wrap.style.display = 'none'; return; }
+
+  wrap.style.display = 'block';
+  container.innerHTML = comps.map(c => `
+    <button class="scan-comp-chip ${scanCompFilter.size === 0 || scanCompFilter.has(c) ? 'on' : ''}"
+      onclick="toggleScanComp('${c.replace(/'/g,'\'')}')" id="scc-${c.replace(/[^a-z0-9]/gi,'')}">
+      ${c}
+    </button>
+  `).join('');
+}
+
+function toggleScanComp(comp) {
+  if (scanCompFilter.size === 0) {
+    // First toggle: enable all then disable this one
+    const allComps = [...new Set(state.matches.map(m => m.comp).filter(Boolean))];
+    allComps.forEach(c => scanCompFilter.add(c));
+    scanCompFilter.delete(comp);
+  } else if (scanCompFilter.has(comp)) {
+    scanCompFilter.delete(comp);
+    if (scanCompFilter.size === 0) scanCompFilter = new Set(); // all = empty
+  } else {
+    scanCompFilter.add(comp);
+  }
+  // Update chips
+  document.querySelectorAll('.scan-comp-chip').forEach(b => b.classList.remove('on'));
+  const allComps = [...new Set(state.matches.map(m => m.comp).filter(Boolean))];
+  allComps.forEach(c => {
+    const el = document.getElementById('scc-' + c.replace(/[^a-z0-9]/gi,''));
+    if (el && (scanCompFilter.size === 0 || scanCompFilter.has(c))) el.classList.add('on');
+  });
+}
+
+// Sort matchlist by value after scan
+function sortMatchListByValue() {
+  const list = document.getElementById('matchList');
+  if (!list) return;
+  const cards = [...list.querySelectorAll('.match-card')];
+  const withValue = cards.filter(c => {
+    const mid = c.id?.replace('match-','');
+    const m = state.matches.find(x => String(x.id) === mid);
+    return m?.valueData?.pct != null;
+  });
+  const withoutValue = cards.filter(c => !withValue.includes(c));
+  // Sort by value desc
+  withValue.sort((a, b) => {
+    const ma = state.matches.find(x => String(x.id) === a.id?.replace('match-',''));
+    const mb = state.matches.find(x => String(x.id) === b.id?.replace('match-',''));
+    return (mb?.valueData?.pct || 0) - (ma?.valueData?.pct || 0);
+  });
+  // Add rank numbers
+  withValue.forEach((c, i) => {
+    let rank = c.querySelector('.match-value-rank');
+    if (!rank) { rank = document.createElement('div'); rank.className = 'match-value-rank'; c.style.position = 'relative'; c.appendChild(rank); }
+    rank.textContent = `#${i+1}`;
+  });
+  // Reorder DOM
+  [...withValue, ...withoutValue].forEach(c => list.appendChild(c));
 }
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
