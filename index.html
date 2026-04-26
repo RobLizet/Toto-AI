@@ -1408,7 +1408,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v5.7</div>
+        <div class="version-badge">v5.8</div>
       </div>
     </div>
   </div>
@@ -2812,7 +2812,8 @@ function updateMatchScores(fixtures) {
 // ═══════════════════════════════════════════════════════
 function selectComp(comp) {
   document.querySelectorAll('.comp-chip').forEach(c => c.classList.remove('active'));
-  document.getElementById('comp-' + comp).classList.add('active');
+  const compEl = document.getElementById('comp-' + comp);
+  if (compEl) compEl.classList.add('active');
   state.activeComp = comp;
   state.valueScans = [];
   state.openingOdds = {};  // reset opening odds bij nieuwe competitie
@@ -4552,13 +4553,17 @@ Geef voor ALLE ${candidates.length} wedstrijden een resultaat.`;
 
   // Send notifications for triple/double lock
   if (state.settings.notifEnabled && Notification.permission === 'granted') {
-    scans.forEach(s => {
-      const hasValue = s.value >= 5;
-      const hasConf  = s.confidence >= 7;
-      const score = (hasValue?1:0) + (hasConf?1:0);
-      if (score === 2) {
-        sendPickNotification('🔑 Double Lock', s.match.home+' vs '+s.match.away+' — '+s.pickLabel+' @ '+(s.odds?.toFixed(2)||'?'), 'double-'+s.id, s.match.id, s.match.comp);
-      }
+    // Groepeer per confidence niveau — stuur max 3 meldingen
+    const notifPicks = scans
+      .filter(s => s.value >= 5 && s.confidence >= 7)
+      .sort((a,b) => b.value - a.value)
+      .slice(0, 3);
+    notifPicks.forEach(s => {
+      sendPickNotification('🔑 Double Lock', s.match.home+' vs '+s.match.away+' — '+s.pickLabel+' @ '+(s.odds?.toFixed(2)||'?'), 'double-'+s.id, s.match.id, s.match.comp);
+    });
+    // Triple locks apart
+    scans.filter(s => s.value >= 5 && s.confidence >= 9).forEach(s => {
+      sendPickNotification('🏆 TRIPLE LOCK', s.match.home+' vs '+s.match.away+' — '+s.pickLabel+' @ '+(s.odds?.toFixed(2)||'?')+' (+'+Math.round(s.value)+'% value)', 'triple-'+s.id, s.match.id, s.match.comp);
     });
   }
 
@@ -7903,8 +7908,12 @@ if ('serviceWorker' in navigator) {
       const { matchId, comp } = e.data;
       // Switch naar wedstrijden tab en selecteer de juiste comp
       switchTab('wedstrijden');
-      if (comp && comp !== state.activeComp) {
+      // Alleen selectComp aanroepen als de comp in de app staat
+      if (comp && comp !== state.activeComp && COMP_IDS[comp] !== undefined) {
         selectComp(comp);
+      } else if (comp && !COMP_IDS[comp]) {
+        // Comp niet in app — laad alle competities vandaag
+        showAutoCheckBar('📍 ' + comp + ' — tik op 🌍 Alle competities', 4000);
       }
       // Scroll naar de match card als die al geladen is
       if (matchId) {
