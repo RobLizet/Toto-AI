@@ -1057,17 +1057,18 @@ body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
 /* ═══════════════════════════════════════
    SWIPE GESTURES op bet-rows
 ═══════════════════════════════════════ */
-.swipeable { position:relative; overflow:hidden; touch-action:pan-y; }
+.swipeable { position:relative; overflow:hidden; touch-action:pan-y; display:block; }
 .swipe-hint {
   position:absolute;top:0;bottom:0;
   display:flex;align-items:center;
   font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;
   padding:0 1rem;pointer-events:none;opacity:0;transition:opacity .15s;
   border-radius:12px;
+  z-index:1;
 }
 .swipe-hint.win-hint  { left:0;background:rgba(22,163,74,.9);color:#fff; }
 .swipe-hint.lose-hint { right:0;background:rgba(220,38,38,.9);color:#fff; }
-.swipe-inner { transition:transform .2s; }
+.swipe-inner { transition:transform .2s; position:relative; z-index:2; background:var(--card,#fff); border-radius:12px; }
 
 /* ═══════════════════════════════════════
    BRON-SPLIT GRAFIEK TABS
@@ -1152,7 +1153,7 @@ body.dark #wkCountdown { color:#d97706 !important; }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v3.9</div>
+        <div class="version-badge">v4.0</div>
       </div>
     </div>
   </div>
@@ -1193,6 +1194,9 @@ body.dark #wkCountdown { color:#d97706 !important; }
       </button>
       <button class="tab-btn" onclick="switchTab('wallet')" id="tab-btn-wallet">
         <span class="tab-icon">💶</span><span class="tab-label">WALLET</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('backtest')" id="tab-btn-backtest">
+        <span class="tab-icon">⚡</span><span class="tab-label">BACKTEST</span>
       </button>
       <button class="tab-btn" onclick="switchTab('tracker')" id="tab-btn-tracker">
         <span class="tab-icon">📒</span><span class="tab-label">TRACKER</span>
@@ -1535,10 +1539,10 @@ body.dark #wkCountdown { color:#d97706 !important; }
   </div>
 
   <!-- ══════════════════════════════════════
-       TAB: ECHTE WEDDENSCHAP TRACKER
+       TAB: VALUE BACKTEST
   ══════════════════════════════════════ -->
 
-  <div id="tab-tracker" class="tab-content">
+  <div id="tab-backtest" class="tab-content">
 
 <!-- ⚡ VALUE BACKTEST SECTIE -->
 <div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
@@ -1562,22 +1566,10 @@ body.dark #wkCountdown { color:#d97706 !important; }
 
   <!-- Stats strip backtest -->
   <div class="bt-strip" id="btStrip">
-    <div class="bt-box">
-      <div class="lbl">Picks</div>
-      <div class="val" id="btTotal" style="color:#0f172a;">0</div>
-    </div>
-    <div class="bt-box">
-      <div class="lbl">Hitrate</div>
-      <div class="val" id="btHitrate" style="color:#7c3aed;">—</div>
-    </div>
-    <div class="bt-box">
-      <div class="lbl">ROI</div>
-      <div class="val" id="btRoi" style="color:#15803d;">—</div>
-    </div>
-    <div class="bt-box">
-      <div class="lbl">Gem. value</div>
-      <div class="val" id="btAvgVal" style="color:#d97706;">—</div>
-    </div>
+    <div class="bt-box"><div class="lbl">Picks</div><div class="val" id="btTotal" style="color:#0f172a;">0</div></div>
+    <div class="bt-box"><div class="lbl">Hitrate</div><div class="val" id="btHitrate" style="color:#7c3aed;">—</div></div>
+    <div class="bt-box"><div class="lbl">ROI</div><div class="val" id="btRoi" style="color:#15803d;">—</div></div>
+    <div class="bt-box"><div class="lbl">Gem. value</div><div class="val" id="btAvgVal" style="color:#d97706;">—</div></div>
   </div>
 
   <!-- Grafiek backtest vs break-even -->
@@ -1601,6 +1593,14 @@ body.dark #wkCountdown { color:#d97706 !important; }
     </div>
   </div>
 </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════
+       TAB: ECHTE WEDDENSCHAP TRACKER
+  ══════════════════════════════════════ -->
+
+  <div id="tab-tracker" class="tab-content">
 
 <!-- Stats strip -->
 <div id="trackerStats" class="wallet-strip" style="grid-template-columns:repeat(4,1fr);">
@@ -2159,7 +2159,8 @@ function switchTab(name) {
     btn.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
   }
   if (name === 'wallet') updateWalletUI();
-  if (name === 'tracker') { renderTracker(); updateTrackerStats(); renderBacktest(); }
+  if (name === 'tracker') { renderTracker(); updateTrackerStats(); }
+  if (name === 'backtest') { renderBacktest(); }
   if (name === 'instellingen') { loadFbBackupInfo(); }
   state.activeTab = name;
   if (name === 'wedstrijden') {
