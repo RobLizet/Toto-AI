@@ -1338,7 +1338,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v4.4</div>
+        <div class="version-badge">v4.5</div>
       </div>
     </div>
   </div>
@@ -1482,12 +1482,19 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
     ⚡ SCAN VALUE
   </button>
 </div>
-<div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
+<div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;align-items:center;">
   <button onclick="loadTodayAllComps()" id="allCompsBtn"
     style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
     padding:.3rem .85rem;border-radius:999px;cursor:pointer;
     background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#1d4ed8;">
     🌍 ALLE COMPETITIES VANDAAG
+  </button>
+  <button onclick="scanAllTodayValue()" id="scanAllTodayBtn" style="display:none;
+    font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
+    background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(5,150,105,.1));
+    border:1px solid rgba(22,163,74,.4);color:#15803d;">
+    ⚡ SCAN ALLES
   </button>
   <div id="allCompsLoading" style="display:none;font-family:'IBM Plex Mono',monospace;
     font-size:.52rem;color:var(--sub);align-self:center;">⟳ Laden...</div>
@@ -3173,6 +3180,9 @@ async function loadTodayAllComps() {
     }
 
     if (btn) { btn.textContent = '🔄 Verversen'; btn.style.display = 'block'; }
+    // Show scan button now that matches are loaded
+    const scanBtn = document.getElementById('scanAllTodayBtn');
+    if (scanBtn) scanBtn.style.display = 'block';
   } catch(e) {
     list.innerHTML = `<div class="match-loading" style="color:var(--red);">⚠ Fout: ${e.message}</div>`;
     if (btn) btn.style.display = 'block';
@@ -4114,6 +4124,146 @@ function analyzeMarketMovement(matchId, currentHome, currentDraw, currentAway) {
  * Gebruikt temperature=0 + 3-uitkomst model (1/X/2 sommeert tot 100%)
  * voor deterministische, reproduceerbare resultaten.
  */
+
+// ═══════════════════════════════════════════════════════
+// SCAN ALLE COMPETITIES VANDAAG — value scan op alle geladen wedstrijden
+// ═══════════════════════════════════════════════════════
+async function scanAllTodayValue() {
+  const apiKey = state.settings.anthropicKey;
+  if (!apiKey) { alert('Vul eerst je Anthropic API key in bij ⚙️ Instellingen!'); return; }
+
+  const candidates = state.matches.filter(m =>
+    m.homeOdds !== '—' && !m.isDone && parseFloat(m.homeOdds) > 1
+  ).slice(0, 20); // max 20 om API kosten te beperken
+
+  if (!candidates.length) {
+    alert('Geen wedstrijden met quotes. Laad eerst alle competities vandaag.');
+    return;
+  }
+
+  const btn = document.getElementById('scanAllTodayBtn');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = `⟳ SCANNEN (0/${candidates.length})...`;
+
+  state.valueScans = [];
+  document.getElementById('valueExplainer') && (document.getElementById('valueExplainer').style.display = 'none');
+
+  let done = 0;
+  const scans = [];
+
+  for (const m of candidates) {
+    btn.textContent = `⟳ SCANNEN (${done}/${candidates.length})...`;
+    try {
+      // Build compact prompt — no standings (too many comps)
+      const prompt = `Je bent een value betting expert.
+
+Wedstrijd: ${m.home} vs ${m.away}
+Competitie: ${m.comp || 'Onbekend'}
+Datum: ${m.date || 'vandaag'}
+Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}
+Thuisform: ${m.homeForm||'?'} | Uitvorm: ${m.awayForm||'?'}
+
+Analyseer de VALUE. Geef ALLEEN dit JSON object terug, geen uitleg:
+{
+  "pick": "1" of "X" of "2",
+  "pickLabel": "korte beschrijving",
+  "kans": getal 0-100,
+  "value": getal (kan negatief),
+  "confidence": getal 1-10,
+  "kelly": getal 0-25,
+  "reason": "max 8 woorden"
+}`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514',
+          max_tokens:300,
+          system:'Geef altijd exact het gevraagde JSON terug, niets anders.',
+          messages:[{role:'user',content:prompt}]
+        })
+      });
+      const data = await resp.json();
+      const raw = data.content?.[0]?.text?.trim().replace(/```json|```/g,'').trim();
+      const parsed = JSON.parse(raw);
+
+      const pick = parsed.pick || '1';
+      const odds = pick === '1' ? parseFloat(m.homeOdds) : pick === 'X' ? parseFloat(m.drawOdds) : parseFloat(m.awayOdds);
+
+      scans.push({
+        match: m,
+        pick,
+        pickLabel: parsed.pickLabel || (pick==='1'?m.home+' wint':pick==='X'?'Gelijkspel':m.away+' wint'),
+        kans: parsed.kans || 33,
+        value: parseFloat(parsed.value) || 0,
+        val: parseFloat(parsed.value) || 0,
+        confidence: parsed.confidence || 5,
+        kelly: parseFloat(parsed.kelly) || 0,
+        reason: parsed.reason || '',
+        odds,
+        bookmaker: m.oddsSource || 'API',
+        poissonUsed: false,
+        id: m.id
+      });
+    } catch(e) { /* skip this match */ }
+    done++;
+  }
+
+  // Filter op value > 0 en render
+  state.valueScans = scans;
+
+  // Save to backtest
+  let savedCount = 0;
+  scans.filter(s => s.value >= 5).forEach(s => {
+    const exists = (state.valueBacktest?.picks||[]).some(p => String(p.matchId) === String(s.match.id));
+    if (!exists) {
+      if (!state.valueBacktest) state.valueBacktest = { picks:[] };
+      state.valueBacktest.picks.unshift({
+        id: Date.now() + Math.random(),
+        matchId: String(s.match.id),
+        matchName: `${s.match.home} vs ${s.match.away}`,
+        fixtureId: s.match.id,
+        date: s.match.date || new Date().toLocaleDateString('nl-NL'),
+        pick: s.pick, pickLabel: s.pickLabel,
+        aiKans: s.kans, odds: s.odds,
+        bookmaker: s.bookmaker,
+        value: parseFloat(s.value.toFixed(1)),
+        kelly: parseFloat((s.kelly||0).toFixed(1)),
+        confidence: s.confidence || 5,
+        reason: s.reason || '',
+        status: 'pending', score: null,
+        comp: s.match.comp || '',
+        scanDate: new Date().toLocaleString('nl-NL')
+      });
+      savedCount++;
+    }
+  });
+  if (savedCount > 0) saveState();
+
+  // Render value results in matchList with Triple/Double Lock
+  renderMatches(state.matches);
+
+  // Send notifications for triple/double lock
+  if (state.settings.notifEnabled && Notification.permission === 'granted') {
+    scans.forEach(s => {
+      const hasValue = s.value >= 5;
+      const hasConf  = s.confidence >= 7;
+      const score = (hasValue?1:0) + (hasConf?1:0);
+      if (score === 2) {
+        sendPickNotification('🔑 Double Lock', s.match.home+' vs '+s.match.away+' — '+s.pickLabel+' @ '+(s.odds?.toFixed(2)||'?'), 'double-'+s.id, s.match.id, s.match.comp);
+      }
+    });
+  }
+
+  const valueCount = scans.filter(s => s.value >= 5).length;
+  btn.disabled = false;
+  btn.textContent = valueCount > 0 ? `✅ ${valueCount} value picks` : '⚡ SCAN ALLES';
+  setTimeout(() => { btn.textContent = origText; }, 5000);
+
+  showAutoCheckBar(`⚡ ${scans.length} gescand · ${valueCount} value picks gevonden`, 4000);
+}
 async function scanValueAll() {
   const apiKey = state.settings.anthropicKey;
   if (!apiKey) {
