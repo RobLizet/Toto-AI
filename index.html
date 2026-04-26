@@ -1161,6 +1161,109 @@ body.dark #wkCountdown { color:#d97706 !important; }
   background: rgba(22,163,74,.12);
   border-color: rgba(22,163,74,.4); color: #15803d;
 }
+
+/* ═══════════════════════════════════════
+   BACKTEST COMP SCOREBORD
+═══════════════════════════════════════ */
+.bt-scoreboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: .35rem;
+  margin-bottom: 1rem;
+}
+.bt-score-row {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  padding: .5rem .75rem;
+}
+.bt-score-comp {
+  flex: 1;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .62rem;
+  font-weight: 800;
+  color: var(--ink);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bt-score-fraction {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: .05em;
+  flex-shrink: 0;
+}
+.bt-score-fraction.pos { color: #16a34a; }
+.bt-score-fraction.neg { color: #dc2626; }
+.bt-score-fraction.neu { color: #d97706; }
+.bt-score-bar-wrap {
+  width: 56px;
+  height: 6px;
+  background: rgba(15,23,42,.08);
+  border-radius: 3px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.bt-score-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .4s ease;
+}
+.bt-score-pct {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem;
+  font-weight: 700;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+  color: var(--sub);
+}
+/* Backtest sub-tabs */
+.bt-subtab-row {
+  display: flex;
+  gap: .3rem;
+  margin-bottom: .7rem;
+}
+.bt-subtab {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .58rem;
+  font-weight: 700;
+  padding: .3rem .8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,.12);
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  transition: all .15s;
+}
+.bt-subtab.active {
+  background: rgba(22,163,74,.12);
+  border-color: rgba(22,163,74,.4);
+  color: #15803d;
+}
+
+/* ═══════════════════════════════════════
+   ALLE COMPETITIES VANDAAG
+═══════════════════════════════════════ */
+.allcomps-section { margin-bottom: 1rem; }
+.allcomps-comp-header {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--sub);
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin: .8rem 0 .3rem;
+  padding: .2rem 0;
+  border-bottom: 1px solid var(--stroke);
+}
 </style>
 
 </head>
@@ -1204,7 +1307,7 @@ body.dark #wkCountdown { color:#d97706 !important; }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v4.1</div>
+        <div class="version-badge">v4.2</div>
       </div>
     </div>
   </div>
@@ -1344,10 +1447,19 @@ body.dark #wkCountdown { color:#d97706 !important; }
   <button onclick="debugAPI()" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;
     background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:#a78bfa;
     border-radius:999px;padding:2px 8px;cursor:pointer;margin-left:.3rem;">🔍 DEBUG</button>
-  <!-- VALUE: scan-knop naast DEBUG -->
   <button onclick="scanValueAll()" id="scanValueBtn" class="scan-value-btn">
     ⚡ SCAN VALUE
   </button>
+</div>
+<div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
+  <button onclick="loadTodayAllComps()" id="allCompsBtn"
+    style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
+    background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#1d4ed8;">
+    🌍 ALLE COMPETITIES VANDAAG
+  </button>
+  <div id="allCompsLoading" style="display:none;font-family:'IBM Plex Mono',monospace;
+    font-size:.52rem;color:var(--sub);align-self:center;">⟳ Laden...</div>
 </div>
 
 <!-- VALUE: uitleg card (wordt alleen getoond bij eerste keer) -->
@@ -1613,6 +1725,11 @@ body.dark #wkCountdown { color:#d97706 !important; }
         🗑️ WISSEN
       </button>
     </div>
+  </div>
+  <!-- Sub-tabs -->
+  <div class="bt-subtab-row">
+    <button class="bt-subtab active" id="bts-picks" onclick="setBtSubTab('picks')">📋 Picks</button>
+    <button class="bt-subtab"        id="bts-comps" onclick="setBtSubTab('comps')">🏆 Per competitie</button>
   </div>
 
   <!-- Stats strip backtest -->
@@ -2748,6 +2865,95 @@ function parseAPIMatch(f) {
 // ═══════════════════════════════════════════════════════
 // WEDSTRIJDEN LADEN
 // ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// ALLE COMPETITIES VANDAAG
+// ═══════════════════════════════════════════════════════
+async function loadTodayAllComps() {
+  const apiKey = state.settings.footballKey;
+  if (!apiKey) { alert('Vul je API-Football key in bij Instellingen'); return; }
+
+  const btn = document.getElementById('allCompsBtn');
+  const loading = document.getElementById('allCompsLoading');
+  const list = document.getElementById('matchList');
+  if (btn) btn.style.display = 'none';
+  if (loading) loading.style.display = 'flex';
+  list.innerHTML = '';
+
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?date=${today}`,
+      apiKey, 12000
+    );
+    const data = await r.json();
+    const fixtures = data.response || [];
+
+    if (!fixtures.length) {
+      list.innerHTML = '<div class="match-loading">Geen wedstrijden vandaag gevonden.</div>';
+      if (btn) btn.style.display = 'block';
+      if (loading) loading.style.display = 'none';
+      return;
+    }
+
+    // Group by league
+    const leagueMap = {};
+    for (const f of fixtures) {
+      const lid = f.league.id;
+      if (!leagueMap[lid]) leagueMap[lid] = { name: f.league.name, country: f.league.country, flag: f.league.flag, matches: [] };
+      leagueMap[lid].matches.push(f);
+    }
+
+    // Sort leagues: known comps first, then alphabetically
+    const knownOrder = Object.values(COMP_IDS);
+    const sorted = Object.entries(leagueMap).sort(([aId],[bId]) => {
+      const ai = knownOrder.indexOf(parseInt(aId));
+      const bi = knownOrder.indexOf(parseInt(bId));
+      if (ai >= 0 && bi >= 0) return ai - bi;
+      if (ai >= 0) return -1;
+      if (bi >= 0) return 1;
+      return leagueMap[aId].name.localeCompare(leagueMap[bId].name);
+    });
+
+    // Build match objects and render per league
+    state.matches = [];
+    const allMatches = [];
+
+    for (const [lid, league] of sorted) {
+      const leagueMatches = league.matches.map(f => parseAPIFMatch(f, league.name)).filter(Boolean);
+      allMatches.push({ league, matches: leagueMatches });
+      state.matches.push(...leagueMatches);
+    }
+
+    // Render grouped by competition
+    list.innerHTML = '';
+    document.getElementById('match-loading').style.display = 'none';
+
+    for (const { league, matches } of allMatches) {
+      if (!matches.length) continue;
+      const header = document.createElement('div');
+      header.className = 'allcomps-comp-header';
+      header.innerHTML = `${league.flag ? `<img src="${league.flag}" style="width:14px;height:10px;object-fit:cover;border-radius:2px;" onerror="this.style.display='none'">` : '🌍'} ${league.name} <span style="opacity:.5;font-weight:400;">${league.country}</span>`;
+      list.appendChild(header);
+      matches.forEach(m => renderSingleMatch(m, list));
+    }
+
+    if (btn) { btn.textContent = '🔄 Verversen'; btn.style.display = 'block'; }
+  } catch(e) {
+    list.innerHTML = `<div class="match-loading" style="color:var(--red);">⚠ Fout: ${e.message}</div>`;
+    if (btn) btn.style.display = 'block';
+  }
+  if (loading) loading.style.display = 'none';
+}
+
+// Render one match card and append to container
+function renderSingleMatch(m, container) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = renderMatchCard(m);
+  const card = tmp.firstElementChild;
+  if (card) container.appendChild(card);
+}
 async function loadMatches(comp) {
   document.getElementById('matchList').innerHTML = '';
   showLoadingMsg('⟳ Wedstrijden laden...', 'var(--muted)');
@@ -3010,93 +3216,7 @@ async function debugAPI() {
 // ═══════════════════════════════════════════════════════
 // RENDER MATCHES (met value-badge integratie)
 // ═══════════════════════════════════════════════════════
-function renderMatches(matches) {
-  const list = document.getElementById('matchList');
-  list.innerHTML = '';
-
-  // ─── TRIPLE LOCK SECTIE ───────────────────────────────────────
-  // Wedstrijden die aan alle 3 signalen voldoen: value≥5% + conf≥7 + poisson
-  const _minOdds = parseFloat(state.settings.tripleMinOdds || 1.6);
-  const tripleMatches = matches.filter(m =>
-    m.valueData &&
-    m.valueData.pct >= 5 &&
-    m.valueData.confidence >= 7 &&
-    m.valueData.poissonUsed === true &&
-    (m.valueData.odds || 0) >= _minOdds
-  );
-  if (tripleMatches.length > 0) {
-    const sec = document.createElement('div');
-    sec.className = 'triple-lock-section';
-    sec.innerHTML = `
-      <div class="triple-lock-header">🔒 Triple Lock · ${tripleMatches.length} wedstrijd${tripleMatches.length > 1 ? 'en' : ''}</div>
-      ${tripleMatches.map(m => {
-        const v = m.valueData;
-        const confColor = v.confidence >= 8 ? '#1d4ed8' : '#2563eb';
-        return `<div class="triple-lock-card" onclick="selectMatch(${JSON.stringify(m).replace(/"/g,'&quot;')})">
-          <div class="triple-lock-glow"></div>
-          <div style="display:flex;align-items:flex-start;gap:.6rem;">
-            <div class="triple-lock-crown">🏆</div>
-            <div style="flex:1;min-width:0;">
-              <div class="triple-lock-match">${m.home} vs ${m.away}</div>
-              <div class="triple-lock-pick">⚡ ${v.pickLabel} <span style="opacity:.6;">· ${m.comp} · ${m.time}</span></div>
-              <div class="triple-lock-badges">
-                <span class="tl-badge value">✓ +${Math.round(v.pct)}% VALUE</span>
-                <span class="tl-badge conf">🎲 ${v.confidence}/10 CONF</span>
-                <span class="tl-badge poisson">📐 POISSON</span>
-                <span class="tl-badge odds">@ ${v.odds?.toFixed(2)||'?'}</span>
-                <span class="tl-badge kelly">½K ${v.kelly?.toFixed(1)||'0'}%</span>
-              </div>
-              ${v.poissonUsed ? `<div class="triple-lock-meta">📐 1=${v.poissonK1}% · X=${v.poissonKX}% · 2=${v.poissonK2}%</div>` : ''}
-            </div>
-          </div>
-        </div>`;
-      }).join('')}
-    `;
-    list.appendChild(sec);
-  }
-  // ─────────────────────────────────────────────────────────────
-
-  // ─── DOUBLE LOCK SECTIE (2 van 3 signalen) ───────────────────
-  const doubleMatches = matches.filter(m => {
-    if ((m.valueData?.odds||0) < _minOdds) return false;
-    if (!m.valueData) return false;
-    const hasValue   = m.valueData.pct >= 5;
-    const hasConf    = m.valueData.confidence >= 7;
-    const hasPoisson = m.valueData.poissonUsed === true;
-    const score = (hasValue?1:0) + (hasConf?1:0) + (hasPoisson?1:0);
-    return score === 2; // precies 2 van 3
-  });
-  if (doubleMatches.length > 0) {
-    const sec2 = document.createElement('div');
-    sec2.className = 'double-lock-section';
-    const rows = doubleMatches.map(m => {
-      const v = m.valueData;
-      const hasValue   = v.pct >= 5;
-      const hasConf    = v.confidence >= 7;
-      const hasPoisson = v.poissonUsed;
-      const missing = !hasValue ? 'value' : !hasConf ? 'conf' : 'poisson';
-      const missingLabel = missing === 'value' ? 'geen value%' : missing === 'conf' ? 'conf < 7' : 'geen poisson';
-      return '<div class="double-lock-row" onclick="selectMatch(state.matches.find(x=>x.id===\''+m.id+'\'))">'
-        + '<div class="dl-icon">🔑</div>'
-        + '<div class="dl-info">'
-        +   '<div class="dl-match">' + m.home + ' vs ' + m.away + '</div>'
-        +   '<div class="dl-pick">⚡ ' + v.pickLabel + ' · ' + m.comp + ' · ' + m.time + '</div>'
-        +   '<div class="dl-badges">'
-        +     (hasValue   ? '<span class="dl-badge value">✓ +' + Math.round(v.pct) + '% VALUE</span>' : '')
-        +     (hasConf    ? '<span class="dl-badge conf">🎲 ' + v.confidence + '/10</span>' : '')
-        +     (hasPoisson ? '<span class="dl-badge poisson">📐 POISSON</span>' : '')
-        +     '<span style="font-family:monospace;font-size:.48rem;color:#94a3b8;padding:1px 5px;">∅ ' + missingLabel + '</span>'
-        +   '</div>'
-        + '</div>'
-        + '<div class="dl-odds">@ ' + (v.odds ? v.odds.toFixed(2) : '?') + '</div>'
-        + '</div>';
-    }).join('');
-    sec2.innerHTML = '<div class="double-lock-header">🔑 Double Lock · ' + doubleMatches.length + ' wedstrijd' + (doubleMatches.length > 1 ? 'en' : '') + '</div>' + rows;
-    list.appendChild(sec2);
-  }
-  // ─────────────────────────────────────────────────────────────
-
-  matches.forEach(m => {
+function renderMatchCard(m) {
     if (!m.awayPct) m.awayPct = Math.max(0, 100 - m.homePct - m.drawPct);
     const card = document.createElement('div');
     card.className = 'match-card';
@@ -3274,8 +3394,95 @@ function renderMatches(matches) {
         <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','2','${m.away} wint','${m.awayOdds}')">+2</div>
       </div>`;
     list.appendChild(card);
-  });
 }
+
+function renderMatches(matches) {
+  const list = document.getElementById('matchList');
+  list.innerHTML = '';
+
+  // ─── TRIPLE LOCK SECTIE ───────────────────────────────────────
+  // Wedstrijden die aan alle 3 signalen voldoen: value≥5% + conf≥7 + poisson
+  const _minOdds = parseFloat(state.settings.tripleMinOdds || 1.6);
+  const tripleMatches = matches.filter(m =>
+    m.valueData &&
+    m.valueData.pct >= 5 &&
+    m.valueData.confidence >= 7 &&
+    m.valueData.poissonUsed === true &&
+    (m.valueData.odds || 0) >= _minOdds
+  );
+  if (tripleMatches.length > 0) {
+    const sec = document.createElement('div');
+    sec.className = 'triple-lock-section';
+    sec.innerHTML = `
+      <div class="triple-lock-header">🔒 Triple Lock · ${tripleMatches.length} wedstrijd${tripleMatches.length > 1 ? 'en' : ''}</div>
+      ${tripleMatches.map(m => {
+        const v = m.valueData;
+        const confColor = v.confidence >= 8 ? '#1d4ed8' : '#2563eb';
+        return `<div class="triple-lock-card" onclick="selectMatch(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+          <div class="triple-lock-glow"></div>
+          <div style="display:flex;align-items:flex-start;gap:.6rem;">
+            <div class="triple-lock-crown">🏆</div>
+            <div style="flex:1;min-width:0;">
+              <div class="triple-lock-match">${m.home} vs ${m.away}</div>
+              <div class="triple-lock-pick">⚡ ${v.pickLabel} <span style="opacity:.6;">· ${m.comp} · ${m.time}</span></div>
+              <div class="triple-lock-badges">
+                <span class="tl-badge value">✓ +${Math.round(v.pct)}% VALUE</span>
+                <span class="tl-badge conf">🎲 ${v.confidence}/10 CONF</span>
+                <span class="tl-badge poisson">📐 POISSON</span>
+                <span class="tl-badge odds">@ ${v.odds?.toFixed(2)||'?'}</span>
+                <span class="tl-badge kelly">½K ${v.kelly?.toFixed(1)||'0'}%</span>
+              </div>
+              ${v.poissonUsed ? `<div class="triple-lock-meta">📐 1=${v.poissonK1}% · X=${v.poissonKX}% · 2=${v.poissonK2}%</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    `;
+    list.appendChild(sec);
+  }
+  // ─────────────────────────────────────────────────────────────
+
+  // ─── DOUBLE LOCK SECTIE (2 van 3 signalen) ───────────────────
+  const doubleMatches = matches.filter(m => {
+    if ((m.valueData?.odds||0) < _minOdds) return false;
+    if (!m.valueData) return false;
+    const hasValue   = m.valueData.pct >= 5;
+    const hasConf    = m.valueData.confidence >= 7;
+    const hasPoisson = m.valueData.poissonUsed === true;
+    const score = (hasValue?1:0) + (hasConf?1:0) + (hasPoisson?1:0);
+    return score === 2; // precies 2 van 3
+  });
+  if (doubleMatches.length > 0) {
+    const sec2 = document.createElement('div');
+    sec2.className = 'double-lock-section';
+    const rows = doubleMatches.map(m => {
+      const v = m.valueData;
+      const hasValue   = v.pct >= 5;
+      const hasConf    = v.confidence >= 7;
+      const hasPoisson = v.poissonUsed;
+      const missing = !hasValue ? 'value' : !hasConf ? 'conf' : 'poisson';
+      const missingLabel = missing === 'value' ? 'geen value%' : missing === 'conf' ? 'conf < 7' : 'geen poisson';
+      return '<div class="double-lock-row" onclick="selectMatch(state.matches.find(x=>x.id===\''+m.id+'\'))">'
+        + '<div class="dl-icon">🔑</div>'
+        + '<div class="dl-info">'
+        +   '<div class="dl-match">' + m.home + ' vs ' + m.away + '</div>'
+        +   '<div class="dl-pick">⚡ ' + v.pickLabel + ' · ' + m.comp + ' · ' + m.time + '</div>'
+        +   '<div class="dl-badges">'
+        +     (hasValue   ? '<span class="dl-badge value">✓ +' + Math.round(v.pct) + '% VALUE</span>' : '')
+        +     (hasConf    ? '<span class="dl-badge conf">🎲 ' + v.confidence + '/10</span>' : '')
+        +     (hasPoisson ? '<span class="dl-badge poisson">📐 POISSON</span>' : '')
+        +     '<span style="font-family:monospace;font-size:.48rem;color:#94a3b8;padding:1px 5px;">∅ ' + missingLabel + '</span>'
+        +   '</div>'
+        + '</div>'
+        + '<div class="dl-odds">@ ' + (v.odds ? v.odds.toFixed(2) : '?') + '</div>'
+        + '</div>';
+    }).join('');
+    sec2.innerHTML = '<div class="double-lock-header">🔑 Double Lock · ' + doubleMatches.length + ' wedstrijd' + (doubleMatches.length > 1 ? 'en' : '') + '</div>' + rows;
+    list.appendChild(sec2);
+  }
+  // ─────────────────────────────────────────────────────────────
+
+  matches.forEach(m => renderSingleMatch(m, list));}
 
 function handleOddsBet(e, matchId, pick, pickLabel, odds) {
   if (odds === '—') {
@@ -5684,6 +5891,84 @@ function updateTrackerStats() {
 // ═══════════════════════════════════════════════════════
 // BACKTEST COMPETITIE BREAKDOWN + FILTER
 // ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// BACKTEST SUB-TABS
+// ═══════════════════════════════════════════════════════
+let btSubTab = 'picks';
+
+function setBtSubTab(tab) {
+  btSubTab = tab;
+  document.querySelectorAll('.bt-subtab').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('bts-' + tab);
+  if (el) el.classList.add('active');
+  renderBacktest();
+}
+
+function renderBtScoreboard(picks) {
+  const el = document.getElementById('btCompBreakdown');
+  if (!el) return;
+
+  const settled = picks.filter(p => p.status === 'win' || p.status === 'lose');
+  if (!settled.length) {
+    el.style.display = 'block';
+    el.innerHTML = '<div class="bt-empty" style="padding:.8rem 0;">Nog geen afgeronde picks om per competitie te tonen.</div>';
+    return;
+  }
+
+  // Group by comp
+  const compMap = {};
+  for (const p of settled) {
+    const key = p.comp || 'Overig';
+    if (!compMap[key]) compMap[key] = { wins:0, total:0, name:key };
+    compMap[key].total++;
+    if (p.status === 'win') compMap[key].wins++;
+  }
+
+  // Also include pending counts
+  for (const p of picks) {
+    if (p.status !== 'win' && p.status !== 'lose') {
+      const key = p.comp || 'Overig';
+      if (!compMap[key]) compMap[key] = { wins:0, total:0, name:key, pending:0 };
+      if (!compMap[key].pending) compMap[key].pending = 0;
+      compMap[key].pending++;
+    }
+  }
+
+  const sorted = Object.values(compMap).sort((a,b) => b.total - a.total);
+
+  const compNames = {
+    eredivisie:'🇳🇱 Eredivisie', kkd:'🇳🇱 Keuken Kampioen',
+    premier:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', bundesliga:'🇩🇪 Bundesliga',
+    ligue1:'🇫🇷 Ligue 1', seriea:'🇮🇹 Serie A',
+    champions:'⭐ Champions League', nations:'🌍 Nations League',
+    beker:'🏆 KNVB Beker', wk2026:'🏆 WK 2026'
+  };
+
+  const rows = sorted.map(d => {
+    const pct = d.total > 0 ? Math.round((d.wins / d.total) * 100) : 0;
+    const cls = pct >= 55 ? 'pos' : pct < 40 ? 'neg' : 'neu';
+    const barColor = pct >= 55 ? '#16a34a' : pct < 40 ? '#dc2626' : '#d97706';
+    const label = compNames[d.name] || d.name;
+    const pendingTxt = d.pending ? ` · ${d.pending} open` : '';
+    return `<div class="bt-score-row">
+      <div class="bt-score-comp">${label}</div>
+      <div class="bt-score-fraction ${cls}">${d.wins}/${d.total}</div>
+      <div class="bt-score-bar-wrap">
+        <div class="bt-score-bar" style="width:${pct}%;background:${barColor};"></div>
+      </div>
+      <div class="bt-score-pct" style="color:${barColor};">${pct}%${pendingTxt}</div>
+    </div>`;
+  }).join('');
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);
+      margin-bottom:.5rem;">Wins / afgeronde picks · hitrate%</div>
+    <div class="bt-scoreboard">${rows}</div>
+  `;
+}
+
 let btFilter = 'all';
 
 function setBtFilter(f) {
@@ -5742,7 +6027,23 @@ function renderBacktest() {
   if (!list) return;
 
   updateBacktestStats();
-  renderBtCompBreakdown(allPicks);
+
+  // Sub-tab: competitie scorebord
+  if (btSubTab === 'comps') {
+    renderBtScoreboard(allPicks);
+    const filterRow = document.getElementById('btFilterRow');
+    if (filterRow) filterRow.style.display = 'none';
+    list.style.display = 'none';
+    const chartWrap = document.getElementById('btChartWrap');
+    if (chartWrap) chartWrap.style.display = 'none';
+    return;
+  }
+
+  // Sub-tab: picks
+  list.style.display = 'block';
+  const breakdown = document.getElementById('btCompBreakdown');
+  if (breakdown) breakdown.style.display = 'none';
+  renderBtCompBreakdown(allPicks); // still update internally
 
   // Show filter row if there are picks
   const filterRow = document.getElementById('btFilterRow');
