@@ -1294,6 +1294,76 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
 .help-body li { margin-bottom:.2rem; }
 .help-body p { margin:.3rem 0; }
 .help-body b { color:var(--ink); }
+
+/* ═══════════════════════════════════════
+   SCAN RESULTATEN PANEL
+═══════════════════════════════════════ */
+#scanResultsPanel {
+  display: none;
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+.scan-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .6rem 1rem;
+  background: linear-gradient(135deg, rgba(22,163,74,.08), rgba(5,150,105,.05));
+  border-bottom: 1px solid rgba(22,163,74,.15);
+  cursor: pointer;
+}
+.scan-results-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  font-weight: 800;
+  color: #15803d;
+  letter-spacing: .05em;
+}
+.scan-result-row {
+  display: flex;
+  align-items: center;
+  padding: .5rem 1rem;
+  border-bottom: 1px solid var(--stroke);
+  gap: .6rem;
+  cursor: pointer;
+  transition: background .1s;
+}
+.scan-result-row:last-child { border-bottom: none; }
+.scan-result-row:active { background: rgba(15,23,42,.04); }
+.scan-result-match {
+  flex: 1;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  font-weight: 700;
+  color: var(--ink);
+  min-width: 0;
+}
+.scan-result-pick {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem;
+  color: var(--sub);
+  margin-top: 1px;
+}
+.scan-result-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: .03em;
+  flex-shrink: 0;
+  min-width: 48px;
+  text-align: right;
+}
+.scan-result-value.pos { color: #16a34a; }
+.scan-result-value.neg { color: #dc2626; }
+.scan-result-value.neu { color: #d97706; }
+.scan-result-conf {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .5rem;
+  color: var(--sub);
+  flex-shrink: 0;
+}
 </style>
 
 </head>
@@ -1338,7 +1408,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v4.9</div>
+        <div class="version-badge">v5.0</div>
       </div>
     </div>
   </div>
@@ -1482,6 +1552,14 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
     ⚡ SCAN VALUE
   </button>
 </div>
+<div id="scanResultsPanel">
+  <div class="scan-results-header" onclick="document.getElementById('scanResultsList').style.display=document.getElementById('scanResultsList').style.display==='none'?'block':'none'">
+    <div class="scan-results-title" id="scanResultsTitle">⚡ SCAN RESULTATEN</div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#15803d;">▼</span>
+  </div>
+  <div id="scanResultsList"></div>
+</div>
+
 <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;align-items:center;">
   <button onclick="loadTodayAllComps()" id="allCompsBtn"
     style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
@@ -4409,6 +4487,9 @@ Analyseer de VALUE. Geef ALLEEN dit JSON object terug, geen uitleg:
 
   // Render value results in matchList with Triple/Double Lock
   renderMatches(state.matches);
+
+  // Toon scan resultaten panel
+  renderScanResults(scans);
 
   // Send notifications for triple/double lock
   if (state.settings.notifEnabled && Notification.permission === 'granted') {
@@ -7393,6 +7474,45 @@ function showHelpTab(tab) {
   document.querySelectorAll('.help-tab').forEach(b => {
     if (b.getAttribute('onclick')?.includes("'" + tab + "'")) b.classList.add('active');
   });
+}
+
+// ═══════════════════════════════════════════════════════
+// SCAN RESULTATEN PANEL
+// ═══════════════════════════════════════════════════════
+function renderScanResults(scans) {
+  const panel = document.getElementById('scanResultsPanel');
+  const list  = document.getElementById('scanResultsList');
+  const title = document.getElementById('scanResultsTitle');
+  if (!panel || !list) return;
+
+  if (!scans.length) { panel.style.display = 'none'; return; }
+
+  // Sort: value hoog → laag
+  const sorted = [...scans].sort((a,b) => b.value - a.value);
+  const valueCount = sorted.filter(s => s.value >= 5).length;
+
+  title.textContent = `⚡ SCAN RESULTATEN · ${scans.length} gescand · ${valueCount} value picks`;
+
+  list.innerHTML = sorted.map(s => {
+    const valClass = s.value >= 10 ? 'pos' : s.value >= 5 ? 'pos' : s.value >= 0 ? 'neu' : 'neg';
+    const valSign  = s.value > 0 ? '+' : '';
+    const confStr  = `${s.confidence}/10 · @ ${s.odds?.toFixed(2)||'?'}`;
+    return `<div class="scan-result-row" onclick="selectMatch(state.matches.find(m=>String(m.id)===String(${s.match.id})))">
+      <div style="flex:1;min-width:0;">
+        <div class="scan-result-match">${s.match.home} vs ${s.match.away}</div>
+        <div class="scan-result-pick">⚡ ${s.pickLabel} · ${s.match.comp||''}</div>
+      </div>
+      <div>
+        <div class="scan-result-value ${valClass}">${valSign}${s.value.toFixed(1)}%</div>
+        <div class="scan-result-conf">${confStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  panel.style.display = 'block';
+  list.style.display = 'block';
+  // Scroll to panel
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
