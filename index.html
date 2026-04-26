@@ -1338,7 +1338,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v4.6</div>
+        <div class="version-badge">v4.7</div>
       </div>
     </div>
   </div>
@@ -3344,68 +3344,131 @@ async function loadFromAPIFootball(comp, apiKey) {
 
 // ═══════════════════════════════════════════════════════
 // ODDS OPHALEN VOOR ALLE COMPETITIES VANDAAG
+// Gebruikt date-endpoint — werkt op betaald abonnement
 // ═══════════════════════════════════════════════════════
 async function fetchOddsForAllMatches(matches, apiKey) {
   if (!apiKey || !matches.length) return;
+
+  const todo = matches.filter(m => m.homeOdds === '—' && !m.isDone);
+  if (!todo.length) return;
+
+  const oddsMap = {};
+
   try {
+    // Één call voor alle wedstrijden vandaag — snel op betaald plan
     const today = new Date().toISOString().split('T')[0];
-    // Fetch odds by date — één call voor alle competities
     const r = await apiFetch(
-      `https://v3.football.api-sports.io/odds?date=${today}&bookmaker=8`,
-      apiKey, 10000
+      `https://v3.football.api-sports.io/odds?date=${today}`,
+      apiKey, 15000
     );
     const data = await r.json();
-    if (!data.response?.length) return;
 
-    let updated = 0;
-    for (const item of data.response) {
+    for (const item of (data.response || [])) {
       const fid = item.fixture?.id;
-      const match = matches.find(m => String(m.id) === String(fid));
-      if (!match) continue;
-      const market = item.bookmakers?.[0]?.bets?.find(b => b.name === 'Match Winner');
-      if (!market) continue;
-      const h = market.values?.find(v => v.value === 'Home')?.odd;
-      const d = market.values?.find(v => v.value === 'Draw')?.odd;
-      const a = market.values?.find(v => v.value === 'Away')?.odd;
-      if (h && d && a) {
-        match.homeOdds = parseFloat(h).toFixed(2);
-        match.drawOdds = parseFloat(d).toFixed(2);
-        match.awayOdds = parseFloat(a).toFixed(2);
-        match.oddsSource = item.bookmakers[0].name || 'API';
-        const tot = 1/parseFloat(h) + 1/parseFloat(d) + 1/parseFloat(a);
-        match.homePct = Math.round((1/parseFloat(h)/tot)*100);
-        match.drawPct = Math.round((1/parseFloat(d)/tot)*100);
-        match.awayPct = Math.round((1/parseFloat(a)/tot)*100);
-        updated++;
+      if (!fid) continue;
+      // Pak eerste bookmaker met Match Winner markt
+      for (const bm of (item.bookmakers || [])) {
+        const mw = bm.bets?.find(b => b.name === 'Match Winner');
+        if (!mw?.values?.length) continue;
+        // values[0]=Home, values[1]=Draw, values[2]=Away
+        const home = parseFloat(mw.values.find(v => v.value === 'Home')?.odd || mw.values[0]?.odd);
+        const draw = parseFloat(mw.values.find(v => v.value === 'Draw')?.odd || mw.values[1]?.odd);
+        const away = parseFloat(mw.values.find(v => v.value === 'Away')?.odd || mw.values[2]?.odd);
+        if (home > 1 && draw > 1 && away > 1) {
+          oddsMap[fid] = { home, draw, away, bookmaker: bm.name };
+          break;
+        }
       }
     }
-    if (updated > 0) renderMatches(matches);
-  } catch(e) { console.warn('[OddsAll]', e.message); }
+  } catch(e) {
+    console.warn('[OddsAll date]', e.message);
+    // Fallback: per fixture voor wedstrijden zonder quotes
+    for (const m of todo.slice(0, 10)) {
+      try {
+        const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${m.id}`, apiKey, 5000);
+        const d = await r.json();
+        if (!d.response?.length) continue;
+        for (const bm of (d.response[0]?.bookmakers || [])) {
+          const mw = bm.bets?.find(b => b.name === 'Match Winner');
+          if (!mw?.values?.length) continue;
+          const home = parseFloat(mw.values[0]?.odd);
+          const draw = parseFloat(mw.values[1]?.odd);
+          const away = parseFloat(mw.values[2]?.odd);
+          if (home > 1 && draw > 1 && away > 1) {
+            oddsMap[m.id] = { home, draw, away, bookmaker: bm.name };
+            break;
+          }
+        }
+      } catch(e2) {}
+    }
+  }
+
+  let updated = 0;
+  for (const m of matches) {
+    const o = oddsMap[m.id];
+    if (!o) continue;
+    const tot = (1/o.home) + (1/o.draw) + (1/o.away);
+    m.homeOdds = o.home.toFixed(2);
+    m.drawOdds = o.draw.toFixed(2);
+    m.awayOdds = o.away.toFixed(2);
+    m.oddsSource = o.bookmaker;
+    m.homePct = Math.round((1/o.home)/tot*100);
+    m.drawPct = Math.round((1/o.draw)/tot*100);
+    m.awayPct = Math.round((1/o.away)/tot*100);
+    updated++;
+  }
+  if (updated > 0) renderMatches(matches);
+  return updated;
 }
 async function fetchOddsForMatches(leagueId, apiKey) {
   try {
     const oddsMap = {};
     const bookmakerOddsMap = {};
     const fixtureIds = state.matches.map(m => m.id).filter(Boolean);
-    for (const fid of fixtureIds.slice(0, 10)) {
-      try {
-        const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fid}`, apiKey);
-        const d = await r.json();
-        if (!d.response?.length) continue;
+
+    // Betaald plan: één date-call voor alle wedstrijden tegelijk
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const r = await apiFetch(`https://v3.football.api-sports.io/odds?date=${today}`, apiKey, 15000);
+      const data = await r.json();
+      for (const item of (data.response || [])) {
+        const fid = item.fixture?.id;
+        if (!fixtureIds.includes(fid)) continue;
         bookmakerOddsMap[fid] = [];
-        for (const bm of (d.response[0]?.bookmakers || [])) {
+        for (const bm of (item.bookmakers || [])) {
           const mw = bm.bets?.find(b => b.name === 'Match Winner');
-          if (mw?.values?.length >= 3) {
-            const home = parseFloat(mw.values[0]?.odd);
-            const draw = parseFloat(mw.values[1]?.odd);
-            const away = parseFloat(mw.values[2]?.odd);
-            if (home > 1 && draw > 1 && away > 1) {
-              bookmakerOddsMap[fid].push({ name: bm.name, home, draw, away });
-              if (!oddsMap[fid]) oddsMap[fid] = { home, draw, away };
-            }
+          if (!mw?.values?.length) continue;
+          const home = parseFloat(mw.values.find(v => v.value === 'Home')?.odd || mw.values[0]?.odd);
+          const draw = parseFloat(mw.values.find(v => v.value === 'Draw')?.odd || mw.values[1]?.odd);
+          const away = parseFloat(mw.values.find(v => v.value === 'Away')?.odd || mw.values[2]?.odd);
+          if (home > 1 && draw > 1 && away > 1) {
+            bookmakerOddsMap[fid].push({ name: bm.name, home, draw, away });
+            if (!oddsMap[fid]) oddsMap[fid] = { home, draw, away };
           }
         }
-      } catch(e) {}
+      }
+    } catch(e) {
+      // Fallback: per fixture
+      for (const fid of fixtureIds.slice(0, 10)) {
+        try {
+          const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fid}`, apiKey);
+          const d = await r.json();
+          if (!d.response?.length) continue;
+          bookmakerOddsMap[fid] = [];
+          for (const bm of (d.response[0]?.bookmakers || [])) {
+            const mw = bm.bets?.find(b => b.name === 'Match Winner');
+            if (mw?.values?.length >= 3) {
+              const home = parseFloat(mw.values[0]?.odd);
+              const draw = parseFloat(mw.values[1]?.odd);
+              const away = parseFloat(mw.values[2]?.odd);
+              if (home > 1 && draw > 1 && away > 1) {
+                bookmakerOddsMap[fid].push({ name: bm.name, home, draw, away });
+                if (!oddsMap[fid]) oddsMap[fid] = { home, draw, away };
+              }
+            }
+          }
+        } catch(e2) {}
+      }
     }
 
     state.bookmakerOdds = { ...state.bookmakerOdds, ...bookmakerOddsMap };
