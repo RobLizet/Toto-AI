@@ -1408,7 +1408,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v5.0</div>
+        <div class="version-badge">v5.2</div>
       </div>
     </div>
   </div>
@@ -2573,6 +2573,7 @@ let state = {
   combiBuilder: [],
   bookmakerOdds: {},
   valueScans: [],    // VALUE: scan resultaten
+  lastScanResults: [], // Laatste scan bewaard
   openingOdds: {},   // marktbeweging: opening quotes per fixture
   wallet: {
     balance: 500,
@@ -2612,6 +2613,10 @@ window.addEventListener('load', () => {
   startAutoCheckScheduler();
   updateAutoDarkUI();
   checkAutoDarkNow();
+  // Herstel scan resultaten panel als er eerder gescand is
+  if (state.lastScanResults?.length) {
+    renderScanResults(state.lastScanResults, true);
+  }
   try { applySettings(); } catch(e) { console.error('applySettings:', e); }
   try { applyTheme(); } catch(e) {}
   try { updateWalletUI(); } catch(e) { console.error('updateWalletUI:', e); }
@@ -4454,8 +4459,40 @@ Analyseer de VALUE. Geef ALLEEN dit JSON object terug, geen uitleg:
     done++;
   }
 
+  // Koppel valueData aan match objecten voor Triple/Double Lock rendering
+  state.matches.forEach(m => { if (m) m.valueData = null; });
+  scans.forEach(s => {
+    if (s.match && s.value >= 5) {
+      s.match.valueData = {
+        pct: s.value,
+        pick: s.pick, pickLabel: s.pickLabel,
+        kans: s.kans, odds: s.odds,
+        bookmaker: s.bookmaker,
+        kelly: s.kelly,
+        confidence: s.confidence,
+        poissonUsed: s.poissonUsed || false,
+        reason: s.reason
+      };
+    }
+  });
+
   // Filter op value > 0 en render
   state.valueScans = scans;
+  // Bewaar scan resultaten zodat ze zichtbaar blijven na verversen
+  state.lastScanResults = scans.map(s => ({
+    matchId: s.match.id,
+    home: s.match.home,
+    away: s.match.away,
+    comp: s.match.comp || '',
+    pick: s.pick,
+    pickLabel: s.pickLabel,
+    value: s.value,
+    confidence: s.confidence,
+    odds: s.odds,
+    kelly: s.kelly,
+    scanTime: new Date().toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'})
+  }));
+  saveState();
 
   // Save to backtest
   let savedCount = 0;
@@ -7479,7 +7516,7 @@ function showHelpTab(tab) {
 // ═══════════════════════════════════════════════════════
 // SCAN RESULTATEN PANEL
 // ═══════════════════════════════════════════════════════
-function renderScanResults(scans) {
+function renderScanResults(scans, restored = false) {
   const panel = document.getElementById('scanResultsPanel');
   const list  = document.getElementById('scanResultsList');
   const title = document.getElementById('scanResultsTitle');
@@ -7487,20 +7524,36 @@ function renderScanResults(scans) {
 
   if (!scans.length) { panel.style.display = 'none'; return; }
 
-  // Sort: value hoog → laag
-  const sorted = [...scans].sort((a,b) => b.value - a.value);
-  const valueCount = sorted.filter(s => s.value >= 5).length;
+  // Normalize: handle both full scan objects and saved lightweight objects
+  const normalized = scans.map(s => ({
+    matchId:   s.matchId  || s.match?.id,
+    home:      s.home     || s.match?.home || '?',
+    away:      s.away     || s.match?.away || '?',
+    comp:      s.comp     || s.match?.comp || '',
+    pickLabel: s.pickLabel || '?',
+    value:     s.value    || 0,
+    confidence:s.confidence || 0,
+    odds:      s.odds     || null,
+    scanTime:  s.scanTime || ''
+  }));
 
-  title.textContent = `⚡ SCAN RESULTATEN · ${scans.length} gescand · ${valueCount} value picks`;
+  // Sort: value hoog → laag
+  const sorted = [...normalized].sort((a,b) => b.value - a.value);
+  const valueCount = sorted.filter(s => s.value >= 5).length;
+  const timeLabel = sorted[0]?.scanTime ? ` · ${sorted[0].scanTime}` : '';
+  const restoredLabel = restored ? ' (vorige scan)' : '';
+
+  title.textContent = `⚡ SCAN RESULTATEN · ${scans.length} gescand · ${valueCount} value picks${timeLabel}${restoredLabel}`;
 
   list.innerHTML = sorted.map(s => {
-    const valClass = s.value >= 10 ? 'pos' : s.value >= 5 ? 'pos' : s.value >= 0 ? 'neu' : 'neg';
+    const valClass = s.value >= 5 ? 'pos' : s.value >= 0 ? 'neu' : 'neg';
     const valSign  = s.value > 0 ? '+' : '';
     const confStr  = `${s.confidence}/10 · @ ${s.odds?.toFixed(2)||'?'}`;
-    return `<div class="scan-result-row" onclick="selectMatch(state.matches.find(m=>String(m.id)===String(${s.match.id})))">
+    const mid = s.matchId;
+    return `<div class="scan-result-row" onclick="const m=state.matches.find(x=>String(x.id)===String(${mid}));if(m)selectMatch(m);">
       <div style="flex:1;min-width:0;">
-        <div class="scan-result-match">${s.match.home} vs ${s.match.away}</div>
-        <div class="scan-result-pick">⚡ ${s.pickLabel} · ${s.match.comp||''}</div>
+        <div class="scan-result-match">${s.home} vs ${s.away}</div>
+        <div class="scan-result-pick">⚡ ${s.pickLabel} · ${s.comp}</div>
       </div>
       <div>
         <div class="scan-result-value ${valClass}">${valSign}${s.value.toFixed(1)}%</div>
@@ -7511,15 +7564,15 @@ function renderScanResults(scans) {
 
   panel.style.display = 'block';
   list.style.display = 'block';
-  // Scroll to panel
-  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  if (!restored) setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
     wallet:state.wallet, tracker:state.tracker,
     valueBacktest:state.valueBacktest,
     favoriteComps:state.favoriteComps || [],
-    settings:state.settings
+    settings:state.settings,
+    lastScanResults:state.lastScanResults || []
   }));
   // Auto-sync naar Firebase na elke wijziging (debounced)
   if (state.settings.footballKey || state.settings.anthropicKey) {
@@ -7534,6 +7587,7 @@ function loadState() {
     if (s.valueBacktest) state.valueBacktest = s.valueBacktest;
     if (s.favoriteComps) state.favoriteComps = s.favoriteComps;
     if (s.settings) state.settings = { ...state.settings, ...s.settings };
+    if (s.lastScanResults) state.lastScanResults = s.lastScanResults;
   } catch(e) {}
 }
 
