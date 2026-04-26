@@ -1152,7 +1152,7 @@ body.dark #wkCountdown { color:#d97706 !important; }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v3.7</div>
+        <div class="version-badge">v3.8</div>
       </div>
     </div>
   </div>
@@ -5563,11 +5563,12 @@ const sourceClass = { analyse:'src-analyse', combi:'src-combi', widget:'src-widg
 function renderTracker() {
   const list = document.getElementById('trackerList');
   let bets = state.tracker.bets || [];
-  if (trackerFilter !== 'all') {
-    if (['win','lose','pending'].includes(trackerFilter)) bets = bets.filter(b => b.status === trackerFilter);
-    else if (trackerFilter === 'open') bets = bets.filter(b => b.status === 'pending');
-    else bets = bets.filter(b => b.source === trackerFilter);
-  }
+  if (trackerFilter === 'open')    bets = bets.filter(b => b.status === 'pending');
+  else if (trackerFilter === 'win')  bets = bets.filter(b => b.status === 'win');
+  else if (trackerFilter === 'lose') bets = bets.filter(b => b.status === 'lose');
+  else if (trackerFilter === 'analyse' || trackerFilter === 'combi' || trackerFilter === 'widget' || trackerFilter === 'eigen')
+    bets = bets.filter(b => (b.source || 'eigen') === trackerFilter);
+  // 'all' = geen filter
   if (!bets.length) { list.innerHTML = '<div class="empty-state">Geen weddenschappen</div>'; return; }
   list.innerHTML = bets.map(b => {
     const scoreBadge = b.score ? ` [${b.score}]` : '';
