@@ -641,6 +641,7 @@ border-color:rgba(219,39,119,.35);color:#be185d;}
 .tracker-row{background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
 border-radius:14px;padding:.75rem .9rem;margin-bottom:.5rem;box-shadow:0 2px 8px rgba(15,23,42,.05);}
 .tracker-match{font-size:.9rem;font-weight:700;color:#0f172a;margin-bottom:.2rem;}
+.tr-score-badge{font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;background:rgba(15,23,42,.08);padding:1px 6px;border-radius:4px;margin-left:4px;}
 .tracker-meta{font-family:‘IBM Plex Mono’,monospace;font-size:.52rem;color:#475569;
 display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.4rem;}
 .tracker-source{font-family:‘IBM Plex Mono’,monospace;font-size:.5rem;font-weight:700;
@@ -784,10 +785,339 @@ padding:.2rem .4rem;border-left:2px solid rgba(255,154,193,.4);}
 .combi-leg-status-btn{font-family:‘IBM Plex Mono’,monospace;font-size:.45rem;
 background:rgba(255,255,255,.6);border:1px solid var(–stroke);
 border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-left:.3rem;}
+
+/* ═══════════════════════════════════════
+   TRIPLE LOCK — 3/3 signalen
+═══════════════════════════════════════ */
+.triple-lock-section {
+  margin-bottom: 1rem;
+}
+.triple-lock-header {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .62rem;
+  font-weight: 800;
+  color: #b45309;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+.triple-lock-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(180,83,9,.25);
+}
+.triple-lock-card {
+  background: linear-gradient(135deg, rgba(254,243,199,.7), rgba(255,237,213,.5));
+  border: 2px solid rgba(217,119,6,.5);
+  border-radius: 16px;
+  padding: .9rem 1rem;
+  margin-bottom: .6rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(217,119,6,.15), 0 4px 20px rgba(217,119,6,.15);
+  transition: transform .15s, box-shadow .15s;
+}
+.triple-lock-card:active { transform: scale(.98); }
+body.dark .triple-lock-card {
+  background: linear-gradient(135deg, rgba(120,53,15,.35), rgba(92,45,12,.25));
+  border-color: rgba(217,119,6,.5);
+}
+.triple-lock-glow {
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 80px; height: 80px;
+  background: radial-gradient(circle, rgba(251,191,36,.4), transparent 70%);
+  pointer-events: none;
+}
+.triple-lock-crown {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.triple-lock-match {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.05rem;
+  letter-spacing: .04em;
+  color: #78350f;
+  margin-bottom: .25rem;
+}
+body.dark .triple-lock-match { color: #fde68a; }
+.triple-lock-pick {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .68rem;
+  font-weight: 800;
+  color: #92400e;
+  margin-bottom: .45rem;
+}
+body.dark .triple-lock-pick { color: #fcd34d; }
+.triple-lock-badges {
+  display: flex;
+  gap: .35rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.tl-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .55rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: .04em;
+}
+.tl-badge.value  { background: rgba(22,163,74,.18); border: 1px solid rgba(22,163,74,.45); color: #15803d; }
+.tl-badge.conf   { background: rgba(37,99,235,.14); border: 1px solid rgba(37,99,235,.35); color: #1d4ed8; }
+.tl-badge.poisson{ background: rgba(124,58,237,.14); border: 1px solid rgba(124,58,237,.35); color: #6d28d9; }
+.tl-badge.odds   { background: rgba(15,23,42,.07);   border: 1px solid rgba(15,23,42,.15);  color: #0f172a; font-size:.62rem; }
+.tl-badge.kelly  { background: rgba(22,163,74,.1);   border: 1px solid rgba(22,163,74,.3);  color: #166534; }
+.triple-lock-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem;
+  color: #92400e;
+  margin-top: .4rem;
+  opacity: .8;
+}
+body.dark .triple-lock-meta { color: #d97706; }
+/* match-card triple-lock border upgrade */
+.match-card.is-triple-lock {
+  border: 2px solid rgba(217,119,6,.55) !important;
+  box-shadow: 0 0 0 3px rgba(251,191,36,.2), 0 6px 24px rgba(217,119,6,.2) !important;
+}
+
+/* ═══════════════════════════════════════
+   AUTO-CHECK STATUS BAR
+═══════════════════════════════════════ */
+#autoCheckBar {
+  display:none;
+  position:fixed;
+  bottom:72px; left:50%; transform:translateX(-50%);
+  background:rgba(15,23,42,.92);
+  color:#fff;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.6rem;
+  font-weight:700;
+  padding:.45rem 1.1rem;
+  border-radius:999px;
+  z-index:9999;
+  backdrop-filter:blur(8px);
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+  letter-spacing:.04em;
+  transition:opacity .3s;
+  white-space:nowrap;
+}
+
+/* ═══════════════════════════════════════
+   STREAK & ROI PER COMPETITIE
+═══════════════════════════════════════ */
+.stats-section {
+  margin-bottom:1.2rem;
+}
+.stats-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.5rem;
+}
+.stats-comp-card {
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:12px;
+  padding:.65rem .8rem;
+}
+.stats-comp-name {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.55rem;
+  font-weight:700;
+  color:var(--sub);
+  letter-spacing:.05em;
+  margin-bottom:.35rem;
+  text-transform:uppercase;
+}
+.stats-comp-roi {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.3rem;
+  letter-spacing:.04em;
+  line-height:1;
+}
+.stats-comp-roi.pos { color:#16a34a; }
+.stats-comp-roi.neg { color:#dc2626; }
+.stats-comp-roi.neu { color:var(--muted); }
+.stats-comp-meta {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.5rem;
+  color:var(--sub);
+  margin-top:.25rem;
+}
+.streak-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.55rem;
+  font-weight:800;
+  padding:2px 8px;
+  border-radius:999px;
+  margin-top:.3rem;
+}
+.streak-badge.hot  { background:rgba(22,163,74,.15); border:1px solid rgba(22,163,74,.3); color:#15803d; }
+.streak-badge.cold { background:rgba(220,38,38,.12); border:1px solid rgba(220,38,38,.25); color:#dc2626; }
+.streak-badge.neu  { background:rgba(100,116,139,.1); border:1px solid rgba(100,116,139,.2); color:#64748b; }
+.overall-streak {
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  padding:.75rem 1rem;
+  margin-bottom:.7rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.overall-streak-label {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.58rem;
+  font-weight:700;
+  color:var(--sub);
+}
+.overall-streak-val {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.6rem;
+  letter-spacing:.05em;
+}
+
+/* ═══════════════════════════════════════
+   JS ERROR BANNER
+═══════════════════════════════════════ */
+#jsBanner {
+  display:none;
+  position:fixed;
+  top:0; left:0; right:0;
+  z-index:99999;
+  background:#dc2626;
+  color:#fff;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.6rem;
+  font-weight:700;
+  padding:.5rem 1rem .5rem 1rem;
+  line-height:1.5;
+  box-shadow:0 2px 12px rgba(0,0,0,.3);
+  cursor:pointer;
+}
+#jsBanner .jb-title {
+  font-size:.65rem;
+  letter-spacing:.05em;
+  margin-bottom:.15rem;
+}
+#jsBanner .jb-msg {
+  opacity:.9;
+  word-break:break-all;
+  font-weight:400;
+}
+#jsBanner .jb-close {
+  float:right;
+  font-size:1rem;
+  line-height:1;
+  margin-left:.5rem;
+  opacity:.8;
+}
+
+/* ═══════════════════════════════════════
+   DOUBLE LOCK — 2/3 signalen
+═══════════════════════════════════════ */
+.double-lock-section { margin-bottom: 1rem; }
+.double-lock-header {
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;
+  color:#2563eb;letter-spacing:.12em;text-transform:uppercase;
+  display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;
+}
+.double-lock-header::after { content:'';flex:1;height:1px;background:rgba(37,99,235,.2); }
+.double-lock-row {
+  display:flex;align-items:center;gap:.7rem;
+  background:var(--card);border:1.5px solid rgba(37,99,235,.25);
+  border-radius:12px;padding:.6rem .8rem;margin-bottom:.4rem;
+  cursor:pointer;transition:transform .12s,box-shadow .12s;
+}
+.double-lock-row:active { transform:scale(.98); }
+body.dark .double-lock-row { border-color:rgba(37,99,235,.35); }
+.dl-icon { font-size:1.1rem; flex-shrink:0; }
+.dl-info { flex:1; min-width:0; }
+.dl-match { font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:800;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.dl-pick  { font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:#2563eb;margin-top:1px; }
+.dl-badges { display:flex;gap:.25rem;flex-wrap:wrap;margin-top:.3rem; }
+.dl-badge {
+  font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;
+  padding:1px 6px;border-radius:999px;
+}
+.dl-badge.value   { background:rgba(22,163,74,.14);border:1px solid rgba(22,163,74,.35);color:#15803d; }
+.dl-badge.conf    { background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.3);color:#1d4ed8; }
+.dl-badge.poisson { background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);color:#6d28d9; }
+.dl-odds { font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink);flex-shrink:0; }
+
+/* ═══════════════════════════════════════
+   SWIPE GESTURES op bet-rows
+═══════════════════════════════════════ */
+.swipeable { position:relative; overflow:hidden; touch-action:pan-y; }
+.swipe-hint {
+  position:absolute;top:0;bottom:0;
+  display:flex;align-items:center;
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;
+  padding:0 1rem;pointer-events:none;opacity:0;transition:opacity .15s;
+  border-radius:12px;
+}
+.swipe-hint.win-hint  { left:0;background:rgba(22,163,74,.9);color:#fff; }
+.swipe-hint.lose-hint { right:0;background:rgba(220,38,38,.9);color:#fff; }
+.swipe-inner { transition:transform .2s; }
+
+/* ═══════════════════════════════════════
+   BRON-SPLIT GRAFIEK TABS
+═══════════════════════════════════════ */
+.chart-tab-row {
+  display:flex; gap:.25rem; flex-wrap:wrap; margin-bottom:.5rem;
+}
+.chart-tab {
+  font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+  padding:2px 9px;border-radius:999px;cursor:pointer;transition:all .15s;
+  border:1px solid rgba(15,23,42,.12);background:transparent;color:#475569;
+}
+.chart-tab.active {
+  border-color:rgba(219,39,119,.4);background:rgba(219,39,119,.1);color:#be185d;
+}
+/* auto-dark toggle pill in settings */
+.auto-dark-toggle {
+  display:flex;align-items:center;gap:.5rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+  cursor:pointer;
+}
+.toggle-pill {
+  width:38px;height:22px;border-radius:11px;
+  background:#e2e8f0;position:relative;transition:background .2s;flex-shrink:0;
+}
+.toggle-pill.on { background:rgba(219,39,119,.7); }
+.toggle-pill::after {
+  content:'';position:absolute;top:3px;left:3px;
+  width:16px;height:16px;border-radius:50%;
+  background:#fff;transition:left .2s;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.toggle-pill.on::after { left:19px; }
+
+/* WK 2026 chip dark mode */
+body.dark .wk-chip {
+  background: linear-gradient(135deg,rgba(120,53,15,.4),rgba(92,45,12,.3)) !important;
+  border-color: rgba(217,119,6,.5) !important;
+}
+body.dark .wk-chip .cname { color:#fde68a !important; }
+body.dark #wkCountdown { color:#d97706 !important; }
 </style>
 
 </head>
 <body>
+<div id="jsBanner" onclick="this.style.display='none'">
+  <span class="jb-close">✕</span>
+  <div class="jb-title">⚠ App fout</div>
+  <div class="jb-msg" id="jsBannerMsg">—</div>
+</div>
 <div class="app">
 
   <!-- INSTALL BANNER -->
@@ -822,7 +1152,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v2.6</div>
+        <div class="version-badge">v3.9</div>
       </div>
     </div>
   </div>
@@ -947,6 +1277,11 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       <div class="comp-chip" onclick="handleCompTap('nations')" id="comp-nations">
         <span class="flag">🌍</span><div class="cname">Nations League</div>
       </div>
+      <div class="comp-chip wk-chip" onclick="handleCompTap('wk2026')" id="comp-wk2026" style="grid-column:span 3;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(254,243,199,.8));border:2px solid rgba(217,119,6,.4);">
+        <span class="flag">🏆</span>
+        <div class="cname" style="color:#92400e;font-weight:800;">WK 2026 · USA/Canada/Mexico</div>
+        <div id="wkCountdown" style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#b45309;margin-top:2px;"></div>
+      </div>
     </div>
 
 <div class="section-label">
@@ -1001,7 +1336,6 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       <button class="combi-clear-btn" onclick="clearCombiBuilder()">✕ WISSEN</button>
     </div>
   </div>
-</div>
 </div>
 
   </div>
@@ -1155,23 +1489,19 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
 <!-- SALDO GRAFIEK -->
 <div style="background:rgba(255,255,255,.88);border:1px solid rgba(15,23,42,.08);
   border-radius:16px;padding:.9rem 1rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,23,42,.05);">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
     <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
       color:#475569;letter-spacing:.05em;">📈 SALDO VERLOOP</div>
     <div style="display:flex;gap:.3rem;">
-      <button onclick="setChartView('saldo')" id="cv-saldo"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
-        padding:2px 8px;border-radius:999px;cursor:pointer;
-        border:1px solid rgba(219,39,119,.4);background:rgba(219,39,119,.1);color:#be185d;">
-        Saldo
-      </button>
-      <button onclick="setChartView('pnl')" id="cv-pnl"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
-        padding:2px 8px;border-radius:999px;cursor:pointer;
-        border:1px solid rgba(15,23,42,.12);background:transparent;color:#475569;">
-        W/V
-      </button>
+      <button onclick="setChartView('saldo')" id="cv-saldo" class="chart-tab active">Saldo</button>
+      <button onclick="setChartView('pnl')"   id="cv-pnl"   class="chart-tab">W/V</button>
     </div>
+  </div>
+  <div class="chart-tab-row">
+    <button onclick="setChartSource('all')"      id="cs-all"      class="chart-tab active">Alles</button>
+    <button onclick="setChartSource('analyse')"  id="cs-analyse"  class="chart-tab">🤖 Analyse</button>
+    <button onclick="setChartSource('combi')"    id="cs-combi"    class="chart-tab">⚡ Combi</button>
+    <button onclick="setChartSource('eigen')"    id="cs-eigen"    class="chart-tab">✏️ Eigen</button>
   </div>
   <canvas id="walletChart" height="140" style="width:100%;display:block;"></canvas>
   <div id="chartEmpty" style="display:none;text-align:center;padding:1.5rem;
@@ -1195,6 +1525,7 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   </div>
 </div>
 <div id="autoCheckStatus" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:.5rem .8rem;border-radius:8px;margin-bottom:.6rem;"></div>
+<div id="autoCheckBar">🔄 Checking...</div>
 
 <div class="section-label">Inzetgeschiedenis</div>
 <div class="bet-history-list" id="betHistoryList">
@@ -1298,6 +1629,9 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
   <button onclick="setTrackerFilter('combi')" id="tf-combi" class="tracker-filter">Combi</button>
 </div>
 
+<!-- Streak + ROI sectie -->
+<div id="trackerSmartStats" class="stats-section" style="display:none;"></div>
+
 <div id="trackerList">
   <div class="empty-state">Nog geen echte weddenschappen bijgehouden</div>
 </div>
@@ -1341,6 +1675,50 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       <option value="30">≥ 30%</option>
     </select>
   </div>
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Test notificatie</div>
+      <div class="sr-sub" id="notifTestResult">Stuur een testmelding naar je telefoon</div>
+    </div>
+    <button onclick="testNotification()"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;
+      padding:.35rem .9rem;border-radius:999px;cursor:pointer;white-space:nowrap;
+      background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.3);color:#1d4ed8;">
+      🔔 TEST
+    </button>
+  </div>
+</div>
+
+<!-- TRIPLE LOCK FILTER -->
+<div class="settings-section">
+  <h4>🏆 Triple Lock filter</h4>
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Minimum odds</div>
+      <div class="sr-sub">Toon alleen Triple/Double Lock vanaf deze quote</div>
+    </div>
+    <select class="sr-input sr-input-border" id="tripleMinOdds" onchange="saveSettings()">
+      <option value="1.0">Alles</option>
+      <option value="1.4">≥ 1.40</option>
+      <option value="1.6" selected>≥ 1.60</option>
+      <option value="1.8">≥ 1.80</option>
+      <option value="2.0">≥ 2.00</option>
+    </select>
+  </div>
+</div>
+
+<!-- AUTO DONKER THEMA -->
+<div class="settings-section">
+  <h4>🌙 Auto donker thema</h4>
+  <div class="settings-row">
+    <div>
+      <div class="sr-label">Automatisch donker na 20:00</div>
+      <div class="sr-sub">Schakelt 's ochtends om 8:00 terug</div>
+    </div>
+    <div class="auto-dark-toggle" onclick="toggleAutoDark()">
+      <div class="toggle-pill" id="autoDarkPill"></div>
+    </div>
+  </div>
 </div>
 
 <div class="settings-section">
@@ -1358,10 +1736,15 @@ border-radius:999px;padding:2px 6px;cursor:pointer;color:var(–muted);margin-le
       <div class="sr-sub">API keys worden automatisch gesynchroniseerd</div>
     </div>
   </div>
-  <div style="margin-top:.5rem;">
-    <button onclick="saveToFirebase().then(()=>showFirebaseStatus('🔥 Gesynchroniseerd!','#2ecc71')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#e74c3c'))"
+  <div id="fbBackupInfo" style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);margin-bottom:.5rem;"></div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem;">
+    <button onclick="saveToFirebase().then(()=>{showFirebaseStatus('🔥 Gesynchroniseerd!','#2ecc71');loadFbBackupInfo();}).catch(e=>showFirebaseStatus('⚠ '+e.message,'#e74c3c'))"
       style="background:linear-gradient(135deg,rgba(255,154,193,.2),rgba(167,139,250,.2));border:1px solid rgba(255,154,193,.3);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;padding:.45rem 1rem;border-radius:999px;cursor:pointer;">
-      🔄 NU SYNCHRONISEREN
+      ☁️ NU OPSLAAN
+    </button>
+    <button onclick="restoreFromFirebase()"
+      style="background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(21,128,61,.1));border:1px solid rgba(22,163,74,.3);color:#15803d;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;padding:.45rem 1rem;border-radius:999px;cursor:pointer;">
+      🔁 HERSTEL UIT CLOUD
     </button>
   </div>
 </div>
@@ -1722,6 +2105,9 @@ let deferredInstall = null;
 // ═══════════════════════════════════════════════════════
 window.addEventListener('load', () => {
   try { loadState(); } catch(e) { console.error('loadState:', e); }
+  startAutoCheckScheduler();
+  updateAutoDarkUI();
+  checkAutoDarkNow();
   try { applySettings(); } catch(e) { console.error('applySettings:', e); }
   try { applyTheme(); } catch(e) {}
   try { updateWalletUI(); } catch(e) { console.error('updateWalletUI:', e); }
@@ -1774,6 +2160,7 @@ function switchTab(name) {
   }
   if (name === 'wallet') updateWalletUI();
   if (name === 'tracker') { renderTracker(); updateTrackerStats(); renderBacktest(); }
+  if (name === 'instellingen') { loadFbBackupInfo(); }
   state.activeTab = name;
   if (name === 'wedstrijden') {
     startLivePolling();
@@ -1788,6 +2175,7 @@ function switchTab(name) {
 let liveInterval = null;
 let liveCountdown = 60;
 let countdownInterval = null;
+let autoCheckInterval = null;
 
 function startLivePolling() {
   stopLivePolling();
@@ -1928,7 +2316,7 @@ function selectComp(comp) {
 // Lang indrukken (touchstart >500ms) = toevoegen aan favorieten
 // ═══════════════════════════════════════════════════════
 const COMP_NAMES = {
-  eredivisie:'🇳🇱 Eredivisie', kkd:'🇳🇱 Keuken Kampioen', beker:'🏆 KNVB Beker',
+  eredivisie:'🇳🇱 Eredivisie', kkd:'🇳🇱 Keuken Kampioen', beker:'🏆 KNVB Beker', wk2026:'🏆 WK 2026',
   premier:'🇬🇧 Premier League', bundesliga:'🇩🇪 Bundesliga', ligue1:'🇫🇷 Ligue 1',
   seriea:'🇮🇹 Serie A', champions:'⭐ Champions League', nations:'🌍 Nations League'
 };
@@ -2142,9 +2530,12 @@ const FD_CODES = {
 };
 const COMP_IDS = {
   eredivisie: 88, kkd: 89, bundesliga: 78, premier: 39,
-  beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5
+  beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5, wk2026: 1
 };
-function getCurrentSeason() { return 2025; }
+function getCurrentSeason(comp) {
+  if (comp === 'wk2026') return 2026;
+  return 2025;
+}
 
 const PROXY = 'https://toto-proxy.zweetzakken.workers.dev';
 function proxyUrl(url) { return `${PROXY}?url=${encodeURIComponent(url)}`; }
@@ -2390,7 +2781,7 @@ async function loadFromAPIFootball(comp, apiKey) {
     const [rLive, rNext, rDate] = await Promise.all([
       apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&live=all`, apiKey),
       apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&next=10`, apiKey),
-      apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`, apiKey)
+      apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${leagueId===1?2026:2025}&from=${dateFrom}&to=${dateTo}`, apiKey)
     ]);
     const [dLive, dNext, dDate] = await Promise.all([rLive.json(), rNext.json(), rDate.json()]);
 
@@ -2543,7 +2934,7 @@ async function debugAPI() {
 
   if (apiKey) {
     try {
-      let r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=2025&from=${dateFrom}&to=${dateTo}`, apiKey);
+      let r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${leagueId===1?2026:2025}&from=${dateFrom}&to=${dateTo}`, apiKey);
       let d = await r.json();
       log += `API-Football s2025: ${d.response?.length||0} wedstrijden\n`;
       d.response?.slice(0,3).forEach(f => log += `  → ${f.fixture.date.split('T')[0]}: ${f.teams.home.name} vs ${f.teams.away.name}\n`);
@@ -2559,6 +2950,89 @@ async function debugAPI() {
 function renderMatches(matches) {
   const list = document.getElementById('matchList');
   list.innerHTML = '';
+
+  // ─── TRIPLE LOCK SECTIE ───────────────────────────────────────
+  // Wedstrijden die aan alle 3 signalen voldoen: value≥5% + conf≥7 + poisson
+  const _minOdds = parseFloat(state.settings.tripleMinOdds || 1.6);
+  const tripleMatches = matches.filter(m =>
+    m.valueData &&
+    m.valueData.pct >= 5 &&
+    m.valueData.confidence >= 7 &&
+    m.valueData.poissonUsed === true &&
+    (m.valueData.odds || 0) >= _minOdds
+  );
+  if (tripleMatches.length > 0) {
+    const sec = document.createElement('div');
+    sec.className = 'triple-lock-section';
+    sec.innerHTML = `
+      <div class="triple-lock-header">🔒 Triple Lock · ${tripleMatches.length} wedstrijd${tripleMatches.length > 1 ? 'en' : ''}</div>
+      ${tripleMatches.map(m => {
+        const v = m.valueData;
+        const confColor = v.confidence >= 8 ? '#1d4ed8' : '#2563eb';
+        return `<div class="triple-lock-card" onclick="selectMatch(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+          <div class="triple-lock-glow"></div>
+          <div style="display:flex;align-items:flex-start;gap:.6rem;">
+            <div class="triple-lock-crown">🏆</div>
+            <div style="flex:1;min-width:0;">
+              <div class="triple-lock-match">${m.home} vs ${m.away}</div>
+              <div class="triple-lock-pick">⚡ ${v.pickLabel} <span style="opacity:.6;">· ${m.comp} · ${m.time}</span></div>
+              <div class="triple-lock-badges">
+                <span class="tl-badge value">✓ +${Math.round(v.pct)}% VALUE</span>
+                <span class="tl-badge conf">🎲 ${v.confidence}/10 CONF</span>
+                <span class="tl-badge poisson">📐 POISSON</span>
+                <span class="tl-badge odds">@ ${v.odds?.toFixed(2)||'?'}</span>
+                <span class="tl-badge kelly">½K ${v.kelly?.toFixed(1)||'0'}%</span>
+              </div>
+              ${v.poissonUsed ? `<div class="triple-lock-meta">📐 1=${v.poissonK1}% · X=${v.poissonKX}% · 2=${v.poissonK2}%</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    `;
+    list.appendChild(sec);
+  }
+  // ─────────────────────────────────────────────────────────────
+
+  // ─── DOUBLE LOCK SECTIE (2 van 3 signalen) ───────────────────
+  const doubleMatches = matches.filter(m => {
+    if ((m.valueData?.odds||0) < _minOdds) return false;
+    if (!m.valueData) return false;
+    const hasValue   = m.valueData.pct >= 5;
+    const hasConf    = m.valueData.confidence >= 7;
+    const hasPoisson = m.valueData.poissonUsed === true;
+    const score = (hasValue?1:0) + (hasConf?1:0) + (hasPoisson?1:0);
+    return score === 2; // precies 2 van 3
+  });
+  if (doubleMatches.length > 0) {
+    const sec2 = document.createElement('div');
+    sec2.className = 'double-lock-section';
+    const rows = doubleMatches.map(m => {
+      const v = m.valueData;
+      const hasValue   = v.pct >= 5;
+      const hasConf    = v.confidence >= 7;
+      const hasPoisson = v.poissonUsed;
+      const missing = !hasValue ? 'value' : !hasConf ? 'conf' : 'poisson';
+      const missingLabel = missing === 'value' ? 'geen value%' : missing === 'conf' ? 'conf < 7' : 'geen poisson';
+      return '<div class="double-lock-row" onclick="selectMatch(state.matches.find(x=>x.id===\''+m.id+'\'))">'
+        + '<div class="dl-icon">🔑</div>'
+        + '<div class="dl-info">'
+        +   '<div class="dl-match">' + m.home + ' vs ' + m.away + '</div>'
+        +   '<div class="dl-pick">⚡ ' + v.pickLabel + ' · ' + m.comp + ' · ' + m.time + '</div>'
+        +   '<div class="dl-badges">'
+        +     (hasValue   ? '<span class="dl-badge value">✓ +' + Math.round(v.pct) + '% VALUE</span>' : '')
+        +     (hasConf    ? '<span class="dl-badge conf">🎲 ' + v.confidence + '/10</span>' : '')
+        +     (hasPoisson ? '<span class="dl-badge poisson">📐 POISSON</span>' : '')
+        +     '<span style="font-family:monospace;font-size:.48rem;color:#94a3b8;padding:1px 5px;">∅ ' + missingLabel + '</span>'
+        +   '</div>'
+        + '</div>'
+        + '<div class="dl-odds">@ ' + (v.odds ? v.odds.toFixed(2) : '?') + '</div>'
+        + '</div>';
+    }).join('');
+    sec2.innerHTML = '<div class="double-lock-header">🔑 Double Lock · ' + doubleMatches.length + ' wedstrijd' + (doubleMatches.length > 1 ? 'en' : '') + '</div>' + rows;
+    list.appendChild(sec2);
+  }
+  // ─────────────────────────────────────────────────────────────
+
   matches.forEach(m => {
     if (!m.awayPct) m.awayPct = Math.max(0, 100 - m.homePct - m.drawPct);
     const card = document.createElement('div');
@@ -2574,6 +3048,7 @@ function renderMatches(matches) {
       valueBadgeHtml = `<div class="value-badge ${cls}" title="${m.valueData.pickLabel} — AI ${m.valueData.kans}% vs quote ${m.valueData.odds?.toFixed(2)||'?'}">${valueLabel(v)}</div>`;
       if (cls === 'high' || cls === 'med') card.classList.add('value-glow');
       card.classList.add('has-value'); // voor extra padding top row
+      if (m.valueData.confidence >= 7 && m.valueData.poissonUsed) card.classList.add('is-triple-lock');
     }
 
     const statusHtml = m.isLive
@@ -3501,6 +3976,33 @@ confidence = zekerheid 0-10 (Poisson beschikbaar + consistente H2H = hoog, allee
 
     state.valueScans = scans;
 
+    // Push notificaties voor Triple Lock en Double Lock picks
+    if (state.settings.notifEnabled && Notification.permission === 'granted') {
+      scans.forEach(s => {
+        const hasValue   = s.value >= 5;
+        const hasConf    = s.confidence >= 7;
+        const hasPoisson = s.poissonUsed;
+        const score = (hasValue?1:0) + (hasConf?1:0) + (hasPoisson?1:0);
+        if (score === 3) {
+          sendPickNotification(
+            '🏆 TRIPLE LOCK',
+            s.match.home + ' vs ' + s.match.away + ' — ' + s.pickLabel + ' @ ' + (s.odds?.toFixed(2)||'?') + ' (+' + Math.round(s.value) + '% value)',
+            'triple-' + s.id,
+            s.match.id,
+            s.match.comp
+          );
+        } else if (score === 2) {
+          sendPickNotification(
+            '🔑 Double Lock',
+            s.match.home + ' vs ' + s.match.away + ' — ' + s.pickLabel + ' @ ' + (s.odds?.toFixed(2)||'?'),
+            'double-' + s.id,
+            s.match.id,
+            s.match.comp
+          );
+        }
+      });
+    }
+
     // Koppel aan matches voor rendering
     // Alleen matches met ≥5% value krijgen een valueData (badge + markering)
     state.matches.forEach(m => { m.valueData = null; });
@@ -3680,6 +4182,62 @@ function openValueAnalysis(matchId) {
 // ═══════════════════════════════════════════════════════
 // 🔔 PUSH NOTIFICATIES
 // ═══════════════════════════════════════════════════════
+function sendPickNotification(title, body, tag, matchId, comp) {
+  if (!state.settings.notifEnabled) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(reg => {
+      const data = {};
+      if (matchId) data.matchId = matchId;
+      if (comp)    data.comp    = comp;
+      reg.showNotification(title, {
+        body, icon:'/Toto-AI/icon-192.png', tag,
+        renotify:true, vibrate:[200,100,200],
+        data
+      });
+    }).catch(() => {});
+  }
+}
+
+
+async function testNotification() {
+  const resultEl = document.getElementById('notifTestResult');
+  const setResult = (msg, color) => { if (resultEl) { resultEl.textContent = msg; resultEl.style.color = color; } };
+
+  if (!('Notification' in window)) {
+    setResult('⚠ Browser ondersteunt geen notificaties', '#dc2626'); return;
+  }
+  if (Notification.permission === 'denied') {
+    setResult('⚠ Geblokkeerd — zet aan via browser instellingen', '#dc2626'); return;
+  }
+  if (Notification.permission !== 'granted') {
+    setResult('⏳ Toestemming vragen...', '#f59e0b');
+    const result = await Notification.requestPermission();
+    if (result !== 'granted') {
+      setResult('⚠ Geen toestemming gegeven', '#dc2626'); return;
+    }
+  }
+  if (!('serviceWorker' in navigator)) {
+    setResult('⚠ ServiceWorker niet beschikbaar', '#dc2626'); return;
+  }
+  setResult('⏳ Versturen...', '#2563eb');
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('🔔 TOTO AI Test', {
+      body: 'Notificaties werken! 🏆 Triple Lock · 🔑 Double Lock · ✅ Bet resultaten',
+      icon: '/Toto-AI/icon-192.png',
+      badge: '/Toto-AI/icon-192.png',
+      vibrate: [200, 100, 200, 100, 200],
+      tag: 'test-notif',
+      renotify: true
+    });
+    setResult('✅ Verstuurd! Check je meldingen', '#16a34a');
+    // Reset na 5 sec
+    setTimeout(() => { if (resultEl) { resultEl.textContent = 'Stuur een testmelding naar je telefoon'; resultEl.style.color = ''; } }, 5000);
+  } catch(e) {
+    setResult('⚠ Fout: ' + e.message, '#dc2626');
+  }
+}
 async function toggleNotifications() {
   if (!('Notification' in window)) { alert('Je browser ondersteunt geen notificaties.'); return; }
   if (state.settings.notifEnabled) {
@@ -3689,7 +4247,7 @@ async function toggleNotifications() {
   if (Notification.permission === 'granted') {
     state.settings.notifEnabled = true;
     saveState(); updateNotifUI();
-    new Notification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/icon-192.png' });
+    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/Toto-AI/icon-192.png' })).catch(()=>{});
     return;
   }
   if (Notification.permission === 'denied') {
@@ -3700,7 +4258,7 @@ async function toggleNotifications() {
   if (result === 'granted') {
     state.settings.notifEnabled = true;
     saveState(); updateNotifUI();
-    new Notification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/icon-192.png' });
+    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/Toto-AI/icon-192.png' })).catch(()=>{});
   }
 }
 
@@ -3742,14 +4300,16 @@ function sendValueNotification(scan) {
   const sign = scan.value > 0 ? '+' : '';
   const title = `⚡ ${sign}${Math.round(scan.value)}% VALUE — ${scan.pickLabel}`;
   const body = `${shortName(scan.match.home)} vs ${shortName(scan.match.away)} · quote ${scan.odds.toFixed(2)} · AI ${scan.kans}%`;
-  try {
-    const n = new Notification(title, {
-      body, icon:'/icon-192.png', badge:'/icon-192.png',
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready.then(reg => {
+    reg.showNotification(title, {
+      body, icon:'/Toto-AI/icon-192.png', badge:'/Toto-AI/icon-192.png',
       tag: 'value-' + scan.match.id,
-      requireInteraction: scan.value >= 25
+      renotify: true,
+      requireInteraction: scan.value >= 25,
+      vibrate: [200, 100, 200]
     });
-    n.onclick = () => { window.focus(); scrollToMatch(scan.match.id); n.close(); };
-  } catch(e) { console.warn(e); }
+  }).catch(e => console.warn('Notif SW:', e));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3901,7 +4461,7 @@ async function fetchTopScorers(leagueId) {
 async function fetchStandings(leagueId) {
   if (!leagueId || !state.settings.footballKey) return null;
   try {
-    const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=2025`, state.settings.footballKey, 6000);
+    const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${leagueId===1?2026:2025}`, state.settings.footballKey, 6000);
     const d = await r.json();
     return d.response?.[0]?.league?.standings?.[0] || null;
   } catch(e) { return null; }
@@ -4325,7 +4885,7 @@ async function generateCombiTip() {
   if (state.settings.footballKey) {
     try {
       const leagueId = COMP_IDS[state.activeComp];
-      const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=2025`, state.settings.footballKey);
+      const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${leagueId===1?2026:2025}`, state.settings.footballKey);
       const d = await r.json();
       const st = d.response?.[0]?.league?.standings?.[0];
       if (st?.length) {
@@ -4690,7 +5250,10 @@ function updateWalletUI() {
           <span class="combi-bet-result ${b.status}" onclick="cycleCombiBetStatus(${b.id})">${b.status === 'win'?'✓ +€'+(b.payout-b.amount).toFixed(2):b.status === 'lose'?'✗ VERLIES':'⏳ OPEN'}</span>
         </div></div>`;
     } else {
-      return `<div class="bet-row">
+      return `<div class="bet-row swipeable" id="swipe-${b.id}">
+        <div class="swipe-hint win-hint">✓ WIN</div>
+        <div class="swipe-hint lose-hint">✗ VERLIES</div>
+        <div class="swipe-inner">
         <div class="bet-info">
           <div class="bet-match-name">${b.matchName}${b.score?` <span style="font-size:.6rem;font-weight:700;">[${b.score}]</span>`:''}</div>
           <div class="bet-meta">${b.pick} — ${b.pickLabel} @ ${b.odds} · ${b.date}</div>
@@ -4701,10 +5264,12 @@ function updateWalletUI() {
             <button onclick="deleteBet(${b.id})" style="background:none;border:none;color:#94a3b8;font-size:.8rem;cursor:pointer;padding:0;" title="Verwijder">✕</button>
           </div>
           ${b.status === 'pending' ? `<button onclick="checkBetResult(${b.id})" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#2563eb;border-radius:6px;padding:2px 7px;cursor:pointer;display:block;width:100%;">🔍 CHECK</button>` : ''}
-          <div class="bet-res ${b.status}" onclick="cycleBetStatus(${b.id})">${b.status === 'win'?'✓ +€'+(b.payout-b.amount).toFixed(2):b.status === 'lose'?'✗':'⏳ OPEN'}</div>
+          <div class="bet-res ${b.status}" onclick="cycleBetStatus(${b.id})">${b.status === 'win'?'✓ +€'+(b.payout-b.amount).toFixed(2)+(b.score?' ['+b.score+']':''): b.status === 'lose'?'✗'+(b.score?' ['+b.score+']':''): '⏳ OPEN'}</div>
+        </div>
         </div></div>`;
     }
   }).join('');
+  setTimeout(initSwipeBets, 50);
 }
 
 async function checkBetResult(betId) {
@@ -4712,60 +5277,67 @@ async function checkBetResult(betId) {
   if (!bet || !state.settings.footballKey) { alert('API key nodig'); return; }
   const apiKey = state.settings.footballKey;
   const legs = bet.type === 'combi' ? bet.legs : [{home:bet.matchName?.split(' vs ')?.[0], away:bet.matchName?.split(' vs ')?.[1], pick:bet.pick, fixtureId:bet.fixtureId}];
+
   function parseBetDate(s) {
     if (!s) return null;
-    // Support DD-M-YYYY, D-MM-YYYY, DD-MM-YYYY and YYYY-MM-DD
     const p = s.split('-');
     if (p.length === 3) {
-      // If first part is 4 digits it's already YYYY-MM-DD
       if (p[0].length === 4) return s;
-      // Otherwise assume DD-MM-YYYY
       return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
     }
     return null;
   }
-  const betDate = parseBetDate(bet.date);
-  let fixturesPool = [];
-  try {
-    const fetches = [];
-    if (betDate) {
-      fetches.push(apiFetch(`https://v3.football.api-sports.io/fixtures?date=${betDate}`, apiKey).then(r=>r.json()).catch(()=>({response:[]})));
-    }
-    fetches.push(apiFetch(`https://v3.football.api-sports.io/fixtures?last=100`, apiKey).then(r=>r.json()).catch(()=>({response:[]})));
-    const results = await Promise.all(fetches);
-    const seen = new Set();
-    for (const d of results) {
-      for (const f of (d.response||[])) {
-        if (!seen.has(f.fixture.id)) { seen.add(f.fixture.id); fixturesPool.push(f); }
-      }
-    }
-    console.log('[CheckBet] Pool size:', fixturesPool.length, 'for date:', betDate);
-  } catch(e) { console.error('[CheckBet] fetch error:', e); }
+
+  // Helper: fetch a single fixture by ID directly
+  async function fetchFixtureById(fid) {
+    try {
+      const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?id=${fid}`, apiKey);
+      const d = await r.json();
+      return (d.response||[])[0] || null;
+    } catch(e) { return null; }
+  }
+
+  // Helper: fetch fixtures by date (all leagues)
+  async function fetchFixturesByDate(date) {
+    try {
+      const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, apiKey);
+      const d = await r.json();
+      return d.response || [];
+    } catch(e) { return []; }
+  }
 
   for (const leg of legs) {
     try {
       let fix = null;
-      if (leg.fixtureId || bet.fixtureId) {
-        const fid = leg.fixtureId || bet.fixtureId;
-        fix = fixturesPool.find(f => f.fixture.id === fid);
+      const fid = leg.fixtureId || bet.fixtureId;
+
+      // 1. Direct lookup by fixture ID (most reliable)
+      if (fid) {
+        fix = await fetchFixtureById(fid);
+        console.log('[CheckBet] Direct ID lookup', fid, '→', fix ? fix.fixture.status.short : 'not found');
       }
-      if (!fix && leg.home && leg.away) {
-        const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
-        const words = s => norm(s).split(' ').filter(w => w.length > 2);
-        const hn = norm(leg.home), an = norm(leg.away);
-        const hwds = words(leg.home), awds = words(leg.away);
-        const finishedPool = fixturesPool.filter(f => ['FT','AET','PEN'].includes(f.fixture.status.short));
-        console.log('[CheckBet] Looking for:', leg.home, 'vs', leg.away, '| finished in pool:', finishedPool.length);
-        fix = finishedPool.find(f => {
-          const fh = norm(f.teams.home.name), fa = norm(f.teams.away.name);
-          const homeMatch = hwds.some(w => fh.includes(w)) || fh.includes(hn.substring(0,5));
-          const awayMatch = awds.some(w => fa.includes(w)) || fa.includes(an.substring(0,5));
-          if (homeMatch || awayMatch) console.log('[CheckBet] Candidate:', f.teams.home.name, 'vs', f.teams.away.name, '| homeMatch:', homeMatch, 'awayMatch:', awayMatch);
-          return homeMatch && awayMatch;
-        });
-        if (!fix) console.warn('[CheckBet] No match found for', leg.home, 'vs', leg.away);
+
+      // 2. Fallback: search by date + team name
+      if (!fix || !['FT','AET','PEN'].includes(fix?.fixture?.status?.short)) {
+        const betDate = parseBetDate(bet.date);
+        if (betDate && leg.home && leg.away) {
+          const pool = await fetchFixturesByDate(betDate);
+          const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+          const words = s => norm(s).split(' ').filter(w => w.length > 2);
+          const hwds = words(leg.home), awds = words(leg.away);
+          console.log('[CheckBet] Date fallback pool size:', pool.length, 'for', leg.home, 'vs', leg.away);
+          fix = pool.find(f => {
+            if (!['FT','AET','PEN'].includes(f.fixture.status.short)) return false;
+            const fh = norm(f.teams.home.name), fa = norm(f.teams.away.name);
+            const homeMatch = hwds.some(w => fh.includes(w));
+            const awayMatch = awds.some(w => fa.includes(w));
+            return homeMatch && awayMatch;
+          });
+          if (!fix) console.warn('[CheckBet] Still not found:', leg.home, 'vs', leg.away);
+        }
       }
-      if (!fix || !['FT','AET','PEN'].includes(fix.fixture.status.short)) continue;
+
+      if (!fix || !['FT','AET','PEN'].includes(fix?.fixture?.status?.short)) continue;
       const hg = fix.goals.home ?? 0, ag = fix.goals.away ?? 0;
       leg.score = `${hg}-${ag}`;
       let won = false;
@@ -4801,7 +5373,9 @@ async function checkBetResult(betId) {
       bet.status = 'win';
       state.wallet.balance += bet.payout;
       state.wallet.totalWon += bet.payout;
-    } else if (leg.legStatus === 'lose' && bet.status === 'pending') bet.status = 'lose';
+    } else if (leg.legStatus === 'lose' && bet.status === 'pending') {
+      bet.status = 'lose';
+    }
   }
   saveState(); updateWalletUI();
 }
@@ -4888,7 +5462,16 @@ async function autoCheckAllBets() {
       const prevStatus = bet.status;
       await checkBetResult(bet.id);
       checked++;
-      if (bet.status !== prevStatus) upd++;
+      if (bet.status !== prevStatus) {
+        upd++;
+        const emoji = bet.status === 'win' ? '✅' : '❌';
+        const result = bet.status === 'win' ? '+€' + (bet.payout - bet.amount).toFixed(2) : '-€' + bet.amount.toFixed(2);
+        sendPickNotification(
+          emoji + ' Bet ' + (bet.status === 'win' ? 'GEWONNEN' : 'VERLOREN'),
+          (bet.matchName || 'Weddenschap') + ' — ' + result,
+          'bet-' + bet.id
+        );
+      }
     } catch(e) {}
   }
   showAutoCheckStatus(`✓ ${checked} gecheckt · ${upd} bijgewerkt`, '#16a34a');
@@ -4979,18 +5562,20 @@ const sourceClass = { analyse:'src-analyse', combi:'src-combi', widget:'src-widg
 function renderTracker() {
   const list = document.getElementById('trackerList');
   let bets = state.tracker.bets || [];
-  if (trackerFilter !== 'all') {
-    if (['win','lose','pending'].includes(trackerFilter)) bets = bets.filter(b => b.status === trackerFilter);
-    else if (trackerFilter === 'open') bets = bets.filter(b => b.status === 'pending');
-    else bets = bets.filter(b => b.source === trackerFilter);
-  }
+  if (trackerFilter === 'open')    bets = bets.filter(b => b.status === 'pending');
+  else if (trackerFilter === 'win')  bets = bets.filter(b => b.status === 'win');
+  else if (trackerFilter === 'lose') bets = bets.filter(b => b.status === 'lose');
+  else if (trackerFilter === 'analyse' || trackerFilter === 'combi' || trackerFilter === 'widget' || trackerFilter === 'eigen')
+    bets = bets.filter(b => (b.source || 'eigen') === trackerFilter);
+  // 'all' = geen filter
   if (!bets.length) { list.innerHTML = '<div class="empty-state">Geen weddenschappen</div>'; return; }
   list.innerHTML = bets.map(b => {
-    const statusTxt = b.status === 'win' ? `✓ +€${(b.payout-b.stake).toFixed(2)}` : b.status === 'lose' ? `✗ -€${b.stake.toFixed(2)}` : '⏳ OPEN';
+    const scoreBadge = b.score ? ` [${b.score}]` : '';
+    const statusTxt = b.status === 'win' ? `✓ +€${(b.payout-b.stake).toFixed(2)}${scoreBadge}` : b.status === 'lose' ? `✗ -€${b.stake.toFixed(2)}${scoreBadge}` : '⏳ OPEN';
     const border = b.status === 'win' ? 'border-left:3px solid #16a34a;' : b.status === 'lose' ? 'border-left:3px solid #dc2626;' : '';
     return `<div class="tracker-row" style="${border}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div class="tracker-match">${b.match}</div>
+        <div class="tracker-match">${b.match}${b.score ? '<span class="tr-score-badge">' + b.score + '</span>' : ''}</div>
         <button onclick="deleteTrackerBet(${b.id})" style="background:none;border:none;color:#94a3b8;font-size:.9rem;cursor:pointer;">✕</button>
       </div>
       <div class="tracker-meta">
@@ -5025,6 +5610,7 @@ function updateTrackerStats() {
   set('trRoi', roi !== '—' ? roi + '%' : '—');
   const el = document.getElementById('trPnl');
   if (el) el.style.color = pnl >= 0 ? '#16a34a' : '#dc2626';
+  renderSmartStats();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -5367,6 +5953,7 @@ function saveSettings() {
   state.settings.defaultBet = parseInt(document.getElementById('settDefaultBet').value) || 10;
   state.settings.defaultBookmaker = document.getElementById('settDefaultBookmaker')?.value || 'Jacks';
   state.settings.notifThreshold = parseInt(document.getElementById('notifThreshold')?.value) || 20;
+  state.settings.tripleMinOdds = parseFloat(document.getElementById('tripleMinOdds')?.value) || 1.6;
   saveState();
   updateNotifUI();
   showFirebaseStatus('✅ Opgeslagen!', '#16a34a');
@@ -5395,6 +5982,8 @@ function applySettings() {
   if (bal) bal.textContent = '€' + (state.wallet.balance||0).toFixed(2).replace('.',',');
   const nt = document.getElementById('notifThreshold');
   if (nt) nt.value = state.settings.notifThreshold || 20;
+  const tmo = document.getElementById('tripleMinOdds');
+  if (tmo) tmo.value = state.settings.tripleMinOdds || 1.6;
   if (state.settings.anthropicKey) {
     document.getElementById('apiStatus').textContent = '✓ Key geladen';
     document.getElementById('apiStatus').className = 'api-status ok';
@@ -5423,6 +6012,8 @@ async function saveToFirebase() {
     startBalance: state.settings.startBalance || 500,
     notifEnabled: state.settings.notifEnabled || false,
     notifThreshold: state.settings.notifThreshold || 20,
+    tripleMinOdds: state.settings.tripleMinOdds || 1.6,
+    autoDark: state.settings.autoDark || false,
     updatedAt: new Date().toISOString()
   };
   const resp = await fetch(`${FB_DB}/settings.json?auth=${FB_KEY}`, {
@@ -5430,13 +6021,65 @@ async function saveToFirebase() {
   });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
-  const backupPayload = { wallet:state.wallet, tracker:state.tracker, valueBacktest:state.valueBacktest, version:'2.3', backupDate:new Date().toISOString() };
-  await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`, {
+  // Altijd wallet + tracker opslaan, ook als er al data is
+  const backupPayload = {
+    wallet: state.wallet,
+    tracker: state.tracker,
+    valueBacktest: state.valueBacktest,
+    version: '3.5',
+    backupDate: new Date().toISOString(),
+    walletBetCount: state.wallet.bets.length,
+    trackerBetCount: state.tracker.bets.length
+  };
+  const bresp = await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`, {
     method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(backupPayload)
   });
+  if (!bresp.ok) throw new Error(`Backup HTTP ${bresp.status}`);
   return resp.json();
 }
 
+
+async function restoreFromFirebase() {
+  if (!confirm('Wallet + Tracker herstellen vanuit de cloud?\nLokale data wordt overschreven als de cloud meer bets heeft.')) return;
+  showFirebaseStatus('🔄 Ophalen...', '#2563eb');
+  try {
+    const br = await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`);
+    if (!br.ok) throw new Error('Geen backup gevonden');
+    const b = await br.json();
+    if (!b) throw new Error('Backup leeg');
+    const fbWallet  = b.wallet?.bets?.length  || 0;
+    const fbTracker = b.tracker?.bets?.length || 0;
+    if (fbWallet === 0 && fbTracker === 0) {
+      showFirebaseStatus('⚠ Cloud backup is leeg', '#f59e0b'); return;
+    }
+    if (b.wallet)  state.wallet  = b.wallet;
+    if (b.tracker) state.tracker = b.tracker;
+    if (b.valueBacktest) state.valueBacktest = b.valueBacktest;
+    saveState();
+    updateWalletUI();
+    renderTracker();
+    updateTrackerStats();
+    showFirebaseStatus('✅ Hersteld: ' + fbWallet + ' wallet bets, ' + fbTracker + ' tracker bets', '#16a34a');
+    loadFbBackupInfo();
+  } catch(e) {
+    showFirebaseStatus('⚠ ' + e.message, '#e74c3c');
+  }
+}
+
+async function loadFbBackupInfo() {
+  const el = document.getElementById('fbBackupInfo');
+  if (!el) return;
+  try {
+    const br = await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`);
+    if (!br.ok) { el.textContent = 'Nog geen cloud backup'; return; }
+    const b = await br.json();
+    if (!b) { el.textContent = 'Nog geen cloud backup'; return; }
+    const date = b.backupDate ? new Date(b.backupDate).toLocaleString('nl-NL') : '?';
+    const wc   = b.walletBetCount  ?? b.wallet?.bets?.length  ?? '?';
+    const tc   = b.trackerBetCount ?? b.tracker?.bets?.length ?? '?';
+    el.textContent = '☁️ Laatste backup: ' + date + ' · ' + wc + ' wallet · ' + tc + ' tracker';
+  } catch(e) { el.textContent = 'Cloud info niet beschikbaar'; }
+}
 async function loadFromFirebase() {
   try {
     const resp = await fetch(`${FB_DB}/settings.json?auth=${FB_KEY}`);
@@ -5451,16 +6094,31 @@ async function loadFromFirebase() {
     if (d.startBalance) state.settings.startBalance = d.startBalance;
     if (d.notifEnabled !== undefined) state.settings.notifEnabled = d.notifEnabled;
     if (d.notifThreshold) state.settings.notifThreshold = d.notifThreshold;
+    if (d.tripleMinOdds) state.settings.tripleMinOdds = d.tripleMinOdds;
+    if (d.autoDark !== undefined) state.settings.autoDark = d.autoDark;
+    if (d._preAutoDarkTheme) state.settings._preAutoDarkTheme = d._preAutoDarkTheme;
     try {
       const br = await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`);
       if (br.ok) {
         const b = await br.json();
-        if (b?.wallet && state.wallet.bets.length === 0) {
-          state.wallet = b.wallet;
-          showFirebaseStatus('🔥 Wallet hersteld','#16a34a');
+        if (b?.wallet) {
+          const localCount = state.wallet.bets.length;
+          const fbCount = b.wallet.bets?.length || 0;
+          if (fbCount > localCount) {
+            state.wallet = b.wallet;
+            showFirebaseStatus('☁️ Wallet hersteld (' + fbCount + ' bets)','#16a34a');
+          }
         }
-        if (b?.tracker && !state.tracker?.bets?.length) state.tracker = b.tracker;
-        if (b?.valueBacktest && !state.valueBacktest?.picks?.length) state.valueBacktest = b.valueBacktest;
+        if (b?.tracker) {
+          const localT = state.tracker?.bets?.length || 0;
+          const fbT = b.tracker.bets?.length || 0;
+          if (fbT > localT) state.tracker = b.tracker;
+        }
+        if (b?.valueBacktest) {
+          const localBt = state.valueBacktest?.picks?.length || 0;
+          const fbBt = b.valueBacktest.picks?.length || 0;
+          if (fbBt > localBt) state.valueBacktest = b.valueBacktest;
+        }
       }
     } catch(e) {}
     saveState();
@@ -5470,6 +6128,283 @@ async function loadFromFirebase() {
   } catch(e) { return false; }
 }
 
+
+// ═══════════════════════════════════════════════════════
+// AUTO-CHECK: elke 15 min tussen 15:00 en 23:00
+// ═══════════════════════════════════════════════════════
+function startAutoCheckScheduler() {
+  if (autoCheckInterval) clearInterval(autoCheckInterval);
+  autoCheckInterval = setInterval(async () => {
+    const now = new Date();
+    const h = now.getHours();
+    if (h < 15 || h >= 23) return; // alleen 15:00–23:00
+    const open = (state.wallet.bets || []).filter(b => b.status === 'pending');
+    if (!open.length) return;
+    if (!state.settings.footballKey) return;
+    showAutoCheckBar('🔄 Auto-check bets...');
+    let upd = 0;
+    for (const bet of open) {
+      try {
+        const prev = bet.status;
+        await checkBetResult(bet.id);
+        if (bet.status !== prev) upd++;
+      } catch(e) {}
+    }
+    if (upd > 0) {
+      showAutoCheckBar(`✅ ${upd} bet${upd>1?'s':''} bijgewerkt!`, 4000);
+    } else {
+      showAutoCheckBar('✓ Geen updates', 2000);
+    }
+  }, 15 * 60 * 1000); // 15 minuten
+}
+
+function showAutoCheckBar(msg, duration=3000) {
+  const el = document.getElementById('autoCheckBar');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.opacity = '1';
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => {
+    el.style.opacity = '0';
+    setTimeout(() => { el.style.display = 'none'; el.style.opacity = '1'; }, 350);
+  }, duration);
+}
+
+// ═══════════════════════════════════════════════════════
+// STREAK TRACKER + ROI PER COMPETITIE
+// ═══════════════════════════════════════════════════════
+function calcStreakAndRoi() {
+  const bets = [...(state.tracker.bets || [])].reverse(); // oudste eerst
+  const settled = bets.filter(b => b.status === 'win' || b.status === 'lose');
+
+  // Huidige streak (meest recente bets)
+  let streak = 0, streakType = 'neu';
+  const recent = [...settled].reverse();
+  if (recent.length) {
+    streakType = recent[0].status;
+    for (const b of recent) {
+      if (b.status === streakType) streak++;
+      else break;
+    }
+  }
+
+  // ROI per competitie (via bookmaker als proxy, of markt)
+  // We groeperen op b.markt als competitie-proxy
+  const compMap = {};
+  for (const b of settled) {
+    const key = b.markt || 'Anders';
+    if (!compMap[key]) compMap[key] = { staked:0, pnl:0, wins:0, losses:0 };
+    compMap[key].staked += b.stake || 0;
+    if (b.status === 'win') {
+      compMap[key].pnl += (b.payout - b.stake);
+      compMap[key].wins++;
+    } else {
+      compMap[key].pnl -= b.stake;
+      compMap[key].losses++;
+    }
+  }
+
+  // Per source ROI (analyse / combi / eigen / widget)
+  const srcMap = {};
+  for (const b of settled) {
+    const key = b.source || 'eigen';
+    if (!srcMap[key]) srcMap[key] = { staked:0, pnl:0, wins:0, count:0, streak:0, streakType:'neu' };
+    srcMap[key].staked += b.stake || 0;
+    srcMap[key].count++;
+    if (b.status === 'win') {
+      srcMap[key].pnl += (b.payout - b.stake);
+      srcMap[key].wins++;
+    } else {
+      srcMap[key].pnl -= b.stake;
+    }
+  }
+  // Streak per source
+  for (const key of Object.keys(srcMap)) {
+    const srcBets = [...settled].reverse().filter(b => (b.source||'eigen') === key);
+    let s = 0, st = 'neu';
+    if (srcBets.length) {
+      st = srcBets[0].status;
+      for (const b of srcBets) { if (b.status === st) s++; else break; }
+    }
+    srcMap[key].streak = s;
+    srcMap[key].streakType = st;
+  }
+
+  return { streak, streakType, compMap, srcMap, totalSettled: settled.length };
+}
+
+function renderSmartStats() {
+  const el = document.getElementById('trackerSmartStats');
+  if (!el) return;
+  const bets = state.tracker.bets || [];
+  const settled = bets.filter(b => b.status !== 'pending');
+  if (settled.length < 2) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  const { streak, streakType, srcMap, totalSettled } = calcStreakAndRoi();
+
+  const streakEmoji = streakType === 'win' ? '🔥' : streakType === 'lose' ? '❄️' : '➖';
+  const streakClass = streakType === 'win' ? 'hot' : streakType === 'lose' ? 'cold' : 'neu';
+  const streakLabel = streakType === 'win' ? `${streak}x WIN op rij` : streakType === 'lose' ? `${streak}x VERLIES op rij` : 'Geen streak';
+
+  const srcLabels = { analyse:'🤖 Analyse', combi:'⚡ Combi AI', widget:'📱 Widget', eigen:'✏️ Eigen' };
+
+  const srcCards = Object.entries(srcMap).map(([key, d]) => {
+    const roi = d.staked > 0 ? ((d.pnl/d.staked)*100).toFixed(1) : null;
+    const roiClass = roi === null ? 'neu' : parseFloat(roi) >= 0 ? 'pos' : 'neg';
+    const hitRate = d.count > 0 ? Math.round((d.wins/d.count)*100) : 0;
+    const sEmoji = d.streakType === 'win' ? '🔥' : d.streakType === 'lose' ? '❄️' : '➖';
+    const sClass = d.streakType === 'win' ? 'hot' : d.streakType === 'lose' ? 'cold' : 'neu';
+    return `<div class="stats-comp-card">
+      <div class="stats-comp-name">${srcLabels[key]||key}</div>
+      <div class="stats-comp-roi ${roiClass}">${roi !== null ? (parseFloat(roi)>=0?'+':'')+roi+'%' : '—'}</div>
+      <div class="stats-comp-meta">${d.wins}W · ${d.count-d.wins}L · ${hitRate}% hit</div>
+      <div class="streak-badge ${sClass}">${sEmoji} ${d.streak}x ${d.streakType === 'win' ? 'WIN' : d.streakType === 'lose' ? 'VER.' : '–'}</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="overall-streak">
+      <div>
+        <div class="overall-streak-label">Huidige streak</div>
+        <div class="overall-streak-val" style="color:${streakType==='win'?'#16a34a':streakType==='lose'?'#dc2626':'var(--muted)'}">
+          ${streakEmoji} ${streakLabel}
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div class="overall-streak-label">Settled</div>
+        <div class="overall-streak-val" style="color:var(--muted);font-size:1.2rem;">${totalSettled}</div>
+      </div>
+    </div>
+    ${srcCards.length ? `
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;color:var(--sub);letter-spacing:.1em;margin-bottom:.4rem;">ROI PER BRON</div>
+    <div class="stats-grid">${srcCards}</div>
+    ` : ''}
+  `;
+}
+
+
+// ═══════════════════════════════════════════════════════
+// SWIPE GESTURES — wallet bet rows
+// ═══════════════════════════════════════════════════════
+function initSwipeBets() {
+  document.querySelectorAll('.swipeable').forEach(row => {
+    const inner = row.querySelector('.swipe-inner');
+    const winHint  = row.querySelector('.win-hint');
+    const loseHint = row.querySelector('.lose-hint');
+    if (!inner || row._swipeInit) return;
+    row._swipeInit = true;
+
+    let startX = 0, startY = 0, dragging = false, dx = 0;
+    const THRESHOLD = 80;
+
+    row.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      dragging = true; dx = 0;
+      inner.style.transition = 'none';
+    }, {passive:true});
+
+    row.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if (Math.abs(dy) > Math.abs(dx)) { dragging = false; return; }
+      inner.style.transform = 'translateX(' + dx + 'px)';
+      if (dx > 20)  { winHint.style.opacity  = Math.min(1, (dx-20)/60); loseHint.style.opacity = 0; }
+      if (dx < -20) { loseHint.style.opacity = Math.min(1, (-dx-20)/60); winHint.style.opacity  = 0; }
+    }, {passive:true});
+
+    row.addEventListener('touchend', () => {
+      if (!dragging) return;
+      dragging = false;
+      inner.style.transition = 'transform .2s';
+      inner.style.transform  = 'translateX(0)';
+      winHint.style.opacity  = 0;
+      loseHint.style.opacity = 0;
+      // Extract bet id from row id (swipe-12345)
+      const betId = parseInt(row.id.replace('swipe-',''));
+      if (dx > THRESHOLD) {
+        const b = state.wallet.bets.find(x => x.id === betId);
+        if (b && b.status === 'pending') { b.status = 'win'; state.wallet.balance += b.payout; state.wallet.totalWon += b.payout; saveState(); updateWalletUI(); }
+      } else if (dx < -THRESHOLD) {
+        const b = state.wallet.bets.find(x => x.id === betId);
+        if (b && b.status === 'pending') { b.status = 'lose'; saveState(); updateWalletUI(); }
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTO DONKER THEMA — 20:00 donker, 08:00 terug
+// ═══════════════════════════════════════════════════════
+function toggleAutoDark() {
+  state.settings.autoDark = !state.settings.autoDark;
+  updateAutoDarkUI();
+  saveState();
+  if (state.settings.autoDark) checkAutoDarkNow();
+}
+
+function updateAutoDarkUI() {
+  const pill = document.getElementById('autoDarkPill');
+  if (!pill) return;
+  pill.classList.toggle('on', !!state.settings.autoDark);
+}
+
+function checkAutoDarkNow() {
+  if (!state.settings.autoDark) return;
+  const h = new Date().getHours();
+  const isDark = h >= 20 || h < 8;
+  const current = localStorage.getItem('totoai_theme') || 'mint';
+  if (isDark && current !== 'dark') {
+    state.settings._preAutoDarkTheme = current;
+    localStorage.setItem('totoai_theme', 'dark');
+    applyTheme();
+  } else if (!isDark && current === 'dark' && state.settings._preAutoDarkTheme) {
+    localStorage.setItem('totoai_theme', state.settings._preAutoDarkTheme);
+    state.settings._preAutoDarkTheme = null;
+    applyTheme();
+  }
+}
+
+// Check elke minuut of thema moet switchen
+setInterval(checkAutoDarkNow, 60 * 1000);
+
+
+// ═══════════════════════════════════════════════════════
+// AUTO-SYNC naar Firebase — debounced, na wallet/tracker wijziging
+// ═══════════════════════════════════════════════════════
+let _fbSyncTimer = null;
+function scheduleFirebaseSync() {
+  clearTimeout(_fbSyncTimer);
+  _fbSyncTimer = setTimeout(() => {
+    saveToFirebase()
+      .then(() => showAutoCheckBar('☁️ Opgeslagen', 1500))
+      .catch(() => {}); // stil falen
+  }, 3000); // 3 sec na laatste wijziging
+}
+
+// ═══════════════════════════════════════════════════════
+// WK 2026 COUNTDOWN
+// ═══════════════════════════════════════════════════════
+function updateWKCountdown() {
+  const el = document.getElementById('wkCountdown');
+  if (!el) return;
+  const wkStart = new Date('2026-06-11T00:00:00');
+  const now = new Date();
+  const diff = wkStart - now;
+  if (diff <= 0) {
+    el.textContent = '🔴 WK IS BEZIG!';
+    return;
+  }
+  const days    = Math.floor(diff / (1000*60*60*24));
+  const hours   = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+  el.textContent = days + 'd ' + hours + 'u ' + minutes + 'm · Start 11 juni';
+}
+updateWKCountdown();
+setInterval(updateWKCountdown, 60000);
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
     wallet:state.wallet, tracker:state.tracker,
@@ -5477,6 +6412,10 @@ function saveState() {
     favoriteComps:state.favoriteComps || [],
     settings:state.settings
   }));
+  // Auto-sync naar Firebase na elke wijziging (debounced)
+  if (state.settings.footballKey || state.settings.anthropicKey) {
+    scheduleFirebaseSync();
+  }
 }
 function loadState() {
   try {
@@ -5498,7 +6437,10 @@ function exportBackup() {
       defaultComp:state.settings.defaultComp,
       startBalance:state.settings.startBalance,
       defaultBet:state.settings.defaultBet,
-      notifThreshold:state.settings.notifThreshold
+      notifThreshold:state.settings.notifThreshold,
+    tripleMinOdds:state.settings.tripleMinOdds,
+    autoDark:state.settings.autoDark,
+    _preAutoDarkTheme:state.settings._preAutoDarkTheme
     }
   };
   const blob = new Blob([JSON.stringify(backup,null,2)], {type:'application/json'});
@@ -5546,6 +6488,15 @@ function showBackupStatus(msg, color) {
 // WALLET CHART
 // ═══════════════════════════════════════════════════════
 let chartView = 'saldo';
+let chartSource = 'all';
+
+function setChartSource(src) {
+  chartSource = src;
+  document.querySelectorAll('[id^="cs-"]').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('cs-' + src);
+  if (el) el.classList.add('active');
+  renderWalletChart();
+}
 function setChartView(v) {
   chartView = v;
   ['saldo','pnl'].forEach(x => {
@@ -5562,8 +6513,13 @@ function renderWalletChart() {
   const emptyEl = document.getElementById('chartEmpty');
   if (!canvas) return;
   const sb = state.settings.startBalance || 500;
-  const settled = [...state.wallet.bets].reverse().filter(b => b.status !== 'pending');
-  if (!settled.length) { canvas.style.display = 'none'; if (emptyEl) emptyEl.style.display = 'block'; return; }
+  const allSettled = [...state.wallet.bets].reverse().filter(b => b.status !== 'pending');
+  const settled = chartSource === 'all' ? allSettled : allSettled.filter(b => (b.source||'eigen') === chartSource);
+  if (!settled.length) {
+    canvas.style.display = 'none';
+    if (emptyEl) { emptyEl.style.display = 'block'; emptyEl.textContent = chartSource === 'all' ? 'Nog geen afgeronde weddenschappen' : 'Geen bets voor deze bron'; }
+    return;
+  }
   canvas.style.display = 'block';
   if (emptyEl) emptyEl.style.display = 'none';
 
@@ -5634,7 +6590,12 @@ function renderWalletChart() {
 // ═══════════════════════════════════════════════════════
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/Toto-AI/sw.js', {scope:'/Toto-AI/'}).catch(() => {});
+    navigator.serviceWorker.register('/Toto-AI/sw.js', {scope:'/Toto-AI/', updateViaCache:'none'})
+      .then(reg => {
+        // Check voor updates bij elke pagina-laad
+        reg.update();
+        console.log('[App] SW geregistreerd, update gecheckt');
+      }).catch(() => {});
   }
 }
 
@@ -5715,5 +6676,48 @@ function showThemeHint(theme) {
 }
 </script>
 
+
+<script>
+// ── Global error catcher ──────────────────────────────
+window.addEventListener('error', function(e) {
+  const banner = document.getElementById('jsBanner');
+  const msg = document.getElementById('jsBannerMsg');
+  if (!banner || !msg) return;
+  const file = (e.filename || '').split('/').pop() || '?';
+  msg.textContent = (e.message || 'Onbekende fout') + ' (' + file + ':' + e.lineno + ')';
+  banner.style.display = 'block';
+});
+window.addEventListener('unhandledrejection', function(e) {
+  const banner = document.getElementById('jsBanner');
+  const msg = document.getElementById('jsBannerMsg');
+  if (!banner || !msg) return;
+  msg.textContent = 'Promise fout: ' + (e.reason?.message || String(e.reason) || '?');
+  banner.style.display = 'block';
+});
+// ═══════════════════════════════════════════════════════
+// NOTIFICATIE KLIK — open app op juiste wedstrijd
+// ═══════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', e => {
+    if (e.data?.type === 'NOTIF_CLICK') {
+      const { matchId, comp } = e.data;
+      // Switch naar wedstrijden tab en selecteer de juiste comp
+      switchTab('wedstrijden');
+      if (comp && comp !== state.activeComp) {
+        selectComp(comp);
+      }
+      // Scroll naar de match card als die al geladen is
+      if (matchId) {
+        setTimeout(() => {
+          const el = document.getElementById('match-' + matchId);
+          if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+          else showAutoCheckBar('📍 Selecteer ' + (comp||'') + ' en zoek de wedstrijd', 3000);
+        }, 600);
+      }
+    }
+  });
+}
+
+</script>
 </body>
 </html>
