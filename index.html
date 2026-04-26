@@ -1110,6 +1110,57 @@ body.dark .wk-chip {
 }
 body.dark .wk-chip .cname { color:#fde68a !important; }
 body.dark #wkCountdown { color:#d97706 !important; }
+
+/* ═══════════════════════════════════════
+   BACKTEST COMPETITIE BREAKDOWN
+═══════════════════════════════════════ */
+#btCompBreakdown { margin-bottom: 1rem; }
+.bt-comp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .4rem;
+  margin-top: .5rem;
+}
+.bt-comp-card {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  padding: .55rem .7rem;
+}
+.bt-comp-card.bt-comp-win  { border-left: 3px solid #16a34a; }
+.bt-comp-card.bt-comp-lose { border-left: 3px solid #dc2626; }
+.bt-comp-card.bt-comp-neu  { border-left: 3px solid #d97706; }
+.bt-comp-name {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem; font-weight: 800;
+  color: var(--sub); letter-spacing: .04em;
+  text-transform: uppercase; margin-bottom: .3rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bt-comp-roi {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem; letter-spacing: .04em; line-height: 1;
+}
+.bt-comp-roi.pos { color: #16a34a; }
+.bt-comp-roi.neg { color: #dc2626; }
+.bt-comp-roi.neu { color: var(--muted); }
+.bt-comp-detail {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .5rem; color: var(--sub); margin-top: .2rem;
+}
+.bt-filter-row {
+  display: flex; gap: .3rem; flex-wrap: wrap; margin-bottom: .6rem;
+}
+.bt-filter-btn {
+  font-family: 'IBM Plex Mono', monospace; font-size: .52rem;
+  font-weight: 700; padding: 2px 10px; border-radius: 999px;
+  cursor: pointer; border: 1px solid rgba(15,23,42,.12);
+  background: transparent; color: #475569; transition: all .15s;
+}
+.bt-filter-btn.active {
+  background: rgba(22,163,74,.12);
+  border-color: rgba(22,163,74,.4); color: #15803d;
+}
 </style>
 
 </head>
@@ -1153,7 +1204,7 @@ body.dark #wkCountdown { color:#d97706 !important; }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v4.0</div>
+        <div class="version-badge">v4.1</div>
       </div>
     </div>
   </div>
@@ -1570,6 +1621,17 @@ body.dark #wkCountdown { color:#d97706 !important; }
     <div class="bt-box"><div class="lbl">Hitrate</div><div class="val" id="btHitrate" style="color:#7c3aed;">—</div></div>
     <div class="bt-box"><div class="lbl">ROI</div><div class="val" id="btRoi" style="color:#15803d;">—</div></div>
     <div class="bt-box"><div class="lbl">Gem. value</div><div class="val" id="btAvgVal" style="color:#d97706;">—</div></div>
+  </div>
+
+  <!-- Competitie breakdown -->
+  <div id="btCompBreakdown" style="display:none;"></div>
+
+  <!-- Filter rij -->
+  <div class="bt-filter-row" id="btFilterRow" style="display:none;">
+    <button class="bt-filter-btn active" id="btf-all"     onclick="setBtFilter('all')">Alle</button>
+    <button class="bt-filter-btn"        id="btf-win"     onclick="setBtFilter('win')">✓ Gewonnen</button>
+    <button class="bt-filter-btn"        id="btf-lose"    onclick="setBtFilter('lose')">✗ Verloren</button>
+    <button class="bt-filter-btn"        id="btf-pending" onclick="setBtFilter('pending')">⏳ Open</button>
   </div>
 
   <!-- Grafiek backtest vs break-even -->
@@ -4052,6 +4114,7 @@ confidence = zekerheid 0-10 (Poisson beschikbaar + consistente H2H = hoog, allee
           reason: s.reason || '',
           status: 'pending',
           score: null,
+          comp: s.match.comp || state.activeComp || '',
           scanDate: new Date().toLocaleString('nl-NL')
         });
         savedCount++;
@@ -5617,19 +5680,84 @@ function updateTrackerStats() {
 // ═══════════════════════════════════════════════════════
 // ⚡ VALUE BACKTEST — render, stats, check, grafiek
 // ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// BACKTEST COMPETITIE BREAKDOWN + FILTER
+// ═══════════════════════════════════════════════════════
+let btFilter = 'all';
+
+function setBtFilter(f) {
+  btFilter = f;
+  document.querySelectorAll('.bt-filter-btn').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('btf-' + f);
+  if (el) el.classList.add('active');
+  renderBacktest();
+}
+
+function renderBtCompBreakdown(picks) {
+  const el = document.getElementById('btCompBreakdown');
+  if (!el) return;
+  const settled = picks.filter(p => p.status === 'win' || p.status === 'lose');
+  if (settled.length < 2) { el.style.display = 'none'; return; }
+
+  // Group by competition
+  const compMap = {};
+  for (const p of settled) {
+    const key = p.comp || p.league || 'Overig';
+    if (!compMap[key]) compMap[key] = { wins: 0, losses: 0, profit: 0, picks: 0 };
+    compMap[key].picks++;
+    if (p.status === 'win') { compMap[key].wins++; compMap[key].profit += (p.odds - 1); }
+    else { compMap[key].losses++; compMap[key].profit -= 1; }
+  }
+
+  // Sort by number of picks desc
+  const sorted = Object.entries(compMap).sort((a,b) => b[1].picks - a[1].picks);
+  if (sorted.length < 2) { el.style.display = 'none'; return; }
+
+  const cards = sorted.map(([comp, d]) => {
+    const roi = ((d.profit / d.picks) * 100).toFixed(1);
+    const roiClass = parseFloat(roi) > 0 ? 'pos' : parseFloat(roi) < 0 ? 'neg' : 'neu';
+    const cardClass = parseFloat(roi) > 0 ? 'bt-comp-win' : parseFloat(roi) < 0 ? 'bt-comp-lose' : 'bt-comp-neu';
+    const hitrate = Math.round((d.wins / d.picks) * 100);
+    return `<div class="bt-comp-card ${cardClass}">
+      <div class="bt-comp-name">${comp}</div>
+      <div class="bt-comp-roi ${roiClass}">${parseFloat(roi) >= 0 ? '+' : ''}${roi}%</div>
+      <div class="bt-comp-detail">${d.wins}W · ${d.losses}V · ${hitrate}% hit · ${d.picks} picks</div>
+    </div>`;
+  }).join('');
+
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:800;
+      color:var(--sub);letter-spacing:.1em;margin-bottom:.4rem;">
+      📊 ROI PER COMPETITIE
+    </div>
+    <div class="bt-comp-grid">${cards}</div>
+  `;
+}
 function renderBacktest() {
   if (!state.valueBacktest) state.valueBacktest = { picks: [] };
-  const picks = state.valueBacktest.picks || [];
+  const allPicks = state.valueBacktest.picks || [];
   const list = document.getElementById('btList');
   if (!list) return;
 
   updateBacktestStats();
+  renderBtCompBreakdown(allPicks);
+
+  // Show filter row if there are picks
+  const filterRow = document.getElementById('btFilterRow');
+  if (filterRow) filterRow.style.display = allPicks.length > 1 ? 'flex' : 'none';
+
+  // Apply filter
+  let picks = allPicks;
+  if (btFilter === 'win')     picks = allPicks.filter(p => p.status === 'win');
+  else if (btFilter === 'lose')    picks = allPicks.filter(p => p.status === 'lose');
+  else if (btFilter === 'pending') picks = allPicks.filter(p => !p.status || p.status === 'pending');
 
   if (!picks.length) {
-    list.innerHTML = `<div class="bt-empty">
-      Nog geen value-picks bijgehouden.<br>
-      Draai een ⚡ Value Scan — picks met ≥5% value worden automatisch hier opgeslagen.
-    </div>`;
+    list.innerHTML = allPicks.length
+      ? '<div class="bt-empty">Geen picks voor dit filter</div>'
+      : `<div class="bt-empty">Nog geen value-picks bijgehouden.<br>Draai een ⚡ Value Scan — picks met ≥5% value worden automatisch hier opgeslagen.</div>`;
     return;
   }
 
