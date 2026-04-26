@@ -1264,6 +1264,36 @@ body.dark #wkCountdown { color:#d97706 !important; }
   padding: .2rem 0;
   border-bottom: 1px solid var(--stroke);
 }
+
+/* ═══════════════════════════════════════
+   HELP MODAL
+═══════════════════════════════════════ */
+.help-tab {
+  font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+  padding:.25rem .7rem;border-radius:999px;cursor:pointer;
+  border:1px solid rgba(15,23,42,.12);background:transparent;color:#475569;
+  transition:all .15s;
+}
+.help-tab.active {
+  background:rgba(219,39,119,.1);border-color:rgba(219,39,119,.35);color:#be185d;
+}
+.help-block {
+  background:rgba(15,23,42,.03);border:1px solid var(--stroke);
+  border-radius:12px;padding:.7rem .85rem;margin-bottom:.55rem;
+}
+body.dark .help-block { background:rgba(255,255,255,.04); }
+.help-title {
+  font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;
+  color:var(--ink);margin-bottom:.35rem;letter-spacing:.02em;
+}
+.help-body {
+  font-family:'IBM Plex Mono',monospace;font-size:.58rem;
+  color:var(--sub);line-height:1.6;
+}
+.help-body ul { margin:.3rem 0 0 1rem;padding:0; }
+.help-body li { margin-bottom:.2rem; }
+.help-body p { margin:.3rem 0; }
+.help-body b { color:var(--ink); }
 </style>
 
 </head>
@@ -1294,9 +1324,10 @@ body.dark #wkCountdown { color:#d97706 !important; }
     <div class="topbar-right">
       <div class="live-badge" id="liveBadge"><span class="live-dot"></span> LIVE DATA</div>
       <div style="display:flex;align-items:center;gap:.4rem;">
-        <a href="help.html" style="background:var(--card);border:1px solid var(--stroke);
+        <button onclick="document.getElementById('helpModal').style.display='flex'"
+          style="background:var(--card);border:1px solid var(--stroke);
           border-radius:999px;padding:3px 8px;font-size:.8rem;box-shadow:var(--shadow2);
-          text-decoration:none;line-height:1;" title="Uitleg & Gids">❓</a>
+          cursor:pointer;line-height:1;" title="Uitleg & Gids">❓</button>
         <a href="https://www.jacks.nl" target="_blank" rel="noopener" style="
           background:var(--card);border:1px solid var(--stroke);
           border-radius:999px;padding:3px 8px;font-size:.75rem;box-shadow:var(--shadow2);
@@ -2060,6 +2091,208 @@ body.dark #wkCountdown { color:#d97706 !important; }
 
   </div>
 
+
+<!-- HELP MODAL -->
+<div class="modal-overlay" id="helpModal" style="display:none;align-items:flex-start;padding-top:2rem;" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-box" style="max-height:85vh;overflow-y:auto;max-width:480px;width:100%;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h3 style="margin:0;">📖 TOTO AI Gids</h3>
+      <button onclick="document.getElementById('helpModal').style.display='none'"
+        style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--sub);">✕</button>
+    </div>
+
+    <!-- TABS -->
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:1rem;" id="helpTabRow">
+      <button class="help-tab active" onclick="showHelpTab('start')">🚀 Start</button>
+      <button class="help-tab" onclick="showHelpTab('tabs')">📑 Tabs</button>
+      <button class="help-tab" onclick="showHelpTab('value')">⚡ Value</button>
+      <button class="help-tab" onclick="showHelpTab('wallet')">💶 Wallet</button>
+      <button class="help-tab" onclick="showHelpTab('notif')">🔔 Meldingen</button>
+      <button class="help-tab" onclick="showHelpTab('tips')">💡 Tips</button>
+    </div>
+
+    <!-- START -->
+    <div class="help-section" id="help-start">
+      <div class="help-block">
+        <div class="help-title">🚀 Aan de slag</div>
+        <div class="help-body">
+          <p>Vul bij <b>⚙️ Instellingen</b> je API keys in:</p>
+          <ul>
+            <li><b>Anthropic</b> — voor AI analyse &amp; tips</li>
+            <li><b>API-Football</b> — voor wedstrijden &amp; statistieken</li>
+          </ul>
+          <p>Daarna kun je wedstrijden laden door op een competitie te tikken.</p>
+        </div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🌍 Alle competities vandaag</div>
+        <div class="help-body">Tik op de blauwe knop <b>🌍 ALLE COMPETITIES VANDAAG</b> om in één keer alle wedstrijden van alle competities te laden, gegroepeerd per competitie.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🏆 WK 2026</div>
+        <div class="help-body">De gouden WK 2026 chip onderaan de competitielijst toont de countdown. Wedstrijden worden beschikbaar vanaf 11 juni 2026.</div>
+      </div>
+    </div>
+
+    <!-- TABS UITLEG -->
+    <div class="help-section" id="help-tabs" style="display:none;">
+      <div class="help-block">
+        <div class="help-title">⚽ Wedstrijden</div>
+        <div class="help-body">Wedstrijden van vandaag t/m overmorgen per competitie. Tik op een wedstrijd voor analyse. Multi-scan: houd een competitie lang ingedrukt om meerdere tegelijk te scannen.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🤖 Analyse</div>
+        <div class="help-body">Selecteer een wedstrijd en tik op <b>ANALYSEER</b> voor een volledige AI-analyse: kansen, vorm, statistieken, tactiek, risico en een bet advies.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">⚡ Tips</div>
+        <div class="help-body">AI-gegenereerde combi tips op basis van de geselecteerde competitie. Tik op een tip om hem toe te voegen aan je wallet.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">💶 Wallet</div>
+        <div class="help-body">Fictief geld bijhouden. Saldo, winst/verlies, hitrate en een grafiek per bron (Analyse / Combi / Eigen). Bets swipen voor snelle win/verlies invoer.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">⚡ Backtest</div>
+        <div class="help-body">Alle value scan picks worden automatisch opgeslagen. Bekijk resultaten per competitie via het <b>🏆 Per competitie</b> sub-tab: wins/totaal + hitrate per competitie.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">📒 Tracker</div>
+        <div class="help-body">Bijhouden van echte weddenschappen. Filter op Alle / Open / Gewonnen / Verloren / Analyse / Combi. Streak en ROI per bron worden automatisch berekend.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">⚙️ Instellingen</div>
+        <div class="help-body">API keys, standaard inzet, notificaties, Triple Lock odds filter, auto donker thema en Firebase cloud backup.</div>
+      </div>
+    </div>
+
+    <!-- VALUE -->
+    <div class="help-section" id="help-value" style="display:none;">
+      <div class="help-block">
+        <div class="help-title">⚡ Wat is value?</div>
+        <div class="help-body">
+          Value = de AI schat een hogere winstkans dan de bookmaker impliceert.
+          <div style="background:rgba(15,23,42,.05);border-radius:8px;padding:.5rem .7rem;margin:.5rem 0;font-family:'IBM Plex Mono',monospace;font-size:.6rem;">
+            value% = (AI_kans × quote − 1) × 100
+          </div>
+          <b>Kleuren:</b><br>
+          🟢 Groen ≥15% — sterk value<br>
+          🟡 Oranje 5–15% — licht value<br>
+          ⚫ Grijs 0–5% — fair geprijsd<br>
+          🔴 Rood &lt;0% — geen value
+        </div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🏆 Triple Lock</div>
+        <div class="help-body">Een wedstrijd heeft Triple Lock als hij aan <b>alle 3</b> signalen voldoet:<br><br>
+          ✓ Value ≥5%<br>
+          🎲 Confidence ≥7/10<br>
+          📐 Poisson model bevestigt<br><br>
+          Triple Lock picks verschijnen in een gouden sectie bovenaan de matchlijst.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🔑 Double Lock</div>
+        <div class="help-body">Precies 2 van 3 signalen aanwezig. Verschijnt in een blauwe sectie onder Triple Lock, met badge welk signaal ontbreekt.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">📐 Poisson model</div>
+        <div class="help-body">Berekent verwachte doelpunten op basis van aanvals- en defensiestatistieken. Gecombineerd met AI geeft dit de meest betrouwbare kansinschatting.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">½ Kelly Criterion</div>
+        <div class="help-body">Optimale inzetgrootte op basis van je bankroll en de value. Kelly% × saldo = aanbevolen inzet. De app gebruikt halve Kelly voor minder risico.</div>
+      </div>
+    </div>
+
+    <!-- WALLET -->
+    <div class="help-section" id="help-wallet" style="display:none;">
+      <div class="help-block">
+        <div class="help-title">💶 Fictief saldo</div>
+        <div class="help-body">Het wallet systeem werkt met fictief geld. Standaard €500. Storten en opnemen via de knoppen. Reset zet alles terug naar beginstand.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">👆 Swipe gestures</div>
+        <div class="help-body">Op open bets in de wallet:<br>
+          ← Swipe links = ✗ Verlies<br>
+          → Swipe rechts = ✓ Win<br>
+          Of tik op de status knop om te wisselen: Open → Win → Verlies → Open</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🔍 Automatisch checken</div>
+        <div class="help-body">De app checkt elke 15 minuten automatisch of open bets al gespeeld zijn (tussen 15:00 en 23:00). Of tik op <b>Alles checken</b> voor een handmatige check.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">☁️ Cloud backup</div>
+        <div class="help-body">Via Firebase worden wallet, tracker en backtest automatisch gesynchroniseerd. Bij ⚙️ Instellingen → Firebase kun je handmatig opslaan of herstellen.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">📊 Grafiek per bron</div>
+        <div class="help-body">De saldo grafiek kan worden gefilterd op bron: Alles / 🤖 Analyse / ⚡ Combi / ✏️ Eigen. Zo zie je welke strategie het meeste oplevert.</div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIES -->
+    <div class="help-section" id="help-notif" style="display:none;">
+      <div class="help-block">
+        <div class="help-title">🔔 Push notificaties aanzetten</div>
+        <div class="help-body">Ga naar <b>⚙️ Instellingen → Value Notificaties</b> en tik op <b>AANZETTEN</b>. Geef toestemming als de browser daarom vraagt.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">Wanneer krijg je een melding?</div>
+        <div class="help-body">
+          🏆 <b>Triple Lock</b> — na Value Scan<br>
+          🔑 <b>Double Lock</b> — na Value Scan<br>
+          ✅ <b>Bet gewonnen</b> — bij auto-check<br>
+          ❌ <b>Bet verloren</b> — bij auto-check<br><br>
+          Tik op de melding om direct naar de wedstrijd te gaan (vereist nieuwe sw.js).
+        </div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🔕 Geen geluid?</div>
+        <div class="help-body">Ga naar Telefooninstellingen → Apps → Chrome → Meldingen → zet geluid aan. Chrome-meldingen staan standaard op stil op Android.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🔔 Test notificatie</div>
+        <div class="help-body">Bij ⚙️ Instellingen → Value Notificaties staat een <b>🔔 TEST</b> knop. Gebruik die om te controleren of notificaties werken.</div>
+      </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="help-section" id="help-tips" style="display:none;">
+      <div class="help-block">
+        <div class="help-title">💡 Beste workflow</div>
+        <div class="help-body">
+          1. Tik op 🌍 <b>Alle competities vandaag</b><br>
+          2. Tik op ⚡ <b>SCAN VALUE</b> voor Triple/Double Lock picks<br>
+          3. Analyseer interessante wedstrijden via 🤖 <b>Analyse tab</b><br>
+          4. Voeg toe aan 💶 <b>Wallet</b> of 📒 <b>Tracker</b><br>
+          5. De app checkt automatisch resultaten
+        </div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🌙 Auto donker thema</div>
+        <div class="help-body">Bij ⚙️ Instellingen → Auto donker thema. Schakelt automatisch naar donker om 20:00 en terug om 08:00.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">🎯 Triple Lock odds filter</div>
+        <div class="help-body">Bij ⚙️ Instellingen → Triple Lock filter kun je een minimale quote instellen. Standaard ≥1.60 — lage odds worden uitgefilterd.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">📌 Multi-scan</div>
+        <div class="help-body">Houd een competitie <b>lang ingedrukt</b> om hem toe te voegen aan multi-scan. Selecteer meerdere competities en tik dan op ⚡ SCAN ALLES.</div>
+      </div>
+      <div class="help-block">
+        <div class="help-title">⚡ Backtest begrijpen</div>
+        <div class="help-body">ROI in de backtest is berekend op <b>flat €1 inzet</b> per pick — de eerlijkste maatstaf. Een ROI van +8% betekent €0.08 winst per €1 ingezet over alle picks.</div>
+      </div>
+    </div>
+
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);
+      text-align:center;margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--stroke);">
+      TOTO AI v4.2 · Made by Rob Borghouts · Powered by Anthropic Claude
+    </div>
+  </div>
+</div>
 </div><!-- /app -->
 
 <!-- INZET MODAL -->
@@ -2921,7 +3154,7 @@ async function loadTodayAllComps() {
     const allMatches = [];
 
     for (const [lid, league] of sorted) {
-      const leagueMatches = league.matches.map(f => parseAPIFMatch(f, league.name)).filter(Boolean);
+      const leagueMatches = league.matches.map(f => parseAPIMatch(f)).filter(Boolean);
       allMatches.push({ league, matches: leagueMatches });
       state.matches.push(...leagueMatches);
     }
@@ -6835,6 +7068,20 @@ function updateWKCountdown() {
 }
 updateWKCountdown();
 setInterval(updateWKCountdown, 60000);
+
+// ═══════════════════════════════════════════════════════
+// HELP MODAL TAB SWITCHING
+// ═══════════════════════════════════════════════════════
+function showHelpTab(tab) {
+  document.querySelectorAll('.help-section').forEach(s => s.style.display = 'none');
+  document.querySelectorAll('.help-tab').forEach(b => b.classList.remove('active'));
+  const sec = document.getElementById('help-' + tab);
+  if (sec) sec.style.display = 'block';
+  // Find and activate button
+  document.querySelectorAll('.help-tab').forEach(b => {
+    if (b.getAttribute('onclick')?.includes("'" + tab + "'")) b.classList.add('active');
+  });
+}
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
     wallet:state.wallet, tracker:state.tracker,
