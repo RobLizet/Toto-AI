@@ -1338,7 +1338,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v4.8</div>
+        <div class="version-badge">v4.9</div>
       </div>
     </div>
   </div>
@@ -1489,12 +1489,19 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
     background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#1d4ed8;">
     🌍 ALLE COMPETITIES VANDAAG
   </button>
-  <button onclick="scanAllTodayValue()" id="scanAllTodayBtn" style="display:none;
+  <button onclick="scanAllTodayValue('today')" id="scanAllTodayBtn" style="display:none;
     font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
     padding:.3rem .85rem;border-radius:999px;cursor:pointer;
     background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(5,150,105,.1));
     border:1px solid rgba(22,163,74,.4);color:#15803d;">
     ⚡ SCAN ALLES
+  </button>
+  <button onclick="scanAllTodayValue('tomorrow')" id="scanTomorrowBtn" style="display:none;
+    font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
+    background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(37,99,235,.06));
+    border:1px solid rgba(37,99,235,.35);color:#1d4ed8;">
+    📅 VANDAAG + MORGEN
   </button>
   <div id="allCompsLoading" style="display:none;font-family:'IBM Plex Mono',monospace;
     font-size:.52rem;color:var(--sub);align-self:center;">⟳ Laden...</div>
@@ -3088,6 +3095,7 @@ function parseAPIMatch(f) {
     id: fix.id, source: 'apif',
     comp: f.league.name, compLogo: f.league.logo || '',
     time: timeStr, date: dateStr,
+    dateISO: fix.date ? fix.date.split('T')[0] : '',
     home: home.name, away: away.name,
     homeId: home.id, awayId: away.id,
     leagueId: f.league.id,
@@ -3182,6 +3190,8 @@ async function loadTodayAllComps() {
     if (btn) { btn.textContent = '🔄 Verversen'; btn.style.display = 'block'; }
     const scanBtn = document.getElementById('scanAllTodayBtn');
     if (scanBtn) scanBtn.style.display = 'block';
+    const tomorrowBtn = document.getElementById('scanTomorrowBtn');
+    if (tomorrowBtn) tomorrowBtn.style.display = 'block';
 
     // Fetch odds for all loaded matches
     if (state.settings.footballKey) {
@@ -3355,21 +3365,23 @@ async function fetchOddsForAllMatches(matches, apiKey) {
   const oddsMap = {};
 
   try {
-    // Alle pagina's voor vandaag ophalen
-    const today = new Date().toISOString().split('T')[0];
-    let allItems = [];
-    let page = 1;
-    while (true) {
-      const r = await apiFetch(
-        `https://v3.football.api-sports.io/odds?date=${today}&page=${page}`,
-        apiKey, 15000
-      );
-      const data = await r.json();
-      const items = data.response || [];
-      allItems = allItems.concat(items);
-      const total = data.paging?.total || 1;
-      if (page >= total || items.length === 0) break;
-      page++;
+    // Odds ophalen voor exact de wedstrijden in matches (per fixture ID)
+    // Dit is betrouwbaarder dan date-call met paginering
+    const matchIds = matches.filter(m => !m.isDone).map(m => m.id).filter(Boolean);
+    const allItems = [];
+    // Batch per 10 fixture IDs
+    for (let i = 0; i < matchIds.slice(0,50).length; i += 10) {
+      const batch = matchIds.slice(i, i+10);
+      for (const fid of batch) {
+        try {
+          const r = await apiFetch(
+            `https://v3.football.api-sports.io/odds?fixture=${fid}`,
+            apiKey, 6000
+          );
+          const d = await r.json();
+          if (d.response?.[0]) allItems.push(d.response[0]);
+        } catch(e) {}
+      }
     }
 
     for (const item of allItems) {
@@ -4264,23 +4276,40 @@ function analyzeMarketMovement(matchId, currentHome, currentDraw, currentAway) {
 // ═══════════════════════════════════════════════════════
 // SCAN ALLE COMPETITIES VANDAAG — value scan op alle geladen wedstrijden
 // ═══════════════════════════════════════════════════════
-async function scanAllTodayValue() {
+async function scanAllTodayValue(mode = 'today') {
   const apiKey = state.settings.anthropicKey;
   if (!apiKey) { alert('Vul eerst je Anthropic API key in bij ⚙️ Instellingen!'); return; }
 
-  const candidates = state.matches.filter(m =>
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const tomorrowStr = new Date(now.getTime() + 86400000).toISOString().split('T')[0];
+
+  const allWithOdds = state.matches.filter(m =>
     m.homeOdds !== '—' && !m.isDone && parseFloat(m.homeOdds) > 1
-  ).slice(0, 20); // max 20 om API kosten te beperken
+  );
+
+  let candidates;
+  if (mode === 'tomorrow') {
+    candidates = allWithOdds.filter(m => {
+      const d = m.dateISO || '';
+      return d === todayStr || d === tomorrowStr;
+    });
+    if (!candidates.length) candidates = allWithOdds.slice(0, 25);
+  } else {
+    candidates = allWithOdds.filter(m => (m.dateISO || '') === todayStr);
+    if (!candidates.length) candidates = allWithOdds.slice(0, 20);
+  }
+  candidates = candidates.slice(0, 25);
 
   if (!candidates.length) {
     alert('Geen wedstrijden met quotes. Laad eerst alle competities vandaag.');
     return;
   }
 
-  const btn = document.getElementById('scanAllTodayBtn');
-  const origText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = `⟳ SCANNEN (0/${candidates.length})...`;
+  const btnId = mode === 'tomorrow' ? 'scanTomorrowBtn' : 'scanAllTodayBtn';
+  const btn = document.getElementById(btnId);
+  const origText = btn?.textContent || '⚡ SCAN';
+  if (btn) { btn.disabled = true; btn.textContent = `⟳ SCANNEN (0/${candidates.length})...`; }
 
   state.valueScans = [];
   document.getElementById('valueExplainer') && (document.getElementById('valueExplainer').style.display = 'none');
@@ -4289,7 +4318,7 @@ async function scanAllTodayValue() {
   const scans = [];
 
   for (const m of candidates) {
-    btn.textContent = `⟳ SCANNEN (${done}/${candidates.length})...`;
+    if (btn) btn.textContent = `⟳ SCANNEN (${done}/${candidates.length})...`;
     try {
       // Build compact prompt — no standings (too many comps)
       const prompt = `Je bent een value betting expert.
@@ -4394,9 +4423,8 @@ Analyseer de VALUE. Geef ALLEEN dit JSON object terug, geen uitleg:
   }
 
   const valueCount = scans.filter(s => s.value >= 5).length;
-  btn.disabled = false;
-  btn.textContent = valueCount > 0 ? `✅ ${valueCount} value picks` : '⚡ SCAN ALLES';
-  setTimeout(() => { btn.textContent = origText; }, 5000);
+  if (btn) { btn.disabled = false; btn.textContent = valueCount > 0 ? `✅ ${valueCount} picks` : origText; }
+  setTimeout(() => { if (btn) btn.textContent = origText; }, 5000);
 
   showAutoCheckBar(`⚡ ${scans.length} gescand · ${valueCount} value picks gevonden`, 4000);
 }
