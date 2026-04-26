@@ -1364,6 +1364,18 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
   color: var(--sub);
   flex-shrink: 0;
 }
+
+/* ═══════════════════════════════════════
+   ODDS MOVEMENT PIJLTJES
+═══════════════════════════════════════ */
+.odds-move-up   { color:#dc2626;font-size:.6rem;font-weight:800; }
+.odds-move-down { color:#16a34a;font-size:.6rem;font-weight:800; }
+.odds-steam-badge {
+  display:inline-flex;align-items:center;gap:3px;
+  font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;
+  background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);
+  color:#7c3aed;padding:1px 6px;border-radius:999px;margin-left:4px;
+}
 </style>
 
 </head>
@@ -1408,7 +1420,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v5.8</div>
+        <div class="version-badge">v5.9</div>
       </div>
     </div>
   </div>
@@ -1428,9 +1440,15 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
       <div class="lbl">Inzetten</div>
       <div class="val" id="miniBets">0</div>
     </div>
-    <div class="w-item rate">
+    <div class="w-item rate" style="cursor:pointer;" onclick="switchTab('wallet')">
       <div class="lbl">Hitrate</div>
       <div class="val" id="miniRate">—</div>
+    </div>
+  </div>
+  <!-- EV strip onder wallet -->
+  <div style="display:flex;justify-content:flex-end;margin-top:.15rem;margin-bottom:.2rem;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);">
+      Gem. EV: <span id="miniEV" style="font-weight:800;color:#7c3aed;">—</span>
     </div>
   </div>
 
@@ -1545,9 +1563,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
 
 <div class="section-label">
   Wedstrijden vandaag t/m overmorgen
-  <button onclick="debugAPI()" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;
-    background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);color:#a78bfa;
-    border-radius:999px;padding:2px 8px;cursor:pointer;margin-left:.3rem;">🔍 DEBUG</button>
+
   <button onclick="scanValueAll()" id="scanValueBtn" class="scan-value-btn">
     ⚡ SCAN VALUE
   </button>
@@ -3048,24 +3064,58 @@ function getCurrentSeason(comp) {
   return 2025;
 }
 
-const PROXY = 'https://toto-proxy.zweetzakken.workers.dev';
-function proxyUrl(url) { return `${PROXY}?url=${encodeURIComponent(url)}`; }
+const PROXIES = [
+  'https://toto-proxy.zweetzakken.workers.dev',
+  'https://corsproxy.io/?'   // backup proxy
+];
+let _proxyIdx = 0;
+
+function proxyUrl(url) {
+  const p = PROXIES[_proxyIdx];
+  // corsproxy.io heeft andere format
+  if (p.includes('corsproxy.io')) return `${p}${encodeURIComponent(url)}`;
+  return `${p}?url=${encodeURIComponent(url)}`;
+}
+
+async function proxyFetchWithFallback(url, options={}) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    _proxyIdx = i;
+    try {
+      const r = await fetch(proxyUrl(url), { ...options, signal: AbortSignal.timeout(10000) });
+      if (r.ok || r.status < 500) { _proxyIdx = i; return r; }
+    } catch(e) {
+      console.warn(`[Proxy ${i}] Failed:`, e.message);
+    }
+  }
+  throw new Error('Alle proxies onbereikbaar');
+}
 
 function fdFetch(url, token) {
   return fetch(proxyUrl(url), { headers: { 'X-Auth-Token': token } });
 }
 
-function apiFetch(url, apiKey, timeoutMs=8000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  return fetch(proxyUrl(url), {
-    headers: {
-      'x-apisports-key': apiKey,
-      'x-rapidapi-key': apiKey,
-      'x-rapidapi-host': 'v3.football.api-sports.io'
-    },
-    signal: controller.signal
-  }).finally(() => clearTimeout(timer));
+async function apiFetch(url, apiKey, timeoutMs=10000) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    _proxyIdx = i;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const r = await fetch(proxyUrl(url), {
+        headers: {
+          'x-apisports-key': apiKey,
+          'x-rapidapi-key': apiKey,
+          'x-rapidapi-host': 'v3.football.api-sports.io'
+        },
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      if (r.ok || r.status < 500) return r;
+    } catch(e) {
+      clearTimeout(timer);
+      console.warn(`[apiFetch proxy ${i}]`, e.message);
+      if (i === PROXIES.length - 1) throw e;
+    }
+  }
 }
 
 async function anthropicFetchWithRetry(apiKey, body, maxRetries=3) {
@@ -3088,19 +3138,30 @@ async function anthropicFetchWithRetry(apiKey, body, maxRetries=3) {
   }
 }
 
-function anthropicFetch(apiKey, body) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 30000);
-  return fetch(proxyUrl('https://api.anthropic.com/v1/messages'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify(body),
-    signal: controller.signal
-  }).finally(() => clearTimeout(timer));
+async function anthropicFetch(apiKey, body) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    _proxyIdx = i;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    try {
+      const r = await fetch(proxyUrl('https://api.anthropic.com/v1/messages'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      if (r.ok || r.status < 500) return r;
+    } catch(e) {
+      clearTimeout(timer);
+      console.warn(`[anthropicFetch proxy ${i}]`, e.message);
+      if (i === PROXIES.length - 1) throw e;
+    }
+  }
 }
 
 function showLoadingMsg(msg, color) {
@@ -3522,7 +3583,10 @@ async function fetchOddsForAllMatches(matches, apiKey) {
     m.awayPct = Math.round((1/o.away)/tot*100);
     updated++;
   }
-  if (updated > 0) renderMatches(matches);
+  if (updated > 0) {
+    saveOpeningOdds(matches);
+    renderMatches(matches);
+  }
   return updated;
 }
 async function fetchOddsForMatches(leagueId, apiKey) {
@@ -3751,15 +3815,44 @@ function renderMatchCard(m) {
       <div class="match-odds">
         <div class="odds-btn ${isPick1?'value-pick':''}" onclick="handleOddsBet(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">
           <span class="odds-lbl">1 THUIS</span>
-          <span class="odds-val" style="${m.homeOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.homeOdds}</span>
+          <span class="odds-val" style="${m.homeOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">
+            ${m.homeOdds}
+            ${(()=>{
+              if (m.homeOdds==='—' || !state.openingOdds?.[m.id]) return '';
+              const op = state.openingOdds[m.id];
+              const diff = parseFloat(m.homeOdds) - op.home;
+              if (Math.abs(diff) < 0.03) return '';
+              return diff > 0
+                ? '<span class="odds-move-up">↑</span>'
+                : '<span class="odds-move-down">↓</span>';
+            })()}
+          </span>
         </div>
         <div class="odds-btn ${isPickX?'value-pick':''}" onclick="handleOddsBet(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')">
           <span class="odds-lbl">X GELIJK</span>
-          <span class="odds-val" style="${m.drawOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.drawOdds}</span>
+          <span class="odds-val" style="${m.drawOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">
+            ${m.drawOdds}
+            ${(()=>{
+              if (m.drawOdds==='—' || !state.openingOdds?.[m.id]) return '';
+              const op = state.openingOdds[m.id];
+              const diff = parseFloat(m.drawOdds) - op.draw;
+              if (Math.abs(diff) < 0.03) return '';
+              return diff > 0 ? '<span class="odds-move-up">↑</span>' : '<span class="odds-move-down">↓</span>';
+            })()}
+          </span>
         </div>
         <div class="odds-btn ${isPick2?'value-pick':''}" onclick="handleOddsBet(event,'${m.id}','2','${m.away} wint','${m.awayOdds}')">
           <span class="odds-lbl">2 UIT</span>
-          <span class="odds-val" style="${m.awayOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">${m.awayOdds}</span>
+          <span class="odds-val" style="${m.awayOdds === '—' ? 'color:var(--muted);font-size:.8rem;' : ''}">
+            ${m.awayOdds}
+            ${(()=>{
+              if (m.awayOdds==='—' || !state.openingOdds?.[m.id]) return '';
+              const op = state.openingOdds[m.id];
+              const diff = parseFloat(m.awayOdds) - op.away;
+              if (Math.abs(diff) < 0.03) return '';
+              return diff > 0 ? '<span class="odds-move-up">↑</span>' : '<span class="odds-move-down">↓</span>';
+            })()}
+          </span>
         </div>
       </div>
       ${m.valueData ? `
@@ -6200,6 +6293,21 @@ function updateWalletUI() {
   document.getElementById('totalStaked').textContent = fmt(w.totalStaked);
   document.getElementById('totalWon').textContent = fmt(w.totalWon);
   document.getElementById('hitRate').textContent = hitRate;
+
+  // Gemiddelde Expected Value berekenen
+  const settledBets = w.bets.filter(b => b.status !== 'pending' && b.odds);
+  const avgEV = settledBets.length > 0
+    ? (settledBets.reduce((sum, b) => {
+        const impliedProb = 1 / parseFloat(b.odds);
+        const actualOutcome = b.status === 'win' ? 1 : 0;
+        return sum + (actualOutcome - impliedProb);
+      }, 0) / settledBets.length * 100)
+    : null;
+  const evEl = document.getElementById('miniEV');
+  if (evEl) {
+    evEl.textContent = avgEV !== null ? (avgEV >= 0 ? '+' : '') + avgEV.toFixed(1) + '%' : '—';
+    evEl.style.color = avgEV === null ? '#7c3aed' : avgEV >= 0 ? '#16a34a' : '#dc2626';
+  }
 
   renderWalletChart();
 
