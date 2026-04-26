@@ -1338,7 +1338,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v4.2</div>
+        <div class="version-badge">v4.3</div>
       </div>
     </div>
   </div>
@@ -3182,9 +3182,7 @@ async function loadTodayAllComps() {
 
 // Render one match card and append to container
 function renderSingleMatch(m, container) {
-  const tmp = document.createElement('div');
-  tmp.innerHTML = renderMatchCard(m);
-  const card = tmp.firstElementChild;
+  const card = renderMatchCard(m);
   if (card) container.appendChild(card);
 }
 async function loadMatches(comp) {
