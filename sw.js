@@ -1,0 +1,58 @@
+// TOTO AI Service Worker v10.0 — Standaard push zonder Firebase
+const SW_VERSION = '10.0';
+const CACHE = 'totoai-' + SW_VERSION;
+
+self.addEventListener('install', e => { self.skipWaiting(); });
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.url.includes('api-sports') ||
+      e.request.url.includes('anthropic') ||
+      e.request.url.includes('firebase') ||
+      e.request.url.includes('workers.dev') ||
+      e.request.url.includes('googleapis')) return;
+  e.respondWith(caches.match(e.request).then(c => c || fetch(e.request)));
+});
+
+// ── Standaard Web Push ────────────────────────────────
+self.addEventListener('push', e => {
+  console.log('[SW] Push ontvangen!');
+  if (!e.data) return;
+  let payload;
+  try { payload = e.data.json(); }
+  catch(err) { payload = { title: '⚡ TOTO AI', body: e.data.text() }; }
+
+  const title = payload.notification?.title || payload.title || '⚡ TOTO AI';
+  const body  = payload.notification?.body  || payload.body  || '';
+  const data  = payload.data || {};
+
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body, icon: '/Toto-AI/icon-192.png',
+      badge: '/Toto-AI/icon-192.png',
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'totoai',
+      requireInteraction: true,
+      data
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(wins => {
+      for (const w of wins) {
+        if (w.url.includes('Toto-AI') && 'focus' in w) { w.focus(); return; }
+      }
+      if (clients.openWindow) return clients.openWindow('https://roblizet.github.io/Toto-AI/');
+    })
+  );
+});
