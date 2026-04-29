@@ -3,14 +3,6 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-VZM5X6LRQR"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-VZM5X6LRQR');
-  </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>TOTO AI — Voetbal Analyse</title>
 <link rel="manifest" href="manifest.json">
@@ -20,10 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="TOTO AI">
 <meta name="description" content="AI voetbal toto analyses, winstkansen en combi tips">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;800&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
-<!-- Firebase SDK voor FCM push -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-  <style>
+<style>
 :root {
   --bg1:#fef6f0;--bg2:#f3f0ff;--bg3:#eef6ff;
   --ink:#0f172a;--muted:#475569;--sub:#64748b;
@@ -1649,6 +1638,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
   border-radius: 14px;
   overflow: hidden;
   margin-bottom: .45rem;
+  animation: cardIn .3s ease both;
 }
 .skeleton-line {
   background: linear-gradient(90deg,
@@ -1669,8 +1659,7 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
 
 /* Page transition */
 .tab-content { animation: none; }
-.tab-content.active { animation: tabFadeIn .15s ease; }
-@keyframes tabFadeIn { from{opacity:.7;} to{opacity:1;} }
+.tab-content.active { animation: cardIn .2s ease; }
 
 /* Scan button pulsing when active */
 @keyframes scanPulse {
@@ -1743,326 +1732,6 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
   color: #64748b;
   opacity: .6;
 }
-
-/* ═══════════════════════════════════════
-   SCAN RESULTATEN — verbeterde lay-out
-═══════════════════════════════════════ */
-.scan-result-row {
-  display: flex;
-  align-items: flex-start;
-  padding: .55rem .85rem;
-  border-bottom: 1px solid var(--stroke);
-  gap: .6rem;
-  cursor: pointer;
-  transition: background .12s, transform .1s;
-  position: relative;
-}
-.scan-result-row:last-child { border-bottom: none; }
-.scan-result-row:hover { background: rgba(219,39,119,.04); }
-.scan-result-row:active { background: rgba(219,39,119,.08); transform: scale(.995); }
-.sr-rank {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .48rem;
-  font-weight: 800;
-  color: var(--sub);
-  opacity: .5;
-  min-width: 14px;
-  padding-top: 2px;
-}
-.sr-main { flex: 1; min-width: 0; }
-.sr-match {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .62rem;
-  font-weight: 800;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sr-pick {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .54rem;
-  color: #be185d;
-  font-weight: 700;
-  margin: 2px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.sr-comp {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .48rem;
-  color: var(--sub);
-}
-.sr-badges {
-  display: flex;
-  gap: 3px;
-  flex-wrap: wrap;
-  margin-top: 3px;
-}
-.sr-badge {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .48rem;
-  font-weight: 800;
-  padding: 1px 5px;
-  border-radius: 999px;
-}
-.sr-badge.value-pos  { background: rgba(22,163,74,.14);  color: #15803d; border: 1px solid rgba(22,163,74,.3); }
-.sr-badge.value-low  { background: rgba(217,119,6,.12);  color: #92400e; border: 1px solid rgba(217,119,6,.3); }
-.sr-badge.value-neg  { background: rgba(220,38,38,.08);  color: #dc2626; border: 1px solid rgba(220,38,38,.2); }
-.sr-badge.conf       { background: rgba(37,99,235,.1);   color: #1d4ed8; border: 1px solid rgba(37,99,235,.25); }
-.sr-badge.poisson    { background: rgba(124,58,237,.1);  color: #6d28d9; border: 1px solid rgba(124,58,237,.25); }
-.sr-badge.odds       { background: rgba(15,23,42,.06);   color: var(--ink); border: 1px solid var(--stroke); }
-.sr-right {
-  text-align: right;
-  flex-shrink: 0;
-  min-width: 54px;
-}
-.sr-value-big {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.3rem;
-  letter-spacing: .04em;
-  line-height: 1;
-}
-.sr-value-big.pos { color: #16a34a; }
-.sr-value-big.low { color: #d97706; }
-.sr-value-big.neg { color: #dc2626; }
-.sr-reason {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .46rem;
-  color: var(--sub);
-  margin-top: 1px;
-  font-style: italic;
-}
-
-/* ═══════════════════════════════════════
-   TRIPLE LOCK HITRATE
-═══════════════════════════════════════ */
-.tl-hitrate-card {
-  background: linear-gradient(135deg,rgba(254,243,199,.6),rgba(255,237,213,.4));
-  border: 1.5px solid rgba(217,119,6,.3);
-  border-radius: 14px;
-  padding: .7rem 1rem;
-  margin-bottom: .8rem;
-  display: flex;
-  align-items: center;
-  gap: .8rem;
-}
-body.dark .tl-hitrate-card {
-  background: linear-gradient(135deg,rgba(120,53,15,.25),rgba(92,45,12,.2));
-}
-.tl-hitrate-icon { font-size: 1.4rem; flex-shrink: 0; }
-.tl-hitrate-val {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2rem;
-  letter-spacing: .04em;
-  line-height: 1;
-}
-.tl-hitrate-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .52rem;
-  font-weight: 800;
-  color: #92400e;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-}
-body.dark .tl-hitrate-label { color: #d97706; }
-.tl-hitrate-sub {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .5rem;
-  color: #b45309;
-  margin-top: 2px;
-}
-
-/* ═══════════════════════════════════════
-   LIVE SCORE IN WALLET BET
-═══════════════════════════════════════ */
-.bet-live-score {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: .9rem;
-  background: rgba(220,38,38,.08);
-  border: 1px solid rgba(220,38,38,.2);
-  color: #dc2626;
-  border-radius: 6px;
-  padding: 0 6px;
-  margin-left: 4px;
-}
-.bet-live-dot {
-  width: 5px; height: 5px;
-  background: #dc2626;
-  border-radius: 50%;
-  animation: blink .8s infinite;
-  flex-shrink: 0;
-}
-
-/* ═══════════════════════════════════════
-   JACKS KNOP
-═══════════════════════════════════════ */
-.jacks-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .52rem;
-  font-weight: 800;
-  padding: 3px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  background: #cc0000;
-  border: none;
-  color: #fff;
-  letter-spacing: .03em;
-  text-decoration: none;
-  transition: opacity .15s, transform .1s;
-}
-.jacks-btn:active { opacity: .85; transform: scale(.95); }
-
-/* ═══════════════════════════════════════
-   LOGIN / REGISTRATIE SCHERM
-═══════════════════════════════════════ */
-#loginScreen {
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(135deg, #fce7f3, #dbeafe);
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-body.dark #loginScreen {
-  background: linear-gradient(135deg, #1a0a0f, #0f172a);
-}
-.login-card {
-  background: rgba(255,255,255,.95);
-  border-radius: 24px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 360px;
-  box-shadow: 0 20px 60px rgba(219,39,119,.15);
-}
-body.dark .login-card {
-  background: rgba(30,41,59,.95);
-}
-.login-logo {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-.login-logo-icon {
-  font-size: 3rem;
-  display: block;
-}
-.login-logo-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 2rem;
-  color: #db2777;
-  letter-spacing: .08em;
-}
-.login-logo-sub {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .55rem;
-  color: var(--sub);
-}
-.login-tabs {
-  display: flex;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1.5px solid rgba(219,39,119,.2);
-  margin-bottom: 1.2rem;
-}
-.login-tab {
-  flex: 1;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .65rem;
-  font-weight: 800;
-  padding: .5rem;
-  cursor: pointer;
-  background: transparent;
-  border: none;
-  color: var(--sub);
-  transition: all .15s;
-}
-.login-tab.active {
-  background: rgba(219,39,119,.1);
-  color: #db2777;
-}
-.login-input {
-  width: 100%;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .7rem;
-  padding: .7rem 1rem;
-  border-radius: 12px;
-  border: 1.5px solid rgba(15,23,42,.12);
-  background: rgba(255,255,255,.8);
-  margin-bottom: .7rem;
-  box-sizing: border-box;
-  color: var(--ink);
-}
-body.dark .login-input {
-  background: rgba(15,23,42,.5);
-  border-color: rgba(255,255,255,.1);
-  color: #e2e8f0;
-}
-.login-btn {
-  width: 100%;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .7rem;
-  font-weight: 800;
-  padding: .8rem;
-  border-radius: 14px;
-  cursor: pointer;
-  border: none;
-  background: linear-gradient(135deg, #db2777, #9333ea);
-  color: #fff;
-  letter-spacing: .05em;
-  margin-bottom: .6rem;
-  transition: opacity .15s;
-}
-.login-btn:active { opacity: .85; }
-.login-btn.google {
-  background: #fff;
-  color: #374151;
-  border: 1.5px solid rgba(15,23,42,.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: .5rem;
-}
-.login-error {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .58rem;
-  color: #dc2626;
-  text-align: center;
-  margin-bottom: .5rem;
-  min-height: 1.2rem;
-}
-.login-divider {
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  margin: .5rem 0;
-  color: var(--sub);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .55rem;
-}
-.login-divider::before, .login-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--stroke);
-}
-.login-footer {
-  text-align: center;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: .5rem;
-  color: var(--sub);
-  margin-top: 1rem;
-}
-.login-footer a { color: #db2777; text-decoration: none; }
 </style>
 
 </head>
@@ -2072,49 +1741,7 @@ body.dark .login-input {
   <div class="jb-title">⚠ App fout</div>
   <div class="jb-msg" id="jsBannerMsg">—</div>
 </div>
-<!-- LOGIN SCHERM -->
-<div id="loginScreen" style="display:none;">
-  <div class="login-card">
-    <div class="login-logo">
-      <span class="login-logo-icon">⚽</span>
-      <div class="login-logo-title">TOTO AI</div>
-      <div class="login-logo-sub">Voetbal Analyse · AI Entiteiten · Value Betting</div>
-      <div style="display:inline-block;background:rgba(217,119,6,.15);border:1px solid rgba(217,119,6,.3);color:#92400e;font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;padding:2px 8px;border-radius:999px;margin-top:.3rem;">🚧 BETA</div>
-    </div>
-    <div class="login-tabs">
-      <button class="login-tab active" id="loginTabBtn" onclick="switchLoginTab('login')">INLOGGEN</button>
-      <button class="login-tab" id="registerTabBtn" onclick="switchLoginTab('register')">REGISTREREN</button>
-    </div>
-    <div id="loginError" class="login-error"></div>
-    <div id="loginForm">
-      <input class="login-input" id="loginEmail" type="email" placeholder="Email adres">
-      <input class="login-input" id="loginPassword" type="password" placeholder="Wachtwoord">
-      <button class="login-btn" onclick="loginWithEmail()">INLOGGEN</button>
-      <div class="login-divider">of</div>
-      <button class="login-btn google" onclick="loginWithGoogle()">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Doorgaan met Google
-      </button>
-    </div>
-    <div id="registerForm" style="display:none;">
-      <input class="login-input" id="registerName" type="text" placeholder="Jouw naam">
-      <input class="login-input" id="registerEmail" type="email" placeholder="Email adres">
-      <input class="login-input" id="registerPassword" type="password" placeholder="Wachtwoord (min. 6 tekens)">
-      <button class="login-btn" onclick="registerWithEmail()">ACCOUNT AANMAKEN</button>
-      <div class="login-divider">of</div>
-      <button class="login-btn google" onclick="loginWithGoogle()">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Doorgaan met Google
-      </button>
-    </div>
-    <div class="login-footer">
-      Made by Rob Borghouts · <a href="mailto:zweetzakken@gmail.com">zweetzakken@gmail.com</a><br>
-      <span style="opacity:.6;">Fictieve app · Uitsluitend educatief · 18+</span>
-    </div>
-  </div>
-</div>
-
-<div class="app" id="app">
+<div class="app">
 
   <!-- INSTALL BANNER -->
 
@@ -2122,12 +1749,6 @@ body.dark .login-input {
     <p>📲 <span>Installeer als app</span> — zet op je homescreen!</p>
     <button class="install-btn" onclick="installPWA()">INSTALLEER</button>
     <button class="dismiss-btn" onclick="dismissBanner()">✕</button>
-  </div>
-
-  <!-- BETA BANNER -->
-  <div id="betaBanner" style="background:linear-gradient(135deg,rgba(217,119,6,.15),rgba(245,158,11,.1));border-bottom:1px solid rgba(217,119,6,.3);padding:.35rem 1rem;display:flex;align-items:center;justify-content:space-between;">
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:#92400e;">🚧 BETA — App in testfase</span>
-    <a href="mailto:zweetzakken@gmail.com" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#d97706;text-decoration:none;">📧 Feedback</a>
   </div>
 
   <!-- TOPBAR -->
@@ -2155,7 +1776,7 @@ body.dark .login-input {
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v11.0</div>
+        <div class="version-badge">v6.8</div>
       </div>
     </div>
   </div>
@@ -2299,24 +1920,6 @@ body.dark .login-input {
       <div class="comp-chip" onclick="handleCompTap('nations')" id="comp-nations">
         <span class="flag">🌍</span><div class="cname">Nations League</div>
       </div>
-      <div class="comp-chip" onclick="handleCompTap('jupiler')" id="comp-jupiler">
-        <span class="flag">🇧🇪</span><div class="cname">Jupiler Pro</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('ligaportugal')" id="comp-ligaportugal">
-        <span class="flag">🇵🇹</span><div class="cname">Liga Portugal</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('superlig')" id="comp-superlig">
-        <span class="flag">🇹🇷</span><div class="cname">Süper Lig</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('eredivisie_playoff_eur')" id="comp-eredivisie_playoff_eur" style="background:linear-gradient(135deg,rgba(255,140,0,.08),rgba(255,165,0,.05));">
-        <span class="flag">🇳🇱</span><div class="cname" style="font-size:.5rem;">🏅 Playoff EUR</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('eredivisie_playoff_rel')" id="comp-eredivisie_playoff_rel" style="background:linear-gradient(135deg,rgba(220,38,38,.06),rgba(185,28,28,.04));">
-        <span class="flag">🇳🇱</span><div class="cname" style="font-size:.5rem;">⚠️ Playoff DEG</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('kkd_playoff_prom')" id="comp-kkd_playoff_prom" style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(21,128,61,.05));">
-        <span class="flag">🇳🇱</span><div class="cname" style="font-size:.5rem;">⬆️ KKD Playoff</div>
-      </div>
       <div class="comp-chip wk-chip" onclick="handleCompTap('wk2026')" id="comp-wk2026" style="grid-column:span 3;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(254,243,199,.8));border:2px solid rgba(217,119,6,.4);">
         <span class="flag">🏆</span>
         <div class="cname" style="color:#92400e;font-weight:800;">WK 2026 · USA/Canada/Mexico</div>
@@ -2457,10 +2060,7 @@ body.dark .login-input {
 <div class="api-bar">
   <span class="api-bar-label">🔑 Anthropic API Key</span>
   <div class="api-row">
-    <div style="display:flex;gap:.3rem;align-items:center;">
-      <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." value="" style="flex:1;">
-      <button onclick="toggleKeyVisibility('apiKeyInput',this)" style="font-size:.7rem;padding:3px 8px;border-radius:8px;border:1px solid var(--stroke);background:transparent;cursor:pointer;">👁</button>
-    </div>
+    <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." value="">
     <button class="api-save" onclick="saveApiKey()">OPSLAAN</button>
   </div>
   <div class="api-status" id="apiStatus"></div>
@@ -2611,9 +2211,6 @@ body.dark .login-input {
   <div class="wa-btn" onclick="resetWallet()">
     <span class="icon">🔄</span><div class="lbl">Reset</div>
   </div>
-  <div class="wa-btn" onclick="exportWalletCSV()">
-    <span class="icon">📥</span><div class="lbl">Export CSV</div>
-  </div>
 </div>
 <div id="autoCheckStatus" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:.5rem .8rem;border-radius:8px;margin-bottom:.6rem;"></div>
 <div id="autoCheckBar">🔄 Checking...</div>
@@ -2630,9 +2227,6 @@ body.dark .login-input {
   ══════════════════════════════════════ -->
 
   <div id="tab-backtest" class="tab-content">
-
-<!-- Triple Lock Hitrate card -->
-<div id="tlHitrateCard" class="tl-hitrate-card" style="display:none;"></div>
 
 <!-- ⚡ VALUE BACKTEST SECTIE -->
 <div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
@@ -2731,12 +2325,6 @@ body.dark .login-input {
     background:rgba(37,99,235,.1);border:1.5px solid rgba(37,99,235,.3);color:#2563eb;">
     🔍 CHECK ALLES
   </button>
-  <button onclick="exportTrackerCSV()" style="
-    font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
-    padding:.75rem 1rem;border-radius:14px;cursor:pointer;
-    background:rgba(15,23,42,.06);border:1.5px solid var(--stroke);color:var(--sub);">
-    📥 CSV
-  </button>
 </div>
 
 <!-- Filter knoppen -->
@@ -2769,23 +2357,7 @@ body.dark .login-input {
 
 <!-- VALUE: notificaties sectie -->
 <div class="settings-section">
-  <h4>👤 Account</h4>
-  <div id="authUserInfo" style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);padding:.3rem 0;">
-    Niet ingelogd
-  </div>
-</div>
-
-<div class="settings-section">
   <h4>⚡ Value Notificaties</h4>
-  <div class="settings-row">
-    <div>
-      <div class="sr-label">VAPID Public Key</div>
-      <div class="sr-sub">Voor echte push — ook als app gesloten is</div>
-    </div>
-    <input type="text" class="sr-input sr-input-border" id="vapidPublicKey"
-      placeholder="BOSVKth6..." style="font-size:.5rem;width:130px;"
-      onchange="saveSettings()">
-  </div>
   <div style="font-size:.75rem;color:var(--sub);line-height:1.6;margin-bottom:.6rem;">
     Krijg een push-melding bij <b>sterke value</b> (≥<span id="notifThresholdDesc">15</span>%) zodra je de Value Scan draait.
   </div>
@@ -2821,12 +2393,6 @@ body.dark .login-input {
       padding:.35rem .9rem;border-radius:999px;cursor:pointer;white-space:nowrap;
       background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.3);color:#1d4ed8;">
       🔔 TEST
-    </button>
-    <button onclick="debugPush()"
-      style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;
-      padding:.35rem .9rem;border-radius:999px;cursor:pointer;white-space:nowrap;
-      background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);color:#7c3aed;">
-      🔍 DEBUG
     </button>
   </div>
 </div>
@@ -2926,10 +2492,7 @@ body.dark .login-input {
       <div class="sr-label">API-Football Key</div>
       <div class="sr-sub">⭐ Primair — alle competities + H2H</div>
     </div>
-    <div style="display:flex;gap:.3rem;align-items:center;">
-      <input class="sr-input sr-input-border" id="settFootballKey" type="password" placeholder="RapidAPI key..." value="" style="flex:1;">
-      <button onclick="toggleKeyVisibility('settFootballKey',this)" style="font-size:.7rem;padding:3px 8px;border-radius:8px;border:1px solid var(--stroke);background:transparent;cursor:pointer;">👁</button>
-    </div>
+    <input class="sr-input sr-input-border" id="settFootballKey" type="password" placeholder="RapidAPI key..." value="">
   </div>
   <div class="settings-row">
     <div>
@@ -2943,10 +2506,7 @@ body.dark .login-input {
       <div class="sr-label">Anthropic API Key</div>
       <div class="sr-sub">Voor AI analyses (claude-sonnet)</div>
     </div>
-    <div style="display:flex;gap:.3rem;align-items:center;">
-      <input class="sr-input sr-input-border" id="settAnthropicKey" type="password" placeholder="sk-ant-..." value="" style="flex:1;">
-      <button onclick="toggleKeyVisibility('settAnthropicKey',this)" style="font-size:.7rem;padding:3px 8px;border-radius:8px;border:1px solid var(--stroke);background:transparent;cursor:pointer;">👁</button>
-    </div>
+    <input class="sr-input sr-input-border" id="settAnthropicKey" type="password" placeholder="sk-ant-..." value="">
   </div>
 </div>
 
@@ -3544,7 +3104,6 @@ let state = {
     anthropicKey: '',
     footballKey: '',
     fdKey: '',
-    vapidPublicKey: 'BPpo274NkAKoESoj_ST_zqYAUauja6rBnX63or8yFhpMK10Roz-3e9TRt7nn7k32oQlWLlWYfN7FUW2MgGoLiJQ',
     defaultComp: 'eredivisie',
     startBalance: 500,
     defaultBet: 10,
@@ -3567,9 +3126,6 @@ window.addEventListener('load', () => {
   startAutoCheckScheduler();
   updateAutoDarkUI();
   checkAutoDarkNow();
-  startReminderScheduler();
-  // Firebase Auth initialiseren
-  setTimeout(initFirebaseAuth, 500);
   updateBottomNav('dashboard');
   renderDashboard();
   // Herstel scan resultaten panel als er eerder gescand is
@@ -3629,7 +3185,7 @@ function switchTab(name) {
   updateBottomNav(name);
   document.getElementById('moreMenu')?.classList.remove('open');
   if (name === 'dashboard') renderDashboard();
-  if (name === 'wallet') { updateWalletUI(); startLiveScorePolling(); }
+  if (name === 'wallet') updateWalletUI();
   if (name === 'tracker') { renderTracker(); updateTrackerStats(); }
   if (name === 'backtest') { renderBacktest(); }
   if (name === 'instellingen') { loadFbBackupInfo(); }
@@ -4003,11 +3559,7 @@ const FD_CODES = {
 };
 const COMP_IDS = {
   eredivisie: 88, kkd: 89, bundesliga: 78, premier: 39,
-  beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5, wk2026: 1,
-  jupiler: 144, ligaportugal: 94, superlig: 203,
-  eredivisie_playoff_eur: 383,   // Eredivisie playoffs Europa
-  eredivisie_playoff_rel: 384,   // Eredivisie playoffs degradatie
-  kkd_playoff_prom: 385          // KKD playoffs promotie
+  beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5, wk2026: 1
 };
 function getCurrentSeason(comp) {
   if (comp === 'wk2026') return 2026;
@@ -4189,7 +3741,6 @@ function parseAPIMatch(f) {
   return {
     id: fix.id, source: 'apif',
     comp: f.league.name, compLogo: f.league.logo || '',
-    leagueId: f.league.id,
     time: timeStr, date: dateStr,
     dateISO: fix.date ? fix.date.split('T')[0] : '',
     home: home.name, away: away.name,
@@ -4418,8 +3969,8 @@ async function loadFromAPIFootball(comp, apiKey) {
     const seen = new Set();
     const unique = all.filter(f => {
       if (seen.has(f.fixture.id)) return false;
-      // Strikt filteren op juiste league ID (=== strict equality)
-      if (Number(f.league?.id) !== Number(leagueId)) return false;
+      // Strikt filteren op juiste league ID
+      if (f.league?.id !== leagueId) return false;
       seen.add(f.fixture.id); return true;
     });
 
@@ -4442,7 +3993,7 @@ async function loadFromAPIFootball(comp, apiKey) {
     const r2 = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&last=5`, apiKey);
     const d2 = await r2.json();
     if (d2.response?.length > 0) {
-      const filtered2 = d2.response.filter(f => Number(f.league?.id) === Number(leagueId));
+      const filtered2 = d2.response.filter(f => f.league?.id === leagueId);
       state.matches = filtered2.sort((a,b) => new Date(b.fixture.date)-new Date(a.fixture.date)).map(parseAPIMatch);
       document.getElementById('match-loading').style.display = 'none';
       renderMatches(state.matches);
@@ -4910,16 +4461,10 @@ function renderMatchCard(m) {
           <button onclick="applyManualOdds('${m.id}');event.stopPropagation();" style="width:100%;padding:.5rem;border-radius:8px;background:rgba(219,39,119,.1);border:1px solid rgba(219,39,119,.3);font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:#be185d;cursor:pointer;">✓ OPSLAAN & GEBRUIKEN</button>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:.35rem;padding:.2rem .75rem .55rem;">
-        <div class="add-combi-row" id="combi-row-${m.id}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;flex:1;">
-          <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">+1</div>
-          <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')">+X</div>
-          <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','2','${m.away} wint','${m.awayOdds}')">+2</div>
-        </div>
-        <a href="https://jacks.nl/sports#search/${(m.home + '+' + m.away).replace(/ /g,'+')}"
-          target="_blank" rel="noopener" class="jacks-btn" onclick="event.stopPropagation()">
-          🎰 JACKS
-        </a>
+      <div class="add-combi-row" id="combi-row-${m.id}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;padding:.4rem .9rem .6rem;">
+        <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">+1</div>
+        <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')">+X</div>
+        <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','2','${m.away} wint','${m.awayOdds}')">+2</div>
       </div>`;
     return card;
 }
@@ -5107,23 +4652,6 @@ function selectMatch(match) {
     ssBtn.innerHTML = `<img src="https://www.sofascore.com/favicon.ico" style="width:14px;height:14px;border-radius:2px;vertical-align:middle;" onerror="this.style.display='none'"> &nbsp;SOFASCORE: ${match.home} vs ${match.away} →`;
     ssLink.style.display = 'block';
   }
-
-  // Jacks knop in analyse tab
-  let jacksBtn = document.getElementById('jacksAnalyseBtn');
-  if (!jacksBtn) {
-    jacksBtn = document.createElement('a');
-    jacksBtn.id = 'jacksAnalyseBtn';
-    jacksBtn.target = '_blank';
-    jacksBtn.rel = 'noopener';
-    jacksBtn.className = 'jacks-btn';
-    jacksBtn.style.cssText = 'margin-left:.5rem;font-size:.58rem;padding:4px 12px;';
-    jacksBtn.textContent = '🎰 BET BIJ JACKS';
-    const nameEl = document.getElementById('selectedMatchName');
-    if (nameEl) nameEl.parentNode.insertBefore(jacksBtn, nameEl.nextSibling);
-  }
-  if (jacksBtn) {
-    jacksBtn.href = `https://jacks.nl/sports#search/${encodeURIComponent(match.home + ' ' + match.away)}`;
-  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -5299,23 +4827,13 @@ function extractTeamGoalStats(stats) {
   const gf = stats.goals.for?.average;
   const ga = stats.goals.against?.average;
   if (!gf || !ga) return null;
-
-  // xG data als beschikbaar (betere goals-verwachting dan werkelijke goals)
-  const xgFor = stats.goals?.for?.xg;
-  const xgAgainst = stats.goals?.against?.xg;
-
   return {
-    avgScoredHome:  parseFloat(gf.home)  || null,
-    avgScoredAway:  parseFloat(gf.away)  || null,
+    avgScoredHome: parseFloat(gf.home) || null,
+    avgScoredAway: parseFloat(gf.away) || null,
     avgScoredTotal: parseFloat(gf.total) || null,
-    avgConcHome:    parseFloat(ga.home)  || null,
-    avgConcAway:    parseFloat(ga.away)  || null,
-    avgConcTotal:   parseFloat(ga.total) || null,
-    // xG als blend-correctie (gemiddeld over seizoen)
-    xgFor:     xgFor     ? parseFloat(xgFor)     : null,
-    xgAgainst: xgAgainst ? parseFloat(xgAgainst) : null,
-    // Thuiswedstrijden gespeeld — voor seizoensfase-correctie
-    gamesPlayed: stats.fixtures?.played?.total || null,
+    avgConcHome: parseFloat(ga.home) || null,
+    avgConcAway: parseFloat(ga.away) || null,
+    avgConcTotal: parseFloat(ga.total) || null,
   };
 }
 
@@ -5329,30 +4847,16 @@ function extractTeamGoalStats(stats) {
 function calcPoissonKansen(homeStats, awayStats, leagueAvg = 1.35, homeInjFactor = null, awayInjFactor = null) {
   if (!homeStats || !awayStats) return { k1:null, kX:null, k2:null, valid:false };
 
-  // Basis aanvals/verdedigingskracht — thuis/uit split voor nauwkeurigheid
-  let homeAttackBase  = homeStats.avgScoredHome  || homeStats.avgScoredTotal || leagueAvg;
-  let awayDefenceBase = awayStats.avgConcAway    || awayStats.avgConcTotal   || leagueAvg;
-  let awayAttackBase  = awayStats.avgScoredAway  || awayStats.avgScoredTotal || leagueAvg;
-  let homeDefenceBase = homeStats.avgConcHome    || homeStats.avgConcTotal   || leagueAvg;
+  const homeAttackBase = homeStats.avgScoredHome || homeStats.avgScoredTotal || leagueAvg;
+  const awayDefenceBase = awayStats.avgConcAway || awayStats.avgConcTotal || leagueAvg;
+  const awayAttackBase = awayStats.avgScoredAway || awayStats.avgScoredTotal || leagueAvg;
+  const homeDefenceBase = homeStats.avgConcHome || homeStats.avgConcTotal || leagueAvg;
 
-  // xG CORRECTIE — blend werkelijke goals met xG (betere voorspeller)
-  // xG corrigeert voor geluk/pech in afwerking
-  if (homeStats.xgFor && homeStats.xgFor > 0) {
-    homeAttackBase  = homeAttackBase  * 0.6 + (homeStats.xgFor  / Math.max(homeStats.gamesPlayed || 20, 10)) * 0.4;
-  }
-  if (awayStats.xgFor && awayStats.xgFor > 0) {
-    awayAttackBase  = awayAttackBase  * 0.6 + (awayStats.xgFor  / Math.max(awayStats.gamesPlayed || 20, 10)) * 0.4;
-  }
-  if (homeStats.xgAgainst && homeStats.xgAgainst > 0) {
-    homeDefenceBase = homeDefenceBase * 0.6 + (homeStats.xgAgainst / Math.max(homeStats.gamesPlayed || 20, 10)) * 0.4;
-  }
-  if (awayStats.xgAgainst && awayStats.xgAgainst > 0) {
-    awayDefenceBase = awayDefenceBase * 0.6 + (awayStats.xgAgainst / Math.max(awayStats.gamesPlayed || 20, 10)) * 0.4;
-  }
-
-  // Blessure-factoren
+  // Pas blessure-factoren toe als beschikbaar
+  // Thuisploeg blessures: zwakkere aanval + zwakkere verdediging
+  // Uitploeg blessures: zwakkere aanval + zwakkere verdediging
   const homeAttack  = homeAttackBase  * (homeInjFactor?.attackFactor  ?? 1.0);
-  const homeDefence = homeDefenceBase * (1 / (homeInjFactor?.defenseFactor ?? 1.0));
+  const homeDefence = homeDefenceBase * (1 / (homeInjFactor?.defenseFactor ?? 1.0)); // meer goals tegen = slechter
   const awayAttack  = awayAttackBase  * (awayInjFactor?.attackFactor  ?? 1.0);
   const awayDefence = awayDefenceBase * (1 / (awayInjFactor?.defenseFactor ?? 1.0));
 
@@ -5365,7 +4869,7 @@ function calcPoissonKansen(homeStats, awayStats, leagueAvg = 1.35, homeInjFactor
 
   const { p1, pX, p2 } = poissonMatchProbs(lambdaHome, lambdaAway);
 
-  const hasXG = (homeStats.xgFor || awayStats.xgFor) ? true : false;
+  // Bouw label voor debug — hoeveel blessures verwerkt
   const injLabel = (homeInjFactor?.count || awayInjFactor?.count)
     ? ` [thuis ${homeInjFactor?.count||0}bless, uit ${awayInjFactor?.count||0}bless]`
     : '';
@@ -5377,7 +4881,6 @@ function calcPoissonKansen(homeStats, awayStats, leagueAvg = 1.35, homeInjFactor
     lambdaHome: parseFloat(lambdaHome.toFixed(2)),
     lambdaAway: parseFloat(lambdaAway.toFixed(2)),
     injLabel,
-    hasXG,  // voor dynamisch blend-gewicht
     valid: true
   };
 }
@@ -5470,8 +4973,6 @@ async function scanAllTodayValue(mode = 'today') {
 
   const allWithOdds = state.matches.filter(m => {
     if (m.homeOdds === '—' || m.isDone || !(parseFloat(m.homeOdds) > 1)) return false;
-    // Alleen bekende competities — filter onbekende eruit
-    if (m.leagueId && !new Set(Object.values(COMP_IDS)).has(m.leagueId)) return false;
     // Apply comp filter if set
     if (scanCompFilter.size > 0 && m.comp && !scanCompFilter.has(m.comp)) return false;
     return true;
@@ -5519,147 +5020,37 @@ async function scanAllTodayValue(mode = 'today') {
   if (btn) { btn.textContent = `⟳ ANALYSEREN (${candidates.length} wedstrijden)...`; btn.classList.add('scanning'); }
 
   try {
-    // ── STAP 1: Verzamel statistische data (Poisson, blessures, vorm) ──
-    if (btn) btn.textContent = `⟳ DATA OPHALEN...`;
-    const batchDataMap = {};
-    const fKey = state.settings.footballKey;
-    const leagueId = COMP_IDS[state.activeComp];
-    const wt = (p, ms=5000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
+    // Bouw één groot prompt met alle wedstrijden
+    const matchList = candidates.map((m, i) =>
+      `${i+1}. ${m.home} vs ${m.away} (${m.comp||'?'}) · 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds} · Thuis:${m.homeForm||'?'} Uit:${m.awayForm||'?'}`
+    ).join('\n');
 
-    if (fKey) {
-      // Parallel data ophalen voor alle candidates
-      await Promise.all(candidates.map(async m => {
-        if (!m.homeId || !m.awayId) { batchDataMap[m.id] = { confidence: 3 }; return; }
-        try {
-          const [h2h, homeForm, awayForm, homeInj, awayInj, hStats, aStats, homeLastFix, awayLastFix] = await Promise.all([
-            wt(fetchH2H(m.homeId, m.awayId), 4000),
-            wt(fetchTeamForm(m.homeId), 4000),
-            wt(fetchTeamForm(m.awayId), 4000),
-            wt(fetchInjuries(m.homeId, m.id), 3000),
-            wt(fetchInjuries(m.awayId, m.id), 3000),
-            wt(fetchTeamStats(m.homeId, leagueId || 88), 4000),
-            wt(fetchTeamStats(m.awayId, leagueId || 88), 4000),
-            wt(fetchLastFixture(m.homeId, fKey), 3000),
-            wt(fetchLastFixture(m.awayId, fKey), 3000),
-          ]);
+    const batchPrompt = `Je bent een value betting expert. Analyseer deze ${candidates.length} wedstrijden op value.
 
-          // Confidence
-          let conf = 4;
-          if (h2h?.length >= 3) conf += 2; else if (h2h?.length) conf += 1;
-          if (homeForm?.length >= 5 && awayForm?.length >= 5) conf += 2;
-          else if (homeForm?.length && awayForm?.length) conf += 1;
-          if (homeInj !== null && awayInj !== null) conf += 1;
+${matchList}
 
-          // Blessure factoren — verbeterd met totaal-penalty
-          const calcInj = (injuries) => {
-            if (!injuries?.length) return { attackFactor:1.0, defenseFactor:1.0, count:0 };
-            let ap = 0, dp = 0;
-            injuries.forEach(inj => {
-              const pos = inj.player?.pos || '';
-              if (pos==='F') ap += 0.10;      // aanvaller: -10%
-              else if (pos==='M') { ap += 0.06; dp += 0.05; } // mid: -6%/-5%
-              else if (pos==='D') dp += 0.10;  // verdediger: -10%
-              else if (pos==='G') dp += 0.18;  // keeper: -18% (enorm)
-              else { ap += 0.04; dp += 0.04; } // onbekend: -4%
-            });
-            // Extra straf voor veel blessures (squad depth probleem)
-            const total = injuries.length;
-            if (total >= 5)  { ap += 0.05; dp += 0.05; }  // 5+ blessures: -5% extra
-            if (total >= 8)  { ap += 0.08; dp += 0.08; }  // 8+ blessures: -8% extra
-            if (total >= 12) { ap += 0.10; dp += 0.10; }  // 12+ blessures: -10% extra
-            // Minimum 0.40 (niet onder 40% kracht — zelfs bij ramp)
-            return {
-              attackFactor: Math.max(0.40, 1 - Math.min(ap, 0.60)),
-              defenseFactor: Math.max(0.40, 1 - Math.min(dp, 0.60)),
-              count: total
-            };
-          };
-          const homeInjF = calcInj(homeInj);
-          const awayInjF = calcInj(awayInj);
+Geef ALLEEN een JSON array terug, geen uitleg, geen markdown:
+[
+  {"idx":1,"pick":"1","pickLabel":"kort","kans":45,"value":8.5,"confidence":7,"kelly":3.2,"reason":"max 8 woorden"},
+  ...
+]
+idx = nummer van de wedstrijd (1 t/m ${candidates.length})
+value = positief is value, negatief is geen value
+Geef voor ALLE ${candidates.length} wedstrijden een resultaat.`;
 
-          // Poisson met xG
-          const homeGoalStats = hStats ? extractTeamGoalStats(hStats) : null;
-          const awayGoalStats = aStats ? extractTeamGoalStats(aStats) : null;
-          const poisson = calcPoissonKansen(homeGoalStats, awayGoalStats, 1.35, homeInjF, awayInjF);
-          if (poisson.valid) conf = Math.min(10, conf + 1 + (poisson.hasXG ? 1 : 0));
-
-          // Marktbeweging
-          const market = analyzeMarketMovement(m.id, parseFloat(m.homeOdds)||0, parseFloat(m.drawOdds)||0, parseFloat(m.awayOdds)||0);
-          conf = Math.min(10, Math.max(1, conf + (market.confDelta||0)));
-
-          const matchD = m.dateISO ? new Date(m.dateISO) : null;
-          const homeRest = calcRestDays(homeLastFix, matchD);
-          const awayRest = calcRestDays(awayLastFix, matchD);
-          const homeStr = hStats ? calcHomeAwayStrength(hStats) : null;
-          const awayStr = aStats ? calcHomeAwayStrength(aStats) : null;
-          if (homeRest !== null) conf = Math.min(10, conf + 0.5);
-          if (homeStr) conf = Math.min(10, conf + 0.5);
-
-          batchDataMap[m.id] = {
-            h2h:       h2h?.length   ? formatH2HCompact(h2h.slice(0,5), m.home, m.away)         : '',
-            homeForm:  homeForm?.length ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home) : '',
-            awayForm:  awayForm?.length ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away): '',
-            homeInj:   homeInj?.length  ? `${homeInj.length}x out` : 'fit',
-            awayInj:   awayInj?.length  ? `${awayInj.length}x out` : 'fit',
-            homeRest, awayRest, homeStr, awayStr,
-            poisson, market, confidence: Math.min(10, conf)
-          };
-        } catch(e) {
-          batchDataMap[m.id] = { confidence: 4 };
-        }
-      }));
-    }
-
-    // ── STAP 2: Bouw context prompt met Poisson + stats ──
-    if (btn) btn.textContent = `⟳ AI ANALYSEREN (${candidates.length})...`;
-
-    const ctx = candidates.map((m, i) => {
-      const d = batchDataMap[m.id] || {};
-      const p = d.poisson;
-      let line = `${i+1}. ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp||'?'} | ${m.date||''} ${m.time||''} | 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
-      if (p?.valid) line += `\n   📐 Poisson: 1=${p.k1}% X=${p.kX}% 2=${p.k2}% λ_thuis=${p.lambdaHome} λ_uit=${p.lambdaAway}${p.hasXG?' (incl. xG)':''}`;
-      if (d.homeForm) line += `\n   Vorm ${m.home}: ${d.homeForm}`;
-      if (d.awayForm) line += `\n   Vorm ${m.away}: ${d.awayForm}`;
-      if (d.h2h)      line += `\n   H2H: ${d.h2h}`;
-      if (d.homeInj || d.awayInj) line += `\n   Blessures: ${m.home}=${d.homeInj||'?'}, ${m.away}=${d.awayInj||'?'}`;
-      if (d.market?.direction !== 'none') line += `\n   Markt: ${d.market?.label||''}`;
-      if (d.homeRest !== null || d.awayRest !== null) line += `\n   Rust: ${m.home}=${restLabel(d.homeRest)}, ${m.away}=${restLabel(d.awayRest)}`;
-      if (d.homeStr?.diff > 15) line += `\n   ${m.home} dominant thuis (${d.homeStr.homeWinRate}% thuis)`;
-      if (d.awayStr?.diff < -10) line += `\n   ${m.away} beter uit dan thuis`;
-      return line;
-    }).join('\n\n');
-
+    const apiKey = state.settings.anthropicKey;
     const resp = await anthropicFetch(apiKey, {
-      model: 'claude-sonnet-4-5',
-      max_tokens: 4000,
-      temperature: 0,
-      system: `Je bent een value-betting analist. Gebruik Poisson als wiskundig anker (±8pp aanpassen max).
-Marktbeweging "📉 sharp money" = professionele betters → zwaar wegen.
-Geef ALLEEN deze JSON array, geen uitleg:
-[{"idx":1,"pick":"1","pickLabel":"kort","kans1":45,"kansX":28,"kans2":27,"value":8.5,"confidence":7,"kelly":3.2,"reason":"max 12 woorden"},...]
-kans1+kansX+kans2 = 100. value = (kans/100 × quote - 1) × 100. Geef voor ALLE ${candidates.length} wedstrijden een resultaat.`,
-      messages:[{role:'user', content:`Analyseer ${candidates.length} wedstrijden:
-
-${ctx}`}]
+      model:'claude-sonnet-4-5',
+      max_tokens:4000,
+      system:'Geef altijd exact de gevraagde JSON array terug, niets anders. Geen markdown backticks.',
+      messages:[{role:'user',content:batchPrompt}]
     });
-
     const data = await resp.json();
     if (data.error) throw new Error(data.error.message || 'API fout');
-    let raw = data.content?.[0]?.text?.trim().replace(/```json|```/g,'').trim();
+    const raw = data.content?.[0]?.text?.trim().replace(/```json|```/g,'').trim();
     if (!raw) throw new Error('Lege response van API');
-    // Extract JSON robustly
-    const _objS = raw.indexOf('{'), _objE = raw.lastIndexOf('}');
-    const _arrS = raw.indexOf('['), _arrE = raw.lastIndexOf(']');
-    if (_arrS >= 0 && _arrE > _arrS && (_objS < 0 || _arrS < _objS)) raw = raw.substring(_arrS, _arrE+1);
-    else if (_objS >= 0 && _objE > _objS) raw = raw.substring(_objS, _objE+1);
 
-    // Robustere JSON extractie — pak alleen het array gedeelte
-    let jsonStr = raw;
-    // Soms geeft AI tekst voor/na de JSON
-    const arrStart = raw.indexOf('[');
-    const arrEnd = raw.lastIndexOf(']');
-    if (arrStart >= 0 && arrEnd > arrStart) jsonStr = raw.substring(arrStart, arrEnd + 1);
-    const results = JSON.parse(jsonStr);
+    const results = JSON.parse(raw);
     if (!Array.isArray(results)) throw new Error('Geen array ontvangen');
 
     if (btn) btn.textContent = `⟳ VERWERKEN...`;
@@ -5668,50 +5059,21 @@ ${ctx}`}]
       const idx = (r.idx || 1) - 1;
       const m = candidates[idx];
       if (!m) continue;
-      const d = batchDataMap[m.id] || {};
-
-      // Normaliseer kansen
-      const sum = (r.kans1||r.kans||33) + (r.kansX||33) + (r.kans2||34);
-      let aiK1 = Math.round(((r.kans1||r.kans||33)/sum)*100);
-      let aiKX = Math.round(((r.kansX||33)/sum)*100);
-      let aiK2 = Math.round(((r.kans2||34)/sum)*100);
-
-      // Blend Poisson + AI (dynamisch gewicht)
-      const poisson = d.poisson;
-      let k1, kX, k2;
-      if (poisson?.valid) {
-        const poissonW = Math.min(0.80, 0.65 + (poisson.hasXG?0.08:0) + (d.h2h?0.03:0) + (d.homeForm?0.04:0));
-        const aiW = 1 - poissonW;
-        k1 = Math.round(poissonW * poisson.k1 + aiW * aiK1);
-        kX = Math.round(poissonW * poisson.kX + aiW * aiKX);
-        k2 = Math.round(poissonW * poisson.k2 + aiW * aiK2);
-        const bs = k1+kX+k2; if (bs!==100) k1 += (100-bs);
-      } else {
-        k1 = aiK1; kX = aiKX; k2 = aiK2;
-      }
-
-      // Value berekening
       const pick = r.pick || '1';
-      const odds = pick==='1' ? parseFloat(m.homeOdds) : pick==='X' ? parseFloat(m.drawOdds) : parseFloat(m.awayOdds);
-      const pickKans = pick==='1' ? k1 : pick==='X' ? kX : k2;
-      const value = parseFloat(((pickKans/100 * odds - 1)*100).toFixed(1));
-      const kelly = odds > 1 ? parseFloat(Math.max(0, ((pickKans/100 - (1-pickKans/100)/(odds-1))/2*100)).toFixed(1)) : 0;
-
+      const odds = pick === '1' ? parseFloat(m.homeOdds) : pick === 'X' ? parseFloat(m.drawOdds) : parseFloat(m.awayOdds);
       scans.push({
         match: m,
         pick,
         pickLabel: r.pickLabel || (pick==='1'?m.home+' wint':pick==='X'?'Gelijkspel':m.away+' wint'),
-        kans: pickKans,
-        value,
-        val: value,
-        confidence: d.confidence || r.confidence || 5,
-        kelly,
+        kans: r.kans || 33,
+        value: parseFloat(r.value) || 0,
+        val: parseFloat(r.value) || 0,
+        confidence: r.confidence || 5,
+        kelly: parseFloat(r.kelly) || 0,
         reason: r.reason || '',
         odds,
         bookmaker: m.oddsSource || 'API',
-        poissonUsed: poisson?.valid || false,
-        poissonK1: poisson?.k1, poissonKX: poisson?.kX, poissonK2: poisson?.k2,
-        market: d.market,
+        poissonUsed: false,
         id: m.id
       });
       done++;
@@ -5733,8 +5095,6 @@ ${ctx}`}]
         kelly: s.kelly,
         confidence: s.confidence,
         poissonUsed: s.poissonUsed || false,
-        poissonK1: s.poissonK1, poissonKX: s.poissonKX, poissonK2: s.poissonK2,
-        market: s.market,
         reason: s.reason
       };
     }
@@ -5754,9 +5114,7 @@ ${ctx}`}]
     confidence: s.confidence,
     odds: s.odds,
     kelly: s.kelly,
-    scanTime: new Date().toLocaleString('nl-NL', {weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}),
-    matchDate: s.match.date ? `${s.match.date}${s.match.time ? ' · ' + s.match.time : ''}` : '',
-    matchTime: s.match.time || ''
+    scanTime: new Date().toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'})
   }));
   saveState();
 
@@ -5794,25 +5152,15 @@ ${ctx}`}]
 
   // Render value results in matchList with Triple/Double Lock
   renderMatches(state.matches);
+  // Sorteer matchlist op value
   setTimeout(sortMatchListByValue, 50);
 
-  // Toon scan resultaten panel — altijd zichtbaar, naar boven scrollen
+  // Toon scan resultaten panel
   renderScanResults(scans);
-
-  // Zorg dat scanResultsBody open is
-  const scanBody = document.getElementById('scanResultsBody');
-  if (scanBody) scanBody.style.display = 'block';
-  const scanChev = document.getElementById('scanResultsChevron');
-  if (scanChev) scanChev.textContent = '▼';
-
-  // Scroll naar resultaten
   setTimeout(() => {
     const panel = document.getElementById('scanResultsPanel');
-    if (panel) {
-      panel.style.display = 'block';
-      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, 300);
+    if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 200);
 
   // Send notifications for triple/double lock
   if (state.settings.notifEnabled && Notification.permission === 'granted') {
@@ -5876,11 +5224,9 @@ async function scanValueAll() {
       const d = await r.json();
       const standings = d.response?.[0]?.league?.standings?.[0];
       if (standings?.length) {
-        // Store voor seizoensfase berekening
-        matchDataMap['_standings'] = standings;
-        standingsCtx = `\n\nSTAND (${state.activeComp.toUpperCase()}):\n` +
+        standingsCtx = `\n\nACTUELE STAND ${state.activeComp.toUpperCase()} (seizoen 2025/26):\n` +
           standings.map(t =>
-            `${t.rank}. ${t.team.name} — ${t.points}pt | W${t.all.win}G${t.all.draw}V${t.all.lose} | DS:${t.goalsDiff>0?'+':''}${t.goalsDiff}`
+            `${t.rank}. ${t.team.name} — ${t.points}pt | W${t.all.win} G${t.all.draw} V${t.all.lose} | DS:${t.goalsDiff>0?'+':''}${t.goalsDiff} | vorm:${t.form||'?'}`
           ).join('\n');
       }
     } catch(e) {}
@@ -5903,16 +5249,14 @@ async function scanValueAll() {
         return;
       }
       try {
-        const [h2h, homeForm, awayForm, homeInj, awayInj, hStats, aStats, homeLastFix, awayLastFix] = await Promise.all([
+        const [h2h, homeForm, awayForm, homeInj, awayInj, hStats, aStats] = await Promise.all([
           wt(fetchH2H(m.homeId, m.awayId), 5000),
           wt(fetchTeamForm(m.homeId), 5000),
           wt(fetchTeamForm(m.awayId), 5000),
           wt(fetchInjuries(m.homeId, m.id), 4000),
           wt(fetchInjuries(m.awayId, m.id), 4000),
-          wt(fetchTeamStats(m.homeId, leagueId), 5000),
-          wt(fetchTeamStats(m.awayId, leagueId), 5000),
-          wt(fetchLastFixture(m.homeId, state.settings.footballKey), 4000),
-          wt(fetchLastFixture(m.awayId, state.settings.footballKey), 4000),
+          wt(fetchTeamStats(m.homeId, leagueId), 5000),  // voor Poisson
+          wt(fetchTeamStats(m.awayId, leagueId), 5000),  // voor Poisson
         ]);
 
         // Confidence score berekenen
@@ -5935,20 +5279,19 @@ async function scanValueAll() {
           let attackPenalty = 0, defensePenalty = 0;
           injuries.forEach(inj => {
             const pos = inj.player?.pos || '';
-            if (pos === 'F') attackPenalty += 0.10;
-            else if (pos === 'M') { attackPenalty += 0.06; defensePenalty += 0.05; }
-            else if (pos === 'D') defensePenalty += 0.10;
-            else if (pos === 'G') defensePenalty += 0.18;
-            else { attackPenalty += 0.04; defensePenalty += 0.04; }
+            if (pos === 'F') attackPenalty += 0.08;       // aanvaller: -8% aanval
+            else if (pos === 'M') {
+              attackPenalty += 0.04;                       // middenvelder: -4% aanval
+              defensePenalty += 0.04;                      // -4% verdediging
+            }
+            else if (pos === 'D') defensePenalty += 0.09; // verdediger: -9% verdediging
+            else if (pos === 'G') defensePenalty += 0.12; // keeper: -12% verdediging
           });
-          const total = injuries.length;
-          if (total >= 5)  { attackPenalty += 0.05; defensePenalty += 0.05; }
-          if (total >= 8)  { attackPenalty += 0.08; defensePenalty += 0.08; }
-          if (total >= 12) { attackPenalty += 0.10; defensePenalty += 0.10; }
+          // Cap op max 40% penalty per categorie
           return {
-            attackFactor:  Math.max(0.40, 1 - Math.min(attackPenalty,  0.60)),
-            defenseFactor: Math.max(0.40, 1 - Math.min(defensePenalty, 0.60)),
-            count: total
+            attackFactor:  Math.max(0.60, 1 - Math.min(attackPenalty,  0.40)),
+            defenseFactor: Math.max(0.60, 1 - Math.min(defensePenalty, 0.40)),
+            count: injuries.length
           };
         };
 
@@ -5972,23 +5315,6 @@ async function scanValueAll() {
 
         conf = Math.min(10, Math.max(1, conf + (market.confDelta || 0)));
 
-        // Rust factor
-        const matchDateObj = m.dateISO ? new Date(m.dateISO) : null;
-        const homeRest = calcRestDays(homeLastFix, matchDateObj);
-        const awayRest = calcRestDays(awayLastFix, matchDateObj);
-
-        // Thuis/uit sterkte ratio
-        const homeStrength = hStats ? calcHomeAwayStrength(hStats) : null;
-        const awayStrength = aStats ? calcHomeAwayStrength(aStats) : null;
-
-        // Seizoensfase uit standings
-        const standingsArr = matchDataMap['_standings'];
-        const phaseCtx = standingsArr ? calcSeasonPhase(standingsArr, m.home, m.away) : '';
-
-        // Confidence boost voor extra data
-        if (homeRest !== null && awayRest !== null) conf = Math.min(10, conf + 0.5);
-        if (homeStrength) conf = Math.min(10, conf + 0.5);
-
         matchDataMap[m.id] = {
           h2h: h2h?.length ? formatH2HCompact(h2h.slice(0,5), m.home, m.away) : '',
           homeForm: homeForm?.length ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home) : '',
@@ -5997,9 +5323,9 @@ async function scanValueAll() {
           awayInj: awayInj?.length ? `${awayInj.length}x out` : 'fit',
           homeInjCount: homeInj?.length || 0,
           awayInjCount: awayInj?.length || 0,
-          homeRest, awayRest, homeStrength, awayStrength, phaseCtx,
-          poisson, market,
-          confidence: Math.min(10, conf)
+          poisson,
+          market,
+          confidence: conf
         };
       } catch(e) {
         matchDataMap[m.id] = { confidence: 4 };
@@ -6025,15 +5351,6 @@ async function scanValueAll() {
     if (d.h2h) line += `\n   H2H: ${d.h2h}`;
     if (d.homeInj || d.awayInj) line += `\n   Blessures: ${m.home}=${d.homeInj||'?'}, ${m.away}=${d.awayInj||'?'}`;
     if (d.market?.direction !== 'none') line += `\n   Markt: ${d.market.label}`;
-    // Rust factor
-    if (d.homeRest !== null || d.awayRest !== null) {
-      line += `\n   Rust: ${m.home}=${restLabel(d.homeRest)}, ${m.away}=${restLabel(d.awayRest)}`;
-    }
-    // Thuis/uit sterkte
-    if (d.homeStrength?.diff > 15) line += `\n   ${m.home} dominant thuis (${d.homeStrength.homeWinRate}% gewonnen thuis vs ${d.homeStrength.awayWinRate}% uit)`;
-    if (d.awayStrength?.diff < -10) line += `\n   ${m.away} beter uit dan thuis`;
-    // Seizoensfase
-    if (d.phaseCtx) line += `\n   Seizoensfase: ${d.phaseCtx}`;
     return line;
   }).join('\n\n');
 
@@ -6042,43 +5359,34 @@ async function scanValueAll() {
       model: 'claude-sonnet-4-5',
       max_tokens: 2500,
       temperature: 0,
-      system: `Je bent een elite value-betting analist. Analyseer ELKE wedstrijd volledig. Geef kans1+kansX+kans2=100.
+      system: `Je bent een value-betting analist. Voor ELKE wedstrijd geef je de winstkans van ALLE 3 uitkomsten (1, X, 2) die samen 100% zijn.
 
-WERKWIJZE — strikt in deze volgorde:
-1. POISSON als wiskundig anker (seizoensstatistieken, meest objectief)
-2. xG-correctie: als Poisson incl. xG, dan hogere betrouwbaarheid
-3. RUST-FACTOR: ≤3 dagen rust = -3-5% kansen voor dat team
-4. THUIS/UIT RATIO: team dat dominant thuis is → +3-5% thuisvoordeel
-5. BLESSURES: sleutelspeler out → +3-5% tegenstander
-6. H2H PATROON: eenduidig 4/5 zelfde team → +4% correctie
-7. SEIZOENSFASE: degradatiedruk = hogere inzet, niks te verliezen = lager
-8. MARKTBEWEGING sharp money → zwaar wegen (+4-6%)
-9. Max totale correctie t.o.v. Poisson: ±12pp per uitkomst
+WERKWIJZE — volg deze volgorde strikt:
+1. START met het Poisson-model als wiskundig anker (staat bij elke wedstrijd vermeld)
+2. PAS AAN op basis van context: blessures, H2H-patroon, motivatie, marktbeweging
+3. Maximale aanpassing: ±8 procentpunt per uitkomst t.o.v. Poisson
+4. Als geen Poisson beschikbaar: gebruik ranglijst + bookmaker-impliciete kansen als anker
 
 KRITIEKE REGELS:
-- Poisson+xG is betrouwbaarder dan gevoel — wijk er NIET van af zonder concrete reden
-- Rust ≤2 dagen is een grote factor (physiek nadeel)
-- 14+ blessures = GROOT nadeel — team speelt met B-keuze spelers → min 15-20% kansreductie voor dat team
-- 8-13 blessures = significant nadeel → min 10-15% kansreductie
-- Blessures bij keeper of vaste aanvaller = extra zwaar wegen
-- Degradatiedruk verhoogt thuiswinst-kans met 5-8% (steun publiek, alles op alles)
-- "Zonder druk" team (midden stand, seizoen bijna klaar) → meer X-kans
-- Sharp money overtreft publieke mening altijd
-- Confidence: 9-10 = Poisson+xG+H2H consistent, 7-8 = goed data, 5-6 = beperkt, <5 = gokken
+- Poisson is gebaseerd op seizoensstatistieken — betrouwbaarder dan gevoel
+- Gelijkspelkans uit Poisson is al gecalibreerd — verhoog NIET zonder concrete reden
+- Marktbeweging "📉 sharp money" = professionele betters zetten op die kant → zwaar wegen
+- Blessures: per key-speler out → +2-3% voordeel tegenstander
+- H2H eenduidig (4/5 wins zelfde team) → max +5% correctie
+- NOOIT kansX hoger dan kans1 bij ranglijstverschil > 5 en thuis speelvoordeel
 
-JSON formaat UITSLUITEND:
+Reageer UITSLUITEND in dit JSON formaat:
 {"scans":[
-  {"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":8,"reason":"Max 15 woorden"},
+  {"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":7,"reason":"Max 15 woorden"},
   ...
-]}`,
+]}
+
+confidence = zekerheid 0-10 (Poisson beschikbaar + consistente H2H = hoog, alleen ranglijst = laag)`,
       messages: [{ role:'user', content:`Analyseer ${candidates.length} wedstrijden. Gebruik Poisson als anker, pas aan voor context:\n\n${ctx}${standingsCtx}` }]
     });
 
     if (data.error) throw new Error(data.error.message);
-    let raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
-    // Extract JSON robustly
-    const _s = raw.indexOf('{'), _e = raw.lastIndexOf('}');
-    if (_s >= 0 && _e > _s) raw = raw.substring(_s, _e+1);
+    const raw = data.content[0].text.trim().replace(/```json|```/g, '').trim();
     const result = JSON.parse(raw);
 
     const scans = (result.scans || []).map(s => {
@@ -6099,22 +5407,9 @@ JSON formaat UITSLUITEND:
       const poisson = matchDataMap[s.id]?.poisson;
       let k1, kX, k2;
       if (poisson?.valid) {
-        // Dynamisch Poisson-gewicht: meer data + xG = meer vertrouwen in model
-        const d = matchDataMap[s.id];
-        const hasXG = poisson.hasXG;
-        const hasH2H = d?.h2h?.length > 0;
-        const hasForm = d?.homeForm && d?.awayForm;
-        // Basisgewicht Poisson: 65%, meer als xG beschikbaar
-        const poissonW = Math.min(0.80,
-          0.65
-          + (hasXG   ? 0.08 : 0)   // xG beschikbaar: +8%
-          + (hasH2H  ? 0.03 : 0)   // goede H2H data: +3%
-          + (hasForm ? 0.04 : 0)   // vorm beschikbaar: +4%
-        );
-        const aiW = 1 - poissonW;
-        k1 = Math.round(poissonW * poisson.k1 + aiW * aiK1);
-        kX = Math.round(poissonW * poisson.kX + aiW * aiKX);
-        k2 = Math.round(poissonW * poisson.k2 + aiW * aiK2);
+        k1 = Math.round(0.65 * poisson.k1 + 0.35 * aiK1);
+        kX = Math.round(0.65 * poisson.kX + 0.35 * aiKX);
+        k2 = Math.round(0.65 * poisson.k2 + 0.35 * aiK2);
         // Herkalibreer
         const blendSum = k1 + kX + k2;
         if (blendSum !== 100) k1 += (100 - blendSum);
@@ -6472,7 +5767,7 @@ function sendPickNotification(title, body, tag, matchId, comp) {
       if (matchId) data.matchId = matchId;
       if (comp)    data.comp    = comp;
       reg.showNotification(title, {
-        body, icon:'/icon-192.png', tag,
+        body, icon:'/Toto-AI/icon-192.png', tag,
         renotify:true, vibrate:[200,100,200],
         data
       });
@@ -6501,31 +5796,18 @@ async function testNotification() {
   if (!('serviceWorker' in navigator)) {
     setResult('⚠ ServiceWorker niet beschikbaar', '#dc2626'); return;
   }
-  // Countdown zodat je de app kunt sluiten
-  for (let i = 10; i > 0; i--) {
-    setResult(`⏳ Melding komt over ${i} seconden — sluit nu de app!`, '#f59e0b');
-    await new Promise(r => setTimeout(r, 1000));
-  }
   setResult('⏳ Versturen...', '#2563eb');
   try {
-    // Probeer echte push via worker (werkt als app gesloten is)
-    const pushed = await sendRealPush(
-      '🔔 TOTO AI Test',
-      'Notificaties werken! 🏆 Triple Lock · 🔑 Double Lock · ✅ Bet resultaten',
-      { tag: 'test-notif' }
-    );
-
-    // Fallback: lokale notificatie
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification('🔔 TOTO AI Test', {
       body: 'Notificaties werken! 🏆 Triple Lock · 🔑 Double Lock · ✅ Bet resultaten',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/Toto-AI/icon-192.png',
+      badge: '/Toto-AI/icon-192.png',
       vibrate: [200, 100, 200, 100, 200],
       tag: 'test-notif',
       renotify: true
     });
-    setResult(pushed ? '✅ Echte push verstuurd!' : '✅ Lokale melding verstuurd!', '#16a34a');
+    setResult('✅ Verstuurd! Check je meldingen', '#16a34a');
     // Reset na 5 sec
     setTimeout(() => { if (resultEl) { resultEl.textContent = 'Stuur een testmelding naar je telefoon'; resultEl.style.color = ''; } }, 5000);
   } catch(e) {
@@ -6541,23 +5823,7 @@ async function toggleNotifications() {
   if (Notification.permission === 'granted') {
     state.settings.notifEnabled = true;
     saveState(); updateNotifUI();
-    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/icon-192.png' })).catch(()=>{});
-    // Subscribe to real push if VAPID key available
-    if (state.settings.vapidPublicKey) {
-      showAutoCheckBar('⏳ Push abonnement aanmaken...', 2000);
-      subscribeToPush().then(ok => {
-        if (ok) {
-          showAutoCheckBar('🔔 Echte push actief — ook als app gesloten!', 4000);
-        } else {
-          showAutoCheckBar('⚠ Push abonnement mislukt — check console', 4000);
-        }
-      }).catch(e => {
-        showAutoCheckBar('⚠ Push fout: ' + e.message, 5000);
-        console.error('[Push]', e);
-      });
-    } else {
-      showAutoCheckBar('⚠ Vul eerst VAPID Public Key in bij Instellingen', 3000);
-    }
+    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/Toto-AI/icon-192.png' })).catch(()=>{});
     return;
   }
   if (Notification.permission === 'denied') {
@@ -6568,7 +5834,7 @@ async function toggleNotifications() {
   if (result === 'granted') {
     state.settings.notifEnabled = true;
     saveState(); updateNotifUI();
-    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/icon-192.png' })).catch(()=>{});
+    if ('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => r.showNotification('⚡ TOTO AI', { body:'Notificaties aan! Je krijgt melding bij sterke value.', icon:'/Toto-AI/icon-192.png' })).catch(()=>{});
   }
 }
 
@@ -6613,7 +5879,7 @@ function sendValueNotification(scan) {
   if (!('serviceWorker' in navigator)) return;
   navigator.serviceWorker.ready.then(reg => {
     reg.showNotification(title, {
-      body, icon:'/icon-192.png', badge:'/icon-192.png',
+      body, icon:'/Toto-AI/icon-192.png', badge:'/Toto-AI/icon-192.png',
       tag: 'value-' + scan.match.id,
       renotify: true,
       requireInteraction: scan.value >= 25,
@@ -6793,31 +6059,6 @@ async function fetchPredictions(fixtureId) {
   } catch(e) { return null; }
 }
 
-async function fetchOddsHistory(fixtureId) {
-  if (!fixtureId || !state.settings.footballKey) return null;
-  try {
-    // Haal odds op van meerdere bookmakers voor bewegingsanalyse
-    const r = await apiFetch(
-      `https://v3.football.api-sports.io/odds?fixture=${fixtureId}`,
-      state.settings.footballKey, 6000
-    );
-    const d = await r.json();
-    return d.response?.[0] || null;
-  } catch(e) { return null; }
-}
-
-async function fetchPlayerStats(teamId, leagueId) {
-  if (!teamId || !leagueId || !state.settings.footballKey) return null;
-  try {
-    const r = await apiFetch(
-      `https://v3.football.api-sports.io/players?team=${teamId}&league=${leagueId}&season=2025`,
-      state.settings.footballKey, 6000
-    );
-    const d = await r.json();
-    return d.response?.slice(0, 20) || null;
-  } catch(e) { return null; }
-}
-
 function formatH2H(fixtures, home, away) {
   if (!fixtures || !fixtures.length) return 'Geen H2H data beschikbaar.';
   let hw=0, aw=0, dr=0;
@@ -6872,191 +6113,41 @@ function formatStandings(standings, homeName, awayName) {
 }
 function formatLineups(lineups, homeName, awayName) {
   if (!lineups?.length) return '';
-  let txt = '\nOPSTELLINGEN (BEVESTIGD):\n';
+  let txt = '\nOPSTELLINGEN:\n';
   lineups.forEach(t => {
-    const isHome = t.team.name.toLowerCase().includes(homeName.toLowerCase().substring(0,5));
-    txt += `\n${t.team.name} | Formatie: ${t.formation||'?'}\n`;
-    // Basis elf per positie
-    if (t.startXI?.length) {
-      const keeper = t.startXI.filter(p => p.player.pos === 'G').map(p => p.player.name);
-      const defs   = t.startXI.filter(p => p.player.pos === 'D').map(p => p.player.name);
-      const mids   = t.startXI.filter(p => p.player.pos === 'M').map(p => p.player.name);
-      const fwds   = t.startXI.filter(p => p.player.pos === 'F').map(p => p.player.name);
-      if (keeper.length) txt += `  GK: ${keeper.join(', ')}\n`;
-      if (defs.length)   txt += `  DEF: ${defs.join(', ')}\n`;
-      if (mids.length)   txt += `  MID: ${mids.join(', ')}\n`;
-      if (fwds.length)   txt += `  AAN: ${fwds.join(', ')}\n`;
-    }
-    // Wisselspelers
-    if (t.substitutes?.length) {
-      txt += `  Bank: ${t.substitutes.slice(0,5).map(p => p.player.name).join(', ')}\n`;
-    }
-    // Coach
-    if (t.coach?.name) txt += `  Coach: ${t.coach.name}\n`;
+    txt += `${t.team.name} (${t.formation||'?'})\n`;
+    if (t.startXI?.length) txt += t.startXI.map(p => `  ${p.player.name}`).join(', ') + '\n';
   });
   return txt;
-}
-
-function formatLineupsVsInjuries(lineups, injuries, homeName, awayName) {
-  if (!lineups?.length) return '';
-  // Check of geblesseerde spelers toch in de opstelling staan (API inconsistentie)
-  const injNames = (injuries||[]).map(i => i.player?.name?.toLowerCase());
-  let warnings = [];
-  lineups.forEach(t => {
-    t.startXI?.forEach(p => {
-      if (injNames.some(n => n && p.player.name.toLowerCase().includes(n.substring(0,6)))) {
-        warnings.push(`⚠️ ${p.player.name} staat in basis maar stond als geblesseerd`);
-      }
-    });
-  });
-  return warnings.length ? '\n' + warnings.join('\n') : '';
 }
 function formatFixtureStats(stats) {
   if (!stats?.length) return '';
-  let txt = '\nWEDSTRIJD STATISTIEKEN:\n';
+  let txt = '\nLIVE STATS:\n';
   stats.forEach(t => {
-    const getStat = (type) => t.statistics?.find(s => s.type === type)?.value;
-    const xg       = getStat('expected_goals');
-    const shots    = getStat('Total Shots');
-    const shotsOT  = getStat('Shots on Goal');
-    const poss     = getStat('Ball Possession');
-    const corners  = getStat('Corner Kicks');
-    const fouls    = getStat('Fouls');
-    const yellow   = getStat('Yellow Cards');
-    const red      = getStat('Red Cards');
-    const passes   = getStat('Total passes');
-    const passAcc  = getStat('Passes accurate');
-
-    txt += `${t.team.name}:\n`;
-    if (xg)      txt += `  xG: ${xg}\n`;
-    if (shots)   txt += `  Schoten: ${shots} (op doel: ${shotsOT||'?'})\n`;
-    if (poss)    txt += `  Balbezit: ${poss}\n`;
-    if (corners) txt += `  Hoekschoppen: ${corners}\n`;
-    if (passes && passAcc) txt += `  Passes: ${passAcc}/${passes}\n`;
-    if (yellow || red) txt += `  Kaarten: ${yellow||0}G ${red||0}R\n`;
+    const xg = t.statistics?.find(s => s.type === 'expected_goals')?.value;
+    const shots = t.statistics?.find(s => s.type === 'Total Shots')?.value;
+    const poss = t.statistics?.find(s => s.type === 'Ball Possession')?.value;
+    txt += `${t.team.name}: xG=${xg||'?'} | Schoten=${shots||'?'} | Bezit=${poss||'?'}\n`;
   });
   return txt;
 }
-function detectPlayerForm(playerStats) {
-  // Analyseer recente vorm op basis van ratings en goals in laatste wedstrijden
-  if (!playerStats?.length) return {};
-  const formMap = {};
-  playerStats.forEach(p => {
-    const st = p.statistics?.[0];
-    if (!st) return;
-    const name = p.player.name;
-    const goals = st.goals?.total || 0;
-    const games = st.games?.appearences || 1;
-    const rating = parseFloat(st.games?.rating || 0);
-    const goalsPerGame = games > 0 ? (goals / games).toFixed(2) : 0;
-    // "In vorm" = hoge rating + recent scorend
-    const inForm = rating >= 7.0 && parseFloat(goalsPerGame) >= 0.3;
-    formMap[name] = { goals, games, rating, goalsPerGame, inForm };
-  });
-  return formMap;
-}
-
-function formatTopScorers(scorers, homeName, awayName, homePlayerStats, awayPlayerStats) {
+function formatTopScorers(scorers, homeName, awayName) {
   if (!scorers?.length) return '';
-  const homeN = homeName.toLowerCase().substring(0,5);
-  const awayN = awayName.toLowerCase().substring(0,5);
+  const homeN = homeName.toLowerCase().substring(0,5), awayN = awayName.toLowerCase().substring(0,5);
   const rel = scorers.filter(s => {
     const club = s.statistics?.[0]?.team?.name?.toLowerCase() || '';
     return club.includes(homeN) || club.includes(awayN);
   });
   if (!rel.length) return '';
-
-  // Bouw vorm map van alle spelers
-  const allPlayerStats = [...(homePlayerStats||[]), ...(awayPlayerStats||[])];
-  const formMap = detectPlayerForm(allPlayerStats);
-
-  return '\nKEY PLAYERS:\n' + rel.map(s => {
-    const st = s.statistics[0];
-    const goals   = st.goals?.total || 0;
-    const assists = st.goals?.assists || 0;
-    const rating  = st.games?.rating ? parseFloat(st.games.rating).toFixed(1) : '?';
-    const mins    = st.games?.minutes || '?';
-    const injured = s.player?.injured ? ' 🤕GEBLESSEERD' : '';
-    const form    = formMap[s.player.name];
-    const inForm  = form?.inForm ? ' 🔥IN VORM' : '';
-    const gpg     = form?.goalsPerGame > 0 ? ` (${form.goalsPerGame}G/wedstrijd)` : '';
-    return `⚽ ${s.player.name} (${st.team.name})${injured}${inForm} — ${goals}G${gpg} ${assists}A | Rating: ${rating} | ${mins}min`;
-  }).join('\n');
+  return '\nTOPSCORERS IN DEZE WEDSTRIJD:\n' + rel.map(s => `⚽ ${s.player.name} (${s.statistics[0].team.name}) — ${s.statistics[0].goals.total||0}g`).join('\n');
 }
 function formatPredictions(pred) {
   if (!pred) return '';
   const p = pred.predictions;
-  const comp = pred.league?.name || '';
-  let txt = 'API-FOOTBALL MODEL:\n';
-  if (p?.winner?.name) txt += `Voorspelling: ${p.winner.name} wint\n`;
+  let txt = '';
+  if (p?.winner?.name) txt += `API voorspelling: ${p.winner.name} wint\n`;
   if (p?.advice) txt += `Advies: ${p.advice}\n`;
-  if (p?.percent) {
-    txt += `Kansen: 1=${p.percent.home} X=${p.percent.draw} 2=${p.percent.away}\n`;
-  }
-  // Goals voorspelling
-  if (p?.goals?.home != null) txt += `Verwachte goals: ${p.goals.home}-${p.goals.away}\n`;
-  // Head to head vergelijking
-  const h2h = pred.h2h;
-  if (h2h) {
-    txt += `H2H API: ${p?.h2h?.home||'?'}% kans ${pred.teams?.home?.name||'thuis'}, ${p?.h2h?.draw||'?'}% gelijk\n`;
-  }
-  // Vergelijkende sterkte
-  const home = pred.teams?.home?.last_5;
-  const away = pred.teams?.away?.last_5;
-  if (home?.goals?.for?.average) {
-    txt += `Aanval (gem/wedstrijd): ${pred.teams.home.name}=${home.goals.for.average} ${pred.teams.away.name}=${away?.goals?.for?.average||'?'}\n`;
-  }
-  if (home?.goals?.against?.average) {
-    txt += `Defensie (gem toegelaten): ${pred.teams.home.name}=${home.goals.against.average} ${pred.teams.away.name}=${away?.goals?.against?.average||'?'}\n`;
-  }
-  return txt.trim();
-}
-
-function formatOddsHistory(oddsData) {
-  if (!oddsData?.bookmakers?.length) return '';
-  let txt = '\nODDS ANALYSE (meerdere bookmakers):\n';
-
-  // Verzamel odds van alle bookmakers
-  const allOdds = { home: [], draw: [], away: [], bookmakers: [] };
-  oddsData.bookmakers.slice(0, 8).forEach(bm => {
-    const mw = bm.bets?.find(b => b.name === 'Match Winner');
-    if (!mw?.values?.length) return;
-    const h = parseFloat(mw.values.find(v => v.value === 'Home')?.odd || mw.values[0]?.odd);
-    const d = parseFloat(mw.values.find(v => v.value === 'Draw')?.odd || mw.values[1]?.odd);
-    const a = parseFloat(mw.values.find(v => v.value === 'Away')?.odd || mw.values[2]?.odd);
-    if (h > 1 && d > 1 && a > 1) {
-      allOdds.home.push(h);
-      allOdds.draw.push(d);
-      allOdds.away.push(a);
-      allOdds.bookmakers.push(bm.name);
-    }
-  });
-
-  if (!allOdds.home.length) return '';
-
-  const avg = arr => arr.reduce((a,b) => a+b, 0) / arr.length;
-  const min = arr => Math.min(...arr);
-  const max = arr => Math.max(...arr);
-
-  const avgH = avg(allOdds.home).toFixed(2);
-  const avgD = avg(allOdds.draw).toFixed(2);
-  const avgA = avg(allOdds.away).toFixed(2);
-
-  txt += `Gemiddelde quote (${allOdds.home.length} bookmakers): 1=${avgH} X=${avgD} 2=${avgA}\n`;
-  txt += `Range: 1=[${min(allOdds.home).toFixed(2)}-${max(allOdds.home).toFixed(2)}] X=[${min(allOdds.draw).toFixed(2)}-${max(allOdds.draw).toFixed(2)}] 2=[${min(allOdds.away).toFixed(2)}-${max(allOdds.away).toFixed(2)}]\n`;
-
-  // Detecteer consensus vs. verdeeldheid
-  const homeSpread = max(allOdds.home) - min(allOdds.home);
-  const awaySpread = max(allOdds.away) - min(allOdds.away);
-  if (homeSpread > 0.3) txt += `⚠️ Grote spreiding thuisquote (${homeSpread.toFixed(2)}) — onzekerheid bookmakers\n`;
-  if (awaySpread > 0.3) txt += `⚠️ Grote spreiding uitquote (${awaySpread.toFixed(2)})\n`;
-
-  // Beste quotes
-  const bestH = max(allOdds.home).toFixed(2);
-  const bestD = max(allOdds.draw).toFixed(2);
-  const bestA = max(allOdds.away).toFixed(2);
-  txt += `Beste beschikbare: 1=${bestH} X=${bestD} 2=${bestA}`;
-
+  if (p?.percent) txt += `Kansen API: 1=${p.percent.home} X=${p.percent.draw} 2=${p.percent.away}`;
   return txt;
 }
 
@@ -7137,25 +6228,19 @@ async function runAnalyse() {
 
   let h2hTxt='', homeFormTxt='', awayFormTxt='', homeStatsTxt='', awayStatsTxt='';
   let homeBlessuresTxt='', awayBlessuresTxt='', predTxt='', standingsTxt='';
-  let lineupsTxt='', fixtureStatsTxt='', topScorersTxt='', oddsHistoryTxt='', restTxt='';
-  let motivationTxt='', formationTxt='', effLabel='';
+  let lineupsTxt='', fixtureStatsTxt='', topScorersTxt='';
 
   try {
     if (state.settings.footballKey && homeId && awayId) {
       const fixtureId = m.id;
       const wt = (p, ms=6000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
-      const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred, standings, lineups, fixStats, topScorers, oddsData, homeLastFix, awayLastFix, homePlayerStats, awayPlayerStats] = await Promise.all([
+      const [h2h, homeForm, awayForm, hStats, aStats, homeInj, awayInj, pred, standings, lineups, fixStats, topScorers] = await Promise.all([
         wt(fetchH2H(homeId, awayId)), wt(fetchTeamForm(homeId)), wt(fetchTeamForm(awayId)),
         wt(fetchTeamStats(homeId, leagueId)), wt(fetchTeamStats(awayId, leagueId)),
         wt(fetchInjuries(homeId, fixtureId), 4000), wt(fetchInjuries(awayId, fixtureId), 4000),
         wt(fetchPredictions(fixtureId), 4000), wt(fetchStandings(leagueId), 5000),
         wt(fetchLineups(fixtureId), 5000), wt(fetchFixtureStats(fixtureId), 5000),
-        wt(fetchTopScorers(leagueId), 5000),
-        wt(fetchOddsHistory(fixtureId), 5000),
-        wt(fetchLastFixture(homeId, state.settings.footballKey), 4000),
-        wt(fetchLastFixture(awayId, state.settings.footballKey), 4000),
-        wt(fetchPlayerStats(homeId, leagueId), 5000),
-        wt(fetchPlayerStats(awayId, leagueId), 5000)
+        wt(fetchTopScorers(leagueId), 5000)
       ]);
       h2hTxt = formatH2H(h2h||[], m.home, m.away);
       homeFormTxt = formatForm(homeForm||[], homeId, m.home);
@@ -7167,33 +6252,8 @@ async function runAnalyse() {
       predTxt = formatPredictions(pred);
       standingsTxt = formatStandings(standings, m.home, m.away);
       lineupsTxt = formatLineups(lineups||[], m.home, m.away);
-      const lineupInjWarnings = formatLineupsVsInjuries(lineups||[], [...(homeInj||[]),...(awayInj||[])], m.home, m.away);
-      if (lineupInjWarnings) lineupsTxt += lineupInjWarnings;
       fixtureStatsTxt = formatFixtureStats(fixStats||[]);
-      topScorersTxt = formatTopScorers(topScorers||[], m.home, m.away, homePlayerStats, awayPlayerStats);
-      oddsHistoryTxt = formatOddsHistory(oddsData);
-      // Rust factor voor losse analyse
-      const matchDateForRest = m.dateISO ? new Date(m.dateISO) : new Date();
-      const homeRestDays = calcRestDays(homeLastFix, matchDateForRest);
-      const awayRestDays = calcRestDays(awayLastFix, matchDateForRest);
-      if (homeRestDays !== null || awayRestDays !== null) {
-        restTxt = `\nRUST: ${m.home}=${restLabel(homeRestDays)}, ${m.away}=${restLabel(awayRestDays)}`;
-      }
-      // Thuis/uit sterkte
-      const homeStrengthAnalyse = hStats ? calcHomeAwayStrength(hStats) : null;
-      const awayStrengthAnalyse = aStats ? calcHomeAwayStrength(aStats) : null;
-      if (homeStrengthAnalyse?.diff > 15) restTxt += `\n${m.home}: ${homeStrengthAnalyse.homeBias}`;
-      if (awayStrengthAnalyse?.diff < -10) restTxt += `\n${m.away}: ${awayStrengthAnalyse.homeBias}`;
-
-      // Motivatie analyse
-      const standingsArr2 = standings ? (Array.isArray(standings) ? standings : []) : [];
-      const motivationTxt = formatMotivationContext(standingsArr2, m.home, m.away, homeForm, awayForm);
-
-      // Formatie matchup
-      const formationTxt = analyzeFormationMatchup(lineups||[], m.home, m.away);
-
-      // Marktefficiëntie
-      const effLabel = marketEfficiencyLabel(leagueId);
+      topScorersTxt = formatTopScorers(topScorers||[], m.home, m.away);
     }
   } catch(e) { console.warn('Data ophalen:', e.message); }
 
@@ -7208,20 +6268,12 @@ async function runAnalyse() {
         let ap=0, dp=0;
         injuries.forEach(inj => {
           const pos = inj.player?.pos || '';
-          if (pos==='F') ap+=0.10;
-          else if (pos==='M') { ap+=0.06; dp+=0.05; }
-          else if (pos==='D') dp+=0.10;
-          else if (pos==='G') dp+=0.18;
-          else { ap+=0.04; dp+=0.04; }
+          if (pos==='F') ap+=0.08;
+          else if (pos==='M') { ap+=0.04; dp+=0.04; }
+          else if (pos==='D') dp+=0.09;
+          else if (pos==='G') dp+=0.12;
         });
-        const total = injuries.length;
-        if (total >= 5)  { ap+=0.05; dp+=0.05; }
-        if (total >= 8)  { ap+=0.08; dp+=0.08; }
-        if (total >= 12) { ap+=0.10; dp+=0.10; }
-        return {
-          attackFactor: Math.max(0.40, 1-Math.min(ap,0.60)),
-          defenseFactor: Math.max(0.40, 1-Math.min(dp,0.60))
-        };
+        return { attackFactor: Math.max(0.6, 1-Math.min(ap,0.4)), defenseFactor: Math.max(0.6, 1-Math.min(dp,0.4)) };
       };
       const hInj = calcInjFactor(homeInj);
       const aInj = calcInjFactor(awayInj);
@@ -7258,66 +6310,28 @@ ${awayBlessuresTxt}
 ${lineupsTxt || '(Opstellingen nog niet beschikbaar)'}
 ${fixtureStatsTxt}
 ${predTxt ? 'API MODEL:\n' + predTxt : ''}
-${oddsHistoryTxt}
-${restTxt}
 
-${motivationTxt || ''}
-${formationTxt || ''}
-MARKTEFFICIËNTIE: ${effLabel}
-
-INSTRUCTIE: Gebruik ALLEEN deze data. Verzin geen stats. Lineups zijn definitief als beschikbaar.
-Als lineups beschikbaar zijn: weeg spelersinformatie zwaarder dan seizoensgemiddelden.
-Als een sleutelspeler (topper in topscorers) NIET in de opstelling staat: pas kansen significant aan (±5-8%).
-Marktefficiëntie laag = meer waarde-kansen mogelijk bij afwijking van bookmaker.`.trim();
+INSTRUCTIE: Gebruik ALLEEN deze data. Verzin geen stats.`.trim();
 
   const nl = 'Analyseer in het Nederlands. Gebruik markdown (## en **). Gebruik ALLEEN de meegeleverde data. Max 220 woorden.';
-  const hasLineups = lineupsTxt && lineupsTxt.includes('BEVESTIGD');
-  const hasPoisson = poissonAnaliseTxt.length > 0;
-  const mktEff = getMarketEfficiency(leagueId);
 
-  const vormText = await callEntity(apiKey,
-    `Je bent vormexpert voetbal. Analyseer recente prestaties KRITISCH. ${nl}
-FOCUS OP: 1) Laatste 5 wedstrijden W/G/V met goals 2) Thuis vs uit verschil 3) Doelpuntentrend (meer/minder goals recent) 4) Spelers in vorm 🔥 vs slecht presterend 5) Momentum shift signalen.
-Als een speler 🔥IN VORM staat: benoem expliciet hoe gevaarlijk dat is.`,
-    `${ctx}\n\nVORM ${m.home}:\n${homeFormTxt}\n\nVORM ${m.away}:\n${awayFormTxt}\n${topScorersTxt}`,
+  const vormText = await callEntity(apiKey, `Je bent een vormexpert. ${nl}`,
+    `${ctx}\n\nVORM ${m.home}:\n${homeFormTxt}\n\nVORM ${m.away}:\n${awayFormTxt}\n\nAnalyseer momentum, thuis vs uit, doelpuntentrend.`,
     'vorm','vorm','vorm');
-
-  const statsText = await callEntity(apiKey,
-    `Je bent statistisch analist voetbal. ${nl}
-FOCUS OP: 1) H2H patroon laatste 5 jaar — eenduidig of wisselend? 2) Goals per wedstrijd gemiddelde 3) BTTS percentage 4) O/U 2.5 historiek 5) Thuis/uit doelpuntenverdeling.
-Wees SPECIFIEK met getallen. Geen vage uitspraken.`,
-    `${ctx}\n\nH2H:\n${h2hTxt}\n\n${homeStatsTxt}\n\n${awayStatsTxt}`,
+  const statsText = await callEntity(apiKey, `Je bent statisticus. ${nl}`,
+    `${ctx}\n\nH2H:\n${h2hTxt}\n\n${homeStatsTxt}\n\n${awayStatsTxt}\n\nAnalyseer H2H, over/under, BTTS patronen.`,
     'stats','stats','stats');
-
-  const tactiekText = await callEntity(apiKey,
-    `Je bent tactisch analist voetbal. ${nl}
-FOCUS OP: 1) Formatie matchup — welke ploeg heeft tactisch voordeel? 2) Als lineups beschikbaar: zijn er sleutelspelers absent die de tactiek veranderen? 3) Pressing vs laag blok — welke stijl verwacht? 4) Set pieces gevaar 5) Hoe neutraliseren ze elkaars sterktes?
-${hasLineups ? 'LINEUPS ZIJN BEVESTIGD — gebruik die als primaire bron voor tactische analyse.' : 'Lineups nog onbekend — analyseer op basis van seizoenspatroon.'}`,
-    `${ctx}\n\n${lineupsTxt||'Geen opstellingen bekend'}\n${formationTxt||''}\nVorm: ${vormText?.substring(0,300)||''}`,
+  const tactiekText = await callEntity(apiKey, `Je bent tactisch analist. ${nl}`,
+    `${ctx}\n\n${lineupsTxt||'Geen opstellingen'}\nVorm: ${vormText?.substring(0,300)||''}\n\nAnalyseer speelstijl, sleutelspelers, tactische impact blessures.`,
     'tactiek','tactiek','tactiek');
-
-  const kansText = await callEntity(apiKey,
-    `Je bent kansen-analist voetbal. ${nl} Geef percentages.
-WERKWIJZE: 1) START met Poisson model als anker 2) Pas aan voor: lineups (±5-8% bij sleutelspeler absent), motivatie (±4-6% degradatie/titeldruk), rust (±3-5% bij ≤3 dagen), vorm (±2-4%) 3) Vergelijk met bookmaker-impliciete kansen 4) Bereken value
-Marktefficiëntie: ${Math.round(mktEff*100)}% — ${mktEff < 0.78 ? 'ruimere marges mogelijk' : 'scherpe markt'}
-${hasPoisson ? 'Poisson beschikbaar — gebruik als primair anker.' : 'Geen Poisson — gebruik API model + vorm als anker.'}`,
-    `${ctx}\n\n${poissonAnaliseTxt ? poissonAnaliseTxt + '\n\n' : ''}API MODEL:\n${predTxt||'Niet beschikbaar'}\nVorm samenvatting: ${vormText?.substring(0,250)||'—'}\nStats: ${statsText?.substring(0,250)||'—'}\nMotivatie: ${motivationTxt||'—'}\n\nGeef: 1) Kansen 1/X/2 in % 2) Value per uitkomst (AI% × quote - 1) × 100 3) Verwachte score 4) O/U 2.5 kans% 5) BTTS kans% 6) Confidence 1-10 met reden`,
+  const kansText = await callEntity(apiKey, `Je bent kansen-analist. ${nl} Geef percentages.`,
+    `${ctx}\n\n${poissonAnaliseTxt ? poissonAnaliseTxt + '\n\n' : ''}API: ${predTxt||'—'}\nVorm: ${vormText?.substring(0,200)||''}\nStats: ${statsText?.substring(0,200)||''}\n\nGeef: 1) winstkansen % (gebruik Poisson als anker indien beschikbaar) 2) vs bookmaker quotes 3) verwachte score 4) O/U 2.5 5) BTTS 6) vertrouwen 1-10`,
     'kans','kans','kans');
-
-  const risicoText = await callEntity(apiKey,
-    `Je bent risicoanalist voetbal. ${nl}
-Geef: 1) Risicoscore 1-10 (10=hoogste risico) 2) Top 3 risicofactoren 3) Onzekerheidsmarges 4) Wanneer NIET te weddden op deze wedstrijd.
-Marktefficiëntie ${Math.round(mktEff*100)}% — ${mktEff < 0.78 ? 'hogere onzekerheid' : 'betrouwbare markt'}.`,
-    `${ctx}\n\nKansen: ${kansText?.substring(0,300)||''}\n${oddsHistoryTxt||''}`,
+  const risicoText = await callEntity(apiKey, `Je bent risicoanalist. ${nl}`,
+    `${ctx}\n\nKansen: ${kansText?.substring(0,250)||''}\n\nGeef risicoscore 1-10, factoren, advies.`,
     'risico','risico','risico');
-
-  await callEntity(apiKey,
-    `Je bent elite bet adviseur. ${nl}
-Geef: 1) BESTE BET met onderbouwing (gebruik Poisson+lineups als basis) 2) Value% uitrekenen 3) Inzetstrategie Kelly voor €${bet} 4) 2 alternatieven 5) Één zin TOP TIP.
-${hasLineups ? '⚡ Lineups bevestigd — weeg spelersinformatie het zwaarst.' : ''}
-${mktEff < 0.78 ? '💡 Lage marktefficiëntie — meer value kansen dan bij grote competities.' : ''}
-Fictief/educatief.`,
-    `${ctx}\n\n${poissonAnaliseTxt ? poissonAnaliseTxt + '\n\n' : ''}Risico: ${risicoText?.substring(0,250)||''}\nKansen: ${kansText?.substring(0,250)||''}\nOdds analyse: ${oddsHistoryTxt?.substring(0,200)||''}`,
+  await callEntity(apiKey, `Je bent bet adviseur. ${nl}`,
+    `${ctx}\n\n${poissonAnaliseTxt ? poissonAnaliseTxt + '\n\n' : ''}Risico: ${risicoText?.substring(0,200)||''}\nKansen: ${kansText?.substring(0,200)||''}\n\nGeef: 1) BESTE BET (gebruik Poisson als basis) 2) Waarom 3) Inzetstrategie €${bet} 4) Alternatieven 5) TOP TIP. Fictief/educatief.`,
     'advies','advies','advies');
 
   // 🎯 AI TIP met value berekening
@@ -7736,11 +6750,8 @@ function confirmCombiBet() {
   }
 
   const total = legs.reduce((a,l) => a * l.odds, 1);
-  const combiMatchName = legs.map(l => (l.home || l.match?.split(' vs ')?.[0] || '?').substring(0,12)).join(' + ');
   const bet = {
     id: Date.now(), type:'combi',
-    matchName: combiMatchName,
-    odds: parseFloat(total.toFixed(2)),
     legs: legs.map(l => ({...l, legStatus:'pending'})),
     totalOdds: parseFloat(total.toFixed(2)),
     amount: amt, payout: parseFloat((amt*total).toFixed(2)),
@@ -7846,11 +6857,7 @@ function updateWalletUI() {
         <div class="swipe-hint lose-hint">✗ VERLIES</div>
         <div class="swipe-inner">
         <div class="bet-info">
-          <div class="bet-match-name">
-            ${b.matchName}
-            ${b.score ? `<span style="font-size:.6rem;font-weight:700;">[${b.score}]</span>` : ''}
-            ${b.liveScore && b.status==='pending' ? `<span class="bet-live-score"><span class="bet-live-dot"></span>${b.liveScore}${b.liveMinute ? ' '+b.liveMinute+"'" : ''}</span>` : ''}
-          </div>
+          <div class="bet-match-name">${b.matchName}${b.score?` <span style="font-size:.6rem;font-weight:700;">[${b.score}]</span>`:''}</div>
           <div class="bet-meta">${b.pick} — ${b.pickLabel} @ ${b.odds} · ${b.date}</div>
         </div>
         <div style="text-align:right;">
@@ -8379,9 +7386,7 @@ function renderBtScoreboard(picks) {
     premier:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', bundesliga:'🇩🇪 Bundesliga',
     ligue1:'🇫🇷 Ligue 1', seriea:'🇮🇹 Serie A',
     champions:'⭐ Champions League', nations:'🌍 Nations League',
-    beker:'🏆 KNVB Beker', wk2026:'🏆 WK 2026',
-    jupiler:'🇧🇪 Jupiler Pro', ligaportugal:'🇵🇹 Liga Portugal',
-    superlig:'🇹🇷 Süper Lig'
+    beker:'🏆 KNVB Beker', wk2026:'🏆 WK 2026'
   };
 
   const rows = sorted.map(d => {
@@ -8466,7 +7471,6 @@ function renderBacktest() {
   if (!list) return;
 
   updateBacktestStats();
-  renderTripleLockHitrate();
 
   // Sub-tab: competitie scorebord
   if (btSubTab === 'comps') {
@@ -8824,7 +7828,6 @@ function saveSettings() {
   state.settings.defaultBookmaker = document.getElementById('settDefaultBookmaker')?.value || 'Jacks';
   state.settings.notifThreshold = parseInt(document.getElementById('notifThreshold')?.value) || 20;
   state.settings.tripleMinOdds = parseFloat(document.getElementById('tripleMinOdds')?.value) || 1.6;
-  state.settings.vapidPublicKey = document.getElementById('vapidPublicKey')?.value?.trim() || '';
   state.settings.tripleMinValue = parseFloat(document.getElementById('tripleMinValue')?.value) || 8;
   state.settings.tripleMinConf  = parseInt(document.getElementById('tripleMinConf')?.value)  || 7;
   saveState();
@@ -8856,8 +7859,6 @@ function applySettings() {
   const nt = document.getElementById('notifThreshold');
   if (nt) nt.value = state.settings.notifThreshold || 20;
   const tmo = document.getElementById('tripleMinOdds');
-  const vpk = document.getElementById('vapidPublicKey');
-  if (vpk) vpk.value = state.settings.vapidPublicKey || '';
   if (tmo) tmo.value = state.settings.tripleMinOdds || 1.6;
   const tmv = document.getElementById('tripleMinValue');
   if (tmv) tmv.value = state.settings.tripleMinValue || 8;
@@ -9344,11 +8345,6 @@ function renderScanResults(scans, restored = false) {
     scanTime:  s.scanTime || ''
   }));
 
-  // Filter: alleen interessante picks (value >= 5%) tonen
-  // Tenzij er geen zijn — dan toon alles
-  const withValue = normalized.filter(s => s.value >= 5);
-  const displayList = withValue.length > 0 ? withValue : normalized;
-
   // Sort based on selected sort mode
   const sortFn = {
     value:  (a,b) => b.value - a.value,
@@ -9356,67 +8352,32 @@ function renderScanResults(scans, restored = false) {
     odds:   (a,b) => b.odds - a.odds,
     kelly:  (a,b) => b.kelly - a.kelly
   };
-  const sorted = [...displayList].sort(sortFn[scanSort] || sortFn.value);
+  const sorted = [...normalized].sort(sortFn[scanSort] || sortFn.value);
   const valueCount = sorted.filter(s => s.value >= 5).length;
   const timeLabel = sorted[0]?.scanTime ? ` · ${sorted[0].scanTime}` : '';
   const restoredLabel = restored ? ' (vorige scan)' : '';
-  const filterLabel = withValue.length > 0
-    ? `${valueCount} value picks · ${normalized.length - valueCount} gefilterd`
-    : `geen value picks · alle ${normalized.length} getoond`;
 
-  title.textContent = `⚡ SCAN RESULTATEN · ${scans.length} gescand · ${filterLabel}${timeLabel}${restoredLabel}`;
+  title.textContent = `⚡ SCAN RESULTATEN · ${scans.length} gescand · ${valueCount} value picks${timeLabel}${restoredLabel}`;
 
-  if (sorted.length === 0) {
-    list.innerHTML = `<div style="padding:1rem;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);">
-      Geen value picks gevonden in deze scan.<br>
-      <span style="opacity:.6;">Alle ${normalized.length} wedstrijden hebben negatieve value.</span>
-    </div>`;
-    panel.style.display = 'block';
-    return;
-  }
-  list.innerHTML = sorted.map((s, i) => {
-    const val = s.value || 0;
-    const valClass = val >= 8 ? 'pos' : val >= 3 ? 'low' : 'neg';
-    const valSign  = val > 0 ? '+' : '';
-    const conf = s.confidence || 0;
-    const confIcon = conf >= 8 ? '🔥' : conf >= 6 ? '✓' : '·';
-    const odds = s.odds?.toFixed(2) || '?';
+  list.innerHTML = sorted.map(s => {
+    const valClass = s.value >= 5 ? 'pos' : s.value >= 0 ? 'neu' : 'neg';
+    const valSign  = s.value > 0 ? '+' : '';
+    const confStr  = `${s.confidence}/10 · @ ${s.odds?.toFixed(2)||'?'}`;
     const mid = s.matchId;
-    const hasPoi = s.poissonK1 != null;
-    const reason = s.reason || '';
-    return `<div class="scan-result-row" onclick="openScanResult(${mid})" style="cursor:pointer;">
-      <div class="sr-rank">#${i+1}</div>
-      <div class="sr-main">
-        <div class="sr-match">${s.home} vs ${s.away}</div>
-        <div class="sr-pick">→ ${s.pickLabel}</div>
-        <div style="display:flex;align-items:center;gap:.4rem;">
-          <div class="sr-comp">${s.comp || ''}</div>
-          <a href="https://jacks.nl/sports#search/${((s.home||'')+'+' +(s.away||'')).replace(/ /g,'+')}"
-            target="_blank" rel="noopener" class="jacks-btn" style="font-size:.44rem;padding:2px 7px;"
-            onclick="event.stopPropagation()">🎰</a>
-        </div>
-        <div class="sr-badges">
-          <span class="sr-badge ${val >= 5 ? 'value-pos' : val >= 0 ? 'value-low' : 'value-neg'}">${valSign}${val.toFixed(1)}%</span>
-          <span class="sr-badge conf">${confIcon} ${conf}/10</span>
-          <span class="sr-badge odds">@ ${odds}</span>
-          ${hasPoi ? '<span class="sr-badge poisson">📐 P</span>' : ''}
-          <span class="sr-badge" id="sr-combi-${mid}"
-            onclick="event.stopPropagation();addScanPickToCombi(${mid},'${s.pick?.replace(/'/g,'\'')}','${(s.pickLabel||'').replace(/'/g,'\'')}',${s.odds||0},'${(s.home||'').replace(/'/g,'\'')}','${(s.away||'').replace(/'/g,'\'')}')"
-            style="cursor:pointer;background:rgba(219,39,119,.1);border-color:rgba(219,39,119,.3);color:#be185d;">
-            + COMBI
-          </span>
-        </div>
-        ${reason ? `<div class="sr-reason">💬 ${reason}</div>` : ''}
+    return `<div class="scan-result-row" onclick="const m=state.matches.find(x=>String(x.id)===String(${mid}));if(m)selectMatch(m);">
+      <div style="flex:1;min-width:0;">
+        <div class="scan-result-match">${s.home} vs ${s.away}</div>
+        <div class="scan-result-pick">⚡ ${s.pickLabel} · ${s.comp}</div>
       </div>
-      <div class="sr-right">
-        <div class="sr-value-big ${valClass}">${valSign}${val.toFixed(1)}%</div>
+      <div>
+        <div class="scan-result-value ${valClass}">${valSign}${s.value.toFixed(1)}%</div>
+        <div class="scan-result-conf">${confStr}</div>
       </div>
     </div>`;
   }).join('');
 
   panel.style.display = 'block';
-  const body = document.getElementById('scanResultsBody');
-  if (body) body.style.display = 'block';
+  list.style.display = 'block';
   if (!restored) setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
@@ -9530,21 +8491,16 @@ function renderDashboard() {
     ${openBets.length > 0 ? `
     <div class="dash-section-title">⏳ Open wallet bets</div>
     ${openBets.slice(0, 3).map(b => {
-      const isCombi = b.type === 'combi' && b.legs?.length;
-      const matchName = b.matchName ||
-        (isCombi ? b.legs.map(l => (l.home || l.match?.split(' vs ')?.[0] || '?').substring(0,12)).join(' + ') : b.match || '?');
-      const pick = b.pickLabel || b.pick ||
-        (isCombi ? b.legs.map(l => l.pick || '?').join(' + ') : '?');
+      const matchName = b.matchName || b.match || (b.legs ? 'Combi ' + b.legs.length + ' legs' : '?');
+      const pick = b.pickLabel || b.pick || '?';
       const stake = b.amount || b.stake || 0;
-      const odds = b.odds || (isCombi ? b.legs.reduce((a,l) => a * (parseFloat(l.odds)||1), 1).toFixed(2) : '?');
-      const payout = b.payout || (stake * parseFloat(odds) || 0);
-      // Extra info voor combi
-      const combiInfo = isCombi ? `${b.legs.length} legs · ` : '';
+      const odds = b.odds || '?';
+      const payout = b.payout || 0;
       return `<div class="dash-bet-row" onclick="switchTab('wallet')">
         <div style="font-size:1rem;">⏳</div>
         <div style="flex:1;">
           <div class="dash-bet-match">${matchName}</div>
-          <div class="dash-bet-sub">${combiInfo}${pick} · €${stake} @ ${odds}</div>
+          <div class="dash-bet-sub">${pick} · €${stake} @ ${odds}</div>
         </div>
         <span class="dash-pick-badge" style="background:rgba(219,39,119,.1);color:#be185d;">
           →€${payout.toFixed(2)}
@@ -9555,17 +8511,13 @@ function renderDashboard() {
     ` : ''}
 
     ${scanResults.length > 0 ? `
-    <div class="dash-section-title">
-      ⚡ Laatste scan
-      ${scanResults[0]?.scanTime ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:400;color:var(--sub);margin-left:.4rem;">· ${scanResults[0].scanTime}</span>` : ''}
-    </div>
+    <div class="dash-section-title">⚡ Laatste scan</div>
     ${scanResults.map(s => `
-      <div class="dash-bet-row" onclick="openScanResult(${s.matchId})">
+      <div class="dash-bet-row" onclick="switchTab('wedstrijden')">
         <div style="font-size:.9rem;">⚡</div>
         <div style="flex:1;">
           <div class="dash-bet-match">${s.home} vs ${s.away}</div>
           <div class="dash-bet-sub">${s.pickLabel} · ${s.comp || ''}</div>
-          ${s.matchDate ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:#7c3aed;margin-top:1px;font-weight:700;">⏰ ${s.matchDate}</div>` : ''}
         </div>
         <span class="dash-pick-badge" style="background:${s.value>=5?'rgba(22,163,74,.12)':'rgba(100,116,139,.1)'};color:${s.value>=5?'#15803d':'#64748b'};">
           ${s.value>=0?'+':''}${s.value.toFixed(1)}%
@@ -9693,47 +8645,15 @@ function buildScanCompFilter(matches) {
   const container = document.getElementById('scanCompFilter');
   if (!wrap || !container) return;
 
-  // Alleen bekende competities tonen
-  const knownNames = {
-    eredivisie: '🇳🇱 Eredivisie', kkd: '🇳🇱 Keuken Kampioen',
-    premier: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', bundesliga: '🇩🇪 Bundesliga',
-    ligue1: '🇫🇷 Ligue 1', seriea: '🇮🇹 Serie A',
-    champions: '⭐ Champions League', nations: '🌍 Nations League',
-    beker: '🏆 KNVB Beker', wk2026: '🏆 WK 2026',
-    jupiler: '🇧🇪 Jupiler Pro', ligaportugal: '🇵🇹 Liga Portugal',
-    superlig: '🇹🇷 Süper Lig',
-    eredivisie_playoff_eur: '🇳🇱 Ered. Playoff EUR',
-    eredivisie_playoff_rel: '🇳🇱 Ered. Playoff DEG',
-    kkd_playoff_prom: '🇳🇱 KKD Playoff PROM'
-  };
-
-  // Welke bekende comps zitten in de geladen matches?
-  const loadedComps = new Set(matches.map(m => m.comp).filter(Boolean));
-  const knownLoaded = Object.entries(knownNames)
-    .filter(([key, name]) => {
-      // Check if any loaded match comp matches this known comp
-      return [...loadedComps].some(c =>
-        c.toLowerCase().includes(key) ||
-        name.toLowerCase().includes(c.toLowerCase()) ||
-        c === name
-      );
-    });
-
-  // Alle geladen comps die niet bekend zijn, niet tonen
-  if (!knownLoaded.length && !loadedComps.size) { wrap.style.display = 'none'; return; }
-
-  // Toon alleen bekende comps die geladen zijn
-  const displayComps = knownLoaded.length > 0
-    ? knownLoaded.map(([k, label]) => ({ key: k, label }))
-    : [...loadedComps].slice(0, 10).map(c => ({ key: c, label: c }));
-
-  if (!displayComps.length) { wrap.style.display = 'none'; return; }
+  // Get unique comps from loaded matches
+  const comps = [...new Set(matches.map(m => m.comp).filter(Boolean))].sort();
+  if (!comps.length) { wrap.style.display = 'none'; return; }
 
   wrap.style.display = 'block';
-  container.innerHTML = displayComps.map(({ key, label }) => `
-    <button class="scan-comp-chip ${scanCompFilter.size === 0 || scanCompFilter.has(key) ? 'on' : ''}"
-      onclick="toggleScanComp('${key}')" id="scc-${key}">
-      ${label}
+  container.innerHTML = comps.map(c => `
+    <button class="scan-comp-chip ${scanCompFilter.size === 0 || scanCompFilter.has(c) ? 'on' : ''}"
+      onclick="toggleScanComp('${c.replace(/'/g,'\'')}')" id="scc-${c.replace(/[^a-z0-9]/gi,'')}">
+      ${c}
     </button>
   `).join('');
 }
@@ -9784,838 +8704,6 @@ function sortMatchListByValue() {
   });
   // Reorder DOM
   [...withValue, ...withoutValue].forEach(c => list.appendChild(c));
-}
-
-// ═══════════════════════════════════════════════════════
-// TRIPLE LOCK HITRATE
-// ═══════════════════════════════════════════════════════
-function calcTripleLockHitrate() {
-  const picks = state.valueBacktest?.picks || [];
-  // Triple lock picks hebben hoge confidence + Poisson
-  // We schatten dit op basis van confidence >= 8 in backtest
-  const tlPicks = picks.filter(p => p.confidence >= 8 && (p.status === 'win' || p.status === 'lose'));
-  const dlPicks = picks.filter(p => p.confidence >= 7 && p.confidence < 8 && (p.status === 'win' || p.status === 'lose'));
-  const tlWins  = tlPicks.filter(p => p.status === 'win').length;
-  const dlWins  = dlPicks.filter(p => p.status === 'win').length;
-  return {
-    tl: { total: tlPicks.length, wins: tlWins, rate: tlPicks.length ? Math.round(tlWins/tlPicks.length*100) : null },
-    dl: { total: dlPicks.length, wins: dlWins, rate: dlPicks.length ? Math.round(dlWins/dlPicks.length*100) : null }
-  };
-}
-
-function renderTripleLockHitrate() {
-  const el = document.getElementById('tlHitrateCard');
-  if (!el) return;
-  const { tl, dl } = calcTripleLockHitrate();
-  if (!tl.total && !dl.total) { el.style.display = 'none'; return; }
-  el.style.display = 'flex';
-
-  const tlColor = tl.rate >= 60 ? '#16a34a' : tl.rate >= 45 ? '#d97706' : '#dc2626';
-  const dlColor = dl.rate >= 55 ? '#16a34a' : dl.rate >= 40 ? '#d97706' : '#dc2626';
-
-  el.innerHTML = `
-    <div class="tl-hitrate-icon">🏆</div>
-    <div style="flex:1;">
-      <div class="tl-hitrate-label">Triple Lock Hitrate</div>
-      <div style="display:flex;gap:1.2rem;margin-top:.3rem;">
-        ${tl.total ? `<div>
-          <div class="tl-hitrate-val" style="color:${tlColor};">${tl.rate !== null ? tl.rate+'%' : '—'}</div>
-          <div class="tl-hitrate-sub">🏆 Triple · ${tl.wins}W/${tl.total}</div>
-        </div>` : ''}
-        ${dl.total ? `<div>
-          <div class="tl-hitrate-val" style="color:${dlColor};font-size:1.5rem;">${dl.rate !== null ? dl.rate+'%' : '—'}</div>
-          <div class="tl-hitrate-sub">🔑 Double · ${dl.wins}W/${dl.total}</div>
-        </div>` : ''}
-      </div>
-    </div>
-  `;
-}
-
-// ═══════════════════════════════════════════════════════
-// WEDSTRIJD HERINNERING — 30 min voor aftrap
-// ═══════════════════════════════════════════════════════
-let _reminderInterval = null;
-
-function startReminderScheduler() {
-  if (_reminderInterval) clearInterval(_reminderInterval);
-  _reminderInterval = setInterval(checkMatchReminders, 60 * 1000); // elke minuut
-  checkMatchReminders(); // direct checken
-}
-
-function checkMatchReminders() {
-  if (!state.settings.notifEnabled || Notification.permission !== 'granted') return;
-  const openBets = (state.wallet?.bets || []).filter(b => b.status === 'pending');
-  if (!openBets.length) return;
-
-  const now = Date.now();
-  const thirtyMin = 30 * 60 * 1000;
-
-  openBets.forEach(bet => {
-    const matchTime = bet.matchTime || bet.kickoff;
-    if (!matchTime) return;
-
-    const kickoff = new Date(matchTime).getTime();
-    const diff = kickoff - now;
-
-    // Tussen 28 en 32 minuten voor aftrap — stuur herinnering
-    if (diff > 28 * 60000 && diff < 32 * 60000) {
-      const remKey = 'remind_' + bet.id;
-      if (localStorage.getItem(remKey)) return; // al verstuurd
-      localStorage.setItem(remKey, '1');
-
-      const name = bet.matchName || bet.match || 'Wedstrijd';
-      const pick = bet.pickLabel || bet.pick || '';
-      sendPickNotification(
-        '⏰ Aftrap over 30 min!',
-        `${name} — Jouw bet: ${pick} @ ${bet.odds}`,
-        'reminder-' + bet.id,
-        null, null
-      );
-    }
-    // Verwijder reminder key na wedstrijd
-    if (diff < -120 * 60000) localStorage.removeItem('remind_' + bet.id);
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-// LIVE SCORE IN WALLET BETS
-// ═══════════════════════════════════════════════════════
-async function fetchLiveScoresForBets() {
-  const apiKey = state.settings.footballKey;
-  if (!apiKey) return;
-  const openBets = (state.wallet?.bets || []).filter(b => b.status === 'pending' && b.fixtureId);
-  if (!openBets.length) return;
-
-  try {
-    // Haal live fixtures op
-    const r = await apiFetch('https://v3.football.api-sports.io/fixtures?live=all', apiKey, 8000);
-    const data = await r.json();
-    const liveFixtures = data.response || [];
-
-    let updated = false;
-    for (const bet of openBets) {
-      const fix = liveFixtures.find(f => String(f.fixture.id) === String(bet.fixtureId));
-      if (!fix) {
-        // Clear live score if not live anymore
-        if (bet.liveScore) { delete bet.liveScore; delete bet.liveMinute; updated = true; }
-        continue;
-      }
-      const score = `${fix.goals.home ?? 0}-${fix.goals.away ?? 0}`;
-      const minute = fix.fixture.status.elapsed || '';
-      if (bet.liveScore !== score || bet.liveMinute !== minute) {
-        bet.liveScore = score;
-        bet.liveMinute = minute;
-        updated = true;
-      }
-    }
-    if (updated) { updateWalletUI(); saveState(); }
-  } catch(e) {}
-}
-
-// Start live score polling every 60s when wallet tab is active
-let _liveScoreInterval = null;
-function startLiveScorePolling() {
-  if (_liveScoreInterval) return;
-  fetchLiveScoresForBets();
-  _liveScoreInterval = setInterval(fetchLiveScoresForBets, 60000);
-}
-function stopLiveScorePolling() {
-  if (_liveScoreInterval) { clearInterval(_liveScoreInterval); _liveScoreInterval = null; }
-}
-
-// ═══════════════════════════════════════════════════════
-// EXPORTEER NAAR CSV
-// ═══════════════════════════════════════════════════════
-function exportWalletCSV() {
-  const bets = state.wallet?.bets || [];
-  if (!bets.length) { alert('Geen bets om te exporteren'); return; }
-
-  const headers = ['Datum','Wedstrijd','Pick','Quote','Inzet','Uitbetaling','W/V','Status','Score','Bron'];
-  const rows = bets.map(b => {
-    const pnl = b.status === 'win' ? (b.payout - (b.amount||b.stake)).toFixed(2)
-              : b.status === 'lose' ? (-( b.amount||b.stake)).toFixed(2)
-              : '0';
-    return [
-      b.date || '',
-      (b.matchName || b.match || '').replace(/,/g,' '),
-      (b.pickLabel || b.pick || '').replace(/,/g,' '),
-      b.odds || '',
-      b.amount || b.stake || '',
-      b.payout?.toFixed(2) || '',
-      pnl,
-      b.status === 'win' ? 'Gewonnen' : b.status === 'lose' ? 'Verloren' : 'Open',
-      b.score || '',
-      b.source || 'eigen'
-    ].join(',');
-  });
-
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `TOTO-AI-wallet-${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showAutoCheckBar('📥 CSV gedownload!', 2000);
-}
-
-function exportTrackerCSV() {
-  const bets = state.tracker?.bets || [];
-  if (!bets.length) { alert('Geen tracker bets om te exporteren'); return; }
-
-  const headers = ['Datum','Wedstrijd','Pick','Markt','Quote','Inzet','Uitbetaling','Status','Score','Bookmaker','Bron'];
-  const rows = bets.map(b => [
-    b.date || '',
-    (b.match || '').replace(/,/g,' '),
-    (b.pick || '').replace(/,/g,' '),
-    b.markt || '',
-    b.odds || '',
-    b.stake || '',
-    b.payout?.toFixed(2) || '',
-    b.status === 'win' ? 'Gewonnen' : b.status === 'lose' ? 'Verloren' : 'Open',
-    b.score || '',
-    b.bookmaker || '',
-    b.source || 'eigen'
-  ].join(',')).join('\n');
-
-  const csv = [headers.join(','), rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `TOTO-AI-tracker-${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showAutoCheckBar('📥 Tracker CSV gedownload!', 2000);
-}
-
-// ═══════════════════════════════════════════════════════
-// RUST FACTOR — dagen sinds laatste wedstrijd
-// ═══════════════════════════════════════════════════════
-async function fetchLastFixture(teamId, apiKey) {
-  if (!teamId || !apiKey) return null;
-  try {
-    const r = await apiFetch(
-      `https://v3.football.api-sports.io/fixtures?team=${teamId}&last=1&status=FT`,
-      apiKey, 5000
-    );
-    const d = await r.json();
-    return d.response?.[0] || null;
-  } catch(e) { return null; }
-}
-
-function calcRestDays(lastFixture, matchDate) {
-  if (!lastFixture?.fixture?.date) return null;
-  const last = new Date(lastFixture.fixture.date);
-  const next = matchDate ? new Date(matchDate) : new Date();
-  const diff = Math.round((next - last) / (1000*60*60*24));
-  return diff;
-}
-
-function restLabel(days) {
-  if (days === null) return '?';
-  if (days <= 2) return `⚠️ ${days}d rust (kort!)`;
-  if (days <= 4) return `${days}d rust`;
-  return `✅ ${days}d rust`;
-}
-
-// ═══════════════════════════════════════════════════════
-// THUIS/UIT RATIO — hoe sterk thuis vs uit
-// ═══════════════════════════════════════════════════════
-function calcHomeAwayStrength(stats) {
-  if (!stats?.fixtures) return null;
-  const homeW = stats.fixtures.wins?.home || 0;
-  const homeP = stats.fixtures.played?.home || 1;
-  const awayW = stats.fixtures.wins?.away || 0;
-  const awayP = stats.fixtures.played?.away || 1;
-  const homeRate = Math.round(homeW / homeP * 100);
-  const awayRate = Math.round(awayW / awayP * 100);
-  const diff = homeRate - awayRate;
-  return {
-    homeWinRate: homeRate,
-    awayWinRate: awayRate,
-    homeBias: diff > 15 ? `sterk thuis (+${diff}%)` : diff < -10 ? `beter uit` : `neutraal`,
-    diff
-  };
-}
-
-// ═══════════════════════════════════════════════════════
-// SEIZOENSFASE CONTEXT
-// ═══════════════════════════════════════════════════════
-function calcSeasonPhase(standings, homeTeam, awayTeam) {
-  if (!standings?.length) return '';
-  const total = standings.length;
-  const home = standings.find(t => t.team.name.toLowerCase().includes(homeTeam.toLowerCase().substring(0,5)));
-  const away = standings.find(t => t.team.name.toLowerCase().includes(awayTeam.toLowerCase().substring(0,5)));
-  if (!home || !away) return '';
-
-  const lines = [];
-
-  // Kampioensdrang
-  if (home.rank <= 2) lines.push(`${homeTeam} vecht om titel (#${home.rank})`);
-  if (away.rank <= 2) lines.push(`${awayTeam} vecht om titel (#${away.rank})`);
-
-  // Degradatiedruk (laatste 3)
-  if (home.rank >= total - 2) lines.push(`${homeTeam} degradatiezone (#${home.rank}/${total}) → hoge druk`);
-  if (away.rank >= total - 2) lines.push(`${awayTeam} degradatiezone (#${away.rank}/${total}) → hoge druk`);
-
-  // Niks te winnen/verliezen (midden)
-  const played = home.all?.played || 0;
-  const totalGames = (total - 1) * 2;
-  const pct = played / totalGames;
-  if (pct > 0.85 && home.rank > 3 && home.rank < total - 2) {
-    lines.push(`${homeTeam} speelt zonder druk (midden stand, seizoen bijna klaar)`);
-  }
-  if (pct > 0.85 && away.rank > 3 && away.rank < total - 2) {
-    lines.push(`${awayTeam} speelt zonder druk`);
-  }
-
-  // Rangverschil
-  const rankDiff = Math.abs(home.rank - away.rank);
-  if (rankDiff >= 8) {
-    const stronger = home.rank < away.rank ? homeTeam : awayTeam;
-    lines.push(`Groot rangverschil (${rankDiff} plaatsen) — ${stronger} duidelijk favoriet`);
-  }
-
-  return lines.length ? lines.join('. ') : '';
-}
-
-// ═══════════════════════════════════════════════════════
-// TEAM MOTIVATIE ANALYSE
-// ═══════════════════════════════════════════════════════
-function analyzeTeamMotivation(standings, teamName, fixtures, isHome) {
-  if (!standings?.length) return '';
-  const total = standings.length;
-  const team = standings.find(t =>
-    t.team.name.toLowerCase().includes(teamName.toLowerCase().substring(0,5))
-  );
-  if (!team) return '';
-
-  const motivations = [];
-  const rank = team.rank;
-  const points = team.points;
-  const played = team.all?.played || 0;
-
-  // Titel race
-  if (rank === 1) motivations.push('🥇 Koploper — maximale inzet');
-  else if (rank === 2 && team.all?.played > 20) {
-    const gap = standings[0].points - points;
-    if (gap <= 3) motivations.push(`🔥 Titelrace: ${gap}pt achter op kop`);
-  }
-
-  // Europees voetbal
-  if (rank <= 4 && played > 15) motivations.push(`🇪🇺 Europees gevecht (#${rank})`);
-
-  // Degradatie
-  if (rank >= total - 2) {
-    const safePoints = standings[total-3]?.points || 0;
-    const gap = safePoints - points;
-    if (gap > 0) motivations.push(`🆘 Degradatiegevaar: ${gap}pt van veiligheid`);
-    else motivations.push('⚠️ In degradatiezone — alles op alles');
-  }
-
-  // Recente vorm (laatste 5)
-  const form = team.form || '';
-  const recentForm = form.slice(-5);
-  const wins = (recentForm.match(/W/g)||[]).length;
-  const losses = (recentForm.match(/L/g)||[]).length;
-  if (wins >= 4) motivations.push(`💪 Uitstekende vorm: ${recentForm}`);
-  else if (losses >= 3) motivations.push(`📉 Slechte serie: ${recentForm} — druk om te winnen`);
-
-  // Thuis vs uit motivatie
-  const homeW = team.home?.win || 0;
-  const homeP = team.home?.played || 1;
-  const awayW = team.away?.win || 0;
-  const awayP = team.away?.played || 1;
-  if (isHome && homeW/homeP > 0.7) motivations.push(`🏟️ Thuisfestung: ${Math.round(homeW/homeP*100)}% thuis gewonnen`);
-  if (!isHome && awayW/awayP > 0.5) motivations.push(`✈️ Sterk op pad: ${Math.round(awayW/awayP*100)}% uitwedstrijden gewonnen`);
-
-  return motivations.length ? motivations.join(' | ') : 'Reguliere motivatie';
-}
-
-function formatMotivationContext(standings, homeName, awayName, homeForm, awayForm) {
-  if (!standings?.length) return '';
-  const homeMot = analyzeTeamMotivation(standings, homeName, homeForm, true);
-  const awayMot = analyzeTeamMotivation(standings, awayName, awayForm, false);
-  if (!homeMot && !awayMot) return '';
-  return `\nMOTIVATIE:\n${homeName}: ${homeMot}\n${awayName}: ${awayMot}`;
-}
-
-// ═══════════════════════════════════════════════════════
-// FORMATIE MATCHUP ANALYSE
-// ═══════════════════════════════════════════════════════
-function analyzeFormationMatchup(lineups, homeName, awayName) {
-  if (!lineups?.length) return '';
-
-  const homeTeam = lineups.find(t => t.team.name.toLowerCase().includes(homeName.toLowerCase().substring(0,5)));
-  const awayTeam = lineups.find(t => t.team.name.toLowerCase().includes(awayName.toLowerCase().substring(0,5)));
-
-  if (!homeTeam?.formation || !awayTeam?.formation) return '';
-
-  const homF = homeTeam.formation; // bijv "4-3-3"
-  const awayF = awayTeam.formation;
-
-  const homeAttackers = parseInt(homF.split('-').pop()) || 1;
-  const awayAttackers = parseInt(awayF.split('-').pop()) || 1;
-  const homeDefenders = parseInt(homF.split('-')[0]) || 4;
-  const awayDefenders = parseInt(awayF.split('-')[0]) || 4;
-
-  const insights = [`Formaties: ${homeName} ${homF} vs ${awayName} ${awayF}`];
-
-  // Aanval vs verdediging matchup
-  if (homeAttackers >= 3 && awayDefenders <= 3) {
-    insights.push(`⚔️ ${homeName} aanval (${homeAttackers} voorin) vs zwakke ${awayName} defensie — kansen voor thuis`);
-  }
-  if (awayAttackers >= 3 && homeDefenders <= 3) {
-    insights.push(`⚔️ ${awayName} aanval (${awayAttackers} voorin) vs kwetsbare ${homeName} defensie — uitkansen verwacht`);
-  }
-
-  // 5-back = defensief
-  if (homF.startsWith('5') || homF.startsWith('3-5')) {
-    insights.push(`🛡️ ${homeName} speelt defensief (${homF}) — laag scorende wedstrijd verwacht`);
-  }
-  if (awayF.startsWith('5') || awayF.startsWith('3-5')) {
-    insights.push(`🛡️ ${awayName} speelt op counter (${awayF}) — uitgespeeld, enkele kansen`);
-  }
-
-  // Gelijke formaties = neutraal
-  if (homF === awayF) {
-    insights.push(`⚖️ Spiegelformatie — tactisch gevecht`);
-  }
-
-  return '\nFORMATIE ANALYSE:\n' + insights.join('\n');
-}
-
-// ═══════════════════════════════════════════════════════
-// MARKTEFFICIËNTIE PER COMPETITIE
-// Grote competities = efficiëntere markt = meer betrouwbaar
-// ═══════════════════════════════════════════════════════
-const MARKET_EFFICIENCY = {
-  39: 0.95,  // Premier League — zeer efficiënt
-  78: 0.93,  // Bundesliga
-  135: 0.92, // Serie A
-  61: 0.91,  // Ligue 1
-  2: 0.90,   // Champions League
-  88: 0.82,  // Eredivisie
-  144: 0.78, // Jupiler Pro
-  94: 0.76,  // Liga Portugal
-  203: 0.75, // Süper Lig
-  89: 0.70,  // Keuken Kampioen
-  90: 0.68,  // KNVB Beker
-  5: 0.72,   // Nations League
-};
-
-function getMarketEfficiency(leagueId) {
-  return MARKET_EFFICIENCY[leagueId] || 0.65;
-}
-
-function marketEfficiencyLabel(leagueId) {
-  const eff = getMarketEfficiency(leagueId);
-  if (eff >= 0.90) return `✅ Hoog efficiënte markt (${Math.round(eff*100)}%) — bookmakerquotes betrouwbaar`;
-  if (eff >= 0.78) return `⚠️ Gemiddelde marktefficiëntie (${Math.round(eff*100)}%) — meer value kansen mogelijk`;
-  return `🟡 Lage marktefficiëntie (${Math.round(eff*100)}%) — grotere foutmarge bookmakers`;
-}
-
-// ═══════════════════════════════════════════════════════
-// OPEN SCAN RESULTAAT — navigeer naar wedstrijd
-// ═══════════════════════════════════════════════════════
-function openScanResult(matchId) {
-  // Zoek in state.matches
-  let m = state.matches.find(x => String(x.id) === String(matchId));
-
-  if (m) {
-    switchTab('wedstrijden');
-    setTimeout(() => {
-      selectMatch(m);
-      // Scroll naar de match card
-      const card = document.getElementById('match-' + m.id);
-      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 150);
-  } else {
-    // Match niet geladen — zoek in lastScanResults voor info
-    const scan = (state.lastScanResults || []).find(s => String(s.matchId) === String(matchId));
-    if (scan) {
-      showAutoCheckBar(`📍 Laad ${scan.comp || 'competitie'} eerst om deze wedstrijd te zien`, 3000);
-    }
-    switchTab('wedstrijden');
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// VOEG SCAN PICK TOE AAN COMBI BUILDER
-// ═══════════════════════════════════════════════════════
-function addScanPickToCombi(matchId, pick, pickLabel, odds, home, away) {
-  addValuePickToCombi(matchId, pick, pickLabel, odds, home, away);
-  updateCombiBuilder();
-
-  // Update button in scan results
-  const btn = document.getElementById('sr-combi-' + matchId);
-  const inCombi = state.combiBuilder.some(l => String(l.matchId) === String(matchId));
-  if (btn) {
-    btn.textContent = inCombi ? '✓ COMBI' : '+ COMBI';
-    btn.style.background = inCombi ? 'rgba(22,163,74,.12)' : 'rgba(219,39,119,.1)';
-    btn.style.borderColor = inCombi ? 'rgba(22,163,74,.4)' : 'rgba(219,39,119,.3)';
-    btn.style.color = inCombi ? '#15803d' : '#be185d';
-  }
-
-  // Scroll naar combi builder
-  switchTab('wedstrijden');
-  setTimeout(() => {
-    const builder = document.getElementById('combiBuilder');
-    if (builder) builder.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 300);
-
-  showAutoCheckBar(`⚡ ${pickLabel} toegevoegd aan combi`, 2000);
-}
-
-// ═══════════════════════════════════════════════════════
-// ECHTE VAPID PUSH SUBSCRIPTIE
-// ═══════════════════════════════════════════════════════
-let _pushSubscription = null;
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
-}
-
-async function subscribeToPush() {
-  const vapidKey = state.settings.vapidPublicKey || 'BPpo274NkAKoESoj_ST_zqYAUauja6rBnX63or8yFhpMK10Roz-3e9TRt7nn7k32oQlWLlWYfN7FUW2MgGoLiJQ';
-
-  try {
-    console.log('[Push] FCM via firebase-messaging-sw.js...');
-
-    // Registreer firebase-messaging-sw.js voor FCM
-    let fcmReg;
-    try {
-      // Verwijder oude registraties van firebase-messaging-sw
-      const regs = await navigator.serviceWorker.getRegistrations();
-      for (const reg of regs) {
-        if (reg.active?.scriptURL?.includes('firebase-messaging-sw')) {
-          fcmReg = reg;
-          break;
-        }
-      }
-      if (!fcmReg) {
-        fcmReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        // Wacht tot actief
-        await new Promise(resolve => {
-          if (fcmReg.active) { resolve(); return; }
-          fcmReg.addEventListener('updatefound', () => {
-            fcmReg.installing.addEventListener('statechange', () => {
-              if (fcmReg.active) resolve();
-            });
-          });
-          setTimeout(resolve, 2000);
-        });
-      }
-      console.log('[Push] FCM SW:', fcmReg.scope, fcmReg.active?.state);
-    } catch(swErr) {
-      console.warn('[Push] FCM SW mislukt:', swErr.message);
-      fcmReg = await navigator.serviceWorker.ready;
-    }
-
-    // Haal FCM token op via Firebase Messaging
-    let app;
-    try { app = firebase.app(); } catch(e) {
-      app = firebase.initializeApp({
-        apiKey: 'AIzaSyB7K4SXPdxHSPIvFyXOfY2bpehcNnjRM-M',
-        projectId: 'toto-ai-397cb',
-        messagingSenderId: '426083019907',
-        appId: '1:426083019907:web:8f32f8037628d63cbbbfb6'
-      });
-    }
-    const messaging = firebase.messaging();
-    const fcmToken = await messaging.getToken({
-      vapidKey,
-      serviceWorkerRegistration: fcmReg
-    });
-
-    if (!fcmToken) throw new Error('Geen FCM token ontvangen');
-
-    console.log('[Push] FCM Token:', fcmToken.substring(0,20)+'...');
-    localStorage.setItem('totoai_fcm_token', fcmToken);
-    localStorage.removeItem('totoai_push_sub'); // gebruik FCM token
-
-    // Stuur token naar worker
-    await fetch('https://toto-proxy.zweetzakken.workers.dev/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fcmToken })
-    }).catch(e => console.warn('[Push] Opslaan mislukt:', e.message));
-
-    return true;
-  } catch(e) {
-    console.error('[Push] FCM mislukt:', e.name, e.message);
-    throw e;
-  }
-}
-
-async function sendRealPush(title, message, data = {}) {
-  const fcmToken = localStorage.getItem('totoai_fcm_token');
-  if (!fcmToken) return false;
-
-  try {
-    const resp = await fetch('https://toto-proxy.zweetzakken.workers.dev/push/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fcmToken, title, message, data })
-    });
-    const result = await resp.json();
-    console.log('[Push] Verstuurd:', result);
-    return resp.ok;
-  } catch(e) {
-    console.warn('[Push] Mislukt:', e.message);
-    return false;
-  }
-}
-
-// Upgrade sendPickNotification om ook echte push te proberen
-const _origSendPickNotif = sendPickNotification;
-async function sendPickNotificationEnhanced(title, body, tag, matchId, comp) {
-  // Probeer altijd lokale notificatie (werkt als app open is)
-  _origSendPickNotif(title, body, tag, matchId, comp);
-
-  // Extra: stuur ook echte push (werkt als app gesloten is)
-  if (localStorage.getItem('totoai_push_sub')) {
-    await sendRealPush(title, body, {
-      tag, matchId, comp,
-      requireInteraction: true
-    });
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// DEBUG PUSH — toont status in app
-// ═══════════════════════════════════════════════════════
-async function debugPush() {
-  const lines = [];
-  lines.push('=== PUSH DEBUG ===');
-
-  // 1. FCM token
-  const fcmToken = localStorage.getItem('totoai_fcm_token');
-  lines.push('FCM token: ' + (fcmToken ? fcmToken.substring(0,30)+'...' : 'LEEG'));
-
-  // 2. VAPID key
-  const vapid = state.settings.vapidPublicKey;
-  lines.push('VAPID key: ' + (vapid ? vapid.substring(0,20)+'...' : 'LEEG'));
-
-  // 3. Notificaties permission
-  lines.push('Notif toestemming: ' + Notification.permission);
-
-  // 4. Service Worker
-  try {
-    const reg = await navigator.serviceWorker.ready;
-    lines.push('SW: actief ✅');
-    lines.push('SW scope: ' + reg.scope);
-
-    // Check push subscription
-    const sub = await reg.pushManager.getSubscription();
-    lines.push('Push sub: ' + (sub ? 'aanwezig' : 'GEEN'));
-  } catch(e) {
-    lines.push('SW: FOUT - ' + e.message);
-  }
-
-  // 5. Firebase
-  try {
-    const app = firebase.app();
-    lines.push('Firebase: OK ✅');
-  } catch(e) {
-    // Firebase niet via app() maar check of object bestaat
-    if (typeof firebase !== 'undefined') {
-      lines.push('Firebase: geladen maar geen app ⚠️');
-    } else {
-      lines.push('Firebase: NIET geladen ❌');
-    }
-  }
-
-  // 6. Probeer subscribe
-  lines.push('--- Subscribe poging ---');
-  try {
-    const ok = await subscribeToPush();
-    lines.push('Subscribe: ' + (ok ? 'OK ✅' : 'MISLUKT ❌'));
-    const newToken = localStorage.getItem('totoai_fcm_token');
-    lines.push('Nieuw token: ' + (newToken ? newToken.substring(0,30)+'...' : 'GEEN'));
-  } catch(e) {
-    lines.push('Subscribe fout: ' + e.name + ': ' + e.message);
-  }
-
-  // 7. Test push via worker
-  lines.push('--- Push test via worker ---');
-  try {
-    const fcmTok = localStorage.getItem('totoai_fcm_token');
-    const subJson = localStorage.getItem('totoai_push_sub');
-    lines.push('FCM token opgeslagen: ' + (fcmTok ? fcmTok.substring(0,20)+'... ✅' : 'GEEN ❌'));
-    if (fcmTok || subJson) {
-      const pushBody = fcmTok
-        ? { fcmToken: fcmTok, title: '🔔 DEBUG TEST', message: 'Push via worker test', data: { tag: 'debug' } }
-        : { subscription: JSON.parse(subJson), title: '🔔 DEBUG TEST', message: 'Push via worker test', data: { tag: 'debug' } };
-      const resp = await fetch('https://toto-proxy.zweetzakken.workers.dev/push/send', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(pushBody)
-      });
-      const result = await resp.json();
-      lines.push('Worker status: ' + resp.status);
-      lines.push('Worker result: ' + JSON.stringify(result).substring(0, 100));
-    } else {
-      lines.push('Geen token voor push test');
-    }
-  } catch(e) {
-    lines.push('Push test fout: ' + e.message);
-  }
-
-  // Toon resultaat
-  const msg = lines.join('\n');
-  alert(msg);
-}
-
-function toggleKeyVisibility(inputId, btn) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    btn.textContent = '👁';
-  }
-}
-
-// ═══════════════════════════════════════════════════════
-// FIREBASE AUTHENTICATIE
-// ═══════════════════════════════════════════════════════
-let _firebaseAuth = null;
-let _currentUser = null;
-
-function initFirebaseAuth() {
-  try {
-    let app;
-    try { app = firebase.app(); } catch(e) {
-      app = firebase.initializeApp({
-        apiKey: 'AIzaSyB7K4SXPdxHSPIvFyXOfY2bpehcNnjRM-M',
-        authDomain: 'toto-ai-397cb.firebaseapp.com',
-        projectId: 'toto-ai-397cb',
-        messagingSenderId: '426083019907',
-        appId: '1:426083019907:web:8f32f8037628d63cbbbfb6'
-      });
-    }
-    _firebaseAuth = firebase.auth();
-
-    // Luister naar auth state changes
-    _firebaseAuth.onAuthStateChanged(user => {
-      _currentUser = user;
-      if (user) {
-        console.log('[Auth] Ingelogd:', user.email);
-        hideLoginScreen();
-        // Toon gebruiker in instellingen
-        const userEl = document.getElementById('authUserInfo');
-        if (userEl) {
-          userEl.innerHTML = `✅ Ingelogd als <b>${user.displayName || user.email}</b>
-            <button onclick="logoutUser()" style="margin-left:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;padding:2px 8px;border-radius:8px;border:1px solid rgba(220,38,38,.3);background:rgba(220,38,38,.08);color:#dc2626;cursor:pointer;">Uitloggen</button>`;
-        }
-      } else {
-        console.log('[Auth] Niet ingelogd');
-        showLoginScreen();
-      }
-    });
-  } catch(e) {
-    console.error('[Auth] Init mislukt:', e.message);
-    // Geen auth beschikbaar — toon app gewoon
-    hideLoginScreen();
-  }
-}
-
-function showLoginScreen() {
-  const ls = document.getElementById('loginScreen');
-  const app = document.getElementById('app');
-  if (ls) ls.style.display = 'flex';
-  if (app) app.style.display = 'none';
-}
-
-function hideLoginScreen() {
-  const ls = document.getElementById('loginScreen');
-  const app = document.getElementById('app');
-  if (ls) ls.style.display = 'none';
-  if (app) app.style.display = 'block';
-}
-
-function switchLoginTab(tab) {
-  const loginForm = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
-  const loginTab = document.getElementById('loginTabBtn');
-  const registerTab = document.getElementById('registerTabBtn');
-  if (tab === 'login') {
-    loginForm.style.display = 'block';
-    registerForm.style.display = 'none';
-    loginTab.classList.add('active');
-    registerTab.classList.remove('active');
-  } else {
-    loginForm.style.display = 'none';
-    registerForm.style.display = 'block';
-    loginTab.classList.remove('active');
-    registerTab.classList.add('active');
-  }
-  document.getElementById('loginError').textContent = '';
-}
-
-async function loginWithEmail() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  const errEl = document.getElementById('loginError');
-  if (!email || !password) { errEl.textContent = 'Vul email en wachtwoord in'; return; }
-  try {
-    await _firebaseAuth.signInWithEmailAndPassword(email, password);
-  } catch(e) {
-    const msgs = {
-      'auth/user-not-found': 'Geen account gevonden met dit email',
-      'auth/wrong-password': 'Verkeerd wachtwoord',
-      'auth/invalid-email': 'Ongeldig email adres',
-      'auth/too-many-requests': 'Te veel pogingen, probeer later'
-    };
-    errEl.textContent = msgs[e.code] || e.message;
-  }
-}
-
-async function registerWithEmail() {
-  const name = document.getElementById('registerName').value.trim();
-  const email = document.getElementById('registerEmail').value.trim();
-  const password = document.getElementById('registerPassword').value;
-  const errEl = document.getElementById('loginError');
-  if (!email || !password) { errEl.textContent = 'Vul alle velden in'; return; }
-  if (password.length < 6) { errEl.textContent = 'Wachtwoord min. 6 tekens'; return; }
-  try {
-    const cred = await _firebaseAuth.createUserWithEmailAndPassword(email, password);
-    if (name) await cred.user.updateProfile({ displayName: name });
-  } catch(e) {
-    const msgs = {
-      'auth/email-already-in-use': 'Email al in gebruik — probeer in te loggen',
-      'auth/invalid-email': 'Ongeldig email adres',
-      'auth/weak-password': 'Wachtwoord te zwak'
-    };
-    errEl.textContent = msgs[e.code] || e.message;
-  }
-}
-
-async function loginWithGoogle() {
-  const errEl = document.getElementById('loginError');
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await _firebaseAuth.signInWithPopup(provider);
-  } catch(e) {
-    if (e.code !== 'auth/popup-closed-by-user') {
-      errEl.textContent = 'Google login mislukt: ' + e.message;
-    }
-  }
-}
-
-async function logoutUser() {
-  try {
-    await _firebaseAuth.signOut();
-    showAutoCheckBar('👋 Uitgelogd', 2000);
-  } catch(e) {}
 }
 function saveState() {
   localStorage.setItem('totoai_state', JSON.stringify({
@@ -10804,7 +8892,7 @@ function renderWalletChart() {
 // ═══════════════════════════════════════════════════════
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js', {scope:'/', updateViaCache:'none'})
+    navigator.serviceWorker.register('/Toto-AI/sw.js', {scope:'/Toto-AI/', updateViaCache:'none'})
       .then(reg => {
         // Check voor updates bij elke pagina-laad
         reg.update();
