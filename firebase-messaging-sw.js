@@ -2,7 +2,9 @@
 // Dit bestand MOET in de root van de GitHub repo staan
 
 // ── Fetch handler: zorgt dat SW actief blijft als app gesloten is ──
-self.addEventListener('fetch', () => {});
+self.addEventListener('fetch', (event) => {
+  event.respondWith(fetch(event.request));
+});
 
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
