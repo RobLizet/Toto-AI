@@ -5870,7 +5870,7 @@ async function scanValueAll() {
     try {
       const leagueId = COMP_IDS[state.activeComp];
       const r = await apiFetch(
-        `https://v3.football.api-sports.io/standings?league=${leagueId}&season=2025`,
+        `https://v3.football.api-sports.io/standings?league=${leagueId}&season=2026`,
         state.settings.footballKey, 6000
       );
       const d = await r.json();
@@ -6739,7 +6739,7 @@ async function fetchTeamForm(teamId) {
 async function fetchTeamStats(teamId, leagueId) {
   if (!teamId || !state.settings.footballKey) return null;
   try {
-    const r = await apiFetch(`https://v3.football.api-sports.io/teams/statistics?team=${teamId}&league=${leagueId}&season=2025`, state.settings.footballKey);
+    const r = await apiFetch(`https://v3.football.api-sports.io/teams/statistics?team=${teamId}&league=${leagueId}&season=2026`, state.settings.footballKey);
     const d = await r.json();
     return d.response || null;
   } catch(e) { return null; }
@@ -6763,7 +6763,7 @@ async function fetchFixtureStats(fixtureId) {
 async function fetchTopScorers(leagueId) {
   if (!leagueId || !state.settings.footballKey) return null;
   try {
-    const r = await apiFetch(`https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=2025`, state.settings.footballKey, 5000);
+    const r = await apiFetch(`https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=2026`, state.settings.footballKey, 5000);
     const d = await r.json();
     return d.response?.slice(0,10) || null;
   } catch(e) { return null; }
@@ -6810,7 +6810,7 @@ async function fetchPlayerStats(teamId, leagueId) {
   if (!teamId || !leagueId || !state.settings.footballKey) return null;
   try {
     const r = await apiFetch(
-      `https://v3.football.api-sports.io/players?team=${teamId}&league=${leagueId}&season=2025`,
+      `https://v3.football.api-sports.io/players?team=${teamId}&league=${leagueId}&season=2026`,
       state.settings.footballKey, 6000
     );
     const d = await r.json();
