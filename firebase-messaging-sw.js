@@ -10,40 +10,31 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Belangrijk: Gebruik de background handler voor het geval je 'data-only' payloads stuurt
 messaging.onBackgroundMessage(payload => {
-  console.log('[FCM-SW] Achtergrond push ontvangen:', payload);
-
-  const notificationTitle = payload.notification?.title || payload.data?.title || '⚡ TOTO AI';
-  const notificationOptions = {
-    body: payload.notification?.body || payload.data?.body || payload.data?.message || '',
+  const title = payload.data?.title || '⚡ TOTO AI';
+  const body = payload.data?.body || payload.data?.message || '';
+  return self.registration.showNotification(title, {
+    body,
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     tag: payload.data?.tag || 'totoai-bg',
     requireInteraction: true,
-    data: payload.data
-  };
-
-  // Gebruik self.registration om de notificatie te tonen
-  return self.registration.showNotification(notificationTitle, notificationOptions);
+    vibrate: [200, 100, 200],
+    data: payload.data || {}
+  });
 });
 
-// Klik afhandeling
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const targetUrl = 'https://toto-ai.app/';
-  
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-      for (var i = 0; i < windowClients.length; i++) {
-        var client = windowClients[i];
-        if (client.url.includes('toto-ai.app') && 'focus' in client) {
-          return client.focus();
-        }
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url.includes('toto-ai.app') && 'focus' in c) return c.focus();
       }
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
+      return clients.openWindow('https://toto-ai.app/');
     })
   );
 });
+
+// Vereist voor Chrome om SW actief te houden bij gesloten app
+self.addEventListener('fetch', e => {});
