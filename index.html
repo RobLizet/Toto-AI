@@ -20,23 +20,9 @@
 <meta name="apple-mobile-web-app-title" content="TOTO AI">
 <meta name="description" content="AI voetbal toto analyses, winstkansen en combi tips">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;800&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
-<!-- Firebase SDK (voor auth + database) -->
+<!-- Firebase SDK voor FCM push -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <!-- OneSignal SDK voor push notificaties -->
-  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-  <script>
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-      await OneSignal.init({
-        appId: "a6786d07-361d-44e5-b1d9-34ce7af00eed",
-        serviceWorkerParam: { scope: "/" },
-        serviceWorkerPath: "OneSignalSDKWorker.js",
-        notifyButton: { enable: false },
-        allowLocalhostAsSecureOrigin: true,
-      });
-    });
-  </script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
   <style>
 :root {
   --bg1:#fef6f0;--bg2:#f3f0ff;--bg3:#eef6ff;
@@ -2169,7 +2155,7 @@ body.dark .login-input {
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v11.2</div>
+        <div class="version-badge">v11.0</div>
       </div>
     </div>
   </div>
@@ -4238,28 +4224,15 @@ async function loadTodayAllComps() {
   if (loading) loading.style.display = 'flex';
   list.innerHTML = '';
 
-  const todayDate = new Date();
-  const today = todayDate.toISOString().split('T')[0];
-  const tomorrow = new Date(todayDate.getTime() + 86400000).toISOString().split('T')[0];
+  const today = new Date().toISOString().split('T')[0];
 
   try {
-    // Haal vandaag + morgen op zodat er altijd wedstrijden zijn
-    const [rToday, rTomorrow] = await Promise.all([
-      apiFetch(`https://v3.football.api-sports.io/fixtures?date=${today}`, apiKey, 12000),
-      apiFetch(`https://v3.football.api-sports.io/fixtures?date=${tomorrow}`, apiKey, 12000)
-    ]);
-    const dToday = await rToday.json();
-    const dTomorrow = await rTomorrow.json();
-    // Combineer en filter gespeelde wedstrijden (FT/AET/PEN) van gisteren
-    const allFixtures = [...(dToday.response||[]), ...(dTomorrow.response||[])];
-    // Filter: verwijder wedstrijden die al gespeeld zijn (FT/AET/PEN) van gisteren
-    const fixtures = allFixtures.filter(f => {
-      const status = f.fixture.status.short;
-      const isFinished = ['FT','AET','PEN'].includes(status);
-      const fixtureDate = f.fixture.date ? f.fixture.date.split('T')[0] : '';
-      // Gespeelde wedstrijden van vandaag mogen, maar niet van gister
-      return !isFinished || fixtureDate >= today;
-    });
+    const r = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?date=${today}`,
+      apiKey, 12000
+    );
+    const data = await r.json();
+    const fixtures = data.response || [];
 
     if (!fixtures.length) {
       list.innerHTML = '<div class="match-loading">Geen wedstrijden vandaag gevonden.</div>';
@@ -4268,30 +4241,23 @@ async function loadTodayAllComps() {
       return;
     }
 
-    // Group by league — ALLEEN bekende competities uit COMP_IDS
-    const knownLeagueIdsSet = new Set(Object.values(COMP_IDS));
+    // Group by league
     const leagueMap = {};
     for (const f of fixtures) {
       const lid = f.league.id;
-      if (!knownLeagueIdsSet.has(lid)) continue; // filter onbekende competities
       if (!leagueMap[lid]) leagueMap[lid] = { name: f.league.name, country: f.league.country, flag: f.league.flag, matches: [] };
       leagueMap[lid].matches.push(f);
     }
 
-    if (!Object.keys(leagueMap).length) {
-      list.innerHTML = '<div class="match-loading" style="color:var(--muted);">Geen wedstrijden vandaag voor de bekende competities.</div>';
-      if (btn) { btn.textContent = '🔄 Verversen'; btn.style.display = 'block'; }
-      if (loading) loading.style.display = 'none';
-      return;
-    }
-
-    // Sort leagues: in volgorde van COMP_IDS definitie
+    // Sort leagues: known comps first, then alphabetically
     const knownOrder = Object.values(COMP_IDS);
     const sorted = Object.entries(leagueMap).sort(([aId],[bId]) => {
       const ai = knownOrder.indexOf(parseInt(aId));
       const bi = knownOrder.indexOf(parseInt(bId));
       if (ai >= 0 && bi >= 0) return ai - bi;
-      return 0;
+      if (ai >= 0) return -1;
+      if (bi >= 0) return 1;
+      return leagueMap[aId].name.localeCompare(leagueMap[bId].name);
     });
 
     // Build match objects and render per league
@@ -10316,81 +10282,89 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function subscribeToPush() {
+  const vapidKey = state.settings.vapidPublicKey || 'BPpo274NkAKoESoj_ST_zqYAUauja6rBnX63or8yFhpMK10Roz-3e9TRt7nn7k32oQlWLlWYfN7FUW2MgGoLiJQ';
+
   try {
-    console.log('[Push] OneSignal subscribe...');
+    console.log('[Push] FCM via firebase-messaging-sw.js...');
 
-    if (typeof OneSignal === 'undefined' && !window.OneSignalDeferred) {
-      throw new Error('OneSignal SDK niet geladen');
-    }
-
-    // Vraag toestemming via OneSignal
-    await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('OneSignal timeout')), 10000);
-      if (window.OneSignal) {
-        window.OneSignal.Notifications.requestPermission().then(() => {
-          clearTimeout(timeout);
-          resolve();
-        }).catch(e => { clearTimeout(timeout); reject(e); });
-      } else {
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        window.OneSignalDeferred.push(async (OneSignal) => {
-          try {
-            await OneSignal.Notifications.requestPermission();
-            clearTimeout(timeout);
-            resolve();
-          } catch(e) { clearTimeout(timeout); reject(e); }
+    // Registreer firebase-messaging-sw.js voor FCM
+    let fcmReg;
+    try {
+      // Verwijder oude registraties van firebase-messaging-sw
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const reg of regs) {
+        if (reg.active?.scriptURL?.includes('firebase-messaging-sw')) {
+          fcmReg = reg;
+          break;
+        }
+      }
+      if (!fcmReg) {
+        fcmReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        // Wacht tot actief
+        await new Promise(resolve => {
+          if (fcmReg.active) { resolve(); return; }
+          fcmReg.addEventListener('updatefound', () => {
+            fcmReg.installing.addEventListener('statechange', () => {
+              if (fcmReg.active) resolve();
+            });
+          });
+          setTimeout(resolve, 2000);
         });
       }
-    });
-
-    // Haal OneSignal player ID op
-    const playerId = await new Promise((resolve) => {
-      const getId = (OneSignal) => {
-        if (OneSignal.User?.pushSubscription?.id) {
-          resolve(OneSignal.User.pushSubscription.id);
-        } else {
-          setTimeout(() => resolve(null), 2000);
-        }
-      };
-      if (window.OneSignal) getId(window.OneSignal);
-      else { window.OneSignalDeferred.push(getId); }
-    });
-
-    if (playerId) {
-      localStorage.setItem('totoai_onesignal_id', playerId);
-      console.log('[Push] OneSignal Player ID:', playerId.substring(0,20)+'...');
+      console.log('[Push] FCM SW:', fcmReg.scope, fcmReg.active?.state);
+    } catch(swErr) {
+      console.warn('[Push] FCM SW mislukt:', swErr.message);
+      fcmReg = await navigator.serviceWorker.ready;
     }
 
-    localStorage.setItem('totoai_push_sub', JSON.stringify({ type: 'onesignal', playerId }));
-    localStorage.removeItem('totoai_fcm_token');
+    // Haal FCM token op via Firebase Messaging
+    let app;
+    try { app = firebase.app(); } catch(e) {
+      app = firebase.initializeApp({
+        apiKey: 'AIzaSyB7K4SXPdxHSPIvFyXOfY2bpehcNnjRM-M',
+        projectId: 'toto-ai-397cb',
+        messagingSenderId: '426083019907',
+        appId: '1:426083019907:web:8f32f8037628d63cbbbfb6'
+      });
+    }
+    const messaging = firebase.messaging();
+    const fcmToken = await messaging.getToken({
+      vapidKey,
+      serviceWorkerRegistration: fcmReg
+    });
 
-    console.log('[Push] OneSignal actief ✅');
+    if (!fcmToken) throw new Error('Geen FCM token ontvangen');
+
+    console.log('[Push] FCM Token:', fcmToken.substring(0,20)+'...');
+    localStorage.setItem('totoai_fcm_token', fcmToken);
+    localStorage.removeItem('totoai_push_sub'); // gebruik FCM token
+
+    // Stuur token naar worker
+    await fetch('https://toto-proxy.zweetzakken.workers.dev/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fcmToken })
+    }).catch(e => console.warn('[Push] Opslaan mislukt:', e.message));
+
     return true;
   } catch(e) {
-    console.error('[Push] OneSignal mislukt:', e.name, e.message);
+    console.error('[Push] FCM mislukt:', e.name, e.message);
     throw e;
   }
 }
 
 async function sendRealPush(title, message, data = {}) {
-  try {
-    // Stuur via OneSignal REST API (via worker)
-    const playerId = localStorage.getItem('totoai_onesignal_id');
-    if (!playerId) return false;
+  const fcmToken = localStorage.getItem('totoai_fcm_token');
+  if (!fcmToken) return false;
 
+  try {
     const resp = await fetch('https://toto-proxy.zweetzakken.workers.dev/push/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'onesignal',
-        playerId,
-        title,
-        message,
-        data
-      })
+      body: JSON.stringify({ fcmToken, title, message, data })
     });
     const result = await resp.json();
-    console.log('[Push] OneSignal verstuurd:', result);
+    console.log('[Push] Verstuurd:', result);
     return resp.ok;
   } catch(e) {
     console.warn('[Push] Mislukt:', e.message);
