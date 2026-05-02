@@ -1857,30 +1857,23 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
 /* ── COMPETITIE INFO KNOP ── */
 .comp-info-btn {
   position: absolute;
-  top: 0; right: 0;
-  width: 36px; height: 36px;
-  border-radius: 0 12px 0 12px;
-  background: rgba(219,39,119,.12);
-  border: none;
-  border-left: 1px solid rgba(219,39,119,.2);
-  border-bottom: 1px solid rgba(219,39,119,.2);
+  top: 4px; right: 4px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(219,39,119,.15);
+  border: 1px solid rgba(219,39,119,.3);
   color: #be185d;
-  font-size: .75rem;
+  font-size: .55rem;
   font-weight: 800;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   transition: all .15s;
   z-index: 5;
   line-height: 1;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
 }
-.comp-info-btn:active {
+.comp-info-btn:hover {
   background: rgba(219,39,119,.3);
-  transform: scale(0.95);
-}
-@media (hover: hover) {
-  .comp-info-btn:hover { background: rgba(219,39,119,.25); }
+  transform: scale(1.1);
 }
 .comp-chip { position: relative; }
 
@@ -2720,7 +2713,7 @@ body.dark .login-input {
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v11.21</div>
+        <div class="version-badge">v11.11</div>
       </div>
     </div>
   </div>
@@ -2846,82 +2839,150 @@ body.dark .login-input {
 <!-- VOORBEELD: zo moet elke comp-chip eruit zien -->
 <!-- Voeg onclick="openCompDetail('...') toe aan de knop, NIET aan de chip zelf -->
 
-<div class="comp-chip active" onclick="handleCompTap('eredivisie')" ontouchstart="handleCompTouchStart('eredivisie', event)" ontouchend="handleCompTouchEnd('eredivisie')" id="comp-eredivisie">
+<div class="comp-chip active" onclick="handleCompTap('eredivisie')" id="comp-eredivisie">
   <span class="flag">🇳🇱</span>
   <div class="cname">Eredivisie</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('eredivisie')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('kkd')" ontouchstart="handleCompTouchStart('kkd', event)" ontouchend="handleCompTouchEnd('kkd')" id="comp-kkd">
+<div class="comp-chip" onclick="handleCompTap('kkd')" id="comp-kkd">
   <span class="flag">🇳🇱</span>
   <div class="cname">Keuken Kampioen</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('kkd')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('beker')" ontouchstart="handleCompTouchStart('beker', event)" ontouchend="handleCompTouchEnd('beker')" id="comp-beker">
+<div class="comp-chip" onclick="handleCompTap('beker')" id="comp-beker">
   <span class="flag">🏆</span>
   <div class="cname">KNVB Beker</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('beker')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('premier')" ontouchstart="handleCompTouchStart('premier', event)" ontouchend="handleCompTouchEnd('premier')" id="comp-premier">
+<div class="comp-chip" onclick="handleCompTap('premier')" id="comp-premier">
   <span class="flag">🇬🇧</span>
   <div class="cname">Premier League</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('premier')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('bundesliga')" ontouchstart="handleCompTouchStart('bundesliga', event)" ontouchend="handleCompTouchEnd('bundesliga')" id="comp-bundesliga">
+<div class="comp-chip" onclick="handleCompTap('bundesliga')" id="comp-bundesliga">
   <span class="flag">🇩🇪</span>
   <div class="cname">Bundesliga</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('bundesliga')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('ligue1')" ontouchstart="handleCompTouchStart('ligue1', event)" ontouchend="handleCompTouchEnd('ligue1')" id="comp-ligue1">
+<div class="comp-chip" onclick="handleCompTap('ligue1')" id="comp-ligue1">
   <span class="flag">🇫🇷</span>
   <div class="cname">Ligue 1</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('ligue1')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('seriea')" ontouchstart="handleCompTouchStart('seriea', event)" ontouchend="handleCompTouchEnd('seriea')" id="comp-seriea">
+<div class="comp-chip" onclick="handleCompTap('seriea')" id="comp-seriea">
   <span class="flag">🇮🇹</span>
   <div class="cname">Serie A</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('seriea')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('champions')" ontouchstart="handleCompTouchStart('champions', event)" ontouchend="handleCompTouchEnd('champions')" id="comp-champions">
+<div class="comp-chip" onclick="handleCompTap('champions')" id="comp-champions">
   <span class="flag">⭐</span>
   <div class="cname">Champions League</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('champions')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('nations')" ontouchstart="handleCompTouchStart('nations', event)" ontouchend="handleCompTouchEnd('nations')" id="comp-nations">
+<div class="comp-chip" onclick="handleCompTap('nations')" id="comp-nations">
   <span class="flag">🌍</span>
   <div class="cname">Nations League</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('nations')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('jupiler')" ontouchstart="handleCompTouchStart('jupiler', event)" ontouchend="handleCompTouchEnd('jupiler')" id="comp-jupiler">
+<div class="comp-chip" onclick="handleCompTap('jupiler')" id="comp-jupiler">
   <span class="flag">🇧🇪</span>
   <div class="cname">Jupiler Pro</div>
   <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('jupiler')" title="Competitie details">ℹ</button>
 </div>
 
-<div class="comp-chip" onclick="handleCompTap('laliga')" ontouchstart="handleCompTouchStart('laliga', event)" ontouchend="handleCompTouchEnd('laliga')" id="comp-laliga">
-  <div class="cflag">🇪🇸</div>
-  <div class="cname">La Liga</div>
-  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('laliga')" title="Competitie details">ℹ</button>
-  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('laliga')" title="Competitie details">ℹ</button>
+<div class="comp-chip" onclick="handleCompTap('ligaportugal')" id="comp-ligaportugal">
+  <span class="flag">🇵🇹</span>
+  <div class="cname">Liga Portugal</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('ligaportugal')" title="Competitie details">ℹ</button>
 </div>
-<div class="comp-chip" onclick="handleCompTap('championship')" ontouchstart="handleCompTouchStart('championship', event)" ontouchend="handleCompTouchEnd('championship')" id="comp-championship">
-  <div class="cflag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
-  <div class="cname">Championship</div>
-  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('championship')" title="Competitie details">ℹ</button>
+
+<div class="comp-chip" onclick="handleCompTap('superlig')" id="comp-superlig">
+  <span class="flag">🇹🇷</span>
+  <div class="cname">Süper Lig</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('superlig')" title="Competitie details">ℹ</button>
 </div>
-<div class="comp-chip" onclick="handleCompTap('bundesliga2')" ontouchstart="handleCompTouchStart('bundesliga2', event)" ontouchend="handleCompTouchEnd('bundesliga2')" id="comp-bundesliga2">
-  <div class="cflag">🇩🇪</div>
-  <div class="cname">2. Bundesliga</div>
-  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('bundesliga2')" title="Competitie details">ℹ</button>
+
+<!-- WK chip blijft hetzelfde maar krijgt ook een knop -->
+<div class="comp-chip wk-chip" onclick="handleCompTap('wk2026')" id="comp-wk2026"
+  style="grid-column:span 3;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(254,243,199,.8));border:2px solid rgba(217,119,6,.4);">
+  <span class="flag">🏆</span>
+  <div class="cname" style="color:#92400e;font-weight:800;">WK 2026 · USA/Canada/Mexico</div>
+  <div id="wkCountdown" style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#b45309;margin-top:2px;"></div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('wk2026')" title="WK 2026 details">ℹ</button>
 </div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     INSTALLATIE INSTRUCTIES
+════════════════════════════════════════════════════ -->
+
+<!--
+  HOE INSTALLEREN (4 stappen):
+
+  STAP 1 — CSS
+  Kopieer de inhoud van comp-detail-1-css.css
+  Plak onderaan in het <style> blok van index.html
+  (vlak voor de afsluitende </style>)
+
+  STAP 2 — HTML
+  Kopieer de inhoud van comp-detail-2-html.html
+  Plak vlak VOOR </body> in index.html
+  (na de andere modals zoals betModal, trackerModal etc.)
+
+  STAP 3 — JavaScript
+  Kopieer de inhoud van comp-detail-3-js.js
+  Plak ONDERAAN in het <script> blok van index.html
+  (vlak voor de afsluitende </script>)
+
+  STAP 4 — Comp chips vervangen
+  Vervang het <div class="comp-grid"> blok in index.html
+  door de chips hierboven (met de ℹ knop toegevoegd)
+
+  KLAAR! Tik op het ℹ knopje bij een competitie
+  om de detailpagina te openen.
+
+  FEATURES:
+  🏆 Stand — ranglijst met degradatie/CL kleuring
+  ⚽ Wedstrijden — aankomende wedstrijden + quotes + bet plaatsen
+  ⚡ Value Scan — AI scan voor die competitie
+  👟 Topscorers + Top Assists
+
+  VERSIE: v11.12 (na installatie versienummer ophogen)
+-->
+
+    </div>
+
+<div class="section-label">
+  Wedstrijden vandaag t/m overmorgen
+
+  <button onclick="scanValueAll()" id="scanValueBtn" class="scan-value-btn">
+    ⚡ SCAN VALUE
+  </button>
+</div>
+<div id="scanResultsPanel">
+  <div class="scan-results-header" onclick="toggleScanResults()">
+    <div class="scan-results-title" id="scanResultsTitle">⚡ SCAN RESULTATEN</div>
+    <span id="scanResultsChevron" style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#15803d;">▼</span>
+  </div>
+  <div id="scanResultsBody">
+    <div class="scan-sort-row" style="padding:.4rem .75rem 0;">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);font-weight:700;">SORTEREN:</span>
+      <button class="sort-btn active" id="sort-value"   onclick="setScanSort('value')">⚡ Value %</button>
+      <button class="sort-btn"        id="sort-conf"    onclick="setScanSort('conf')">🎲 Confidence</button>
+      <button class="sort-btn"        id="sort-odds"    onclick="setScanSort('odds')">📊 Quote</button>
+      <button class="sort-btn"        id="sort-kelly"   onclick="setScanSort('kelly')">½K Kelly</button>
+    </div>
+    <div id="scanResultsList" style="padding-bottom:.3rem;"></div>
+  </div>
 </div>
 
 <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;align-items:center;">
@@ -4434,7 +4495,7 @@ function selectComp(comp) {
 // ═══════════════════════════════════════════════════════
 const COMP_NAMES = {
   eredivisie:'🇳🇱 Eredivisie', kkd:'🇳🇱 Keuken Kampioen', beker:'🏆 KNVB Beker', wk2026:'🏆 WK 2026',
-  premier:'🇬🇧 Premier League', championship:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship', bundesliga:'🇩🇪 Bundesliga', bundesliga2:'🇩🇪 2. Bundesliga', ligue1:'🇫🇷 Ligue 1',
+  premier:'🇬🇧 Premier League', bundesliga:'🇩🇪 Bundesliga', ligue1:'🇫🇷 Ligue 1',
   seriea:'🇮🇹 Serie A', champions:'⭐ Champions League', nations:'🌍 Nations League'
 };
 
@@ -4496,36 +4557,13 @@ function toggleMultiMode() {
   }
 }
 
-// Longpress timer per comp chip
-const _chipPressTimers = {};
-
-function handleCompTouchStart(comp, e) {
-  _chipPressTimers[comp] = setTimeout(() => {
-    _chipPressTimers[comp] = null;
-    if (navigator.vibrate) navigator.vibrate(50);
-    if (_multiMode) {
-      // In multi-mode: longpress = open detail
-      openCompDetail(comp);
-    } else {
-      // Normaal: longpress = multi-mode activeren
-      toggleFavComp(comp);
-      if (!_multiMode) toggleMultiMode();
-    }
-  }, 500);
-}
-
-function handleCompTouchEnd(comp) {
-  if (_chipPressTimers[comp]) {
-    clearTimeout(_chipPressTimers[comp]);
-    _chipPressTimers[comp] = null;
-  }
-}
-
 function handleCompTap(comp) {
   if (_multiMode) {
+    // Multi-mode: togglefav + vibratie
     toggleFavComp(comp);
     if (navigator.vibrate) navigator.vibrate(40);
   } else {
+    // Normaal: laad wedstrijden
     selectComp(comp);
   }
 }
@@ -4671,7 +4709,7 @@ const FD_CODES = {
 const COMP_IDS = {
   eredivisie: 88, kkd: 89, bundesliga: 78, premier: 39,
   beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5, wk2026: 1,
-  jupiler: 144, laliga: 140, superlig: 203, championship: 40, bundesliga2: 79,
+  jupiler: 144, ligaportugal: 94, superlig: 203,
   // Playoffs tijdelijk uitgeschakeld — IDs worden nog geverifieerd
 };
 function getCurrentSeason(comp) {
@@ -4679,41 +4717,67 @@ function getCurrentSeason(comp) {
   return 2025;
 }
 
-// ═══════════════════════════════════════════════════════
-// PROXY v2.0 — Alle keys veilig op de Cloudflare Worker
-// Geen enkele API key wordt meer vanuit de browser verstuurd
-// ═══════════════════════════════════════════════════════
-const WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
+const PROXIES = [
+  'https://toto-proxy.zweetzakken.workers.dev',
+  'https://corsproxy.io/?'   // backup proxy
+];
+let _proxyIdx = 0;
 
-// ── API-Football via Worker /apif/* ─────────────────────
-async function apiFetch(url, _apiKey, timeoutMs=10000) {
-  // Vervang het volledige API-Football domein door /apif/
-  const apiPath = url.replace('https://v3.football.api-sports.io', '');
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const r = await fetch(`${WORKER}/apif${apiPath}`, { signal: controller.signal });
-    clearTimeout(timer);
-    return r;
-  } catch(e) {
-    clearTimeout(timer);
-    throw e;
+function proxyUrl(url) {
+  const p = PROXIES[_proxyIdx];
+  // corsproxy.io heeft andere format
+  if (p.includes('corsproxy.io')) return `${p}${encodeURIComponent(url)}`;
+  return `${p}?url=${encodeURIComponent(url)}`;
+}
+
+async function proxyFetchWithFallback(url, options={}) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    _proxyIdx = i;
+    try {
+      const r = await fetch(proxyUrl(url), { ...options, signal: AbortSignal.timeout(10000) });
+      if (r.ok || r.status < 500) { _proxyIdx = i; return r; }
+    } catch(e) {
+      console.warn(`[Proxy ${i}] Failed:`, e.message);
+    }
+  }
+  throw new Error('Alle proxies onbereikbaar');
+}
+
+function fdFetch(url, token) {
+  return fetch(proxyUrl(url), { headers: { 'X-Auth-Token': token } });
+}
+
+async function apiFetch(url, apiKey, timeoutMs=10000) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    _proxyIdx = i;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const r = await fetch(proxyUrl(url), {
+        headers: {
+          'x-apisports-key': apiKey,
+          'x-rapidapi-key': apiKey,
+          'x-rapidapi-host': 'v3.football.api-sports.io'
+        },
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      if (r.ok || r.status < 500) return r;
+    } catch(e) {
+      clearTimeout(timer);
+      console.warn(`[apiFetch proxy ${i}]`, e.message);
+      if (i === PROXIES.length - 1) throw e;
+    }
   }
 }
 
-// ── football-data.org via Worker /fd/* ──────────────────
-function fdFetch(url, _token) {
-  const apiPath = url.replace('https://api.football-data.org', '');
-  return fetch(`${WORKER}/fd${apiPath}`);
-}
-
-// ── Anthropic via Worker /anthropic ─────────────────────
-async function anthropicFetchWithRetry(body, maxRetries=3) {
+async function anthropicFetchWithRetry(apiKey, body, maxRetries=3) {
   for (let i=0; i<=maxRetries; i++) {
     try {
-      const resp = await anthropicFetch(body);
+      const resp = await anthropicFetch(apiKey, body);
       const data = await resp.json();
       if (data.error?.type === 'overloaded_error' && i < maxRetries) {
+        // Langere wachttijden: 15s, 30s, 45s — geeft servers meer tijd
         const wait = 15000 + i * 15000;
         console.log(`Anthropic overloaded, poging ${i+1}/${maxRetries}, wacht ${wait/1000}s...`);
         await new Promise(r => setTimeout(r, wait));
@@ -4727,36 +4791,30 @@ async function anthropicFetchWithRetry(body, maxRetries=3) {
   }
 }
 
-async function anthropicFetch(body) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 30000);
-  try {
-    const r = await fetch(`${WORKER}/anthropic`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    return r;
-  } catch(e) {
-    clearTimeout(timer);
-    throw e;
+async function anthropicFetch(apiKey, body) {
+  for (let i = 0; i < PROXIES.length; i++) {
+    _proxyIdx = i;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    try {
+      const r = await fetch(proxyUrl('https://api.anthropic.com/v1/messages'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      if (r.ok || r.status < 500) return r;
+    } catch(e) {
+      clearTimeout(timer);
+      console.warn(`[anthropicFetch proxy ${i}]`, e.message);
+      if (i === PROXIES.length - 1) throw e;
+    }
   }
-}
-
-// ── Generieke proxy (voor overige calls) ────────────────
-async function proxyFetchWithFallback(url, options={}) {
-  const apiPath = url.replace('https://v3.football.api-sports.io', '')
-                     .replace('https://api.football-data.org', '');
-  const workerUrl = url.includes('api-sports') || url.includes('football.api-sports')
-    ? `${WORKER}/apif${apiPath}`
-    : url.includes('football-data.org')
-      ? `${WORKER}/fd${apiPath}`
-      : `${WORKER}?url=${encodeURIComponent(url)}`;
-  const r = await fetch(workerUrl, { ...options, signal: AbortSignal.timeout(10000) });
-  if (r.ok || r.status < 500) return r;
-  throw new Error('Worker onbereikbaar');
 }
 
 function showLoadingMsg(msg, color) {
@@ -4833,7 +4891,7 @@ function parseAPIMatch(f) {
 
   return {
     id: fix.id, source: 'apif',
-    comp: ({'Eerste Divisie':'Keuken Kampioen Divisie'}[f.league.name] || f.league.name), compLogo: f.league.logo || '',
+    comp: f.league.name, compLogo: f.league.logo || '',
     leagueId: f.league.id,
     time: timeStr, date: dateStr,
     dateISO: fix.date ? fix.date.split('T')[0] : '',
@@ -5010,7 +5068,7 @@ async function loadFromFD(fdCode, fdKey, comp) {
   const today = new Date();
   const dateFrom = today.toISOString().split('T')[0];
   const dateTo = new Date(today.getTime() + 2 * 86400000).toISOString().split('T')[0];
-  const compName = { eredivisie:'Eredivisie', kkd:'Keuken Kampioen Divisie', bundesliga:'Bundesliga', bundesliga2:'2. Bundesliga', championship:'Championship', premier:'Premier League', beker:'KNVB Beker', champions:'Champions League' }[comp] || comp;
+  const compName = { eredivisie:'Eredivisie', bundesliga:'Bundesliga', premier:'Premier League', beker:'KNVB Beker', champions:'Champions League' }[comp] || comp;
 
   try {
     showLoadingMsg('⟳ football-data.org laden...', 'var(--muted)');
@@ -5404,13 +5462,6 @@ async function debugAPI() {
 // ═══════════════════════════════════════════════════════
 // RENDER MATCHES (met value-badge integratie)
 // ═══════════════════════════════════════════════════════
-
-// Helper: selecteer match en ga naar analyse tab
-function goToAnalyse(matchId) {
-  const match = (state.matches || []).find(m => String(m.id) === String(matchId));
-  if (match) selectMatch(match);
-  setTimeout(() => switchTab('analyse'), 80);
-}
 function renderMatchCard(m) {
     if (!m.awayPct) m.awayPct = Math.max(0, 100 - m.homePct - m.drawPct);
     const card = document.createElement('div');
@@ -5612,29 +5663,11 @@ function renderMatchCard(m) {
           <button onclick="applyManualOdds('${m.id}');event.stopPropagation();" style="width:100%;padding:.5rem;border-radius:8px;background:rgba(219,39,119,.1);border:1px solid rgba(219,39,119,.3);font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:#be185d;cursor:pointer;">✓ OPSLAAN & GEBRUIKEN</button>
         </div>
       </div>
-      <!-- ── ANALYSE knop ───────────────────────────────── -->
-      <div style="padding:.35rem .75rem .1rem;" onclick="event.stopPropagation()">
-        <button onclick="event.stopPropagation();goToAnalyse('${m.id}')"
-          style="display:flex;align-items:center;justify-content:center;gap:.4rem;width:100%;
-          padding:.55rem .4rem;border-radius:10px;border:1px solid rgba(219,39,119,.25);
-          background:linear-gradient(135deg,rgba(255,154,193,.18),rgba(167,139,250,.18));
-          font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;
-          color:#be185d;cursor:pointer;touch-action:manipulation;">
-          🤖 ANALYSE
-        </button>
-      </div>
-      <!-- ── DIRECTE BET KNOPPEN ─────────────────────────── -->
-      <div style="display:flex;align-items:center;gap:.35rem;padding:.2rem .75rem .55rem;" onclick="event.stopPropagation()">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;flex:1;">
-          <div class="add-combi-btn" onclick="event.stopPropagation();openBetModal(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')" style="font-size:.62rem;">
-            1 ${m.homeOdds !== '—' ? '<span style=\'color:#7c3aed;font-size:.55rem;\'>@${m.homeOdds}</span>' : ''}
-          </div>
-          <div class="add-combi-btn" onclick="event.stopPropagation();openBetModal(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')" style="font-size:.62rem;">
-            X ${m.drawOdds !== '—' ? '<span style=\'color:#7c3aed;font-size:.55rem;\'>@${m.drawOdds}</span>' : ''}
-          </div>
-          <div class="add-combi-btn" onclick="event.stopPropagation();openBetModal(event,'${m.id}','2','${m.away} wint','${m.awayOdds}')" style="font-size:.62rem;">
-            2 ${m.awayOdds !== '—' ? '<span style=\'color:#7c3aed;font-size:.55rem;\'>@${m.awayOdds}</span>' : ''}
-          </div>
+      <div style="display:flex;align-items:center;gap:.35rem;padding:.2rem .75rem .55rem;">
+        <div class="add-combi-row" id="combi-row-${m.id}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;flex:1;">
+          <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','1','${m.home} wint','${m.homeOdds}')">+1</div>
+          <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','X','Gelijkspel','${m.drawOdds}')">+X</div>
+          <div class="add-combi-btn" data-match="${m.id}" onclick="handleCombiAdd(event,'${m.id}','2','${m.away} wint','${m.awayOdds}')">+2</div>
         </div>
         <a href="https://jacks.nl/sports#search/${(m.home + '+' + m.away).replace(/ /g,'+')}"
           target="_blank" rel="noopener" class="jacks-btn" onclick="event.stopPropagation()">
@@ -5692,9 +5725,8 @@ function renderMatches(matches) {
   }
   // ─────────────────────────────────────────────────────────────
 
-  // ─── DOUBLE LOCK SECTIE uitgeschakeld (2-combi verwijderd) ───
-  const doubleMatches = []; // uitgeschakeld
-  if (false && matches.filter(m => {
+  // ─── DOUBLE LOCK SECTIE (2 van 3 signalen) ───────────────────
+  const doubleMatches = matches.filter(m => {
     if ((m.valueData?.odds||0) < _minOdds) return false;
     if ((m.valueData?.pct||0) < _minValue) return false;
     if (!m.valueData) return false;
@@ -5730,8 +5762,9 @@ function renderMatches(matches) {
         + '</div>';
     }).join('');
     sec2.innerHTML = '<div class="double-lock-header">🔑 Double Lock · ' + doubleMatches.length + ' wedstrijd' + (doubleMatches.length > 1 ? 'en' : '') + '</div>' + rows;
-    // list.appendChild(sec2);
-  }); // end disabled double lock
+    list.appendChild(sec2);
+  }
+  // ─────────────────────────────────────────────────────────────
 
   matches.forEach(m => renderSingleMatch(m, list));}
 
@@ -5795,7 +5828,7 @@ function shortName(name) {
     'Sparta Rotterdam':'Sparta','PSV Eindhoven':'PSV','AFC Ajax':'Ajax','AZ Alkmaar':'AZ',
     'FC Utrecht':'Utrecht','SC Heerenveen':'Heerenveen','Go Ahead Eagles':'Go Ahead',
     'NEC Nijmegen':'NEC','Fortuna Sittard':'Fortuna','NAC Breda':'NAC','PEC Zwolle':'Zwolle',
-    'FC Groningen':'Groningen','RKC Waalwijk':'RKC','Almere City':'Almere City','Almere City FC':'Almere City','Heracles Almelo':'Heracles',
+    'FC Groningen':'Groningen','RKC Waalwijk':'RKC','Almere City':'Almere','Heracles Almelo':'Heracles',
     'Manchester City':'Man City','Manchester United':'Man United','Nottingham Forest':"Nott'm Forest",
     'Newcastle United':'Newcastle','Tottenham Hotspur':'Spurs','West Ham United':'West Ham',
     'Wolverhampton Wanderers':'Wolves','Brighton & Hove Albion':'Brighton','Leicester City':'Leicester',
@@ -6349,22 +6382,15 @@ async function scanAllTodayValue(mode = 'today') {
       return line;
     }).join('\n\n');
 
-    const resp = await anthropicFetch({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1500,
+    const resp = await anthropicFetch(apiKey, {
+      model: 'claude-sonnet-4-5',
+      max_tokens: 4000,
       temperature: 0,
-      system: `Je bent een value-betting analist. Strikt consistent: pick, kansen en reason moeten ALTIJD overeenkomen.
-Regels:
-- kans1+kansX+kans2 = precies 100
-- pick is de uitkomst met hoogste verwachte waarde (EV)
-- pickLabel beschrijft de pick beknopt (bv "Ajax wint", "Gelijkspel")
-- reason onderbouwt ALLEEN de gekozen pick — geen tegenstrijdige info
-- Gebruik Poisson als wiskundig anker (±8pp max aanpassen)
-- Marktbeweging sharp money → zwaar wegen
-- value = (kans/100 × quote - 1) × 100
-Geef ALLEEN deze JSON array, geen uitleg buiten de JSON:
-[{"idx":1,"pick":"1","pickLabel":"Ajax wint","kans1":52,"kansX":26,"kans2":22,"value":8.5,"confidence":7,"kelly":3.2,"reason":"max 12 woorden die pick onderbouwen"},...]
-Geef voor ALLE ${candidates.length} wedstrijden een resultaat.`,
+      system: `Je bent een value-betting analist. Gebruik Poisson als wiskundig anker (±8pp aanpassen max).
+Marktbeweging "📉 sharp money" = professionele betters → zwaar wegen.
+Geef ALLEEN deze JSON array, geen uitleg:
+[{"idx":1,"pick":"1","pickLabel":"kort","kans1":45,"kansX":28,"kans2":27,"value":8.5,"confidence":7,"kelly":3.2,"reason":"max 12 woorden"},...]
+kans1+kansX+kans2 = 100. value = (kans/100 × quote - 1) × 100. Geef voor ALLE ${candidates.length} wedstrijden een resultaat.`,
       messages:[{role:'user', content:`Analyseer ${candidates.length} wedstrijden:
 
 ${ctx}`}]
@@ -6765,9 +6791,9 @@ async function scanValueAll() {
   }).join('\n\n');
 
   try {
-    const data = await anthropicFetchWithRetry({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1000,
+    const data = await anthropicFetchWithRetry(apiKey, {
+      model: 'claude-sonnet-4-5',
+      max_tokens: 2500,
       temperature: 0,
       system: `Je bent een elite value-betting analist. Analyseer ELKE wedstrijd volledig. Geef kans1+kansX+kans2=100.
 
@@ -7804,8 +7830,8 @@ async function callEntity(apiKey, system, userMsg, entityId, cardId, bodyId) {
   }, 8000);
 
   try {
-    const data = await anthropicFetchWithRetry({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 400, system,
+    const data = await anthropicFetchWithRetry(apiKey, {
+      model: 'claude-sonnet-4-5', max_tokens: 600, system,
       messages: [{role:'user', content:userMsg}]
     });
     clearTimeout(overloadTimer);
@@ -7997,111 +8023,55 @@ Als lineups beschikbaar zijn: weeg spelersinformatie zwaarder dan seizoensgemidd
 Als een sleutelspeler (topper in topscorers) NIET in de opstelling staat: pas kansen significant aan (±5-8%).
 Marktefficiëntie laag = meer waarde-kansen mogelijk bij afwijking van bookmaker.`.trim();
 
+  const nl = 'Analyseer in het Nederlands. Gebruik markdown (## en **). Gebruik ALLEEN de meegeleverde data. Max 220 woorden.';
   const hasLineups = lineupsTxt && lineupsTxt.includes('BEVESTIGD');
   const hasPoisson = poissonAnaliseTxt.length > 0;
   const mktEff = getMarketEfficiency(leagueId);
 
-  // ── 1 GECOMBINEERDE ANALYSE CALL (ipv 6 losse calls) ──────────
-  // Toont alle entity cards als loading
-  ['vorm','stats','tactiek','kans','risico','advies'].forEach(id => {
-    const chip = document.getElementById('ec-' + id);
-    const card = document.getElementById('rc-' + id);
-    const body = document.getElementById('rb-' + id);
-    if (card) card.style.display = 'block';
-    if (chip) chip.className = 'entity-chip running';
-    if (body) body.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
-  });
+  const vormText = await callEntity(apiKey,
+    `Je bent vormexpert voetbal. Analyseer recente prestaties KRITISCH. ${nl}
+FOCUS OP: 1) Laatste 5 wedstrijden W/G/V met goals 2) Thuis vs uit verschil 3) Doelpuntentrend (meer/minder goals recent) 4) Spelers in vorm 🔥 vs slecht presterend 5) Momentum shift signalen.
+Als een speler 🔥IN VORM staat: benoem expliciet hoe gevaarlijk dat is.`,
+    `${ctx}\n\nVORM ${m.home}:\n${homeFormTxt}\n\nVORM ${m.away}:\n${awayFormTxt}\n${topScorersTxt}`,
+    'vorm','vorm','vorm');
 
-  let vormText = '', statsText = '', tactiekText = '', kansText = '', risicoText = '';
+  const statsText = await callEntity(apiKey,
+    `Je bent statistisch analist voetbal. ${nl}
+FOCUS OP: 1) H2H patroon laatste 5 jaar — eenduidig of wisselend? 2) Goals per wedstrijd gemiddelde 3) BTTS percentage 4) O/U 2.5 historiek 5) Thuis/uit doelpuntenverdeling.
+Wees SPECIFIEK met getallen. Geen vage uitspraken.`,
+    `${ctx}\n\nH2H:\n${h2hTxt}\n\n${homeStatsTxt}\n\n${awayStatsTxt}`,
+    'stats','stats','stats');
 
-  try {
-    const analyseData = await anthropicFetchWithRetry({
-      model: 'claude-sonnet-4-5',
-      max_tokens: 1800,
-      temperature: 0,
-      system: `Je bent een beknopte voetbal betting analist. Analyseer in het Nederlands. Gebruik markdown (## kopjes, **vet**). 
-Geef een CONSISTENTE analyse — alle secties moeten dezelfde conclusie ondersteunen.
-Wees beknopt maar volledig: max 60 woorden per sectie. Gebruik ALLEEN meegeleverde data.`,
-      messages: [{ role: 'user', content: `Analyseer: ${m.home} vs ${m.away} (${m.comp}, ${m.date} ${m.time})
-Inzet: €${bet} | Risicoprofiel: ${risk}
-${hasPoisson ? poissonAnaliseTxt + '\n' : ''}
-H2H: ${h2hTxt?.substring(0,300)||'geen data'}
-Vorm ${m.home}: ${homeFormTxt?.substring(0,200)||'geen data'}
-Vorm ${m.away}: ${awayFormTxt?.substring(0,200)||'geen data'}
-Stats: ${homeStatsTxt?.substring(0,150)||''} | ${awayStatsTxt?.substring(0,150)||''}
-Blessures: ${homeBlessuresTxt||'geen'} / ${awayBlessuresTxt||'geen'}
-${lineupsTxt ? 'Lineups: ' + lineupsTxt.substring(0,200) : ''}
-${standingsTxt?.substring(0,200)||''}
-${oddsHistoryTxt?.substring(0,200)||''}
-${restTxt||''}
-${motivationTxt||''}
+  const tactiekText = await callEntity(apiKey,
+    `Je bent tactisch analist voetbal. ${nl}
+FOCUS OP: 1) Formatie matchup — welke ploeg heeft tactisch voordeel? 2) Als lineups beschikbaar: zijn er sleutelspelers absent die de tactiek veranderen? 3) Pressing vs laag blok — welke stijl verwacht? 4) Set pieces gevaar 5) Hoe neutraliseren ze elkaars sterktes?
+${hasLineups ? 'LINEUPS ZIJN BEVESTIGD — gebruik die als primaire bron voor tactische analyse.' : 'Lineups nog onbekend — analyseer op basis van seizoenspatroon.'}`,
+    `${ctx}\n\n${lineupsTxt||'Geen opstellingen bekend'}\n${formationTxt||''}\nVorm: ${vormText?.substring(0,300)||''}`,
+    'tactiek','tactiek','tactiek');
 
-Geef deze 5 secties (elke sectie max 60 woorden):
+  const kansText = await callEntity(apiKey,
+    `Je bent kansen-analist voetbal. ${nl} Geef percentages.
+WERKWIJZE: 1) START met Poisson model als anker 2) Pas aan voor: lineups (±5-8% bij sleutelspeler absent), motivatie (±4-6% degradatie/titeldruk), rust (±3-5% bij ≤3 dagen), vorm (±2-4%) 3) Vergelijk met bookmaker-impliciete kansen 4) Bereken value
+Marktefficiëntie: ${Math.round(mktEff*100)}% — ${mktEff < 0.78 ? 'ruimere marges mogelijk' : 'scherpe markt'}
+${hasPoisson ? 'Poisson beschikbaar — gebruik als primair anker.' : 'Geen Poisson — gebruik API model + vorm als anker.'}`,
+    `${ctx}\n\n${poissonAnaliseTxt ? poissonAnaliseTxt + '\n\n' : ''}API MODEL:\n${predTxt||'Niet beschikbaar'}\nVorm samenvatting: ${vormText?.substring(0,250)||'—'}\nStats: ${statsText?.substring(0,250)||'—'}\nMotivatie: ${motivationTxt||'—'}\n\nGeef: 1) Kansen 1/X/2 in % 2) Value per uitkomst (AI% × quote - 1) × 100 3) Verwachte score 4) O/U 2.5 kans% 5) BTTS kans% 6) Confidence 1-10 met reden`,
+    'kans','kans','kans');
 
-## 📊 Vorm & Stats
-[recente vorm, H2H patroon, goals per wedstrijd, BTTS/O2.5 trend]
+  const risicoText = await callEntity(apiKey,
+    `Je bent risicoanalist voetbal. ${nl}
+Geef: 1) Risicoscore 1-10 (10=hoogste risico) 2) Top 3 risicofactoren 3) Onzekerheidsmarges 4) Wanneer NIET te weddden op deze wedstrijd.
+Marktefficiëntie ${Math.round(mktEff*100)}% — ${mktEff < 0.78 ? 'hogere onzekerheid' : 'betrouwbare markt'}.`,
+    `${ctx}\n\nKansen: ${kansText?.substring(0,300)||''}\n${oddsHistoryTxt||''}`,
+    'risico','risico','risico');
 
-## ⚽ Tactiek & Opstellingen  
-[formatie voordeel, sleutelspelers, blessure-impact, verwachte speelstijl]
-
-## 🎯 Kansen & Value
-[kansen 1/X/2 in %, vergelijk met bookmaker, value%, O2.5 kans%, BTTS kans%, confidence 1-10]
-
-## ⚠️ Risico
-[risicoscore 1-10, top 2 risicofactoren, wanneer NIET wedden]
-
-## 💡 Advies
-[BESTE BET met odds en value%, Kelly-inzet voor €${bet}, 1 alternatief, conclusie in 1 zin]` }]
-    });
-
-    if (analyseData.error) throw new Error(analyseData.error.message);
-    const fullText = analyseData.content?.[0]?.text || '';
-
-    // Splits de output per sectie en vul entity cards
-    const sections = {
-      vorm:    fullText.match(/## 📊 Vorm[^
-]*
-([\s\S]*?)(?=## |$)/)?.[1]?.trim() || '',
-      tactiek: fullText.match(/## ⚽ Tactiek[^
-]*
-([\s\S]*?)(?=## |$)/)?.[1]?.trim() || '',
-      kans:    fullText.match(/## 🎯 Kansen[^
-]*
-([\s\S]*?)(?=## |$)/)?.[1]?.trim() || '',
-      risico:  fullText.match(/## ⚠️ Risico[^
-]*
-([\s\S]*?)(?=## |$)/)?.[1]?.trim() || '',
-      advies:  fullText.match(/## 💡 Advies[^
-]*
-([\s\S]*?)(?=## |$)/)?.[1]?.trim() || '',
-    };
-
-    vormText  = sections.vorm;
-    kansText  = sections.kans;
-    risicoText = sections.risico;
-
-    // Vul entity cards
-    const fillCard = (id, text) => {
-      const chip = document.getElementById('ec-' + id);
-      const body = document.getElementById('rb-' + id);
-      if (chip) chip.className = 'entity-chip done';
-      if (body) body.innerHTML = renderMarkdown(text || '—');
-    };
-    fillCard('vorm',    sections.vorm);
-    fillCard('stats',   sections.vorm); // stats combineert met vorm
-    fillCard('tactiek', sections.tactiek);
-    fillCard('kans',    sections.kans);
-    fillCard('risico',  sections.risico);
-    fillCard('advies',  sections.advies);
-
-  } catch(e) {
-    ['vorm','stats','tactiek','kans','risico','advies'].forEach(id => {
-      const chip = document.getElementById('ec-' + id);
-      const body = document.getElementById('rb-' + id);
-      if (chip) chip.className = 'entity-chip err';
-      if (body) body.innerHTML = `<span style="color:#dc2626">⚠ ${e.message}</span>`;
-    });
-  }
+  await callEntity(apiKey,
+    `Je bent elite bet adviseur. ${nl}
+Geef: 1) BESTE BET met onderbouwing (gebruik Poisson+lineups als basis) 2) Value% uitrekenen 3) Inzetstrategie Kelly voor €${bet} 4) 2 alternatieven 5) Één zin TOP TIP.
+${hasLineups ? '⚡ Lineups bevestigd — weeg spelersinformatie het zwaarst.' : ''}
+${mktEff < 0.78 ? '💡 Lage marktefficiëntie — meer value kansen dan bij grote competities.' : ''}
+Fictief/educatief.`,
+    `${ctx}\n\n${poissonAnaliseTxt ? poissonAnaliseTxt + '\n\n' : ''}Risico: ${risicoText?.substring(0,250)||''}\nKansen: ${kansText?.substring(0,250)||''}\nOdds analyse: ${oddsHistoryTxt?.substring(0,200)||''}`,
+    'advies','advies','advies');
 
   // 🎯 AI TIP met value berekening
   const tipCard = document.getElementById('rc-tip');
@@ -8112,8 +8082,8 @@ Geef deze 5 secties (elke sectie max 60 woorden):
   tipBody.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
 
   try {
-    const tipResp = await anthropicFetch({
-      model:'claude-haiku-4-5-20251001', max_tokens:600,
+    const tipResp = await anthropicFetch(apiKey, {
+      model:'claude-sonnet-4-5', max_tokens:900,
       system:`Je bent top tipster. Geef BESTE tip. JSON only:
 {"pick":"O2.5","pickLabel":"Meer dan 2.5 goals","markt":"Doelpunten","odds":"1.85","kans":68,"sterren":4,"confidence":7,"confidenceReden":"max 20 woorden","redenering":"max 70 woorden","tips":[
   {"pick":"1","pickLabel":"Thuis","markt":"Uitslag","odds":"2.10","kans":55,"reden":"Korte"},
@@ -8122,8 +8092,6 @@ Geef deze 5 secties (elke sectie max 60 woorden):
       messages:[{role:'user',content:`${ctx}\nVorm:${vormText?.substring(0,200)||''}\nKansen:${kansText?.substring(0,200)||''}`}]
     });
     const tipData = await tipResp.json();
-    if (tipData.error) throw new Error(tipData.error.message || 'API fout');
-    if (!tipData.content?.[0]?.text) throw new Error('Lege response — controleer je API key in instellingen');
     const raw = tipData.content[0].text.trim().replace(/```json|```/g,'').trim();
     const tip = JSON.parse(raw);
 
@@ -8251,8 +8219,8 @@ async function generateCombiTip() {
   const vandaag = new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});
 
   try {
-    const resp = await anthropicFetch({
-      model:'claude-haiku-4-5-20251001', max_tokens:800,
+    const resp = await anthropicFetch(apiKey, {
+      model:'claude-sonnet-4-5', max_tokens:2000,
       system:`Je bent sportadviseur. Geef TOP 3 tips + combi van 3 legs. JSON only:
 {"top3":[{"match":"A vs B","datum":"za 19 apr","pick":"O2.5","pickLabel":"Meer dan 2.5","markt":"Doelpunten","odds":1.85,"vertrouwen":8,"reden":"korte"},{},{}],
 "combi":{"legs":[{"match":"","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0},{},{}],"redenering":"max 80w","synergie":"max 60w","risico":"max 40w","kansBerekening":"72% × 68% × 75% = 37%","valueScore":7}}
@@ -8260,8 +8228,6 @@ Markten: 1/X/2, O2.5, U2.5, BTTS-J/N, 1X, X2, 12`,
       messages:[{role:'user',content:`Datum: ${vandaag}\nWedstrijden:\n${matchesCtx}\n${standingsCtx}\n\nTop 3 + combi 3 legs.`}]
     });
     const data = await resp.json();
-    if (data.error) throw new Error(data.error.message || 'API fout');
-    if (!data.content?.[0]?.text) throw new Error('Lege response — controleer je API key in instellingen');
     const raw = data.content[0].text.trim().replace(/```json|```/g,'').trim();
     const result = JSON.parse(raw);
     renderTop3EnCombi(result);
@@ -8839,11 +8805,8 @@ function confirmDeposit() {
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function resetWallet() {
   const newBal = parseInt(document.getElementById('settStartBalance')?.value) || state.settings.startBalance || 500;
-  if (!confirm(`Wallet volledig resetten naar €${newBal}?\n\nAlle bets, winst/verlies en geschiedenis worden gewist.`)) return;
+  if (!confirm(`Wallet resetten naar €${newBal}?`)) return;
   state.wallet.balance = newBal;
-  state.wallet.totalStaked = 0;
-  state.wallet.totalWon = 0;
-  state.wallet.bets = [];
   state.settings.startBalance = newBal;
   saveState(); updateWalletUI(); applySettings();
 }
@@ -9181,8 +9144,8 @@ function renderBtScoreboard(picks) {
     ligue1:'🇫🇷 Ligue 1', seriea:'🇮🇹 Serie A',
     champions:'⭐ Champions League', nations:'🌍 Nations League',
     beker:'🏆 KNVB Beker', wk2026:'🏆 WK 2026',
-    jupiler:'🇧🇪 Jupiler Pro', laliga:'🇪🇸 La Liga',
-    superlig:'🇹🇷 Süper Lig', championship:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship', bundesliga2:'🇩🇪 2. Bundesliga'
+    jupiler:'🇧🇪 Jupiler Pro', ligaportugal:'🇵🇹 Liga Portugal',
+    superlig:'🇹🇷 Süper Lig'
   };
 
   const rows = sorted.map(d => {
@@ -9828,10 +9791,33 @@ async function loadFromFirebase() {
 }
 
 
-// AUTO-CHECK scheduler verwijderd (te hoge API kosten)
-// Gebruik de handmatige check-knop in Wallet
+// ═══════════════════════════════════════════════════════
+// AUTO-CHECK: elke 15 min tussen 15:00 en 23:00
+// ═══════════════════════════════════════════════════════
 function startAutoCheckScheduler() {
-  // uitgeschakeld
+  if (autoCheckInterval) clearInterval(autoCheckInterval);
+  autoCheckInterval = setInterval(async () => {
+    const now = new Date();
+    const h = now.getHours();
+    if (h < 13 || h >= 23) return; // alleen 13:00-23:00
+    const open = (state.wallet.bets || []).filter(b => b.status === 'pending');
+    if (!open.length) return;
+    if (!state.settings.footballKey) return;
+    showAutoCheckBar('🔄 Auto-check bets...');
+    let upd = 0;
+    for (const bet of open) {
+      try {
+        const prev = bet.status;
+        await checkBetResult(bet.id);
+        if (bet.status !== prev) upd++;
+      } catch(e) {}
+    }
+    if (upd > 0) {
+      showAutoCheckBar(`✅ ${upd} bet${upd>1?'s':''} bijgewerkt!`, 4000);
+    } else {
+      showAutoCheckBar('✓ Geen updates', 2000);
+    }
+  }, 60 * 60 * 1000); // 60 minuten
 }
 
 function showAutoCheckBar(msg, duration=3000) {
@@ -10494,8 +10480,8 @@ function buildScanCompFilter(matches) {
     ligue1: '🇫🇷 Ligue 1', seriea: '🇮🇹 Serie A',
     champions: '⭐ Champions League', nations: '🌍 Nations League',
     beker: '🏆 KNVB Beker', wk2026: '🏆 WK 2026',
-    jupiler: '🇧🇪 Jupiler Pro', laliga: '🇪🇸 La Liga',
-    superlig: '🇹🇷 Süper Lig', championship: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship', bundesliga2: '🇩🇪 2. Bundesliga',
+    jupiler: '🇧🇪 Jupiler Pro', ligaportugal: '🇵🇹 Liga Portugal',
+    superlig: '🇹🇷 Süper Lig',
     eredivisie_playoff_eur: '🇳🇱 Ered. Playoff EUR',
     eredivisie_playoff_rel: '🇳🇱 Ered. Playoff DEG',
     kkd_playoff_prom: '🇳🇱 KKD Playoff PROM'
@@ -10993,9 +10979,7 @@ const MARKET_EFFICIENCY = {
   2: 0.90,   // Champions League
   88: 0.82,  // Eredivisie
   144: 0.78, // Jupiler Pro
-  140: 0.92,  // La Liga
-  40: 0.82,   // Championship
-  79: 0.84,   // 2. Bundesliga
+  94: 0.76,  // Liga Portugal
   203: 0.75, // Süper Lig
   89: 0.70,  // Keuken Kampioen
   90: 0.68,  // KNVB Beker
@@ -11647,7 +11631,7 @@ const COMP_FLAGS = {
   eredivisie:'🇳🇱', kkd:'🇳🇱', beker:'🏆', premier:'🏴',
   bundesliga:'🇩🇪', ligue1:'🇫🇷', seriea:'🇮🇹',
   champions:'⭐', nations:'🌍', jupiler:'🇧🇪',
-  laliga:'🇪🇸', superlig:'🇹🇷', championship:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', bundesliga2:'🇩🇪', wk2026:'🏆'
+  ligaportugal:'🇵🇹', superlig:'🇹🇷', wk2026:'🏆'
 };
 const COMP_FULL_NAMES = {
   eredivisie:'Eredivisie', kkd:'Keuken Kampioen Divisie',
@@ -11655,7 +11639,7 @@ const COMP_FULL_NAMES = {
   bundesliga:'Bundesliga', ligue1:'Ligue 1',
   seriea:'Serie A', champions:'Champions League',
   nations:'Nations League', jupiler:'Jupiler Pro League',
-  laliga:'La Liga', superlig:'Süper Lig', championship:'Championship', bundesliga2:'2. Bundesliga', wk2026:'WK 2026'
+  ligaportugal:'Liga Portugal', superlig:'Süper Lig', wk2026:'WK 2026'
 };
 
 async function openCompDetail(comp) {
@@ -11700,8 +11684,8 @@ async function renderCDStand() {
   const body = document.getElementById('cd-body');
   const apiKey = state.settings.footballKey;
   const leagueId = COMP_IDS[_cdComp];
-  if (!leagueId) {
-    body.innerHTML = '<div class="cd-loading">⚠ Onbekende competitie</div>'; return;
+  if (!apiKey || !leagueId) {
+    body.innerHTML = '<div class="cd-loading">⚠ API-Football key nodig in ⚙️ Instellingen</div>'; return;
   }
 
   const cacheKey = 'stand_' + _cdComp;
@@ -11796,10 +11780,10 @@ async function renderCDStand() {
 // ── WEDSTRIJDEN ────────────────────────────────────────
 async function renderCDWedstrijden() {
   const body = document.getElementById('cd-body');
-  const apiKey = state.settings.footballKey; // optioneel — key zit op de server
+  const apiKey = state.settings.footballKey;
   const leagueId = COMP_IDS[_cdComp];
-  if (!leagueId) {
-    body.innerHTML = '<div class="cd-loading">⚠ Onbekende competitie</div>'; return;
+  if (!apiKey || !leagueId) {
+    body.innerHTML = '<div class="cd-loading">⚠ API-Football key nodig</div>'; return;
   }
 
   const cacheKey = 'matches_' + _cdComp;
@@ -12034,8 +12018,8 @@ async function renderCDTopscorers() {
   const body = document.getElementById('cd-body');
   const apiKey = state.settings.footballKey;
   const leagueId = COMP_IDS[_cdComp];
-  if (!leagueId) {
-    body.innerHTML = '<div class="cd-loading">⚠ Onbekende competitie</div>'; return;
+  if (!apiKey || !leagueId) {
+    body.innerHTML = '<div class="cd-loading">⚠ API-Football key nodig</div>'; return;
   }
 
   const cacheKey = 'scorers_' + _cdComp;
