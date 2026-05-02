@@ -1849,6 +1849,431 @@ body.dark .help-block { background:rgba(255,255,255,.04); }
   font-style: italic;
 }
 
+/* ═══════════════════════════════════════════════════════
+   COMPETITIE DETAIL MODAL — CSS
+   Plak dit in het <style> blok van index.html
+════════════════════════════════════════════════════════ */
+
+/* ── COMPETITIE INFO KNOP ── */
+.comp-info-btn {
+  position: absolute;
+  top: 4px; right: 4px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(219,39,119,.15);
+  border: 1px solid rgba(219,39,119,.3);
+  color: #be185d;
+  font-size: .55rem;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all .15s;
+  z-index: 5;
+  line-height: 1;
+}
+.comp-info-btn:hover {
+  background: rgba(219,39,119,.3);
+  transform: scale(1.1);
+}
+.comp-chip { position: relative; }
+
+/* ── COMPETITIE DETAIL MODAL ── */
+#compDetailModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15,23,42,.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  align-items: flex-end;
+  justify-content: center;
+}
+#compDetailModal.open { display: flex; }
+
+.comp-detail-sheet {
+  background: linear-gradient(180deg, var(--bg1, #fef6f0), var(--bg2, #f3f0ff) 60%, var(--bg3, #eef6ff));
+  border-radius: 24px 24px 0 0;
+  width: 100%;
+  max-width: 860px;
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: sheetUp .3s cubic-bezier(.16,1,.3,1);
+  box-shadow: 0 -24px 60px rgba(12,18,30,.18);
+}
+@keyframes sheetUp {
+  from { transform: translateY(100%); opacity: .7; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.cd-header {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  padding: 1rem 1.2rem .7rem;
+  border-bottom: 1px solid var(--stroke);
+  flex-shrink: 0;
+  background: rgba(255,255,255,.6);
+  backdrop-filter: blur(12px);
+}
+.cd-flag { font-size: 1.6rem; flex-shrink: 0; }
+.cd-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: .06em;
+  color: var(--ink);
+  flex: 1;
+}
+.cd-close {
+  background: rgba(15,23,42,.07);
+  border: none;
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--sub);
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.cd-close:hover { background: rgba(220,38,38,.12); color: #dc2626; }
+
+.cd-tabs {
+  display: flex;
+  gap: .3rem;
+  padding: .5rem 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  background: rgba(255,255,255,.4);
+  border-bottom: 1px solid var(--stroke);
+}
+.cd-tabs::-webkit-scrollbar { display: none; }
+.cd-tab {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .55rem;
+  font-weight: 800;
+  padding: .3rem .75rem;
+  border-radius: 999px;
+  border: 1px solid var(--stroke);
+  background: rgba(255,255,255,.7);
+  color: var(--sub);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.cd-tab.active {
+  background: rgba(219,39,119,.12);
+  border-color: rgba(219,39,119,.4);
+  color: #be185d;
+}
+
+.cd-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: .8rem 1rem 2rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Stand */
+.cd-standings {
+  background: rgba(255,255,255,.82);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: .8rem;
+  box-shadow: 0 2px 12px rgba(15,23,42,.06);
+}
+.cd-standings-header {
+  display: grid;
+  grid-template-columns: 28px 1fr 32px 32px 32px 32px 40px;
+  gap: .2rem;
+  padding: .4rem .75rem;
+  background: rgba(15,23,42,.04);
+  border-bottom: 1px solid var(--stroke);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .48rem;
+  font-weight: 800;
+  color: var(--sub);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.cd-standings-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 32px 32px 32px 32px 40px;
+  gap: .2rem;
+  padding: .45rem .75rem;
+  border-bottom: 1px solid rgba(15,23,42,.04);
+  align-items: center;
+  transition: background .1s;
+  cursor: pointer;
+}
+.cd-standings-row:last-child { border-bottom: none; }
+.cd-standings-row:hover { background: rgba(219,39,119,.04); }
+.st-rank {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .58rem;
+  font-weight: 800;
+  color: var(--sub);
+  text-align: center;
+}
+.st-rank.champion { color: #d97706; }
+.st-rank.cl       { color: #2563eb; }
+.st-rank.uel      { color: #ea580c; }
+.st-rank.rel      { color: #dc2626; }
+.st-team {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  min-width: 0;
+}
+.st-team-logo { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+.st-team-name {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.st-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  color: var(--ink);
+  text-align: center;
+}
+.st-pts {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: .95rem;
+  letter-spacing: .03em;
+  color: var(--ink);
+  text-align: center;
+}
+
+/* Topscorers */
+.cd-scorer-row {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  padding: .5rem .75rem;
+  background: rgba(255,255,255,.82);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  margin-bottom: .4rem;
+  box-shadow: 0 2px 8px rgba(15,23,42,.04);
+}
+.cd-scorer-rank {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.1rem;
+  color: var(--sub);
+  min-width: 22px;
+  text-align: center;
+}
+.cd-scorer-rank.gold   { color: #d97706; }
+.cd-scorer-rank.silver { color: #94a3b8; }
+.cd-scorer-rank.bronze { color: #b45309; }
+.cd-scorer-info { flex: 1; min-width: 0; }
+.cd-scorer-name { font-size: .82rem; font-weight: 700; color: var(--ink); }
+.cd-scorer-club {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .5rem;
+  color: var(--sub);
+  margin-top: 1px;
+}
+.cd-scorer-goals {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: .03em;
+  color: #be185d;
+}
+.cd-scorer-assists {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem;
+  color: var(--sub);
+  text-align: right;
+}
+
+/* Wedstrijd kaarten */
+.cd-match-card {
+  background: rgba(255,255,255,.82);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: .5rem;
+  box-shadow: 0 2px 10px rgba(15,23,42,.06);
+}
+.cd-match-top {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .35rem .75rem;
+  background: rgba(255,255,255,.3);
+  border-bottom: 1px solid var(--stroke);
+}
+.cd-match-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .58rem;
+  color: #7c3aed;
+  font-weight: 700;
+  flex: 1;
+}
+.cd-match-status {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.cd-match-teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .6rem .75rem;
+}
+.cd-team { flex: 1; }
+.cd-team.away { text-align: right; }
+.cd-team-name { font-size: .88rem; font-weight: 800; color: var(--ink); }
+.cd-score {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  color: var(--ink);
+  padding: 0 .8rem;
+  flex-shrink: 0;
+}
+.cd-odds-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: .35rem;
+  padding: .4rem .75rem .55rem;
+  border-top: 1px solid var(--stroke);
+}
+.cd-odds-btn {
+  background: rgba(255,255,255,.85);
+  border: 1px solid var(--stroke);
+  border-radius: 9px;
+  padding: .38rem .25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all .15s;
+}
+.cd-odds-btn:hover {
+  border-color: rgba(219,39,119,.35);
+  background: rgba(252,231,243,.6);
+}
+.cd-odds-lbl {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .5rem;
+  color: var(--sub);
+  font-weight: 700;
+  display: block;
+  margin-bottom: 2px;
+}
+.cd-odds-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+/* Scan */
+.cd-scan-btn {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(22,163,74,.15), rgba(5,150,105,.1));
+  border: 1.5px solid rgba(22,163,74,.4);
+  color: #15803d;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  font-weight: 800;
+  padding: .7rem;
+  border-radius: 12px;
+  cursor: pointer;
+  letter-spacing: .05em;
+  margin-bottom: .8rem;
+  transition: all .2s;
+}
+.cd-scan-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.cd-scan-result {
+  background: linear-gradient(135deg, rgba(22,163,74,.06), rgba(5,150,105,.04));
+  border: 1px solid rgba(22,163,74,.2);
+  border-radius: 12px;
+  padding: .6rem .85rem;
+  margin-bottom: .4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  transition: all .12s;
+}
+.cd-scan-result:hover { transform: translateX(2px); border-color: rgba(22,163,74,.4); }
+.cd-scan-result-info { flex: 1; min-width: 0; }
+.cd-scan-result-match {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .62rem;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cd-scan-result-pick {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem;
+  color: #be185d;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.cd-scan-result-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: .04em;
+  flex-shrink: 0;
+}
+.cd-scan-result-value.pos { color: #16a34a; }
+.cd-scan-result-value.med { color: #d97706; }
+.cd-scan-result-value.neg { color: #dc2626; }
+
+.cd-section {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  font-weight: 800;
+  color: var(--sub);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin: .9rem 0 .45rem;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.cd-section::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--stroke);
+}
+
+.cd-loading {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  color: var(--sub);
+  line-height: 2;
+}
+.cd-spinner {
+  display: inline-block;
+  width: 20px; height: 20px;
+  border: 2px solid rgba(219,39,119,.2);
+  border-top-color: #be185d;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin-bottom: .5rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+
 /* ═══════════════════════════════════════
    TRIPLE LOCK HITRATE
 ═══════════════════════════════════════ */
@@ -2405,48 +2830,135 @@ body.dark .login-input {
       </div>
     </div>
     <div class="comp-grid">
-      <div class="comp-chip active" onclick="handleCompTap('eredivisie')" id="comp-eredivisie">
-        <span class="flag">🇳🇱</span><div class="cname">Eredivisie</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('kkd')" id="comp-kkd">
-        <span class="flag">🇳🇱</span><div class="cname">Keuken Kampioen</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('beker')" id="comp-beker">
-        <span class="flag">🏆</span><div class="cname">KNVB Beker</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('premier')" id="comp-premier">
-        <span class="flag">🇬🇧</span><div class="cname">Premier League</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('bundesliga')" id="comp-bundesliga">
-        <span class="flag">🇩🇪</span><div class="cname">Bundesliga</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('ligue1')" id="comp-ligue1">
-        <span class="flag">🇫🇷</span><div class="cname">Ligue 1</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('seriea')" id="comp-seriea">
-        <span class="flag">🇮🇹</span><div class="cname">Serie A</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('champions')" id="comp-champions">
-        <span class="flag">⭐</span><div class="cname">Champions League</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('nations')" id="comp-nations">
-        <span class="flag">🌍</span><div class="cname">Nations League</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('jupiler')" id="comp-jupiler">
-        <span class="flag">🇧🇪</span><div class="cname">Jupiler Pro</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('ligaportugal')" id="comp-ligaportugal">
-        <span class="flag">🇵🇹</span><div class="cname">Liga Portugal</div>
-      </div>
-      <div class="comp-chip" onclick="handleCompTap('superlig')" id="comp-superlig">
-        <span class="flag">🇹🇷</span><div class="cname">Süper Lig</div>
-      </div>
+      <!-- ═══════════════════════════════════════════════════
+     STAP 4: COMP-CHIP HTML AANPASSING
+     Vervang elke comp-chip in index.html door onderstaande
+     (voeg ℹ️ knop toe aan elk)
+════════════════════════════════════════════════════ -->
 
-      <div class="comp-chip wk-chip" onclick="handleCompTap('wk2026')" id="comp-wk2026" style="grid-column:span 3;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(254,243,199,.8));border:2px solid rgba(217,119,6,.4);">
-        <span class="flag">🏆</span>
-        <div class="cname" style="color:#92400e;font-weight:800;">WK 2026 · USA/Canada/Mexico</div>
-        <div id="wkCountdown" style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#b45309;margin-top:2px;"></div>
-      </div>
+<!-- VOORBEELD: zo moet elke comp-chip eruit zien -->
+<!-- Voeg onclick="openCompDetail('...') toe aan de knop, NIET aan de chip zelf -->
+
+<div class="comp-chip active" onclick="handleCompTap('eredivisie')" id="comp-eredivisie">
+  <span class="flag">🇳🇱</span>
+  <div class="cname">Eredivisie</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('eredivisie')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('kkd')" id="comp-kkd">
+  <span class="flag">🇳🇱</span>
+  <div class="cname">Keuken Kampioen</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('kkd')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('beker')" id="comp-beker">
+  <span class="flag">🏆</span>
+  <div class="cname">KNVB Beker</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('beker')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('premier')" id="comp-premier">
+  <span class="flag">🇬🇧</span>
+  <div class="cname">Premier League</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('premier')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('bundesliga')" id="comp-bundesliga">
+  <span class="flag">🇩🇪</span>
+  <div class="cname">Bundesliga</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('bundesliga')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('ligue1')" id="comp-ligue1">
+  <span class="flag">🇫🇷</span>
+  <div class="cname">Ligue 1</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('ligue1')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('seriea')" id="comp-seriea">
+  <span class="flag">🇮🇹</span>
+  <div class="cname">Serie A</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('seriea')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('champions')" id="comp-champions">
+  <span class="flag">⭐</span>
+  <div class="cname">Champions League</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('champions')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('nations')" id="comp-nations">
+  <span class="flag">🌍</span>
+  <div class="cname">Nations League</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('nations')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('jupiler')" id="comp-jupiler">
+  <span class="flag">🇧🇪</span>
+  <div class="cname">Jupiler Pro</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('jupiler')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('ligaportugal')" id="comp-ligaportugal">
+  <span class="flag">🇵🇹</span>
+  <div class="cname">Liga Portugal</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('ligaportugal')" title="Competitie details">ℹ</button>
+</div>
+
+<div class="comp-chip" onclick="handleCompTap('superlig')" id="comp-superlig">
+  <span class="flag">🇹🇷</span>
+  <div class="cname">Süper Lig</div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('superlig')" title="Competitie details">ℹ</button>
+</div>
+
+<!-- WK chip blijft hetzelfde maar krijgt ook een knop -->
+<div class="comp-chip wk-chip" onclick="handleCompTap('wk2026')" id="comp-wk2026"
+  style="grid-column:span 3;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(254,243,199,.8));border:2px solid rgba(217,119,6,.4);">
+  <span class="flag">🏆</span>
+  <div class="cname" style="color:#92400e;font-weight:800;">WK 2026 · USA/Canada/Mexico</div>
+  <div id="wkCountdown" style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#b45309;margin-top:2px;"></div>
+  <button class="comp-info-btn" onclick="event.stopPropagation();openCompDetail('wk2026')" title="WK 2026 details">ℹ</button>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     INSTALLATIE INSTRUCTIES
+════════════════════════════════════════════════════ -->
+
+<!--
+  HOE INSTALLEREN (4 stappen):
+
+  STAP 1 — CSS
+  Kopieer de inhoud van comp-detail-1-css.css
+  Plak onderaan in het <style> blok van index.html
+  (vlak voor de afsluitende </style>)
+
+  STAP 2 — HTML
+  Kopieer de inhoud van comp-detail-2-html.html
+  Plak vlak VOOR </body> in index.html
+  (na de andere modals zoals betModal, trackerModal etc.)
+
+  STAP 3 — JavaScript
+  Kopieer de inhoud van comp-detail-3-js.js
+  Plak ONDERAAN in het <script> blok van index.html
+  (vlak voor de afsluitende </script>)
+
+  STAP 4 — Comp chips vervangen
+  Vervang het <div class="comp-grid"> blok in index.html
+  door de chips hierboven (met de ℹ knop toegevoegd)
+
+  KLAAR! Tik op het ℹ knopje bij een competitie
+  om de detailpagina te openen.
+
+  FEATURES:
+  🏆 Stand — ranglijst met degradatie/CL kleuring
+  ⚽ Wedstrijden — aankomende wedstrijden + quotes + bet plaatsen
+  ⚡ Value Scan — AI scan voor die competitie
+  👟 Topscorers + Top Assists
+
+  VERSIE: v11.12 (na installatie versienummer ophogen)
+-->
+
     </div>
 
 <div class="section-label">
@@ -3158,7 +3670,7 @@ body.dark .login-input {
 </div>
 
 <div class="settings-section">
-  <h4>💶 Wallet Instellingen</h4>
+  <h4>?? Wallet Instellingen</h4>
   <div class="settings-row">
     <div>
       <div class="sr-label">Startbedrag fictief saldo</div>
@@ -11106,6 +11618,522 @@ function renderWalletChart() {
 }
 
 // ═══════════════════════════════════════════════════════
+// COMPETITIE DETAIL MODAL — JavaScript
+// Plak dit in het <script> blok van index.html
+// ═══════════════════════════════════════════════════════
+
+let _cdComp = null;
+let _cdTab = 'stand';
+let _cdData = {};
+let _cdScanResults = [];
+
+const COMP_FLAGS = {
+  eredivisie:'🇳🇱', kkd:'🇳🇱', beker:'🏆', premier:'🏴',
+  bundesliga:'🇩🇪', ligue1:'🇫🇷', seriea:'🇮🇹',
+  champions:'⭐', nations:'🌍', jupiler:'🇧🇪',
+  ligaportugal:'🇵🇹', superlig:'🇹🇷', wk2026:'🏆'
+};
+const COMP_FULL_NAMES = {
+  eredivisie:'Eredivisie', kkd:'Keuken Kampioen Divisie',
+  beker:'KNVB Beker', premier:'Premier League',
+  bundesliga:'Bundesliga', ligue1:'Ligue 1',
+  seriea:'Serie A', champions:'Champions League',
+  nations:'Nations League', jupiler:'Jupiler Pro League',
+  ligaportugal:'Liga Portugal', superlig:'Süper Lig', wk2026:'WK 2026'
+};
+
+async function openCompDetail(comp) {
+  _cdComp = comp;
+  _cdTab = 'stand';
+  _cdScanResults = [];
+  const modal = document.getElementById('compDetailModal');
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('cd-flag').textContent = COMP_FLAGS[comp] || '🏆';
+  document.getElementById('cd-title').textContent = COMP_FULL_NAMES[comp] || comp;
+  document.getElementById('cd-subtitle').textContent = 'Seizoen 2025/26';
+  // Reset tab buttons
+  document.querySelectorAll('.cd-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('cdt-stand')?.classList.add('active');
+  setCDTab('stand');
+}
+
+function closeCompDetail() {
+  document.getElementById('compDetailModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function setCDTab(tab) {
+  _cdTab = tab;
+  document.querySelectorAll('.cd-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('cdt-' + tab)?.classList.add('active');
+  renderCDTab(tab);
+}
+
+async function renderCDTab(tab) {
+  const body = document.getElementById('cd-body');
+  body.innerHTML = '<div class="cd-loading"><div class="cd-spinner"></div><br>Laden...</div>';
+  if (tab === 'stand')            await renderCDStand();
+  else if (tab === 'wedstrijden') await renderCDWedstrijden();
+  else if (tab === 'scan')        await renderCDScan();
+  else if (tab === 'topscorers')  await renderCDTopscorers();
+}
+
+// ── STAND ─────────────────────────────────────────────
+async function renderCDStand() {
+  const body = document.getElementById('cd-body');
+  const apiKey = state.settings.footballKey;
+  const leagueId = COMP_IDS[_cdComp];
+  if (!apiKey || !leagueId) {
+    body.innerHTML = '<div class="cd-loading">⚠ API-Football key nodig in ⚙️ Instellingen</div>'; return;
+  }
+
+  const cacheKey = 'stand_' + _cdComp;
+  if (!_cdData[cacheKey]) {
+    try {
+      const r = await apiFetch(
+        'https://v3.football.api-sports.io/standings?league=' + leagueId + '&season=2025',
+        apiKey, 8000
+      );
+      const d = await r.json();
+      _cdData[cacheKey] = d.response?.[0]?.league?.standings?.[0] || [];
+    } catch(e) {
+      body.innerHTML = '<div class="cd-loading">⚠ ' + e.message + '</div>'; return;
+    }
+  }
+
+  const standings = _cdData[cacheKey];
+  if (!standings.length) {
+    body.innerHTML = '<div class="cd-loading">Geen standgegevens beschikbaar voor dit seizoen</div>'; return;
+  }
+
+  const total = standings.length;
+  const rankClass = (rank) => {
+    if (rank === 1) return 'champion';
+    if (rank <= 4) return 'cl';
+    if (rank <= 6) return 'uel';
+    if (rank > total - 3) return 'rel';
+    return '';
+  };
+  const rankBorder = (rc) => {
+    if (rc === 'champion') return 'border-left:3px solid #d97706;';
+    if (rc === 'cl')       return 'border-left:3px solid #2563eb;';
+    if (rc === 'uel')      return 'border-left:3px solid #ea580c;';
+    if (rc === 'rel')      return 'border-left:3px solid #dc2626;';
+    return '';
+  };
+
+  const rows = standings.map(t => {
+    const rc = rankClass(t.rank);
+    const form = (t.form || '').slice(-5);
+    const formDots = form.split('').map(f =>
+      '<div class="st-form-dot ' + f + '"></div>'
+    ).join('');
+    return `
+      <div class="cd-standings-row" style="${rankBorder(rc)}" onclick="filterMatchesByTeam('${t.team.name.replace(/'/g,"\\'")}')">
+        <div class="st-rank ${rc}">${t.rank}</div>
+        <div class="st-team">
+          ${t.team.logo ? `<img src="${t.team.logo}" class="st-team-logo" onerror="this.style.display='none'">` : ''}
+          <span class="st-team-name">${t.team.name}</span>
+        </div>
+        <div class="st-num">${t.all.played}</div>
+        <div class="st-num" style="color:#16a34a;">${t.all.win}</div>
+        <div class="st-num" style="color:#d97706;">${t.all.draw}</div>
+        <div class="st-num" style="color:#dc2626;">${t.all.lose}</div>
+        <div class="st-pts">${t.points}</div>
+      </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.6rem;padding:.5rem .75rem;
+      background:rgba(255,255,255,.7);border-radius:10px;border:1px solid var(--stroke);">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;display:flex;align-items:center;gap:.3rem;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#d97706;"></span>Kampioen
+      </span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;display:flex;align-items:center;gap:.3rem;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#2563eb;"></span>CL
+      </span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;display:flex;align-items:center;gap:.3rem;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#ea580c;"></span>EL/ECL
+      </span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;display:flex;align-items:center;gap:.3rem;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#dc2626;"></span>Degradatie
+      </span>
+    </div>
+    <div class="cd-standings">
+      <div class="cd-standings-header">
+        <div>#</div><div>Team</div>
+        <div title="Gespeeld">G</div>
+        <div title="Winst" style="color:#16a34a;">W</div>
+        <div title="Gelijk" style="color:#d97706;">G</div>
+        <div title="Verlies" style="color:#dc2626;">V</div>
+        <div title="Punten">Pts</div>
+      </div>
+      ${rows}
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;margin-top:.4rem;">
+      Tik op een team → filter wedstrijden
+    </div>
+  `;
+}
+
+// ── WEDSTRIJDEN ────────────────────────────────────────
+async function renderCDWedstrijden() {
+  const body = document.getElementById('cd-body');
+  const apiKey = state.settings.footballKey;
+  const leagueId = COMP_IDS[_cdComp];
+  if (!apiKey || !leagueId) {
+    body.innerHTML = '<div class="cd-loading">⚠ API-Football key nodig</div>'; return;
+  }
+
+  const cacheKey = 'matches_' + _cdComp;
+  if (!_cdData[cacheKey]) {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const nextWeek = new Date(Date.now() + 14*86400000).toISOString().split('T')[0];
+      const r = await apiFetch(
+        'https://v3.football.api-sports.io/fixtures?league=' + leagueId + '&season=2025&from=' + today + '&to=' + nextWeek,
+        apiKey, 8000
+      );
+      const d = await r.json();
+      _cdData[cacheKey] = (d.response || []).slice(0, 20);
+    } catch(e) {
+      body.innerHTML = '<div class="cd-loading">⚠ ' + e.message + '</div>'; return;
+    }
+  }
+
+  const fixtures = _cdData[cacheKey];
+  if (!fixtures.length) {
+    body.innerHTML = '<div class="cd-loading">Geen aankomende wedstrijden</div>'; return;
+  }
+
+  // Quotes ophalen
+  const oddsMap = {};
+  try {
+    await Promise.all(fixtures.slice(0,8).map(async f => {
+      try {
+        const r = await apiFetch('https://v3.football.api-sports.io/odds?fixture=' + f.fixture.id, apiKey, 4000);
+        const d = await r.json();
+        if (!d.response?.[0]) return;
+        for (const bm of (d.response[0].bookmakers || [])) {
+          const mw = bm.bets?.find(b => b.name === 'Match Winner');
+          if (!mw?.values?.length) continue;
+          const h  = parseFloat(mw.values.find(v => v.value === 'Home')?.odd  || mw.values[0]?.odd);
+          const dr = parseFloat(mw.values.find(v => v.value === 'Draw')?.odd  || mw.values[1]?.odd);
+          const a  = parseFloat(mw.values.find(v => v.value === 'Away')?.odd  || mw.values[2]?.odd);
+          if (h > 1 && dr > 1 && a > 1) {
+            oddsMap[f.fixture.id] = { h, dr, a, bm: bm.name };
+            break;
+          }
+        }
+      } catch(e) {}
+    }));
+  } catch(e) {}
+
+  const cards = fixtures.map(f => {
+    const o = oddsMap[f.fixture.id];
+    const dt = new Date(f.fixture.date);
+    const dateStr = dt.toLocaleDateString('nl-NL', {weekday:'short', day:'numeric', month:'short'});
+    const timeStr = dt.toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Amsterdam'});
+    const isLive = ['1H','HT','2H','ET'].includes(f.fixture.status.short);
+    const isDone = ['FT','AET','PEN'].includes(f.fixture.status.short);
+    const statusHtml = isLive
+      ? `<span class="cd-match-status" style="background:rgba(220,38,38,.1);color:#dc2626;border:1px solid rgba(220,38,38,.25);">🔴 LIVE${f.fixture.status.elapsed ? ' '+f.fixture.status.elapsed+"'" : ''}</span>`
+      : isDone
+        ? `<span class="cd-match-status" style="background:rgba(71,85,105,.07);color:var(--sub);border:1px solid var(--stroke);">GESPEELD</span>`
+        : `<span class="cd-match-status" style="background:rgba(124,58,237,.1);color:#7c3aed;border:1px solid rgba(124,58,237,.25);">📅 GEPLAND</span>`;
+    const scoreHtml = (isLive || isDone) && f.goals.home != null
+      ? `${f.goals.home}-${f.goals.away}` : 'VS';
+    const fid = f.fixture.id;
+    const hn = f.teams.home.name.replace(/'/g,"\\'");
+    const an = f.teams.away.name.replace(/'/g,"\\'");
+    const oddsHtml = o ? `
+      <div class="cd-odds-row">
+        <div class="cd-odds-btn" onclick="handleCDOddsBet(${fid},'1','${hn} wint',${o.h})">
+          <span class="cd-odds-lbl">1 THUIS</span>
+          <span class="cd-odds-val">${o.h.toFixed(2)}</span>
+        </div>
+        <div class="cd-odds-btn" onclick="handleCDOddsBet(${fid},'X','Gelijkspel',${o.dr})">
+          <span class="cd-odds-lbl">X GELIJK</span>
+          <span class="cd-odds-val">${o.dr.toFixed(2)}</span>
+        </div>
+        <div class="cd-odds-btn" onclick="handleCDOddsBet(${fid},'2','${an} wint',${o.a})">
+          <span class="cd-odds-lbl">2 UIT</span>
+          <span class="cd-odds-val">${o.a.toFixed(2)}</span>
+        </div>
+      </div>` : `<div style="padding:.35rem .75rem .5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">Geen quotes beschikbaar</div>`;
+    return `
+      <div class="cd-match-card">
+        <div class="cd-match-top">
+          <span class="cd-match-date">${dateStr} · ${timeStr}</span>
+          ${statusHtml}
+        </div>
+        <div class="cd-match-teams">
+          <div class="cd-team">
+            ${f.teams.home.logo ? `<img src="${f.teams.home.logo}" style="width:24px;height:24px;object-fit:contain;display:block;margin-bottom:3px;" onerror="this.style.display='none'">` : ''}
+            <div class="cd-team-name">${f.teams.home.name}</div>
+          </div>
+          <div class="cd-score">${scoreHtml}</div>
+          <div class="cd-team away">
+            ${f.teams.away.logo ? `<img src="${f.teams.away.logo}" style="width:24px;height:24px;object-fit:contain;display:block;margin-bottom:3px;margin-left:auto;" onerror="this.style.display='none'">` : ''}
+            <div class="cd-team-name">${f.teams.away.name}</div>
+          </div>
+        </div>
+        ${oddsHtml}
+      </div>`;
+  }).join('');
+
+  body.innerHTML = `<div class="cd-section">Aankomende wedstrijden</div>${cards}`;
+}
+
+// ── SCAN ───────────────────────────────────────────────
+async function renderCDScan() {
+  const body = document.getElementById('cd-body');
+  if (_cdScanResults.length) { renderCDScanResults(); return; }
+  body.innerHTML = `
+    <div class="cd-section">Value Scan</div>
+    <div style="background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);border-radius:12px;
+      padding:.8rem 1rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;
+      font-size:.58rem;color:#15803d;line-height:1.7;">
+      Scan alle aankomende wedstrijden in <b>${COMP_FULL_NAMES[_cdComp]||_cdComp}</b> op value.<br>
+      Picks met ≥5% worden opgeslagen in de Backtest.
+    </div>
+    <button class="cd-scan-btn" id="cdScanBtn" onclick="runCDScan()">
+      ⚡ SCAN ALLE WEDSTRIJDEN
+    </button>
+    <div id="cdScanStatus" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.6rem;
+      color:var(--sub);text-align:center;padding:.5rem;"></div>
+    <div id="cdScanList"></div>
+  `;
+}
+
+async function runCDScan() {
+  const btn = document.getElementById('cdScanBtn');
+  const status = document.getElementById('cdScanStatus');
+  if (!state.settings.anthropicKey) {
+    if (status) { status.style.display = 'block'; status.textContent = '⚠ Anthropic key nodig in ⚙️ Instellingen'; } return;
+  }
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Data ophalen...'; }
+  if (status) status.style.display = 'block';
+
+  // Laad wedstrijden als nog niet gecached
+  const cacheKey = 'matches_' + _cdComp;
+  if (!_cdData[cacheKey]) {
+    if (status) status.textContent = '⟳ Wedstrijden laden...';
+    try {
+      const leagueId = COMP_IDS[_cdComp];
+      const today = new Date().toISOString().split('T')[0];
+      const nextWeek = new Date(Date.now() + 14*86400000).toISOString().split('T')[0];
+      const r = await apiFetch(
+        'https://v3.football.api-sports.io/fixtures?league=' + leagueId + '&season=2025&from=' + today + '&to=' + nextWeek,
+        state.settings.footballKey, 8000
+      );
+      const d = await r.json();
+      _cdData[cacheKey] = (d.response || []).slice(0, 20);
+    } catch(e) {
+      if (status) status.textContent = '⚠ ' + e.message;
+      if (btn) { btn.disabled = false; btn.textContent = '⚡ OPNIEUW PROBEREN'; }
+      return;
+    }
+  }
+
+  const fixtures = _cdData[cacheKey].filter(f => !['FT','AET','PEN'].includes(f.fixture.status.short));
+  if (!fixtures.length) {
+    if (status) status.textContent = '⚠ Geen aankomende wedstrijden';
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ SCAN ALLE WEDSTRIJDEN'; }
+    return;
+  }
+
+  // Sla huidige state op, vervang tijdelijk met detail matches
+  const prevMatches = state.matches;
+  const prevComp = state.activeComp;
+  state.matches = fixtures.map(f => parseAPIMatch(f));
+  state.activeComp = _cdComp;
+
+  // Quotes ophalen
+  if (status) status.textContent = '⟳ Quotes ophalen (' + state.matches.length + ' wedstrijden)...';
+  try { await fetchOddsForMatches(COMP_IDS[_cdComp], state.settings.footballKey); } catch(e) {}
+
+  const withOdds = state.matches.filter(m => m.homeOdds !== '—' && parseFloat(m.homeOdds) > 1);
+  if (!withOdds.length) {
+    if (status) status.textContent = '⚠ Geen quotes beschikbaar — gratis API plan heeft beperkte odds';
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ OPNIEUW PROBEREN'; }
+    state.matches = prevMatches; state.activeComp = prevComp;
+    return;
+  }
+
+  if (status) status.textContent = '⟳ AI scant ' + withOdds.length + ' wedstrijden...';
+  try {
+    await scanValueAll();
+    _cdScanResults = state.valueScans || [];
+  } catch(e) {
+    if (status) status.textContent = '⚠ Scan fout: ' + e.message;
+  }
+
+  state.matches = prevMatches;
+  state.activeComp = prevComp;
+  renderCDScanResults();
+}
+
+function renderCDScanResults() {
+  const body = document.getElementById('cd-body');
+  const results = _cdScanResults;
+  if (!results.length) {
+    body.innerHTML = '<div class="cd-loading">Geen value picks gevonden in deze scan</div>'; return;
+  }
+  const sorted = [...results].sort((a,b) => (b.value||0) - (a.value||0));
+  const valueCount = sorted.filter(s => (s.value||0) >= 5).length;
+  const html = sorted.map(s => {
+    const val = s.value || 0;
+    const cls = val >= 15 ? 'pos' : val >= 5 ? 'med' : 'neg';
+    const sign = val > 0 ? '+' : '';
+    return `
+      <div class="cd-scan-result" onclick="openValueAnalysis('${s.match?.id||s.id}');closeCompDetail()">
+        <div class="cd-scan-result-info">
+          <div class="cd-scan-result-match">${s.match?.home||'?'} vs ${s.match?.away||'?'}</div>
+          <div class="cd-scan-result-pick">${s.pickLabel||'?'} @ ${(s.odds||0).toFixed(2)} · 🎲 ${s.confidence||'?'}/10 · ½K ${(s.kelly||0).toFixed(1)}%</div>
+        </div>
+        <div class="cd-scan-result-value ${cls}">${sign}${Math.round(val)}%</div>
+      </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+      <div class="cd-section" style="margin:0;">${results.length} gescand · ${valueCount} value picks</div>
+      <button onclick="_cdScanResults=[];renderCDScan()" style="font-family:'IBM Plex Mono',monospace;
+        font-size:.5rem;padding:3px 10px;border-radius:999px;cursor:pointer;
+        border:1px solid var(--stroke);background:transparent;color:var(--sub);">
+        🔄 Opnieuw
+      </button>
+    </div>
+    ${html}
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;margin-top:.5rem;">
+      Tik op een pick voor volledige analyse
+    </div>
+  `;
+}
+
+// ── TOPSCORERS ─────────────────────────────────────────
+async function renderCDTopscorers() {
+  const body = document.getElementById('cd-body');
+  const apiKey = state.settings.footballKey;
+  const leagueId = COMP_IDS[_cdComp];
+  if (!apiKey || !leagueId) {
+    body.innerHTML = '<div class="cd-loading">⚠ API-Football key nodig</div>'; return;
+  }
+
+  const cacheKey = 'scorers_' + _cdComp;
+  if (!_cdData[cacheKey]) {
+    try {
+      const r = await apiFetch(
+        'https://v3.football.api-sports.io/players/topscorers?league=' + leagueId + '&season=2025',
+        apiKey, 8000
+      );
+      const d = await r.json();
+      _cdData[cacheKey] = (d.response || []).slice(0, 20);
+    } catch(e) {
+      body.innerHTML = '<div class="cd-loading">⚠ ' + e.message + '</div>'; return;
+    }
+  }
+
+  const scorers = _cdData[cacheKey];
+  if (!scorers.length) {
+    body.innerHTML = '<div class="cd-loading">Geen topscorers beschikbaar</div>'; return;
+  }
+
+  const rankColors = ['gold','silver','bronze'];
+  const rows = scorers.map((s, i) => {
+    const st = s.statistics[0];
+    const goals = st.goals?.total || 0;
+    const assists = st.goals?.assists || 0;
+    const rating = parseFloat(st.games?.rating || 0).toFixed(1);
+    return `
+      <div class="cd-scorer-row">
+        <div class="cd-scorer-rank ${rankColors[i]||''}">${i+1}</div>
+        ${s.player.photo ? `<img src="${s.player.photo}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+        <div class="cd-scorer-info">
+          <div class="cd-scorer-name">${s.player.name}${s.player.injured ? ' 🤕' : ''}</div>
+          <div class="cd-scorer-club">${st.team?.name||''} · ⭐ ${rating}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="cd-scorer-goals">${goals}</div>
+          <div class="cd-scorer-assists">${assists} assist</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Top assists
+  const topAssists = [...scorers]
+    .sort((a,b) => (b.statistics[0].goals?.assists||0) - (a.statistics[0].goals?.assists||0))
+    .slice(0,5);
+  const assistRows = topAssists.map((s,i) => {
+    const st = s.statistics[0];
+    return `
+      <div class="cd-scorer-row">
+        <div class="cd-scorer-rank ${rankColors[i]||''}">${i+1}</div>
+        ${s.player.photo ? `<img src="${s.player.photo}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+        <div class="cd-scorer-info">
+          <div class="cd-scorer-name">${s.player.name}</div>
+          <div class="cd-scorer-club">${st.team?.name||''}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="cd-scorer-goals" style="color:#2563eb;">${st.goals?.assists||0}</div>
+          <div class="cd-scorer-assists">assists</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="cd-section">Topscorers</div>
+    ${rows}
+    <div class="cd-section">Top Assists</div>
+    ${assistRows}
+  `;
+}
+
+// ── ACTIES ─────────────────────────────────────────────
+function handleCDOddsBet(fixtureId, pick, pickLabel, odds) {
+  let match = state.matches.find(m => String(m.id) === String(fixtureId));
+  if (!match) {
+    const cached = (_cdData['matches_' + _cdComp] || []).find(f => String(f.fixture.id) === String(fixtureId));
+    if (cached) match = parseAPIMatch(cached);
+  }
+  if (!match) { alert('Wedstrijd niet gevonden — laad eerst de competitie'); return; }
+  closeCompDetail();
+  setTimeout(() => {
+    pendingBet = { match, pick, pickLabel, odds: parseFloat(odds), markt: '1X2',
+      _origPick: pick, _origPickLabel: pickLabel, _origOdds: parseFloat(odds) };
+    document.getElementById('modalMatchName').textContent = match.home + ' vs ' + match.away;
+    document.getElementById('modalPickInfo').textContent = 'Keuze: ' + pick + ' — ' + pickLabel + ' @ ' + odds;
+    document.getElementById('modalBetInput').value = state.settings.defaultBet || 10;
+    document.getElementById('marketPickRow').style.display = 'none';
+    document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('mb-1X2')?.classList.add('active');
+    updatePayoutPreview();
+    document.getElementById('betModal').classList.add('show');
+  }, 300);
+}
+
+function filterMatchesByTeam(teamName) {
+  closeCompDetail();
+  switchTab('wedstrijden');
+  setTimeout(() => {
+    const norm = teamName.toLowerCase().substring(0,5);
+    const found = state.matches.find(m =>
+      m.home.toLowerCase().includes(norm) || m.away.toLowerCase().includes(norm)
+    );
+    if (found) {
+      const el = document.getElementById('match-' + found.id);
+      if (el) el.scrollIntoView({ behavior:'smooth', block:'center' });
+    } else {
+      // Team niet in huidige lijst — selecteer comp en laad
+      selectComp(_cdComp);
+    }
+  }, 400);
+}
+
+
+// ═══════════════════════════════════════════════════════
 // SERVICE WORKER + DARK MODE
 // ═══════════════════════════════════════════════════════
 function registerSW() {
@@ -11247,6 +12275,39 @@ if ('serviceWorker' in navigator) {
       }
     }
   });
+  <!-- ═══════════════════════════════════════════════════
+     COMPETITIE DETAIL MODAL — HTML
+     Plak dit vlak voor </body> in index.html
+════════════════════════════════════════════════════ -->
+
+<div id="compDetailModal" onclick="if(event.target===this)closeCompDetail()">
+  <div class="comp-detail-sheet">
+    <!-- Header -->
+    <div class="cd-header">
+      <span class="cd-flag" id="cd-flag">🏆</span>
+      <div style="flex:1;min-width:0;">
+        <div class="cd-title" id="cd-title">Competitie</div>
+        <div id="cd-subtitle" style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);"></div>
+      </div>
+      <button class="cd-close" onclick="closeCompDetail()">✕</button>
+    </div>
+    <!-- Tabs -->
+    <div class="cd-tabs">
+      <button class="cd-tab active" id="cdt-stand"       onclick="setCDTab('stand')">🏆 Stand</button>
+      <button class="cd-tab"        id="cdt-wedstrijden" onclick="setCDTab('wedstrijden')">⚽ Wedstrijden</button>
+      <button class="cd-tab"        id="cdt-scan"        onclick="setCDTab('scan')">⚡ Value Scan</button>
+      <button class="cd-tab"        id="cdt-topscorers"  onclick="setCDTab('topscorers')">👟 Topscorers</button>
+    </div>
+    <!-- Body -->
+    <div class="cd-body" id="cd-body">
+      <div class="cd-loading">
+        <div class="cd-spinner"></div><br>
+        Data ophalen...
+      </div>
+    </div>
+  </div>
+</div>
+
 }
 
 </script>
