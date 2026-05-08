@@ -1,10 +1,14 @@
 [{
-  "relation": ["delegate_permission/common.handle_all_urls"],
+  "relation": [
+    "delegate_permission/common.handle_all_urls",
+    "delegate_permission/common.get_login_creds"
+  ],
   "target": {
     "namespace": "android_app",
     "package_name": "app.toto_ai.twa",
     "sha256_cert_fingerprints": [
-      "B3:F5:6F:88:3E:C3:BE:B9:BE:DE:0A:94:D7:34:6F:DE:E9:81:27:AC:E5:96:53:EA:2C:CD:69:AC:FE:B6:EF:F3"
+      "B3:F5:6F:88:3E:C3:BE:B9:BE:DE:0A:94:D7:34:6F:DE:E9:81:27:AC:E5:96:53:EA:2C:CD:69:AC:FE:B6:EF:F3",
+      "DA:BC:B6:63:88:2B:5B:B0:9B:40:B2:0B:F8:FC:7C:A8:C1:DA:BE:B1:76:DE:EA:EA:3B:04:AE:F8:0C:5D"
     ]
   }
 }]
