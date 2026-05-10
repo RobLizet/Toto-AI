@@ -13053,5 +13053,48 @@ async function saveSubscriberToFirebase(playerId) {
     <div id="qaModalBody" style="padding:1rem 1.1rem 1.4rem;font-family:'IBM Plex Mono',monospace;font-size:.68rem;line-height:1.7;color:var(--ink);white-space:pre-wrap;"></div>
   </div>
 </div>
+<script>
+const FB_URL = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app/picks.json';
+
+async function loadV40Picks() {
+  try {
+    const response = await fetch(FB_URL);
+    const data = await response.json();
+    
+    if (!data) return;
+
+    // 1. Transformeer v40 data naar het formaat van je app
+    const formattedScans = Object.values(data)
+      .filter(pick => !pick.processed) // Alleen onverwerkte picks
+      .map(pick => ({
+        matchId: pick.fixtureId,
+        home: pick.home || 'Thuis',
+        away: pick.away || 'Uit',
+        comp: 'v40 ENGINE',
+        pickLabel: pick.betType,
+        value: pick.audit ? pick.audit.edge : 0, // v40 'edge' wordt 'value'
+        confidence: pick.audit ? (10 - (pick.audit.risk / 10)) : 5, // Risk omzetten naar 0-10 score
+        odds: pick.odds,
+        kans: pick.kans,
+        scanTime: new Date(pick.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      }));
+
+    // 2. Gebruik je bestaande render-functie om ze te tonen
+    if (formattedScans.length > 0) {
+      renderScanResults(formattedScans);
+      console.log("v40 Data succesvol geladen:", formattedScans.length, "picks");
+    }
+  } catch (error) {
+    console.error("Fout bij laden v40 data:", error);
+  }
+}
+
+// Start de check zodra de pagina geladen is en daarna elke 5 minuten
+window.addEventListener('load', () => {
+  setTimeout(loadV40Picks, 2000); // Wacht even tot de rest van de app klaar is
+  setInterval(loadV40Picks, 300000); 
+});
+</script>
+
 </body>
 </html>
