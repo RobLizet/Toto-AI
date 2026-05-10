@@ -12458,7 +12458,7 @@ function registerSW() {
   }
   localStorage.setItem('totoai_version', APP_VERSION);
 
-   navigator.serviceWorker.register('/worker.js?v=14'),scope:'/', updateViaCache:'none'})
+   navigator.serviceWorker.register('/worker.js?v=40'),scope:'/', updateViaCache:'none'})
     .then(reg => {
       reg.update();
       console.log('[App] SW geregistreerd v' + APP_VERSION);
