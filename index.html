@@ -7,7 +7,757 @@
 <html lang="nl">
 
 
-<head>
+<
+
+<!-- ══ VALUE SCAN ══ -->
+
+<div class="section-label">
+
+
+  Wedstrijden vandaag t/m overmorgen
+
+
+
+
+
+  <button onclick="scanValueAll()" id="scanValueBtn" class="scan-value-btn">
+
+
+    ⚡ SCAN VALUE
+
+
+  </button>
+
+
+  <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);display:block;margin-top:2px;text-align:right;">auto bij laden</span>
+
+
+</div>
+
+
+<div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#15803d;
+
+
+  background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);border-radius:8px;
+
+
+  padding:.3rem .7rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;">
+
+
+  📊 Picks ≥5% value worden automatisch opgeslagen in
+
+
+  <b style="cursor:pointer;text-decoration:underline;" onclick="switchTab('backtest')">Backtest tab</b>
+
+
+  — daar houd je bij of ze goed of fout waren.
+
+
+</div>
+
+
+<div id="scanResultsPanel">
+
+
+  <div class="scan-results-header" onclick="toggleScanResults()">
+
+
+    <div class="scan-results-title" id="scanResultsTitle">⚡ SCAN RESULTATEN</div>
+
+
+    <span id="scanResultsChevron" style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#15803d;">▼</span>
+
+
+  </div>
+
+
+  <div id="scanResultsBody">
+
+
+    <div class="scan-sort-row" style="padding:.4rem .75rem 0;">
+
+
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);font-weight:700;">SORTEREN:</span>
+
+
+      <button class="sort-btn active" id="sort-value"   onclick="setScanSort('value')">⚡ Value %</button>
+
+
+      <button class="sort-btn"        id="sort-conf"    onclick="setScanSort('conf')">🎲 Confidence</button>
+
+
+      <button class="sort-btn"        id="sort-odds"    onclick="setScanSort('odds')">📊 Quote</button>
+
+
+      <button class="sort-btn"        id="sort-kelly"   onclick="setScanSort('kelly')">½K Kelly</button>
+
+
+    </div>
+
+
+    <div id="scanResultsList" style="padding-bottom:.3rem;"></div>
+
+
+  </div>
+
+
+</div>
+
+
+
+
+
+<div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;align-items:center;">
+
+
+  <button onclick="loadTodayAllComps()" id="allCompsBtn"
+
+
+    style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+
+
+    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
+
+
+    background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#1d4ed8;">
+
+
+    🌍 ALLE COMPETITIES VANDAAG
+
+
+  </button>
+
+
+  <button onclick="scanAllTodayValue('today')" id="scanAllTodayBtn" style="display:none;
+
+
+    font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+
+
+    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
+
+
+    background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(5,150,105,.1));
+
+
+    border:1px solid rgba(22,163,74,.4);color:#15803d;">
+
+
+    ⚡ SCAN ALLES
+
+
+  </button>
+
+
+  <button onclick="scanAllTodayValue('tomorrow')" id="scanTomorrowBtn" style="display:none;
+
+
+    font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+
+
+    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
+
+
+    background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(37,99,235,.06));
+
+
+    border:1px solid rgba(37,99,235,.35);color:#1d4ed8;">
+
+
+    📅 VANDAAG + MORGEN
+
+
+  </button>
+
+
+  <div id="allCompsLoading" style="display:none;font-family:'IBM Plex Mono',monospace;
+
+
+    font-size:.52rem;color:var(--sub);align-self:center;">⟳ Laden...</div>
+
+
+</div>
+
+
+<!-- Scan competitie filter -->
+
+
+<div id="scanCompFilterWrap" style="display:none;margin-bottom:.5rem;">
+
+
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:var(--sub);margin-bottom:.35rem;">
+
+
+    SCAN COMPETITIES <span style="opacity:.5;">(tik om uit/aan te zetten)</span>
+
+
+  </div>
+
+
+  <div class="scan-comp-filter" id="scanCompFilter"></div>
+
+
+</div>
+
+
+
+
+
+<!-- VALUE: uitleg card (wordt alleen getoond bij eerste keer) -->
+
+
+<div id="valueExplainer" class="value-explainer" style="display:none;">
+
+
+  <h5>⚡ WAT IS VALUE?</h5>
+
+
+  <p><b>Value</b> = wanneer de AI een hogere winstkans schat dan de bookmaker. Dan heb je op lange termijn statistisch voordeel.</p>
+
+
+  <div class="formula">value % = (AI_kans × quote − 1) × 100</div>
+
+
+  <p style="margin-top:.5rem;">Voorbeeld: AI zegt Ajax wint met 60% kans, bookmaker geeft quote 2.10</p>
+
+
+  <div class="example">
+
+
+    0,60 × 2,10 = 1,26<br>
+
+
+    → (1,26 − 1) × 100 = <b style="color:#15803d;">+26% value</b> 🔥
+
+
+  </div>
+
+
+  <p style="margin-top:.5rem;">Kleuren: <span style="color:#15803d;font-weight:700;">⚡ groen ≥15%</span> sterk · <span style="color:#b45309;font-weight:700;">oranje 5-15%</span> licht · <span style="color:#64748b;font-weight:700;">grijs 0-5%</span> fair · <span style="color:#dc2626;font-weight:700;">rood &lt;0%</span> geen value.</p>
+
+
+  <button onclick="hideValueExplainer()" style="margin-top:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.55rem;background:none;border:none;color:var(--sub);cursor:pointer;text-decoration:underline;">✕ Niet meer tonen</button>
+
+
+</div>
+
+
+
+
+
+<!-- VALUE: resultaten banner -->
+
+
+<div id="valueBanner" class="value-banner" style="display:none;"></div>
+
+
+
+
+
+<div id="debugOutput" style="display:none;background:rgba(255,255,255,.6);border:1px solid var(--stroke);
+
+
+  border-radius:10px;padding:.7rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;
+
+
+  font-size:.52rem;color:var(--ink);line-height:1.7;white-space:pre-wrap;word-break:break-all;
+
+
+  max-height:200px;overflow-y:auto;"></div>
+
+
+<div id="match-loading" style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);padding:.8rem 0;">
+
+
+  ⟳ Wedstrijden laden...
+
+
+</div>
+
+
+<div class="match-list" id="matchList"></div>
+
+
+
+
+
+<!-- COMBI BUILDER BALK -->
+
+
+<div class="combi-builder" id="combiBuilder" style="display:none;">
+
+
+  <div class="combi-builder-inner">
+
+
+    <div class="combi-builder-header">
+
+
+      <span class="combi-builder-title">🎰 Mijn Combi (<span id="cbLegCount">0</span> legs)</span>
+
+
+      <span class="combi-builder-odds" id="cbTotalOdds">1.00</span>
+
+
+    </div>
+
+
+    <div class="combi-builder-legs" id="cbLegs">
+
+
+      <div class="combi-empty">Klik op een wedstrijd om toe te voegen</div>
+
+
+    </div>
+
+
+    <div class="combi-builder-actions">
+
+
+      <button class="combi-place-btn" onclick="openCombiPlaceModal()">💶 INZET PLAATSEN</button>
+
+
+      <button class="combi-clear-btn" onclick="clearCombiBuilder()">✕ WISSEN</button>
+
+
+    </div>
+
+
+  </div>
+
+
+</div>
+
+
+
+
+
+<!-- FLOATING COMBI KNOP — altijd zichtbaar bovenaan als combi actief -->
+
+
+<div id="floatingCombiBtn" style="display:none;position:fixed;top:60px;right:12px;z-index:200;">
+
+
+  <button onclick="openCombiPlaceModal()" style="
+
+
+    background:linear-gradient(135deg,#db2777,#9333ea);
+
+
+    color:#fff;border:none;border-radius:999px;
+
+
+    font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;
+
+
+    padding:.5rem 1rem;cursor:pointer;
+
+
+    box-shadow:0 4px 16px rgba(219,39,119,.4);
+
+
+    display:flex;align-items:center;gap:.4rem;
+
+
+    white-space:nowrap;letter-spacing:.04em;">
+
+
+    🎰 <span id="floatingCombiOdds">1.00</span> · PLAATSEN
+
+
+  </button>
+
+
+</div>
+
+
+
+
+
+  </div>
+
+
+
+
+
+  <!-- ══════════════════════════════════════
+
+
+       TAB 3: TIPS & COMBI
+
+
+  ══════════════════════════════════════ -->
+
+
+
+
+
+  <div id="tab-tips" class="tab-content">
+
+
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);
+
+
+      background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:12px;
+
+
+      padding:.7rem 1rem;margin-bottom:.9rem;line-height:1.7;">
+
+
+      💡 AI selecteert de beste tips uit de geladen wedstrijden. Ga eerst naar <b>⚽ Wedstrijden</b> en laad een competitie.
+
+
+    </div>
+
+
+    <button class="combi-gen-btn" id="combiGenBtn" onclick="generateCombiTip()">
+
+
+      ⚡ GENEREER TOP 3 TIPS + COMBI
+
+
+    </button>
+
+
+    <div id="combiCard" class="combi-card" style="display:none;margin-top:.8rem;"></div>
+
+
+  </div>
+
+
+
+
+
+  <!-- ══════════════════════════════════════
+
+
+       TAB 5: ANALYSE
+
+
+  ══════════════════════════════════════ -->
+
+
+
+
+
+  <div id="tab-analyse" class="tab-content">
+
+
+    <div id="selectedMatchInfo" style="background:rgba(255,154,193,.08);border:1px solid rgba(255,154,193,.25);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#a78bfa;display:none;">
+
+
+      Geselecteerde wedstrijd: <span id="selectedMatchName" style="color:#d63384;font-weight:700;"></span>
+
+
+    </div>
+
+
+    <div id="noMatchWarning" style="background:rgba(243,156,18,.05);border:1px solid rgba(243,156,18,.2);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--yellow);">
+
+
+      ⚠ Selecteer eerst een wedstrijd in het tabblad Wedstrijden
+
+
+    </div>
+
+
+
+
+
+<!-- API key balk -->
+
+
+<div class="api-bar">
+
+
+  <span class="api-bar-label">🔑 Anthropic API Key</span>
+
+
+  <div class="api-row">
+
+
+    <div style="display:flex;gap:.3rem;align-items:center;">
+
+
+      <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." value="" style="flex:1;">
+
+
+      <button onclick="toggleKeyVisibility('apiKeyInput',this)" style="font-size:.7rem;padding:3px 8px;border-radius:8px;border:1px solid var(--stroke);background:transparent;cursor:pointer;">👁</button>
+
+
+    </div>
+
+
+    <button class="api-save" onclick="saveApiKey()">OPSLAAN</button>
+
+
+  </div>
+
+
+  <div class="api-status" id="apiStatus"></div>
+
+
+</div>
+
+
+
+
+
+<!-- Inzet config -->
+
+
+<div class="bet-config">
+
+
+  <div class="cfg-box">
+
+
+    <label>Fictieve inzet (€)</label>
+
+
+    <input type="number" id="betAmount" value="10" min="1" max="500" style="font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:700;background:transparent;border:none;color:var(--text);outline:none;width:100%;">
+
+
+  </div>
+
+
+  <div class="cfg-box">
+
+
+    <label>Risicoprofiel</label>
+
+
+    <select id="riskProfile">
+
+
+      <option value="laag">🟢 Laag risico</option>
+
+
+      <option value="gemiddeld" selected>🟡 Gemiddeld</option>
+
+
+      <option value="hoog">🔴 Hoog risico</option>
+
+
+    </select>
+
+
+  </div>
+
+
+</div>
+
+
+
+
+
+<!-- Entiteiten status -->
+
+
+<div class="entity-row" id="entityRow">
+
+
+  <div class="entity-chip" id="ec-kans"><span class="led"></span>KANSEN</div>
+
+
+  <div class="entity-chip" id="ec-advies"><span class="led"></span>BET ADVIES</div>
+
+
+  <div class="entity-chip" id="ec-vorm"><span class="led"></span>VORM ANALIST</div>
+
+
+  <div class="entity-chip" id="ec-stats"><span class="led"></span>STATISTIEKEN</div>
+
+
+  <div class="entity-chip" id="ec-tactiek"><span class="led"></span>TACTIEK</div>
+
+
+  <div class="entity-chip" id="ec-risico"><span class="led"></span>RISICO</div>
+
+
+  <div class="entity-chip" id="ec-tip"><span class="led"></span>🎯 AI TIP</div>
+
+
+</div>
+
+
+
+
+
+<button class="analyse-btn" id="analyseBtn" onclick="runAnalyse()">
+
+
+  ⚽ ANALYSEER WEDSTRIJD
+
+
+</button>
+
+
+
+
+
+<div id="sofascoreLink" style="display:none;margin-top:.5rem;">
+
+
+  <a id="sofascoreBtn" href="#" target="_blank" rel="noopener" style="
+
+
+    display:flex;align-items:center;justify-content:center;gap:.5rem;
+
+
+    width:100%;padding:.55rem;border-radius:12px;
+
+
+    background:rgba(3,91,188,.08);border:1px solid rgba(3,91,188,.25);
+
+
+    font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+
+
+    color:#035bbc;text-decoration:none;letter-spacing:.03em;">
+
+
+    <img src="https://www.sofascore.com/favicon.ico" style="width:14px;height:14px;border-radius:2px;" onerror="this.style.display='none'">
+
+
+    BEKIJK OP SOFASCORE →
+
+
+  </a>
+
+
+</div>
+
+
+
+
+
+<!-- Resultaten -->
+
+
+<div class="results" id="resultCards">
+
+
+  <div class="result-card" id="rc-kans" style="display:none">
+
+
+    <div class="card-head"><span class="card-tag t-kans">KANSEN</span><span class="card-title-txt">Winstkansen & Waarschijnlijkheden</span></div>
+
+
+    <div class="card-body" id="rb-kans"><span class="dots"><span></span><span></span><span></span></span></div>
+
+
+  </div>
+
+
+  <div class="result-card" id="rc-advies" style="display:none">
+
+
+    <div class="card-head"><span class="card-tag t-advies">BET ADVIES</span><span class="card-title-txt">Strategie & Inzet Advies</span></div>
+
+
+    <div class="card-body" id="rb-advies"><span class="dots"><span></span><span></span><span></span></span></div>
+
+
+  </div>
+
+
+  <div class="result-card" id="rc-tip" style="display:none;border:2px solid rgba(255,154,193,.4);background:linear-gradient(135deg,rgba(255,215,230,.25),rgba(214,240,255,.2));">
+
+
+    <div class="card-head"><span class="card-tag" style="background:linear-gradient(135deg,#ff9ac1,#a78bfa);color:#fff;">🎯 AI TIP</span><span class="card-title-txt" style="color:#d63384;font-weight:700;">Beste Tip + Kans van Slagen</span></div>
+
+
+    <div class="card-body" id="rb-tip"><span class="dots"><span></span><span></span><span></span></span></div>
+
+
+  </div>
+
+
+  <div class="result-card" id="rc-vorm" style="display:none">
+
+
+    <div class="card-head"><span class="card-tag t-vorm">VORM</span><span class="card-title-txt">Vorm & Recent Resultaten</span></div>
+
+
+    <div class="card-body" id="rb-vorm"><span class="dots"><span></span><span></span><span></span></span></div>
+
+
+  </div>
+
+
+  <div class="result-card" id="rc-stats" style="display:none">
+
+
+    <div class="card-head"><span class="card-tag t-stats">STATISTIEKEN</span><span class="card-title-txt">Hoofd-aan-hoofd & Cijfers</span></div>
+
+
+    <div class="card-body" id="rb-stats"><span class="dots"><span></span><span></span><span></span></span></div>
+
+
+  </div>
+
+
+  <div class="result-card" id="rc-tactiek" style="display:none">
+
+
+    <div class="card-head"><span class="card-tag t-tactiek">TACTIEK</span><span class="card-title-txt">Tactische Analyse</span></div>
+
+
+    <div class="card-body" id="rb-tactiek"><span class="dots"><span></span><span></span><span></span></span></div>
+
+
+  </div>
+
+
+  <div class="result-card" id="rc-risico" style="display:none">
+
+
+    <div class="card-head"><span class="card-tag t-risico">RISICO</span><span class="card-title-txt">Risicobeoordeling</span></div>
+
+
+    <div class="card-body" id="rb-risico"><span class="dots"><span></span><span></span><span></span></span></div>
+
+
+  </div>
+
+
+</div>
+
+
+
+
+
+<div class="disclaimer">
+
+
+  ⚠ FICTIEVE APP — Uitsluitend voor educatieve doeleinden. Geen echte gok-adviezen.
+
+
+  Gebruik geen echt geld op basis van AI-analyses. 18+
+
+
+</div>
+
+
+
+
+
+  </div>
+
+
+
+
+
+
+<!-- ══ SCHEIDSLIJN ══ -->
+<div style="display:flex;align-items:center;gap:.5rem;margin:1.2rem 0;">
+  <div style="flex:1;height:1px;background:var(--stroke);"></div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);font-weight:700;letter-spacing:.08em;">OF ANALYSEER 1 WEDSTRIJD</div>
+  <div style="flex:1;height:1px;background:var(--stroke);"></div>
+</div>
+
+head>
 
 
 <meta charset="UTF-8">
@@ -8143,7 +8893,7 @@ body.dark .login-input {
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
 
 
-        <div class="version-badge">v11.60</div>
+        <div class="version-badge">v11.76</div>
 
 
       </div>
@@ -8263,7 +9013,7 @@ body.dark .login-input {
       <button class="tab-btn" onclick="switchTab('analyse')" id="tab-btn-analyse">
 
 
-        <span class="tab-icon">🤖</span><span class="tab-label">ANALYSE</span>
+        <span class="tab-icon">⚡</span><span class="tab-label">SCAN & ANALYSE</span>
 
 
       </button>
@@ -8893,7 +9643,7 @@ body.dark .login-input {
 
 
 
-  VERSIE: v11.60
+  VERSIE: v11.76
 
 
 -->
@@ -8941,743 +9691,7 @@ body.dark .login-input {
 
 
 
-<div class="section-label">
-
-
-  Wedstrijden vandaag t/m overmorgen
-
-
-
-
-
-  <button onclick="scanValueAll()" id="scanValueBtn" class="scan-value-btn">
-
-
-    ⚡ SCAN VALUE
-
-
-  </button>
-
-
-  <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);display:block;margin-top:2px;text-align:right;">auto bij laden</span>
-
-
-</div>
-
-
-<div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#15803d;
-
-
-  background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);border-radius:8px;
-
-
-  padding:.3rem .7rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem;">
-
-
-  📊 Picks ≥5% value worden automatisch opgeslagen in
-
-
-  <b style="cursor:pointer;text-decoration:underline;" onclick="switchTab('backtest')">Backtest tab</b>
-
-
-  — daar houd je bij of ze goed of fout waren.
-
-
-</div>
-
-
-<div id="scanResultsPanel">
-
-
-  <div class="scan-results-header" onclick="toggleScanResults()">
-
-
-    <div class="scan-results-title" id="scanResultsTitle">⚡ SCAN RESULTATEN</div>
-
-
-    <span id="scanResultsChevron" style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#15803d;">▼</span>
-
-
-  </div>
-
-
-  <div id="scanResultsBody">
-
-
-    <div class="scan-sort-row" style="padding:.4rem .75rem 0;">
-
-
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);font-weight:700;">SORTEREN:</span>
-
-
-      <button class="sort-btn active" id="sort-value"   onclick="setScanSort('value')">⚡ Value %</button>
-
-
-      <button class="sort-btn"        id="sort-conf"    onclick="setScanSort('conf')">🎲 Confidence</button>
-
-
-      <button class="sort-btn"        id="sort-odds"    onclick="setScanSort('odds')">📊 Quote</button>
-
-
-      <button class="sort-btn"        id="sort-kelly"   onclick="setScanSort('kelly')">½K Kelly</button>
-
-
-    </div>
-
-
-    <div id="scanResultsList" style="padding-bottom:.3rem;"></div>
-
-
-  </div>
-
-
-</div>
-
-
-
-
-
-<div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;align-items:center;">
-
-
-  <button onclick="loadTodayAllComps()" id="allCompsBtn"
-
-
-    style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
-
-
-    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
-
-
-    background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#1d4ed8;">
-
-
-    🌍 ALLE COMPETITIES VANDAAG
-
-
-  </button>
-
-
-  <button onclick="scanAllTodayValue('today')" id="scanAllTodayBtn" style="display:none;
-
-
-    font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
-
-
-    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
-
-
-    background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(5,150,105,.1));
-
-
-    border:1px solid rgba(22,163,74,.4);color:#15803d;">
-
-
-    ⚡ SCAN ALLES
-
-
-  </button>
-
-
-  <button onclick="scanAllTodayValue('tomorrow')" id="scanTomorrowBtn" style="display:none;
-
-
-    font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
-
-
-    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
-
-
-    background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(37,99,235,.06));
-
-
-    border:1px solid rgba(37,99,235,.35);color:#1d4ed8;">
-
-
-    📅 VANDAAG + MORGEN
-
-
-  </button>
-
-
-  <div id="allCompsLoading" style="display:none;font-family:'IBM Plex Mono',monospace;
-
-
-    font-size:.52rem;color:var(--sub);align-self:center;">⟳ Laden...</div>
-
-
-</div>
-
-
-<!-- Scan competitie filter -->
-
-
-<div id="scanCompFilterWrap" style="display:none;margin-bottom:.5rem;">
-
-
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:var(--sub);margin-bottom:.35rem;">
-
-
-    SCAN COMPETITIES <span style="opacity:.5;">(tik om uit/aan te zetten)</span>
-
-
-  </div>
-
-
-  <div class="scan-comp-filter" id="scanCompFilter"></div>
-
-
-</div>
-
-
-
-
-
-<!-- VALUE: uitleg card (wordt alleen getoond bij eerste keer) -->
-
-
-<div id="valueExplainer" class="value-explainer" style="display:none;">
-
-
-  <h5>⚡ WAT IS VALUE?</h5>
-
-
-  <p><b>Value</b> = wanneer de AI een hogere winstkans schat dan de bookmaker. Dan heb je op lange termijn statistisch voordeel.</p>
-
-
-  <div class="formula">value % = (AI_kans × quote − 1) × 100</div>
-
-
-  <p style="margin-top:.5rem;">Voorbeeld: AI zegt Ajax wint met 60% kans, bookmaker geeft quote 2.10</p>
-
-
-  <div class="example">
-
-
-    0,60 × 2,10 = 1,26<br>
-
-
-    → (1,26 − 1) × 100 = <b style="color:#15803d;">+26% value</b> 🔥
-
-
-  </div>
-
-
-  <p style="margin-top:.5rem;">Kleuren: <span style="color:#15803d;font-weight:700;">⚡ groen ≥15%</span> sterk · <span style="color:#b45309;font-weight:700;">oranje 5-15%</span> licht · <span style="color:#64748b;font-weight:700;">grijs 0-5%</span> fair · <span style="color:#dc2626;font-weight:700;">rood &lt;0%</span> geen value.</p>
-
-
-  <button onclick="hideValueExplainer()" style="margin-top:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.55rem;background:none;border:none;color:var(--sub);cursor:pointer;text-decoration:underline;">✕ Niet meer tonen</button>
-
-
-</div>
-
-
-
-
-
-<!-- VALUE: resultaten banner -->
-
-
-<div id="valueBanner" class="value-banner" style="display:none;"></div>
-
-
-
-
-
-<div id="debugOutput" style="display:none;background:rgba(255,255,255,.6);border:1px solid var(--stroke);
-
-
-  border-radius:10px;padding:.7rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;
-
-
-  font-size:.52rem;color:var(--ink);line-height:1.7;white-space:pre-wrap;word-break:break-all;
-
-
-  max-height:200px;overflow-y:auto;"></div>
-
-
-<div id="match-loading" style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);padding:.8rem 0;">
-
-
-  ⟳ Wedstrijden laden...
-
-
-</div>
-
-
-<div class="match-list" id="matchList"></div>
-
-
-
-
-
-<!-- COMBI BUILDER BALK -->
-
-
-<div class="combi-builder" id="combiBuilder" style="display:none;">
-
-
-  <div class="combi-builder-inner">
-
-
-    <div class="combi-builder-header">
-
-
-      <span class="combi-builder-title">🎰 Mijn Combi (<span id="cbLegCount">0</span> legs)</span>
-
-
-      <span class="combi-builder-odds" id="cbTotalOdds">1.00</span>
-
-
-    </div>
-
-
-    <div class="combi-builder-legs" id="cbLegs">
-
-
-      <div class="combi-empty">Klik op een wedstrijd om toe te voegen</div>
-
-
-    </div>
-
-
-    <div class="combi-builder-actions">
-
-
-      <button class="combi-place-btn" onclick="openCombiPlaceModal()">💶 INZET PLAATSEN</button>
-
-
-      <button class="combi-clear-btn" onclick="clearCombiBuilder()">✕ WISSEN</button>
-
-
-    </div>
-
-
-  </div>
-
-
-</div>
-
-
-
-
-
-<!-- FLOATING COMBI KNOP — altijd zichtbaar bovenaan als combi actief -->
-
-
-<div id="floatingCombiBtn" style="display:none;position:fixed;top:60px;right:12px;z-index:200;">
-
-
-  <button onclick="openCombiPlaceModal()" style="
-
-
-    background:linear-gradient(135deg,#db2777,#9333ea);
-
-
-    color:#fff;border:none;border-radius:999px;
-
-
-    font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;
-
-
-    padding:.5rem 1rem;cursor:pointer;
-
-
-    box-shadow:0 4px 16px rgba(219,39,119,.4);
-
-
-    display:flex;align-items:center;gap:.4rem;
-
-
-    white-space:nowrap;letter-spacing:.04em;">
-
-
-    🎰 <span id="floatingCombiOdds">1.00</span> · PLAATSEN
-
-
-  </button>
-
-
-</div>
-
-
-
-
-
-  </div>
-
-
-
-
-
-  <!-- ══════════════════════════════════════
-
-
-       TAB 3: TIPS & COMBI
-
-
-  ══════════════════════════════════════ -->
-
-
-
-
-
-  <div id="tab-tips" class="tab-content">
-
-
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);
-
-
-      background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:12px;
-
-
-      padding:.7rem 1rem;margin-bottom:.9rem;line-height:1.7;">
-
-
-      💡 AI selecteert de beste tips uit de geladen wedstrijden. Ga eerst naar <b>⚽ Wedstrijden</b> en laad een competitie.
-
-
-    </div>
-
-
-    <button class="combi-gen-btn" id="combiGenBtn" onclick="generateCombiTip()">
-
-
-      ⚡ GENEREER TOP 3 TIPS + COMBI
-
-
-    </button>
-
-
-    <div id="combiCard" class="combi-card" style="display:none;margin-top:.8rem;"></div>
-
-
-  </div>
-
-
-
-
-
-  <!-- ══════════════════════════════════════
-
-
-       TAB 5: ANALYSE
-
-
-  ══════════════════════════════════════ -->
-
-
-
-
-
-  <div id="tab-analyse" class="tab-content">
-
-
-    <div id="selectedMatchInfo" style="background:rgba(255,154,193,.08);border:1px solid rgba(255,154,193,.25);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#a78bfa;display:none;">
-
-
-      Geselecteerde wedstrijd: <span id="selectedMatchName" style="color:#d63384;font-weight:700;"></span>
-
-
-    </div>
-
-
-    <div id="noMatchWarning" style="background:rgba(243,156,18,.05);border:1px solid rgba(243,156,18,.2);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--yellow);">
-
-
-      ⚠ Selecteer eerst een wedstrijd in het tabblad Wedstrijden
-
-
-    </div>
-
-
-
-
-
-<!-- API key balk -->
-
-
-<div class="api-bar">
-
-
-  <span class="api-bar-label">🔑 Anthropic API Key</span>
-
-
-  <div class="api-row">
-
-
-    <div style="display:flex;gap:.3rem;align-items:center;">
-
-
-      <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." value="" style="flex:1;">
-
-
-      <button onclick="toggleKeyVisibility('apiKeyInput',this)" style="font-size:.7rem;padding:3px 8px;border-radius:8px;border:1px solid var(--stroke);background:transparent;cursor:pointer;">👁</button>
-
-
-    </div>
-
-
-    <button class="api-save" onclick="saveApiKey()">OPSLAAN</button>
-
-
-  </div>
-
-
-  <div class="api-status" id="apiStatus"></div>
-
-
-</div>
-
-
-
-
-
-<!-- Inzet config -->
-
-
-<div class="bet-config">
-
-
-  <div class="cfg-box">
-
-
-    <label>Fictieve inzet (€)</label>
-
-
-    <input type="number" id="betAmount" value="10" min="1" max="500" style="font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:700;background:transparent;border:none;color:var(--text);outline:none;width:100%;">
-
-
-  </div>
-
-
-  <div class="cfg-box">
-
-
-    <label>Risicoprofiel</label>
-
-
-    <select id="riskProfile">
-
-
-      <option value="laag">🟢 Laag risico</option>
-
-
-      <option value="gemiddeld" selected>🟡 Gemiddeld</option>
-
-
-      <option value="hoog">🔴 Hoog risico</option>
-
-
-    </select>
-
-
-  </div>
-
-
-</div>
-
-
-
-
-
-<!-- Entiteiten status -->
-
-
-<div class="entity-row" id="entityRow">
-
-
-  <div class="entity-chip" id="ec-kans"><span class="led"></span>KANSEN</div>
-
-
-  <div class="entity-chip" id="ec-advies"><span class="led"></span>BET ADVIES</div>
-
-
-  <div class="entity-chip" id="ec-vorm"><span class="led"></span>VORM ANALIST</div>
-
-
-  <div class="entity-chip" id="ec-stats"><span class="led"></span>STATISTIEKEN</div>
-
-
-  <div class="entity-chip" id="ec-tactiek"><span class="led"></span>TACTIEK</div>
-
-
-  <div class="entity-chip" id="ec-risico"><span class="led"></span>RISICO</div>
-
-
-  <div class="entity-chip" id="ec-tip"><span class="led"></span>🎯 AI TIP</div>
-
-
-</div>
-
-
-
-
-
-<button class="analyse-btn" id="analyseBtn" onclick="runAnalyse()">
-
-
-  ⚽ ANALYSEER WEDSTRIJD
-
-
-</button>
-
-
-
-
-
-<div id="sofascoreLink" style="display:none;margin-top:.5rem;">
-
-
-  <a id="sofascoreBtn" href="#" target="_blank" rel="noopener" style="
-
-
-    display:flex;align-items:center;justify-content:center;gap:.5rem;
-
-
-    width:100%;padding:.55rem;border-radius:12px;
-
-
-    background:rgba(3,91,188,.08);border:1px solid rgba(3,91,188,.25);
-
-
-    font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
-
-
-    color:#035bbc;text-decoration:none;letter-spacing:.03em;">
-
-
-    <img src="https://www.sofascore.com/favicon.ico" style="width:14px;height:14px;border-radius:2px;" onerror="this.style.display='none'">
-
-
-    BEKIJK OP SOFASCORE →
-
-
-  </a>
-
-
-</div>
-
-
-
-
-
-<!-- Resultaten -->
-
-
-<div class="results" id="resultCards">
-
-
-  <div class="result-card" id="rc-kans" style="display:none">
-
-
-    <div class="card-head"><span class="card-tag t-kans">KANSEN</span><span class="card-title-txt">Winstkansen & Waarschijnlijkheden</span></div>
-
-
-    <div class="card-body" id="rb-kans"><span class="dots"><span></span><span></span><span></span></span></div>
-
-
-  </div>
-
-
-  <div class="result-card" id="rc-advies" style="display:none">
-
-
-    <div class="card-head"><span class="card-tag t-advies">BET ADVIES</span><span class="card-title-txt">Strategie & Inzet Advies</span></div>
-
-
-    <div class="card-body" id="rb-advies"><span class="dots"><span></span><span></span><span></span></span></div>
-
-
-  </div>
-
-
-  <div class="result-card" id="rc-tip" style="display:none;border:2px solid rgba(255,154,193,.4);background:linear-gradient(135deg,rgba(255,215,230,.25),rgba(214,240,255,.2));">
-
-
-    <div class="card-head"><span class="card-tag" style="background:linear-gradient(135deg,#ff9ac1,#a78bfa);color:#fff;">🎯 AI TIP</span><span class="card-title-txt" style="color:#d63384;font-weight:700;">Beste Tip + Kans van Slagen</span></div>
-
-
-    <div class="card-body" id="rb-tip"><span class="dots"><span></span><span></span><span></span></span></div>
-
-
-  </div>
-
-
-  <div class="result-card" id="rc-vorm" style="display:none">
-
-
-    <div class="card-head"><span class="card-tag t-vorm">VORM</span><span class="card-title-txt">Vorm & Recent Resultaten</span></div>
-
-
-    <div class="card-body" id="rb-vorm"><span class="dots"><span></span><span></span><span></span></span></div>
-
-
-  </div>
-
-
-  <div class="result-card" id="rc-stats" style="display:none">
-
-
-    <div class="card-head"><span class="card-tag t-stats">STATISTIEKEN</span><span class="card-title-txt">Hoofd-aan-hoofd & Cijfers</span></div>
-
-
-    <div class="card-body" id="rb-stats"><span class="dots"><span></span><span></span><span></span></span></div>
-
-
-  </div>
-
-
-  <div class="result-card" id="rc-tactiek" style="display:none">
-
-
-    <div class="card-head"><span class="card-tag t-tactiek">TACTIEK</span><span class="card-title-txt">Tactische Analyse</span></div>
-
-
-    <div class="card-body" id="rb-tactiek"><span class="dots"><span></span><span></span><span></span></span></div>
-
-
-  </div>
-
-
-  <div class="result-card" id="rc-risico" style="display:none">
-
-
-    <div class="card-head"><span class="card-tag t-risico">RISICO</span><span class="card-title-txt">Risicobeoordeling</span></div>
-
-
-    <div class="card-body" id="rb-risico"><span class="dots"><span></span><span></span><span></span></span></div>
-
-
-  </div>
-
-
-</div>
-
-
-
-
-
-<div class="disclaimer">
-
-
-  ⚠ FICTIEVE APP — Uitsluitend voor educatieve doeleinden. Geen echte gok-adviezen.
-
-
-  Gebruik geen echt geld op basis van AI-analyses. 18+
-
-
-</div>
-
-
-
-
-
-  </div>
-
-
-
-
+<div class="section-label">Wedstrijden vandaag t/m overmorgen</div>
 
   <!-- ══════════════════════════════════════
 
@@ -10144,19 +10158,18 @@ body.dark .login-input {
 
 
 
-  <!-- ══════════════════════════════════════
 
+<!-- ══ ECHTE WEDDENSCHAPPEN (geïntegreerd) ══ -->
+<div style="margin-top:1.5rem;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:700;color:#475569;letter-spacing:.06em;">📒 ECHTE WEDDENSCHAPPEN</div>
+    <div style="display:flex;gap:.4rem;">
+      <button onclick="openTrackerModal()" style="background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.85));border:none;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.4rem .75rem;border-radius:10px;cursor:pointer;">➕</button>
+      <button onclick="autoCheckTrackerBets()" style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.4rem .65rem;border-radius:10px;cursor:pointer;background:rgba(37,99,235,.1);border:1.5px solid rgba(37,99,235,.3);color:#2563eb;">🔍</button>
+      <button onclick="exportTrackerCSV()" style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.4rem .65rem;border-radius:10px;cursor:pointer;background:rgba(15,23,42,.06);border:1.5px solid var(--stroke);color:var(--sub);">📥</button>
+    </div>
+  </div>
 
-       TAB: ECHTE WEDDENSCHAP TRACKER
-
-
-  ══════════════════════════════════════ -->
-
-
-
-
-
-  <div id="tab-tracker" class="tab-content">
 
 
 
@@ -10306,11 +10319,7 @@ body.dark .login-input {
 
 
 
-  </div>
-
-
-
-
+</div>
 
   <!-- ══════════════════════════════════════
 
@@ -12202,7 +12211,7 @@ body.dark .login-input {
       text-align:center;margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--stroke);">
 
 
-      TOTO AI v11.60 · Made by Rob Borghouts · Powered by Anthropic Claude
+      TOTO AI v11.76 · Made by Rob Borghouts · Powered by Anthropic Claude
 
 
     </div>
@@ -12270,23 +12279,6 @@ body.dark .login-input {
 
   </button>
 
-
-  <button class="bnav-btn" id="bnav-tracker" onclick="switchTab('tracker')">
-
-
-    <span class="bnav-icon">📒</span>
-
-
-    <span class="bnav-label">Tracker</span>
-
-
-    <span class="bnav-dot" id="bnav-tracker-dot"></span>
-
-
-    <span class="bnav-dot-line"></span>
-
-
-  </button>
 
 
   <button class="bnav-btn" id="bnav-more" onclick="toggleMoreMenu()">
@@ -13125,6 +13117,7 @@ window.addEventListener('load', () => {
 
 
   try { loadState(); } catch(e) { console.error('loadState:', e); }
+  checkDisclaimer();
 
 
   startAutoCheckScheduler();
@@ -13376,7 +13369,7 @@ function switchTab(name) {
   if (name === 'dashboard') renderDashboard();
 
 
-  if (name === 'wallet') { updateWalletUI(); startLiveScorePolling(); }
+  if (name === 'wallet') { updateWalletUI(); renderTracker(); updateTrackerStats(); startLiveScorePolling(); }
 
 
   if (name === 'tracker') { renderTracker(); updateTrackerStats(); }
@@ -19718,7 +19711,7 @@ async function scanAllTodayValue(mode = 'today') {
       const p = d.poisson;
 
 
-      let line = `${i+1}. ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp||'?'} | ${m.date||''} ${m.time||''} | 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
+      let line = `${i+1}. matchId:${m.id} | ${m.home} vs ${m.away} | ${m.comp||'?'} | ${m.date||''} ${m.time||''} | 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
 
 
       if (p?.valid) line += `\n   📐 Poisson: 1=${p.k1}% X=${p.kX}% 2=${p.k2}% λ_thuis=${p.lambdaHome} λ_uit=${p.lambdaAway}${p.hasXG?' (incl. xG)':''}`;
@@ -19754,6 +19747,9 @@ async function scanAllTodayValue(mode = 'today') {
     }).join('\n\n');
 
 
+    // ── Voeg historische leer-context toe ──
+    const historyCtx = buildAIHistoryContext();
+
 
 
 
@@ -19772,13 +19768,18 @@ async function scanAllTodayValue(mode = 'today') {
       system: `RESPOND WITH VALID JSON ONLY. NO TEXT BEFORE OR AFTER JSON. START YOUR RESPONSE WITH { AND END WITH }.
 
 
-{"results":[{"idx":1,"pick":"1","pickLabel":"kort","kans1":45,"kansX":28,"kans2":27,"confidence":7,"kelly":3.2,"reason":"30-40 woorden waarom value","factoren":["kort","kort"],"risico":"max 15 woorden"}]}
+{"results":[{"matchId":"12345","pick":"1","pickLabel":"kort","kans1":45,"kansX":28,"kans2":27,"reason":"30-40 woorden waarom value","factoren":["kort","kort"],"risico":"max 15 woorden"}]}
 
 
-Regels: kans1+kansX+kans2=100. Poisson als anker (±8pp). Geef voor ALLE ${candidates.length} wedstrijden een object. Geen uitleg, geen markdown.`,
+Regels:
+- kans1+kansX+kans2=100. Poisson als anker (±8pp).
+- matchId = het ID uit de wedstrijd (verplicht, gebruik dit exact).
+- Geef voor ALLE ${candidates.length} wedstrijden een object.
+- Als value < 3% of signalen tegenstrijdig: geef "pick":"SKIP".
+- Geen uitleg, geen markdown.`,
 
 
-      messages:[{role:'user', content:`Analyseer ${candidates.length} wedstrijden:
+      messages:[{role:'user', content:`Analyseer ${candidates.length} wedstrijden:${historyCtx}
 
 
 
@@ -19835,10 +19836,16 @@ ${ctx}`}]
     for (const r of results) {
 
 
-      const idx = (r.idx || 1) - 1;
+      // SKIP picks die AI als onbetrouwbaar markeert
+      if (r.pick === 'SKIP') continue;
 
 
-      const m = candidates[idx];
+      // ID-based matching (betrouwbaarder dan idx)
+      let m = r.matchId ? candidates.find(c => String(c.id) === String(r.matchId)) : null;
+      if (!m) {
+        const idx = (r.idx || 1) - 1;
+        m = candidates[idx];
+      }
 
 
       if (!m) continue;
@@ -19952,7 +19959,7 @@ ${ctx}`}]
         val: value,
 
 
-        confidence: d.confidence || r.confidence || 5,
+        confidence: d.confidence || 5,
 
 
         kelly,
@@ -20368,6 +20375,69 @@ ${ctx}`}]
 
 }
 
+
+
+// ── AI Leer-context: historische stats voor betere analyses ──
+function buildAIHistoryContext() {
+  try {
+    const bets = (state.wallet?.bets || []).filter(b => b.status === 'win' || b.status === 'lose');
+    if (bets.length < 3) return '';
+
+    // Globale stats
+    const wins = bets.filter(b => b.status === 'win').length;
+    const hitRate = Math.round(wins / bets.length * 100);
+    const profit = bets.reduce((s, b) => b.status === 'win' ? s + (b.odds - 1) : s - 1, 0);
+    const roi = ((profit / bets.length) * 100).toFixed(1);
+
+    // Per competitie
+    const compMap = {};
+    for (const b of bets) {
+      const key = b.comp || b.league || 'Overig';
+      if (!compMap[key]) compMap[key] = { wins: 0, total: 0, profit: 0 };
+      compMap[key].total++;
+      if (b.status === 'win') { compMap[key].wins++; compMap[key].profit += (b.odds - 1); }
+      else compMap[key].profit -= 1;
+    }
+
+    const compLines = Object.entries(compMap)
+      .filter(([, d]) => d.total >= 3)
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 6)
+      .map(([comp, d]) => {
+        const pct = Math.round(d.wins / d.total * 100);
+        const r = ((d.profit / d.total) * 100).toFixed(1);
+        const trend = parseFloat(r) > 5 ? '📈' : parseFloat(r) < -5 ? '📉' : '➡️';
+        return `  - ${comp}: ${d.total} picks, ${pct}% treffscore, ROI ${r}% ${trend}`;
+      }).join('\n');
+
+    // Per pick type (1/X/2)
+    const pickMap = { '1': { wins: 0, total: 0 }, 'X': { wins: 0, total: 0 }, '2': { wins: 0, total: 0 } };
+    for (const b of bets) {
+      const t = b.pick || '1';
+      if (pickMap[t]) { pickMap[t].total++; if (b.status === 'win') pickMap[t].wins++; }
+    }
+    const pickLines = Object.entries(pickMap)
+      .filter(([, d]) => d.total >= 3)
+      .map(([t, d]) => `  - Pick ${t}: ${d.total}x, ${Math.round(d.wins/d.total*100)}% treffscore`)
+      .join('\n');
+
+    // Recente vorm (laatste 10)
+    const recent = bets.slice(0, 10);
+    const recentWins = recent.filter(b => b.status === 'win').length;
+    const recentForm = recent.map(b => b.status === 'win' ? 'W' : 'L').join('');
+
+    let ctx = `\n\nJOUW HISTORISCHE PRESTATIES (gebruik dit om je analyse te kalibreren):`;
+    ctx += `\nAlgemeen: ${bets.length} picks, ${hitRate}% treffscore, ROI ${roi}%`;
+    ctx += `\nRecente vorm (laatste ${recent.length}): ${recentForm} (${recentWins}/${recent.length} gewonnen)`;
+    if (compLines) ctx += `\nPer competitie:\n${compLines}`;
+    if (pickLines) ctx += `\nPer pick type:\n${pickLines}`;
+    ctx += `\n→ Wees strenger in competities met negatieve ROI. Vertrouw je sterke competities meer.`;
+
+    return ctx;
+  } catch(e) {
+    return '';
+  }
+}
 
 async function scanValueAll() {
 
@@ -31523,7 +31593,7 @@ function renderScanResults(scans, restored = false) {
 // ═══════════════════════════════════════════════════════
 
 
-const BNAV_TABS = ['dashboard','wedstrijden','wallet','tracker'];
+const BNAV_TABS = ['dashboard','wedstrijden','wallet'];
 
 
 
@@ -37322,7 +37392,7 @@ function registerSW() {
   if (!('serviceWorker' in navigator)) return;
 
 
-  const APP_VERSION = 'v11.60';
+  const APP_VERSION = 'v11.76';
 
 
   const storedVersion = localStorage.getItem('totoai_version');
@@ -39029,6 +39099,19 @@ async function saveSubscriberToFirebase(playerId) {
 
 
 
+
+function checkDisclaimer() {
+  const accepted = localStorage.getItem('totoai_disclaimer_v1');
+  if (!accepted) {
+    const modal = document.getElementById('disclaimerModal');
+    if (modal) modal.style.display = 'flex';
+  }
+}
+function acceptDisclaimer() {
+  localStorage.setItem('totoai_disclaimer_v1', new Date().toISOString());
+  const modal = document.getElementById('disclaimerModal');
+  if (modal) modal.style.display = 'none';
+}
 </script>
 
 
@@ -39161,6 +39244,35 @@ async function saveSubscriberToFirebase(playerId) {
 </div>
 
 
+
+<div id="disclaimerModal" class="modal-overlay" style="display:none;z-index:9999;
+  background:rgba(15,23,42,.85);backdrop-filter:blur(8px);">
+  <div class="modal-box" style="max-width:340px;padding:1.5rem;border-radius:20px;
+    background:#fff;margin:2rem auto;position:relative;">
+    <div style="text-align:center;margin-bottom:1rem;">
+      <div style="font-size:2rem;">⚠️</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#0f172a;letter-spacing:.05em;">BELANGRIJK</div>
+    </div>
+    <div style="font-size:.75rem;font-family:'IBM Plex Mono',monospace;color:#475569;line-height:1.8;margin-bottom:1.2rem;">
+      <b style="color:#0f172a;">TOTO AI is uitsluitend voor entertainment en educatie.</b><br><br>
+      • De AI-analyses zijn <b>geen gok- of financieel advies</b><br>
+      • Gebruik <b>nooit echt geld</b> op basis van deze app<br>
+      • Gokken brengt financiële risico's met zich mee<br>
+      • Speel verantwoord en alleen als je 18+ bent<br><br>
+      <span style="color:#dc2626;font-weight:700;">Verslavingslijn: 0900-1090 (gratis)</span><br>
+      <a href="https://www.gamcare.org.uk" target="_blank" style="color:#2563eb;">GamCare · BeGambleAware</a>
+    </div>
+    <button onclick="acceptDisclaimer()" style="width:100%;
+      background:linear-gradient(135deg,#16a34a,#15803d);border:none;color:#fff;
+      font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:700;
+      padding:.85rem;border-radius:12px;cursor:pointer;letter-spacing:.05em;">
+      ✓ IK BEGRIJP DIT EN BEN 18+
+    </button>
+    <div style="text-align:center;font-size:.6rem;color:#94a3b8;font-family:'IBM Plex Mono',monospace;margin-top:.5rem;">
+      Je moet akkoord gaan om de app te gebruiken
+    </div>
+  </div>
+</div>
 </body>
 
 
