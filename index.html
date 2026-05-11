@@ -13315,6 +13315,22 @@ function dismissBanner() {
 
 // ═══════════════════════════════════════════════════════
 
+function switchTab(tabId) {
+    // Verberg eerst alle secties/pagina's
+    const pages = document.querySelectorAll('.page-section'); // Zorg dat je secties deze class hebben
+    pages.forEach(page => {
+        page.style.display = 'none';
+    });
+
+    // Toon de gevraagde sectie
+    const activePage = document.getElementById(tabId);
+    if (activePage) {
+        activePage.style.display = 'block';
+    } else {
+        console.error("Sectie niet gevonden: " + tabId);
+    }
+}
+
 
 function switchTab(name) {
 
