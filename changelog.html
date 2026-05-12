@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOTO AI — Changelog</title>
+<meta name="theme-color" content="#fce7f3">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: linear-gradient(135deg, #fce7f3, #ede9fe, #e0f2fe);
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+.app { max-width: 600px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 0 1.2rem;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+  margin-bottom: 1.5rem;
+}
+.logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;
+  background: linear-gradient(135deg, #db2777, #7c3aed);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.back-btn {
+  display: flex; align-items: center; gap: .4rem;
+  font-family: 'IBM Plex Mono', monospace; font-size: .6rem; font-weight: 700;
+  color: #be185d; text-decoration: none;
+  background: rgba(219,39,119,.08); border: 1px solid rgba(219,39,119,.25);
+  padding: .4rem .8rem; border-radius: 999px;
+}
+
+/* Release blok */
+.release {
+  background: rgba(255,255,255,.88);
+  border: 1px solid rgba(15,23,42,.08);
+  border-radius: 16px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(15,23,42,.05);
+}
+.release-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .85rem 1.1rem;
+  border-bottom: 1px solid rgba(15,23,42,.06);
+}
+.release-version {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem;
+  letter-spacing: .05em; color: #0f172a;
+}
+.release-date {
+  font-family: 'IBM Plex Mono', monospace; font-size: .52rem;
+  color: #94a3b8;
+}
+.release-badge {
+  font-family: 'IBM Plex Mono', monospace; font-size: .5rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px;
+}
+.badge-major  { background: rgba(219,39,119,.12); color: #be185d; border: 1px solid rgba(219,39,119,.3); }
+.badge-fix    { background: rgba(220,38,38,.08);  color: #b91c1c; border: 1px solid rgba(220,38,38,.2); }
+.badge-feature{ background: rgba(22,163,74,.1);   color: #15803d; border: 1px solid rgba(22,163,74,.25);}
+.badge-perf   { background: rgba(37,99,235,.1);   color: #1d4ed8; border: 1px solid rgba(37,99,235,.25);}
+
+.release-body { padding: .8rem 1.1rem; }
+
+.change-item {
+  display: flex; align-items: flex-start; gap: .6rem;
+  padding: .35rem 0;
+  border-bottom: 1px solid rgba(15,23,42,.05);
+  font-size: .84rem; line-height: 1.6; color: #334155;
+}
+.change-item:last-child { border: none; }
+.change-icon { font-size: .9rem; flex-shrink: 0; margin-top: 1px; }
+.change-text b { color: #0f172a; font-weight: 700; }
+
+.tag {
+  display: inline-block; font-family: 'IBM Plex Mono', monospace;
+  font-size: .46rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+  margin: 0 2px;
+}
+.tag-green  { background: rgba(22,163,74,.1);  color: #15803d; }
+.tag-red    { background: rgba(220,38,38,.08); color: #b91c1c; }
+.tag-blue   { background: rgba(37,99,235,.1);  color: #1d4ed8; }
+.tag-purple { background: rgba(124,58,237,.1); color: #6d28d9; }
+.tag-orange { background: rgba(217,119,6,.1);  color: #b45309; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo">TOTO AI</div>
+    <a href="https://roblizet.github.io/Toto-AI/" class="back-btn">← TERUG NAAR APP</a>
+  </div>
+
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#475569;
+    margin-bottom:1.5rem;line-height:1.7;">
+    Versiegeschiedenis van TOTO AI — van v11.40 tot heden.
+  </div>
+
+  <!-- v11.94 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.94</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-feature">FEATURE</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🎯</span>
+        <div class="change-text"><b>Pick Tracker verbeterd</b> — 🎯 TRACKER knop geeft nu automatisch Poisson kansen (1%/X%/2%) door en bepaalt AI vs Poisson overeenstemming automatisch</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🤖</span>
+        <div class="change-text"><b>Agree detectie</b> — app bepaalt zelf of AI en Poisson het eens zijn (✅ JA / ❌ NEE / ⚠️ DEELS) op basis van kansen en pick richting</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🗑️</span>
+        <div class="change-text"><b>Reset knoppen</b> in Instellingen — wallet, backtest, tracker en alles apart of tegelijk resetten voor een verse start</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.93 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.93</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-fix">FIX</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>Wallet lege tabs</b> — duplicate HTML structuur (wallet/tracker/backtest stonden elk twee keer) veroorzaakte lege sub-tabs. Opgeschoond.</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔑</span>
+        <div class="change-text"><b>Login bounce fix</b> — Firebase vuurt eerst null dan user na Google redirect. Oplossing: 1.5s wachttijd zodat echte user altijd wordt afgewacht</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">👤</span>
+        <div class="change-text"><b>"Doorgaan zonder account"</b> knop toegevoegd — inloggen is volledig optioneel, keuze wordt onthouden</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.92 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.92</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-fix">FIX</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>Syntax error opgelost</b> — <code>font-family:'IBM Plex Mono'</code> in single-quoted JS strings crashte het hele script. Alle 230+ gevallen gefixed.</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>checkDisclaimer not defined</b> — was een kettingreactie van de syntax error. Beide opgelost.</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔄</span>
+        <div class="change-text"><b>Firebase wachtloop</b> — vervangt vaste 500ms timeout door een slimme retry loop (elke 250ms, max 5s)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.91 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.91</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-feature">FEATURE</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">👤</span>
+        <div class="change-text"><b>Login optioneel gemaakt</b> — "Doorgaan zonder account" knop, loginscherm verdwijnt permanent na keuze</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔑</span>
+        <div class="change-text"><b>Google login via redirect</b> — popup vervangen door redirect (werkt beter op Android/PWA)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.90 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.90</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-fix">FIX</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>Firebase SDK niet geladen</b> — betrouwbaardere laadvolgorde, database compat SDK toegevoegd</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.88–89 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.88–89</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-fix">FIX</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>Auth bounce</b> — Firebase redirect vuurde eerst null, waardoor loginscherm terugkwam. Opgelost met timer en sessionStorage</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>Auto dagelijkse scan toggle</b> — misleidende toggle vervangen door ✓ ACTIEF badge (Worker draait altijd via cron)</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">💰</span>
+        <div class="change-text"><b>Anthropic kostenteller</b> in Instellingen — toont tokens en kosten per dag/maand per model</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.85–87 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.85–87</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-feature">FEATURE</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🎯</span>
+        <div class="change-text"><b>Pick Tracker ingebouwd</b> in Wallet → 🎯 PICKS sub-tab — 100 picks analyse met hitrate, ROI, AI vs Poisson vergelijk, confidence analyse</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">⚡</span>
+        <div class="change-text"><b>🎯 TRACKER knop</b> op elke scan-resultaat rij — pick direct opslaan met alle data automatisch ingevuld</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🤖</span>
+        <div class="change-text"><b>Cloudflare Worker v42</b> — volledig herschreven met Poisson, Dixon-Coles, vig-correctie, alle 3 picks (1/X/2), push via OneSignal</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">⏰</span>
+        <div class="change-text"><b>Scheduled scan</b> — automatisch om 08:00 en 14:00 Amsterdam tijd via Cloudflare cron</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.84 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.84</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-perf">ANALYSE</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">📐</span>
+        <div class="change-text"><b>Dixon-Coles correctie</b> — lage scores (0-0, 1-0, 1-1) worden nu correct gewogen via tau correctiefactor</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🌍</span>
+        <div class="change-text"><b>Competitie-specifieke doelpuntengemiddelden</b> — Eredivisie 1.68, Serie A 1.18, etc. i.p.v. vaste 1.35 voor alle competities</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">📊</span>
+        <div class="change-text"><b>Recente vorm weging</b> — laatste 5 wedstrijden tellen voor 40%, seizoensgemiddelde voor 60%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.83 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.83</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-feature">FEATURE</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">💰</span>
+        <div class="change-text"><b>Anthropic kostenteller</b> — bijhoudt token gebruik en kosten per dag/maand/model (Haiku $0.80/M, Sonnet $3.00/M)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.82 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.82</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-feature">FEATURE</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🤖</span>
+        <div class="change-text"><b>Automatische scan resultaten op Dashboard</b> — Worker picks worden bij app start opgehaald en getoond</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔔</span>
+        <div class="change-text"><b>FCM push notificaties</b> via Firebase Cloud Functions — bij ≥10% value + confidence ≥7, ook als app gesloten is</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.81 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.81</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-feature">FEATURE</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🎉</span>
+        <div class="change-text"><b>Nieuw onboarding scherm</b> — donker welkomstscherm met feature cards en 4-stappen uitleg. Geen API keys meer vragen.</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">📋</span>
+        <div class="change-text"><b>Meer-menu uitgebreid</b> — directe shortcuts naar Backtest en Tracker sub-tabs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.80 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.80</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-fix">FIX</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>Bottom nav verdwenen</b> — nav stond inside app div waardoor position:fixed niet werkte. Verplaatst naar buiten app container.</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>Wallet sub-tab structuur</b> — verkeerde div labels (wallet/tracker/backtest verwisseld) volledig hersteld</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.79 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.79</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-perf">ANALYSE</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🔓</span>
+        <div class="change-text"><b>if(null) blokken verwijderd</b> — H2H, vorm, blessures, standings en odds worden nu altijd opgehaald (stonden bewust uitgeschakeld)</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">📉</span>
+        <div class="change-text"><b>Vig-correctie in calcValue</b> — bookmaker marge (~5%) wordt nu verrekend. Minder false positives, realistischere value %</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🎯</span>
+        <div class="change-text"><b>AI confidence definitie aangescherpt</b> — striktere definitie per niveau, nooit 9-10 zonder Poisson data</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>Duplicate COMP_IDS opgeschoond</b> — LaLiga stond dubbel, Championship had twee conflicterende IDs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.77–78 -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.77–78</div>
+        <div class="release-date">12 mei 2026</div>
+      </div>
+      <span class="release-badge badge-fix">FIX</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>Wallet sub-tabs toegevoegd</b> — Wallet tab heeft nu 4 sub-tabs: Wallet / Tracker / Backtest / Picks</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔧</span>
+        <div class="change-text"><b>TypeError valueBanner</b> — kapotte HTML (opening div tag ontbrak) veroorzaakte app crash. Gerepareerd.</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔑</span>
+        <div class="change-text"><b>Anthropic API key</b> verwijderd uit Analyse tab — staat nu alleen nog in Instellingen</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- v11.40–76 samenvatting -->
+  <div class="release">
+    <div class="release-header">
+      <div>
+        <div class="release-version">v11.40–76</div>
+        <div class="release-date">Apr – mei 2026</div>
+      </div>
+      <span class="release-badge badge-major">MAJOR</span>
+    </div>
+    <div class="release-body">
+      <div class="change-item">
+        <span class="change-icon">🔒</span>
+        <div class="change-text"><b>Security hardening</b> — API keys gemigreerd naar Cloudflare Secrets, niet meer zichtbaar in code</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">⚡</span>
+        <div class="change-text"><b>Analyse & Value knoppen</b> op wedstrijdkaarten — directe toegang zonder te scrollen</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">💶</span>
+        <div class="change-text"><b>Quick bet knoppen</b> in wallet voor sneller inzetten</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🔔</span>
+        <div class="change-text"><b>Push notificaties</b> — FCM verlaten voor OneSignal (App ID: 7efd1d2e). Bevestigd werkend op gesloten app via Android</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">📱</span>
+        <div class="change-text"><b>TWA packaging</b> voor Google Play — package name app.toto_ai.twa, keystore en assetlinks.json opgelost</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🌐</span>
+        <div class="change-text"><b>Cloudflare Worker v12</b> — API response caching, betere proxy routing</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🏆</span>
+        <div class="change-text"><b>Triple/Double Lock systeem</b> — automatische badge voor sterkste picks op basis van value + confidence + Poisson</div>
+      </div>
+      <div class="change-item">
+        <span class="change-icon">🏆</span>
+        <div class="change-text"><b>WK 2026 chip</b> — speciale countdown en badge voor het WK (start 11 juni 2026)</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.58rem;
+    color:#94a3b8;padding:1rem 0 2rem;">
+    TOTO AI · Made by Rob Borghouts<br>
+    <a href="help.html" style="color:#be185d;text-decoration:none;">📖 Terug naar Help →</a>
+  </div>
+
+</div>
+</body>
+</html>
