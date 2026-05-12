@@ -2623,7 +2623,7 @@ body.dark .login-input {
           border-radius:999px;padding:3px 8px;cursor:pointer;
           font-size:.8rem;box-shadow:var(--shadow2);line-height:1;"
           title="Wissel thema: licht → mint → crème → donker">🌙</button>
-        <div class="version-badge">v11.76</div>
+        <div class="version-badge">v11.79</div>
       </div>
     </div>
   </div>
@@ -2667,12 +2667,7 @@ body.dark .login-input {
       <button class="tab-btn" onclick="switchTab('wallet')" id="tab-btn-wallet">
         <span class="tab-icon">💶</span><span class="tab-label">WALLET</span>
       </button>
-      <button class="tab-btn" onclick="switchTab('backtest')" id="tab-btn-backtest">
-        <span class="tab-icon">⚡</span><span class="tab-label">BACKTEST</span>
-      </button>
-      <button class="tab-btn" onclick="switchTab('tracker')" id="tab-btn-tracker">
-        <span class="tab-icon">📒</span><span class="tab-label">TRACKER</span>
-      </button>
+<!-- Tracker & Backtest zitten nu in de Wallet sub-tabs -->
       <button class="tab-btn" onclick="switchTab('instellingen')" id="tab-btn-instellingen">
         <span class="tab-icon">⚙️</span><span class="tab-label">INSTELLINGEN</span>
       </button>
@@ -2840,7 +2835,7 @@ body.dark .login-input {
   STAP 4 — Comp chips vervangen
   Vervang het div class comp-grid blok in index.html
   door de chips hierboven (met de knop toegevoegd)
-  VERSIE: v11.76
+  VERSIE: v11.79
 -->
 <!-- Quick Analyse Modal -->
 <div id="quickAnalyseModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);padding:1rem;" onclick="if(event.target===this)closeQuickAnalyse()">
@@ -2867,7 +2862,7 @@ body.dark .login-input {
     </button>
     <div id="combiCard" class="combi-card" style="display:none;margin-top:.8rem;"></div>
   </div>
- id="valueBanner" class="value-banner" style="display:none;"></div>
+<div id="valueBanner" class="value-banner" style="display:none;"></div>
 <div id="debugOutput" style="display:none;background:rgba(255,255,255,.6);border:1px solid var(--stroke);
   border-radius:10px;padding:.7rem;margin-bottom:.8rem;font-family:'IBM Plex Mono',monospace;
   font-size:.52rem;color:var(--ink);line-height:1.7;white-space:pre-wrap;word-break:break-all;
@@ -2891,6 +2886,66 @@ body.dark .login-input {
     <div id="scanResultsList" style="padding-bottom:.3rem;"></div>
   </div>
 </div>
+<!-- Handmatige wedstrijd invoer knop -->
+<div id="manualMatchSection" style="display:none;background:rgba(255,255,255,.85);
+  border:1px solid var(--stroke);border-radius:14px;padding:.9rem 1rem;margin-bottom:.8rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+    color:var(--sub);letter-spacing:.05em;margin-bottom:.6rem;">✏️ HANDMATIGE WEDSTRIJD INVOEREN</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
+    <input id="manualHome" type="text" placeholder="Thuisploeg (bijv. Arsenal)"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;padding:.5rem .7rem;
+      border-radius:10px;border:1px solid var(--stroke);background:var(--card);color:var(--ink);outline:none;">
+    <input id="manualAway" type="text" placeholder="Uitploeg (bijv. Chelsea)"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;padding:.5rem .7rem;
+      border-radius:10px;border:1px solid var(--stroke);background:var(--card);color:var(--ink);outline:none;">
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">1 THUIS</div>
+      <input id="manualOdds1" type="number" step="0.01" min="1" placeholder="2.10"
+        style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:700;
+        padding:.45rem .5rem;border-radius:10px;border:1px solid var(--stroke);
+        background:var(--card);color:var(--ink);outline:none;box-sizing:border-box;">
+    </div>
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">X GELIJK</div>
+      <input id="manualOddsX" type="number" step="0.01" min="1" placeholder="3.40"
+        style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:700;
+        padding:.45rem .5rem;border-radius:10px;border:1px solid var(--stroke);
+        background:var(--card);color:var(--ink);outline:none;box-sizing:border-box;">
+    </div>
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:2px;">2 UIT</div>
+      <input id="manualOdds2" type="number" step="0.01" min="1" placeholder="2.80"
+        style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:700;
+        padding:.45rem .5rem;border-radius:10px;border:1px solid var(--stroke);
+        background:var(--card);color:var(--ink);outline:none;box-sizing:border-box;">
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.6rem;">
+    <input id="manualLeague" type="text" placeholder="Competitie (bijv. Premier League)"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:.45rem .7rem;
+      border-radius:10px;border:1px solid var(--stroke);background:var(--card);color:var(--ink);outline:none;">
+    <input id="manualDate" type="date"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:.45rem .7rem;
+      border-radius:10px;border:1px solid var(--stroke);background:var(--card);color:var(--ink);outline:none;">
+  </div>
+  <div style="display:flex;gap:.5rem;">
+    <button onclick="addManualMatch()" style="flex:1;
+      background:linear-gradient(135deg,rgba(37,99,235,.85),rgba(79,70,229,.8));
+      color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+      font-weight:700;padding:.55rem;border-radius:10px;cursor:pointer;letter-spacing:.04em;">
+      ✓ TOEVOEGEN AAN LIJST
+    </button>
+    <button onclick="document.getElementById('manualMatchSection').style.display='none'"
+      style="background:none;border:1px solid var(--stroke);color:var(--sub);
+      font-family:'IBM Plex Mono',monospace;font-size:.6rem;padding:.55rem .9rem;
+      border-radius:10px;cursor:pointer;">
+      ✕
+    </button>
+  </div>
+</div>
+
 <div class="match-list" id="matchList"></div>
 <!-- COMBI BUILDER BALK -->
 <div class="combi-builder" id="combiBuilder" style="display:none;">
@@ -2921,7 +2976,6 @@ body.dark .login-input {
     🎰 <span id="floatingCombiOdds">1.00</span> · PLAATSEN
   </button>
 </div>
-  </div>    <div 
   <!-- ══════════════════════════════════════
        TAB 5: ANALYSE
   ══════════════════════════════════════ -->
@@ -2946,6 +3000,11 @@ body.dark .login-input {
 </div>
 
 <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;align-items:center;">
+  <button onclick="toggleManualMatchSection()" style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+    padding:.3rem .85rem;border-radius:999px;cursor:pointer;
+    background:rgba(37,99,235,.1);border:1px solid rgba(37,99,235,.3);color:#1d4ed8;">
+    ✏️ HANDMATIG
+  </button>
   <button onclick="loadTodayAllComps()" id="allCompsBtn"
     style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
     padding:.3rem .85rem;border-radius:999px;cursor:pointer;
@@ -2996,18 +3055,7 @@ body.dark .login-input {
     <div id="noMatchWarning" style="background:rgba(243,156,18,.05);border:1px solid rgba(243,156,18,.2);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--yellow);">
       ⚠ Selecteer eerst een wedstrijd in het tabblad Wedstrijden
     </div>
-<!-- API key balk -->
-<div class="api-bar">
-  <span class="api-bar-label">🔑 Anthropic API Key</span>
-  <div class="api-row">
-    <div style="display:flex;gap:.3rem;align-items:center;">
-      <input class="api-input" id="apiKeyInput" type="password" placeholder="sk-ant-api03-..." value="" style="flex:1;">
-      <button onclick="toggleKeyVisibility('apiKeyInput',this)" style="font-size:.7rem;padding:3px 8px;border-radius:8px;border:1px solid var(--stroke);background:transparent;cursor:pointer;">👁</button>
-    </div>
-    <button class="api-save" onclick="saveApiKey()">OPSLAAN</button>
-  </div>
-  <div class="api-status" id="apiStatus"></div>
-</div>
+<!-- API key staat in Instellingen tab -->
 <!-- Inzet config -->
 <div class="bet-config">
   <div class="cfg-box">
@@ -3087,6 +3135,33 @@ body.dark .login-input {
        TAB 3: WALLET
   ══════════════════════════════════════ -->
   <div id="tab-wallet" class="tab-content">
+
+<!-- ── Wallet sub-tab navigatie ── -->
+<div style="display:flex;gap:.4rem;margin-bottom:1rem;background:rgba(255,255,255,.6);
+  border:1px solid var(--stroke);border-radius:14px;padding:.3rem;">
+  <button id="wsub-wallet" onclick="setWalletSubTab('wallet')"
+    style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+    padding:.45rem .5rem;border-radius:10px;cursor:pointer;letter-spacing:.04em;
+    background:linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8));
+    color:#fff;border:none;box-shadow:0 2px 8px rgba(219,39,119,.25);">
+    💶 WALLET
+  </button>
+  <button id="wsub-tracker" onclick="setWalletSubTab('tracker')"
+    style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+    padding:.45rem .5rem;border-radius:10px;cursor:pointer;letter-spacing:.04em;
+    background:transparent;color:var(--sub);border:none;">
+    📒 TRACKER
+  </button>
+  <button id="wsub-backtest" onclick="setWalletSubTab('backtest')"
+    style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
+    padding:.45rem .5rem;border-radius:10px;cursor:pointer;letter-spacing:.04em;
+    background:transparent;color:var(--sub);border:none;">
+    📊 BACKTEST
+  </button>
+</div>
+
+<!-- ── Wallet sub-tab: WALLET ── -->
+<div id="wsub-content-wallet" style="display:block;">
     <div class="wallet-big">
       <div class="lbl">Fictief Saldo</div>
       <div class="amount" id="bigBalance">€500,00</div>
@@ -3220,7 +3295,10 @@ body.dark .login-input {
     </div>
   </div>
 </div>
-  </div>
+</div><!-- /wsub-content-tracker -->
+
+<!-- ── Wallet sub-tab: BACKTEST ── -->
+<div id="wsub-content-backtest" style="display:none;">
 <div style="margin-top:1.5rem;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:700;color:#475569;letter-spacing:.06em;">📒 ECHTE WEDDENSCHAPPEN</div><div style="display:flex;gap:.4rem;"><button onclick="openTrackerModal()" style="background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.85));border:none;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.4rem .75rem;border-radius:10px;cursor:pointer;">➕</button><button onclick="autoCheckTrackerBets()" style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.4rem .65rem;border-radius:10px;cursor:pointer;background:rgba(37,99,235,.1);border:1.5px solid rgba(37,99,235,.3);color:#2563eb;">🔍</button><button onclick="exportTrackerCSV()" style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;padding:.4rem .65rem;border-radius:10px;cursor:pointer;background:rgba(15,23,42,.06);border:1.5px solid var(--stroke);color:var(--sub);">📥</button></div></div>
 <!-- Stats strip -->
 <div id="trackerStats" class="wallet-strip" style="grid-template-columns:repeat(4,1fr);">
@@ -3265,7 +3343,8 @@ body.dark .login-input {
 <div id="trackerList">
   <div class="empty-state">Nog geen echte weddenschappen bijgehouden</div>
 </div>
-</div>
+</div><!-- /wsub-content-backtest -->
+</div><!-- /tab-wallet -->
   <!-- ══════════════════════════════════════
        TAB 4: INSTELLINGEN
   ══════════════════════════════════════ -->
@@ -3903,9 +3982,7 @@ body.dark .login-input {
   <div class="more-menu-item" onclick="switchTab('tips');toggleMoreMenu()">
     <span class="more-menu-icon">⚡</span> Tips
   </div>
-  <div class="more-menu-item" onclick="switchTab('backtest');toggleMoreMenu()">
-    <span class="more-menu-icon">📊</span> Backtest
-  </div>
+<!-- Backtest zit nu in Wallet tab -->
   <div class="more-menu-item" onclick="switchTab('instellingen');toggleMoreMenu()">
     <span class="more-menu-icon">⚙️</span> Instellingen
   </div>
@@ -4146,110 +4223,6 @@ let deferredInstall = null;
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════
-// SERVICE WORKER + DARK MODE
-// ═══════════════════════════════════════════════════════
-function registerSW() {
-  if (!('serviceWorker' in navigator)) return;
-  const APP_VERSION = 'v11.76';
-  const storedVersion = localStorage.getItem('totoai_version');
-  // Versie gewijzigd: verwijder alle oude SW caches en herregistreer
-  if (storedVersion && storedVersion !== APP_VERSION) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(r => r.unregister());
-    });
-    if ('caches' in window) {
-      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
-    }
-    localStorage.setItem('totoai_version', APP_VERSION);
-    console.log('[App] Versie gewijzigd — SW en cache gewist, herlaad...');
-    setTimeout(() => location.reload(), 800);
-    return;
-  }
-  localStorage.setItem('totoai_version', APP_VERSION);
-   navigator.serviceWorker.register('/worker.js?v=40', {scope:'/', updateViaCache:'none'})
-    .then(reg => {
-      reg.update();
-      console.log('[App] SW geregistreerd v' + APP_VERSION);
-    }).catch(() => {});
-}
-// ═══════════════════════════════════════════════════════
-// THEMA SYSTEEM — 4 thema's: licht / mint / crème / donker
-// ═══════════════════════════════════════════════════════
-const THEMES = ['light', 'mint', 'cream', 'dark'];
-const THEME_ICONS = { light: '🌙', mint: '🌿', cream: '🍶', dark: '☀️' };
-const THEME_NAMES = { light: 'Licht', mint: 'Mint', cream: 'Crème', dark: 'Donker' };
-function cycleTheme() {
-  const current = localStorage.getItem('totoai_theme') || 'mint';
-  const idx = THEMES.indexOf(current);
-  const next = THEMES[(idx + 1) % THEMES.length];
-  localStorage.setItem('totoai_theme', next);
-  applyTheme();
-  // Kort popup-label zodat je weet welk thema nu actief is
-  showThemeHint(next);
-}
-function applyTheme() {
-  let theme = localStorage.getItem('totoai_theme') || migrateOldDarkPref();
-  // Eerste keer: detecteer systeem voorkeur
-  if (!localStorage.getItem('totoai_theme')) {
-    if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-      theme = 'dark';
-      localStorage.setItem('totoai_theme', 'dark');
-    }
-  }
-  document.body.classList.remove('dark', 'mint', 'cream');
-  if (theme === 'dark') document.body.classList.add('dark');
-  else if (theme === 'mint') document.body.classList.add('mint');
-  else if (theme === 'cream') document.body.classList.add('cream');
-  // light = standaard (geen class)
-  // Update icoon — toont het VOLGENDE thema als hint van wat je krijgt bij klik
-  const btn = document.getElementById('themeToggle');
-  if (btn) {
-    const idx = THEMES.indexOf(theme);
-    const next = THEMES[(idx + 1) % THEMES.length];
-    btn.textContent = THEME_ICONS[next];
-    btn.title = `Huidig: ${THEME_NAMES[theme]} — tik voor ${THEME_NAMES[next]}`;
-  }
-}
-/** Migreer oude dark-only setting naar nieuwe 4-themas systeem */
-function migrateOldDarkPref() {
-  const oldDark = localStorage.getItem('totoai_dark');
-  if (oldDark === '1') {
-    localStorage.setItem('totoai_theme', 'dark');
-    localStorage.removeItem('totoai_dark');
-    return 'dark';
-  }
-  // Migratie: bestaande gebruikers met 'light' upgraden naar 'mint'
-  // Eenmalig — als 'totoai_migrated_mint' nog niet gezet is
-  const current = localStorage.getItem('totoai_theme');
-  if (current === 'light' && !localStorage.getItem('totoai_migrated_mint')) {
-    localStorage.setItem('totoai_theme', 'mint');
-    localStorage.setItem('totoai_migrated_mint', '1');
-    return 'mint';
-  }
-  return 'mint';
-}
-function showThemeHint(theme) {
-  let hint = document.getElementById('themeHint');
-  if (!hint) {
-    hint = document.createElement('div');
-    hint.id = 'themeHint';
-    hint.style.cssText = `
-      position:fixed;top:70px;right:12px;
-      background:var(--card);border:1px solid var(--stroke);
-      border-radius:10px;padding:.5rem .9rem;
-      font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:700;
-      color:var(--ink);box-shadow:var(--shadow2);backdrop-filter:blur(10px);
-      z-index:10000;opacity:0;transition:opacity .2s;pointer-events:none;
-      letter-spacing:.04em;white-space:nowrap;
-    `;
-    document.body.appendChild(hint);
-  }
-  hint.textContent = `${THEME_ICONS[theme]} ${THEME_NAMES[theme]}`;
-  requestAnimationFrame(() => { hint.style.opacity = '1'; });
-  clearTimeout(window._themeHintTimer);
-  window._themeHintTimer = setTimeout(() => { hint.style.opacity = '0'; }, 1400);
-}
 window.addEventListener('load', () => {
   try { loadState(); } catch(e) { console.error('loadState:', e); }
   checkDisclaimer();
@@ -4333,9 +4306,9 @@ function switchTab(name) {
   updateBottomNav(name);
   document.getElementById('moreMenu')?.classList.remove('open');
   if (name === 'dashboard') renderDashboard();
-  if (name === 'wallet') { updateWalletUI(); renderTracker(); updateTrackerStats(); startLiveScorePolling(); }
-  if (name === 'tracker') { renderTracker(); updateTrackerStats(); }
-  if (name === 'backtest') { renderBacktest(); }
+  if (name === 'wallet') { updateWalletUI(); startLiveScorePolling(); setWalletSubTab('wallet'); }
+  if (name === 'tracker') { switchTab('wallet'); setTimeout(()=>setWalletSubTab('tracker'),50); return; }
+  if (name === 'backtest') { switchTab('wallet'); setTimeout(()=>setWalletSubTab('backtest'),50); return; }
   if (name === 'instellingen') { loadFbBackupInfo(); }
   state.activeTab = name;
   if (name === 'wedstrijden') {
@@ -4733,8 +4706,7 @@ const COMP_IDS = {
   eredivisie: 88, kkd: 89, bundesliga: 78, premier: 39,
   beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5, wk2026: 1,
   jupiler: 144, laliga: 140, championship: 40, bundesliga2: 79, superlig: 203,
-  laliga: 140, championship: 41, bundesliga2: 79,
-  // Playoffs tijdelijk uitgeschakeld — IDs worden nog geverifieerd
+  // championship API-Football ID: 40 (EFL Championship)
 };
 function getCurrentSeason(comp) {
   if (comp === 'wk2026') return 2026;
@@ -5006,7 +4978,7 @@ async function loadTodayAllComps() {
     // Build comp filter
     buildScanCompFilter(state.matches);
     // Fetch odds for all loaded matches
-    if (null) {
+    if (true) { // quotes altijd ophalen bij laden
       scanBtn && (scanBtn.textContent = '⟳ Quotes ophalen...');
       scanBtn && (scanBtn.disabled = true);
       await fetchOddsForAllMatches(state.matches, null);
@@ -5831,12 +5803,30 @@ function selectMatch(match) {
  * Value% = (AI_kans × odds − 1) × 100
  * Voorbeeld: AI 60% kans, odds 2.10  →  (0.60 × 2.10 − 1) × 100 = +26%
  */
-function calcValue(aiKans, odds) {
+function calcValue(aiKans, odds, match) {
   if (aiKans == null || !odds) return null;
   const kans = aiKans / 100;
   const o = parseFloat(odds);
   if (!o || o <= 1) return null;
-  return (kans * o - 1) * 100;
+  // ── VIG-CORRECTIE ──
+  // Bookmakers bouwen een marge (~4-6%) in hun odds. Zonder correctie vergelijken we
+  // onze kansen met te lage odds, wat de value systematisch te hoog maakt.
+  // We berekenen de "fair" odds door de vig eruit te halen.
+  let fairOdds = o;
+  if (match) {
+    const o1 = parseFloat(match.homeOdds);
+    const oX = parseFloat(match.drawOdds);
+    const o2 = parseFloat(match.awayOdds);
+    if (o1 > 1 && oX > 1 && o2 > 1) {
+      const overround = 1/o1 + 1/oX + 1/o2;
+      // overround > 1 betekent bookmaker marge. Typisch 1.04-1.08 (4-8% vig)
+      // Fair odds = raw odds / overround * 1.0 (geen marge)
+      // We limiteren vig-correctie: max 8% (extreem), min 1% (exchange)
+      const vigFactor = Math.min(1.08, Math.max(1.01, overround));
+      fairOdds = o / vigFactor;
+    }
+  }
+  return (kans * fairOdds - 1) * 100;
 }
 /**
  * Half Kelly Criterion — optimale inzet% van bankroll.
@@ -6189,8 +6179,8 @@ async function scanAllTodayValue(mode = 'today') {
             wt(fetchInjuries(m.awayId, m.id), 3000),
             wt(fetchTeamStats(m.homeId, leagueId || 88), 4000),
             wt(fetchTeamStats(m.awayId, leagueId || 88), 4000),
-            wt(fetchLastFixture(m.homeId, fKey), 3000),
-            wt(fetchLastFixture(m.awayId, fKey), 3000),
+            wt(fetchLastFixture(m.homeId, null), 3000),
+            wt(fetchLastFixture(m.awayId, null), 3000),
           ]);
           // Confidence
           let conf = 4;
@@ -6473,9 +6463,11 @@ async function scanValueAll() {
   }
   // ── ACTUELE RANGLIJST OPHALEN ──
   let standingsCtx = '';
-  if (null) {
+  let standingsArr_temp = null;
+  const leagueIdForStandings = COMP_IDS[state.activeComp];
+  if (leagueIdForStandings) {
     try {
-      const leagueId = COMP_IDS[state.activeComp];
+      const leagueId = leagueIdForStandings;
       const r = await apiFetch(
         `https://v3.football.api-sports.io/standings?league=${leagueId}&season=2026`,
         null, 6000
@@ -6483,8 +6475,7 @@ async function scanValueAll() {
       const d = await r.json();
       const standings = d.response?.[0]?.league?.standings?.[0];
       if (standings?.length) {
-        // Store voor seizoensfase berekening
-        matchDataMap['_standings'] = standings;
+        standingsArr_temp = standings;
         standingsCtx = `\n\nSTAND (${state.activeComp.toUpperCase()}):\n` +
           standings.map(t =>
             `${t.rank}. ${t.team.name} — ${t.points}pt | W${t.all.win}G${t.all.draw}V${t.all.lose} | DS:${t.goalsDiff>0?'+':''}${t.goalsDiff}`
@@ -6497,8 +6488,10 @@ async function scanValueAll() {
   // Ook de confidence-score is hierop gebaseerd: meer data = hogere confidence.
   btn.textContent = '⟳ DATA VERZAMELEN...';
   const matchDataMap = {};
+  // Sla standings nu op in matchDataMap (was eerder nog niet gedeclareerd)
+  if (standingsArr_temp) matchDataMap['_standings'] = standingsArr_temp;
   const leagueId = COMP_IDS[state.activeComp];
-  if (null) {
+  if (true) { // data ophalen altijd aan
     const wt = (p, ms=5000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
     // Parallel ophalen per wedstrijd — inclusief team stats voor Poisson
     await Promise.all(candidates.map(async m => {
@@ -6651,9 +6644,16 @@ KRITIEKE REGELS:
 - Degradatiedruk verhoogt thuiswinst-kans met 5-8% (steun publiek, alles op alles)
 - "Zonder druk" team (midden stand, seizoen bijna klaar) → meer X-kans
 - Sharp money overtreft publieke mening altijd
-- Confidence: 9-10 = Poisson+xG+H2H consistent, 7-8 = goed data, 5-6 = beperkt, <5 = gokken
+- Confidence DEFINITIE (wees streng, de meeste scans zijn 5-7):
+  10 = Poisson+xG+H2H+vorm allemaal consistent én dezelfde richting wijzen
+  8-9 = Minstens 3 factoren consistent, Poisson geldig, goede data
+  6-7 = 2 factoren consistent OF alleen Poisson zonder bevestiging
+  4-5 = Beperkte data, 1 factor of tegenstrijdige signalen
+  1-3 = Gissen, geen data, extreme omstandigheden
+- Geef NOOIT confidence 9-10 als je geen Poisson data hebt
+- Reason: max 12 woorden, concreet (bv "thuis 4W op rij, uitploeg 3x geblesseerd")
 RESPOND WITH VALID JSON ONLY. START WITH { END WITH }. NO TEXT BEFORE OR AFTER.
-{"scans":[{"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":8,"reason":"Max 15 woorden"}]}`,
+{"scans":[{"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":7,"reason":"Vorm thuis sterk, weinig blessures"}]}`,
       messages: [{ role:'user', content:`Analyseer ${candidates.length} wedstrijden. Gebruik Poisson als anker, pas aan voor context:\n\n${ctx}${standingsCtx}` }]
     });
     if (data.error) throw new Error(data.error.message);
@@ -6752,7 +6752,7 @@ RESPOND WITH VALID JSON ONLY. START WITH { END WITH }. NO TEXT BEFORE OR AFTER.
       picks.forEach(p => {
         p.odds = p.oddsInfo.odds;
         p.bookmaker = p.oddsInfo.bookmaker;
-        p.value = calcValue(p.kans, p.odds);
+        p.value = calcValue(p.kans, p.odds, match);
         p.kelly = halfKelly(p.kans, p.odds);
       });
       // ── GELIJKSPEL SANITY CHECKS ──
@@ -7002,12 +7002,10 @@ function renderValueBanner(displayScans, totalScanned) {
   banner.style.display = 'block';
 }
 function hideValueBanner() {
-  const el = document.getElementById('valueBanner');
-  if (el) el.style.display = 'none';
+  document.getElementById('valueBanner').style.display = 'none';
 }
 function hideValueExplainer() {
-  const el = document.getElementById('valueExplainer');
-  if (el) el.style.display = 'none';
+  document.getElementById('valueExplainer').style.display = 'none';
   state.settings.valueExplainerSeen = true;
   saveState();
 }
@@ -7648,7 +7646,7 @@ function renderMarkdown(text) {
     .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
 }
 async function runAnalyse() {
-  const apiKey = document.getElementById('apiKeyInput').value.trim() || state.settings.anthropicKey;
+  const apiKey = document.getElementById('apiKeyInput')?.value?.trim() || state.settings.anthropicKey || '';
   if (!apiKey || !apiKey.startsWith('sk-ant')) {
     document.getElementById('apiStatus').textContent = '⚠ Ongeldige API key';
     document.getElementById('apiStatus').className = 'api-status err';
@@ -7958,9 +7956,10 @@ async function generateCombiTip() {
     return `ID:${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${datum} | quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
   }).join('\n');
   let standingsCtx = '';
-  if (null) {
+  const _leagueIdCombi = COMP_IDS[state.activeComp];
+  if (_leagueIdCombi) {
     try {
-      const leagueId = COMP_IDS[state.activeComp];
+      const leagueId = _leagueIdCombi;
       const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${leagueId===1?2026:2025}`, null);
       const d = await r.json();
       const st = d.response?.[0]?.league?.standings?.[0];
@@ -9242,7 +9241,7 @@ function clearBacktest() {
 // SETTINGS + FIREBASE + BACKUP
 // ═══════════════════════════════════════════════════════
 function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
+  const key = document.getElementById('apiKeyInput')?.value?.trim() || '';
   if (key.startsWith('sk-ant')) {
     state.settings.anthropicKey = key;
     saveState();
@@ -9281,7 +9280,7 @@ function saveSettings() {
   saveToFirebase().then(() => showFirebaseStatus('🔥 Gesynchroniseerd','#16a34a')).catch(() => {});
 }
 function applySettings() {
-  document.getElementById('apiKeyInput').value = state.settings.anthropicKey || '';
+  if (document.getElementById('apiKeyInput')) document.getElementById('apiKeyInput').value = state.settings.anthropicKey || '';
   document.getElementById('settAnthropicKey').value = state.settings.anthropicKey || '';
   document.getElementById('settFootballKey').value = state.settings.footballKey || '';
   document.getElementById('settFdKey').value = state.settings.fdKey || '';
@@ -11602,7 +11601,110 @@ function filterMatchesByTeam(teamName) {
     }
   }, 400);
 }
-
+// ═══════════════════════════════════════════════════════
+// SERVICE WORKER + DARK MODE
+// ═══════════════════════════════════════════════════════
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  const APP_VERSION = 'v11.76';
+  const storedVersion = localStorage.getItem('totoai_version');
+  // Versie gewijzigd: verwijder alle oude SW caches en herregistreer
+  if (storedVersion && storedVersion !== APP_VERSION) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
+    });
+    if ('caches' in window) {
+      caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+    localStorage.setItem('totoai_version', APP_VERSION);
+    console.log('[App] Versie gewijzigd — SW en cache gewist, herlaad...');
+    setTimeout(() => location.reload(), 800);
+    return;
+  }
+  localStorage.setItem('totoai_version', APP_VERSION);
+   navigator.serviceWorker.register('/worker.js?v=40', {scope:'/', updateViaCache:'none'})
+    .then(reg => {
+      reg.update();
+      console.log('[App] SW geregistreerd v' + APP_VERSION);
+    }).catch(() => {});
+}
+// ═══════════════════════════════════════════════════════
+// THEMA SYSTEEM — 4 thema's: licht / mint / crème / donker
+// ═══════════════════════════════════════════════════════
+const THEMES = ['light', 'mint', 'cream', 'dark'];
+const THEME_ICONS = { light: '🌙', mint: '🌿', cream: '🍶', dark: '☀️' };
+const THEME_NAMES = { light: 'Licht', mint: 'Mint', cream: 'Crème', dark: 'Donker' };
+function cycleTheme() {
+  const current = localStorage.getItem('totoai_theme') || 'mint';
+  const idx = THEMES.indexOf(current);
+  const next = THEMES[(idx + 1) % THEMES.length];
+  localStorage.setItem('totoai_theme', next);
+  applyTheme();
+  // Kort popup-label zodat je weet welk thema nu actief is
+  showThemeHint(next);
+}
+function applyTheme() {
+  let theme = localStorage.getItem('totoai_theme') || migrateOldDarkPref();
+  // Eerste keer: detecteer systeem voorkeur
+  if (!localStorage.getItem('totoai_theme')) {
+    if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+      theme = 'dark';
+      localStorage.setItem('totoai_theme', 'dark');
+    }
+  }
+  document.body.classList.remove('dark', 'mint', 'cream');
+  if (theme === 'dark') document.body.classList.add('dark');
+  else if (theme === 'mint') document.body.classList.add('mint');
+  else if (theme === 'cream') document.body.classList.add('cream');
+  // light = standaard (geen class)
+  // Update icoon — toont het VOLGENDE thema als hint van wat je krijgt bij klik
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    const idx = THEMES.indexOf(theme);
+    const next = THEMES[(idx + 1) % THEMES.length];
+    btn.textContent = THEME_ICONS[next];
+    btn.title = `Huidig: ${THEME_NAMES[theme]} — tik voor ${THEME_NAMES[next]}`;
+  }
+}
+/** Migreer oude dark-only setting naar nieuwe 4-themas systeem */
+function migrateOldDarkPref() {
+  const oldDark = localStorage.getItem('totoai_dark');
+  if (oldDark === '1') {
+    localStorage.setItem('totoai_theme', 'dark');
+    localStorage.removeItem('totoai_dark');
+    return 'dark';
+  }
+  // Migratie: bestaande gebruikers met 'light' upgraden naar 'mint'
+  // Eenmalig — als 'totoai_migrated_mint' nog niet gezet is
+  const current = localStorage.getItem('totoai_theme');
+  if (current === 'light' && !localStorage.getItem('totoai_migrated_mint')) {
+    localStorage.setItem('totoai_theme', 'mint');
+    localStorage.setItem('totoai_migrated_mint', '1');
+    return 'mint';
+  }
+  return 'mint';
+}
+function showThemeHint(theme) {
+  let hint = document.getElementById('themeHint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = 'themeHint';
+    hint.style.cssText = `
+      position:fixed;top:70px;right:12px;
+      background:var(--card);border:1px solid var(--stroke);
+      border-radius:10px;padding:.5rem .9rem;
+      font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:700;
+      color:var(--ink);box-shadow:var(--shadow2);backdrop-filter:blur(10px);
+      z-index:10000;opacity:0;transition:opacity .2s;pointer-events:none;
+      letter-spacing:.04em;white-space:nowrap;
+    `;
+    document.body.appendChild(hint);
+  }
+  hint.textContent = `${THEME_ICONS[theme]} ${THEME_NAMES[theme]}`;
+  requestAnimationFrame(() => { hint.style.opacity = '1'; });
+  clearTimeout(window._themeHintTimer);
+  window._themeHintTimer = setTimeout(() => { hint.style.opacity = '0'; }, 1400);
+}
 </script>
 <script>
 // ── Global error catcher ──────────────────────────────
@@ -12024,6 +12126,107 @@ async function saveSubscriberToFirebase(playerId) {
 }
 function checkDisclaimer(){if(!localStorage.getItem("totoai_disclaimer_v1")){const m=document.getElementById("disclaimerModal");if(m)m.style.display="flex";}}
 function acceptDisclaimer(){localStorage.setItem("totoai_disclaimer_v1",new Date().toISOString());const m=document.getElementById("disclaimerModal");if(m)m.style.display="none";}
+
+// ── Wallet sub-tab schakelaar ──
+function setWalletSubTab(tab) {
+  ['wallet','tracker','backtest'].forEach(t => {
+    const content = document.getElementById('wsub-content-' + t);
+    const btn = document.getElementById('wsub-' + t);
+    if (content) content.style.display = t === tab ? 'block' : 'none';
+    if (btn) {
+      if (t === tab) {
+        btn.style.background = 'linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8))';
+        btn.style.color = '#fff';
+        btn.style.boxShadow = '0 2px 8px rgba(219,39,119,.25)';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--sub)';
+        btn.style.boxShadow = 'none';
+      }
+    }
+  });
+  if (tab === 'tracker') { renderTracker(); updateTrackerStats(); }
+  if (tab === 'backtest') { renderBacktest(); }
+  if (tab === 'wallet') { updateWalletUI(); startLiveScorePolling(); }
+}
+
+// ── Handmatige wedstrijd invoer ──
+function toggleManualMatchSection() {
+  const s = document.getElementById('manualMatchSection');
+  if (!s) return;
+  s.style.display = s.style.display === 'none' ? 'block' : 'none';
+  // Zet vandaag als standaard datum
+  const d = document.getElementById('manualDate');
+  if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
+}
+
+function addManualMatch() {
+  const home = document.getElementById('manualHome')?.value.trim();
+  const away = document.getElementById('manualAway')?.value.trim();
+  const odds1 = parseFloat(document.getElementById('manualOdds1')?.value) || null;
+  const oddsX = parseFloat(document.getElementById('manualOddsX')?.value) || null;
+  const odds2 = parseFloat(document.getElementById('manualOdds2')?.value) || null;
+  const league = document.getElementById('manualLeague')?.value.trim() || 'Handmatig';
+  const date = document.getElementById('manualDate')?.value || new Date().toISOString().split('T')[0];
+
+  if (!home || !away) { alert('Vul minimaal een thuis- en uitploeg in.'); return; }
+
+  const id = 'manual_' + Date.now();
+  const match = {
+    id,
+    home,
+    away,
+    homeOdds: odds1 ? String(odds1) : '—',
+    drawOdds: oddsX ? String(oddsX) : '—',
+    awayOdds: odds2 ? String(odds2) : '—',
+    leagueName: league,
+    date,
+    status: 'GEPLAND',
+    isManual: true,
+    bookmakers: odds1 ? [{
+      name: 'Handmatig',
+      markets: [{
+        key: '1X2',
+        values: [
+          { value: '1', odd: odds1 },
+          { value: 'X', odd: oddsX },
+          { value: '2', odd: odds2 }
+        ]
+      }]
+    }] : []
+  };
+
+  state.matches = state.matches || [];
+  state.matches.unshift(match);
+  renderMatches(state.matches);
+
+  // Verberg formulier en wis velden
+  document.getElementById('manualMatchSection').style.display = 'none';
+  ['manualHome','manualAway','manualOdds1','manualOddsX','manualOdds2','manualLeague'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  // Toon bevestiging
+  showToast(`✓ ${home} vs ${away} toegevoegd`);
+}
+
+function showToast(msg) {
+  let t = document.getElementById('toastMsg');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toastMsg';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+      'background:rgba(15,23,42,.9);color:#fff;font-family:IBM Plex Mono,monospace;' +
+      'font-size:.62rem;padding:.5rem 1.2rem;border-radius:999px;z-index:9999;' +
+      'pointer-events:none;transition:opacity .3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
 </script>
 <!-- ═══════════════════════════════════════════════════
      COMPETITIE DETAIL MODAL — HTML
