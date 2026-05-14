@@ -1,7 +1,7 @@
-// TOTO AI WORKER v42
+// TOTO AI WORKER v43
 // Proxy + scheduled value scan
 
-const VERSION = 'v42';
+const VERSION = 'v43';
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
