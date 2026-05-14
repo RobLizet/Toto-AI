@@ -54,11 +54,17 @@ function initFirebaseAuth() {
         }
         sessionStorage.setItem('totoai_was_logged_in','1');
         // Toon gebruiker in topbar
+        // Topbar user label
         const topbarUser = document.getElementById('topbar-user');
         if (topbarUser) {
           topbarUser.textContent = user.displayName || user.email?.split('@')[0] || '👤';
           topbarUser.style.display = 'block';
         }
+        // Login knop — groen = ingelogd
+        const loginBtn = document.getElementById('topbar-login-btn');
+        const loginDot = document.getElementById('login-status-dot');
+        if (loginBtn) loginBtn.style.display = 'flex';
+        if (loginDot) loginDot.style.background = '#16a34a';
         // Laad keys en data automatisch vanuit Firebase
         if (typeof loadFromFirebase === 'function') {
           loadFromFirebase().then(() => {
@@ -95,6 +101,13 @@ function initFirebaseAuth() {
         console.log('[Auth] Niet ingelogd — app werkt zonder auth');
         sessionStorage.removeItem('totoai_was_logged_in');
         hideLoginScreen();
+        // Topbar — rood = niet ingelogd
+        const topbarUser2 = document.getElementById('topbar-user');
+        if (topbarUser2) topbarUser2.style.display = 'none';
+        const loginBtn2 = document.getElementById('topbar-login-btn');
+        const loginDot2 = document.getElementById('login-status-dot');
+        if (loginBtn2) loginBtn2.style.display = 'flex';
+        if (loginDot2) loginDot2.style.background = '#dc2626';
         // Start app zonder login
         const app = document.getElementById('app');
         const nav = document.getElementById('bottom-nav');
@@ -298,4 +311,15 @@ async function logoutUser() {
     const userEl = document.getElementById('authUserInfo');
     if (userEl) userEl.innerHTML='';
   } catch(e) {}
+}
+
+function handleLoginBtnClick() {
+  if (_firebaseAuth && _firebaseAuth.currentUser) {
+    // Al ingelogd — ga naar instellingen account sectie
+    switchScreen('instellingen');
+    showToast('✅ Ingelogd als ' + (_firebaseAuth.currentUser.displayName || _firebaseAuth.currentUser.email));
+  } else {
+    // Niet ingelogd — toon login scherm
+    showLoginScreen();
+  }
 }
