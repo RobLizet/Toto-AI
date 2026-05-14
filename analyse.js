@@ -209,7 +209,7 @@ async function scanValueAll() {
     }).join('\n\n');
 
     const data = await anthropicFetch(null, {
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1500,
       temperature: 0,
       system: `RESPOND WITH VALID JSON ONLY. NO TEXT BEFORE OR AFTER JSON. START WITH { END WITH }.
@@ -493,7 +493,7 @@ H2H: ${h2hStr}
 Formaties: ${formationStr}`;
 
     const data = await anthropicFetchWithRetry(null, {
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1600,
       system: `Je bent een Nederlandstalige voetbal analist. JSON only, geen tekst buiten JSON:
 {"vorm":"...","stats":"...","tactiek":"...","kans":"...","risico":"...","advies":"...",
@@ -659,7 +659,7 @@ async function generateCombiTip() {
 
   try {
     const data = await anthropicFetch(null, {
-      model:'claude-haiku-4-5-20251001', max_tokens:1600,
+      model:'claude-sonnet-4-6', max_tokens:1600,
       system:`Je bent sportadviseur. JSON only, geen tekst buiten JSON:
 {"top3":[{"match":"","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":8,"reden":"30-40 woorden","factoren":["",""],"risico":""},{"match":"","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0,"reden":"","factoren":[],"risico":""},{"match":"","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0,"reden":"","factoren":[],"risico":""}],
 "combi":{"legs":[{"match":"","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0},{"match":"","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0},{"match":"","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0}],"redenering":"40-50 woorden","synergie":"max 30 woorden","risico":"max 25 woorden","kansBerekening":"72%x68%x75%=37%","valueScore":7}}`,

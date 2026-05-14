@@ -1,7 +1,7 @@
-// TOTO AI WORKER v44
+// TOTO AI WORKER v45
 // Proxy + scheduled value scan
 
-const VERSION = 'v44';
+const VERSION = 'v45';
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -166,7 +166,7 @@ async function runScan(env) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }]
       })
