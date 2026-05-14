@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOTO AI — Uitleg & Gids v12</title>
+<meta name="theme-color" content="#fce7f3">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: linear-gradient(135deg, #fce7f3, #ede9fe, #e0f2fe);
+  min-height: 100vh;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+.app { max-width: 600px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
+
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 0 1.2rem;
+  border-bottom: 1px solid rgba(15,23,42,.08);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap; gap: .5rem;
+}
+.logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;
+  background: linear-gradient(135deg, #db2777, #7c3aed);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-btns { display: flex; gap: .5rem; flex-wrap: wrap; }
+.back-btn, .pdf-btn {
+  display: flex; align-items: center; gap: .4rem;
+  font-family: 'IBM Plex Mono', monospace; font-size: .6rem; font-weight: 700;
+  padding: .4rem .8rem; border-radius: 999px; cursor: pointer;
+  text-decoration: none; border: none;
+}
+.back-btn {
+  color: #be185d;
+  background: rgba(219,39,119,.08); border: 1px solid rgba(219,39,119,.25);
+}
+.pdf-btn {
+  color: #1d4ed8;
+  background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.25);
+}
+.pdf-btn:hover { background: rgba(37,99,235,.15); }
+
+.section { margin-bottom: 1.8rem; }
+.section-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem;
+  color: #0f172a; letter-spacing: .05em; margin-bottom: .8rem;
+  display: flex; align-items: center; gap: .5rem;
+}
+.card {
+  background: rgba(255,255,255,.88); border: 1px solid rgba(15,23,42,.08);
+  border-radius: 16px; padding: 1rem 1.1rem; margin-bottom: .6rem;
+  box-shadow: 0 2px 8px rgba(15,23,42,.05);
+}
+.card-title {
+  font-family: 'IBM Plex Mono', monospace; font-size: .68rem; font-weight: 700;
+  color: #be185d; letter-spacing: .04em; margin-bottom: .4rem;
+  display: flex; align-items: center; gap: .4rem;
+}
+.card-text { font-size: .88rem; line-height: 1.75; color: #334155; }
+.card-text b { color: #0f172a; font-weight: 700; }
+
+.tag {
+  display: inline-block; font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+  margin: 2px;
+}
+.tag-green  { background: rgba(22,163,74,.1);  color: #15803d; border: 1px solid rgba(22,163,74,.25); }
+.tag-orange { background: rgba(217,119,6,.1);  color: #b45309; border: 1px solid rgba(217,119,6,.25); }
+.tag-red    { background: rgba(220,38,38,.08); color: #b91c1c; border: 1px solid rgba(220,38,38,.2); }
+.tag-blue   { background: rgba(37,99,235,.1);  color: #1d4ed8; border: 1px solid rgba(37,99,235,.25); }
+.tag-purple { background: rgba(124,58,237,.1); color: #6d28d9; border: 1px solid rgba(124,58,237,.25); }
+.tag-pink   { background: rgba(219,39,119,.1); color: #be185d; border: 1px solid rgba(219,39,119,.25); }
+
+.markt-row {
+  display: flex; align-items: flex-start; gap: .8rem;
+  padding: .6rem 0; border-bottom: 1px solid rgba(15,23,42,.06);
+}
+.markt-row:last-child { border: none; padding-bottom: 0; }
+.markt-code {
+  font-family: 'IBM Plex Mono', monospace; font-size: .65rem; font-weight: 700;
+  color: #be185d; min-width: 60px; padding-top: 2px;
+}
+.markt-uitleg { font-size: .84rem; line-height: 1.6; color: #334155; }
+.markt-uitleg b { color: #0f172a; }
+
+.tip-box {
+  background: rgba(219,39,119,.06); border: 1px solid rgba(219,39,119,.2);
+  border-radius: 10px; padding: .7rem .9rem; margin-top: .6rem;
+  font-size: .8rem; line-height: 1.65; color: #475569;
+}
+.tip-box strong { color: #be185d; }
+
+.info-box {
+  background: rgba(37,99,235,.05); border: 1px solid rgba(37,99,235,.18);
+  border-radius: 10px; padding: .7rem .9rem; margin-top: .6rem;
+  font-size: .8rem; line-height: 1.65; color: #475569;
+}
+.info-box strong { color: #1d4ed8; }
+
+.new-badge {
+  display: inline-block; font-family: 'IBM Plex Mono', monospace;
+  font-size: .45rem; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+  background: rgba(22,163,74,.15); color: #15803d;
+  border: 1px solid rgba(22,163,74,.3); margin-left: .3rem; vertical-align: middle;
+}
+
+.divider { height: 1px; background: rgba(15,23,42,.07); margin: 1.5rem 0; }
+
+.nav-tabs {
+  display: flex; gap: .4rem; flex-wrap: wrap;
+  margin-bottom: 1.5rem; position: sticky; top: 0;
+  background: linear-gradient(135deg,#fce7f3,#ede9fe);
+  padding: .6rem 0; z-index: 10;
+}
+.nav-tab {
+  font-family: 'IBM Plex Mono', monospace; font-size: .52rem; font-weight: 700;
+  padding: .35rem .8rem; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(219,39,119,.25); background: rgba(255,255,255,.7);
+  color: #be185d; text-decoration: none;
+}
+.nav-tab:hover { background: rgba(219,39,119,.1); }
+
+/* Print / PDF stijlen */
+@media print {
+  body { background: white; font-size: 12px; }
+  .nav-tabs, .header-btns, .back-btn, .pdf-btn { display: none !important; }
+  .app { max-width: 100%; padding: 1rem; }
+  .card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+  .section { break-inside: avoid; }
+  .divider { border-top: 1px solid #eee; }
+  a { color: inherit; text-decoration: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo">TOTO AI <span style="font-size:1rem;font-family:'IBM Plex Mono',monospace;color:#94a3b8;-webkit-text-fill-color:#94a3b8;">v12</span></div>
+    <div class="header-btns">
+      <button class="pdf-btn" onclick="window.print()">📄 Opslaan als PDF</button>
+      <a href="https://toto-ai.app" class="back-btn">← TERUG NAAR APP</a>
+    </div>
+  </div>
+
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:#475569;
+    background:rgba(255,255,255,.7);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;
+    line-height:1.7;">
+    ⚠️ TOTO AI is een <b>fictieve, educatieve app</b>. Alle analyses zijn AI-gegenereerd.
+    Gebruik dit nooit als enige basis voor echte weddenschappen. Gok verantwoord · 18+ · Verslavingslijn: <b>0900-1090</b>
+  </div>
+
+  <!-- Snelnavigatie -->
+  <div class="nav-tabs">
+    <a href="#tabs" class="nav-tab">📱 Tabs</a>
+    <a href="#scanlog" class="nav-tab">📊 Scan Log</a>
+    <a href="#autoscan" class="nav-tab">⏱️ Auto Scan</a>
+    <a href="#value" class="nav-tab">⚡ Value</a>
+    <a href="#poisson" class="nav-tab">📐 Poisson</a>
+    <a href="#picktracker" class="nav-tab">🎯 Pick Tracker</a>
+    <a href="#markten" class="nav-tab">🎰 Markten</a>
+    <a href="#quotes" class="nav-tab">💰 Quotes</a>
+    <a href="#stats" class="nav-tab">📊 Stats</a>
+    <a href="#data" class="nav-tab">📡 Data</a>
+  </div>
+
+  <!-- TABS UITLEG -->
+  <div class="section" id="tabs">
+    <div class="section-title">📱 De Tabs</div>
+
+    <div class="card">
+      <div class="card-title">🏠 HOME — DASHBOARD</div>
+      <div class="card-text">
+        Overzicht van je actuele situatie: saldo, hitrate, open bets en
+        de <b>dagelijkse automatische scan</b> (als die picks heeft gevonden).
+        Triple Lock picks van vandaag verschijnen hier direct.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚽ WEDSTRIJDEN</div>
+      <div class="card-text">
+        Kies een competitie bovenin en laad de wedstrijden van vandaag.
+        Live wedstrijden staan bovenaan met een <b>🔴 badge + minuut</b>.<br><br>
+        <b>✏️ Handmatig toevoegen</b> — tik op de HANDMATIG knop om een
+        wedstrijd van elke competitie toe te voegen, inclusief eigen quotes.<br><br>
+        Tik op een wedstrijd om hem te selecteren. Daarna kun je:
+        <span class="tag tag-blue">ANALYSEER</span> voor een volledige AI analyse,
+        of <span class="tag tag-green">VALUE</span> voor een snelle value check.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ ANALYSE <span class="new-badge">BIJGEWERKT v12</span></div>
+      <div class="card-text">
+        De Analyse tab heeft nu drie sub-tabs:<br><br>
+        <b>⚡ Scan & Analyse</b> — value scan van alle geladen wedstrijden + diepgaande AI analyse per wedstrijd.<br><br>
+        <b>🎯 Combi Tips</b> — genereert automatisch top 3 losse tips en een combi van 3 legs.<br><br>
+        <b>📊 Scan Log</b> <span class="new-badge">NIEUW</span> — trackrecord van alle scans met hitrate, ROI, value kalibratie en automatische verificatie van resultaten. Doel: 100 scans analyseren voor Play Store lancering.
+      </div>
+    </div>
+
+    <div class="card" id="wallet">
+      <div class="card-title">💶 WALLET — 4 SUB-TABS</div>
+      <div class="card-text">
+        De wallet tab heeft vier sub-tabs bovenaan:<br><br>
+        <span class="tag tag-blue">💶 WALLET</span> Fictief saldo, open bets, verloopgrafiek<br>
+        <span class="tag tag-orange">📒 TRACKER</span> Echte weddenschappen bijhouden<br>
+        <span class="tag tag-purple">📊 BACKTEST</span> Alle value scan picks + resultaten<br>
+        <span class="tag tag-green">🎯 PICKS</span> 100 picks analyse (zie Pick Tracker)<br><br>
+        <b>Geen echt geld</b> — de wallet is puur voor bijhouden en leren.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ INSTELLINGEN <span class="new-badge">BIJGEWERKT v12</span></div>
+      <div class="card-text">
+        • <b>API Keys</b> — Anthropic + API-Football + FootballData<br>
+        • <b>Standaard instellingen</b> — startbalans, inzet, bookmaker, competitie<br>
+        • <b>Triple Lock criteria</b> — min. odds, value% en confidence instellen<br>
+        • <b>🔔 Push notificaties</b> — value alerts en wedstrijd herinneringen<br>
+        • <b>⏱️ Automatische scan</b> <span class="new-badge">NIEUW</span> — dagelijks scanvenster instellen (standaard 14:00–18:00) met "sla vandaag over" optie<br>
+        • <b>🎨 Thema</b> — donker, mint of crème<br>
+        • <b>☁️ Firebase backup</b> — cloud opslag en herstel<br>
+        • <b>⚠️ Reset</b> — wallet, backtest, tracker of alles resetten
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SCAN LOG -->
+  <div class="section" id="scanlog">
+    <div class="section-title">📊 Scan Log <span class="new-badge">NIEUW v12</span></div>
+
+    <div class="card">
+      <div class="card-title">WAT IS DE SCAN LOG?</div>
+      <div class="card-text">
+        De Scan Log (Analyse → 📊 Scan Log) houdt elk resultaat bij van elke value scan die je uitvoert.
+        Doel: <b>100 scans analyseren</b> om te bewijzen dat het model werkt — vereist voor de Play Store interne testtrack.<br><br>
+        Per scan wordt opgeslagen:<br>
+        • Datum en tijd van de scan<br>
+        • Alle picks met match, pick type, odds, value% en confidence<br>
+        • Uitslag achteraf (win / verlies / onbeslist)<br>
+        • Score van de wedstrijd
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📐 ANALYSE DASHBOARD</div>
+      <div class="card-text">
+        Na voldoende scans toont de Scan Log automatisch:<br><br>
+        <b>Voortgangsbalk</b> — X/100 richting Play Store lancering<br>
+        <b>Hitrate & ROI</b> — overall prestatie<br>
+        <b>Value kalibratie</b> — klopt de value berekening?<br>
+        &nbsp;&nbsp;→ Bv. zeggen picks met 20% value ook echt 20% meer?<br>
+        <b>Per pick type</b> — welke markt (1/X/2/BTTS) scoort het best?<br>
+        <b>Per competitie</b> — welke league is het meest betrouwbaar?
+      </div>
+      <div class="tip-box">
+        <strong>💡 Tip:</strong> Pas na 30+ picks zijn de resultaten statistisch betrouwbaar.
+        De kalibratie kolommen worden pas getoond als er minimaal 5 afgeronde picks zijn.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔄 AUTOMATISCHE VERIFICATIE</div>
+      <div class="card-text">
+        Tik op <b>🔄 Verificeer</b> om openstaande picks automatisch te controleren via de API-Football.<br><br>
+        De app haalt de einduitslag op en bepaalt automatisch win/verlies op basis van het pick type.
+        Ondersteunde markten: 1 · X · 2 · 1X · X2 · O2.5 · U2.5 · O1.5 · O3.5 · BTTS.<br><br>
+        <b>📥 CSV export</b> — download alle scan data voor externe analyse in Excel.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- AUTO SCAN -->
+  <div class="section" id="autoscan">
+    <div class="section-title">⏱️ Automatische Scan <span class="new-badge">NIEUW v12</span></div>
+
+    <div class="card">
+      <div class="card-title">HOE WERKT DE AUTO SCAN?</div>
+      <div class="card-text">
+        Inschakelen via <b>Instellingen → ⏱️ Automatische Scan</b>.<br><br>
+        De app scant elke uur automatisch alle wedstrijden van vandaag op value — ook als de app op de achtergrond staat.<br><br>
+        Configureerbaar:<br>
+        • <b>Scanvenster van/tot</b> — standaard 14:00–18:00<br>
+        • <b>Sla vandaag over</b> — scan overslaan voor deze dag<br>
+        • <b>Start nu</b> — direct een scan uitvoeren
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">WAT DOET DE SCAN?</div>
+      <div class="card-text">
+        1. Laadt wedstrijden van vandaag uit alle competities<br>
+        2. Berekent Poisson kansen + AI analyse (blend 65/35)<br>
+        3. Filtert picks boven de value drempel<br>
+        4. Slaat picks op in <b>Dashboard → Auto-scan picks</b><br>
+        5. Logt elke scan in de <b>Scan Log</b> (Analyse tab)<br>
+        6. Stuurt een <b>push notificatie</b> bij sterke value (als notificaties aan staan)
+      </div>
+      <div class="info-box">
+        <strong>ℹ️ Vereist:</strong> Anthropic API key in Instellingen voor de AI analyse stap.
+        Zonder key draait alleen het Poisson model.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- VALUE SCAN -->
+  <div class="section" id="value">
+    <div class="section-title">⚡ Value Scan</div>
+
+    <div class="card">
+      <div class="card-title">HOE WERKT DE VALUE SCAN?</div>
+      <div class="card-text">
+        De scan analyseert alle geladen wedstrijden tegelijk:<br><br>
+        1. Haalt H2H, vorm, blessures en statistieken op<br>
+        2. Berekent kansen via het <b>Poisson model</b><br>
+        3. AI analyseert context en geeft eigen kansinschatting<br>
+        4. Blend: <b>65% Poisson + 35% AI</b> = gecombineerde kans<br>
+        5. Vergelijkt gecombineerde kans met bookmaker quote (incl. vig-correctie)<br>
+        6. Berekent <b>value%</b> — hoe veel de kans hoger is dan de quote impliceert<br>
+        7. Pick wordt <b>automatisch opgeslagen</b> in de Scan Log
+      </div>
+      <div class="tip-box">
+        <strong>💡 Drempel:</strong> Gebruik alleen picks met <strong>≥10% value</strong>
+        én <strong>confidence ≥7</strong>. Dat zijn de signalen met de meeste onderbouwing.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏆 TRIPLE / DOUBLE LOCK</div>
+      <div class="card-text">
+        De sterkste picks krijgen een Lock badge:<br><br>
+        <span class="tag tag-green">🏆 TRIPLE LOCK</span> Value ≥15% + conf ≥8 + Poisson bevestigt<br>
+        <span class="tag tag-blue">🔒 DOUBLE LOCK</span> Value ≥12% + conf ≥7<br><br>
+        Lock picks worden automatisch opgeslagen in de Backtest tab én de Scan Log.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">VIG-CORRECTIE</div>
+      <div class="card-text">
+        Bookmakers bouwen een marge (vig) van ~4-6% in hun quotes.
+        Zonder correctie lijkt bijna alles value. De app berekent de
+        <b>overround</b> (1/o1 + 1/oX + 1/o2) en corrigeert de fair odds
+        hierop. Daardoor zijn de value-percentages realistischer.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- POISSON -->
+  <div class="section" id="poisson">
+    <div class="section-title">📐 Poisson Model</div>
+
+    <div class="card">
+      <div class="card-title">WAT IS HET POISSON MODEL?</div>
+      <div class="card-text">
+        Poisson is een wiskundig model dat de kans berekent op een bepaald
+        aantal doelpunten, gebaseerd op de aanvals- en verdedigingssterkte
+        van beide teams.<br><br>
+        De app gebruikt:<br>
+        • Gemiddelde doelpunten gescoord thuis/uit (seizoen)<br>
+        • Gemiddelde doelpunten tegen thuis/uit<br>
+        • <b>Recente vorm</b> — laatste 5 wedstrijden tellen voor 40%<br>
+        • xG data als beschikbaar<br>
+        • Competitiespecifiek gemiddelde (Eredivisie ≠ Serie A)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">DIXON-COLES CORRECTIE</div>
+      <div class="card-text">
+        Standaard Poisson onderschat lage scores (0-0, 1-0, 0-1, 1-1).
+        De app past een <b>Dixon-Coles tau correctie</b> toe die de kansen
+        op lage scores verhoogt naar wat historisch echt voorkomt.<br><br>
+        Na correctie worden alle kansen hergenormaliseerd tot 100%.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">COMPETITIE GEMIDDELDEN</div>
+      <div class="card-text">
+        <span class="tag tag-orange">🇳🇱 Eredivisie</span> 1.68 goals/team<br>
+        <span class="tag tag-blue">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</span> 1.40<br>
+        <span class="tag tag-green">🇩🇪 Bundesliga</span> 1.55<br>
+        <span class="tag tag-red">🇮🇹 Serie A</span> 1.18 (meest defensief)<br>
+        <span class="tag tag-purple">🇪🇸 La Liga</span> 1.28<br><br>
+        Een 0-0 in Italië heeft een heel andere kans dan een 0-0 in Nederland.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- PICK TRACKER -->
+  <div class="section" id="picktracker">
+    <div class="section-title">🎯 Pick Tracker</div>
+
+    <div class="card">
+      <div class="card-title">WAT IS DE PICK TRACKER?</div>
+      <div class="card-text">
+        De Pick Tracker (Wallet → 🎯 PICKS) is een analysetool.
+        Doel: na 100 picks precies weten welke signalen werken.<br><br>
+        Per pick wordt bijgehouden:<br>
+        • Wedstrijd, quote, pick type (1/X/2)<br>
+        • Value% en confidence score<br>
+        • <b>AI vs Poisson eens?</b> — het sleutelgegeven<br>
+        • Marktbeweging (steam/drift)<br>
+        • Resultaat (gewonnen/verloren)
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎯 TRACKER KNOP</div>
+      <div class="card-text">
+        Na een Value Scan staat bij elke pick een
+        <span class="tag tag-green">🎯 TRACKER</span> knop.
+        Één tik vult automatisch in:<br><br>
+        • Alle wedstrijdgegevens en waarden<br>
+        • Poisson kansen (1%/X%/2%)<br>
+        • <b>AI vs Poisson eens?</b> — automatisch bepaald:<br>
+        &nbsp;&nbsp;✅ JA = beide wijzen naar dezelfde pick (≤10pp verschil)<br>
+        &nbsp;&nbsp;❌ NEE = groot verschil (≥15pp)<br>
+        &nbsp;&nbsp;⚠️ DEELS = daartussenin
+      </div>
+      <div class="tip-box">
+        <strong>💡 Tip:</strong> Na ~30 picks zie je al of picks waarbij
+        AI én Poisson het eens waren een hogere hitrate hebben.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- MARKTEN -->
+  <div class="section" id="markten">
+    <div class="section-title">🎰 Wedmarkten</div>
+
+    <div class="card">
+      <div class="card-title">1X2 — UITSLAG</div>
+      <div class="markt-row">
+        <div class="markt-code">1</div>
+        <div class="markt-uitleg"><b>Thuisteam wint</b> — meer goals dan uitteam.</div>
+      </div>
+      <div class="markt-row">
+        <div class="markt-code">X</div>
+        <div class="markt-uitleg"><b>Gelijkspel</b> — beide teams evenveel goals.</div>
+      </div>
+      <div class="markt-row">
+        <div class="markt-code">2</div>
+        <div class="markt-uitleg"><b>Uitteam wint</b> — meer goals dan thuisteam.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">OVER/ONDER</div>
+      <div class="markt-row">
+        <div class="markt-code">O2.5</div>
+        <div class="markt-uitleg"><b>Over 2.5</b> — 3 of meer goals in totaal.</div>
+      </div>
+      <div class="markt-row">
+        <div class="markt-code">U2.5</div>
+        <div class="markt-uitleg"><b>Under 2.5</b> — 0, 1 of 2 goals in totaal.</div>
+      </div>
+      <div class="markt-row">
+        <div class="markt-code">O1.5</div>
+        <div class="markt-uitleg"><b>Over 1.5</b> — 2 of meer goals. Relatief hoge kans.</div>
+      </div>
+      <div class="markt-row">
+        <div class="markt-code">O3.5</div>
+        <div class="markt-uitleg"><b>Over 3.5</b> — 4 of meer goals. Hogere quote, lagere kans.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">BTTS — BEIDE TEAMS SCOREN</div>
+      <div class="markt-row">
+        <div class="markt-code">BTTS-J</div>
+        <div class="markt-uitleg"><b>Ja</b> — beide teams scoren minstens 1 goal.</div>
+      </div>
+      <div class="markt-row">
+        <div class="markt-code">BTTS-N</div>
+        <div class="markt-uitleg"><b>Nee</b> — minstens één team houdt een clean sheet.</div>
+      </div>
+      <div class="tip-box">
+        <strong>💡 Voorbeeld:</strong> Ajax 2-1 PSV → BTTS-J wint ✓ &nbsp;|&nbsp; Ajax 3-0 PSV → BTTS-N wint ✓
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">DUBBELE KANS</div>
+      <div class="markt-row">
+        <div class="markt-code">1X</div>
+        <div class="markt-uitleg"><b>Thuis wint OF gelijkspel</b> — veiliger, lagere quote.</div>
+      </div>
+      <div class="markt-row">
+        <div class="markt-code">X2</div>
+        <div class="markt-uitleg"><b>Gelijkspel OF uitteam wint</b> — wint als thuisploeg niet wint.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- QUOTES -->
+  <div class="section" id="quotes">
+    <div class="section-title">💰 Quotes & Kansen</div>
+
+    <div class="card">
+      <div class="card-title">WAT IS EEN QUOTE?</div>
+      <div class="card-text">
+        Een quote geeft aan hoeveel je terugkrijgt per ingezette euro.<br><br>
+        <b>Quote 2.00</b> → €10 inzet = €20 terug (€10 winst)<br>
+        <b>Quote 1.50</b> → €10 inzet = €15 terug (€5 winst)<br>
+        <b>Quote 3.50</b> → €10 inzet = €35 terug (€25 winst)<br><br>
+        Quote 1.20 = grote favoriet &nbsp;·&nbsp; Quote 5.00 = outsider
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">VALUE BET</div>
+      <div class="card-text">
+        Een value bet is een weddenschap waarbij jij denkt dat de echte kans
+        hoger is dan de bookmaker inschat.<br><br>
+        <b>Voorbeeld:</b> Quote 3.00 op gelijkspel (= 33% kans).
+        Als de AI+Poisson 45% berekent → value bet van +12%.
+      </div>
+      <div class="tip-box">
+        <strong>💡 Tip:</strong> Op lange termijn win je alleen structureel
+        als je consequent value bets vindt. Eén gewonnen bet zegt niets.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- STATS -->
+  <div class="section" id="stats">
+    <div class="section-title">📊 Statistieken & ROI</div>
+
+    <div class="card">
+      <div class="card-title">HITRATE</div>
+      <div class="card-text">
+        Percentage gewonnen weddenschappen. <b>Hitrate 60%</b> → 6 van 10 gewonnen.<br><br>
+        Let op: een hoge hitrate zegt niet alles. Bij lage quotes (1.30)
+        win je vaak maar verdien je weinig. Kijk altijd naar <b>ROI</b>.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ROI — RETURN ON INVESTMENT</div>
+      <div class="card-text">
+        <b>ROI% = (winst − verlies) / totaal ingezet × 100</b><br><br>
+        <b>+10% ROI</b> → €10 winst per €100 ingezet<br>
+        <b>−15% ROI</b> → €15 verlies per €100 ingezet<br><br>
+        Professionele tipsters halen gemiddeld 5-10% ROI. Dat klinkt laag maar is uitstekend.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">VALUE KALIBRATIE</div>
+      <div class="card-text">
+        De Scan Log toont de <b>value kalibratie</b> per bucket (0-10%, 10-20%, 20-30%, 30%+).<br><br>
+        Een goed gekalibreerd model: picks met 20% value winnen ook ~20% vaker dan de quote impliceert.
+        Als alle buckets vergelijkbaar scoren, werkt de value berekening niet goed genoeg.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- DATA -->
+  <div class="section" id="data">
+    <div class="section-title">📡 Data & API</div>
+
+    <div class="card">
+      <div class="card-title">WAAR KOMT DE DATA VANDAAN?</div>
+      <div class="card-text">
+        <b>API-Football</b> — wedstrijden, uitslagen, vorm, statistieken,
+        blessures, ranglijsten, live scores, xG, opstellingen<br><br>
+        <b>Anthropic Claude Haiku 4.5</b> — analyseert alle data en
+        genereert tips. Verzint <b>geen</b> statistieken.<br><br>
+        <b>Cloudflare Worker</b> — server-side proxy en automatische scan
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">WAAROM SOMS GEEN DATA?</div>
+      <div class="card-text">
+        • <b>Blessures</b> — alleen grote competities<br>
+        • <b>Opstellingen</b> — pas beschikbaar ~1u voor aftrap<br>
+        • <b>xG</b> — niet elke competitie heeft xG data<br>
+        • <b>Quotes</b> — vroege wedstrijden soms nog geen quotes<br><br>
+        Ontbreken quotes? Vul ze handmatig in via <b>✏️ Quotes invullen</b> op de wedstrijdkaart.
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.58rem;
+    color:#94a3b8;padding:1rem 0 2rem;">
+    TOTO AI v12 · Made by Rob Borghouts<br>
+    Powered by Anthropic Claude Haiku 4.5 + API-Football + Cloudflare<br><br>
+    <a href="changelog.html" style="color:#be185d;text-decoration:none;">📋 Bekijk Changelog →</a>
+    &nbsp;·&nbsp;
+    <button onclick="window.print()" style="background:none;border:none;color:#be185d;font-family:'IBM Plex Mono',monospace;font-size:.58rem;cursor:pointer;">📄 Opslaan als PDF</button>
+  </div>
+
+</div>
+</body>
+</html>
