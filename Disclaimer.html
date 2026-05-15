@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0f">
+<title>TOTO AI — Verantwoord Spelen</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0a0a0f;
+  --card:    #13131c;
+  --border:  rgba(255,255,255,.07);
+  --text:    #f0f0f8;
+  --muted:   rgba(240,240,248,.5);
+  --accent:  #db2777;
+  --warn:    #f59e0b;
+  --red:     #ef4444;
+  --green:   #22c55e;
+  --mono:    'IBM Plex Mono', monospace;
+  --sans:    'DM Sans', sans-serif;
+  --display: 'Bebas Neue', sans-serif;
+}
+
+html, body {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Animated background */
+.bg-glow {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 20%, rgba(239,68,68,.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 70% at 85% 80%, rgba(245,158,11,.06) 0%, transparent 60%);
+}
+
+.container {
+  position: relative; z-index: 1;
+  max-width: 420px; margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+
+/* Header */
+.header {
+  text-align: center; margin-bottom: 2rem;
+  animation: fadeDown .5s ease both;
+}
+.logo {
+  font-family: var(--display);
+  font-size: 2.2rem; letter-spacing: .1em;
+  background: linear-gradient(135deg, #fff 30%, rgba(219,39,119,.7));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; margin-bottom: .25rem;
+}
+.logo span {
+  background: linear-gradient(135deg, #db2777, #f59e0b);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.tagline {
+  font-family: var(--mono); font-size: .55rem; font-weight: 600;
+  color: var(--muted); letter-spacing: .15em; text-transform: uppercase;
+}
+
+/* Waarschuwing banner */
+.warn-banner {
+  background: rgba(239,68,68,.08);
+  border: 1.5px solid rgba(239,68,68,.25);
+  border-radius: 16px; padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  animation: fadeUp .5s .1s ease both;
+}
+.warn-icon { font-size: 2rem; margin-bottom: .5rem; display: block; }
+.warn-title {
+  font-family: var(--display); font-size: 1.3rem;
+  letter-spacing: .06em; color: #ef4444;
+  margin-bottom: .5rem; line-height: 1.1;
+}
+.warn-text {
+  font-size: .82rem; line-height: 1.75; color: var(--muted);
+}
+.warn-text strong { color: var(--text); }
+
+/* Info cards */
+.info-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 1rem 1.1rem;
+  margin-bottom: .75rem;
+  animation: fadeUp .5s ease both;
+}
+.info-card:nth-child(1) { animation-delay: .15s; }
+.info-card:nth-child(2) { animation-delay: .2s; }
+.info-card:nth-child(3) { animation-delay: .25s; }
+.info-card:nth-child(4) { animation-delay: .3s; }
+
+.info-header {
+  display: flex; align-items: center; gap: .6rem;
+  margin-bottom: .5rem;
+}
+.info-icon { font-size: 1.1rem; }
+.info-title {
+  font-family: var(--mono); font-size: .55rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--warn);
+}
+.info-body {
+  font-size: .8rem; line-height: 1.7; color: var(--muted);
+}
+.info-body strong { color: var(--text); }
+
+/* Hulplijnen */
+.helplines {
+  background: rgba(34,197,94,.06);
+  border: 1px solid rgba(34,197,94,.2);
+  border-radius: 14px; padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+  animation: fadeUp .5s .35s ease both;
+}
+.helplines-title {
+  font-family: var(--mono); font-size: .55rem; font-weight: 600;
+  letter-spacing: .1em; color: var(--green); margin-bottom: .6rem;
+}
+.helpline-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .4rem 0; border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.helpline-row:last-child { border: none; padding-bottom: 0; }
+.helpline-name { font-size: .78rem; color: var(--text); }
+.helpline-num {
+  font-family: var(--mono); font-size: .72rem;
+  color: var(--green); font-weight: 600;
+}
+
+/* Checkbox bevestiging */
+.confirm-section {
+  margin-bottom: 1.25rem;
+  animation: fadeUp .5s .4s ease both;
+}
+.checkbox-row {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .85rem 1rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; cursor: pointer;
+  transition: border-color .2s;
+  margin-bottom: .5rem;
+}
+.checkbox-row:has(input:checked) {
+  border-color: rgba(34,197,94,.35);
+  background: rgba(34,197,94,.05);
+}
+.checkbox-row input[type="checkbox"] {
+  width: 18px; height: 18px; flex-shrink: 0;
+  accent-color: var(--green); cursor: pointer; margin-top: 1px;
+}
+.checkbox-label {
+  font-size: .78rem; line-height: 1.6; color: var(--muted);
+}
+.checkbox-label strong { color: var(--text); }
+
+/* CTA knop */
+.cta-btn {
+  width: 100%; padding: .9rem;
+  background: linear-gradient(135deg, #db2777, #9333ea);
+  border: none; border-radius: 14px;
+  font-family: var(--mono); font-size: .65rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: #fff; cursor: pointer;
+  transition: all .2s; opacity: .4; pointer-events: none;
+  box-shadow: 0 4px 24px rgba(219,39,119,.2);
+  animation: fadeUp .5s .45s ease both;
+}
+.cta-btn.active {
+  opacity: 1; pointer-events: all;
+}
+.cta-btn.active:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(219,39,119,.35); }
+.cta-btn.active:active { transform: scale(.98); }
+
+/* Footer */
+.footer {
+  margin-top: 1.5rem; text-align: center;
+  font-family: var(--mono); font-size: .42rem;
+  color: rgba(240,240,248,.2); letter-spacing: .06em; line-height: 1.8;
+  animation: fadeUp .5s .5s ease both;
+}
+
+/* Age badge */
+.age-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(239,68,68,.15); border: 2px solid rgba(239,68,68,.4);
+  font-family: var(--display); font-size: 1rem; color: #ef4444;
+  margin-bottom: .5rem;
+}
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">TOTO <span>AI</span></div>
+    <div class="tagline">Verantwoord spelen · 18+</div>
+  </div>
+
+  <!-- Rode waarschuwing -->
+  <div class="warn-banner">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.6rem;">
+      <div class="age-badge">18+</div>
+      <div class="warn-title">Gokken is voor volwassenen</div>
+    </div>
+    <div class="warn-text">
+      Deze app is uitsluitend bedoeld voor <strong>entertainment en educatieve doeleinden</strong>.
+      De analyses en voorspellingen zijn <strong>geen garantie</strong> op winst en vormen
+      <strong>geen officieel gokadvies</strong>.<br><br>
+      Gokken brengt <strong>financiële risico's</strong> met zich mee.
+      Speel nooit met geld dat je niet kunt missen.
+    </div>
+  </div>
+
+  <!-- Info cards -->
+  <div class="info-card">
+    <div class="info-header">
+      <span class="info-icon">🎰</span>
+      <div class="info-title">Wat is TOTO AI?</div>
+    </div>
+    <div class="info-body">
+      TOTO AI is een <strong>AI-gedreven voetbalanalyse tool</strong> voor het berekenen van
+      statistische kansen op wedstrijduitslagen. De app gebruikt Poisson-modellen en
+      AI om value-picks te identificeren — dit zijn <strong>geen zekere weddenschappen</strong>.
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="info-header">
+      <span class="info-icon">⚠️</span>
+      <div class="info-title">Risico's van gokken</div>
+    </div>
+    <div class="info-body">
+      Gokken kan <strong>verslavend</strong> zijn. Tekenen van probleemgokken zijn:
+      meer inzetten dan gepland, gokken om verliezen terug te winnen,
+      of gokken dat je dagelijks leven beïnvloedt.
+      <strong>Stop direct</strong> als je deze tekenen herkent.
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="info-header">
+      <span class="info-icon">📋</span>
+      <div class="info-title">Verantwoord spelen</div>
+    </div>
+    <div class="info-body">
+      • Stel een <strong>dagelijks budget</strong> in en houd je eraan<br>
+      • Gok nooit met <strong>geleend geld</strong><br>
+      • Beschouw inzetten als <strong>entertainment</strong>, niet als inkomen<br>
+      • Neem regelmatig <strong>pauzes</strong> van gokken<br>
+      • Gebruik de <strong>zelfuitsluitingstools</strong> van bookmakers
+    </div>
+  </div>
+
+  <div class="info-card">
+    <div class="info-header">
+      <span class="info-icon">🔞</span>
+      <div class="info-title">Leeftijdsgrens</div>
+    </div>
+    <div class="info-body">
+      Deelnemen aan kansspelen is in Nederland <strong>alleen toegestaan voor personen van 18 jaar en ouder</strong>.
+      Door gebruik te maken van deze app bevestig je dat je <strong>18 jaar of ouder</strong> bent.
+    </div>
+  </div>
+
+  <!-- Hulplijnen -->
+  <div class="helplines">
+    <div class="helplines-title">📞 Hulp nodig? Bel gratis:</div>
+    <div class="helpline-row">
+      <span class="helpline-name">Verslavingslijn (24/7)</span>
+      <span class="helpline-num">0900-1090</span>
+    </div>
+    <div class="helpline-row">
+      <span class="helpline-name">AGOG Hulplijn</span>
+      <span class="helpline-num">088-5050 300</span>
+    </div>
+    <div class="helpline-row">
+      <span class="helpline-name">Jellinek (online)</span>
+      <span class="helpline-num">jellinek.nl</span>
+    </div>
+    <div class="helpline-row">
+      <span class="helpline-name">Zelfuitsluiting (CRUKS)</span>
+      <span class="helpline-num">cruks.nl</span>
+    </div>
+  </div>
+
+  <!-- Bevestiging checkboxes -->
+  <div class="confirm-section">
+    <label class="checkbox-row">
+      <input type="checkbox" id="check1" onchange="checkAll()">
+      <span class="checkbox-label">
+        Ik bevestig dat ik <strong>18 jaar of ouder</strong> ben en begrijp dat
+        gokken financiële risico's met zich meebrengt.
+      </span>
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" id="check2" onchange="checkAll()">
+      <span class="checkbox-label">
+        Ik begrijp dat TOTO AI <strong>geen gokadvies</strong> geeft en dat
+        analyses uitsluitend voor entertainment zijn.
+      </span>
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" id="check3" onchange="checkAll()">
+      <span class="checkbox-label">
+        Ik ga akkoord met de <strong>verantwoord spelen voorwaarden</strong>
+        en zal nooit meer inzetten dan ik kan missen.
+      </span>
+    </label>
+  </div>
+
+  <!-- CTA -->
+  <button class="cta-btn" id="ctaBtn" onclick="acceptAndContinue()">
+    ✓ Ik begrijp het — Doorgaan naar TOTO AI
+  </button>
+
+  <div class="footer">
+    TOTO AI · AppsMadeByRobB · toto-ai.app<br>
+    Uitsluitend voor entertainment &amp; educatie · 18+ · KSA gecertificeerde bookmakers aanbevolen<br>
+    Verslavingslijn: 0900-1090 (gratis)
+  </div>
+
+</div>
+
+<script>
+function checkAll() {
+  const all = document.getElementById('check1').checked
+           && document.getElementById('check2').checked
+           && document.getElementById('check3').checked;
+  const btn = document.getElementById('ctaBtn');
+  btn.classList.toggle('active', all);
+}
+
+function acceptAndContinue() {
+  // Sla acceptatie op zodat het scherm niet elke keer getoond wordt
+  localStorage.setItem('totoai_disclaimer_accepted', Date.now());
+  localStorage.setItem('totoai_disclaimer_version', '1.0');
+  // Ga naar de app
+  window.location.href = 'index.html';
+}
+
+// Check of disclaimer al geaccepteerd is (max 30 dagen geldig)
+(function() {
+  const accepted = localStorage.getItem('totoai_disclaimer_accepted');
+  if (accepted) {
+    const days = (Date.now() - parseInt(accepted)) / (1000 * 60 * 60 * 24);
+    if (days < 30) {
+      window.location.href = 'index.html';
+    }
+  }
+})();
+</script>
+</body>
+</html>
