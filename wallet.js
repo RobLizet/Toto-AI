@@ -33,6 +33,12 @@ function renderWalletScreen() {
         <button id="wsub-tracker"  class="wsub-btn" onclick="setWalletSubTab('tracker')">📒 Tracker</button>
         <button id="wsub-backtest" class="wsub-btn" onclick="setWalletSubTab('backtest')">📊 Backtest</button>
         <button id="wsub-picks"    class="wsub-btn" onclick="setWalletSubTab('picks')">🎯 Picks</button>
+        <button id="wsub-value"    class="wsub-btn" onclick="setWalletSubTab('value')">⚡ Value</button>
+      </div>
+
+      <!-- VALUE PICKS TAB -->
+      <div id="wsub-content-value" style="display:none;">
+        <div id="value-picks-content"></div>
       </div>
 
       <!-- WALLET TAB -->
@@ -291,7 +297,7 @@ function renderWalletScreen() {
 // ── SET SUB-TAB ──────────────────────────────────────
 
 function setWalletSubTab(tab) {
-  ['wallet','tracker','backtest','picks'].forEach(t => {
+  ['wallet','tracker','backtest','picks','value'].forEach(t => {
     const el  = document.getElementById('wsub-content-' + t);
     const btn = document.getElementById('wsub-' + t);
     if (el)  el.style.display = t === tab ? 'block' : 'none';
@@ -311,6 +317,7 @@ function setWalletSubTab(tab) {
   if (tab === 'tracker')  { renderTracker(); updateTrackerStats(); }
   if (tab === 'backtest') { renderBacktest(); }
   if (tab === 'picks')    { ptRenderAll(); }
+  if (tab === 'value')    { renderValuePicks(); }
 }
 
 // ── UPDATE WALLET UI ─────────────────────────────────
@@ -1312,4 +1319,147 @@ function ptSaveFromScan(home, away, pick, pickLabel, odds, value, confidence, po
   if (state.valueBacktest.picks.length>100) state.valueBacktest.picks=state.valueBacktest.picks.slice(0,100);
   saveState();
   showToast(`🎯 Opgeslagen: ${home} vs ${away}`);
+}
+
+// ══════════════════════════════════════════════════════
+// VALUE PICKS TAB
+// ══════════════════════════════════════════════════════
+function renderValuePicks() {
+  const el = document.getElementById('value-picks-content');
+  if (!el) return;
+
+  // Combineer valueScans (huidige scan) + valueBacktest picks
+  const scanPicks = state.valueScans || [];
+  const btPicks   = (state.valueBacktest?.picks || []).filter(p => p.status === 'pending');
+
+  // Dedupliceer op match ID
+  const seen = new Set();
+  const allPicks = [];
+  [...scanPicks, ...btPicks].forEach(p => {
+    const key = String(p.id || p.matchId || p.fixtureId);
+    if (!seen.has(key)) { seen.add(key); allPicks.push(p); }
+  });
+
+  // Sorteer op value %
+  allPicks.sort((a, b) => (b.value||0) - (a.value||0));
+
+  if (!allPicks.length) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:3rem 1rem;">
+        <div style="font-size:2rem;margin-bottom:.75rem;">⚡</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);">
+          Geen value picks beschikbaar.<br>
+          Voer eerst een Value Scan uit via de Analyse tab.
+        </div>
+      </div>`;
+    return;
+  }
+
+  const valueClass = v => v >= 20 ? '#15803d' : v >= 10 ? '#b45309' : '#64748b';
+  const valueBg    = v => v >= 20 ? 'rgba(22,163,74,.1)' : v >= 10 ? 'rgba(217,119,6,.08)' : 'rgba(100,116,139,.06)';
+  const valueLbl   = v => v >= 20 ? '🏆 HOGE VALUE' : v >= 10 ? '⚡ VALUE' : '📊 LAGE VALUE';
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;">VALUE PICKS</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${allPicks.length} picks</div>
+    </div>`;
+
+  allPicks.forEach(p => {
+    const matchName = p.match ? `${p.match.home} vs ${p.match.away}` : (p.matchName || p.home + ' vs ' + p.away || '');
+    const pick      = p.pick || '1';
+    const pickLabel = p.pickLabel || (pick === '1' ? 'Thuis wint' : pick === 'X' ? 'Gelijkspel' : 'Uit wint');
+    const odds      = parseFloat(p.odds || p.homeOdds || 2).toFixed(2);
+    const value     = parseFloat(p.value || 0);
+    const conf      = p.confidence || 5;
+    const matchId   = p.id || p.matchId || p.fixtureId;
+    const comp      = p.comp || p.compName || (p.match?.comp) || '';
+    const reason    = p.reason || p.reden || '';
+
+    html += `
+      <div style="background:var(--card);border:1px solid var(--stroke);border-radius:16px;
+        padding:.9rem 1rem;margin-bottom:.6rem;">
+
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.45rem;color:var(--sub);">${comp}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;
+            color:${valueClass(value)};background:${valueBg(value)};
+            padding:2px 8px;border-radius:6px;">
+            ${valueLbl(value)} +${value.toFixed(1)}%
+          </div>
+        </div>
+
+        <!-- Match -->
+        <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;
+          color:var(--ink);margin-bottom:.4rem;">${matchName}</div>
+
+        <!-- Pick info -->
+        <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${pick}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${pickLabel}</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;margin-left:auto;">${odds}</span>
+        </div>
+
+        <!-- Confidence + reden -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.45rem;color:var(--sub);">
+            Conf: ${'★'.repeat(Math.min(conf,10))}${'☆'.repeat(Math.max(0,10-conf))} ${conf}/10
+          </div>
+          ${reason ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);max-width:55%;text-align:right;">${reason}</div>` : ''}
+        </div>
+
+        <!-- Knoppen -->
+        <div style="display:flex;gap:.4rem;">
+          <button onclick="quickBetFromValue('${matchId}','${pick}','${pickLabel}',${odds})"
+            style="flex:2;padding:.5rem;border-radius:10px;
+            background:linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8));
+            border:none;font-family:'IBM Plex Mono',monospace;font-size:.55rem;
+            font-weight:800;color:#fff;cursor:pointer;letter-spacing:.04em;">
+            💰 INZETTEN
+          </button>
+          <button onclick="addValueToCombiBuilder('${matchId}','${pick}','${pickLabel}',${odds})"
+            style="flex:1;padding:.5rem;border-radius:10px;
+            background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
+            font-family:'IBM Plex Mono',monospace;font-size:.55rem;
+            font-weight:700;color:#7c3aed;cursor:pointer;">
+            + COMBI
+          </button>
+        </div>
+      </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function quickBetFromValue(matchId, pick, pickLabel, odds) {
+  // Zoek match in state
+  const match = state.matches.find(m => String(m.id) === String(matchId));
+  if (match) {
+    openBetModal(null, matchId, pick, pickLabel, odds);
+    switchScreen('wallet');
+    setWalletSubTab('wallet');
+  } else {
+    // Match niet meer in state — open modal met beschikbare info
+    pendingBet = {
+      match: { id: matchId, home: '?', away: '?' },
+      pick, pickLabel, odds: parseFloat(odds), markt: '1X2',
+      _origPick: pick, _origPickLabel: pickLabel, _origOdds: parseFloat(odds)
+    };
+    const stakeInput = document.getElementById('bet-stake');
+    if (stakeInput) stakeInput.value = state.settings.defaultBet || 10;
+    const oddsInput = document.getElementById('bet-odds');
+    if (oddsInput) oddsInput.value = odds;
+    const modal = document.getElementById('bet-modal');
+    if (modal) modal.style.display = 'flex';
+  }
+}
+
+function addValueToCombiBuilder(matchId, pick, pickLabel, odds) {
+  if (!state.combiBuilder) state.combiBuilder = [];
+  const exists = state.combiBuilder.some(l => String(l.matchId) === String(matchId));
+  if (exists) { showToast('Al in combi'); return; }
+  state.combiBuilder.push({ matchId, pick, pickLabel, odds: parseFloat(odds) });
+  saveState();
+  showToast('➕ Toegevoegd aan combi');
 }

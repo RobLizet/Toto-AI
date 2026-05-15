@@ -72,27 +72,38 @@ function openBetModal(e, matchId, pick, pickLabel, odds) {
   if (!match) return;
   pendingBet = { match, pick, pickLabel, odds: parseFloat(odds), markt: '1X2',
     _origPick: pick, _origPickLabel: pickLabel, _origOdds: parseFloat(odds) };
-  const modalName = document.getElementById('modalMatchName');
-  const modalPick = document.getElementById('modalPickInfo');
-  const modalInput = document.getElementById('modalBetInput');
-  if (modalName) modalName.textContent = match.home + ' vs ' + match.away;
-  if (modalPick) modalPick.textContent = 'Keuze: ' + pick + ' — ' + pickLabel + ' @ ' + odds;
-  if (modalInput) modalInput.value = state.settings.defaultBet || 10;
-  const pickRow = document.getElementById('marketPickRow');
-  if (pickRow) pickRow.style.display = 'none';
-  document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('mb-1X2')?.classList.add('active');
-  updatePayoutPreview();
-  document.getElementById('betModal')?.classList.add('show');
+
+  // Vul modal in
+  const title = document.getElementById('bet-modal-title');
+  if (title) title.textContent = match.home + ' vs ' + match.away + ' — ' + pickLabel + ' @ ' + odds;
+
+  const matchInput = document.getElementById('bet-match');
+  if (matchInput) matchInput.value = match.home + ' vs ' + match.away;
+
+  const stakeInput = document.getElementById('bet-stake');
+  if (stakeInput) stakeInput.value = state.settings.defaultBet || 10;
+
+  const oddsInput = document.getElementById('bet-odds');
+  if (oddsInput) oddsInput.value = odds;
+
+  const noteInput = document.getElementById('bet-note');
+  if (noteInput) noteInput.value = pickLabel;
+
+  const typeSelect = document.getElementById('bet-type');
+  if (typeSelect) typeSelect.value = '1X2';
+
+  // Toon modal
+  const modal = document.getElementById('bet-modal');
+  if (modal) { modal.style.display = 'flex'; }
 }
 
 function selectMarket(markt) {
   if (!pendingBet) return;
   pendingBet.markt = markt;
   document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('mb-' + markt)?.classList.add('active');
-  const pickRow = document.getElementById('marketPickRow');
-  const pickInfo = document.getElementById('modalPickInfo');
+  document.getElementById('bet-type')?.classList.add('active');
+  const pickRow = document.getElementById('bet-note');
+  const pickInfo = document.getElementById('bet-modal-title');
   if (markt === '1X2') {
     pendingBet.pick = pendingBet._origPick;
     pendingBet.pickLabel = pendingBet._origPickLabel;
@@ -106,8 +117,8 @@ function selectMarket(markt) {
       'BTTSJ':'Beide teams scoren - Ja','BTTSN':'Beide teams scoren - Nee',
       '1X':'Thuis of gelijk (1X)','X2':'Gelijk of uit (X2)'
     };
-    const customLabel = document.getElementById('customPickLabel');
-    const customOdds = document.getElementById('customOdds');
+    const customLabel = document.getElementById('bet-note');
+    const customOdds = document.getElementById('bet-odds');
     if (customLabel) customLabel.value = labels[markt] || '';
     if (customOdds) customOdds.value = '';
     if (pickInfo) pickInfo.textContent = 'Markt: ' + markt;
@@ -119,11 +130,11 @@ function selectMarket(markt) {
 
 function updatePayoutPreview() {
   if (!pendingBet) return;
-  const amt = parseFloat(document.getElementById('modalBetInput')?.value) || 0;
+  const amt = parseFloat(document.getElementById('bet-stake')?.value) || 0;
   const odds = pendingBet.markt !== '1X2'
-    ? parseFloat(document.getElementById('customOdds')?.value) || 0
+    ? parseFloat(document.getElementById('bet-odds')?.value) || 0
     : pendingBet.odds;
-  const preview = document.getElementById('payoutPreview');
+  const preview = document.getElementById('quick-bet-return');
   if (!preview) return;
   if (!odds) { preview.textContent = 'Vul quote in'; return; }
   const payout = (amt * odds).toFixed(2);
@@ -131,21 +142,22 @@ function updatePayoutPreview() {
 }
 
 function closeBetModal() {
-  document.getElementById('betModal')?.classList.remove('show');
+  const modal = document.getElementById('bet-modal');
+  if (modal) modal.style.display = 'none';
   pendingBet = null;
 }
 
 function confirmBet() {
   if (!pendingBet) return;
-  const amt = parseFloat(document.getElementById('modalBetInput')?.value);
+  const amt = parseFloat(document.getElementById('bet-stake')?.value);
   if (!amt || amt <= 0) return;
   if (amt > state.wallet.balance) { alert('Onvoldoende saldo!'); return; }
   let finalOdds = pendingBet.odds;
   let finalPick = pendingBet.pick;
   let finalPickLabel = pendingBet.pickLabel;
   if (pendingBet.markt !== '1X2') {
-    finalOdds = parseFloat(document.getElementById('customOdds')?.value);
-    finalPickLabel = document.getElementById('customPickLabel')?.value.trim() || pendingBet.pickLabel;
+    finalOdds = parseFloat(document.getElementById('bet-odds')?.value);
+    finalPickLabel = document.getElementById('bet-note')?.value.trim() || pendingBet.pickLabel;
     if (!finalOdds || finalOdds < 1.01) { alert('Vul een geldige quote in!'); return; }
   }
   const marktLabels = {'1X2':'Uitslag','O25':'Over 2.5','U25':'Under 2.5','O15':'Over 1.5','O35':'Over 3.5','BTTSJ':'BTTS-J','BTTSN':'BTTS-N','1X':'1X','X2':'X2'};

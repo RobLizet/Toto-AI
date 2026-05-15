@@ -219,6 +219,10 @@ Regels: kans1+kansX+kans2=100. Gebruik Poisson als anker (±8pp). Geef voor ALLE
     });
 
     if (data.error) throw new Error(data.error.message || 'API fout');
+    // Track kosten
+    if (data.usage && typeof trackTokenUsage === 'function') {
+      trackTokenUsage('claude-sonnet-4-6', data.usage.input_tokens||0, data.usage.output_tokens||0);
+    }
     let raw = data.content?.[0]?.text?.trim();
     if (!raw) throw new Error('Lege response van API');
     const s1 = raw.indexOf('{'), e1 = raw.lastIndexOf('}');
@@ -526,6 +530,8 @@ Formaties: ${formationStr}`;
     // Tip sectie
     const tip = result.tip;
     if (tip && tip.pick) {
+      // Sla op voor knoppen
+      state.lastAnalyseTip = { ...tip, matchId: m.id, home: m.home, away: m.away };
       const tv = calcValue(tip.kans, parseFloat(tip.odds));
       const tvColor = tv >= 15 ? '#15803d' : tv >= 5 ? '#b45309' : '#64748b';
       const kleur = tip.kans >= 70 ? '#16a34a' : tip.kans >= 55 ? '#d97706' : '#dc2626';
@@ -1068,4 +1074,61 @@ function exportScanLogCSV() {
   const csv = rows.map(r => r.join(',')).join('\n');
   downloadFile(csv, 'TOTO-AI-scanlog-' + new Date().toISOString().split('T')[0] + '.csv', 'text/csv;charset=utf-8;');
   showToast('📥 Scan log gedownload');
+}
+
+// ── Analyse tip knoppen ───────────────────────────────
+function openBetFromAnalyse() {
+  const tip = state.lastAnalyseTip;
+  if (!tip) { showToast('Geen analyse tip beschikbaar'); return; }
+
+  // Zorg dat match in state.matches zit
+  const m = state.selectedMatch;
+  if (m && !state.matches.find(x => String(x.id) === String(m.id))) {
+    state.matches.unshift(m);
+  }
+
+  // Vul bet modal
+  const title = document.getElementById('bet-modal-title');
+  if (title) title.textContent = (tip.home||'') + ' vs ' + (tip.away||'') + ' — ' + (tip.pickLabel||tip.pick) + ' @ ' + tip.odds;
+
+  const matchInput = document.getElementById('bet-match');
+  if (matchInput) matchInput.value = (tip.home||'') + ' vs ' + (tip.away||'');
+
+  const stakeInput = document.getElementById('bet-stake');
+  if (stakeInput) stakeInput.value = state.settings.defaultBet || 10;
+
+  const oddsInput = document.getElementById('bet-odds');
+  if (oddsInput) oddsInput.value = tip.odds;
+
+  const noteInput = document.getElementById('bet-note');
+  if (noteInput) noteInput.value = tip.pickLabel || tip.pick;
+
+  // Sla pendingBet op
+  pendingBet = {
+    match: m || { id: tip.matchId, home: tip.home||'', away: tip.away||'' },
+    pick: tip.pick, pickLabel: tip.pickLabel||tip.pick,
+    odds: parseFloat(tip.odds), markt: '1X2',
+    _origPick: tip.pick, _origPickLabel: tip.pickLabel||tip.pick, _origOdds: parseFloat(tip.odds)
+  };
+
+  const modal = document.getElementById('bet-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function addCombiFromAnalyse() {
+  const tip = state.lastAnalyseTip;
+  if (!tip) { showToast('Geen analyse tip beschikbaar'); return; }
+  if (!state.combiBuilder) state.combiBuilder = [];
+  const exists = state.combiBuilder.some(l => String(l.matchId) === String(tip.matchId));
+  if (exists) { showToast('Al in combi'); return; }
+  state.combiBuilder.push({
+    matchId: tip.matchId,
+    pick: tip.pick,
+    pickLabel: tip.pickLabel || tip.pick,
+    odds: parseFloat(tip.odds),
+    home: tip.home || '',
+    away: tip.away || ''
+  });
+  saveState();
+  showToast('➕ ' + (tip.home||'') + ' toegevoegd aan combi');
 }
