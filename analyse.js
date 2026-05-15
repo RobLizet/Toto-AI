@@ -387,20 +387,25 @@ Regels: kans1+kansX+kans2=100. Gebruik Poisson als anker (±8pp). Geef voor ALLE
 }
 
 function renderValueBannerInAnalyse(displayScans, total) {
-  const banner = document.getElementById('valueBanner') || document.getElementById('valueBanner2');
-  if (!banner) return;
+  // Fix v14.8: vul BEIDE banners (Wedstrijden + Analyse tab)
+  const banners = [
+    document.getElementById('valueBanner'),
+    document.getElementById('valueBanner2')
+  ].filter(Boolean);
+  if (!banners.length) return;
+
   if (!displayScans?.length) {
-    banner.style.display = 'block';
-    banner.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);padding:.8rem;text-align:center;">
+    const emptyHtml = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);padding:.8rem;text-align:center;">
       Geen value ≥5% gevonden in ${total} wedstrijden.<br>Bookmakers zitten goed in de markt vandaag.
       <button onclick="this.parentElement.parentElement.style.display='none'" style="background:none;border:none;color:var(--sub);cursor:pointer;margin-left:.5rem;">✕</button>
     </div>`;
+    banners.forEach(b => { b.style.display = 'block'; b.innerHTML = emptyHtml; });
     return;
   }
+
   const highCount = displayScans.filter(s => s.value >= 15).length;
   const medCount = displayScans.filter(s => s.value >= 5 && s.value < 15).length;
-  banner.style.display = 'block';
-  banner.innerHTML = `
+  const html = `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .9rem;
       background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
       border-bottom:1px solid rgba(22,163,74,.15);">
@@ -426,6 +431,7 @@ function renderValueBannerInAnalyse(displayScans, total) {
       <button onclick="this.parentElement.parentElement.style.display='none'" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.9rem;">✕</button>
     </div>
   `;
+  banners.forEach(b => { b.style.display = 'block'; b.innerHTML = html; });
 }
 
 function openValueAnalysis(matchId) {
