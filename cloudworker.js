@@ -1,4 +1,4 @@
-// TOTO AI WORKER v467
+// TOTO AI WORKER v46
 // Verbeteringen:
 // - Odds ophalen via API-Football voor echte value berekening
 // - AI prompt uitgebreid met odds + context
