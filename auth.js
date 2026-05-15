@@ -184,10 +184,8 @@ function renderLoginScreen() {
 }
 
 function showLoginScreen() {
-  if (localStorage.getItem('totoai_skip_login')) { hideLoginScreen(); return; }
-  // Gebruik het bestaande screen-login in de HTML
-  const ls = document.getElementById('screen-login');
-  if (ls) ls.classList.add('active');
+  // Altijd naar de mooie login pagina
+  window.location.href = 'login.html';
 }
 
 function hideLoginScreen() {
