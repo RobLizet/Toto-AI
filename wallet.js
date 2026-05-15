@@ -1,5 +1,9 @@
 // ═══════════════════════════════════════════════════════
-// WALLET SCREEN — sub-tabs: wallet, tracker, backtest, picks
+// WALLET SCREEN v14.9 — wallet, tracker, resultaten (backtest+picks samengevoegd)
+// Wijzigingen v14.9:
+// - Picks tab samengevoegd met Backtest → nu "Resultaten"
+// - Lock-detectie: auto Double/Triple Lock badge op basis van scan history
+// - Scan Log: teamnamen fix, confidence>=7 filter, dedup (zie analyse.js)
 // ═══════════════════════════════════════════════════════
 
 let trackerType = 'single';
@@ -10,7 +14,34 @@ let btSubTab = 'picks';
 let btFilter = 'all';
 let _liveScoreInterval = null;
 
-// ── RENDER WALLET SCREEN ──────────────────────────────
+// ── LOCK DETECTIE ─────────────────────────────────────────
+// Detecteert of een pick door meerdere scan-sessies bevestigd is
+function detectLockLevel(fixtureId, pick) {
+  const log = state.scanLog || [];
+  const fidStr = String(fixtureId);
+  let confirmCount = 0;
+  const seenScanIds = new Set();
+  log.forEach(scan => {
+    const hasPick = scan.picks.some(p =>
+      String(p.fixtureId) === fidStr && p.pick === pick
+    );
+    if (hasPick && !seenScanIds.has(scan.id)) {
+      seenScanIds.add(scan.id);
+      confirmCount++;
+    }
+  });
+  if (confirmCount >= 3) return 'triple';
+  if (confirmCount >= 2) return 'double';
+  return 'single';
+}
+
+function lockBadge(level) {
+  if (level === 'triple') return '<span style="font-family:monospace;font-size:.48rem;font-weight:900;color:#15803d;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);padding:2px 7px;border-radius:999px;">🏆 TRIPLE LOCK</span>';
+  if (level === 'double') return '<span style="font-family:monospace;font-size:.48rem;font-weight:900;color:#b45309;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.25);padding:2px 7px;border-radius:999px;">🔒 DOUBLE LOCK</span>';
+  return '';
+}
+
+// ── RENDER WALLET SCREEN ──────────────────────────────────
 
 function renderWalletScreen() {
   const el = document.getElementById('screen-wallet');
@@ -27,13 +58,12 @@ function renderWalletScreen() {
         </div>
       </div>
 
-      <!-- SUB-TAB KNOPPEN -->
+      <!-- SUB-TAB KNOPPEN (Picks tab verwijderd — samengevoegd met Resultaten) -->
       <div class="wallet-subtabs">
-        <button id="wsub-wallet"   class="wsub-btn" onclick="setWalletSubTab('wallet')">💰 Wallet</button>
-        <button id="wsub-tracker"  class="wsub-btn" onclick="setWalletSubTab('tracker')">📒 Tracker</button>
-        <button id="wsub-backtest" class="wsub-btn" onclick="setWalletSubTab('backtest')">📊 Backtest</button>
-        <button id="wsub-picks"    class="wsub-btn" onclick="setWalletSubTab('picks')">🎯 Picks</button>
-        <button id="wsub-value"    class="wsub-btn" onclick="setWalletSubTab('value')">⚡ Value</button>
+        <button id="wsub-wallet"     class="wsub-btn" onclick="setWalletSubTab('wallet')">💰 Wallet</button>
+        <button id="wsub-tracker"    class="wsub-btn" onclick="setWalletSubTab('tracker')">📒 Tracker</button>
+        <button id="wsub-backtest"   class="wsub-btn" onclick="setWalletSubTab('backtest')">📊 Resultaten</button>
+        <button id="wsub-value"      class="wsub-btn" onclick="setWalletSubTab('value')">⚡ Value</button>
       </div>
 
       <!-- VALUE PICKS TAB -->
@@ -43,7 +73,6 @@ function renderWalletScreen() {
 
       <!-- WALLET TAB -->
       <div id="wsub-content-wallet" style="display:none;">
-        <!-- Saldo groot -->
         <div class="wallet-big">
           <div class="wallet-big-label">HUIDIG SALDO</div>
           <div class="amount" id="bigBalance">€0,00</div>
@@ -53,48 +82,18 @@ function renderWalletScreen() {
             <button class="wallet-action-btn danger" onclick="clearWallet()">Wissen</button>
           </div>
         </div>
-
-        <!-- Stats strip -->
         <div class="wallet-strip">
-          <div class="w-item bal">
-            <div class="w-label">Saldo</div>
-            <div class="val" id="miniBalance">€0,00</div>
-          </div>
-          <div class="w-item">
-            <div class="w-label">W/V</div>
-            <div class="val" id="miniPnl">+€0,00</div>
-          </div>
-          <div class="w-item">
-            <div class="w-label">Bets</div>
-            <div class="val" id="miniBets">0</div>
-          </div>
-          <div class="w-item">
-            <div class="w-label">Hitrate</div>
-            <div class="val" id="miniRate">—</div>
-          </div>
-          <div class="w-item">
-            <div class="w-label">Avg EV</div>
-            <div class="val" id="miniEV" style="color:#7c3aed;">—</div>
-          </div>
+          <div class="w-item bal"><div class="w-label">Saldo</div><div class="val" id="miniBalance">€0,00</div></div>
+          <div class="w-item"><div class="w-label">W/V</div><div class="val" id="miniPnl">+€0,00</div></div>
+          <div class="w-item"><div class="w-label">Bets</div><div class="val" id="miniBets">0</div></div>
+          <div class="w-item"><div class="w-label">Hitrate</div><div class="val" id="miniRate">—</div></div>
+          <div class="w-item"><div class="w-label">Avg EV</div><div class="val" id="miniEV" style="color:#7c3aed;">—</div></div>
         </div>
-
-        <!-- Extra stats -->
         <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
-          <div class="stat-mini-card">
-            <div class="stat-mini-label">Ingezet</div>
-            <div class="stat-mini-val" id="totalStaked">€0,00</div>
-          </div>
-          <div class="stat-mini-card">
-            <div class="stat-mini-label">Ontvangen</div>
-            <div class="stat-mini-val" id="totalWon">€0,00</div>
-          </div>
-          <div class="stat-mini-card">
-            <div class="stat-mini-label">Hitrate</div>
-            <div class="stat-mini-val" id="hitRate">—</div>
-          </div>
+          <div class="stat-mini-card"><div class="stat-mini-label">Ingezet</div><div class="stat-mini-val" id="totalStaked">€0,00</div></div>
+          <div class="stat-mini-card"><div class="stat-mini-label">Ontvangen</div><div class="stat-mini-val" id="totalWon">€0,00</div></div>
+          <div class="stat-mini-card"><div class="stat-mini-label">Hitrate</div><div class="stat-mini-val" id="hitRate">—</div></div>
         </div>
-
-        <!-- Grafiek -->
         <div class="wallet-chart-wrap">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
             <div style="display:flex;gap:.3rem;">
@@ -111,14 +110,8 @@ function renderWalletScreen() {
           <canvas id="walletChart" height="100"></canvas>
           <div id="chartEmpty" style="display:none;font-family:monospace;font-size:.6rem;color:var(--sub);text-align:center;padding:1.5rem 0;"></div>
         </div>
-
-        <!-- CSV export -->
         <button class="export-btn" onclick="exportWalletCSV()">📥 Exporteer als CSV</button>
-
-        <!-- Open bets lijst -->
-        <div class="section-header">
-          <span>MIJN INZETTEN</span>
-        </div>
+        <div class="section-header"><span>MIJN INZETTEN</span></div>
         <div id="betHistoryList"></div>
       </div>
 
@@ -128,58 +121,39 @@ function renderWalletScreen() {
           <div class="section-header" style="margin-bottom:0;">📒 TRACKER</div>
           <button class="add-tracker-btn" onclick="openTrackerModal()">+ Bet toevoegen</button>
         </div>
-
-        <!-- Tracker stats -->
         <div class="wallet-strip" style="margin-bottom:.75rem;">
-          <div class="w-item">
-            <div class="w-label">Ingezet</div>
-            <div class="val" id="trStaked">€0</div>
-          </div>
-          <div class="w-item">
-            <div class="w-label">W/V</div>
-            <div class="val" id="trPnl">€0,00</div>
-          </div>
-          <div class="w-item">
-            <div class="w-label">Bets</div>
-            <div class="val" id="trBets">0</div>
-          </div>
-          <div class="w-item">
-            <div class="w-label">ROI</div>
-            <div class="val" id="trRoi">—</div>
-          </div>
+          <div class="w-item"><div class="w-label">Ingezet</div><div class="val" id="trStaked">€0</div></div>
+          <div class="w-item"><div class="w-label">W/V</div><div class="val" id="trPnl">€0,00</div></div>
+          <div class="w-item"><div class="w-label">Bets</div><div class="val" id="trBets">0</div></div>
+          <div class="w-item"><div class="w-label">ROI</div><div class="val" id="trRoi">—</div></div>
         </div>
-
-        <!-- Smart stats -->
         <div id="smartStatsWrap" style="margin-bottom:.75rem;"></div>
-
-        <!-- Filter knoppen -->
         <div class="tracker-filter-row">
-          <button id="tf-all"      class="tracker-filter active" onclick="setTrackerFilter('all')">Alles</button>
-          <button id="tf-open"     class="tracker-filter" onclick="setTrackerFilter('open')">Open</button>
-          <button id="tf-win"      class="tracker-filter" onclick="setTrackerFilter('win')">Win</button>
-          <button id="tf-lose"     class="tracker-filter" onclick="setTrackerFilter('lose')">Verlies</button>
-          <button id="tf-analyse"  class="tracker-filter" onclick="setTrackerFilter('analyse')">AI</button>
-          <button id="tf-value"    class="tracker-filter" onclick="setTrackerFilter('value')">Value</button>
+          <button id="tf-all"     class="tracker-filter active" onclick="setTrackerFilter('all')">Alles</button>
+          <button id="tf-open"    class="tracker-filter" onclick="setTrackerFilter('open')">Open</button>
+          <button id="tf-win"     class="tracker-filter" onclick="setTrackerFilter('win')">Win</button>
+          <button id="tf-lose"    class="tracker-filter" onclick="setTrackerFilter('lose')">Verlies</button>
+          <button id="tf-analyse" class="tracker-filter" onclick="setTrackerFilter('analyse')">AI</button>
+          <button id="tf-value"   class="tracker-filter" onclick="setTrackerFilter('value')">Value</button>
         </div>
-
         <button class="export-btn" onclick="exportTrackerCSV()">📥 Export CSV</button>
         <div id="trackerList"></div>
       </div>
 
-      <!-- BACKTEST TAB -->
+      <!-- RESULTATEN TAB (was: Backtest + Picks samengevoegd) -->
       <div id="wsub-content-backtest" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
-          <div class="section-header" style="margin-bottom:0;">📊 VALUE BACKTEST</div>
+          <div class="section-header" style="margin-bottom:0;">📊 VALUE RESULTATEN</div>
           <div style="display:flex;gap:.4rem;">
             <button class="small-action-btn" onclick="checkAllBacktestPicks()">🔍 Alles checken</button>
             <button class="small-action-btn danger" onclick="clearBacktest()">Wissen</button>
           </div>
         </div>
 
-        <!-- Triple Lock hitrate -->
+        <!-- Lock hitrate card -->
         <div id="tlHitrateCard" style="display:none;" class="tl-hitrate-card"></div>
 
-        <!-- Backtest sub-tabs -->
+        <!-- Sub-tabs -->
         <div class="bt-subtabs">
           <button id="bts-picks" class="bt-subtab active" onclick="setBtSubTab('picks')">Picks</button>
           <button id="bts-comps" class="bt-subtab" onclick="setBtSubTab('comps')">Per Competitie</button>
@@ -187,25 +161,24 @@ function renderWalletScreen() {
 
         <!-- Stats strip -->
         <div class="wallet-strip" style="margin-bottom:.75rem;">
-          <div class="w-item">
-            <div class="w-label">Picks</div>
-            <div class="val" id="btTotal">0</div>
+          <div class="w-item"><div class="w-label">Picks</div><div class="val" id="btTotal">0</div></div>
+          <div class="w-item"><div class="w-label">Hitrate</div><div class="val" id="btHitrate">—</div></div>
+          <div class="w-item"><div class="w-label">ROI</div><div class="val" id="btRoi">—</div></div>
+          <div class="w-item"><div class="w-label">Winst/€</div><div class="val" id="btProfit">—</div></div>
+        </div>
+
+        <!-- Voortgangsbalk naar 100 picks -->
+        <div id="btProgressWrap" style="background:var(--card);border:1px solid var(--stroke);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
+            <div style="font-family:monospace;font-size:.5rem;color:var(--sub);">VOORTGANG TRACKRECORD</div>
+            <div id="btProgressLabel" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;">0/100</div>
           </div>
-          <div class="w-item">
-            <div class="w-label">Hitrate</div>
-            <div class="val" id="btHitrate">—</div>
-          </div>
-          <div class="w-item">
-            <div class="w-label">ROI</div>
-            <div class="val" id="btRoi">—</div>
-          </div>
-          <div class="w-item">
-            <div class="w-label">Winst/€</div>
-            <div class="val" id="btProfit">—</div>
+          <div style="background:rgba(0,0,0,.08);border-radius:999px;height:7px;overflow:hidden;">
+            <div id="btProgressBar" style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:0%;transition:width .4s;"></div>
           </div>
         </div>
 
-        <!-- Backtest grafiek -->
+        <!-- Grafiek -->
         <div id="btChartWrap" style="margin-bottom:.75rem;display:none;">
           <canvas id="btChart" height="90"></canvas>
         </div>
@@ -219,108 +192,97 @@ function renderWalletScreen() {
           <button id="btf-win"     class="bt-filter-btn" onclick="setBtFilter('win')">Win</button>
           <button id="btf-lose"    class="bt-filter-btn" onclick="setBtFilter('lose')">Verlies</button>
           <button id="btf-pending" class="bt-filter-btn" onclick="setBtFilter('pending')">Open</button>
+          <button id="btf-lock"    class="bt-filter-btn" onclick="setBtFilter('lock')">🔒 Locks</button>
         </div>
 
         <div id="btList"></div>
       </div>
 
-      <!-- PICKS TAB (100 picks tracker) -->
-      <div id="wsub-content-picks" style="display:none;">
-        <div id="pt-content"></div>
-      </div>
-
-    </div>
-
-    <!-- DEPOSIT MODAL -->
-    <div class="modal-overlay" id="depositModal">
-      <div class="modal-box">
-        <h3>Storten</h3>
-        <input class="modal-input" type="number" id="depositInput" placeholder="Bedrag (€)" step="10">
-        <div class="modal-actions">
-          <button class="modal-btn cancel" onclick="closeModal('depositModal')">Annuleer</button>
-          <button class="modal-btn confirm" onclick="confirmDeposit()">Storten</button>
+      <!-- DEPOSIT MODAL -->
+      <div class="modal-overlay" id="depositModal">
+        <div class="modal-box">
+          <h3>Storten</h3>
+          <input class="modal-input" type="number" id="depositInput" placeholder="Bedrag (€)" step="10">
+          <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeModal('depositModal')">Annuleer</button>
+            <button class="modal-btn confirm" onclick="confirmDeposit()">Storten</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- TRACKER MODAL -->
-    <div class="modal-overlay" id="trackerModal">
-      <div class="modal-box">
-        <h3>📒 Bet Toevoegen</h3>
-        <!-- Type knoppen -->
-        <div style="display:flex;gap:.4rem;margin-bottom:.7rem;">
-          <button id="trTypeSingle" class="type-btn" onclick="setTrackerType('single')">Enkelvoudig</button>
-          <button id="trTypeCombi"  class="type-btn" onclick="setTrackerType('combi')">Combi</button>
-        </div>
-        <!-- Bron knoppen -->
-        <div style="display:flex;gap:.3rem;margin-bottom:.7rem;flex-wrap:wrap;">
-          <button id="trs-analyse" class="src-btn src-analyse" onclick="selectTrackerSource('analyse')">🤖 Analyse</button>
-          <button id="trs-combi"   class="src-btn src-combi"   onclick="selectTrackerSource('combi')">⚡ Combi</button>
-          <button id="trs-value"   class="src-btn src-value"   onclick="selectTrackerSource('value')">⚡ Value</button>
-          <button id="trs-eigen"   class="src-btn src-eigen"   onclick="selectTrackerSource('eigen')">✏️ Eigen</button>
-        </div>
-        <!-- Single velden -->
-        <div id="trSingleSection">
-          <input class="modal-input" id="trMatch" placeholder="Wedstrijd (bijv. Ajax vs PSV)">
-          <input class="modal-input" id="trDate" type="date">
-        </div>
-        <div id="trPickSection" style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;">
-          <input class="modal-input" id="trPick" placeholder="Pick (bijv. 1, O2.5)">
-          <select class="modal-input" id="trMarkt">
-            <option>1X2</option><option>BTTS</option><option>Over/Under</option>
-            <option>Handicap</option><option>Andere</option>
-          </select>
-        </div>
-        <div id="trOddsSection" style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;">
-          <input class="modal-input" type="number" id="trOdds" placeholder="Quote" step="0.01">
-          <input class="modal-input" id="trBookmaker" placeholder="Bookmaker">
-        </div>
-        <!-- Combi sectie -->
-        <div id="trCombiSection" style="display:none;">
-          <div id="trLegsContainer"></div>
-          <div id="trCombiTotal" style="font-family:monospace;font-size:.55rem;color:var(--sub);margin:.4rem 0;"></div>
-          <button class="small-action-btn" onclick="addTrackerLeg()">+ Leg toevoegen</button>
-        </div>
-        <input class="modal-input" type="number" id="trStakeInput" placeholder="Inzet (€)" step="5">
-        <textarea class="modal-input" id="trNote" placeholder="Opmerking (optioneel)" rows="2" style="resize:none;"></textarea>
-        <div class="modal-actions">
-          <button class="modal-btn cancel" onclick="closeModal('trackerModal')">Annuleer</button>
-          <button class="modal-btn confirm" onclick="confirmTracker()">Opslaan</button>
+      <!-- TRACKER MODAL -->
+      <div class="modal-overlay" id="trackerModal">
+        <div class="modal-box">
+          <h3>📒 Bet Toevoegen</h3>
+          <div style="display:flex;gap:.4rem;margin-bottom:.7rem;">
+            <button id="trTypeSingle" class="type-btn" onclick="setTrackerType('single')">Enkelvoudig</button>
+            <button id="trTypeCombi"  class="type-btn" onclick="setTrackerType('combi')">Combi</button>
+          </div>
+          <div style="display:flex;gap:.3rem;margin-bottom:.7rem;flex-wrap:wrap;">
+            <button id="trs-analyse" class="src-btn src-analyse" onclick="selectTrackerSource('analyse')">🤖 Analyse</button>
+            <button id="trs-combi"   class="src-btn src-combi"   onclick="selectTrackerSource('combi')">⚡ Combi</button>
+            <button id="trs-value"   class="src-btn src-value"   onclick="selectTrackerSource('value')">⚡ Value</button>
+            <button id="trs-eigen"   class="src-btn src-eigen"   onclick="selectTrackerSource('eigen')">✏️ Eigen</button>
+          </div>
+          <div id="trSingleSection">
+            <input class="modal-input" id="trMatch" placeholder="Wedstrijd (bijv. Ajax vs PSV)">
+            <input class="modal-input" id="trDate" type="date">
+          </div>
+          <div id="trPickSection" style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;">
+            <input class="modal-input" id="trPick" placeholder="Pick (bijv. 1, O2.5)">
+            <select class="modal-input" id="trMarkt">
+              <option>1X2</option><option>BTTS</option><option>Over/Under</option>
+              <option>Handicap</option><option>Andere</option>
+            </select>
+          </div>
+          <div id="trOddsSection" style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem;">
+            <input class="modal-input" type="number" id="trOdds" placeholder="Quote" step="0.01">
+            <input class="modal-input" id="trBookmaker" placeholder="Bookmaker">
+          </div>
+          <div id="trCombiSection" style="display:none;">
+            <div id="trLegsContainer"></div>
+            <div id="trCombiTotal" style="font-family:monospace;font-size:.55rem;color:var(--sub);margin:.4rem 0;"></div>
+            <button class="small-action-btn" onclick="addTrackerLeg()">+ Leg toevoegen</button>
+          </div>
+          <input class="modal-input" type="number" id="trStakeInput" placeholder="Inzet (€)" step="5">
+          <textarea class="modal-input" id="trNote" placeholder="Opmerking (optioneel)" rows="2" style="resize:none;"></textarea>
+          <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeModal('trackerModal')">Annuleer</button>
+            <button class="modal-btn confirm" onclick="confirmTracker()">Opslaan</button>
+          </div>
         </div>
       </div>
     </div>
   `;
-
   setWalletSubTab('wallet');
 }
 
-// ── SET SUB-TAB ──────────────────────────────────────
+// ── SET SUB-TAB ───────────────────────────────────────────
 
 function setWalletSubTab(tab) {
-  ['wallet','tracker','backtest','picks','value'].forEach(t => {
+  ['wallet','tracker','backtest','value'].forEach(t => {
     const el  = document.getElementById('wsub-content-' + t);
     const btn = document.getElementById('wsub-' + t);
     if (el)  el.style.display = t === tab ? 'block' : 'none';
     if (btn) {
       if (t === tab) {
-        btn.style.background  = 'linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8))';
-        btn.style.color       = '#fff';
-        btn.style.boxShadow   = '0 2px 8px rgba(219,39,119,.25)';
+        btn.style.background = 'linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8))';
+        btn.style.color      = '#fff';
+        btn.style.boxShadow  = '0 2px 8px rgba(219,39,119,.25)';
       } else {
-        btn.style.background  = 'transparent';
-        btn.style.color       = 'var(--sub)';
-        btn.style.boxShadow   = 'none';
+        btn.style.background = 'transparent';
+        btn.style.color      = 'var(--sub)';
+        btn.style.boxShadow  = 'none';
       }
     }
   });
   if (tab === 'wallet')   { updateWalletUI(); startLiveScorePolling(); }
   if (tab === 'tracker')  { renderTracker(); updateTrackerStats(); }
   if (tab === 'backtest') { renderBacktest(); }
-  if (tab === 'picks')    { ptRenderAll(); }
   if (tab === 'value')    { renderValuePicks(); }
 }
 
-// ── UPDATE WALLET UI ─────────────────────────────────
+// ── UPDATE WALLET UI ──────────────────────────────────────
 
 function updateWalletUI() {
   const w = state.wallet;
@@ -331,21 +293,17 @@ function updateWalletUI() {
   const hitRate = settled > 0
     ? Math.round(wins/settled*100) + '%' + (settled < 10 ? ` (${settled})` : '')
     : '—';
-
   const _t = (id,val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   const _c = (id,val) => { const el = document.getElementById(id); if (el) el.style.color = val; };
-
-  _t('miniBalance',  fmt(w.balance));
-  _t('miniPnl',      (pnl >= 0 ? '+' : '') + fmt(pnl));
-  _c('miniPnl',      pnl >= 0 ? 'var(--green)' : 'var(--red)');
-  _t('miniBets',     w.bets.length);
-  _t('miniRate',     hitRate);
-  _t('bigBalance',   fmt(w.balance));
-  _t('totalStaked',  fmt(w.totalStaked));
-  _t('totalWon',     fmt(w.totalWon));
-  _t('hitRate',      hitRate);
-
-  // Gemiddelde Expected Value
+  _t('miniBalance', fmt(w.balance));
+  _t('miniPnl',     (pnl >= 0 ? '+' : '') + fmt(pnl));
+  _c('miniPnl',     pnl >= 0 ? 'var(--green)' : 'var(--red)');
+  _t('miniBets',    w.bets.length);
+  _t('miniRate',    hitRate);
+  _t('bigBalance',  fmt(w.balance));
+  _t('totalStaked', fmt(w.totalStaked));
+  _t('totalWon',    fmt(w.totalWon));
+  _t('hitRate',     hitRate);
   const settledBets = w.bets.filter(b => b.status !== 'pending' && b.odds);
   const avgEV = settledBets.length > 0
     ? (settledBets.reduce((sum, b) => {
@@ -354,72 +312,53 @@ function updateWalletUI() {
         return sum + (actualOutcome - impliedProb);
       }, 0) / settledBets.length * 100)
     : null;
-
-  const evEl = document.getElementById('miniEV');
-  if (evEl) {
-    evEl.textContent = avgEV !== null ? (avgEV >= 0 ? '+' : '') + avgEV.toFixed(1) + '%' : '—';
-    evEl.style.color = avgEV === null ? '#7c3aed' : avgEV >= 0 ? '#16a34a' : '#dc2626';
-  }
-
+  _t('miniEV', avgEV !== null ? (avgEV >= 0 ? '+' : '') + avgEV.toFixed(1) + '%' : '—');
+  _c('miniEV', avgEV === null ? '#94a3b8' : avgEV >= 5 ? '#15803d' : avgEV >= 0 ? '#d97706' : '#dc2626');
+  renderBetHistory();
   renderWalletChart();
-
-  const list = document.getElementById('betHistoryList');
-  if (!list) return;
-  if (w.bets.length === 0) {
-    list.innerHTML = '<div class="empty-state">Nog geen inzetten</div>';
-    return;
-  }
-
-  list.innerHTML = w.bets.map(b => {
-    if (b.type === 'combi') {
-      const legsHtml = b.legs.map((l, i) => `
-        <div class="combi-bet-leg leg-${l.legStatus||'pending'}">
-          <span>${l.home} vs ${l.away} — ${l.pick} (${l.odds.toFixed(2)})${l.score ? ` <b>[${l.score}]</b>` : ''}</span>
-          <button class="combi-leg-status-btn" onclick="cycleCombiLegStatus(${b.id},${i})">${l.legStatus==='win'?'✓':l.legStatus==='lose'?'✗':'⏳'}</button>
-        </div>`).join('');
-      return `<div class="combi-bet-row">
-        <div class="combi-bet-header">
-          <span class="combi-bet-label">🎰 COMBI ${b.legs.length} LEGS · ${b.date}</span>
-          <span class="combi-bet-odds">${b.totalOdds.toFixed(2)}</span>
-        </div>
-        <div class="combi-bet-legs">${legsHtml}</div>
-        <div class="combi-bet-footer">
-          <div style="display:flex;align-items:center;gap:.5rem;">
-            <span class="combi-bet-amount">€${b.amount.toFixed(2)} → €${b.payout.toFixed(2)}</span>
-            <button onclick="deleteBet(${b.id})" class="del-btn" title="Verwijder">✕</button>
-          </div>
-          <span class="combi-bet-result ${b.status}" onclick="cycleCombiBetStatus(${b.id})">${b.status==='win'?'✓ +€'+(b.payout-b.amount).toFixed(2):b.status==='lose'?'✗ VERLIES':'⏳ OPEN'}</span>
-        </div>
-      </div>`;
-    } else {
-      return `<div class="bet-row swipeable" id="swipe-${b.id}">
-        <div class="swipe-hint win-hint">✓ WIN</div>
-        <div class="swipe-hint lose-hint">✗ VERLIES</div>
-        <div class="swipe-inner">
-          <div class="bet-info">
-            <div class="bet-match-name">
-              ${b.matchName}
-              ${b.score ? `<span style="font-size:.6rem;font-weight:700;">[${b.score}]</span>` : ''}
-              ${b.liveScore && b.status==='pending' ? `<span class="bet-live-score"><span class="bet-live-dot"></span>${b.liveScore}${b.liveMinute ? ' '+b.liveMinute+"'" : ''}</span>` : ''}
-            </div>
-            <div class="bet-meta">${b.pick} — ${b.pickLabel} @ ${b.odds} · ${b.date}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="display:flex;align-items:center;justify-content:flex-end;gap:.4rem;margin-bottom:2px;">
-              <div class="bet-amt">€${b.amount.toFixed(2)}</div>
-              <button onclick="deleteBet(${b.id})" class="del-btn" title="Verwijder">✕</button>
-            </div>
-            ${b.status === 'pending' ? `<button onclick="checkBetResult(${b.id})" class="check-btn">🔍 CHECK</button>` : ''}
-            <div class="bet-res ${b.status}" onclick="cycleBetStatus(${b.id})">${b.status==='win'?'✓ +€'+(b.payout-b.amount).toFixed(2)+(b.score?' ['+b.score+']':''):b.status==='lose'?'✗'+(b.score?' ['+b.score+']':''):'⏳ OPEN'}</div>
-          </div>
-        </div>
-      </div>`;
-    }
-  }).join('');
-  setTimeout(initSwipeBets, 50);
 }
 
-// ── BET ACTIES ───────────────────────────────────────
+function renderBetHistory() {
+  const list = document.getElementById('betHistoryList');
+  if (!list) return;
+  const bets = [...(state.wallet.bets||[])].reverse();
+  if (!bets.length) { list.innerHTML = '<div class="empty-state">Nog geen weddenschappen</div>'; return; }
+  list.innerHTML = bets.map(b => {
+    const isCombi = b.type === 'combi';
+    const pnlText = b.status==='win' ? `+€${(b.payout-(b.amount||b.stake)).toFixed(2)}`
+                  : b.status==='lose' ? `-€${(b.amount||b.stake).toFixed(2)}` : '⏳';
+    const pnlColor = b.status==='win'?'#16a34a':b.status==='lose'?'#dc2626':'#475569';
+    const scoreTag = b.score ? ` [${b.score}]` : (b.liveScore ? ` ⚽${b.liveScore}${b.liveMinute?` ${b.liveMinute}'`:''}` : '');
+    const srcBadge = b.source === 'value' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(22,163,74,.1);color:#15803d;padding:1px 6px;border-radius:4px;font-weight:700;">⚡ Value</span> ' : b.source === 'analyse' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(124,58,237,.1);color:#7c3aed;padding:1px 6px;border-radius:4px;font-weight:700;">🤖 AI</span> ' : '';
+    const legsHtml = isCombi && b.legs ? b.legs.map((l,i) => `
+      <div style="display:flex;justify-content:space-between;padding:.25rem 0;border-top:1px solid var(--stroke);font-family:monospace;font-size:.5rem;">
+        <span style="color:var(--ink);">${l.match||''} — ${l.pick} @ ${l.odds}</span>
+        <span style="color:${l.legStatus==='win'?'#16a34a':l.legStatus==='lose'?'#dc2626':'#94a3b8'};">${l.legStatus==='win'?'✓':l.legStatus==='lose'?'✗':'⏳'}</span>
+      </div>`).join('') : '';
+    return `
+    <div class="bet-row bet-${b.status||'pending'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
+        <div style="flex:1;">
+          <div style="font-size:.85rem;font-weight:700;color:var(--ink);">${srcBadge}${b.matchName||b.match||''}${scoreTag}</div>
+          <div style="font-family:monospace;font-size:.5rem;color:var(--sub);margin-top:.15rem;">
+            ${isCombi ? `Combi ${b.legs?.length||0} legs` : b.pick} @ ${b.odds} · €${b.amount||b.stake||0} → €${b.payout||0} · ${b.date||''}
+          </div>
+          ${isCombi ? `<div style="margin-top:.3rem;">${legsHtml}</div>` : ''}
+        </div>
+        <button onclick="deleteBet(${b.id})" class="del-btn" style="margin-left:.5rem;">✕</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        ${isCombi
+          ? `<button class="small-action-btn" onclick="checkBetResult(${b.id})">🔍</button>`
+          : `<button class="small-action-btn" onclick="checkBetResult(${b.id})">🔍 Check</button>`}
+        <div class="bet-status ${b.status||'pending'}" onclick="${isCombi?`cycleCombiBetStatus(${b.id})`:`cycleBetStatus(${b.id})`}"
+          style="color:${pnlColor};font-family:monospace;font-size:.6rem;font-weight:700;cursor:pointer;">${pnlText}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── BET ACTIES ────────────────────────────────────────────
 
 async function checkBetResult(betId) {
   const bet = state.wallet.bets.find(b => b.id === betId);
@@ -456,9 +395,7 @@ async function checkBetResult(betId) {
     try {
       let fix = null;
       const fid = leg.fixtureId || bet.fixtureId;
-      if (fid) {
-        fix = await fetchFixtureById(fid);
-      }
+      if (fid) fix = await fetchFixtureById(fid);
       if (!fix || !['FT','AET','PEN'].includes(fix?.fixture?.status?.short)) {
         const betDate = parseBetDate(bet.date);
         if (betDate && leg.home && leg.away) {
@@ -491,19 +428,12 @@ async function checkBetResult(betId) {
     const anyLose = legs.some(l => l.legStatus==='lose');
     const allWin  = legs.every(l => l.legStatus==='win');
     if (anyLose && bet.status==='pending') bet.status='lose';
-    else if (allWin && bet.status==='pending') {
-      bet.status='win';
-      state.wallet.balance += bet.payout;
-      state.wallet.totalWon += bet.payout;
-    }
+    else if (allWin && bet.status==='pending') { bet.status='win'; state.wallet.balance+=bet.payout; state.wallet.totalWon+=bet.payout; }
   } else {
     const leg = legs[0];
     bet.score = leg.score;
-    if (leg.legStatus==='win' && bet.status==='pending') {
-      bet.status='win'; state.wallet.balance+=bet.payout; state.wallet.totalWon+=bet.payout;
-    } else if (leg.legStatus==='lose' && bet.status==='pending') {
-      bet.status='lose';
-    }
+    if (leg.legStatus==='win' && bet.status==='pending') { bet.status='win'; state.wallet.balance+=bet.payout; state.wallet.totalWon+=bet.payout; }
+    else if (leg.legStatus==='lose' && bet.status==='pending') { bet.status='lose'; }
   }
   saveState(); updateWalletUI();
 }
@@ -517,19 +447,10 @@ function cycleCombiBetStatus(id) {
   saveState(); updateWalletUI();
 }
 
-function cycleCombiLegStatus(betId, legIdx) {
-  const b = state.wallet.bets.find(x => x.id===betId);
-  if (!b || !b.legs) return;
-  const l = b.legs[legIdx];
-  if (!l) return;
-  l.legStatus = l.legStatus==='pending' ? 'win' : l.legStatus==='win' ? 'lose' : 'pending';
-  saveState(); updateWalletUI();
-}
-
 function deleteBet(id) {
   const bet = state.wallet.bets.find(b => b.id===id);
   if (!bet) return;
-  const label = bet.type==='combi' ? `Combi (${bet.legs?.length||0} legs) €${bet.amount?.toFixed(2)}` : `${bet.matchName} — ${bet.pick}`;
+  const label = bet.type==='combi' ? `Combi €${bet.amount?.toFixed(2)}` : `${bet.matchName} — ${bet.pick}`;
   if (!confirm(`Verwijderen: ${label}?`)) return;
   if (bet.status==='pending') { state.wallet.balance+=bet.amount; state.wallet.totalStaked-=bet.amount; }
   if (bet.status==='win')     { state.wallet.balance-=bet.payout; state.wallet.totalWon-=bet.payout; }
@@ -566,7 +487,7 @@ function clearWallet() {
   showAutoCheckBar('🗑 Wallet gewist','#dc2626');
 }
 
-// ── WALLET CHART ─────────────────────────────────────
+// ── WALLET CHART ──────────────────────────────────────────
 
 let chartView   = 'saldo';
 let chartSource = 'all';
@@ -589,7 +510,7 @@ function setChartView(v) {
 }
 
 function renderWalletChart() {
-  const canvas  = document.getElementById('walletChart');
+  const canvas = document.getElementById('walletChart');
   const emptyEl = document.getElementById('chartEmpty');
   if (!canvas) return;
   const sb = state.settings.startBalance || 500;
@@ -606,18 +527,14 @@ function renderWalletChart() {
   const W = canvas.offsetWidth||360, H = canvas.height||100;
   canvas.width = W;
   ctx.clearRect(0,0,W,H);
-
   let points = [];
   if (chartView==='saldo') {
-    let bal = sb;
-    points = [bal];
+    let bal = sb; points = [bal];
     settled.forEach(b => { bal += b.status==='win'?(b.payout-b.amount):-b.amount; points.push(bal); });
   } else {
-    let pnl = 0;
-    points = [pnl];
+    let pnl = 0; points = [pnl];
     settled.forEach(b => { pnl += b.status==='win'?(b.payout-b.amount):-b.amount; points.push(pnl); });
   }
-
   const minV=Math.min(...points,chartView==='pnl'?-1:sb*0.5);
   const maxV=Math.max(...points,chartView==='pnl'?1:sb*1.1);
   const range=Math.max(maxV-minV,0.01);
@@ -625,49 +542,36 @@ function renderWalletChart() {
   const cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
   const xP=i=>pad.left+(i/Math.max(points.length-1,1))*cw;
   const yP=v=>pad.top+ch-((v-minV)/range)*ch;
-
-  // Zero line
   const zeroVal = chartView==='pnl' ? 0 : sb;
   const zeroY = yP(zeroVal);
   ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(148,163,184,.5)'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(pad.left,zeroY); ctx.lineTo(pad.left+cw,zeroY); ctx.stroke();
   ctx.setLineDash([]);
-
   const lastVal=points[points.length-1];
   const isPos = chartView==='pnl' ? lastVal>=0 : lastVal>=(sb||500);
   const lineColor = isPos ? '#15803d' : '#dc2626';
   const grad = ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
   grad.addColorStop(0, isPos ? 'rgba(21,128,61,.2)' : 'rgba(220,38,38,.15)');
   grad.addColorStop(1, 'rgba(255,255,255,0)');
-
-  ctx.beginPath();
-  ctx.moveTo(xP(0), yP(points[0]));
+  ctx.beginPath(); ctx.moveTo(xP(0), yP(points[0]));
   points.forEach((v,i) => { if (i>0) ctx.lineTo(xP(i),yP(v)); });
-  ctx.lineTo(xP(points.length-1), H-pad.bottom);
-  ctx.lineTo(xP(0), H-pad.bottom);
+  ctx.lineTo(xP(points.length-1), H-pad.bottom); ctx.lineTo(xP(0), H-pad.bottom);
   ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
-
-  ctx.beginPath();
-  ctx.moveTo(xP(0), yP(points[0]));
+  ctx.beginPath(); ctx.moveTo(xP(0), yP(points[0]));
   points.forEach((v,i) => { if (i>0) ctx.lineTo(xP(i),yP(v)); });
   ctx.strokeStyle=lineColor; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
-
-  // Punten
   settled.forEach((b,i) => {
-    ctx.beginPath();
-    ctx.arc(xP(i+1), yP(points[i+1]), 3, 0, Math.PI*2);
+    ctx.beginPath(); ctx.arc(xP(i+1), yP(points[i+1]), 3, 0, Math.PI*2);
     ctx.fillStyle = b.status==='win' ? '#15803d' : '#dc2626';
     ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
   });
-
-  // Labels
   ctx.fillStyle='#94a3b8'; ctx.font='9px IBM Plex Mono, monospace'; ctx.textAlign='right';
   const labelVal = chartView==='pnl' ? (lastVal>=0?'+':'')+lastVal.toFixed(0)+' €' : '€'+lastVal.toFixed(0);
   ctx.fillText(labelVal, pad.left-3, yP(lastVal)+3);
   ctx.fillText(chartView==='pnl' ? '0' : '€'+sb.toFixed(0), pad.left-3, zeroY+3);
 }
 
-// ── LIVE SCORE POLLING ───────────────────────────────
+// ── LIVE SCORE POLLING ────────────────────────────────────
 
 function startLiveScorePolling() {
   if (_liveScoreInterval) return;
@@ -696,7 +600,7 @@ async function fetchLiveScoresForBets() {
   } catch(e) {}
 }
 
-// ── CSV EXPORTS ──────────────────────────────────────
+// ── CSV EXPORTS ───────────────────────────────────────────
 
 function exportWalletCSV() {
   const bets = state.wallet?.bets||[];
@@ -726,25 +630,24 @@ function downloadFile(content, filename, type) {
   URL.revokeObjectURL(url);
 }
 
-// ── TRACKER FUNCTIES ─────────────────────────────────
+// ── TRACKER FUNCTIES ──────────────────────────────────────
 
 function setTrackerType(type) {
   trackerType = type;
-  const isSingle = type==='single';
   const setStyle = (id, active) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.style.background = active ? 'rgba(219,39,119,.1)' : 'transparent';
+    el.style.background  = active ? 'rgba(219,39,119,.1)' : 'transparent';
     el.style.borderWidth = active ? '2px' : '1.5px';
-    el.style.color = active ? '#be185d' : '#475569';
+    el.style.color       = active ? '#be185d' : '#475569';
   };
-  setStyle('trTypeSingle', isSingle);
-  setStyle('trTypeCombi', !isSingle);
-  document.getElementById('trSingleSection').style.display = isSingle ? 'block' : 'none';
-  document.getElementById('trPickSection').style.display  = isSingle ? 'grid' : 'none';
-  document.getElementById('trOddsSection').style.display  = isSingle ? 'grid' : 'none';
-  document.getElementById('trCombiSection').style.display = !isSingle ? 'block' : 'none';
-  if (!isSingle && trackerLegs.length===0) { addTrackerLeg(); addTrackerLeg(); }
+  setStyle('trTypeSingle', type==='single');
+  setStyle('trTypeCombi',  type==='combi');
+  document.getElementById('trSingleSection').style.display = type==='single' ? 'block' : 'none';
+  document.getElementById('trPickSection').style.display   = type==='single' ? 'grid'  : 'none';
+  document.getElementById('trOddsSection').style.display   = type==='single' ? 'grid'  : 'none';
+  document.getElementById('trCombiSection').style.display  = type==='combi'  ? 'block' : 'none';
+  if (type==='combi' && trackerLegs.length===0) { addTrackerLeg(); addTrackerLeg(); }
 }
 
 function addTrackerLeg() {
@@ -788,7 +691,7 @@ function openTrackerModal() {
   const trDate = document.getElementById('trDate');
   const trMatch = document.getElementById('trMatch');
   const trStake = document.getElementById('trStakeInput');
-  if (trDate) trDate.value = new Date().toISOString().split('T')[0];
+  if (trDate)  trDate.value  = new Date().toISOString().split('T')[0];
   if (trMatch) trMatch.value = state.selectedMatch ? `${state.selectedMatch.home} vs ${state.selectedMatch.away}` : '';
   if (trStake) trStake.value = state.settings.defaultBet||10;
   ['trBookmaker','trPick','trOdds','trNote'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
@@ -803,10 +706,10 @@ function selectTrackerSource(src) {
   });
 }
 function confirmTracker() {
-  const stake = parseFloat(document.getElementById('trStakeInput').value);
-  const date = document.getElementById('trDate').value;
-  const bookmaker = document.getElementById('trBookmaker').value.trim();
-  const note = document.getElementById('trNote').value.trim();
+  const stake    = parseFloat(document.getElementById('trStakeInput').value);
+  const date     = document.getElementById('trDate').value;
+  const bookmaker= document.getElementById('trBookmaker').value.trim();
+  const note     = document.getElementById('trNote').value.trim();
   if (!stake) { alert('Vul een inzet in'); return; }
   let bet;
   if (trackerType==='combi') {
@@ -866,11 +769,11 @@ function renderTracker() {
     bets = bets.filter(b => (b.source||'eigen')===trackerFilter);
   if (!bets.length) { list.innerHTML='<div class="empty-state">Geen weddenschappen</div>'; return; }
   list.innerHTML = bets.map(b => {
-    const pnlText = b.status==='win' ? `+€${(b.payout-b.stake).toFixed(2)}` : b.status==='lose' ? `-€${b.stake.toFixed(2)}` : '⏳ Open';
+    const pnlText  = b.status==='win' ? `+€${(b.payout-b.stake).toFixed(2)}` : b.status==='lose' ? `-€${b.stake.toFixed(2)}` : '⏳ Open';
     const pnlColor = b.status==='win'?'#16a34a':b.status==='lose'?'#dc2626':'#475569';
-    const srcLbl = sourceLabel[b.source||'eigen']||'✏️ Eigen';
-    const srcCls = sourceClass[b.source||'eigen']||'src-eigen';
-    const isCombi = b.type==='combi';
+    const srcLbl   = sourceLabel[b.source||'eigen']||'✏️ Eigen';
+    const srcCls   = sourceClass[b.source||'eigen']||'src-eigen';
+    const isCombi  = b.type==='combi';
     const legsHtml = isCombi && b.legs ? b.legs.map(l => `
       <div class="tracker-leg-row">
         <span>${l.match||''} — ${l.pick} @ ${l.odds}</span>
@@ -898,7 +801,7 @@ function renderTracker() {
 }
 
 function updateTrackerStats() {
-  const bets = state.tracker.bets||[];
+  const bets   = state.tracker.bets||[];
   const staked = bets.reduce((s,b) => s+(b.stake||0),0);
   const won    = bets.filter(b=>b.status==='win').reduce((s,b)=>s+(b.payout-b.stake),0);
   const lost   = bets.filter(b=>b.status==='lose').reduce((s,b)=>s+b.stake,0);
@@ -917,7 +820,7 @@ function updateTrackerStats() {
 function renderSmartStats() {
   const wrap = document.getElementById('smartStatsWrap');
   if (!wrap) return;
-  const bets = state.tracker.bets||[];
+  const bets    = state.tracker.bets||[];
   const settled = bets.filter(b => b.status!=='pending');
   if (settled.length < 5) { wrap.innerHTML=''; return; }
   const bySource = {};
@@ -935,7 +838,7 @@ function renderSmartStats() {
   wrap.innerHTML = `<div class="smart-stats-card"><div class="smart-stats-title">📊 Hitrate per bron</div>${srcRows}</div>`;
 }
 
-// ── BACKTEST FUNCTIES ────────────────────────────────
+// ── BACKTEST / RESULTATEN FUNCTIES ───────────────────────
 
 function setBtSubTab(tab) {
   btSubTab=tab;
@@ -960,44 +863,57 @@ function renderBacktest() {
 
   if (btSubTab==='comps') {
     renderBtScoreboard(allPicks);
-    document.getElementById('btFilterRow')?.style && (document.getElementById('btFilterRow').style.display='none');
+    const filterRow = document.getElementById('btFilterRow');
+    if (filterRow) filterRow.style.display='none';
     list.style.display='none';
-    document.getElementById('btChartWrap')?.style && (document.getElementById('btChartWrap').style.display='none');
+    const chartWrap = document.getElementById('btChartWrap');
+    if (chartWrap) chartWrap.style.display='none';
     return;
   }
 
   list.style.display='block';
   const breakdown = document.getElementById('btCompBreakdown');
   if (breakdown) breakdown.style.display='none';
-  renderBtCompBreakdown(allPicks);
   const filterRow = document.getElementById('btFilterRow');
   if (filterRow) filterRow.style.display=allPicks.length>1?'flex':'none';
 
-  let picks=allPicks;
-  if (btFilter==='win')     picks=allPicks.filter(p=>p.status==='win');
-  else if (btFilter==='lose') picks=allPicks.filter(p=>p.status==='lose');
-  else if (btFilter==='pending') picks=allPicks.filter(p=>!p.status||p.status==='pending');
+  let picks = allPicks;
+  if (btFilter==='win')     picks = allPicks.filter(p=>p.status==='win');
+  else if (btFilter==='lose')    picks = allPicks.filter(p=>p.status==='lose');
+  else if (btFilter==='pending') picks = allPicks.filter(p=>!p.status||p.status==='pending');
+  else if (btFilter==='lock')    picks = allPicks.filter(p=>{
+    const lv = detectLockLevel(p.fixtureId||p.matchId, p.pick);
+    return lv==='double'||lv==='triple';
+  });
 
   if (!picks.length) {
     list.innerHTML = allPicks.length
       ? '<div class="bt-empty">Geen picks voor dit filter</div>'
-      : `<div class="bt-empty">Nog geen value-picks bijgehouden.<br>Draai een ⚡ Value Scan — picks met ≥5% value worden automatisch hier opgeslagen.</div>`;
+      : `<div class="bt-empty">Nog geen value-picks bijgehouden.<br>Draai een ⚡ Value Scan — picks met ≥5% value en confidence ≥7 worden automatisch hier opgeslagen.</div>`;
     return;
   }
 
   list.innerHTML = picks.map(p => {
-    const statusTxt = p.status==='win' ? `✓ WIN (+€${((p.odds-1)*1).toFixed(2)} per €1)` : p.status==='lose' ? '✗ VERLIES' : '⏳ OPEN';
+    const lockLv    = detectLockLevel(p.fixtureId||p.matchId, p.pick);
+    const badge     = lockBadge(lockLv);
+    const statusTxt = p.status==='win'  ? `✓ WIN (+€${((p.odds-1)*1).toFixed(2)} per €1)`
+                    : p.status==='lose' ? '✗ VERLIES' : '⏳ OPEN';
     const confColor = p.confidence>=7?'#15803d':p.confidence>=5?'#b45309':'#dc2626';
     const valColor  = p.value>=15?'#15803d':p.value>=5?'#b45309':'#64748b';
+    const borderLeft = lockLv==='triple'?'4px solid #15803d':lockLv==='double'?'4px solid #b45309':'4px solid transparent';
     return `
-    <div class="bt-row bt-${p.status||'pending'}">
-      <div class="bt-match">${p.matchName}</div>
+    <div class="bt-row bt-${p.status||'pending'}" style="border-left:${borderLeft};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem;">
+        <div class="bt-match">${p.matchName}</div>
+        ${badge ? `<div style="flex-shrink:0;margin-left:.5rem;">${badge}</div>` : ''}
+      </div>
       <div class="bt-meta">
         <span>📅 ${p.date}</span>
         <span style="font-weight:700;color:${valColor}">⚡ +${p.value}%</span>
         <span>🎯 ${p.pickLabel} @ ${p.odds}</span>
         <span style="color:${confColor}">🎲 ${p.confidence}/10</span>
         <span style="color:var(--sub);">📊 ${p.bookmaker||'?'}</span>
+        ${p.poissonUsed ? '<span style="color:#7c3aed;">P+AI</span>' : ''}
       </div>
       <div style="font-family:monospace;font-size:.52rem;color:var(--sub);margin-bottom:.35rem;line-height:1.5;">
         AI ${p.aiKans}% kans · ½ Kelly ${p.kelly}% · ${p.reason||''}
@@ -1007,6 +923,7 @@ function renderBacktest() {
         <div style="display:flex;gap:.4rem;align-items:center;">
           ${p.status==='pending' ? `<button onclick="checkBacktestPick('${p.id}')" class="check-btn">🔍 CHECK</button>` : ''}
           <button onclick="deleteBacktestPick('${p.id}')" class="del-btn">✕</button>
+          <button onclick="quickBetFromBacktest('${p.id}')" class="small-action-btn" style="font-size:.45rem;">💰 Bet</button>
         </div>
         <div class="bt-result ${p.status||'pending'}" onclick="cycleBacktestStatus('${p.id}')">${statusTxt}</div>
       </div>
@@ -1024,15 +941,66 @@ function updateBacktestStats() {
   settled.forEach(p => { profit += p.status==='win' ? (p.odds-1) : -1; });
   const roi = settled.length>0 ? ((profit/settled.length)*100).toFixed(1) : '—';
   const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
-  set('btTotal',  picks.length);
-  set('btHitrate',hitrate);
-  set('btRoi',    roi!=='—'?roi+'%':'—');
-  set('btProfit', settled.length>0?(profit>=0?'+':'')+profit.toFixed(2)+'€':'—');
+  set('btTotal',   picks.length);
+  set('btHitrate', hitrate);
+  set('btRoi',     roi!=='—'?roi+'%':'—');
+  set('btProfit',  settled.length>0?(profit>=0?'+':'')+profit.toFixed(2)+'€':'—');
 
-  // Grafiek
+  // Voortgangsbalk
+  const pct = Math.min(Math.round((settled.length/100)*100), 100);
+  const bar  = document.getElementById('btProgressBar');
+  const lbl  = document.getElementById('btProgressLabel');
+  if (bar) bar.style.width = pct + '%';
+  if (lbl) lbl.textContent = `${settled.length}/100`;
+
   const chartWrap = document.getElementById('btChartWrap');
   if (chartWrap) chartWrap.style.display = settled.length>1?'block':'none';
   renderBacktestChart(settled);
+}
+
+function renderTripleLockHitrate() {
+  const card = document.getElementById('tlHitrateCard');
+  if (!card) return;
+  const picks = state.valueBacktest?.picks||[];
+
+  // Tel lock levels
+  const doubles = picks.filter(p => detectLockLevel(p.fixtureId||p.matchId, p.pick)==='double');
+  const triples = picks.filter(p => detectLockLevel(p.fixtureId||p.matchId, p.pick)==='triple');
+
+  const calcHitrate = arr => {
+    const s = arr.filter(p => p.status==='win'||p.status==='lose');
+    if (!s.length) return null;
+    return Math.round(arr.filter(p=>p.status==='win').length/s.length*100);
+  };
+
+  const trHr = calcHitrate(triples);
+  const dHr  = calcHitrate(doubles);
+
+  if (!doubles.length && !triples.length) { card.style.display='none'; return; }
+  card.style.display='block';
+
+  const trRow = triples.length ? `
+    <div style="font-family:monospace;font-size:.75rem;font-weight:900;color:${trHr===null?'#94a3b8':trHr>=55?'#15803d':trHr>=40?'#d97706':'#dc2626'};">
+      ${trHr !== null ? trHr+'%' : '—'}
+    </div>
+    <div style="font-family:monospace;font-size:.48rem;color:var(--sub);">Triple · ${triples.filter(p=>p.status==='win').length}W/${triples.filter(p=>p.status==='lose').length}V (${triples.length} picks)</div>
+  ` : '';
+
+  const dRow = doubles.length ? `
+    <div style="font-family:monospace;font-size:.55rem;color:var(--sub);margin-top:.4rem;">
+      🔒 Double · ${dHr !== null ? dHr+'%' : '—'} hitrate · ${doubles.filter(p=>p.status==='win').length}W/${doubles.filter(p=>p.status==='lose').length}V (${doubles.length} picks)
+    </div>
+  ` : '';
+
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:.75rem;">
+      <div style="font-size:1.5rem;">🏆</div>
+      <div>
+        <div style="font-family:monospace;font-size:.5rem;color:var(--sub);margin-bottom:.15rem;">TRIPLE LOCK HITRATE</div>
+        ${trRow}
+        ${dRow}
+      </div>
+    </div>`;
 }
 
 function renderBtScoreboard(picks) {
@@ -1045,18 +1013,12 @@ function renderBtScoreboard(picks) {
     return;
   }
   const compMap={};
-  for (const p of settled) {
-    const key=p.comp||'Overig';
-    if (!compMap[key]) compMap[key]={wins:0,total:0,name:key};
-    compMap[key].total++; if(p.status==='win') compMap[key].wins++;
-  }
   for (const p of picks) {
-    if (p.status!=='win'&&p.status!=='lose') {
-      const key=p.comp||'Overig';
-      if (!compMap[key]) compMap[key]={wins:0,total:0,name:key,pending:0};
-      if (!compMap[key].pending) compMap[key].pending=0;
-      compMap[key].pending++;
-    }
+    const key=p.comp||'Overig';
+    if (!compMap[key]) compMap[key]={wins:0,total:0,pending:0,name:key};
+    if (p.status==='win') { compMap[key].wins++; compMap[key].total++; }
+    else if (p.status==='lose') compMap[key].total++;
+    else compMap[key].pending++;
   }
   const COMP_NAMES={
     eredivisie:'🇳🇱 Eredivisie',kkd:'🇳🇱 Keuken Kampioen',premier:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League',
@@ -1067,7 +1029,7 @@ function renderBtScoreboard(picks) {
   const sorted=Object.values(compMap).sort((a,b)=>b.total-a.total);
   const rows=sorted.map(d => {
     const pct=d.total>0?Math.round((d.wins/d.total)*100):0;
-    const barColor=pct>=55?'#16a34a':pct<40?'#dc2626':'#d97706';
+    const barColor=pct>=55?'#16a34a':pct<40&&d.total>2?'#dc2626':'#d97706';
     const label=COMP_NAMES[d.name]||d.name;
     const pendingTxt=d.pending?` · ${d.pending} open`:'';
     return `<div class="bt-score-row">
@@ -1081,9 +1043,7 @@ function renderBtScoreboard(picks) {
   el.innerHTML=`<div style="font-family:monospace;font-size:.55rem;color:var(--sub);margin-bottom:.5rem;">Wins / afgeronde picks · hitrate%</div><div class="bt-scoreboard">${rows}</div>`;
 }
 
-function renderBtCompBreakdown(picks) {
-  // Alleen intern gebruiken voor data — tonen via setBtSubTab('comps')
-}
+function renderBtCompBreakdown(picks) { /* intern — via setBtSubTab('comps') */ }
 
 function renderBacktestChart(settled) {
   const canvas = document.getElementById('btChart');
@@ -1092,7 +1052,6 @@ function renderBacktestChart(settled) {
   const W=canvas.offsetWidth||360, H=90;
   canvas.width=W; canvas.height=H;
   ctx.clearRect(0,0,W,H);
-
   const points=[0];
   settled.forEach(p => { const last=points[points.length-1]; points.push(last+(p.status==='win'?(p.odds-1):-1)); });
   const minV=Math.min(...points,-0.5), maxV=Math.max(...points,0.5);
@@ -1101,32 +1060,26 @@ function renderBacktestChart(settled) {
   const cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
   const xP=i=>pad.left+(i/Math.max(points.length-1,1))*cw;
   const yP=v=>pad.top+ch-((v-minV)/range)*ch;
-
   ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(148,163,184,.5)'; ctx.lineWidth=1;
   const zeroY=yP(0); ctx.beginPath(); ctx.moveTo(pad.left,zeroY); ctx.lineTo(pad.left+cw,zeroY); ctx.stroke();
   ctx.setLineDash([]);
-
   const lastVal=points[points.length-1];
   const isPos=lastVal>=0, lineColor=isPos?'#15803d':'#dc2626';
   const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
   grad.addColorStop(0,isPos?'rgba(21,128,61,.2)':'rgba(220,38,38,.15)');
   grad.addColorStop(1,'rgba(255,255,255,0)');
-
   ctx.beginPath(); ctx.moveTo(xP(0),yP(0));
   points.forEach((v,i)=>{ if(i>0) ctx.lineTo(xP(i),yP(v)); });
   ctx.lineTo(xP(points.length-1),H-pad.bottom); ctx.lineTo(xP(0),H-pad.bottom);
   ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
-
   ctx.beginPath(); ctx.moveTo(xP(0),yP(0));
   points.forEach((v,i)=>{ if(i>0) ctx.lineTo(xP(i),yP(v)); });
   ctx.strokeStyle=lineColor; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
-
   settled.forEach((p,i) => {
     ctx.beginPath(); ctx.arc(xP(i+1),yP(points[i+1]),3,0,Math.PI*2);
     ctx.fillStyle=p.status==='win'?'#15803d':'#dc2626';
     ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
   });
-
   ctx.fillStyle='#94a3b8'; ctx.font='9px IBM Plex Mono, monospace'; ctx.textAlign='right';
   ctx.fillText((lastVal>=0?'+':'')+lastVal.toFixed(2)+' €/pick', pad.left-3, yP(lastVal)+3);
 }
@@ -1143,204 +1096,94 @@ async function checkBacktestPick(pickId) {
       const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?id=${p.fixtureId}`,null,8000);
       const d = await r.json(); fix=d.response?.[0]||null;
     }
-    if (!fix&&p.matchDateObj) {
-      const parts=p.matchDateObj.split('-');
-      const isoDate=parts.length===3?`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`:p.matchDateObj;
+    if (!fix && p.date) {
+      const parts=p.date.split('-');
+      const isoDate=parts.length===3&&parts[0].length===2?`${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`:p.date;
       const r2=await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${isoDate}`,null,8000);
       const d2=await r2.json();
-      const norm=s=>(s||'').toLowerCase().replace(/\s+/g,' ').trim();
-      const hn=norm(p.matchName?.split(' vs ')?.[0]||''), an=norm(p.matchName?.split(' vs ')?.[1]||'');
-      fix=(d2.response||[]).find(f => {
-        if(!['FT','AET','PEN'].includes(f.fixture.status.short)) return false;
-        const fh=norm(f.teams.home.name), fa=norm(f.teams.away.name);
-        return (fh.includes(hn.substring(0,5))||hn.includes(fh.substring(0,5)))&&
-               (fa.includes(an.substring(0,5))||an.includes(fa.substring(0,5)));
-      });
+      const pool=d2.response||[];
+      const norm=s=>s.toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+      const [home,away]=(p.matchName||'').split(' vs ');
+      if (home&&away) {
+        const hw=norm(home).split(' ').filter(w=>w.length>2);
+        const aw=norm(away).split(' ').filter(w=>w.length>2);
+        fix=pool.find(f=>{
+          if(!['FT','AET','PEN'].includes(f.fixture.status.short)) return false;
+          const fh=norm(f.teams.home.name),fa=norm(f.teams.away.name);
+          return hw.some(w=>fh.includes(w))&&aw.some(w=>fa.includes(w));
+        });
+      }
     }
     if (!fix||!['FT','AET','PEN'].includes(fix?.fixture?.status?.short)) {
-      showFirebaseStatus(`⚠ ${p.matchName}: uitslag niet gevonden`,'#d97706');
-      if (btn) btn.textContent='🔍 CHECK'; return;
+      showToast('Wedstrijd nog niet gespeeld of niet gevonden'); renderBacktest(); return;
     }
     const hg=fix.goals.home??0, ag=fix.goals.away??0;
     p.score=`${hg}-${ag}`;
     let won=false;
-    if(p.pick==='1') won=hg>ag; else if(p.pick==='2') won=ag>hg; else if(p.pick==='X') won=hg===ag;
-    else if(p.pick==='1X') won=hg>=ag; else if(p.pick==='X2') won=ag>=hg;
-    p.status=won?'win':'lose';
-    showFirebaseStatus(`${won?'✓ WIN':'✗ VERLIES'}: ${p.matchName} ${p.score}`,won?'#15803d':'#dc2626');
+    if (p.pick==='1') won=hg>ag; else if(p.pick==='2') won=ag>hg; else if(p.pick==='X') won=hg===ag;
+    else if(p.pick==='O2.5') won=(hg+ag)>2.5; else if(p.pick==='U2.5') won=(hg+ag)<2.5;
+    else if(p.pick==='BTTS-J') won=hg>0&&ag>0; else if(p.pick==='BTTS-N') won=hg===0||ag===0;
+    p.status = won ? 'win' : 'lose';
+    p.verifiedAt = new Date().toLocaleString('nl-NL');
+    saveState();
+    showToast(won ? `✓ WIN: ${p.matchName} [${p.score}]` : `✗ VERLIES: ${p.matchName} [${p.score}]`);
   } catch(e) {
-    showFirebaseStatus(`⚠ Fout: ${e.message}`,'#dc2626');
-    if (btn) btn.textContent='🔍 CHECK';
+    showToast('Fout bij ophalen resultaat'); console.error(e);
   }
-  saveState(); renderBacktest();
-}
-
-async function checkAllBacktestPicks() {
-  if (!state.valueBacktest) return;
-  const open = state.valueBacktest.picks.filter(p => p.status==='pending');
-  if (!open.length) { showFirebaseStatus('Geen open backtest picks','#475569'); return; }
-  showFirebaseStatus(`⟳ ${open.length} picks checken...`,'#d97706');
-  let resolved=0;
-  for (const p of open) { await checkBacktestPick(p.id); if(p.status!=='pending') resolved++; }
-  showFirebaseStatus(`✓ ${resolved}/${open.length} opgelost`,'#15803d');
   renderBacktest();
 }
 
-function cycleBacktestStatus(pickId) {
-  if (!state.valueBacktest) return;
-  const p = state.valueBacktest.picks.find(x => String(x.id)===String(pickId));
+async function checkAllBacktestPicks() {
+  const picks = (state.valueBacktest?.picks||[]).filter(p=>p.status==='pending');
+  if (!picks.length) { showToast('Geen open picks om te checken'); return; }
+  showToast(`⟳ Checken ${picks.length} picks...`);
+  for (const p of picks) { await checkBacktestPick(p.id); }
+  showToast('✓ Klaar met checken');
+}
+
+function cycleBacktestStatus(id) {
+  const p = state.valueBacktest?.picks?.find(x=>String(x.id)===String(id));
   if (!p) return;
   p.status = p.status==='pending'?'win':p.status==='win'?'lose':'pending';
-  if (p.status==='pending') p.score=null;
+  if (p.status!=='pending') p.verifiedAt = new Date().toLocaleString('nl-NL');
   saveState(); renderBacktest();
 }
-function deleteBacktestPick(pickId) {
-  if (!state.valueBacktest) return;
-  state.valueBacktest.picks=state.valueBacktest.picks.filter(p=>String(p.id)!==String(pickId));
+
+function deleteBacktestPick(id) {
+  if (!confirm('Pick verwijderen?')) return;
+  state.valueBacktest.picks = state.valueBacktest.picks.filter(p=>String(p.id)!==String(id));
   saveState(); renderBacktest();
 }
+
 function clearBacktest() {
-  if (!confirm('Alle backtest picks verwijderen?')) return;
-  state.valueBacktest={picks:[]}; saveState(); renderBacktest();
+  if (!confirm('Alle resultaten wissen?')) return;
+  state.valueBacktest={picks:[]};
+  saveState(); renderBacktest();
+  showToast('🗑 Resultaten gewist');
 }
 
-function calcTripleLockHitrate() {
-  const picks = state.valueBacktest?.picks||[];
-  const tlPicks = picks.filter(p => p.confidence>=8&&p.value>=10&&p.poissonUsed);
-  const dlPicks = picks.filter(p => p.confidence>=7&&p.value>=8&&!tlPicks.includes(p));
-  const tlWins=tlPicks.filter(p=>p.status==='win').length;
-  const dlWins=dlPicks.filter(p=>p.status==='win').length;
-  return {
-    tl:{total:tlPicks.length,wins:tlWins,rate:tlPicks.length?Math.round(tlWins/tlPicks.length*100):null},
-    dl:{total:dlPicks.length,wins:dlWins,rate:dlPicks.length?Math.round(dlWins/dlPicks.length*100):null}
-  };
-}
-function renderTripleLockHitrate() {
-  const el=document.getElementById('tlHitrateCard');
-  if (!el) return;
-  const {tl,dl}=calcTripleLockHitrate();
-  if (!tl.total&&!dl.total) { el.style.display='none'; return; }
-  el.style.display='flex';
-  const tlColor=tl.rate>=60?'#16a34a':tl.rate>=45?'#d97706':'#dc2626';
-  const dlColor=dl.rate>=55?'#16a34a':dl.rate>=40?'#d97706':'#dc2626';
-  el.innerHTML=`
-    <div class="tl-hitrate-icon">🏆</div>
-    <div style="flex:1;">
-      <div class="tl-hitrate-label">Triple Lock Hitrate</div>
-      <div style="display:flex;gap:1.2rem;margin-top:.3rem;">
-        ${tl.total?`<div><div class="tl-hitrate-val" style="color:${tlColor};">${tl.rate!==null?tl.rate+'%':'—'}</div><div class="tl-hitrate-sub">🏆 Triple · ${tl.wins}W/${tl.total}</div></div>`:''}
-        ${dl.total?`<div><div class="tl-hitrate-val" style="color:${dlColor};font-size:1.5rem;">${dl.rate!==null?dl.rate+'%':'—'}</div><div class="tl-hitrate-sub">🔑 Double · ${dl.wins}W/${dl.total}</div></div>`:''}
-      </div>
-    </div>`;
+function quickBetFromBacktest(pickId) {
+  const p = state.valueBacktest?.picks?.find(x=>String(x.id)===String(pickId));
+  if (!p) return;
+  const matchId = p.fixtureId || p.matchId;
+  openBetModal(null, matchId, p.pick, p.pickLabel, p.odds);
+  switchScreen('wallet');
+  setWalletSubTab('wallet');
 }
 
-// ── PICKS TRACKER (100 picks) ────────────────────────
+// ── VALUE PICKS TAB ───────────────────────────────────────
 
-function ptRenderAll() {
-  const el = document.getElementById('pt-content');
-  if (!el) return;
-  const picks = state.valueBacktest?.picks||[];
-  const pendingPicks = picks.filter(p => !p.status||p.status==='pending').slice(0,100);
-  const settledPicks = picks.filter(p => p.status==='win'||p.status==='lose').slice(0,100);
-
-  if (!picks.length) {
-    el.innerHTML = `
-      <div class="pt-empty">
-        <div style="font-size:2rem;margin-bottom:.6rem;">🎯</div>
-        <div style="font-family:monospace;font-size:.65rem;font-weight:800;color:var(--sub);margin-bottom:.3rem;">PICKS TRACKER</div>
-        <div style="font-family:monospace;font-size:.55rem;color:var(--sub);line-height:1.6;">
-          Voer een ⚡ Value Scan uit — picks worden<br>automatisch hier bijgehouden (max 100).
-        </div>
-      </div>`;
-    return;
-  }
-
-  const totalSettled = settledPicks.length;
-  const totalWins = settledPicks.filter(p => p.status==='win').length;
-  const hitrate = totalSettled > 0 ? Math.round(totalWins/totalSettled*100) : null;
-  const avgOdds = settledPicks.length > 0 ? (settledPicks.reduce((s,p)=>s+p.odds,0)/settledPicks.length).toFixed(2) : '—';
-
-  el.innerHTML = `
-    <div class="pt-header">
-      <div class="pt-stat"><div class="pt-stat-val">${picks.length}</div><div class="pt-stat-lbl">Picks</div></div>
-      <div class="pt-stat"><div class="pt-stat-val" style="color:${hitrate>=50?'#16a34a':'#dc2626'};">${hitrate!==null?hitrate+'%':'—'}</div><div class="pt-stat-lbl">Hitrate</div></div>
-      <div class="pt-stat"><div class="pt-stat-val">${pendingPicks.length}</div><div class="pt-stat-lbl">Open</div></div>
-      <div class="pt-stat"><div class="pt-stat-val">${avgOdds}</div><div class="pt-stat-lbl">Gem. Quote</div></div>
-    </div>
-    ${pendingPicks.length?`<div class="section-header" style="margin-bottom:.5rem;">⏳ OPEN PICKS (${pendingPicks.length})</div>`:''}
-    ${pendingPicks.map(p => ptPickCard(p)).join('')}
-    ${settledPicks.length?`<div class="section-header" style="margin-top:.75rem;margin-bottom:.5rem;">✓ AFGEROND (${settledPicks.length})</div>`:''}
-    ${settledPicks.map(p => ptPickCard(p)).join('')}
-  `;
-}
-
-function ptPickCard(p) {
-  const valColor = p.value>=15?'#15803d':p.value>=5?'#b45309':'#64748b';
-  const confColor= p.confidence>=7?'#15803d':p.confidence>=5?'#b45309':'#dc2626';
-  const statusTxt= p.status==='win'?'✓ WIN':p.status==='lose'?'✗ VERLIES':'⏳ OPEN';
-  const statusColor= p.status==='win'?'#16a34a':p.status==='lose'?'#dc2626':'#475569';
-  return `<div class="pt-card pt-${p.status||'pending'}">
-    <div class="pt-card-top">
-      <div style="flex:1;min-width:0;">
-        <div class="pt-match">${p.matchName}</div>
-        <div class="pt-meta">${p.pickLabel} @ ${p.odds} · ${p.date}${p.score?` [${p.score}]`:''}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;">
-        <div style="font-family:monospace;font-size:.7rem;font-weight:800;color:${valColor};">+${p.value}%</div>
-        <div style="font-family:monospace;font-size:.48rem;color:${confColor};">${p.confidence}/10 conf</div>
-      </div>
-    </div>
-    <div class="pt-card-bottom">
-      <span style="font-family:monospace;font-size:.52rem;color:var(--sub);">AI ${p.aiKans}% · ${p.comp||''}</span>
-      <div class="pt-status" style="color:${statusColor};" onclick="cycleBacktestStatus('${p.id}')">${statusTxt}</div>
-    </div>
-  </div>`;
-}
-
-function ptSaveFromScan(home, away, pick, pickLabel, odds, value, confidence, poissonUsed, reason, poissonK1, poissonKX, poissonK2, aiKans) {
-  if (!state.valueBacktest) state.valueBacktest={picks:[]};
-  const existing = state.valueBacktest.picks.find(p =>
-    p.matchName===`${home} vs ${away}` && p.pick===pick && p.date===new Date().toLocaleDateString('nl-NL')
-  );
-  if (existing) { showToast('Al opgeslagen in pick tracker'); return; }
-  const pt = {
-    id: Date.now()+'_pt',
-    matchName:`${home} vs ${away}`,
-    pick, pickLabel, odds,
-    value:parseFloat(value)||0, confidence:parseInt(confidence)||5,
-    poissonUsed:!!poissonUsed, reason,
-    poissonK1:parseFloat(poissonK1)||0, poissonKX:parseFloat(poissonKX)||0, poissonK2:parseFloat(poissonK2)||0,
-    aiKans:parseInt(aiKans)||0, kelly:parseFloat(((value/100)/(odds-1)*0.5*100).toFixed(1)),
-    bookmaker:state.settings.defaultBookmaker||'?',
-    date:new Date().toLocaleDateString('nl-NL'),
-    status:'pending', score:null
-  };
-  state.valueBacktest.picks.unshift(pt);
-  if (state.valueBacktest.picks.length>100) state.valueBacktest.picks=state.valueBacktest.picks.slice(0,100);
-  saveState();
-  showToast(`🎯 Opgeslagen: ${home} vs ${away}`);
-}
-
-// ══════════════════════════════════════════════════════
-// VALUE PICKS TAB
-// ══════════════════════════════════════════════════════
 function renderValuePicks() {
   const el = document.getElementById('value-picks-content');
   if (!el) return;
-
-  // Combineer valueScans (huidige scan) + valueBacktest picks
   const scanPicks = state.valueScans || [];
   const btPicks   = (state.valueBacktest?.picks || []).filter(p => p.status === 'pending');
-
-  // Dedupliceer op match ID
   const seen = new Set();
   const allPicks = [];
   [...scanPicks, ...btPicks].forEach(p => {
     const key = String(p.id || p.matchId || p.fixtureId);
     if (!seen.has(key)) { seen.add(key); allPicks.push(p); }
   });
-
-  // Sorteer op value %
   allPicks.sort((a, b) => (b.value||0) - (a.value||0));
 
   if (!allPicks.length) {
@@ -1348,8 +1191,7 @@ function renderValuePicks() {
       <div style="text-align:center;padding:3rem 1rem;">
         <div style="font-size:2rem;margin-bottom:.75rem;">⚡</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);">
-          Geen value picks beschikbaar.<br>
-          Voer eerst een Value Scan uit via de Analyse tab.
+          Geen value picks beschikbaar.<br>Voer eerst een Value Scan uit via de Analyse tab.
         </div>
       </div>`;
     return;
@@ -1366,81 +1208,71 @@ function renderValuePicks() {
     </div>`;
 
   allPicks.forEach(p => {
-    const matchName = p.match ? `${p.match.home} vs ${p.match.away}` : (p.matchName || p.home + ' vs ' + p.away || '');
+    const matchName = p.match ? `${p.match.home} vs ${p.match.away}` : (p.matchName || '');
     const pick      = p.pick || '1';
-    const pickLabel = p.pickLabel || (pick === '1' ? 'Thuis wint' : pick === 'X' ? 'Gelijkspel' : 'Uit wint');
-    const odds      = parseFloat(p.odds || p.homeOdds || 2).toFixed(2);
+    const pickLabel = p.pickLabel || (pick==='1'?'Thuis wint':pick==='X'?'Gelijkspel':'Uit wint');
+    const odds      = parseFloat(p.odds || 2).toFixed(2);
     const value     = parseFloat(p.value || 0);
     const conf      = p.confidence || 5;
     const matchId   = p.id || p.matchId || p.fixtureId;
     const comp      = p.comp || p.compName || (p.match?.comp) || '';
     const reason    = p.reason || p.reden || '';
+    const lockLv    = detectLockLevel(matchId, pick);
+    const badge     = lockBadge(lockLv);
 
     html += `
       <div style="background:var(--card);border:1px solid var(--stroke);border-radius:16px;
-        padding:.9rem 1rem;margin-bottom:.6rem;">
-
-        <!-- Header -->
+        padding:.9rem 1rem;margin-bottom:.6rem;
+        border-left:${lockLv==='triple'?'4px solid #15803d':lockLv==='double'?'4px solid #b45309':'1px solid var(--stroke)'};">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.45rem;color:var(--sub);">${comp}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;
-            color:${valueClass(value)};background:${valueBg(value)};
-            padding:2px 8px;border-radius:6px;">
-            ${valueLbl(value)} +${value.toFixed(1)}%
+          <div style="display:flex;gap:.3rem;align-items:center;">
+            ${badge}
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;
+              color:${valueClass(value)};background:${valueBg(value)};padding:2px 8px;border-radius:6px;">
+              ${valueLbl(value)} +${value.toFixed(1)}%
+            </div>
           </div>
         </div>
-
-        <!-- Match -->
-        <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;
-          color:var(--ink);margin-bottom:.4rem;">${matchName}</div>
-
-        <!-- Pick info -->
+        <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:.4rem;">${matchName}</div>
         <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
           <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${pick}</span>
           <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${pickLabel}</span>
           <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;margin-left:auto;">${odds}</span>
         </div>
-
-        <!-- Confidence + reden -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.45rem;color:var(--sub);">
             Conf: ${'★'.repeat(Math.min(conf,10))}${'☆'.repeat(Math.max(0,10-conf))} ${conf}/10
           </div>
           ${reason ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);max-width:55%;text-align:right;">${reason}</div>` : ''}
         </div>
-
-        <!-- Knoppen -->
         <div style="display:flex;gap:.4rem;">
           <button onclick="quickBetFromValue('${matchId}','${pick}','${pickLabel}',${odds})"
             style="flex:2;padding:.5rem;border-radius:10px;
             background:linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8));
             border:none;font-family:'IBM Plex Mono',monospace;font-size:.55rem;
-            font-weight:800;color:#fff;cursor:pointer;letter-spacing:.04em;">
+            font-weight:800;color:#fff;cursor:pointer;">
             💰 INZETTEN
           </button>
           <button onclick="addValueToCombiBuilder('${matchId}','${pick}','${pickLabel}',${odds})"
             style="flex:1;padding:.5rem;border-radius:10px;
             background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
-            font-family:'IBM Plex Mono',monospace;font-size:.55rem;
-            font-weight:700;color:#7c3aed;cursor:pointer;">
+            font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;color:#7c3aed;cursor:pointer;">
             + COMBI
           </button>
         </div>
       </div>`;
   });
-
   el.innerHTML = html;
 }
 
 function quickBetFromValue(matchId, pick, pickLabel, odds) {
-  // Zoek match in state
   const match = state.matches.find(m => String(m.id) === String(matchId));
   if (match) {
     openBetModal(null, matchId, pick, pickLabel, odds);
     switchScreen('wallet');
     setWalletSubTab('wallet');
   } else {
-    // Match niet meer in state — open modal met beschikbare info
     pendingBet = {
       match: { id: matchId, home: '?', away: '?' },
       pick, pickLabel, odds: parseFloat(odds), markt: '1X2',
@@ -1462,4 +1294,32 @@ function addValueToCombiBuilder(matchId, pick, pickLabel, odds) {
   state.combiBuilder.push({ matchId, pick, pickLabel, odds: parseFloat(odds) });
   saveState();
   showToast('➕ Toegevoegd aan combi');
+}
+
+// ── PICK TRACKER (ptSaveFromScan) ─────────────────────────
+// Bewaard voor backward compat — slaat op in valueBacktest
+
+function ptSaveFromScan(home, away, pick, pickLabel, odds, value, confidence, poissonUsed, reason, poissonK1, poissonKX, poissonK2, aiKans) {
+  if ((confidence||0) < 7) return; // v14.9: confidence filter
+  if (!state.valueBacktest) state.valueBacktest={picks:[]};
+  const existing = state.valueBacktest.picks.find(p =>
+    p.matchName===`${home} vs ${away}` && p.pick===pick && p.date===new Date().toLocaleDateString('nl-NL')
+  );
+  if (existing) { showToast('Al opgeslagen'); return; }
+  const pt = {
+    id: Date.now()+'_pt',
+    matchName:`${home} vs ${away}`,
+    pick, pickLabel, odds,
+    value:parseFloat(value)||0, confidence:parseInt(confidence)||7,
+    poissonUsed:!!poissonUsed, reason,
+    poissonK1:parseFloat(poissonK1)||0, poissonKX:parseFloat(poissonKX)||0, poissonK2:parseFloat(poissonK2)||0,
+    aiKans:parseInt(aiKans)||0, kelly:parseFloat(((value/100)/(odds-1)*0.5*100).toFixed(1)),
+    bookmaker:state.settings.defaultBookmaker||'?',
+    date:new Date().toLocaleDateString('nl-NL'),
+    status:'pending', score:null
+  };
+  state.valueBacktest.picks.unshift(pt);
+  if (state.valueBacktest.picks.length>200) state.valueBacktest.picks=state.valueBacktest.picks.slice(0,200);
+  saveState();
+  showToast(`🎯 Opgeslagen: ${home} vs ${away}`);
 }
