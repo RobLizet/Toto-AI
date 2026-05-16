@@ -463,8 +463,11 @@
 
 <!-- 7. App Init -->
 <script>
-(function initApp() {
-  'use strict';
+// Disclaimer check
+  if (!localStorage.getItem('totoai_disclaimer_accepted')) {
+    window.location.href = 'disclaimer.html';
+    return;
+  }
 
   // ── Laad opgeslagen state ──
   loadState();
