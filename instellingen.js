@@ -444,6 +444,7 @@ async function saveToFirebase() {
     notifThreshold:state.settings.notifThreshold||20,
     tripleMinOdds:state.settings.tripleMinOdds||1.6,
     autoDark:state.settings.autoDark||false,
+    vapidPublicKey:state.settings.vapidPublicKey||'',
     updatedAt:new Date().toISOString()
   };
   const resp = await fetch(`${FB_DB}/settings.json?auth=${FB_KEY}`,{
@@ -498,6 +499,9 @@ async function loadFromFirebase() {
     if (d.notifThreshold) state.settings.notifThreshold=d.notifThreshold;
     if (d.tripleMinOdds)  state.settings.tripleMinOdds=d.tripleMinOdds;
     if (d.autoDark!==undefined) state.settings.autoDark=d.autoDark;
+    if (state.settings.anthropicKey) localStorage.setItem('totoai_key_anthropic', state.settings.anthropicKey);
+    if (state.settings.footballKey)  localStorage.setItem('totoai_key_football',  state.settings.footballKey);
+    if (d.vapidPublicKey) state.settings.vapidPublicKey=d.vapidPublicKey;
 
     try {
       const br = await fetch(`${FB_DB}/backup.json?auth=${FB_KEY}`);
