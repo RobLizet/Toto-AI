@@ -705,70 +705,154 @@ function skipScanToday() {
 }
 
 
+// ── 
 // ── Handmatige scan vanuit instellingen ───────────────
 async function runManualScan() {
   const btn = document.querySelector('[onclick="runManualScan()"]');
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Scannen...'; }
 
-  showToast('⚡ Scan gestart — wedstrijden laden...');
+  showToast('⚡ Wedstrijden laden...');
 
   try {
-    // Laad alle wedstrijden van vandaag
-    const today = new Date().toISOString().split('T')[0];
+    const today    = new Date().toISOString().split('T')[0];
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
-    const [rToday, rTomorrow] = await Promise.all([
-      apiFetch(`https://v3.football.api-sports.io/fixtures?date=${today}`, null, 12000),
-      apiFetch(`https://v3.football.api-sports.io/fixtures?date=${tomorrow}`, null, 12000)
-    ]);
+    // Stap 1: laad fixtures via per-league odds endpoint (zelfde als wedstrijden tab)
+    showToast('⟳ Odds ophalen per competitie...');
+    const knownLeagueIds = Object.values(COMP_IDS);
+    const allMatches = [];
 
-    const dToday    = await rToday.json();
-    const dTomorrow = await rTomorrow.json();
-    const allFixtures = [...(dToday.response||[]), ...(dTomorrow.response||[])];
+    await Promise.all(knownLeagueIds.map(async leagueId => {
+      try {
+        const r = await apiFetch(
+          `https://v3.football.api-sports.io/odds?league=${leagueId}&season=2025&date=${today}&bookmaker=8`,
+          null, 8000
+        );
+        const d = await r.json();
+        (d.response || []).forEach(item => {
+          const fix = item.fixture;
+          if (!fix) return;
+          const statusShort = fix.status?.short || '';
+          if (['FT','AET','PEN'].includes(statusShort)) return;
 
-    const knownLeagueIds = new Set(Object.values(COMP_IDS));
-    const matches = allFixtures
-      .filter(f => knownLeagueIds.has(f.league.id) && !['FT','AET','PEN'].includes(f.fixture.status.short))
-      .map(f => parseAPIMatch(f))
-      .filter(Boolean);
+          // Parse odds
+          let homeOdds = '—', drawOdds = '—', awayOdds = '—';
+          const bk = (item.bookmakers || [])[0];
+          if (bk) {
+            const mkt = (bk.bets || []).find(b => b.name === 'Match Winner');
+            if (mkt?.values) {
+              const h = mkt.values.find(v => v.value === 'Home');
+              const dr = mkt.values.find(v => v.value === 'Draw');
+              const a = mkt.values.find(v => v.value === 'Away');
+              if (h) homeOdds = parseFloat(h.odd).toFixed(2);
+              if (dr) drawOdds = parseFloat(dr.odd).toFixed(2);
+              if (a) awayOdds = parseFloat(a.odd).toFixed(2);
+            }
+          }
+          if (homeOdds === '—') return; // geen odds = overslaan
+
+          const dateObj = fix.date ? new Date(fix.date) : null;
+          allMatches.push({
+            id: String(fix.id),
+            source: 'apif',
+            comp: item.league?.name || '',
+            leagueId: item.league?.id || leagueId,
+            time: dateObj ? dateObj.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '--:--',
+            date: dateObj ? dateObj.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'}) : '',
+            dateISO: fix.date ? fix.date.split('T')[0] : '',
+            home: fix.teams?.home?.name || '?',
+            away: fix.teams?.away?.name || '?',
+            homeId: fix.teams?.home?.id,
+            awayId: fix.teams?.away?.id,
+            homeLogo: '', awayLogo: '',
+            homeOdds, drawOdds, awayOdds,
+            isLive: false, isDone: false,
+            fixture: { neutral: false }
+          });
+        });
+      } catch(e) {}
+    }));
+
+    // Dedup op fixture ID
+    const seen = new Set();
+    const matches = allMatches.filter(m => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id); return true;
+    });
 
     if (!matches.length) {
-      showToast('Geen wedstrijden gevonden voor vandaag/morgen');
+      // Fallback: probeer morgen
+      showToast('Geen odds vandaag — morgen proberen...');
+      await Promise.all(knownLeagueIds.map(async leagueId => {
+        try {
+          const r = await apiFetch(
+            `https://v3.football.api-sports.io/odds?league=${leagueId}&season=2025&date=${tomorrow}&bookmaker=8`,
+            null, 8000
+          );
+          const d = await r.json();
+          (d.response || []).forEach(item => {
+            const fix = item.fixture;
+            if (!fix) return;
+            let homeOdds = '—', drawOdds = '—', awayOdds = '—';
+            const bk = (item.bookmakers || [])[0];
+            if (bk) {
+              const mkt = (bk.bets || []).find(b => b.name === 'Match Winner');
+              if (mkt?.values) {
+                const h = mkt.values.find(v => v.value === 'Home');
+                const dr = mkt.values.find(v => v.value === 'Draw');
+                const a = mkt.values.find(v => v.value === 'Away');
+                if (h) homeOdds = parseFloat(h.odd).toFixed(2);
+                if (dr) drawOdds = parseFloat(dr.odd).toFixed(2);
+                if (a) awayOdds = parseFloat(a.odd).toFixed(2);
+              }
+            }
+            if (homeOdds === '—') return;
+            const dateObj = fix.date ? new Date(fix.date) : null;
+            if (!seen.has(String(fix.id))) {
+              seen.add(String(fix.id));
+              matches.push({
+                id: String(fix.id), source: 'apif',
+                comp: item.league?.name || '', leagueId: item.league?.id || leagueId,
+                time: dateObj ? dateObj.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '--:--',
+                date: dateObj ? dateObj.toLocaleDateString('nl-NL',{weekday:'short',day:'numeric',month:'short'}) : '',
+                dateISO: fix.date ? fix.date.split('T')[0] : '',
+                home: fix.teams?.home?.name || '?', away: fix.teams?.away?.name || '?',
+                homeId: fix.teams?.home?.id, awayId: fix.teams?.away?.id,
+                homeLogo: '', awayLogo: '',
+                homeOdds, drawOdds, awayOdds,
+                isLive: false, isDone: false, fixture: { neutral: false }
+              });
+            }
+          });
+        } catch(e) {}
+      }));
+    }
+
+    if (!matches.length) {
+      showToast('Geen wedstrijden met odds gevonden');
       if (btn) { btn.disabled = false; btn.textContent = '⚡ Nu scannen'; }
       return;
     }
 
-    // Odds ophalen
-    showToast(`⟳ Odds ophalen voor ${matches.length} wedstrijden...`);
+    showToast(`⟳ AI scan van ${matches.length} wedstrijden met odds...`);
     state.matches = matches;
-    await fetchOddsForAllMatches(matches, null);
-
-    const withOdds = matches.filter(m => m.homeOdds !== '—' && parseFloat(m.homeOdds) > 1);
-    if (!withOdds.length) {
-      showToast('Geen odds beschikbaar');
-      if (btn) { btn.disabled = false; btn.textContent = '⚡ Nu scannen'; }
-      return;
-    }
-
-    showToast(`⟳ AI scan van ${withOdds.length} wedstrijden...`);
-    state.matches = withOdds;
 
     // Voer value scan uit
     await scanValueAll();
 
     const results = state.valueScans || [];
     const highValue = results.filter(s => s.value >= 10);
-    showToast(`✅ Scan klaar — ${highValue.length} picks ≥10% value gevonden`);
+    showToast(`✅ Scan klaar — ${highValue.length} picks ≥10% value`);
 
-    // Ga naar analyse tabblad om resultaten te zien
-    setTimeout(() => {
-      switchScreen('analyse');
-    }, 1500);
+    setTimeout(() => switchScreen('analyse'), 1500);
 
   } catch(e) {
     showToast('⚠ Scan fout: ' + e.message);
+    console.error(e);
   }
 
   if (btn) { btn.disabled = false; btn.textContent = '⚡ Nu scannen'; }
+}
+
 }
 
