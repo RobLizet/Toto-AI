@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOTO AI — Play Store Assets</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600;700&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --pink: #db2777;
+    --purple: #7c3aed;
+    --green: #16a34a;
+    --ink: #0f1117;
+    --sub: #64748b;
+    --card: #ffffff;
+    --bg: #f8f4ff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0f1117;
+    color: #fff;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #db2777, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: .25rem;
+  }
+
+  .section {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .7rem;
+    font-weight: 700;
+    color: #db2777;
+    letter-spacing: .12em;
+    margin-bottom: 1.25rem;
+    text-transform: uppercase;
+  }
+
+  /* ── BESCHRIJVING ── */
+  .desc-block {
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .desc-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .58rem;
+    color: #7c3aed;
+    font-weight: 700;
+    margin-bottom: .75rem;
+    letter-spacing: .08em;
+  }
+
+  .desc-text {
+    font-size: .95rem;
+    line-height: 1.8;
+    color: rgba(255,255,255,.88);
+    white-space: pre-wrap;
+  }
+
+  .copy-btn {
+    margin-top: .75rem;
+    padding: .4rem 1rem;
+    border-radius: 8px;
+    background: rgba(219,39,119,.15);
+    border: 1px solid rgba(219,39,119,.3);
+    color: #db2777;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .6rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .copy-btn:hover { background: rgba(219,39,119,.25); }
+  .copy-btn.copied { background: rgba(22,163,74,.15); border-color: rgba(22,163,74,.3); color: #16a34a; }
+
+  /* ── APP ICOON ── */
+  .icon-wrap {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  canvas {
+    border-radius: 22.5%;
+    display: block;
+  }
+
+  .icon-info {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .icon-size-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .6rem;
+    color: var(--sub);
+    margin-bottom: .4rem;
+  }
+
+  .download-btn {
+    margin-top: 1rem;
+    padding: .55rem 1.25rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(219,39,119,.9), rgba(124,58,237,.8));
+    border: none;
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .65rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: block;
+    width: fit-content;
+    transition: opacity .15s;
+  }
+  .download-btn:hover { opacity: .85; }
+
+  .tag {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .52rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin: .15rem .15rem 0 0;
+  }
+  .tag-green { background: rgba(22,163,74,.12); color: #16a34a; border: 1px solid rgba(22,163,74,.25); }
+  .tag-purple { background: rgba(124,58,237,.12); color: #a78bfa; border: 1px solid rgba(124,58,237,.25); }
+  .tag-pink { background: rgba(219,39,119,.12); color: #f472b6; border: 1px solid rgba(219,39,119,.25); }
+</style>
+</head>
+<body>
+
+<h1>TOTO AI</h1>
+<p style="font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:#64748b;margin-bottom:2rem;">Play Store Assets · AppsMadeByRobB</p>
+
+<!-- ═══ BESCHRIJVINGEN ═══ -->
+<div class="section">
+  <div class="section-title">📝 Play Store Beschrijvingen</div>
+
+  <div class="desc-block">
+    <div class="desc-label">KORTE BESCHRIJVING (80 tekens max)</div>
+    <div class="desc-text" id="short-desc">AI-gedreven voetbalanalyse. Vind value bets met Poisson & Claude AI.</div>
+    <button class="copy-btn" onclick="copyText('short-desc', this)">📋 Kopiëren</button>
+  </div>
+
+  <div class="desc-block">
+    <div class="desc-label">VOLLEDIGE BESCHRIJVING (4000 tekens max)</div>
+    <div class="desc-text" id="full-desc">⚡ TOTO AI — Slimme voetbalanalyse voor iedereen
+
+Maak betere keuzes bij het wedden op voetbal, gebaseerd op echte data en kunstmatige intelligentie. TOTO AI combineert geavanceerde statistische modellen met de kracht van Claude AI om jou de beste picks te geven.
+
+🔍 WAT DOET TOTO AI?
+
+TOTO AI analyseert voetbalwedstrijden op een manier die voorheen alleen professionele analisten konden doen. De app haalt live data op over vorm, head-to-head statistieken, blessures en standen — en combineert dit met Poisson-kansberekeningen en AI-analyse om waardevolle wedkansen (value bets) te ontdekken.
+
+⚡ VALUE SCAN
+Scan tientallen wedstrijden tegelijk en ontdek automatisch welke quotes door de bookmaker onderschat zijn. De app berekent kansen op basis van echte data en vergelijkt ze met de marktquotes.
+
+🤖 AI DIEPTE-ANALYSE
+Selecteer een wedstrijd en krijg een complete analyse: recente vorm, tactiek, kansen, risico's en een concreet advies. Stel daarna vervolgvragen via de ingebouwde AI-chat.
+
+📊 SCAN LOG & TRACKRECORD
+Elke scan wordt automatisch bijgehouden. Volg je hitrate, ROI en value-kalibratie terwijl je trackrecord groeit. Transparantie staat centraal.
+
+💰 WALLET & TRACKER
+Registreer je inzetten, volg je winst/verlies en importeer bets direct vanuit Jacks via een screenshot. De app leest je betgeschiedenis automatisch uit.
+
+🎯 COMBI TIPS
+Laat de AI drie sterke picks selecteren en combineren tot een doordachte combibet, inclusief synergie-uitleg en risico-inschatting.
+
+🔒 TRIPLE & DOUBLE LOCK
+Picks die meerdere keren bevestigd worden door opeenvolgende scans krijgen automatisch een Lock-badge — jouw sterkste signalen.
+
+📱 VOLLEDIG NEDERLANDSTALIG
+Gebouwd voor de Nederlandse markt. Alle teksten, analyses en tips zijn in het Nederlands.
+
+──────────────────────────
+
+⚠️ DISCLAIMER
+TOTO AI is uitsluitend bedoeld voor entertainment en educatieve doeleinden. De app geeft geen financieel of kansspeladvies. Gokken brengt risico's met zich mee. Speel verantwoord en alleen met geld dat je kunt missen. Minimumleeftijd: 18 jaar. Verslavingslijn: 0900-1090 (gratis).
+
+De app maakt gebruik van publieke voetbaldata en AI-modellen. Resultaten uit het verleden bieden geen garantie voor de toekomst.</div>
+    <button class="copy-btn" onclick="copyText('full-desc', this)">📋 Kopiëren</button>
+  </div>
+
+  <div class="desc-block">
+    <div class="desc-label">WHAT'S NEW (bij elke update)</div>
+    <div class="desc-text" id="whats-new">• Jacks screenshot import — bets automatisch inlezen via AI
+• Scan resultaten direct zichtbaar in Analyse tab
+• Firebase sync verbeterd — keys en scan log worden hersteld na inloggen
+• Wallet stabiliteit verbeterd
+• Multi-scan resultaten zichtbaar in Analyse tab na afloop</div>
+    <button class="copy-btn" onclick="copyText('whats-new', this)">📋 Kopiëren</button>
+  </div>
+
+  <div class="desc-block">
+    <div class="desc-label">TAGS / KEYWORDS</div>
+    <div style="margin-top:.25rem;">
+      <span class="tag tag-green">voetbal analyse</span>
+      <span class="tag tag-green">value betting</span>
+      <span class="tag tag-green">sports betting</span>
+      <span class="tag tag-purple">AI analyse</span>
+      <span class="tag tag-purple">Poisson model</span>
+      <span class="tag tag-purple">Claude AI</span>
+      <span class="tag tag-pink">TOTO</span>
+      <span class="tag tag-pink">voetbal tips</span>
+      <span class="tag tag-pink">odds vergelijker</span>
+      <span class="tag tag-green">eredivisie</span>
+      <span class="tag tag-green">premier league</span>
+      <span class="tag tag-purple">statistieken voetbal</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ICOON ═══ -->
+<div class="section">
+  <div class="section-title">🎨 App Icoon</div>
+  <div class="icon-wrap">
+    <div>
+      <div class="icon-size-label">512 × 512px (Play Store vereiste)</div>
+      <canvas id="icon512" width="512" height="512"></canvas>
+      <button class="download-btn" onclick="downloadCanvas('icon512', 'totoai-icon-512.png')">⬇️ Download 512px</button>
+    </div>
+    <div>
+      <div class="icon-size-label">192 × 192px (PWA manifest)</div>
+      <canvas id="icon192" width="192" height="192" style="border-radius:22.5%"></canvas>
+      <button class="download-btn" onclick="downloadCanvas('icon192', 'totoai-icon-192.png')">⬇️ Download 192px</button>
+    </div>
+    <div class="icon-info">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#64748b;line-height:2;">
+        <div>✅ Achtergrond: donker met roze/paars gradient</div>
+        <div>✅ Geen transparantie (Play Store eis)</div>
+        <div>✅ Geen tekst kleiner dan 10% van de hoogte</div>
+        <div>✅ Hoge contrast logo elementen</div>
+        <div style="margin-top:.75rem;color:#db2777;">Upload icon-512.png naar:<br>Play Console → Store listing → App icoon</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FEATURE GRAPHIC ═══ -->
+<div class="section">
+  <div class="section-title">🖼️ Feature Graphic</div>
+  <div style="margin-bottom:.75rem;">
+    <div class="icon-size-label">1024 × 500px (Play Store vereiste)</div>
+    <canvas id="featureGraphic" width="1024" height="500" style="border-radius:12px;width:100%;max-width:1024px;height:auto;"></canvas>
+    <button class="download-btn" onclick="downloadCanvas('featureGraphic', 'totoai-feature-graphic.png')">⬇️ Download Feature Graphic</button>
+  </div>
+</div>
+
+<script>
+// ── COPY TEXT ──
+function copyText(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ Gekopieerd!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 Kopiëren'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── DOWNLOAD CANVAS ──
+function downloadCanvas(id, filename) {
+  const canvas = document.getElementById(id);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// ── DRAW APP ICON ──
+function drawIcon(canvasId, size) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const s = size;
+  const r = s * 0.225;
+
+  // Achtergrond gradient
+  const bg = ctx.createLinearGradient(0, 0, s, s);
+  bg.addColorStop(0, '#0f1117');
+  bg.addColorStop(0.5, '#1a0a2e');
+  bg.addColorStop(1, '#0f1117');
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, s, s, r);
+  ctx.fill();
+
+  // Subtiele glow achtergrond
+  const glow = ctx.createRadialGradient(s*0.5, s*0.45, 0, s*0.5, s*0.45, s*0.55);
+  glow.addColorStop(0, 'rgba(124,58,237,0.35)');
+  glow.addColorStop(0.5, 'rgba(219,39,119,0.15)');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, s, s, r);
+  ctx.fill();
+
+  // Decoratieve cirkels
+  ctx.strokeStyle = 'rgba(219,39,119,0.12)';
+  ctx.lineWidth = s * 0.003;
+  ctx.beginPath();
+  ctx.arc(s*0.5, s*0.5, s*0.42, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(124,58,237,0.08)';
+  ctx.beginPath();
+  ctx.arc(s*0.5, s*0.5, s*0.35, 0, Math.PI*2);
+  ctx.stroke();
+
+  // Bliksem bolt (⚡) als centraal icoon
+  const boltGrad = ctx.createLinearGradient(s*0.35, s*0.2, s*0.65, s*0.8);
+  boltGrad.addColorStop(0, '#f9a8d4');
+  boltGrad.addColorStop(0.4, '#db2777');
+  boltGrad.addColorStop(1, '#7c3aed');
+
+  ctx.fillStyle = boltGrad;
+  ctx.beginPath();
+  const cx = s * 0.5;
+  const cy = s * 0.5;
+  const bh = s * 0.52;
+  const bw = s * 0.28;
+  // Bliksembout punten
+  ctx.moveTo(cx + bw*0.15, cy - bh*0.5);
+  ctx.lineTo(cx - bw*0.45, cy + bh*0.05);
+  ctx.lineTo(cx + bw*0.05, cy + bh*0.05);
+  ctx.lineTo(cx - bw*0.15, cy + bh*0.5);
+  ctx.lineTo(cx + bw*0.45, cy - bh*0.05);
+  ctx.lineTo(cx - bw*0.05, cy - bh*0.05);
+  ctx.closePath();
+  ctx.fill();
+
+  // Glow effect op bliksem
+  ctx.shadowColor = '#db2777';
+  ctx.shadowBlur = s * 0.06;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // "AI" tekst onderaan
+  const fontSize = s * 0.115;
+  ctx.font = `900 ${fontSize}px 'Bebas Neue', sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const textGrad = ctx.createLinearGradient(cx - s*0.2, 0, cx + s*0.2, 0);
+  textGrad.addColorStop(0, '#f9a8d4');
+  textGrad.addColorStop(1, '#a78bfa');
+  ctx.fillStyle = textGrad;
+  ctx.fillText('TOTO AI', cx, cy + bh*0.5 + fontSize*0.95);
+
+  // Kleine stipjes decoratie
+  ctx.fillStyle = 'rgba(219,39,119,0.5)';
+  [[0.2,0.2],[0.8,0.2],[0.15,0.8],[0.85,0.8]].forEach(([px,py]) => {
+    ctx.beginPath();
+    ctx.arc(s*px, s*py, s*0.012, 0, Math.PI*2);
+    ctx.fill();
+  });
+}
+
+// ── DRAW FEATURE GRAPHIC ──
+function drawFeatureGraphic() {
+  const canvas = document.getElementById('featureGraphic');
+  const ctx = canvas.getContext('2d');
+  const W = 1024, H = 500;
+
+  // Achtergrond
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, '#0a0612');
+  bg.addColorStop(0.4, '#12062a');
+  bg.addColorStop(1, '#0f1117');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Glow bollen
+  const g1 = ctx.createRadialGradient(W*0.15, H*0.5, 0, W*0.15, H*0.5, W*0.35);
+  g1.addColorStop(0, 'rgba(219,39,119,0.3)');
+  g1.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g1;
+  ctx.fillRect(0, 0, W, H);
+
+  const g2 = ctx.createRadialGradient(W*0.85, H*0.5, 0, W*0.85, H*0.5, W*0.3);
+  g2.addColorStop(0, 'rgba(124,58,237,0.25)');
+  g2.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g2;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lijnen subtiel
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 60) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 60) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Mini app scherm rechts (decoratief)
+  const screenX = W * 0.58, screenY = H * 0.08;
+  const screenW = W * 0.38, screenH = H * 0.84;
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(screenX, screenY, screenW, screenH, 18);
+  ctx.fill();
+  ctx.stroke();
+
+  // Mock scan resultaten in scherm
+  const cards = [
+    { home: 'Lyon', away: 'Lens', pick: 'Lens wint', value: '+12%', color: '#16a34a' },
+    { home: 'PSG', away: 'Paris FC', pick: 'PSG wint', value: '+10%', color: '#16a34a' },
+    { home: 'Nantes', away: 'Toulouse', pick: 'Gelijkspel', value: '+5%', color: '#b45309' },
+  ];
+
+  // Scan header in scherm
+  ctx.fillStyle = 'rgba(22,163,74,0.15)';
+  ctx.beginPath();
+  ctx.roundRect(screenX + 12, screenY + 12, screenW - 24, 32, 8);
+  ctx.fill();
+
+  ctx.fillStyle = '#16a34a';
+  ctx.font = `700 11px 'IBM Plex Mono', monospace`;
+  ctx.textAlign = 'left';
+  ctx.fillText('⚡ SCAN RESULTATEN · 3 picks', screenX + 22, screenY + 32);
+
+  cards.forEach((card, i) => {
+    const cy = screenY + 58 + i * 72;
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath();
+    ctx.roundRect(screenX + 12, cy, screenW - 24, 62, 10);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = `700 12px 'DM Sans', sans-serif`;
+    ctx.fillText(`${card.home} vs ${card.away}`, screenX + 22, cy + 20);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = `500 10px 'IBM Plex Mono', monospace`;
+    ctx.fillText(card.pick, screenX + 22, cy + 38);
+
+    ctx.fillStyle = card.color;
+    ctx.font = `800 18px 'Bebas Neue', sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText(card.value, screenX + screenW - 22, cy + 42);
+    ctx.textAlign = 'left';
+  });
+
+  // TOTO AI logo links
+  ctx.font = `400 72px 'Bebas Neue', sans-serif`;
+  ctx.textAlign = 'left';
+  const logoGrad = ctx.createLinearGradient(60, 0, 460, 0);
+  logoGrad.addColorStop(0, '#f9a8d4');
+  logoGrad.addColorStop(0.5, '#db2777');
+  logoGrad.addColorStop(1, '#7c3aed');
+  ctx.fillStyle = logoGrad;
+  ctx.fillText('TOTO AI', 60, H * 0.38);
+
+  // Tagline
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = `600 18px 'DM Sans', sans-serif`;
+  ctx.fillText('Slimme voetbalanalyse met AI', 62, H * 0.38 + 36);
+
+  // Feature bullets
+  const features = [
+    '⚡  Value scan op 25+ wedstrijden',
+    '🤖  AI diepte-analyse per wedstrijd',
+    '📊  Scan log & trackrecord bijhouden',
+    '💰  Wallet & Jacks import',
+  ];
+  features.forEach((f, i) => {
+    ctx.fillStyle = i === 0 ? '#f9a8d4' : 'rgba(255,255,255,0.55)';
+    ctx.font = `500 14px 'DM Sans', sans-serif`;
+    ctx.fillText(f, 62, H * 0.38 + 80 + i * 28);
+  });
+
+  // Bliksem icoon decoratief
+  ctx.save();
+  ctx.translate(W * 0.52, H * 0.5);
+  ctx.rotate(0.05);
+  const boltGrad = ctx.createLinearGradient(-30, -60, 30, 60);
+  boltGrad.addColorStop(0, 'rgba(249,168,212,0.15)');
+  boltGrad.addColorStop(1, 'rgba(124,58,237,0.1)');
+  ctx.fillStyle = boltGrad;
+  ctx.beginPath();
+  ctx.moveTo(10, -60); ctx.lineTo(-25, 5); ctx.lineTo(5, 5);
+  ctx.lineTo(-10, 60); ctx.lineTo(25, -5); ctx.lineTo(-5, -5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Versie badge
+  ctx.fillStyle = 'rgba(219,39,119,0.2)';
+  ctx.strokeStyle = 'rgba(219,39,119,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(62, H - 52, 120, 26, 13);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#f472b6';
+  ctx.font = `700 11px 'IBM Plex Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('AppsMadeByRobB', 62 + 60, H - 34);
+}
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  drawIcon('icon512', 512);
+  drawIcon('icon192', 192);
+  drawFeatureGraphic();
+});
+</script>
+</body>
+</html>
