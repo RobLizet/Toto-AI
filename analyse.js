@@ -238,6 +238,11 @@ async function scanValueAll() {
             wt(fetchInjuries(m.id), 3000),
             wt(fetchStandings(leagueId || m.leagueId, null), 4000),
           ]);
+          // v18.9: xG ophalen uit fixture statistics
+          const [homeXG, awayXG] = await Promise.all([
+            wt(typeof fetchXGFromFixtures === 'function' ? fetchXGFromFixtures(m.homeId, homeForm) : Promise.resolve([]), 5000),
+            wt(typeof fetchXGFromFixtures === 'function' ? fetchXGFromFixtures(m.awayId, awayForm) : Promise.resolve([]), 5000),
+          ]);
           let conf = 4;
           if (h2h?.length >= 3) conf += 2; else if (h2h?.length) conf += 1;
           if (homeForm?.length >= 5 && awayForm?.length >= 5) conf += 2;
@@ -261,8 +266,8 @@ async function scanValueAll() {
           const played = homeStanding?.played || 0;
           const compPhase = getCompetitionPhase(played);
 
-          const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm) : null;
-          const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm)  : null;
+          const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[]) : null;
+          const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[])  : null;
 
           // Motivatie factor meenemen in Poisson
           const homeMotFactor = homeStanding?.motivatieFactor || 1.0;
@@ -704,9 +709,15 @@ async function runAnalyse() {
       wt(fetchStandings(leagueId || m.leagueId, null), 4000),
     ]);
 
-    // Poisson
-    const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm) : null;
-    const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm) : null;
+    // v18.9: xG ophalen uit fixture statistics voor betere Poisson
+    const [homeXG, awayXG] = await Promise.all([
+      wt(typeof fetchXGFromFixtures === 'function' ? fetchXGFromFixtures(m.homeId, homeForm) : Promise.resolve([]), 5000),
+      wt(typeof fetchXGFromFixtures === 'function' ? fetchXGFromFixtures(m.awayId, awayForm) : Promise.resolve([]), 5000),
+    ]);
+
+    // Poisson met xG
+    const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[]) : null;
+    const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[]) : null;
     const poisson = calcPoissonKansen(homeGoalStats, awayGoalStats, leagueId || 1.35);
 
     if (btn) btn.textContent = '⟳ AI ANALYSE...';

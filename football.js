@@ -190,13 +190,22 @@ function poissonMatchProbs(lambdaHome, lambdaAway, maxGoals = 6, useDixonColes =
   return { p1: p1/total, pX: pX/total, p2: p2/total };
 }
 
-function extractTeamGoalStats(stats, recentFixtures = null) {
+function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null) {
   if (!stats?.goals) return null;
   const gf = stats.goals.for?.average;
   const ga = stats.goals.against?.average;
   if (!gf || !ga) return null;
-  const xgFor = stats.goals?.for?.xg;
-  const xgAgainst = stats.goals?.against?.xg;
+
+  // v18.9: xG uit fixture statistics (API-Football Pro levert dit per wedstrijd)
+  // fixtureXgData = [{xgFor: 1.2, xgAgainst: 0.8}, ...] van laatste N wedstrijden
+  let xgFor = null, xgAgainst = null;
+  if (fixtureXgData?.length >= 2) {
+    const validFor     = fixtureXgData.map(d => d.xgFor).filter(v => v !== null && v > 0);
+    const validAgainst = fixtureXgData.map(d => d.xgAgainst).filter(v => v !== null && v > 0);
+    if (validFor.length >= 2)     xgFor     = parseFloat((validFor.reduce((a,b)=>a+b,0) / validFor.length).toFixed(2));
+    if (validAgainst.length >= 2) xgAgainst = parseFloat((validAgainst.reduce((a,b)=>a+b,0) / validAgainst.length).toFixed(2));
+  }
+
   const gamesPlayed = stats.fixtures?.played?.total || null;
   let base = {
     avgScoredHome:  parseFloat(gf.home)  || null,
@@ -205,8 +214,8 @@ function extractTeamGoalStats(stats, recentFixtures = null) {
     avgConcHome:    parseFloat(ga.home)  || null,
     avgConcAway:    parseFloat(ga.away)  || null,
     avgConcTotal:   parseFloat(ga.total) || null,
-    xgFor:     xgFor     ? parseFloat(xgFor)     : null,
-    xgAgainst: xgAgainst ? parseFloat(xgAgainst) : null,
+    xgFor,
+    xgAgainst,
     gamesPlayed,
   };
   if (recentFixtures?.length >= 3) {
@@ -431,4 +440,38 @@ function formatFormCompact(fixtures, teamId, teamName) {
     letters += team.winner === true ? 'W' : team.winner === false ? 'L' : 'D';
   });
   return `${letters} (${gFor}-${gAg}, scoorde ${scored}/${fixtures.length})`;
+}
+
+
+// ── xG ophalen uit recente fixture statistics ────────────
+// Haalt xG op voor een team uit hun laatste N gespeelde wedstrijden
+// Gebruik: const xgData = await fetchXGFromFixtures(teamId, recentFixtures)
+async function fetchXGFromFixtures(teamId, recentFixtures) {
+  if (!recentFixtures?.length || !teamId) return [];
+  const last5 = recentFixtures.slice(0, 5);
+  const results = [];
+  await Promise.all(last5.map(async fix => {
+    const fixtureId = fix.fixture?.id;
+    if (!fixtureId) return;
+    try {
+      const cacheKey = `xg_${fixtureId}`;
+      const cached = _cacheGet(cacheKey);
+      if (cached) { results.push(cached); return; }
+      const r = await apiFetch(`https://v3.football.api-sports.io/fixtures/statistics?fixture=${fixtureId}`, null, 4000);
+      const d = await r.json();
+      const teamStats = (d.response||[]).find(t => String(t.team?.id) === String(teamId));
+      if (!teamStats) return;
+      const xgForVal     = teamStats.statistics?.find(s => s.type === 'expected_goals')?.value;
+      const xgAgainstVal = (d.response||[]).find(t => String(t.team?.id) !== String(teamId))
+                            ?.statistics?.find(s => s.type === 'expected_goals')?.value;
+      const entry = {
+        fixtureId,
+        xgFor:     xgForVal     ? parseFloat(xgForVal)     : null,
+        xgAgainst: xgAgainstVal ? parseFloat(xgAgainstVal) : null,
+      };
+      _cacheSet(cacheKey, entry);
+      results.push(entry);
+    } catch(e) {}
+  }));
+  return results.filter(r => r.xgFor !== null || r.xgAgainst !== null);
 }
