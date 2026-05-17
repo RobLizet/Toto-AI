@@ -486,43 +486,130 @@
        MODALS
   ══════════════════════════════════════════ -->
 
-  <!-- Bet Modal -->
-  <div id="bet-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeBetModal()">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="bet-modal-title" class="modal-title">Weddenschap toevoegen</h3>
-        <button class="modal-close-btn" onclick="closeBetModal()">✕</button>
+  <!-- Bet Modal — v18.9 card layout -->
+  <div id="bet-modal" class="modal-overlay" style="display:none;align-items:flex-end;" onclick="if(event.target===this)closeBetModal()">
+    <div style="background:var(--card,#fff);border-radius:24px 24px 0 0;padding:0;width:100%;max-width:480px;
+      box-shadow:0 -8px 40px rgba(15,23,42,.18);overflow:hidden;max-height:92vh;overflow-y:auto;">
+
+      <!-- Drag pill -->
+      <div style="padding:.75rem 0 0;text-align:center;">
+        <div style="width:36px;height:4px;background:rgba(15,23,42,.15);border-radius:999px;display:inline-block;"></div>
       </div>
-      <div class="modal-body">
-        <div class="modal-field">
-          <label class="modal-label">Wedstrijd</label>
-          <input id="bet-match" type="text" class="modal-input" placeholder="bijv. Ajax - PSV" />
+
+      <!-- Header -->
+      <div style="padding:.75rem 1.25rem .5rem;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;letter-spacing:.04em;">💶 WEDDENSCHAP</div>
+          <div id="bet-modal-title" style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);margin-top:.1rem;"></div>
         </div>
-        <div class="modal-field">
-          <label class="modal-label">Inzet (€)</label>
-          <input id="bet-stake" type="number" class="modal-input" placeholder="0.00" min="0" step="0.01" />
+        <button onclick="closeBetModal()" style="background:rgba(15,23,42,.06);border:none;border-radius:999px;
+          width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;
+          cursor:pointer;font-size:.85rem;color:var(--sub);">✕</button>
+      </div>
+
+      <!-- Pick card -->
+      <div style="margin:.25rem 1.25rem .75rem;background:linear-gradient(135deg,rgba(219,39,119,.06),rgba(124,58,237,.04));
+        border:1px solid rgba(219,39,119,.15);border-radius:14px;padding:.75rem 1rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.2rem;">JOUW PICK</div>
+        <div id="bet-pick-display" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--ink);"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.4rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
+            <input id="bet-match" type="text" placeholder="Wedstrijd"
+              style="background:none;border:none;outline:none;font-family:'IBM Plex Mono',monospace;
+              font-size:.5rem;color:var(--sub);width:100%;"/>
+          </div>
+          <div id="bet-odds-display" style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#16a34a;"></div>
         </div>
-        <div class="modal-field">
-          <label class="modal-label">Odds</label>
-          <input id="bet-odds" type="number" class="modal-input" placeholder="1.00" min="1" step="0.01" />
+      </div>
+
+      <div style="padding:0 1.25rem 1.5rem;">
+        <!-- Inzet sectie -->
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:var(--sub);
+          letter-spacing:.06em;margin-bottom:.5rem;">INZET</div>
+
+        <!-- Snelle presets -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.6rem;">
+          <button onclick="document.getElementById('bet-stake').value=5;updateBetReturn()"
+            style="padding:.5rem;border-radius:10px;background:rgba(15,23,42,.05);border:1px solid rgba(15,23,42,.1);
+            font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;cursor:pointer;">€5</button>
+          <button onclick="document.getElementById('bet-stake').value=10;updateBetReturn()"
+            style="padding:.5rem;border-radius:10px;background:rgba(15,23,42,.05);border:1px solid rgba(15,23,42,.1);
+            font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;cursor:pointer;">€10</button>
+          <button onclick="document.getElementById('bet-stake').value=25;updateBetReturn()"
+            style="padding:.5rem;border-radius:10px;background:rgba(15,23,42,.05);border:1px solid rgba(15,23,42,.1);
+            font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;cursor:pointer;">€25</button>
+          <button onclick="document.getElementById('bet-stake').value=50;updateBetReturn()"
+            style="padding:.5rem;border-radius:10px;background:rgba(15,23,42,.05);border:1px solid rgba(15,23,42,.1);
+            font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;cursor:pointer;">€50</button>
         </div>
-        <div class="modal-field">
-          <label class="modal-label">Type</label>
-          <select id="bet-type" class="modal-input modal-select">
-            <option value="1X2">1X2</option>
-            <option value="O/U">Over/Under</option>
-            <option value="BTTS">Beide scoren</option>
-            <option value="Handicap">Handicap</option>
-            <option value="Overig">Overig</option>
-          </select>
+
+        <!-- Inzet + Odds velden -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.6rem;">
+          <div style="background:rgba(15,23,42,.03);border:1px solid rgba(15,23,42,.1);border-radius:12px;padding:.6rem .8rem;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-bottom:.2rem;">INZET (€)</div>
+            <input id="bet-stake" type="number" min="0" step="0.01" placeholder="10.00"
+              oninput="updateBetReturn()"
+              style="width:100%;background:none;border:none;outline:none;font-family:'Bebas Neue',sans-serif;
+              font-size:1.3rem;color:var(--ink);"/>
+          </div>
+          <div style="background:rgba(15,23,42,.03);border:1px solid rgba(15,23,42,.1);border-radius:12px;padding:.6rem .8rem;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-bottom:.2rem;">QUOTE</div>
+            <input id="bet-odds" type="number" min="1" step="0.01" placeholder="2.00"
+              oninput="updateBetReturn()"
+              style="width:100%;background:none;border:none;outline:none;font-family:'Bebas Neue',sans-serif;
+              font-size:1.3rem;color:#16a34a;"/>
+          </div>
         </div>
-        <div class="modal-field">
-          <label class="modal-label">Notitie (optioneel)</label>
-          <input id="bet-note" type="text" class="modal-input" placeholder="bijv. Thuis sterk, Beide scoren" />
+
+        <!-- Mogelijke winst -->
+        <div id="bet-return-display" style="background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);
+          border-radius:12px;padding:.65rem 1rem;margin-bottom:.75rem;display:flex;
+          justify-content:space-between;align-items:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#15803d;font-weight:700;">
+            💰 MOGELIJKE WINST
+          </div>
+          <div id="bet-return-value" style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#15803d;">€0.00</div>
         </div>
-        <div class="modal-actions">
-          <button class="modal-cancel-btn" onclick="closeBetModal()">Annuleren</button>
-          <button class="modal-confirm-btn" onclick="confirmBet()">Toevoegen</button>
+
+        <!-- Type + Notitie -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.75rem;">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-bottom:.3rem;">TYPE</div>
+            <select id="bet-type" style="width:100%;padding:.5rem .7rem;border-radius:10px;
+              background:rgba(15,23,42,.04);border:1px solid rgba(15,23,42,.1);
+              font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--ink);outline:none;">
+              <option value="1X2">1X2</option>
+              <option value="O/U">Over/Under</option>
+              <option value="BTTS">Beide scoren</option>
+              <option value="Handicap">Handicap</option>
+              <option value="Overig">Overig</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-bottom:.3rem;">NOTITIE</div>
+            <input id="bet-note" type="text" placeholder="optioneel"
+              style="width:100%;padding:.5rem .7rem;border-radius:10px;box-sizing:border-box;
+              background:rgba(15,23,42,.04);border:1px solid rgba(15,23,42,.1);
+              font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--ink);outline:none;"/>
+          </div>
+        </div>
+
+        <!-- Actie knoppen -->
+        <div style="display:flex;gap:.5rem;">
+          <button onclick="closeBetModal()"
+            style="flex:1;padding:.7rem;border-radius:12px;background:rgba(15,23,42,.06);
+            border:1px solid rgba(15,23,42,.1);font-family:'IBM Plex Mono',monospace;
+            font-size:.6rem;font-weight:700;color:var(--sub);cursor:pointer;">
+            Annuleren
+          </button>
+          <button onclick="confirmBet()"
+            style="flex:2;padding:.7rem;border-radius:12px;
+            background:linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.85));
+            color:#fff;border:none;font-family:'IBM Plex Mono',monospace;
+            font-size:.6rem;font-weight:800;cursor:pointer;letter-spacing:.04em;
+            box-shadow:0 4px 16px rgba(219,39,119,.25);">
+            💶 INZETTEN
+          </button>
         </div>
       </div>
     </div>
