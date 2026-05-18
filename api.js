@@ -4,37 +4,30 @@
 
 const WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
 
-// ── Sessie-cache voor API calls (30 min TTL) ────────────
-// Voorkomt dubbele calls bij herhaal-analyse of scan
-const _apiCache = new Map();
-const _CACHE_TTL = 30 * 60 * 1000; // 30 minuten
-
-function _cacheGet(key) {
-  const entry = _apiCache.get(key);
-  if (!entry) return null;
-  if (Date.now() - entry.ts > _CACHE_TTL) { _apiCache.delete(key); return null; }
-  return entry.data;
-}
-
-function _cacheSet(key, data) {
-  _apiCache.set(key, { data, ts: Date.now() });
-  // Max 200 entries bijhouden
-  if (_apiCache.size > 200) {
-    const oldest = _apiCache.keys().next().value;
-    _apiCache.delete(oldest);
-  }
-}
-
-function clearApiCache() {
-  _apiCache.clear();
-  console.log('[Cache] Gewist');
-}
-
 const COMP_IDS = {
   eredivisie: 88, kkd: 89, bundesliga: 78, premier: 39,
   beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5, wk2026: 1,
   jupiler: 144, laliga: 140, championship: 40, bundesliga2: 79, superlig: 203,
-  intvriendsch: 10, wkkwal: 33, ekkwal: 4,
+  // Extra voor scan coverage
+  portugal: 94,        // Primeira Liga Portugal
+  scotland: 179,       // Scottish Premiership
+  netherlands_cup: 90, // KNVB Beker (alias)
+  austria: 218,        // Österreichische Bundesliga
+  switzerland: 207,    // Super League Zwitserland
+  denmark: 119,        // Superliga Denemarken
+  norway: 103,         // Eliteserien Noorwegen
+  sweden: 113,         // Allsvenskan Zweden
+  greece: 197,         // Super League Griekenland
+  russia: 235,         // RPL Rusland
+  ukraine: 333,        // UPL Oekraïne
+  czech: 345,          // Czech Liga
+  poland: 106,         // Ekstraklasa Polen
+  romania: 283,        // Liga 1 Roemenië
+  europa: 3,           // Europa League
+  conference: 848,     // Conference League
+  wk_kwal_europa: 32,  // WK 2026 Kwalificatie Europa
+  wk_kwal_azie: 36,    // WK 2026 Kwalificatie Azië
+  wk_kwal_latam: 34,   // WK 2026 Kwalificatie CONMEBOL
 };
 
 const COMP_NAMES = {
@@ -42,8 +35,7 @@ const COMP_NAMES = {
   premier: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', beker: '🏆 KNVB Beker', champions: '⭐ Champions League',
   ligue1: '🇫🇷 Ligue 1', seriea: '🇮🇹 Serie A', nations: '🌍 Nations League',
   jupiler: '🇧🇪 Jupiler Pro League', laliga: '🇪🇸 La Liga', championship: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship',
-  bundesliga2: '🇩🇪 2. Bundesliga', superlig: '🇹🇷 Süper Lig', wk2026: '🏆 WK 2026',
-  intvriendsch: '🌍 Interlands Vriendsch.', wkkwal: '🌍 WK Kwalificatie', ekkwal: '🌍 EK Kwalificatie'
+  bundesliga2: '🇩🇪 2. Bundesliga', superlig: '🇹🇷 Süper Lig', wk2026: '🏆 WK 2026'
 };
 
 const FD_CODES = {
@@ -61,23 +53,6 @@ async function apiFetch(url, _apiKey, timeoutMs = 10000) {
     clearTimeout(timer);
     return r;
   } catch(e) { clearTimeout(timer); throw e; }
-}
-
-// ── Fixtures voor vandaag gecached laden (bespaart meeste calls) ─
-const _fixtureCache = new Map();
-const _FIXTURE_TTL  = 60 * 60 * 1000; // 1 uur voor fixtures
-
-async function apiFetchCached(url, ttl = _CACHE_TTL) {
-  const cached = _cacheGet('url_' + url);
-  if (cached) return cached;
-  try {
-    const r = await apiFetch(url, null);
-    const d = await r.json();
-    if (d.response !== undefined) {
-      _cacheSet('url_' + url, d);
-    }
-    return d;
-  } catch(e) { return { response: [] }; }
 }
 
 // ── football-data.org via Worker /fd/* ──────────────────
@@ -130,7 +105,7 @@ async function anthropicFetch(_apiKey, body) {
     const txt = await r.text();
     try {
       const parsed = JSON.parse(txt);
-      if (parsed.usage) trackTokenUsage(body.model || 'claude-sonnet-4-20250514', parsed.usage.input_tokens||0, parsed.usage.output_tokens||0);
+      if (parsed.usage) trackTokenUsage(parsed.usage, body.model || 'claude-haiku-4-5-20251001');
       return parsed;
     } catch(e) {
       throw new Error('Worker response: ' + txt.substring(0, 100));
@@ -147,9 +122,7 @@ async function anthropicFetch(_apiKey, body) {
       },
       body: JSON.stringify(body)
     });
-    const r2data = await r2.json();
-    if (r2data.usage) trackTokenUsage(body.model || 'claude-sonnet-4-20250514', r2data.usage.input_tokens||0, r2data.usage.output_tokens||0);
-    return r2data;
+    return await r2.json();
   }
 }
 
@@ -255,101 +228,156 @@ function getCurrentSeason(comp) {
 // ── Team & fixture data ophalen ───────────────────────────
 async function fetchH2H(homeId, awayId) {
   if (!homeId || !awayId) return [];
-  const key = `h2h_${homeId}_${awayId}`;
-  const cached = _cacheGet(key);
-  if (cached) return cached;
   try {
     const r = await apiFetch(`https://v3.football.api-sports.io/fixtures/headtohead?h2h=${homeId}-${awayId}&last=10`, null);
     const d = await r.json();
-    const result = d.response || [];
-    _cacheSet(key, result);
-    return result;
+    return d.response || [];
   } catch(e) { return []; }
 }
 
 async function fetchTeamForm(teamId) {
   if (!teamId) return [];
-  const key = `form_${teamId}`;
-  const cached = _cacheGet(key);
-  if (cached) return cached;
   try {
     const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?team=${teamId}&last=8`, null);
     const d = await r.json();
-    const result = d.response || [];
-    _cacheSet(key, result);
-    return result;
+    return d.response || [];
   } catch(e) { return []; }
 }
 
 async function fetchTeamStats(teamId, leagueId) {
   if (!teamId) return null;
-  const key = `stats_${teamId}_${leagueId}`;
-  const cached = _cacheGet(key);
-  if (cached !== null) return cached;
   try {
     const season = leagueId === 1 ? 2026 : 2025;
     const r = await apiFetch(`https://v3.football.api-sports.io/teams/statistics?team=${teamId}&league=${leagueId}&season=${season}`, null);
     const d = await r.json();
-    const result = d.response || null;
-    _cacheSet(key, result);
-    return result;
+    return d.response || null;
   } catch(e) { return null; }
 }
 
 async function fetchLineups(fixtureId) {
   if (!fixtureId) return null;
-  const key = `lineups_${fixtureId}`;
-  const cached = _cacheGet(key);
-  if (cached !== null) return cached;
   try {
     const r = await apiFetch(`https://v3.football.api-sports.io/fixtures/lineups?fixture=${fixtureId}`, null, 5000);
     const d = await r.json();
-    const result = d.response?.length ? d.response : null;
-    if (result) _cacheSet(key, result); // alleen cachen als er data is
-    return result;
-  } catch(e) { return null; }
-}
-
-async function fetchInjuries(fixtureId) {
-  if (!fixtureId) return null;
-  const key = `injuries_${fixtureId}`;
-  const cached = _cacheGet(key);
-  if (cached !== null) return cached;
-  try {
-    const r = await apiFetch(`https://v3.football.api-sports.io/injuries?fixture=${fixtureId}`, null, 5000);
-    const d = await r.json();
-    const result = d.response?.length ? d.response : null;
-    if (result) _cacheSet(key, result);
-    return result;
-  } catch(e) { return null; }
-}
-
-async function fetchStandings(leagueId, season) {
-  if (!leagueId) return null;
-  const s = season || (leagueId === 1 ? 2026 : 2025);
-  const key = `standings_${leagueId}_${s}`;
-  const cached = _cacheGet(key);
-  if (cached !== null) return cached;
-  try {
-    const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${s}`, null, 5000);
-    const d = await r.json();
-    const result = d.response?.[0]?.league?.standings?.[0] || null;
-    if (result) _cacheSet(key, result);
-    return result;
+    return d.response?.length ? d.response : null;
   } catch(e) { return null; }
 }
 
 async function fetchTopScorers(leagueId) {
   if (!leagueId) return null;
-  const key = `topscorers_${leagueId}`;
-  const cached = _cacheGet(key);
-  if (cached !== null) return cached;
   try {
     const season = leagueId === 1 ? 2026 : 2025;
     const r = await apiFetch(`https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=${season}`, null, 5000);
     const d = await r.json();
-    const result = d.response?.slice(0, 10) || null;
-    if (result) _cacheSet(key, result);
-    return result;
+    return d.response?.slice(0, 10) || null;
   } catch(e) { return null; }
+}
+
+// ── Standings ophalen ────────────────────────────────────
+async function fetchStandings(leagueId, _unused) {
+  if (!leagueId) return null;
+  try {
+    const season = leagueId === 1 ? 2026 : 2025;
+    const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`, null, 6000);
+    const d = await r.json();
+    return d.response?.[0]?.league?.standings?.[0] || null;
+  } catch(e) { return null; }
+}
+
+// ── Injuries/suspensions ophalen ────────────────────────
+async function fetchInjuries(fixtureId) {
+  if (!fixtureId) return null;
+  try {
+    const r = await apiFetch(`https://v3.football.api-sports.io/injuries?fixture=${fixtureId}`, null, 5000);
+    const d = await r.json();
+    return d.response?.length ? d.response : null;
+  } catch(e) { return null; }
+}
+
+// ── API-Football Predictions ophalen (pro endpoint) ─────
+async function fetchPredictions(fixtureId) {
+  if (!fixtureId) return null;
+  try {
+    const r = await apiFetch(`https://v3.football.api-sports.io/predictions?fixture=${fixtureId}`, null, 6000);
+    const d = await r.json();
+    const pred = d.response?.[0];
+    if (!pred) return null;
+    // Verwerk naar bruikbaar object
+    return {
+      winner:       pred.predictions?.winner?.name || null,
+      winnerComment: pred.predictions?.winner?.comment || null,
+      advice:       pred.predictions?.advice || null,
+      percent: {
+        home: parseInt(pred.predictions?.percent?.home) || null,
+        draw: parseInt(pred.predictions?.percent?.draw) || null,
+        away: parseInt(pred.predictions?.percent?.away) || null,
+      },
+      goalsHome:    pred.predictions?.goals?.home || null,
+      goalsAway:    pred.predictions?.goals?.away || null,
+      under_over:   pred.predictions?.under_over || null,
+      form: {
+        home: pred.teams?.home?.league?.form || null,
+        away: pred.teams?.away?.league?.form || null,
+      },
+      homeAttack:   pred.teams?.home?.league?.goals?.for?.average?.total || null,
+      homeDefense:  pred.teams?.home?.league?.goals?.against?.average?.total || null,
+      awayAttack:   pred.teams?.away?.league?.goals?.for?.average?.total || null,
+      awayDefense:  pred.teams?.away?.league?.goals?.against?.average?.total || null,
+      h2h: {
+        home: pred.h2h ? pred.h2h.filter(f => f.teams?.home?.winner).length : null,
+        draw: pred.h2h ? pred.h2h.filter(f => !f.teams?.home?.winner && !f.teams?.away?.winner).length : null,
+        away: pred.h2h ? pred.h2h.filter(f => f.teams?.away?.winner).length : null,
+        total: pred.h2h?.length || null,
+      },
+      comparison: {
+        form:          pred.comparison?.form         || null,
+        att:           pred.comparison?.att          || null,
+        def:           pred.comparison?.def          || null,
+        poisson_distribution: pred.comparison?.poisson_distribution || null,
+        h2h:           pred.comparison?.h2h          || null,
+        goals:         pred.comparison?.goals        || null,
+        total:         pred.comparison?.total        || null,
+      },
+      raw: pred
+    };
+  } catch(e) { return null; }
+}
+
+// ── Predictions formatteren voor AI context ─────────────
+function formatPredictions(pred, home, away) {
+  if (!pred) return '';
+  const lines = [];
+
+  if (pred.advice) lines.push(`💡 API advies: "${pred.advice}"`);
+
+  if (pred.percent?.home !== null) {
+    const h = pred.percent.home || 0;
+    const d = pred.percent.draw || 0;
+    const a = pred.percent.away || 0;
+    lines.push(`📊 API kansen: ${home} ${h}% / gelijk ${d}% / ${away} ${a}%`);
+  }
+
+  if (pred.winner) {
+    lines.push(`🏆 API winnaar tip: ${pred.winner}${pred.winnerComment ? ' ('+pred.winnerComment+')' : ''}`);
+  }
+
+  if (pred.goalsHome !== null && pred.goalsAway !== null) {
+    lines.push(`⚽ Verwachte doelpunten: ${home} ${pred.goalsHome} – ${away} ${pred.goalsAway}${pred.under_over ? ' ('+pred.under_over+')' : ''}`);
+  }
+
+  if (pred.comparison?.form) {
+    lines.push(`📈 Vorm vergelijk: ${home} ${pred.comparison.form.home} vs ${away} ${pred.comparison.form.away}`);
+  }
+  if (pred.comparison?.att && pred.comparison?.def) {
+    lines.push(`⚔️ Aanval/verdediging: att ${pred.comparison.att.home}/${pred.comparison.att.away} – def ${pred.comparison.def.home}/${pred.comparison.def.away}`);
+  }
+  if (pred.comparison?.poisson_distribution) {
+    lines.push(`📐 Poisson (API): ${pred.comparison.poisson_distribution.home} / ${pred.comparison.poisson_distribution.away}`);
+  }
+
+  if (pred.h2h?.total) {
+    lines.push(`🔁 H2H (API): ${pred.h2h.total} duels — ${home} ${pred.h2h.home}W / gelijk ${pred.h2h.draw} / ${away} ${pred.h2h.away}W`);
+  }
+
+  return lines.join('\n');
 }
