@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v49';
+const VERSION = 'v50';
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -349,7 +349,7 @@ Geen uitleg, alleen de JSON array.`;
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 2048,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -521,7 +521,7 @@ Formaat:
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 300,
         messages: [{ role: 'user', content: prompt }]
       })
@@ -630,8 +630,8 @@ export default {
     ctx.waitUntil(Promise.all([
       runScan(env),
       verifyYesterdayPicks(env),
-      // 08:00 UTC: dagelijkse AI tip genereren
-      hour === 8 ? generateDailyTip(env) : Promise.resolve(),
+      // 06:00 UTC (= 08:00 NL zomertijd): dagelijkse AI tip genereren
+      hour === 6 ? generateDailyTip(env) : Promise.resolve(),
       // Zondag 06:00 UTC: weekly calibration
       (isSunday && hour === 6) ? runWeeklyCalibration(env) : Promise.resolve(),
     ]));
