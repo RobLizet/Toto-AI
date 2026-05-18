@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.8
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.9
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -363,7 +363,7 @@ WEGING:
 - Als alle drie beschikbaar: Poisson 35% + API pred 30% + context 35%
 - Als Poisson + API pred: elk 40% + context 20%
 - Als alleen Poisson: Poisson 50% + context 50%
-- API pred advies ("${home} wint") = extra signaalbevestiging, niet blind volgen
+- API pred advies ("thuisploeg wint") = extra signaalbevestiging, niet blind volgen
 
 ANALYSE REGELS:
 - kans1+kansX+kans2 MOET exact 100 zijn
