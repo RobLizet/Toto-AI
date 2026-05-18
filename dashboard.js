@@ -65,33 +65,51 @@ function renderDashboard() {
   // Laad dagelijkse tip asynchroon
   fetchDailyTip().then(function(tip) {
     var tipCard = document.getElementById('daily-tip-card');
-    if (!tipCard || !tip || !tip.tip) return;
+    if (!tipCard) return;
     var today = new Date().toISOString().split('T')[0];
-    var isToday = tip.date === today;
-    var tipLines = tip.tip.split('\n').filter(Boolean);
-    var card = document.createElement('div');
-    card.style.cssText = 'background:linear-gradient(135deg,rgba(219,39,119,.08),rgba(124,58,237,.06));border:1px solid rgba(219,39,119,.2);border-radius:16px;padding:.85rem 1rem;cursor:pointer;';
-    card.onclick = function() { switchScreen('analyse'); };
-    var hdr = document.createElement('div');
-    hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;';
-    var t1 = document.createElement('div');
-    t1.style.cssText = 'font-family:Bebas Neue,sans-serif;font-size:1rem;color:#be185d;';
-    t1.textContent = '🎯 TIP VAN DE DAG';
-    var t2 = document.createElement('div');
-    t2.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:.42rem;color:var(--sub);';
-    t2.textContent = isToday ? 'Vandaag' : (tip.date || '');
-    hdr.appendChild(t1); hdr.appendChild(t2);
-    card.appendChild(hdr);
-    tipLines.forEach(function(line) {
-      var isTitle = line.charAt(0) === '🎯' || line.indexOf('TIP') === 0;
-      var isDisclaimer = line.charAt(0) === '⚠';
-      var div = document.createElement('div');
-      div.style.cssText = 'font-family:IBM Plex Mono,monospace;line-height:1.6;margin-bottom:.2rem;font-size:' + (isTitle ? '.6rem' : '.5rem') + ';font-weight:' + (isTitle ? '700' : '400') + ';color:' + (isTitle ? '#be185d' : isDisclaimer ? 'var(--sub)' : 'var(--ink)') + ';';
-      div.textContent = line;
-      card.appendChild(div);
-    });
-    tipCard.innerHTML = '';
-    tipCard.appendChild(card);
+    var isToday = tip?.date === today;
+
+    // Geen tip of niet gekwalificeerd
+    if (!tip || !tip.qualified) {
+      tipCard.innerHTML = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:.75rem 1rem;opacity:.6;">
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <div style="font-size:1.1rem;">🎯</div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:800;color:var(--sub);">TIP VAN DE DAG</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">Vandaag geen gekwalificeerde pick — scan meer wedstrijden.</div>
+          </div>
+        </div>
+      </div>`;
+      return;
+    }
+
+    // Sterren op basis van confidence
+    var stars = '';
+    var conf = tip.confidence || 0;
+    for (var i = 0; i < 5; i++) stars += i < Math.round(conf/2) ? '★' : '☆';
+    var valColor = (tip.value||0) >= 15 ? '#15803d' : '#b45309';
+
+    tipCard.innerHTML = `<div style="background:linear-gradient(135deg,rgba(219,39,119,.08),rgba(124,58,237,.06));
+      border:1px solid rgba(219,39,119,.2);border-radius:16px;padding:.85rem 1rem;cursor:pointer;"
+      onclick="switchScreen('analyse')">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#be185d;letter-spacing:.04em;">🎯 TIP VAN DE DAG</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">${isToday ? 'Vandaag' : (tip.date||'')}</div>
+      </div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:800;color:var(--ink);margin-bottom:.3rem;">${tip.match||'?'}</div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;">
+        <span style="background:rgba(219,39,119,.12);border:1px solid rgba(219,39,119,.25);
+          color:#be185d;font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:800;
+          border-radius:8px;padding:.2rem .5rem;">${tip.pickLabel||'?'}</span>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#16a34a;">${tip.odds||'?'}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:800;color:${valColor};">+${Math.round(tip.value||0)}%</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:#f59e0b;margin-left:auto;">${stars}</span>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);line-height:1.65;">${tip.analyse||tip.tip||''}</div>
+      <div style="margin-top:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);opacity:.7;">
+        🎲 ${conf}/10 confidence · ${tip.markt||'Uitslag'} · Uitsluitend entertainment & educatie
+      </div>
+    </div>`;
   });
 
   screen.innerHTML = `
