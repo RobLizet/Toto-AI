@@ -694,6 +694,37 @@ const ANTHROPIC_PRICES = {
   'default':                   { input: 0.000003,   output: 0.000015   }
 };
 
+// Laad kosten uit Firebase bij opstarten
+async function loadCostsFromFirebase() {
+  try {
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid) return;
+    const snap = await firebase.database().ref(`users/${uid}/costs`).get();
+    if (snap.exists()) {
+      const fbCosts = snap.val();
+      // Neem het hoogste van localStorage en Firebase
+      const local = state.costs || {calls:0,tokensIn:0,tokensOut:0,totalUSD:0};
+      state.costs = {
+        calls:    Math.max(local.calls||0,    fbCosts.calls||0),
+        tokensIn: Math.max(local.tokensIn||0, fbCosts.tokensIn||0),
+        tokensOut:Math.max(local.tokensOut||0,fbCosts.tokensOut||0),
+        totalUSD: Math.max(local.totalUSD||0, fbCosts.totalUSD||0),
+      };
+      saveState();
+      updateCostUI();
+    }
+  } catch(e) {}
+}
+
+// Sla kosten op in Firebase
+async function saveCostsToFirebase() {
+  try {
+    const uid = firebase.auth().currentUser?.uid;
+    if (!uid) return;
+    await firebase.database().ref(`users/${uid}/costs`).set(state.costs);
+  } catch(e) {}
+}
+
 function trackTokenUsage(model, inputTokens, outputTokens) {
   if (!state.costs) state.costs = {calls:0, tokensIn:0, tokensOut:0, totalUSD:0};
   const prices = ANTHROPIC_PRICES[model] || ANTHROPIC_PRICES['default'];
@@ -702,7 +733,10 @@ function trackTokenUsage(model, inputTokens, outputTokens) {
   state.costs.tokensIn  += inputTokens||0;
   state.costs.tokensOut += outputTokens||0;
   state.costs.totalUSD  += cost;
+  saveState();
   updateCostUI();
+  // Async sync naar Firebase
+  saveCostsToFirebase();
 }
 
 function updateCostUI() {
@@ -722,6 +756,7 @@ function resetCostCounter() {
   if (!confirm('Kostenteller resetten?')) return;
   state.costs={calls:0,tokensIn:0,tokensOut:0,totalUSD:0};
   saveState(); updateCostUI();
+  saveCostsToFirebase();
 }
 
 // ── NOTIFICATIES UI ──────────────────────────────────
