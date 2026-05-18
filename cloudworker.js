@@ -1,8 +1,8 @@
-// TOTO AI WORKER v47
+// TOTO AI WORKER v48
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v47';
+const VERSION = 'v49';
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -442,6 +442,135 @@ async function handleGetPicks(env) {
   return json({ picks: arr, count: arr.length, version: VERSION });
 }
 
+
+// ═══════════════════════════════════════════════════════
+// DAGELIJKSE AI TIP — v19.3
+// Elke dag om 08:00 UTC: haal picks op + genereer AI tip
+// Opgeslagen in Firebase onder daily_tip/
+// ═══════════════════════════════════════════════════════
+
+async function generateDailyTip(env) {
+  console.log('[DailyTip] Genereren dagelijkse tip...');
+  const today = new Date().toISOString().split('T')[0];
+
+  // Check of er al een tip is voor vandaag
+  try {
+    const existing = await fb(env, 'daily_tip/latest');
+    if (existing?.date === today) {
+      console.log('[DailyTip] Al een tip voor vandaag:', today);
+      return;
+    }
+  } catch(e) {}
+
+  // Haal picks op uit Firebase
+  let picks = [];
+  try {
+    const picksData = await fb(env, 'picks') || {};
+    picks = Object.values(picksData)
+      .filter(p => p.status === 'pending' && p.date === today)
+      .sort((a, b) => (b.value || 0) - (a.value || 0))
+      .slice(0, 5);
+  } catch(e) {
+    console.warn('[DailyTip] Picks ophalen mislukt:', e.message);
+  }
+
+  // Haal vandaag fixtures op van API-Football voor context
+  let topFixtures = [];
+  try {
+    const r = await apif(env, `/fixtures?date=${today}&status=NS`);
+    const d = await r.json();
+    const known = new Set([39, 140, 78, 135, 61, 2, 88, 94, 203]);
+    topFixtures = (d.response || [])
+      .filter(f => known.has(f.league.id))
+      .slice(0, 8)
+      .map(f => `${f.teams.home.name} vs ${f.teams.away.name} (${f.league.name})`);
+  } catch(e) {}
+
+  // Bouw prompt voor Claude
+  const picksText = picks.length
+    ? picks.map(p => `- ${p.matchName || '?'}: ${p.pickLabel} @ ${p.odds} (value: +${Math.round(p.value || 0)}%, conf: ${p.confidence}/10)`).join('\n')
+    : 'Nog geen gescande picks beschikbaar voor vandaag.';
+
+  const fixturesText = topFixtures.length
+    ? topFixtures.join('\n')
+    : 'Geen fixtures gevonden.';
+
+  const prompt = `Je bent een voetbal betting analist. Geef een korte, concrete dagelijkse tip voor ${today}.
+
+Top value picks van vandaag:
+${picksText}
+
+Wedstrijden van vandaag (grote competities):
+${fixturesText}
+
+Geef je analyse in het Nederlands. Maximaal 3 zinnen. Geef 1 concrete beste pick met onderbouwing. Eindig met een korte disclaimer.
+Formaat:
+🎯 TIP VAN DE DAG: [pick]
+📊 ANALYSE: [2 zinnen analyse]
+⚠️ [korte disclaimer]`;
+
+  // Genereer tip via Claude
+  let tipText = '';
+  let tipPick = '';
+  try {
+    const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': env.ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    tipText = data.content?.[0]?.text || '';
+
+    // Extraheer de pick uit de tip
+    const tipMatch = tipText.match(/TIP VAN DE DAG:\s*(.+)/);
+    tipPick = tipMatch?.[1]?.trim() || '';
+  } catch(e) {
+    console.error('[DailyTip] Claude API fout:', e.message);
+    tipText = '🎯 TIP VAN DE DAG: Geen tip beschikbaar\n📊 ANALYSE: AI service tijdelijk niet beschikbaar.\n⚠️ Uitsluitend voor entertainment.';
+  }
+
+  // Sla op in Firebase
+  const tipData = {
+    date: today,
+    tip: tipText,
+    pick: tipPick,
+    picks: picks.slice(0, 3).map(p => ({
+      match: p.matchName,
+      label: p.pickLabel,
+      odds: p.odds,
+      value: p.value,
+      confidence: p.confidence
+    })),
+    generatedAt: new Date().toISOString(),
+    version: VERSION
+  };
+
+  await fb(env, 'daily_tip/latest', 'PUT', tipData);
+  await fb(env, `daily_tip/archive/${today}`, 'PUT', tipData);
+
+  console.log('[DailyTip] Tip opgeslagen voor', today, ':', tipPick);
+  return tipData;
+}
+
+// ── Daily tip endpoint (/daily-tip) ───────────────────────
+async function handleDailyTip(env) {
+  try {
+    const tip = await fb(env, 'daily_tip/latest');
+    if (!tip) return json({ error: 'Geen tip beschikbaar' }, 404);
+    return json(tip);
+  } catch(e) {
+    return json({ error: e.message }, 500);
+  }
+}
+
 // ── Main fetch handler ───────────────────────────────────
 export default {
   async fetch(request, env) {
@@ -474,6 +603,15 @@ export default {
       return handleGetPicks(env);
     }
 
+    if (path === '/daily-tip') {
+      return handleDailyTip(env);
+    }
+
+    if (path === '/daily-tip/generate') {
+      const tip = await generateDailyTip(env);
+      return json(tip || { error: 'Genereren mislukt' });
+    }
+
     if (url.searchParams.get('url')) {
       return handleProxy(url.searchParams.get('url'), request, env);
     }
@@ -486,9 +624,16 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
+    const now = new Date();
+    const hour = now.getUTCHours();
+    const isSunday = now.getUTCDay() === 0;
     ctx.waitUntil(Promise.all([
       runScan(env),
-      verifyYesterdayPicks(env)
+      verifyYesterdayPicks(env),
+      // 08:00 UTC: dagelijkse AI tip genereren
+      hour === 8 ? generateDailyTip(env) : Promise.resolve(),
+      // Zondag 06:00 UTC: weekly calibration
+      (isSunday && hour === 6) ? runWeeklyCalibration(env) : Promise.resolve(),
     ]));
   }
 };
