@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v18.7
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.8
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -229,7 +229,7 @@ async function scanValueAll() {
       await Promise.all(candidates.map(async m => {
         if (!m.homeId || !m.awayId) { matchDataMap[m.id] = { confidence: 3 }; return; }
         try {
-          const [h2h, homeForm, awayForm, hStats, aStats, injuries, standings] = await Promise.all([
+          const [h2h, homeForm, awayForm, hStats, aStats, injuries, standings, predictions] = await Promise.all([
             wt(fetchH2H(m.homeId, m.awayId), 4000),
             wt(fetchTeamForm(m.homeId), 4000),
             wt(fetchTeamForm(m.awayId), 4000),
@@ -237,6 +237,7 @@ async function scanValueAll() {
             wt(fetchTeamStats(m.awayId, leagueId || 88), 4000),
             wt(fetchInjuries(m.id), 3000),
             wt(fetchStandings(leagueId || m.leagueId, null), 4000),
+            wt(fetchPredictions(m.id), 5000),
           ]);
           // v18.9: xG ophalen uit fixture statistics
           const [homeXG, awayXG] = await Promise.all([
@@ -301,6 +302,10 @@ async function scanValueAll() {
           if (homeStanding) standingContext += `\n   📊 ${m.home}: pos ${homeStanding.pos}/${homeStanding.total}, ${homeStanding.pts}pt, GD ${homeStanding.gd>0?'+':''}${homeStanding.gd}${homeStanding.motivatieLabel ? ' — '+homeStanding.motivatieLabel : ''}`;
           if (awayStanding)  standingContext += `\n   📊 ${m.away}: pos ${awayStanding.pos}/${awayStanding.total}, ${awayStanding.pts}pt, GD ${awayStanding.gd>0?'+':''}${awayStanding.gd}${awayStanding.motivatieLabel ? ' — '+awayStanding.motivatieLabel : ''}`;
 
+          // Predictions verwerken — extra confidence als beschikbaar
+          const predContext = predictions ? formatPredictions(predictions, m.home, m.away) : '';
+          if (predictions?.percent?.home !== null) conf = Math.min(10, conf + 1);
+
           matchDataMap[m.id] = {
             h2h:           h2hCount   ? formatH2HCompact(h2h.slice(0,5), m.home, m.away)        : '',
             homeForm:      homeGames  ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home) : '',
@@ -309,6 +314,7 @@ async function scanValueAll() {
             homeInjFactor, awayInjFactor, injuryContext,
             homeStanding, awayStanding, standingContext,
             h2hWeighted, compPhase,
+            predictions, predContext,
             confidence: finalConf,
             dataQuality, isSparseData,
             h2hCount, homeGames, awayGames
@@ -334,13 +340,13 @@ async function scanValueAll() {
       if (d.injuryContext) line += d.injuryContext;
       if (d.standingContext) line += d.standingContext;
       if (d.compPhase?.label) line += `\n   🗓 Fase: ${d.compPhase.label}`;
+      if (d.predContext) line += `\n   ${d.predContext.split('\n').join('\n   ')}`;
       if (d.isSparseData) line += `\n   ⚠️ DATA SCHAARS (H2H:${d.h2hCount||0} wedstr, vorm:${(d.homeGames||0)+(d.awayGames||0)} wedstr) — max confidence 5`;
       else if (d.dataQuality < 8) line += `\n   📊 Beperkte data (${d.dataQuality} wedstr totaal) — wees voorzichtig`;
       return line;
     }).join('\n\n');
 
-    // v18.6: max_tokens dynamisch — meer wedstrijden = meer tokens nodig
-    const dynamicTokens = Math.min(4000, Math.max(1500, candidates.length * 120));
+    const dynamicTokens = Math.min(4000, Math.max(1500, candidates.length * 130));
     const data = await anthropicFetch(null, {
       model: 'claude-sonnet-4-6',
       max_tokens: dynamicTokens,
@@ -348,25 +354,36 @@ async function scanValueAll() {
       system: `RESPOND WITH VALID JSON ONLY. NO TEXT BEFORE OR AFTER JSON. START WITH { END WITH }.
 {"scans":[{"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":7,"reason":"max 12 woorden concreet"}]}
 
+DRIE ANKERS — gebruik alle drie als beschikbaar:
+1. POISSON (📐): statistisch model op doelpuntengemiddelden + xG
+2. API PREDICTIONS (📊/💡): externe kansberekening van API-Football (onafhankelijk model)
+3. CONTEXT: vorm, H2H gewogen, blessures, motivatie, fase
+
+WEGING:
+- Als alle drie beschikbaar: Poisson 35% + API pred 30% + context 35%
+- Als Poisson + API pred: elk 40% + context 20%
+- Als alleen Poisson: Poisson 50% + context 50%
+- API pred advies ("${home} wint") = extra signaalbevestiging, niet blind volgen
+
 ANALYSE REGELS:
 - kans1+kansX+kans2 MOET exact 100 zijn
-- Gebruik Poisson als statistisch anker, pas aan op basis van vorm/H2H/context
-- Thuisvoordeel: +3-5pp voor thuisploeg tenzij vorm anders aangeeft
+- Thuisvoordeel: +3-5pp voor thuisploeg tenzij vorm/API anders aangeeft
 - Vorm weegt zwaarder dan seizoensgemiddelden (laatste 5 wedstrijden)
-- GEWOGEN H2H: recente duels wegen zwaarder — kijk naar h2h gewogen percentages
-- BLESSURES: 🏥 label = sterspelers missen → pas kansen dienovereenkomstig aan
-- MOTIVATIE: 😴 niets_te_winnen → -5 tot -8pp voor dat team; 🔴 degradatiestrijd → +5pp; 🏆 titelstrijd → +3pp
-- COMPETITIE FASE: 🏁 einde seizoen = ploegen rusten/roteren → meer onzekerheid, hogere kansX
-- Geef voor ALLE ${candidates.length} wedstrijden een object
+- GEWOGEN H2H: recente duels wegen zwaarder
+- BLESSURES: 🏥 sterspelers missen → pas kansen aan (-3 tot -8pp aanvalskans betrokken team)
+- MOTIVATIE: 😴 niets_te_winnen → -5 tot -8pp; 🔴 degradatie → +5pp; 🏆 titel → +3pp
+- COMPETITIE FASE: 🏁 einde seizoen = rotatie → meer onzekerheid, hogere kansX
+- CONVERGENTIE BONUS: als Poisson + API pred + vorm hetzelfde aangeven → confidence +1
+- DIVERGENTIE: als Poisson en API pred sterk afwijken (>15pp) → confidence -1, noteer in reason
 
 VALUE DETECTIE:
-- reason beschrijft het sterkste argument voor de pick (max 12 woorden, concreet)
-- confidence 8-10: sterke data + consistente signalen
-- confidence 6-7: redelijke data, 1-2 conflicterende signalen
-- confidence 1-5: schaarse data of veel onzekerheid
+- reason = sterkste argument voor de pick (max 12 woorden, concreet met cijfers)
+- confidence 8-10: meerdere ankers bevestigen + consistente signalen
+- confidence 6-7: 1-2 ankers bevestigen, 1 conflicterend signaal
+- confidence 1-5: schaarse data of sterke divergentie tussen ankers
 
 SCHAARSE DATA:
-- "DATA SCHAARS" label: confidence MAX 5, wijk max 5pp af van Poisson
+- "DATA SCHAARS" label: confidence MAX 5, wijk max 5pp af van Poisson/API pred
 - "Beperkte data": confidence MAX 7
 - Geen uitleg buiten JSON`,
       messages:[{role:'user', content:`Analyseer ${candidates.length} wedstrijden:\n\n${ctx}`}]
@@ -699,7 +716,7 @@ async function runAnalyse() {
     const leagueId = m.leagueId || COMP_IDS[state.activeComp];
     const wt = (p, ms=5000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
 
-    const [h2h, homeForm, awayForm, hStats, aStats, lineups, injuries, standings] = await Promise.all([
+    const [h2h, homeForm, awayForm, hStats, aStats, lineups, injuries, standings, predictions] = await Promise.all([
       wt(fetchH2H(m.homeId, m.awayId), 5000),
       wt(fetchTeamForm(m.homeId), 5000),
       wt(fetchTeamForm(m.awayId), 5000),
@@ -708,6 +725,7 @@ async function runAnalyse() {
       wt(fetchLineups(m.id), 4000),
       wt(fetchInjuries(m.id), 3000),
       wt(fetchStandings(leagueId || m.leagueId, null), 4000),
+      wt(fetchPredictions(m.id), 5000),
     ]);
 
     // v18.9: xG ophalen uit fixture statistics voor betere Poisson
@@ -752,6 +770,9 @@ async function runAnalyse() {
     // Competitie fase
     const phase = getCompetitionPhase(homeStand?.played || 0);
 
+    // Predictions context
+    const predStr = predictions ? formatPredictions(predictions, m.home, m.away) : '';
+
     const context = `Wedstrijd: ${m.home} vs ${m.away}
 Competitie: ${m.comp} | ${m.date} ${m.time} | Fase: ${phase.label||'normaal'}
 Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}
@@ -762,16 +783,33 @@ H2H: ${h2hStr}
 ${h2hWStr}
 Standen: ${standStr}
 Blessures: ${injStr}
-Formaties: ${formationStr}`;
+Formaties: ${formationStr}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}`;
 
     const data = await anthropicFetchWithRetry(null, {
       model: 'claude-sonnet-4-6',
-      max_tokens: 1600,
-      system: `Je bent een elite voetbalanalist. JSON only, geen tekst buiten JSON:
-{"vorm":"2-3 zinnen recente prestaties BEIDE teams, specifieke cijfers","stats":"2-3 zinnen statistieken + Poisson kansen","tactiek":"2-3 zinnen speelstijl en formaties","kans":"2 zinnen: kansberekening met gecorrigeerde implied kansen","risico":"1-2 zinnen concrete risicofactoren","advies":"1-2 zinnen concreet value-advies",
-"tip":{"pick":"1","pickLabel":"${m.home} wint","markt":"Uitslag","odds":${m.homeOdds||2},"kans":55,"sterren":3,"confidence":6,"confidenceReden":"1 zin waarom deze confidence","redenering":"3-4 zinnen onderbouwing met feiten en cijfers",
+      max_tokens: 1800,
+      system: `Je bent een elite voetbalanalist voor een bettingadvies app. JSON only, geen tekst buiten JSON.
+
+BESCHIKBARE DATA ANKERS (gebruik alles wat beschikbaar is):
+1. Poisson model (eigen berekening op doelpuntengemiddelden + xG)
+2. API Predictions (onafhankelijk model van API-Football — als aanwezig in context)
+3. Vorm, H2H gewogen, standen, blessures, formaties
+
+WEGING: als Poisson + API pred beschikbaar → elk 35% + context 30%. Als alleen Poisson → 50% + context 50%.
+CONVERGENTIE: als meerdere ankers dezelfde kant wijzen → hogere confidence en sterkere uitspraak.
+DIVERGENTIE: als Poisson en API pred sterk afwijken (>12pp) → wees voorzichtig, vermeld in advies.
+
+JSON STRUCTUUR:
+{"vorm":"2-3 zinnen recente prestaties BEIDE teams met specifieke cijfers","stats":"2-3 zinnen statistieken + Poisson kansen + API pred kansen als beschikbaar","tactiek":"2 zinnen speelstijl en formaties","kans":"2 zinnen kansberekening: gecombineerde inschatting na weging van alle ankers","risico":"1-2 zinnen concrete risicofactoren","advies":"1-2 zinnen concreet value-advies met pick en odds",
+"tip":{"pick":"1","pickLabel":"${m.home} wint","markt":"Uitslag","odds":${m.homeOdds||2},"kans":55,"sterren":3,"confidence":6,"confidenceReden":"1 zin: databeschikbaarheid + signaalconsistentie","redenering":"3-4 zinnen onderbouwing met specifieke cijfers uit de data",
 "tips":[{"pick":"O2.5","pickLabel":"Meer dan 2.5 goals","markt":"Doelpunten","odds":1.8,"kans":58,"reden":"concreet statistisch argument"},{"pick":"X","pickLabel":"Gelijkspel","markt":"Uitslag","odds":${m.drawOdds||3.5},"kans":26,"reden":"concreet argument"}]}}
-KWALITEIT: Noem teams bij naam. Gebruik specifieke cijfers uit context. Kans = jouw schatting na overround-correctie. Confidence op databeschikbaarheid en signaalconsistentie.`,
+
+KWALITEITSREGELS:
+- Noem teams altijd bij naam, nooit "thuisploeg"
+- Gebruik specifieke cijfers: "4 van laatste 5 thuis gewonnen", "gemiddeld 2.1 goals per duel"
+- kans = jouw gecombineerde schatting NA overround-correctie van de bookmaker
+- confidence: 8-10 = meerdere ankers bevestigen + rijke data; 6-7 = redelijke data, 1 conflicterend; 1-5 = schaars of sterk divergerend
+- tips array: 2 alternatieve markten (O/U goals, BTTS, Asian handicap) met concrete onderbouwing`,
       messages:[{role:'user',content:`Analyseer:\n${context}`}]
     });
 
@@ -790,7 +828,10 @@ KWALITEIT: Noem teams bij naam. Gebruik specifieke cijfers uit context. Kans = j
       </div>`;
 
     fill('vorm',    sectionCard('⚡', 'VORM', result.vorm || '—', '#2563eb'));
-    fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#7c3aed;">📐 ${poissonStr}</span>` : ''), '#7c3aed'));
+    const predBadge = predictions?.advice
+      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API: ${predictions.advice}${predictions.percent?.home !== null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
+      : '';
+    fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#7c3aed;">📐 ${poissonStr}</span>` : '') + predBadge, '#7c3aed'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', result.tactiek || '—', '#d97706'));
     fill('kans',    sectionCard('🎯', 'KANSEN', result.kans || '—', '#16a34a'));
     fill('risico',  sectionCard('⚠️', 'RISICO', result.risico || '—', '#dc2626'));
@@ -877,15 +918,71 @@ KWALITEIT: Noem teams bij naam. Gebruik specifieke cijfers uit context. Kans = j
 
 // ── Scannen alle comp vandaag ─────────────────────────────
 async function scanAllTodayValue(mode = 'today') {
+  const btnId = mode === 'tomorrow' ? 'scanTomorrowBtn' : 'scanAllTodayBtn';
+  const btnContainer = document.getElementById(btnId);
+  const btn = btnContainer?.querySelector('button') || btnContainer;
+  const origText = btn?.textContent || '⚡ SCAN';
+
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const tomorrowStr = new Date(now.getTime() + 86400000).toISOString().split('T')[0];
+
+  // Laad alle competities als state.matches te weinig wedstrijden heeft
+  const currentWithOdds = (state.matches||[]).filter(m =>
+    m.homeOdds !== '—' && !m.isDone && parseFloat(m.homeOdds) > 1
+  );
+
+  if (currentWithOdds.length < 5) {
+    if (btn) { btn.disabled = true; btn.textContent = '⟳ ALLE COMPS LADEN...'; }
+
+    // Laad alle competities parallel — volledige scan lijst
+    const SCAN_LEAGUE_IDS = [
+      // Standaard app comps
+      88, 89, 78, 39, 61, 135, 2, 3, 848, 144, 140, 40, 79, 203, 5,
+      // Extra comps voor bredere coverage
+      94, 179, 218, 207, 119, 103, 113, 197, 106, 283, 345,
+      32, 34, 36, 1,
+    ];
+    const allMatches = [];
+    const seen = new Set();
+
+    await Promise.all(SCAN_LEAGUE_IDS.map(async leagueId => {
+      try {
+        const season = leagueId === 1 ? 2026 : 2025;
+        const dateParam = mode === 'tomorrow' ? tomorrowStr : todayStr;
+        const r = await apiFetch(
+          `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&date=${dateParam}&status=NS-1H-HT-2H`,
+          null, 8000
+        );
+        const d = await r.json();
+        (d.response || []).forEach(f => {
+          const m = parseAPIMatch(f);
+          if (m && !seen.has(m.id)) {
+            seen.add(m.id);
+            allMatches.push(m);
+          }
+        });
+      } catch(e) {}
+    }));
+
+    if (allMatches.length > 0) {
+      // Haal odds op voor gevonden wedstrijden
+      if (btn) btn.textContent = `⟳ ODDS OPHALEN (${allMatches.length})...`;
+      try {
+        await fetchOddsForAllMatches(allMatches, null);
+      } catch(e) {}
+      // Voeg toe aan state.matches (dedupliceer)
+      const existingIds = new Set((state.matches||[]).map(m => m.id));
+      allMatches.forEach(m => { if (!existingIds.has(m.id)) state.matches.push(m); });
+    }
+  }
+
   const allWithOdds = (state.matches||[]).filter(m => {
     if (m.homeOdds === '—' || m.isDone || !(parseFloat(m.homeOdds) > 1)) return false;
     if (m.leagueId && !new Set(Object.values(COMP_IDS)).has(m.leagueId)) return false;
     return true;
   });
 
-  const now = new Date();
-  const todayStr = now.toISOString().split('T')[0];
-  const tomorrowStr = new Date(now.getTime() + 86400000).toISOString().split('T')[0];
   let candidates;
   if (mode === 'tomorrow') {
     candidates = allWithOdds.filter(m => { const d = m.dateISO||''; return !d || d === todayStr || d === tomorrowStr; });
@@ -898,18 +995,14 @@ async function scanAllTodayValue(mode = 'today') {
   candidates = candidates.slice(0, 25);
 
   if (!candidates.length) {
-    alert('Geen wedstrijden met quotes. Laad eerst alle competities vandaag.');
+    if (btn) { btn.disabled = false; btn.textContent = origText; }
+    showToast('Geen wedstrijden met quotes gevonden voor vandaag.');
     return;
   }
 
-  const btnId = mode === 'tomorrow' ? 'scanTomorrowBtn' : 'scanAllTodayBtn';
-  const btnContainer = document.getElementById(btnId);
-  const btn = btnContainer?.querySelector('button') || btnContainer;
-  const origText = btn?.textContent || '⚡ SCAN';
   if (btn) { btn.disabled = true; btn.textContent = `⟳ ANALYSEREN (${candidates.length})...`; }
 
-  // v18.7: bewaar gescande matches zodat teamnamen zichtbaar blijven in resultaten
-  // state.matches wordt NIET teruggezet na scan — gebruiker ziet de gescande wedstrijden
+  // Bewaar gescande matches zodat teamnamen zichtbaar blijven
   state.matches = candidates;
   await scanValueAll();
 
@@ -922,9 +1015,39 @@ async function generateCombiTip() {
   if (!btn) return;
   btn.disabled = true; btn.textContent = '⟳ BEREKENEN...';
 
-  const upcomingMatches = (state.matches||[]).filter(m => !m.isDone);
+  const allMatches = (state.matches||[]).filter(m => !m.isDone);
+
+  // Blokkeer als geen wedstrijden geladen
+  if (!allMatches.length) {
+    const card = document.getElementById('combiCard');
+    if (card) {
+      card.innerHTML = `<div style="text-align:center;padding:1.5rem;background:var(--card);border:1px solid var(--stroke);border-radius:14px;">
+        <div style="font-size:1.8rem;margin-bottom:.5rem;">⚽</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:var(--ink);margin-bottom:.4rem;">GEEN WEDSTRIJDEN GELADEN</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--sub);margin-bottom:.8rem;line-height:1.6;">Laad eerst wedstrijden via het Wedstrijden tabblad om combi tips te genereren.</div>
+        <button onclick="switchScreen('wedstrijden')" style="padding:.55rem 1.2rem;border-radius:10px;background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.8));color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">⚽ Naar Wedstrijden →</button>
+      </div>`;
+      card.style.display = 'block';
+    }
+    btn.disabled = false; btn.textContent = '⚡ GENEREER TOP 3 TIPS + COMBI';
+    return;
+  }
+
+  // Filter: minimale odds 1.40, moet quotes hebben
+  const upcomingMatches = allMatches.filter(m =>
+    m.homeOdds !== '—' &&
+    parseFloat(m.homeOdds) >= 1.40 &&
+    parseFloat(m.awayOdds) >= 1.10
+  );
+
   if (!upcomingMatches.length) {
-    alert('Geen aankomende wedstrijden gevonden. Laad eerst wedstrijden via het Wedstrijden tabblad.');
+    const card = document.getElementById('combiCard');
+    if (card) {
+      card.innerHTML = `<div style="text-align:center;padding:1.5rem;background:var(--card);border:1px solid var(--stroke);border-radius:14px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);line-height:1.7;">Geen wedstrijden met bruikbare quotes (min. 1.40).<br>Laad meer wedstrijden of kies een andere competitie.</div>
+      </div>`;
+      card.style.display = 'block';
+    }
     btn.disabled = false; btn.textContent = '⚡ GENEREER TOP 3 TIPS + COMBI';
     return;
   }
@@ -946,8 +1069,15 @@ Het veld "match" MOET altijd de exacte teamnamen bevatten: "ThuisTeam vs UitTeam
 Het veld "fixtureId" MOET de fixtureId zijn uit de invoer.
 Gebruik NOOIT fixture-ID's of competitienamen als waarde voor "match".
 
+SELECTIE REGELS:
+- Kies wedstrijden met odds tussen 1.40 en 4.00 — NOOIT odds onder 1.40 (geen value)
+- Geef voorkeur aan wedstrijden met duidelijke vorm/statistieken
+- Top 3 tips: kies de 3 wedstrijden met BESTE verhouding kans/quote (value)
+- Combi: kies 3 VERSCHILLENDE wedstrijden met gezamenlijke winkans >30%
+- Vermijd extreem lage odds (1.01-1.39) volledig — te weinig marge
+
 {"top3":[
-  {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":8,"reden":"30-40 woorden","factoren":["",""],"risico":""},
+  {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":8,"reden":"30-40 woorden met concrete redenen","factoren":["",""],"risico":""},
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0,"reden":"","factoren":[],"risico":""},
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0,"reden":"","factoren":[],"risico":""}
 ],
@@ -956,7 +1086,7 @@ Gebruik NOOIT fixture-ID's of competitienamen als waarde voor "match".
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0},
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0}
 ],"redenering":"40-50 woorden","synergie":"max 30 woorden","risico":"max 25 woorden","kansBerekening":"72%x68%x75%=37%","valueScore":7}}`,
-      messages:[{role:'user',content:`Datum: ${vandaag}\nWedstrijden:\n${matchesCtx}\n\nGeef top 3 tips en combi van 3 legs.`}]
+      messages:[{role:'user',content:`Datum: ${vandaag}\nWedstrijden:\n${matchesCtx}\n\nGeef top 3 tips en combi van 3 legs. Gebruik ALLEEN wedstrijden met odds ≥ 1.40.`}]
     });
     let raw = data.content[0].text.trim();
     const js = raw.indexOf('{'), je = raw.lastIndexOf('}');
