@@ -1,4 +1,4 @@
-// TOTO AI WORKER v48
+// TOTO AI WORKER v47
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
