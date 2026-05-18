@@ -176,16 +176,18 @@ function renderWedstrijdenScreen() {
         id="valueScanBtn">
         ⚡ SCAN VALUE
       </button>
+      <button onclick="showHelp('value-scan')" style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:999px;width:1.6rem;height:1.6rem;font-size:.65rem;cursor:pointer;color:#7c3aed;margin-left:.4rem;font-weight:800;">?</button>
     </div>
 
     <!-- Combi builder -->
     <div class="combi-builder" id="combiBuilder" style="display:none;">
       <div class="combi-builder-inner">
         <div class="combi-builder-header">
-          <div class="combi-builder-title">⚡ COMBI BUILDER</div>
+          <div class="combi-builder-title" style="display:flex;align-items:center;gap:.3rem;">⚡ COMBI BUILDER <button onclick="showHelp('combi-builder')" style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:999px;width:1.4rem;height:1.4rem;font-size:.55rem;cursor:pointer;color:#7c3aed;font-weight:800;">?</button></div>
           <div class="combi-builder-odds" id="combiTotalOdds">—</div>
         </div>
         <div class="combi-builder-legs" id="combiBuilderLegs"></div>
+        <div id="combiBetSlipTotal"></div>
         <div class="combi-builder-actions">
           <button onclick="placeCombi()" class="combi-place-btn">💶 PLAATSEN</button>
           <button onclick="clearCombi()" class="combi-clear-btn">✕ WISSEN</button>
@@ -818,16 +820,55 @@ function updateCombiBuilder() {
 
   builder.style.display = 'block';
   const totalOdds = legs.reduce((a, l) => a * l.odds, 1);
+  const defaultBet = state.settings.defaultBet || 10;
+  const payout = (defaultBet * totalOdds).toFixed(2);
   if (oddsEl) oddsEl.textContent = totalOdds.toFixed(2);
 
-  legsEl.innerHTML = legs.map(l => `
-    <div class="combi-builder-leg">
-      <span class="cbl-match">${l.home} vs ${l.away}</span>
-      <span class="cbl-pick">${l.pickLabel}</span>
-      <span class="cbl-odds">${l.odds.toFixed(2)}</span>
-      <button class="cbl-remove" onclick="removeCombiLeg('${l.matchId}')">✕</button>
+  // v18.8: mooiere leg kaartjes in wedstrijdcard-stijl
+  legsEl.innerHTML = legs.map((l, i) => `
+    <div style="background:rgba(255,255,255,.85);border:1px solid rgba(28,35,48,.08);
+      border-radius:12px;padding:.65rem .8rem;margin-bottom:.4rem;
+      display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.15rem;">
+          LEG ${i+1} · ${l.date||''}
+        </div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          ${l.home} vs ${l.away}
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#be185d;font-weight:700;margin-top:.15rem;">
+          ${l.pickLabel || l.pick}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;flex-shrink:0;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#16a34a;">${parseFloat(l.odds).toFixed(2)}</div>
+        <button onclick="removeCombiLeg('${l.matchId}')"
+          style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.75rem;line-height:1;">✕</button>
+      </div>
     </div>
   `).join('');
+
+  // Totaal kaart onderaan
+  const totaalEl = document.getElementById('combiBetSlipTotal');
+  if (totaalEl) {
+    totaalEl.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .8rem;
+        background:rgba(219,39,119,.06);border-radius:10px;margin-bottom:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
+          ${legs.length} legs · €${defaultBet} inzet
+        </div>
+        <div style="display:flex;gap:.75rem;align-items:center;">
+          <div style="text-align:center;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">QUOTE</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;">${totalOdds.toFixed(2)}</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">WINST</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#16a34a;">€${payout}</div>
+          </div>
+        </div>
+      </div>`;
+  }
 }
 
 function removeCombiLeg(matchId) {
