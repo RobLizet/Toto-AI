@@ -7,7 +7,7 @@
 const COMP_LIST = [
   { key:'eredivisie', flag:'🇳🇱', name:'Eredivisie' },
   { key:'kkd',        flag:'🇳🇱', name:'KKD' },
-  { key:'premier',    flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',  name:'Premier League' },
+  { key:'premier',    flag:'🏴',  name:'Premier League' },
   { key:'bundesliga', flag:'🇩🇪', name:'Bundesliga' },
   { key:'ligue1',     flag:'🇫🇷', name:'Ligue 1' },
   { key:'seriea',     flag:'🇮🇹', name:'Serie A' },
@@ -48,13 +48,7 @@ function renderWedstrijdenScreen() {
       border-radius:16px;padding:.9rem;margin-bottom:.85rem;box-shadow:var(--shadow2);"></div>
 
     <!-- Competitie chips -->
-    <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
-      <span>COMPETITIE</span>
-      <button onclick="openCompDetail(state.activeComp)"
-        style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:8px;
-        padding:2px 8px;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
-        color:#7c3aed;cursor:pointer;">ℹ Stand & Topscorers</button>
-    </div>
+    <div class="section-label">COMPETITIE</div>
     <div class="comp-grid" id="compGrid">
       ${COMP_LIST.map(c => {
         const isActive = state.activeComp === c.key;
