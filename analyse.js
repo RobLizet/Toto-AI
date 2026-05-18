@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v18.7
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -29,10 +29,26 @@ function renderAnalyseScreen() {
       <div id="analyseScanResults" style="margin-bottom:.5rem;"></div>
 
       ${!m ? `
-      <div style="text-align:center;padding:2rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--sub);line-height:2;">
-        <div style="font-size:2rem;margin-bottom:.5rem;">⚽</div>
-        Selecteer een wedstrijd via het<br>
-        <b style="color:var(--ink);">Wedstrijden</b> tabblad om te analyseren.
+      <!-- v18.4: vriendelijke lege state met actieknop -->
+      <div style="text-align:center;padding:2.5rem 1.25rem;
+        display:flex;flex-direction:column;align-items:center;gap:.7rem;">
+        <div style="font-size:2.2rem;opacity:.3;">⚽</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;
+          color:var(--ink);letter-spacing:.04em;">
+          Kies een wedstrijd
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;
+          color:var(--sub);line-height:1.75;max-width:230px;">
+          Selecteer een wedstrijd via het Wedstrijden tabblad om een AI-analyse te starten.
+        </div>
+        <button onclick="switchScreen('wedstrijden')"
+          style="padding:.6rem 1.3rem;border-radius:12px;
+          background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.8));
+          color:#fff;border:none;font-family:'IBM Plex Mono',monospace;
+          font-size:.62rem;font-weight:800;cursor:pointer;letter-spacing:.04em;
+          box-shadow:0 4px 14px rgba(219,39,119,.2);margin-top:.2rem;">
+          ⚽ Naar Wedstrijden →
+        </button>
       </div>` : `
       <!-- Geselecteerde wedstrijd info -->
       <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.8rem 1rem;margin-bottom:.85rem;">
@@ -112,7 +128,7 @@ function renderAnalyseScreen() {
 
       <!-- Value scan sectie -->
       <div style="margin-top:.5rem;">
-        <div class="section-label">VALUE SCAN</div>
+        <div class="section-label" style="display:flex;align-items:center;gap:.3rem;">VALUE SCAN <span id="help-valuescan-btn"></span></div>
         ${(state.matches||[]).some(m => m.homeOdds !== '—') ? `
         <button id="valueScanBtn2" onclick="scanValueAll()"
           style="width:100%;background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(5,150,105,.06));
@@ -120,9 +136,14 @@ function renderAnalyseScreen() {
           font-size:.65rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;margin-bottom:.7rem;">
           ⚡ SCAN VALUE — alle geladen matches
         </button>` : `
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);text-align:center;padding:.8rem;background:rgba(15,23,42,.04);border-radius:10px;margin-bottom:.7rem;">
-          Laad eerst wedstrijden via het ⚽ Wedstrijden tabblad
-        </div>`}
+        <!-- v18.4: klikbare lege state voor value scan -->
+        <button onclick="switchScreen('wedstrijden')"
+          style="width:100%;padding:.65rem;border-radius:10px;
+          background:rgba(15,23,42,.03);border:1px dashed rgba(15,23,42,.15);
+          font-family:'IBM Plex Mono',monospace;font-size:.56rem;
+          color:var(--sub);cursor:pointer;text-align:center;margin-bottom:.7rem;">
+          ⚽ Eerst wedstrijden laden — tik om naar Wedstrijden te gaan →
+        </button>`}
         <div id="valueBanner2" style="display:none;"></div>
       </div>
     </div>
@@ -180,9 +201,10 @@ async function scanValueAll() {
     alert('Er loopt al een scan. Wacht tot die klaar is.');
     return;
   }
+  // v18.6: max 15 candidates om JSON truncatie te voorkomen bij grote batches
   const candidates = (state.matches||[]).filter(m =>
     m.homeOdds !== '—' && !m.isDone && parseFloat(m.homeOdds) > 1
-  ).slice(0, 25);
+  ).slice(0, 15);
 
   if (!candidates.length) {
     alert('Geen wedstrijden met quotes. Laad eerst wedstrijden via Wedstrijden tabblad.');
@@ -216,6 +238,11 @@ async function scanValueAll() {
             wt(fetchInjuries(m.id), 3000),
             wt(fetchStandings(leagueId || m.leagueId, null), 4000),
           ]);
+          // v18.9: xG ophalen uit fixture statistics
+          const [homeXG, awayXG] = await Promise.all([
+            wt(typeof fetchXGFromFixtures === 'function' ? fetchXGFromFixtures(m.homeId, homeForm) : Promise.resolve([]), 5000),
+            wt(typeof fetchXGFromFixtures === 'function' ? fetchXGFromFixtures(m.awayId, awayForm) : Promise.resolve([]), 5000),
+          ]);
           let conf = 4;
           if (h2h?.length >= 3) conf += 2; else if (h2h?.length) conf += 1;
           if (homeForm?.length >= 5 && awayForm?.length >= 5) conf += 2;
@@ -239,8 +266,8 @@ async function scanValueAll() {
           const played = homeStanding?.played || 0;
           const compPhase = getCompetitionPhase(played);
 
-          const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm) : null;
-          const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm)  : null;
+          const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[]) : null;
+          const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[])  : null;
 
           // Motivatie factor meenemen in Poisson
           const homeMotFactor = homeStanding?.motivatieFactor || 1.0;
@@ -312,9 +339,11 @@ async function scanValueAll() {
       return line;
     }).join('\n\n');
 
+    // v18.6: max_tokens dynamisch — meer wedstrijden = meer tokens nodig
+    const dynamicTokens = Math.min(4000, Math.max(1500, candidates.length * 120));
     const data = await anthropicFetch(null, {
       model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
+      max_tokens: dynamicTokens,
       temperature: 0,
       system: `RESPOND WITH VALID JSON ONLY. NO TEXT BEFORE OR AFTER JSON. START WITH { END WITH }.
 {"scans":[{"id":"123","kans1":45,"kansX":30,"kans2":25,"confidence":7,"reason":"max 12 woorden concreet"}]}
@@ -431,23 +460,9 @@ SCHAARSE DATA:
       const isSparse    = matchDataMap[s.id]?.isSparseData || false;
       const dataQuality = matchDataMap[s.id]?.dataQuality  || 0;
 
-      let rawConfidence = Math.min(10, Math.round((dataConf + aiConf) / 2) + (poisson?.valid ? 1 : 0));
-      if (isSparse)          rawConfidence = Math.min(rawConfidence, 5);
-      else if (dataQuality < 8) rawConfidence = Math.min(rawConfidence, 7);
-
-      // v19.1: self-learning confidence calibratie
-      let confidence = rawConfidence;
-      if (typeof calcCalibratedConfidenceSync === 'function') {
-        const leagueId = match?.leagueId || null;
-        const calibResult = calcCalibratedConfidenceSync(
-          rawConfidence * 10, leagueId, s.id, dataQuality, isSparse
-        );
-        confidence = Math.round(calibResult.final / 10);
-        // Bewaar calibratie info voor display
-        s._calibrated = calibResult.calibrated;
-        s._fBucket    = calibResult.fBucket;
-        s._fLeague    = calibResult.fLeague;
-      }
+      let confidence = Math.min(10, Math.round((dataConf + aiConf) / 2) + (poisson?.valid ? 1 : 0));
+      if (isSparse)          confidence = Math.min(confidence, 5);
+      else if (dataQuality < 8) confidence = Math.min(confidence, 7);
 
       if (isSparse && best.value > 10) {
         best.value = Math.min(best.value, 10);
@@ -694,9 +709,15 @@ async function runAnalyse() {
       wt(fetchStandings(leagueId || m.leagueId, null), 4000),
     ]);
 
-    // Poisson
-    const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm) : null;
-    const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm) : null;
+    // v18.9: xG ophalen uit fixture statistics voor betere Poisson
+    const [homeXG, awayXG] = await Promise.all([
+      wt(typeof fetchXGFromFixtures === 'function' ? fetchXGFromFixtures(m.homeId, homeForm) : Promise.resolve([]), 5000),
+      wt(typeof fetchXGFromFixtures === 'function' ? fetchXGFromFixtures(m.awayId, awayForm) : Promise.resolve([]), 5000),
+    ]);
+
+    // Poisson met xG
+    const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[]) : null;
+    const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[]) : null;
     const poisson = calcPoissonKansen(homeGoalStats, awayGoalStats, leagueId || 1.35);
 
     if (btn) btn.textContent = '⟳ AI ANALYSE...';
@@ -886,10 +907,10 @@ async function scanAllTodayValue(mode = 'today') {
   const origText = btn?.textContent || '⚡ SCAN';
   if (btn) { btn.disabled = true; btn.textContent = `⟳ ANALYSEREN (${candidates.length})...`; }
 
-  const prevMatches = state.matches;
+  // v18.7: bewaar gescande matches zodat teamnamen zichtbaar blijven in resultaten
+  // state.matches wordt NIET teruggezet na scan — gebruiker ziet de gescande wedstrijden
   state.matches = candidates;
   await scanValueAll();
-  state.matches = prevMatches;
 
   if (btn) { btn.disabled = false; btn.textContent = origText; }
 }
@@ -1141,6 +1162,10 @@ async function verifyScanLog() {
   const pending = [];
   log.forEach(scan => {
     scan.picks.forEach(p => {
+      // v18.5: fixtureId fallback — oudere picks kunnen id ipv fixtureId hebben
+      if (!p.fixtureId && p.id && !String(p.id).startsWith('manual')) {
+        p.fixtureId = p.id;
+      }
       if (p.status === 'pending' && p.fixtureId) pending.push({ scan, pick: p });
     });
   });
@@ -1150,8 +1175,9 @@ async function verifyScanLog() {
 
   for (const { pick } of pending) {
     try {
+      // v18.5: cache-bypass via timestamp zodat Worker geen oude NS-status teruggeeft
       const res = await apiFetch(
-        `https://v3.football.api-sports.io/fixtures?id=${pick.fixtureId}`, null
+        `https://v3.football.api-sports.io/fixtures?id=${pick.fixtureId}&_cb=${Date.now()}`, null
       );
       const json = await res.json();
       const f = json?.response?.[0];
@@ -1326,7 +1352,7 @@ function renderScanLog() {
   function statCard(val, lbl, color) {
     return '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.6rem .4rem;text-align:center;">'
       + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:' + color + ';">' + val + '</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:var(--muted);margin-top:.1rem;display:flex;align-items:center;justify-content:center;gap:.2rem;">' + lbl + '</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:var(--muted);margin-top:.1rem;">' + lbl + '</div>'
       + '</div>';
   }
 
@@ -1345,8 +1371,7 @@ function renderScanLog() {
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">'
     + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--text);">SCAN LOG</div>'
     + '<div style="display:flex;gap:.4rem;">'
-    + '<button class="small-action-btn" onclick="verifyScanLog().then(n=>{if(n)showToast(n+\' picks geverifieerd\');renderScanLog();})">🔄 Verificeer</button>'
-    + (typeof helpBtn==='function' ? '<button onclick="showHelp(\'scan-log\')" style="background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-radius:999px;width:1.8rem;height:1.8rem;font-size:.6rem;cursor:pointer;color:#7c3aed;font-weight:800;">?</button>' : '')
+    + '<button class="small-action-btn" onclick="verifyScanLog().then(n=>{showToast(n>0?n+\' picks geverifieerd\':\'Geen nieuwe resultaten\');renderScanLog();}).catch(e=>showToast(\'⚠ \'+e.message))">🔄 Verificeer</button>'
     + '<button class="small-action-btn" onclick="exportScanLogCSV()">📥 CSV</button>'
     + '<button class="small-action-btn" style="color:#dc2626;" onclick="if(confirm(\'Scan log wissen?\')){state.scanLog=[];saveState();renderScanLog();}">🗑</button>'
     + '</div></div>';
@@ -1361,10 +1386,10 @@ function renderScanLog() {
     + '</div></div>';
 
   html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:.8rem;">'
-    + statCard(allPicks.length, 'PICKS' + (typeof helpBtn==='function'?helpBtn('scan-log'):''), '#2563eb')
-    + statCard(hitrate + '%', 'HITRATE' + (typeof helpBtn==='function'?helpBtn('hitrate'):''), hrColor(hitrate))
-    + statCard((roi>=0?'+':'') + roi.toFixed(1) + '%', 'ROI' + (typeof helpBtn==='function'?helpBtn('roi'):''), roi>=0?'#16a34a':'#dc2626')
-    + statCard(avgValue.toFixed(1) + '%', 'AVG VALUE' + (typeof helpBtn==='function'?helpBtn('avg-value'):''), '#7c3aed')
+    + statCard(allPicks.length, 'PICKS' + helpBtn('scan-log'), '#2563eb')
+    + statCard(hitrate + '%', 'HITRATE' + helpBtn('hitrate'), hrColor(hitrate))
+    + statCard((roi>=0?'+':'') + roi.toFixed(1) + '%', 'ROI' + helpBtn('roi'), roi>=0?'#16a34a':'#dc2626')
+    + statCard(avgValue.toFixed(1) + '%', 'AVG VALUE' + helpBtn('avg-value'), '#7c3aed')
     + '</div>';
 
   if (settled.length >= 5) {
@@ -1434,6 +1459,17 @@ function renderScanLog() {
         + '</div></div>';
       scan.picks.forEach(function(p) {
         var icon = p.status==='win' ? '✅' : p.status==='lose' ? '❌' : p.status==='void' ? '⬜' : '⏳';
+        // v18.6: handmatige verificatie knop voor pending picks
+        var pickId = String(p.fixtureId || p.id || '');
+        var scanId = String(scan.id || '');
+        var pickType = String(p.pick || '');
+        // v18.6: gebruik data-attributen voor veilige onclick zonder quote-escaping
+        var manualBtn = p.status === 'pending'
+          ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" data-match="' + (p.match||'').replace(/"/g,'') + '" '
+            + 'style="font-family:monospace;font-size:.44rem;padding:2px 7px;border-radius:6px;'
+            + 'background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);'
+            + 'color:#2563eb;cursor:pointer;white-space:nowrap;flex-shrink:0;">✏ Score</button>'
+          : '';
         html += '<div style="display:flex;align-items:center;gap:.4rem;padding:.3rem 0;border-top:1px solid var(--border);">'
           + '<div style="width:1.6rem;text-align:center;font-size:.8rem;">' + icon + '</div>'
           + '<div style="flex:1;min-width:0;">'
@@ -1441,6 +1477,7 @@ function renderScanLog() {
           + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">' + (p.pickLabel||p.pick) + ' @ ' + p.odds + ' &middot; ' + (p.value||0).toFixed(1) + '% value &middot; conf ' + p.confidence + '/10</div>'
           + '</div>'
           + (p.score ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:var(--muted);">' + p.score + '</div>' : '')
+          + manualBtn
           + '</div>';
       });
       html += '</div>';
@@ -1448,6 +1485,17 @@ function renderScanLog() {
   }
 
   el.innerHTML = html;
+
+  // v18.6: event delegation voor Score knoppen (data-attributen aanpak)
+  el.addEventListener('click', function(e) {
+    const btn = e.target.closest('.manual-verify-btn');
+    if (!btn) return;
+    const scanId = btn.dataset.scan;
+    const pickId = btn.dataset.pick;
+    const pickType = btn.dataset.type;
+    const matchName = btn.dataset.match;
+    showManualVerify(scanId, pickId, pickType, matchName);
+  });
 }
 
 function exportScanLogCSV() {
@@ -1646,7 +1694,151 @@ function addCombiFromAnalyse() {
 }
 
 
-// ── Preload calibration bij laden analyse module ──────
-if (typeof preloadCalibration === 'function') {
-  preloadCalibration();
+// ═══════════════════════════════════════════════════════
+// HANDMATIGE VERIFICATIE — v18.6
+// Voor picks waarvan API-Football geen resultaat geeft
+// ═══════════════════════════════════════════════════════
+
+function showManualVerify(scanId, pickId, pick, matchName) {
+  // Verwijder bestaande modal als die er al is
+  const existing = document.getElementById('manual-verify-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'manual-verify-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:9000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);';
+  modal.innerHTML = `
+    <div style="background:var(--card);border-radius:20px 20px 0 0;padding:1.25rem 1.25rem 2rem;
+      width:100%;max-width:480px;box-shadow:0 -8px 32px rgba(15,23,42,.2);">
+      <div style="width:36px;height:4px;background:rgba(15,23,42,.15);border-radius:999px;margin:0 auto .75rem;"></div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);margin-bottom:.3rem;">
+        ✏ SCORE INVOEREN
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--sub);margin-bottom:1rem;line-height:1.6;">
+        ${matchName}<br>
+        Pick: <b style="color:var(--ink);">${pick}</b>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);display:block;margin-bottom:.4rem;">
+          EINDSTAND (bijv. 2-1)
+        </label>
+        <input id="manual-score-input" type="text" placeholder="0-0"
+          style="width:100%;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;text-align:center;
+          padding:.6rem;border-radius:12px;border:2px solid var(--stroke);
+          background:var(--card);color:var(--ink);outline:none;letter-spacing:.1em;"
+          oninput="updateManualPreview('${pick}', this.value)">
+      </div>
+      <div id="manual-verify-preview" style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;
+        text-align:center;padding:.5rem;border-radius:8px;margin-bottom:1rem;min-height:1.5rem;"></div>
+      <div style="display:flex;gap:.5rem;">
+        <button onclick="document.getElementById('manual-verify-modal').remove()"
+          style="flex:1;padding:.65rem;border-radius:12px;background:rgba(15,23,42,.06);
+          border:1px solid var(--stroke);font-family:'IBM Plex Mono',monospace;
+          font-size:.6rem;font-weight:700;color:var(--sub);cursor:pointer;">
+          Annuleren
+        </button>
+        <button onclick="confirmManualVerify('${scanId}','${pickId}','${pick}')"
+          style="flex:2;padding:.65rem;border-radius:12px;
+          background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.8));
+          color:#fff;border:none;font-family:'IBM Plex Mono',monospace;
+          font-size:.6rem;font-weight:800;cursor:pointer;letter-spacing:.04em;">
+          ✓ BEVESTIGEN
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+  // Focus input
+  setTimeout(() => document.getElementById('manual-score-input')?.focus(), 100);
+  // Sluit bij tik buiten sheet
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function updateManualPreview(pick, scoreStr) {
+  const preview = document.getElementById('manual-verify-preview');
+  if (!preview) return;
+  const parts = scoreStr.trim().split('-');
+  if (parts.length !== 2) { preview.textContent = ''; return; }
+  const hg = parseInt(parts[0]);
+  const ag = parseInt(parts[1]);
+  if (isNaN(hg) || isNaN(ag)) { preview.textContent = ''; return; }
+
+  let won = false;
+  const t = pick.toUpperCase();
+  if      (t === '1')    won = hg > ag;
+  else if (t === 'X')    won = hg === ag;
+  else if (t === '2')    won = ag > hg;
+  else if (t === '1X')   won = hg >= ag;
+  else if (t === 'X2')   won = ag >= hg;
+  else if (t === 'O2.5') won = (hg + ag) > 2.5;
+  else if (t === 'U2.5') won = (hg + ag) < 2.5;
+  else if (t === 'BTTS-J') won = hg > 0 && ag > 0;
+  else if (t === 'BTTS-N') won = hg === 0 || ag === 0;
+
+  preview.style.background = won ? 'rgba(22,163,74,.1)' : 'rgba(220,38,38,.08)';
+  preview.style.color = won ? '#15803d' : '#dc2626';
+  preview.style.border = `1px solid ${won ? 'rgba(22,163,74,.25)' : 'rgba(220,38,38,.2)'}`;
+  preview.textContent = won ? `✅ WIN — pick ${pick} correct bij ${hg}-${ag}` : `❌ VERLIES — pick ${pick} fout bij ${hg}-${ag}`;
+}
+
+function confirmManualVerify(scanId, pickId, pick) {
+  const input = document.getElementById('manual-score-input');
+  const scoreStr = input?.value.trim();
+  if (!scoreStr || !scoreStr.includes('-')) {
+    showToast('Voer een geldige score in (bijv. 2-1)');
+    return;
+  }
+  const parts = scoreStr.split('-');
+  const hg = parseInt(parts[0]);
+  const ag = parseInt(parts[1]);
+  if (isNaN(hg) || isNaN(ag)) {
+    showToast('Ongeldige score — gebruik formaat 2-1');
+    return;
+  }
+
+  // Zoek de pick in scanLog
+  const log = state.scanLog || [];
+  let found = false;
+
+  log.forEach(scan => {
+    if (String(scan.id) !== String(scanId)) return;
+    scan.picks.forEach(p => {
+      const pId = String(p.fixtureId || p.id || '');
+      if (pId !== String(pickId)) return;
+
+      // Bereken resultaat
+      const t = (p.pick || pick).toUpperCase();
+      let won = false;
+      if      (t === '1')      won = hg > ag;
+      else if (t === 'X')      won = hg === ag;
+      else if (t === '2')      won = ag > hg;
+      else if (t === '1X')     won = hg >= ag;
+      else if (t === 'X2')     won = ag >= hg;
+      else if (t === 'O2.5')   won = (hg + ag) > 2.5;
+      else if (t === 'U2.5')   won = (hg + ag) < 2.5;
+      else if (t === 'BTTS-J') won = hg > 0 && ag > 0;
+      else if (t === 'BTTS-N') won = hg === 0 || ag === 0;
+      else won = false;
+
+      p.status = won ? 'win' : 'lose';
+      p.score = `${hg}-${ag}`;
+      p.verifiedAt = new Date().toISOString();
+      p.verifiedManually = true;
+      found = true;
+    });
+  });
+
+  if (!found) {
+    showToast('Pick niet gevonden in scan log');
+    return;
+  }
+
+  // Sync naar backtest
+  syncScanLogToBacktest();
+  saveState();
+
+  // Sluit modal en herrender
+  document.getElementById('manual-verify-modal')?.remove();
+  showToast(`✅ Score ${hg}-${ag} opgeslagen`);
+  renderScanLog();
 }
