@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.11
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.12
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -1053,8 +1053,35 @@ async function generateCombiTip() {
     return;
   }
 
-  // Filter: minimale odds 1.40, moet quotes hebben
-  const upcomingMatches = allMatches.filter(m =>
+  // Laad alle competities als te weinig wedstrijden met odds
+  const withOdds = allMatches.filter(m => m.homeOdds !== '—' && parseFloat(m.homeOdds) >= 1.40);
+  if (withOdds.length < 6) {
+    btn.textContent = '⟳ ALLE COMPS LADEN...';
+    const today = new Date().toISOString().split('T')[0];
+    const SCAN_IDS = [88,89,78,39,61,135,2,3,848,144,140,40,79,203,5,94,179,218,207,119,103,113,106,32,34,36,1];
+    const seen = new Set((state.matches||[]).map(m => m.id));
+    const extra = [];
+    await Promise.all(SCAN_IDS.map(async lid => {
+      try {
+        const season = lid === 1 ? 2026 : 2025;
+        const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${lid}&season=${season}&date=${today}&status=NS-1H-HT-2H`, null, 6000);
+        const d = await r.json();
+        (d.response||[]).forEach(f => {
+          const m = parseAPIMatch(f);
+          if (m && !seen.has(m.id)) { seen.add(m.id); extra.push(m); }
+        });
+      } catch(e) {}
+    }));
+    if (extra.length) {
+      btn.textContent = `⟳ ODDS OPHALEN (${extra.length})...`;
+      try { await fetchOddsForAllMatches(extra, null); } catch(e) {}
+      extra.forEach(m => state.matches.push(m));
+    }
+  }
+
+  // Filter: minimale odds 1.40, moet quotes hebben, niet afgelopen
+  const upcomingMatches = (state.matches||[]).filter(m =>
+    !m.isDone &&
     m.homeOdds !== '—' &&
     parseFloat(m.homeOdds) >= 1.40 &&
     parseFloat(m.awayOdds) >= 1.10
@@ -1074,9 +1101,9 @@ async function generateCombiTip() {
 
   // ── FIX v18.2: Gebruik index als referentie, stuur fixtureId mee ──
   // Zodat teamnamen altijd uit state.matches komen, niet uit AI response
-  const matchesCtx = upcomingMatches.slice(0,15).map((m, i) => {
+  const matchesCtx = upcomingMatches.slice(0,25).map((m, i) => {
     const datum = m.date ? `${m.date} ${m.time}` : m.time;
-    return `[${i+1}] fixtureId=${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${datum} | quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
+    return `[${i+1}] fixtureId=${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${datum} | 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
   }).join('\n');
 
   const vandaag = new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});
@@ -1087,14 +1114,14 @@ async function generateCombiTip() {
       system:`Je bent sportadviseur. JSON only, geen tekst buiten JSON.
 Het veld "match" MOET altijd de exacte teamnamen bevatten: "ThuisTeam vs UitTeam".
 Het veld "fixtureId" MOET de fixtureId zijn uit de invoer.
-Gebruik NOOIT fixture-ID's of competitienamen als waarde voor "match".
 
-SELECTIE REGELS:
-- Kies wedstrijden met odds tussen 1.40 en 4.00 — NOOIT odds onder 1.40 (geen value)
-- Geef voorkeur aan wedstrijden met duidelijke vorm/statistieken
-- Top 3 tips: kies de 3 wedstrijden met BESTE verhouding kans/quote (value)
-- Combi: kies 3 VERSCHILLENDE wedstrijden met gezamenlijke winkans >30%
-- Vermijd extreem lage odds (1.01-1.39) volledig — te weinig marge
+CROSS-COMPETITIE SELECTIE:
+- Kies wedstrijden uit VERSCHILLENDE competities waar mogelijk — meer diversiteit = minder correlatie
+- Top 3 tips: de 3 beste value picks over ALLE beschikbare competities
+- Combi: kies 3 legs uit MINIMAAL 2 verschillende competities
+- Vermijd picks uit dezelfde competitie op dezelfde speelronde in de combi (hoge correlatie)
+- Odds tussen 1.40 en 4.00 — NOOIT onder 1.40
+- Geef voorkeur aan: thuisfavorieten met motivatieverschil, ploegen in goede vorm, duidelijke kwaliteitsverschillen
 
 {"top3":[
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":8,"reden":"30-40 woorden met concrete redenen","factoren":["",""],"risico":""},
@@ -1105,8 +1132,8 @@ SELECTIE REGELS:
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0},
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0},
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0}
-],"redenering":"40-50 woorden","synergie":"max 30 woorden","risico":"max 25 woorden","kansBerekening":"72%x68%x75%=37%","valueScore":7}}`,
-      messages:[{role:'user',content:`Datum: ${vandaag}\nWedstrijden:\n${matchesCtx}\n\nGeef top 3 tips en combi van 3 legs. Gebruik ALLEEN wedstrijden met odds ≥ 1.40.`}]
+],"redenering":"40-50 woorden","synergie":"max 30 woorden — benoem de cross-competitie diversiteit","risico":"max 25 woorden","kansBerekening":"72%x68%x75%=37%","valueScore":7}}`,
+      messages:[{role:'user',content:`Datum: ${vandaag}\n\nBeschikbare wedstrijden (${upcomingMatches.length} totaal, meerdere competities):\n${matchesCtx}\n\nMaak top 3 tips en een cross-competitie combi van 3 legs uit minimaal 2 verschillende competities.`}]
     });
     let raw = data.content[0].text.trim();
     const js = raw.indexOf('{'), je = raw.lastIndexOf('}');
