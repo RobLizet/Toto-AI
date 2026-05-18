@@ -466,7 +466,10 @@ function selectMatch(m) {
 function selectMatchAndAnalyse(matchId) {
   const m = (state.matches||[]).find(x => String(x.id) === String(matchId));
   if (m) selectMatch(m);
-  setTimeout(() => switchScreen('analyse'), 80);
+  setTimeout(() => {
+    switchScreen('analyse');
+    setTimeout(() => showAnalyseSubTab('analyse'), 80);
+  }, 80);
 }
 
 function goToAnalyse(matchId) {
@@ -644,7 +647,7 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
   let oddsData = cached;
 
   if (!oddsData) {
-    const bookmakers = [8, 6, 1];
+    const bookmakers = [8, 6, 1, 5, 11, 3, 4, 7, 2];
     const season = leagueId === 1 ? 2026 : 2025;
     const leagueMatch = (state.matches || []).find(m => String(m.leagueId) === String(leagueId));
     const matchDate = leagueMatch?.dateISO || new Date().toISOString().split('T')[0];
@@ -717,17 +720,30 @@ async function fetchOddsForAllMatches(matches, _apiKey) {
     let oddsData = typeof _cacheGet === 'function' ? _cacheGet(cacheKey) : null;
 
     if (!oddsData) {
-      const bookmakers = [8, 6, 1];
+      const bookmakers = [8, 6, 1, 5, 11, 3, 4, 7, 2];
       for (const bm of bookmakers) {
         try {
-          const today = new Date().toISOString().split('T')[0];
+          const matchDate = byLeague[leagueId]?.[0]?.dateISO || new Date().toISOString().split('T')[0];
+          const season = parseInt(leagueId) === 1 ? 2026 : 2025;
+          // Eerst op datum proberen
           const r = await apiFetch(
-            `https://v3.football.api-sports.io/odds?league=${leagueId}&date=${today}&bookmaker=${bm}`,
+            `https://v3.football.api-sports.io/odds?league=${leagueId}&season=${season}&date=${matchDate}&bookmaker=${bm}`,
             null, 8000
           );
           const d = await r.json();
           if (d.response?.length) {
             oddsData = d.response;
+            if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData);
+            break;
+          }
+          // Fallback: next=20 zonder datum (pakt komende wedstrijden)
+          const r2 = await apiFetch(
+            `https://v3.football.api-sports.io/odds?league=${leagueId}&season=${season}&bookmaker=${bm}&next=20`,
+            null, 8000
+          );
+          const d2 = await r2.json();
+          if (d2.response?.length) {
+            oddsData = d2.response;
             if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData);
             break;
           }
