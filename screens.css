@@ -277,3 +277,51 @@
 .nav-card-arrow {
   position:absolute;bottom:.7rem;right:.8rem;font-size:.9rem;color:var(--border);
 }
+
+/* ── Dashboard nav kaarten ─────────────────────────── */
+.dash-nav-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+  margin-bottom: .85rem;
+}
+.dash-nav-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: .85rem .9rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  transition: transform .15s, box-shadow .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.dash-nav-card:active { transform: scale(.97); }
+.dash-nav-icon { font-size: 1.4rem; }
+.dash-nav-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: .95rem;
+  color: var(--ink);
+  letter-spacing: .03em;
+}
+.dash-nav-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .46rem;
+  color: var(--sub);
+  line-height: 1.5;
+  flex: 1;
+}
+.dash-nav-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .5rem;
+  font-weight: 800;
+}
+.dash-nav-card:nth-child(1) { background: rgba(37,99,235,.06); border-color: rgba(37,99,235,.18); }
+.dash-nav-card:nth-child(1) .dash-nav-badge { color: #2563eb; }
+.dash-nav-card:nth-child(2) { background: rgba(124,58,237,.06); border-color: rgba(124,58,237,.18); }
+.dash-nav-card:nth-child(2) .dash-nav-badge { color: #7c3aed; }
+.dash-nav-card:nth-child(3) { background: rgba(219,39,119,.06); border-color: rgba(219,39,119,.18); }
+.dash-nav-card:nth-child(3) .dash-nav-badge { color: #be185d; }
+.dash-nav-card:nth-child(4) { background: rgba(15,23,42,.04); border-color: rgba(15,23,42,.1); }
+.dash-nav-card:nth-child(4) .dash-nav-badge { color: #64748b; }
