@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.9
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.10
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -8,12 +8,16 @@ function renderAnalyseScreen() {
   if (!screen) return;
 
   const m = state.selectedMatch;
+  const hasMatches = (state.matches||[]).some(m => m.homeOdds !== '—');
 
   screen.innerHTML = `
     <!-- Sub-tabs -->
     <div class="analyse-subtabs">
       <button id="asub-scan" class="asub-btn active" onclick="showAnalyseSubTab('scan')">
-        ⚡ Scan &amp; Analyse
+        ⚡ Value Scan
+      </button>
+      <button id="asub-analyse" class="asub-btn inactive" onclick="showAnalyseSubTab('analyse')">
+        🤖 AI Analyse
       </button>
       <button id="asub-tips" class="asub-btn inactive" onclick="showAnalyseSubTab('tips')">
         🎯 Combi Tips
@@ -23,23 +27,42 @@ function renderAnalyseScreen() {
       </button>
     </div>
 
-    <!-- Scan sub-tab -->
+    <!-- VALUE SCAN tab -->
     <div id="asub-content-scan">
-      <!-- Scan resultaten altijd bovenaan zichtbaar -->
       <div id="analyseScanResults" style="margin-bottom:.5rem;"></div>
+      ${hasMatches ? `
+      <button id="valueScanBtn2" onclick="scanValueAll()"
+        style="width:100%;background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(5,150,105,.06));
+        border:1.5px solid rgba(22,163,74,.3);color:#15803d;font-family:'IBM Plex Mono',monospace;
+        font-size:.65rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;margin-bottom:.7rem;">
+        ⚡ SCAN VALUE — alle geladen wedstrijden
+      </button>` : `
+      <div style="text-align:center;padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:.7rem;">
+        <div style="font-size:2rem;opacity:.3;">⚡</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--sub);line-height:1.75;max-width:240px;">
+          Laad eerst wedstrijden via het Wedstrijden tabblad, of gebruik de automatische scan hieronder.
+        </div>
+        <button onclick="switchScreen('wedstrijden')"
+          style="padding:.6rem 1.3rem;border-radius:12px;
+          background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.8));
+          color:#fff;border:none;font-family:'IBM Plex Mono',monospace;
+          font-size:.62rem;font-weight:800;cursor:pointer;">
+          ⚽ Naar Wedstrijden →
+        </button>
+      </div>`}
+      <div id="valueBanner2" style="display:none;"></div>
+    </div>
 
+    <!-- AI ANALYSE tab -->
+    <div id="asub-content-analyse" style="display:none;">
       ${!m ? `
-      <!-- v18.4: vriendelijke lege state met actieknop -->
-      <div style="text-align:center;padding:2.5rem 1.25rem;
-        display:flex;flex-direction:column;align-items:center;gap:.7rem;">
-        <div style="font-size:2.2rem;opacity:.3;">⚽</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;
-          color:var(--ink);letter-spacing:.04em;">
+      <div style="text-align:center;padding:2.5rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:.7rem;">
+        <div style="font-size:2.2rem;opacity:.3;">🤖</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--ink);letter-spacing:.04em;">
           Kies een wedstrijd
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;
-          color:var(--sub);line-height:1.75;max-width:230px;">
-          Selecteer een wedstrijd via het Wedstrijden tabblad om een AI-analyse te starten.
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--sub);line-height:1.75;max-width:230px;">
+          Tik op een wedstrijd in het Wedstrijden scherm en kies ANALYSE om een diepte-analyse te starten.
         </div>
         <button onclick="switchScreen('wedstrijden')"
           style="padding:.6rem 1.3rem;border-radius:12px;
@@ -50,7 +73,6 @@ function renderAnalyseScreen() {
           ⚽ Naar Wedstrijden →
         </button>
       </div>` : `
-      <!-- Geselecteerde wedstrijd info -->
       <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.8rem 1rem;margin-bottom:.85rem;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);margin-bottom:.35rem;">${m.comp || 'Competitie'} · ${m.date || ''} ${m.time || ''}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
@@ -74,29 +96,17 @@ function renderAnalyseScreen() {
           </div>
         </div>` : ''}
       </div>
-
-      <!-- AI Analyse knop -->
       <button id="analyseBtn" onclick="runAnalyse()"
         style="width:100%;background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.8));
         color:#fff;border:none;border-radius:12px;font-family:'IBM Plex Mono',monospace;
         font-size:.68rem;font-weight:800;padding:.8rem;cursor:pointer;margin-bottom:.85rem;
         letter-spacing:.05em;box-shadow:0 4px 16px rgba(219,39,119,.25);">
-        ⚽ ANALYSEER — ${m.home} vs ${m.away}
+        🤖 ANALYSEER — ${m.home} vs ${m.away}
       </button>
-
-      <!-- Analyse output -->
       <div id="analyseOutput" style="display:none;">
-        <!-- Entity chips -->
         <div id="entityChips" style="display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.8rem;"></div>
-        <!-- Secties -->
-        <div id="rb-vorm"></div>
-        <div id="rb-stats"></div>
-        <div id="rb-tactiek"></div>
-        <div id="rb-kans"></div>
-        <div id="rb-risico"></div>
-        <div id="rb-advies"></div>
-        <div id="rb-tip"></div>
-        <!-- AI Chat -->
+        <div id="rb-vorm"></div><div id="rb-stats"></div><div id="rb-tactiek"></div>
+        <div id="rb-kans"></div><div id="rb-risico"></div><div id="rb-advies"></div><div id="rb-tip"></div>
         <div id="matchChatSection" style="display:none;margin-top:.75rem;">
           <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:#7c3aed;">💬 VRAAG AAN AI</div>
@@ -115,8 +125,6 @@ function renderAnalyseScreen() {
           </div>
           <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.4rem;" id="chatSuggestions"></div>
         </div>
-
-        <!-- Chat knop -->
         <button id="openChatBtn" onclick="openMatchChat()"
           style="width:100%;margin-top:.6rem;padding:.5rem;border-radius:10px;
           background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
@@ -124,28 +132,6 @@ function renderAnalyseScreen() {
           💬 Stel een vraag aan AI
         </button>
       </div>`}
-
-
-      <!-- Value scan sectie -->
-      <div style="margin-top:.5rem;">
-        <div class="section-label" style="display:flex;align-items:center;gap:.3rem;">VALUE SCAN <span id="help-valuescan-btn"></span></div>
-        ${(state.matches||[]).some(m => m.homeOdds !== '—') ? `
-        <button id="valueScanBtn2" onclick="scanValueAll()"
-          style="width:100%;background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(5,150,105,.06));
-          border:1.5px solid rgba(22,163,74,.3);color:#15803d;font-family:'IBM Plex Mono',monospace;
-          font-size:.65rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;margin-bottom:.7rem;">
-          ⚡ SCAN VALUE — alle geladen matches
-        </button>` : `
-        <!-- v18.4: klikbare lege state voor value scan -->
-        <button onclick="switchScreen('wedstrijden')"
-          style="width:100%;padding:.65rem;border-radius:10px;
-          background:rgba(15,23,42,.03);border:1px dashed rgba(15,23,42,.15);
-          font-family:'IBM Plex Mono',monospace;font-size:.56rem;
-          color:var(--sub);cursor:pointer;text-align:center;margin-bottom:.7rem;">
-          ⚽ Eerst wedstrijden laden — tik om naar Wedstrijden te gaan →
-        </button>`}
-        <div id="valueBanner2" style="display:none;"></div>
-      </div>
     </div>
 
     <!-- Scan Log sub-tab -->
@@ -164,26 +150,30 @@ function renderAnalyseScreen() {
       <div id="combiCard" style="display:none;"></div>
     </div>
   `;
-
 }
 
+
 function showAnalyseSubTab(tab) {
-  const scan = document.getElementById('asub-content-scan');
-  const tips = document.getElementById('asub-content-tips');
-  const log  = document.getElementById('asub-content-log');
-  const btnScan = document.getElementById('asub-scan');
-  const btnTips = document.getElementById('asub-tips');
-  const btnLog  = document.getElementById('asub-log');
-  [scan,tips,log].forEach(el => { if(el) el.style.display='none'; });
-  [btnScan,btnTips,btnLog].forEach(b => { if(b) b.className='asub-btn inactive'; });
+  const scan    = document.getElementById('asub-content-scan');
+  const analyse = document.getElementById('asub-content-analyse');
+  const tips    = document.getElementById('asub-content-tips');
+  const log     = document.getElementById('asub-content-log');
+  const btnScan    = document.getElementById('asub-scan');
+  const btnAnalyse = document.getElementById('asub-analyse');
+  const btnTips    = document.getElementById('asub-tips');
+  const btnLog     = document.getElementById('asub-log');
+  [scan,analyse,tips,log].forEach(el => { if(el) el.style.display='none'; });
+  [btnScan,btnAnalyse,btnTips,btnLog].forEach(b => { if(b) b.className='asub-btn inactive'; });
   if (tab === 'scan') {
     if (scan) scan.style.display = 'block';
     if (btnScan) btnScan.className = 'asub-btn active';
-    // Herstel scan resultaten bij openen tab
     if (state.valueScans?.length) {
       const sorted = [...state.valueScans].sort((a,b)=>(b.value||-999)-(a.value||-999)).filter(s=>s.value>=5);
       renderAnalyseScanResults(sorted);
     }
+  } else if (tab === 'analyse') {
+    if (analyse) analyse.style.display = 'block';
+    if (btnAnalyse) btnAnalyse.className = 'asub-btn active';
   } else if (tab === 'tips') {
     if (tips) tips.style.display = 'block';
     if (btnTips) btnTips.className = 'asub-btn active';
