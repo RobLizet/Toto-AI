@@ -7,8 +7,11 @@ const APP_VERSION = 'v19.0';
 const STATE_KEY = 'totoai_state';
 
 const state = {
+  // Navigatie
   activeScreen: 'dashboard',
   activeTab: 'dashboard',
+
+  // Wedstrijden
   activeComp: 'eredivisie',
   matches: [],
   bookmakerOdds: {},
@@ -20,11 +23,29 @@ const state = {
   backtestPicks: [],
   scanLog: [],
   trackerBets: [],
+
+  // Combi builder
   combiBuilder: [],
-  wallet: { balance: 500, startBalance: 500, totalStaked: 0, totalWon: 0, bets: [] },
+
+  // Wallet
+  wallet: {
+    balance: 500,
+    startBalance: 500,
+    totalStaked: 0,
+    totalWon: 0,
+    bets: []
+  },
+
+  // Tracker (echte bets buiten de app)
   tracker: { bets: [] },
+
+  // Backtest (automatisch bijgehouden value picks)
   valueBacktest: { picks: [] },
+
+  // Kosten tracker
   costs: { calls: 0, tokensIn: 0, tokensOut: 0, totalUSD: 0 },
+
+  // Instellingen
   settings: {
     anthropicKey: '',
     footballKey: '',
@@ -62,11 +83,14 @@ function loadState() {
     const raw = localStorage.getItem(STATE_KEY);
     if (!raw) return;
     const saved = JSON.parse(raw);
+    // Deep merge — bewaar structuur, overschrijf met opgeslagen waarden
     if (saved.wallet)        Object.assign(state.wallet, saved.wallet);
     if (saved.tracker)       Object.assign(state.tracker, saved.tracker);
     if (saved.valueBacktest) Object.assign(state.valueBacktest, saved.valueBacktest);
     if (saved.settings)      Object.assign(state.settings, saved.settings);
-    if (saved.costs)         Object.assign(state.costs, saved.costs);
+    // Kosten tracker laden
+    if (saved.costs) Object.assign(state.costs, saved.costs);
+
     const scalarFields = [
       'activeComp','activeScreen','favoriteComps','combiBuilder',
       'openingOdds','lastScanResults','scheduledScanPicks',
@@ -80,4 +104,5 @@ function loadState() {
   }
 }
 
+// Stub — wordt overschreven door firebase.js
 function scheduleFirebaseSync() {}
