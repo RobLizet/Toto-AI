@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v50';
+const VERSION = 'v51';
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -462,56 +462,64 @@ async function generateDailyTip(env) {
     }
   } catch(e) {}
 
-  // Haal picks op uit Firebase
+  // Haal picks op uit Firebase — alleen kwalitatieve picks
   let picks = [];
   try {
     const picksData = await fb(env, 'picks') || {};
     picks = Object.values(picksData)
-      .filter(p => p.status === 'pending' && p.date === today)
+      .filter(p =>
+        p.status === 'pending' &&
+        p.date === today &&
+        !p.isSparseData &&
+        (p.value || 0) >= 8 &&
+        (p.confidence || 0) >= 6 &&
+        p.poissonUsed
+      )
       .sort((a, b) => (b.value || 0) - (a.value || 0))
       .slice(0, 5);
   } catch(e) {
     console.warn('[DailyTip] Picks ophalen mislukt:', e.message);
   }
 
-  // Haal vandaag fixtures op van API-Football voor context
-  let topFixtures = [];
-  try {
-    const r = await apif(env, `/fixtures?date=${today}&status=NS`);
-    const d = await r.json();
-    const known = new Set([39, 140, 78, 135, 61, 2, 88, 94, 203]);
-    topFixtures = (d.response || [])
-      .filter(f => known.has(f.league.id))
-      .slice(0, 8)
-      .map(f => `${f.teams.home.name} vs ${f.teams.away.name} (${f.league.name})`);
-  } catch(e) {}
+  // Geen kwalitatieve picks → geen tip vandaag
+  if (!picks.length) {
+    const noTip = {
+      date: today,
+      qualified: false,
+      tip: null,
+      reason: 'Geen picks die voldoen aan de kwaliteitsdrempel vandaag.',
+      generatedAt: new Date().toISOString(),
+      version: VERSION
+    };
+    await fb(env, 'daily_tip/latest', 'PUT', noTip);
+    console.log('[DailyTip] Geen gekwalificeerde picks vandaag.');
+    return noTip;
+  }
 
-  // Bouw prompt voor Claude
-  const picksText = picks.length
-    ? picks.map(p => `- ${p.matchName || '?'}: ${p.pickLabel} @ ${p.odds} (value: +${Math.round(p.value || 0)}%, conf: ${p.confidence}/10)`).join('\n')
-    : 'Nog geen gescande picks beschikbaar voor vandaag.';
+  // Bouw prompt voor Claude — gestructureerde JSON output
+  const picksText = picks
+    .map(p => `- ${p.matchName || '?'}: ${p.pickLabel} @ ${p.odds} (value: +${Math.round(p.value||0)}%, conf: ${p.confidence}/10, Poisson: ${p.poissonUsed ? 'ja' : 'nee'})`)
+    .join('\n');
 
-  const fixturesText = topFixtures.length
-    ? topFixtures.join('\n')
-    : 'Geen fixtures gevonden.';
+  const prompt = `Je bent een voetbal betting analist. Kies uit onderstaande gekwalificeerde value picks de BESTE pick van de dag.
 
-  const prompt = `Je bent een voetbal betting analist. Geef een korte, concrete dagelijkse tip voor ${today}.
-
-Top value picks van vandaag:
+Gekwalificeerde picks (value ≥8%, conf ≥6/10, Poisson geldig):
 ${picksText}
 
-Wedstrijden van vandaag (grote competities):
-${fixturesText}
+Respond ONLY with valid JSON, no text outside JSON:
+{
+  "match": "Thuis vs Uit",
+  "pick": "1",
+  "pickLabel": "Thuis wint",
+  "odds": 2.10,
+  "value": 15,
+  "confidence": 7,
+  "markt": "Uitslag",
+  "analyse": "2-3 zinnen concrete onderbouwing met cijfers",
+  "tip": "1 zin samenvatting voor de gebruiker"
+}`;
 
-Geef je analyse in het Nederlands. Maximaal 3 zinnen. Geef 1 concrete beste pick met onderbouwing. Eindig met een korte disclaimer.
-Formaat:
-🎯 TIP VAN DE DAG: [pick]
-📊 ANALYSE: [2 zinnen analyse]
-⚠️ [korte disclaimer]`;
-
-  // Genereer tip via Claude
-  let tipText = '';
-  let tipPick = '';
+  let tipData = null;
   try {
     const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -522,43 +530,58 @@ Formaat:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 300,
+        max_tokens: 400,
         messages: [{ role: 'user', content: prompt }]
       })
     });
     const data = await res.json();
-    tipText = data.content?.[0]?.text || '';
-
-    // Extraheer de pick uit de tip
-    const tipMatch = tipText.match(/TIP VAN DE DAG:\s*(.+)/);
-    tipPick = tipMatch?.[1]?.trim() || '';
+    const raw = data.content?.[0]?.text || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    tipData = {
+      date: today,
+      qualified: true,
+      match:      parsed.match,
+      pick:       parsed.pick,
+      pickLabel:  parsed.pickLabel,
+      odds:       parsed.odds,
+      value:      parsed.value,
+      confidence: parsed.confidence,
+      markt:      parsed.markt || 'Uitslag',
+      analyse:    parsed.analyse,
+      tip:        parsed.tip,
+      allPicks:   picks.slice(0, 3).map(p => ({
+        match: p.matchName, label: p.pickLabel,
+        odds: p.odds, value: p.value, confidence: p.confidence
+      })),
+      generatedAt: new Date().toISOString(),
+      version: VERSION
+    };
   } catch(e) {
-    console.error('[DailyTip] Claude API fout:', e.message);
-    tipText = '🎯 TIP VAN DE DAG: Geen tip beschikbaar\n📊 ANALYSE: AI service tijdelijk niet beschikbaar.\n⚠️ Uitsluitend voor entertainment.';
+    console.error('[DailyTip] Fout:', e.message);
+    // Neem gewoon de top pick zonder AI samenvatting
+    const top = picks[0];
+    tipData = {
+      date: today,
+      qualified: true,
+      match:      top.matchName || '?',
+      pick:       top.pick,
+      pickLabel:  top.pickLabel,
+      odds:       top.odds,
+      value:      top.value,
+      confidence: top.confidence,
+      markt:      top.markt || 'Uitslag',
+      analyse:    `Value pick met ${Math.round(top.value||0)}% positieve verwachte waarde en confidence ${top.confidence}/10.`,
+      tip:        `${top.pickLabel} @ ${top.odds}`,
+      generatedAt: new Date().toISOString(),
+      version: VERSION
+    };
   }
-
-  // Sla op in Firebase
-  const tipData = {
-    date: today,
-    tip: tipText,
-    pick: tipPick,
-    picks: picks.slice(0, 3).map(p => ({
-      match: p.matchName,
-      label: p.pickLabel,
-      odds: p.odds,
-      value: p.value,
-      confidence: p.confidence
-    })),
-    generatedAt: new Date().toISOString(),
-    version: VERSION
-  };
 
   await fb(env, 'daily_tip/latest', 'PUT', tipData);
   await fb(env, `daily_tip/archive/${today}`, 'PUT', tipData);
-
-  console.log('[DailyTip] Tip opgeslagen voor', today, ':', tipPick);
+  console.log('[DailyTip] Tip opgeslagen:', tipData.match, tipData.pickLabel);
   return tipData;
-}
 
 // ── Daily tip endpoint (/daily-tip) ───────────────────────
 async function handleDailyTip(env) {
