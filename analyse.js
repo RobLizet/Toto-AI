@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.10
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.11
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -625,6 +625,56 @@ function renderAnalyseScanResults(scans) {
   if (!el) return;
   if (!scans || !scans.length) { el.innerHTML = ''; return; }
 
+  // Kwaliteitsdrempel voor de 100 picks
+  const DREMPEL = { minValue: 8, minConf: 6 };
+  const teltMee  = scans.filter(s => !s.isSparseData && s.value >= DREMPEL.minValue && (s.confidence||0) >= DREMPEL.minConf && s.poissonUsed);
+  const teltNiet = scans.filter(s =>  s.isSparseData || s.value <  DREMPEL.minValue || (s.confidence||0) <  DREMPEL.minConf || !s.poissonUsed);
+
+  const renderPick = (s, geldig) => {
+    const valColor = !geldig ? '#94a3b8' : s.value >= 15 ? '#15803d' : '#b45309';
+    const sign = s.value > 0 ? '+' : '';
+    const home = s.match?.home || s.home || '?';
+    const away = s.match?.away || s.away || '?';
+    const redenen = [];
+    if (s.isSparseData) redenen.push('data schaars');
+    if (s.value < DREMPEL.minValue) redenen.push(`value < ${DREMPEL.minValue}%`);
+    if ((s.confidence||0) < DREMPEL.minConf) redenen.push(`conf < ${DREMPEL.minConf}/10`);
+    if (!s.poissonUsed) redenen.push('geen Poisson');
+
+    return `<div style="display:flex;align-items:center;padding:.5rem .9rem;
+      border-bottom:1px solid var(--stroke);cursor:pointer;
+      ${!geldig ? 'opacity:.45;' : ''}"
+      onclick="openValueAnalysis('${s.match?.id || s.id}')">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;
+            font-weight:700;color:${geldig ? 'var(--ink)' : 'var(--sub)'};">${home} vs ${away}</div>
+          ${!geldig ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;
+            background:rgba(148,163,184,.15);border:1px solid rgba(148,163,184,.3);
+            color:#94a3b8;border-radius:4px;padding:.1rem .3rem;font-weight:700;">
+            TELT NIET MEE</span>` : `<span style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;
+            background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);
+            color:#15803d;border-radius:4px;padding:.1rem .3rem;font-weight:700;">✓ PICK</span>`}
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
+          ${s.pickLabel} · ${s.kans||'?'}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):s._hasXG?' (xG)':''} · ${s.reason||''}
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">
+          🎲 ${s.confidence||'?'}/10 · ½K ${(s.kelly||0).toFixed(1)}%
+          ${!geldig ? `· <span style="color:#94a3b8;">${redenen.join(', ')}</span>` : ''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:${valColor};">
+          ${sign}${Math.round(s.value)}%
+        </div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:${geldig ? '#16a34a' : '#94a3b8'};">
+          ${(s.odds||0).toFixed(2)}
+        </div>
+      </div>
+    </div>`;
+  };
+
   const html = `
     <div style="background:var(--card);border:1px solid rgba(22,163,74,.25);border-radius:14px;
       overflow:hidden;margin-bottom:.5rem;">
@@ -632,39 +682,19 @@ function renderAnalyseScanResults(scans) {
         padding:.55rem .9rem;background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
         border-bottom:1px solid rgba(22,163,74,.15);">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;color:#15803d;">
-          ⚡ SCAN RESULTATEN · ${scans.length} picks
+          ⚡ SCAN RESULTATEN · ${teltMee.length} picks <span style="color:var(--sub);font-weight:400;">van ${scans.length}</span>
         </div>
         <button onclick="document.getElementById('analyseScanResults').innerHTML=''"
           style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.85rem;">✕</button>
       </div>
-      ${scans.slice(0, 8).map(s => {
-        const valColor = s.value >= 15 ? '#15803d' : '#b45309';
-        const sign = s.value > 0 ? '+' : '';
-        const home = s.match?.home || s.home || '?';
-        const away = s.match?.away || s.away || '?';
-        return `<div style="display:flex;align-items:center;padding:.5rem .9rem;
-          border-bottom:1px solid var(--stroke);cursor:pointer;"
-          onclick="openValueAnalysis('${s.match?.id || s.id}')">
-          <div style="flex:1;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-              font-weight:700;color:var(--ink);">${home} vs ${away}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
-              ${s.pickLabel} · ${s.kans||'?'}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):s._hasXG?' (xG)':''} · ${s.reason||''}
-            </div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">
-              🎲 ${s.confidence||'?'}/10 · ½K ${(s.kelly||0).toFixed(1)}%
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:${valColor};">
-              ${sign}${Math.round(s.value)}%
-            </div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:#16a34a;">
-              ${(s.odds||0).toFixed(2)}
-            </div>
-          </div>
-        </div>`;
-      }).join('')}
+      ${teltMee.map(s => renderPick(s, true)).join('')}
+      ${teltNiet.length ? `
+        <div style="padding:.35rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.48rem;
+          color:var(--sub);background:rgba(15,23,42,.03);border-top:1px solid var(--stroke);">
+          ONDER DREMPEL (value ≥8%, conf ≥6/10, Poisson vereist)
+        </div>
+        ${teltNiet.map(s => renderPick(s, false)).join('')}
+      ` : ''}
     </div>`;
   el.innerHTML = html;
 }
