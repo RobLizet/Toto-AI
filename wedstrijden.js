@@ -7,7 +7,7 @@
 const COMP_LIST = [
   { key:'eredivisie', flag:'🇳🇱', name:'Eredivisie' },
   { key:'kkd',        flag:'🇳🇱', name:'KKD' },
-  { key:'premier',    flag:'🏴',  name:'Premier League' },
+  { key:'premier',    flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',  name:'Premier League' },
   { key:'bundesliga', flag:'🇩🇪', name:'Bundesliga' },
   { key:'ligue1',     flag:'🇫🇷', name:'Ligue 1' },
   { key:'seriea',     flag:'🇮🇹', name:'Serie A' },
@@ -54,11 +54,18 @@ function renderWedstrijdenScreen() {
         const isActive = state.activeComp === c.key;
         const isFav = favs.includes(c.key);
         return `<div class="comp-chip${isActive?' active':''}${isFav?' fav':''}" id="comp-${c.key}"
+          style="position:relative;"
           ontouchstart="handleCompTouchStart('${c.key}',event)"
           ontouchend="handleCompTouchEnd('${c.key}')"
           onclick="handleCompTap('${c.key}')">
           <span class="flag">${c.flag}</span>
           <span class="cname">${c.name}</span>
+          <button onclick="event.stopPropagation();openCompDetail('${c.key}')"
+            style="position:absolute;top:3px;right:3px;background:rgba(124,58,237,.2);
+            border:1px solid rgba(124,58,237,.35);border-radius:999px;
+            width:1.4rem;height:1.4rem;font-size:.58rem;cursor:pointer;color:#7c3aed;
+            display:flex;align-items:center;justify-content:center;font-weight:900;
+            line-height:1;z-index:10;padding:0;">ℹ</button>
         </div>`;
       }).join('')}
     </div>
@@ -1236,3 +1243,137 @@ function openJacks(matchId) {
     : `https://www.jacks.nl/sport/zoeken?q=${encodeURIComponent(m.home + ' ' + m.away)}`;
   window.open(url, '_blank');
 }
+
+
+// ── Competitie Info Modal ─────────────────────────────
+async function openCompDetail(compKey) {
+  const key = compKey || state.activeComp;
+  const leagueId = COMP_IDS[key];
+  const compName = COMP_NAMES[key] || key;
+
+  let modal = document.getElementById('comp-info-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'comp-info-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:9000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);';
+    modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = '<div style="background:var(--card);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;">'
+    + '<div style="padding:.75rem 0 0;text-align:center;"><div style="width:36px;height:4px;background:rgba(15,23,42,.15);border-radius:999px;display:inline-block;"></div></div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;padding:.75rem 1.25rem .5rem;">'
+    + '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;color:var(--ink);">' + compName + '</div>'
+    + '<button onclick="document.getElementById("comp-info-modal").remove()" style="background:rgba(15,23,42,.08);border:none;border-radius:999px;width:2rem;height:2rem;cursor:pointer;font-size:.8rem;color:var(--sub);">✕</button>'
+    + '</div>'
+    + '<div style="display:flex;border-bottom:1px solid var(--stroke);padding:0 1.25rem;">'
+    + '<button onclick="showCompTab("stand")" id="ctab-stand" style="font-family:IBM Plex Mono,monospace;font-size:.55rem;font-weight:700;padding:.5rem .75rem;border:none;background:none;cursor:pointer;color:#be185d;border-bottom:2px solid #be185d;">Stand</button>'
+    + '<button onclick="showCompTab("scorers")" id="ctab-scorers" style="font-family:IBM Plex Mono,monospace;font-size:.55rem;font-weight:700;padding:.5rem .75rem;border:none;background:none;cursor:pointer;color:var(--sub);border-bottom:2px solid transparent;">Topscorers</button>'
+    + '<button onclick="showCompTab("wedstrijden")" id="ctab-wedstrijden" style="font-family:IBM Plex Mono,monospace;font-size:.55rem;font-weight:700;padding:.5rem .75rem;border:none;background:none;cursor:pointer;color:var(--sub);border-bottom:2px solid transparent;">Wedstrijden</button>'
+    + '</div>'
+    + '<div id="comp-tab-content" style="padding:1rem 1.25rem 2rem;"><div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:var(--sub);">⟳ Laden...</div></div>'
+    + '</div>';
+
+  loadCompStand(leagueId);
+}
+
+function showCompTab(tab) {
+  const key = state.activeComp;
+  const leagueId = COMP_IDS[key];
+  ['stand','scorers','wedstrijden'].forEach(function(t) {
+    const btn = document.getElementById('ctab-' + t);
+    if (btn) { btn.style.color = t === tab ? '#be185d' : 'var(--sub)'; btn.style.borderBottom = t === tab ? '2px solid #be185d' : '2px solid transparent'; }
+  });
+  if (tab === 'stand') loadCompStand(leagueId);
+  else if (tab === 'scorers') loadCompTopscorers(leagueId);
+  else loadCompWedstrijden(leagueId);
+}
+
+async function loadCompStand(leagueId) {
+  const el = document.getElementById('comp-tab-content');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:var(--sub);">⟳ Stand laden...</div>';
+  try {
+    const standings = await fetchStandings(leagueId, null);
+    if (!standings?.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:var(--sub);">Geen stand beschikbaar</div>'; return; }
+    let html = '<div style="font-family:IBM Plex Mono,monospace;font-size:.48rem;">'
+      + '<div style="display:grid;grid-template-columns:1.2rem 1fr repeat(5,2rem);gap:.3rem;padding:.3rem 0;color:var(--sub);font-weight:700;border-bottom:1px solid var(--stroke);margin-bottom:.3rem;">'
+      + '<span>#</span><span>Team</span><span style="text-align:center">G</span><span style="text-align:center">W</span><span style="text-align:center">V</span><span style="text-align:center">GD</span><span style="text-align:center;color:#be185d">Pt</span></div>';
+    standings.forEach(function(t) {
+      const gd = t.goalsDiff || 0;
+      html += '<div style="display:grid;grid-template-columns:1.2rem 1fr repeat(5,2rem);gap:.3rem;padding:.3rem 0;border-bottom:1px solid rgba(15,23,42,.05);align-items:center;">'
+        + '<span style="color:var(--sub);">' + t.rank + '</span>'
+        + '<span style="font-weight:600;color:var(--ink);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + (t.team?.name||'?') + '</span>'
+        + '<span style="text-align:center;color:var(--sub);">' + (t.all?.played||0) + '</span>'
+        + '<span style="text-align:center;color:#16a34a;">' + (t.all?.win||0) + '</span>'
+        + '<span style="text-align:center;color:#dc2626;">' + (t.all?.lose||0) + '</span>'
+        + '<span style="text-align:center;color:var(--sub);">' + (gd>0?'+':'') + gd + '</span>'
+        + '<span style="text-align:center;font-weight:800;color:#be185d;">' + (t.points||0) + '</span>'
+        + '</div>';
+    });
+    el.innerHTML = html + '</div>';
+  } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:1rem;font-size:.55rem;">⚠ ' + e.message + '</div>'; }
+}
+
+async function loadCompTopscorers(leagueId) {
+  const el = document.getElementById('comp-tab-content');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:var(--sub);">⟳ Topscorers laden...</div>';
+  try {
+    const scorers = await fetchTopScorers(leagueId);
+    if (!scorers?.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:var(--sub);">Geen data beschikbaar</div>'; return; }
+    let html = '<div>';
+    scorers.slice(0,10).forEach(function(s, i) {
+      const goals = s.statistics?.[0]?.goals?.total || 0;
+      const assists = s.statistics?.[0]?.goals?.assists || 0;
+      const team = s.statistics?.[0]?.team?.name || '';
+      html += '<div style="display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid rgba(15,23,42,.06);">'
+        + '<div style="font-family:Bebas Neue,sans-serif;font-size:1rem;color:var(--sub);width:1.5rem;text-align:center;">' + (i+1) + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-family:DM Sans,sans-serif;font-size:.72rem;font-weight:700;color:var(--ink);">' + (s.player?.name||'?') + '</div>'
+        + '<div style="font-family:IBM Plex Mono,monospace;font-size:.46rem;color:var(--sub);">' + team + '</div>'
+        + '</div>'
+        + '<div style="text-align:right;">'
+        + '<div style="font-family:Bebas Neue,sans-serif;font-size:1.1rem;color:#be185d;">' + goals + '</div>'
+        + '<div style="font-family:IBM Plex Mono,monospace;font-size:.42rem;color:var(--sub);">' + assists + ' ast</div>'
+        + '</div></div>';
+    });
+    el.innerHTML = html + '</div>';
+  } catch(e) { el.innerHTML = '<div style="color:#dc2626;padding:1rem;font-size:.55rem;">⚠ ' + e.message + '</div>'; }
+}
+
+async function loadCompWedstrijden(leagueId) {
+  const el = document.getElementById('comp-tab-content');
+  if (!el) return;
+  const matches = (state.matches||[]).filter(function(m) { return !leagueId || String(m.leagueId) === String(leagueId); });
+  if (!matches.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:var(--sub);">Laad eerst wedstrijden</div>';
+    return;
+  }
+  el.innerHTML = '';
+  matches.forEach(function(m) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(15,23,42,.06);cursor:pointer;';
+    row.onclick = function() {
+      const modal = document.getElementById('comp-info-modal');
+      if (modal) modal.remove();
+      const match = (state.matches||[]).find(function(x) { return x.id === m.id; });
+      if (match) selectMatch(match);
+      switchScreen('analyse');
+    };
+    const time = document.createElement('div');
+    time.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:.5rem;color:var(--sub);';
+    time.textContent = m.time;
+    const name = document.createElement('div');
+    name.style.cssText = 'flex:1;text-align:center;font-family:DM Sans,sans-serif;font-size:.65rem;font-weight:700;';
+    name.textContent = m.home + ' vs ' + m.away;
+    const odds = document.createElement('div');
+    odds.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:.5rem;color:#be185d;';
+    odds.textContent = m.homeOdds !== '—' ? m.homeOdds : '—';
+    row.appendChild(time);
+    row.appendChild(name);
+    row.appendChild(odds);
+    el.appendChild(row);
+  });
+}
+
