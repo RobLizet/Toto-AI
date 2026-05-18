@@ -31,18 +31,6 @@ function renderDashboard() {
   const topValuePick = valuePicks.sort((a,b) => (b.value||0)-(a.value||0))[0];
 
   // WK countdown
-  // Weekoverzicht berekenen
-  const weekNow = new Date();
-  const weekStart = new Date(weekNow);
-  weekStart.setDate(weekNow.getDate() - weekNow.getDay());
-  weekStart.setHours(0,0,0,0);
-  const weekScans = scanLog.filter(s => new Date(s.timestamp||0) >= weekStart);
-  const weekPicksArr = weekScans.flatMap(s => s.picks||[]);
-  const weekSettled = weekPicksArr.filter(p => p.status==='win'||p.status==='lose');
-  const weekWins = weekSettled.filter(p => p.status==='win');
-  const weekHR = weekSettled.length ? Math.round(weekWins.length/weekSettled.length*100) : null;
-  const weekOpen = weekPicksArr.filter(p => p.status==='pending').length;
-
   const wkStart = new Date('2026-06-11T00:00:00');
   const now = new Date();
   const wkDiff = wkStart - now;
@@ -107,56 +95,32 @@ function renderDashboard() {
     </div>` : ''}
 
     <!-- Nav kaarten -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.85rem;">
-      <div onclick="switchScreen('wedstrijden')" style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.18);border-radius:16px;padding:.85rem .9rem;cursor:pointer;display:flex;flex-direction:column;gap:.3rem;">
-        <div style="font-size:1.4rem;">⚽</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;color:var(--ink);">WEDSTRIJDEN</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);line-height:1.5;flex:1;">Laad matches, bekijk quotes en value indicators</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:#2563eb;">LIVE API</div>
+    <div class="dash-nav-grid">
+      <div class="dash-nav-card" onclick="switchScreen('wedstrijden')">
+        <div class="dash-nav-icon">⚽</div>
+        <div class="dash-nav-title">WEDSTRIJDEN</div>
+        <div class="dash-nav-sub">Laad matches, bekijk quotes en value indicators</div>
+        <div class="dash-nav-badge">LIVE API</div>
       </div>
-      <div onclick="switchScreen('analyse')" style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.18);border-radius:16px;padding:.85rem .9rem;cursor:pointer;display:flex;flex-direction:column;gap:.3rem;">
-        <div style="font-size:1.4rem;">⚡</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;color:var(--ink);">ANALYSE</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);line-height:1.5;flex:1;">AI analyse, value scan en combi tips</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:#7c3aed;">AI POWERED</div>
+      <div class="dash-nav-card" onclick="switchScreen('analyse')">
+        <div class="dash-nav-icon">⚡</div>
+        <div class="dash-nav-title">ANALYSE</div>
+        <div class="dash-nav-sub">AI analyse, value scan en combi tips</div>
+        <div class="dash-nav-badge" style="color:#7c3aed;">AI POWERED</div>
       </div>
-      <div onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('wallet'),100)" style="background:rgba(219,39,119,.06);border:1px solid rgba(219,39,119,.18);border-radius:16px;padding:.85rem .9rem;cursor:pointer;display:flex;flex-direction:column;gap:.3rem;">
-        <div style="font-size:1.4rem;">💰</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;color:var(--ink);">WALLET</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);line-height:1.5;flex:1;">Bets, tracker, backtest en pick analyse</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:#be185d;">€${wallet.balance.toFixed(0)}</div>
+      <div class="dash-nav-card" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('wallet'),100)">
+        <div class="dash-nav-icon">💰</div>
+        <div class="dash-nav-title">WALLET</div>
+        <div class="dash-nav-sub">Bets, tracker, backtest en pick analyse</div>
+        <div class="dash-nav-badge" style="color:#be185d;">€${wallet.balance.toFixed(0)}</div>
       </div>
-      <div onclick="switchScreen('instellingen')" style="background:rgba(15,23,42,.04);border:1px solid rgba(15,23,42,.1);border-radius:16px;padding:.85rem .9rem;cursor:pointer;display:flex;flex-direction:column;gap:.3rem;">
-        <div style="font-size:1.4rem;">⚙️</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:.95rem;color:var(--ink);">INSTELLINGEN</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);line-height:1.5;flex:1;">API keys, thema, notificaties en account</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:#64748b;">CONFIG</div>
+      <div class="dash-nav-card" onclick="switchScreen('instellingen')">
+        <div class="dash-nav-icon">⚙️</div>
+        <div class="dash-nav-title">INSTELLINGEN</div>
+        <div class="dash-nav-sub">API keys, thema, notificaties en account</div>
+        <div class="dash-nav-badge">CONFIG</div>
       </div>
     </div>
-
-    <!-- Weekoverzicht -->
-    ${weekScans.length ? `
-    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:var(--sub);margin-bottom:.5rem;">📅 DEZE WEEK</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.4rem;">
-        <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#2563eb;">${weekScans.length}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">SCANS</div>
-        </div>
-        <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#7c3aed;">${weekPicksArr.length}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">PICKS</div>
-        </div>
-        <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${weekHR!==null&&weekHR>=50?'#16a34a':'#dc2626'};">${weekHR !== null ? weekHR+'%' : '—'}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">HITRATE</div>
-        </div>
-        <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#be185d;">${weekOpen}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">OPEN</div>
-        </div>
-      </div>
-    </div>` : ''}
 
     <!-- Confidence engine status -->
     ${scanROI !== null ? `
