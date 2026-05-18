@@ -95,24 +95,18 @@ function renderDashboard() {
   });
 
   screen.innerHTML = `
-    <!-- Stats strip -->
-    <div class="dash-stats">
-      <div class="dash-stat" onclick="switchScreen('wallet')">
-        <div class="dash-stat-val" style="color:#be185d;">€${wallet.balance.toFixed(0)}</div>
-        <div class="dash-stat-lbl">SALDO</div>
+
+    <!-- 100 picks voortgang -->
+    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;"
+      onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('log'),100)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">🎯 VOORTGANG NAAR 100 PICKS</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;">${allPicks.length}<span style="font-size:.65rem;color:var(--sub);">/100</span></div>
       </div>
-      <div class="dash-stat" onclick="switchScreen('wallet')">
-        <div class="dash-stat-val" style="color:${pnlPos?'#16a34a':'#dc2626'};">${pnlPos?'+':''}€${pnl.toFixed(0)}</div>
-        <div class="dash-stat-lbl">W/V</div>
+      <div style="background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">
+        <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:${Math.min(100,allPicks.length)}%;transition:width .4s;"></div>
       </div>
-      <div class="dash-stat" onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('log'),100)">
-        <div class="dash-stat-val" style="color:#2563eb;">${allPicks.length}</div>
-        <div class="dash-stat-lbl">PICKS</div>
-      </div>
-      <div class="dash-stat" onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('log'),100)">
-        <div class="dash-stat-val" style="color:#7c3aed;">${scanHitrate !== null ? scanHitrate + '%' : '—'}</div>
-        <div class="dash-stat-lbl">HITRATE</div>
-      </div>
+      ${settledPicks.length ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">${settledPicks.length} afgerond · ${scanHitrate !== null ? scanHitrate + '% hitrate' : '—'} · ROI ${scanROI >= 0 ? '+' : ''}${scanROI.toFixed(1)}%</div>` : `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">Scan wedstrijden om picks te verzamelen →</div>`}
     </div>
 
     <!-- Open bets -->
