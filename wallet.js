@@ -678,6 +678,41 @@ function openBetModal(event, matchId, pick, pickLabel, odds) {
   const noteInput = document.getElementById('bet-note');
   if (noteInput) noteInput.value = pickLabel || pick;
 
+  // Kelly inzetadvies berekenen
+  const kellyAdvisEl = document.getElementById('kelly-advies');
+  if (kellyAdvisEl) {
+    const scanPick = (state.valueScans||[]).find(s =>
+      String(s.match?.id || s.id) === String(matchId) &&
+      s.pick === pick
+    );
+    const kelly = scanPick?.kelly || null;
+    const saldo = state.wallet?.balance || 500;
+    if (kelly && kelly > 0) {
+      const halfKelly = kelly / 2;
+      const advisBedrag = Math.round((halfKelly / 100) * saldo);
+      kellyAdvisEl.innerHTML = `
+        <div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.2);
+          border-radius:10px;padding:.5rem .75rem;margin-bottom:.5rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#15803d;font-weight:700;margin-bottom:.2rem;">
+            💡 KELLY INZETADVIES
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--ink);">
+            ½ Kelly: <b>${halfKelly.toFixed(1)}%</b> van €${saldo.toFixed(0)} saldo = 
+            <b style="color:#15803d;">€${advisBedrag}</b>
+          </div>
+          <button onclick="document.getElementById('bet-stake').value=${advisBedrag};updateBetReturn();"
+            style="margin-top:.35rem;font-family:'IBM Plex Mono',monospace;font-size:.48rem;
+            font-weight:800;padding:.25rem .6rem;border-radius:7px;cursor:pointer;
+            background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);color:#15803d;">
+            ✓ Gebruik €${advisBedrag}
+          </button>
+        </div>`;
+      kellyAdvisEl.style.display = 'block';
+    } else {
+      kellyAdvisEl.style.display = 'none';
+    }
+  }
+
   const modal = document.getElementById('bet-modal');
   if (modal) modal.style.display = 'flex';
 
