@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.31
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.32
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
