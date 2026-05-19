@@ -192,7 +192,10 @@ function showLoginScreen() {
   if (ls) ls.classList.add('active');
 }
 
-hideLoginScreen();
+function hideLoginScreen() {
+  const ls = document.getElementById('screen-login');
+  if (ls) ls.classList.remove('active');
+}
 
 function skipLoginAndEnter() {
   localStorage.setItem('totoai_skip_login','1');
