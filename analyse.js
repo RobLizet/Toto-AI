@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.32
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.33
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -634,80 +634,128 @@ function renderAnalyseScanResults(scans) {
   if (!el) return;
   if (!scans || !scans.length) { el.innerHTML = ''; return; }
 
-  // Kwaliteitsdrempel voor de 100 picks
   const DREMPEL = { minValue: 8, minConf: 6 };
-  const teltMee  = scans.filter(s => !s.isSparseData && s.value >= DREMPEL.minValue && (s.confidence||0) >= DREMPEL.minConf && s.poissonUsed);
-  const teltNiet = scans.filter(s =>  s.isSparseData || s.value <  DREMPEL.minValue || (s.confidence||0) <  DREMPEL.minConf || !s.poissonUsed);
+  const teltMee  = scans.filter(s => !s.isSparseData && s.value >= DREMPEL.minValue && (s.confidence||0) >= DREMPEL.minConf);
+  const teltNiet = scans.filter(s =>  s.isSparseData || s.value <  DREMPEL.minValue || (s.confidence||0) <  DREMPEL.minConf);
 
-  const renderPick = (s, geldig) => {
-    const valColor = !geldig ? '#94a3b8' : s.value >= 15 ? '#15803d' : '#b45309';
-    const sign = s.value > 0 ? '+' : '';
+  const makeCard = (s, geldig) => {
     const home = s.match?.home || s.home || '?';
     const away = s.match?.away || s.away || '?';
     const matchDate = s.match?.date || s.date || '';
     const matchTime = s.match?.time || s.time || '';
+    const comp = s.match?.comp || s.comp || '';
+    const value = s.value || 0;
+    const conf = s.confidence || 0;
+    const odds = s.odds || 0;
+    const valColor = !geldig ? '#94a3b8' : value >= 20 ? '#15803d' : value >= 10 ? '#b45309' : '#64748b';
+    const valBg = !geldig ? 'rgba(148,163,184,.08)' : value >= 20 ? 'rgba(22,163,74,.1)' : value >= 10 ? 'rgba(180,83,9,.08)' : 'rgba(100,116,139,.08)';
+    const valLabel = !geldig ? 'TELT NIET MEE' : value >= 20 ? '🏆 HOGE VALUE' : value >= 10 ? '⚡ VALUE' : '📊 LAGE VALUE';
     const redenen = [];
     if (s.isSparseData) redenen.push('data schaars');
-    if (s.value < DREMPEL.minValue) redenen.push(`value < ${DREMPEL.minValue}%`);
-    if ((s.confidence||0) < DREMPEL.minConf) redenen.push(`conf < ${DREMPEL.minConf}/10`);
+    if (value < DREMPEL.minValue) redenen.push(`value < ${DREMPEL.minValue}%`);
+    if (conf < DREMPEL.minConf) redenen.push(`conf < ${DREMPEL.minConf}/10`);
 
-    return `<div style="display:flex;align-items:center;padding:.5rem .9rem;
-      border-bottom:1px solid var(--stroke);cursor:pointer;
-      ${!geldig ? 'opacity:.45;' : ''}"
-      onclick="openValueAnalysis('${s.match?.id || s.id}')">
-      <div style="flex:1;">
-        <div style="display:flex;align-items:center;gap:.4rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;
-            font-weight:700;color:${geldig ? 'var(--ink)' : 'var(--sub)'};">${home} vs ${away}</div>
-          ${!geldig ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;
-            background:rgba(148,163,184,.15);border:1px solid rgba(148,163,184,.3);
-            color:#94a3b8;border-radius:4px;padding:.1rem .3rem;font-weight:700;">
-            TELT NIET MEE</span>` : `<span style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;
-            background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);
-            color:#15803d;border-radius:4px;padding:.1rem .3rem;font-weight:700;">✓ PICK</span>`}
-          ${matchDate ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">📅 ${matchDate}${matchTime ? ' ' + matchTime : ''}</span>` : ''}
+    const div = document.createElement('div');
+    div.style.cssText = `background:var(--card);border:1px solid var(--stroke);border-radius:16px;
+      padding:.85rem 1rem;margin-bottom:.6rem;cursor:pointer;
+      border-left:${geldig && value >= 20 ? '4px solid #15803d' : geldig && value >= 10 ? '4px solid #b45309' : '1px solid var(--stroke)'};
+      ${!geldig ? 'opacity:.5;' : ''}`;
+
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.45rem;">
+        <div style="flex:1;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">${comp}</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--ink);margin:.15rem 0;">${home} vs ${away}</div>
+          ${matchDate ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">📅 ${matchDate}${matchTime ? ' ' + matchTime : ''}</div>` : ''}
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
-          ${s.pickLabel} · ${s.kans||'?'}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):s._hasXG?' (xG)':''} · ${s.reason||''}
-        </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">
-          🎲 ${s.confidence||'?'}/10 · ½K ${(s.kelly||0).toFixed(1)}%
-          ${!geldig ? `· <span style="color:#94a3b8;">${redenen.join(', ')}</span>` : ''}
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;
+          padding:2px 8px;border-radius:6px;background:${valBg};color:${valColor};white-space:nowrap;margin-left:.5rem;">
+          ${valLabel}${geldig ? ' +' + Math.round(value) + '%' : (redenen.length ? ' · ' + redenen.join(', ') : '')}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:${valColor};">
-          ${sign}${Math.round(s.value)}%
-        </div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:${geldig ? '#16a34a' : '#94a3b8'};">
-          ${(s.odds||0).toFixed(2)}
-        </div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;">${s.pickLabel||s.pick||''}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
+          ${s.kans||'?'}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):''} · ${s.reason||''}
+        </span>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;margin-left:auto;">${odds.toFixed(2)}</span>
       </div>
-    </div>`;
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:${geldig?'.5rem':'0'};">
+        ${'⭐'.repeat(Math.min(Math.round(conf/2),5))} ${conf}/10 conf · ½K ${(s.kelly||0).toFixed(1)}%
+      </div>
+      ${geldig ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;">
+        <button class="scan-inzet-btn"
+          style="padding:.5rem;border-radius:10px;background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.7));
+          color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:800;cursor:pointer;"
+          data-mid="${s.match?.id||s.id||''}" data-pick="${s.pick||''}" data-label="${(s.pickLabel||'').replace(/"/g,'')}" data-odds="${odds}">
+          💰 INZETTEN
+        </button>
+        <button class="scan-combi-btn"
+          style="padding:.5rem;border-radius:10px;background:rgba(124,58,237,.1);
+          border:1px solid rgba(124,58,237,.25);color:#7c3aed;font-family:'IBM Plex Mono',monospace;
+          font-size:.55rem;font-weight:800;cursor:pointer;"
+          data-mid="${s.match?.id||s.id||''}" data-pick="${s.pick||''}" data-label="${(s.pickLabel||'').replace(/"/g,'')}"
+          data-odds="${odds}" data-home="${home}" data-away="${away}">
+          + COMBI
+        </button>
+      </div>` : ''}`;
+
+    div.addEventListener('click', e => {
+      if (e.target.closest('button')) return;
+      if (typeof openCardPopup === 'function') {
+        openCardPopup('scan', {
+          id: String(s.match?.id||s.id||''), match: {id: String(s.match?.id||s.id||'')},
+          home, away, pick: s.pick, pickLabel: s.pickLabel,
+          odds, value, confidence: conf,
+          reason: s.reason||'', poissonUsed: s.poissonUsed||false, isSparseData: s.isSparseData||false
+        });
+      }
+    });
+    return div;
   };
 
-  const html = `
-    <div style="background:var(--card);border:1px solid rgba(22,163,74,.25);border-radius:14px;
-      overflow:hidden;margin-bottom:.5rem;">
-      <div style="display:flex;justify-content:space-between;align-items:center;
-        padding:.55rem .9rem;background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.05));
-        border-bottom:1px solid rgba(22,163,74,.15);">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;color:#15803d;">
-          ⚡ SCAN RESULTATEN · ${teltMee.length} picks <span style="color:var(--sub);font-weight:400;">van ${scans.length}</span>
-        </div>
-        <button onclick="document.getElementById('analyseScanResults').innerHTML=''"
-          style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.85rem;">✕</button>
-      </div>
-      ${teltMee.map(s => renderPick(s, true)).join('')}
-      ${teltNiet.length ? `
-        <div style="padding:.35rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.48rem;
-          color:var(--sub);background:rgba(15,23,42,.03);border-top:1px solid var(--stroke);">
-          ONDER DREMPEL (value ≥8%, conf ≥6/10)
-        </div>
-        ${teltNiet.map(s => renderPick(s, false)).join('')}
-      ` : ''}
-    </div>`;
-  el.innerHTML = html;
+  // Bouw container
+  el.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'margin-bottom:.5rem;';
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;';
+  hdr.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;color:#15803d;">
+    ⚡ SCAN RESULTATEN · ${teltMee.length} picks <span style="color:var(--sub);font-weight:400;">van ${scans.length}</span></div>
+    <button onclick="document.getElementById('analyseScanResults').innerHTML=''"
+      style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.85rem;">✕</button>`;
+  wrap.appendChild(hdr);
+
+  teltMee.forEach(s => wrap.appendChild(makeCard(s, true)));
+
+  if (teltNiet.length) {
+    const sep = document.createElement('div');
+    sep.style.cssText = 'font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);padding:.3rem 0;margin:.3rem 0;border-top:1px solid var(--stroke);';
+    sep.textContent = 'ONDER DREMPEL (value ≥8%, conf ≥6/10)';
+    wrap.appendChild(sep);
+    teltNiet.forEach(s => wrap.appendChild(makeCard(s, false)));
+  }
+
+  el.appendChild(wrap);
+
+  // Event delegation knoppen
+  el.querySelectorAll('.scan-inzet-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (typeof openBetModal === 'function')
+        openBetModal(null, btn.dataset.mid, btn.dataset.pick, btn.dataset.label, parseFloat(btn.dataset.odds));
+    });
+  });
+  el.querySelectorAll('.scan-combi-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (typeof addValuePickToCombi === 'function')
+        addValuePickToCombi(btn.dataset.mid, btn.dataset.pick, btn.dataset.label,
+          parseFloat(btn.dataset.odds), btn.dataset.home, btn.dataset.away);
+    });
+  });
 }
 
 // ── Universele Card Pop-up ────────────────────────────────
@@ -1943,39 +1991,44 @@ function renderScanLog() {
         + '</div></div>';
       scan.picks.forEach(function(p) {
         var icon = p.status==='win' ? '✅' : p.status==='lose' ? '❌' : p.status==='void' ? '⬜' : '⏳';
-        // v18.6: handmatige verificatie knop voor pending picks
-        var pickId = String(p.fixtureId || p.id || '');
+        var statusColor = p.status==='win' ? '#16a34a' : p.status==='lose' ? '#dc2626' : '#d97706';
+        var value = p.value || 0;
+        var valColor = value >= 20 ? '#15803d' : value >= 10 ? '#b45309' : '#64748b';
+        var valBg = value >= 20 ? 'rgba(22,163,74,.1)' : value >= 10 ? 'rgba(180,83,9,.08)' : 'rgba(100,116,139,.08)';
         var scanId = String(scan.id || '');
-        var pickType = String(p.pick || '');
-        // v18.6: gebruik data-attributen voor veilige onclick zonder quote-escaping
-        var manualBtn = p.status === 'pending'
-          ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" data-match="' + (p.match||'').replace(/"/g,'') + '" '
-            + 'style="font-family:monospace;font-size:.44rem;padding:2px 7px;border-radius:6px;'
-            + 'background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);'
-            + 'color:#2563eb;cursor:pointer;white-space:nowrap;flex-shrink:0;">✏ Score</button>'
-          : '';
+        var pickId = String(p.fixtureId || p.id || '');
         var pickData = JSON.stringify({
-          id: String(p.fixtureId||p.id||''),
-          pick: String(p.pick||''),
-          pickLabel: String(p.pickLabel||p.pick||''),
-          odds: p.odds||2,
-          value: p.value||0,
-          confidence: p.confidence||0,
-          match: p.match||'',
+          id: String(p.fixtureId||p.id||''), pick: String(p.pick||''),
+          pickLabel: String(p.pickLabel||p.pick||''), odds: p.odds||2,
+          value: p.value||0, confidence: p.confidence||0, match: p.match||'',
           reason: (p.reason||'').substring(0,100),
-          poissonUsed: !!p.poissonUsed,
-          isSparseData: !!p.isSparseData
+          poissonUsed: !!p.poissonUsed, isSparseData: !!p.isSparseData
         }).replace(/"/g, '&quot;');
-        html += '<div style="display:flex;align-items:center;gap:.4rem;padding:.3rem 0;border-top:1px solid var(--border);cursor:pointer;" onclick="var d=JSON.parse(this.dataset.p.replace(/&quot;/g,\'\\\"\')); var parts=(d.match||\'\').split(\' vs \'); openCardPopup(\'scan\',{id:d.id,match:{id:d.id},home:parts[0]||\'\',away:parts[1]||\'\',pick:d.pick,pickLabel:d.pickLabel,odds:d.odds,value:d.value,confidence:d.confidence,reason:d.reason,poissonUsed:d.poissonUsed,isSparseData:d.isSparseData})" data-p="' + pickData + '">'
-          + '<div style="width:1.6rem;text-align:center;font-size:.8rem;">' + icon + '</div>'
-          + '<div style="flex:1;min-width:0;">'
-          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.58rem;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + '</div>'
-          + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">' + (p.pickLabel||p.pick) + ' @ ' + p.odds + ' &middot; ' + (p.value||0).toFixed(1) + '% value &middot; conf ' + p.confidence + '/10</div>'
-          + (p.matchDate||p.date ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--muted);">📅 ' + (p.matchDate||p.date||'') + (p.matchTime||p.time ? ' ' + (p.matchTime||p.time) : '') + '</div>' : '')
+        var manualBtn = p.status === 'pending'
+          ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + (p.pick||'') + '" data-match="' + (p.match||'').replace(/"/g,'') + '" style="font-family:monospace;font-size:.44rem;padding:3px 8px;border-radius:6px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);color:#2563eb;cursor:pointer;">✏ Score</button>'
+          : '';
+        html += '<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;'
+          + 'padding:.75rem .9rem;margin-bottom:.4rem;cursor:pointer;'
+          + 'border-left:' + (p.status==='win'?'3px solid #16a34a':p.status==='lose'?'3px solid #dc2626':'3px solid #d97706') + ';"'
+          + ' onclick="if(!event.target.closest(\'button\')){var d=JSON.parse(this.dataset.p.replace(/&quot;/g,\'\\"\'));'
+          + 'var parts=(d.match||\'\')\.split(\' vs \');'
+          + 'openCardPopup(\'scan\',{id:d.id,match:{id:d.id},home:parts[0]||\'\'\,away:parts[1]||\'\'\,pick:d.pick,pickLabel:d.pickLabel,odds:d.odds,value:d.value,confidence:d.confidence,reason:d.reason,poissonUsed:d.poissonUsed,isSparseData:d.isSparseData})}"'
+          + ' data-p="' + pickData + '">'
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">'
+          + '<div style="flex:1;">'
+          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.75rem;font-weight:700;color:var(--ink);">' + icon + ' ' + (p.match||'') + '</div>'
+          + (p.matchDate||p.date ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">📅 ' + (p.matchDate||p.date||'') + (p.matchTime||p.time ? ' ' + (p.matchTime||p.time) : '') + '</div>' : '')
           + '</div>'
-          + (p.score ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:var(--muted);">' + p.score + '</div>' : '')
+          + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;padding:2px 7px;border-radius:6px;background:' + valBg + ';color:' + valColor + ';">' + (value>0?'+':'') + value.toFixed(1) + '%</div>'
+          + '</div>'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;">'
+          + '<div><span style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;font-weight:800;">' + (p.pickLabel||p.pick||'') + '</span>'
+          + '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#be185d;margin-left:.4rem;">' + (p.odds||0) + '</span>'
+          + '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin-left:.4rem;">conf ' + (p.confidence||0) + '/10</span></div>'
+          + '<div style="display:flex;align-items:center;gap:.3rem;">'
+          + (p.score ? '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;font-weight:700;color:' + statusColor + ';">' + p.score + '</span>' : '')
           + manualBtn
-          + '</div>';
+          + '</div></div></div>';
       });
       html += '</div>';
     });
