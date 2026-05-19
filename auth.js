@@ -129,24 +129,74 @@ function initFirebaseAuth() {
 // ── LOGIN SCHERM ──────────────────────────────────────
 
 function renderLoginScreen() {
-  // Gebruik altijd het screen-login element uit index.html — niet dynamisch aanmaken
-  showLoginScreen();
+  const existing = document.getElementById('loginScreen');
+  if (existing) { existing.style.display='flex'; return; }
+
+  const div = document.createElement('div');
+  div.id = 'loginScreen';
+  div.style.cssText = 'position:fixed;inset:0;z-index:9000;background:var(--bg1);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;';
+  div.innerHTML = `
+    <div style="width:100%;max-width:380px;">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;letter-spacing:.08em;
+          background:linear-gradient(135deg,#ff9ac1,#a78bfa,#6bb6ff);
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">TOTO AI</div>
+        <div style="font-family:'Dancing Script',cursive;font-size:.9rem;color:var(--sub);">door AppsMadeByRobB</div>
+      </div>
+
+      <!-- Tab knoppen -->
+      <div style="display:flex;gap:.3rem;margin-bottom:1rem;background:rgba(0,0,0,.05);border-radius:12px;padding:3px;">
+        <button id="loginTabBtn" onclick="switchLoginTab('login')"
+          style="flex:1;font-family:monospace;font-size:.6rem;font-weight:700;padding:.5rem;border-radius:9px;border:none;cursor:pointer;
+          background:linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8));color:#fff;">Inloggen</button>
+        <button id="registerTabBtn" onclick="switchLoginTab('register')"
+          style="flex:1;font-family:monospace;font-size:.6rem;font-weight:700;padding:.5rem;border-radius:9px;border:none;cursor:pointer;
+          background:transparent;color:var(--sub);">Registreren</button>
+      </div>
+
+      <div id="loginError" style="font-family:monospace;font-size:.55rem;color:#dc2626;min-height:1.2em;margin-bottom:.5rem;"></div>
+
+      <!-- Login form -->
+      <div id="loginForm">
+        <input id="loginEmail" type="email" placeholder="E-mailadres" class="modal-input" style="margin-bottom:.4rem;">
+        <input id="loginPassword" type="password" placeholder="Wachtwoord" class="modal-input" style="margin-bottom:.75rem;">
+        <button onclick="loginWithEmail()" class="save-settings-btn" style="margin-bottom:.5rem;">Inloggen</button>
+        <button onclick="loginWithGoogle()" style="width:100%;font-family:monospace;font-size:.6rem;font-weight:700;
+          padding:.7rem;border-radius:12px;border:1.5px solid var(--stroke);background:var(--card);color:var(--ink);cursor:pointer;margin-bottom:.75rem;">
+          🌐 Inloggen met Google
+        </button>
+      </div>
+
+      <!-- Register form -->
+      <div id="registerForm" style="display:none;">
+        <input id="registerName" type="text" placeholder="Naam (optioneel)" class="modal-input" style="margin-bottom:.4rem;">
+        <input id="registerEmail" type="email" placeholder="E-mailadres" class="modal-input" style="margin-bottom:.4rem;">
+        <input id="registerPassword" type="password" placeholder="Wachtwoord (min 6 tekens)" class="modal-input" style="margin-bottom:.75rem;">
+        <button onclick="registerWithEmail()" class="save-settings-btn">Account aanmaken</button>
+      </div>
+
+      <button onclick="skipLoginAndEnter()"
+        style="width:100%;font-family:monospace;font-size:.52rem;color:var(--sub);
+        background:transparent;border:none;cursor:pointer;margin-top:.75rem;padding:.5rem;text-decoration:underline;">
+        Overslaan — gratis zonder account gebruiken
+      </button>
+    </div>
+  `;
+  document.body.appendChild(div);
 }
+
 function showLoginScreen() {
+  if (localStorage.getItem('totoai_skip_login')) { hideLoginScreen(); return; }
+  // Gebruik het bestaande screen-login in de HTML
   const ls = document.getElementById('screen-login');
-  if (ls) {
-    ls.style.display = 'flex';
-    ls.style.zIndex = '9000';
-    ls.classList.add('active');
-  }
+  if (ls) ls.classList.add('active');
 }
 
 function hideLoginScreen() {
   const ls = document.getElementById('screen-login');
-  if (ls) {
-    ls.classList.remove('active');
-    ls.style.display = 'none';
-  }
+  if (ls) ls.classList.remove('active');
+  const ls2 = document.getElementById('loginScreen');
+  if (ls2) ls2.style.display = 'none';
 }
 
 function skipLoginAndEnter() {
@@ -274,6 +324,13 @@ function handleLoginBtnClick() {
     showToast('✅ Ingelogd als ' + (_firebaseAuth.currentUser.displayName || _firebaseAuth.currentUser.email));
   } else {
     // Niet ingelogd — toon login scherm
-    showLoginScreen();
+    
+  }function showLoginScreen() {
+  const ls = document.getElementById('screen-login');
+  if (ls) {
+    ls.style.display = 'flex';
+    ls.style.zIndex = '9000';
+    ls.classList.add('active');
   }
+}
 }
