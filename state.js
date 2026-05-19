@@ -2,7 +2,7 @@
 // STATE.JS — Centraal state object + persistence
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v19.27';
+const APP_VERSION = 'v19.4';
 
 const STATE_KEY = 'totoai_state';
 
@@ -71,7 +71,12 @@ const state = {
 
 function saveState() {
   try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    // Beperk matches voor opslag — max 100, geen live wedstrijden
+    const stateToSave = {...state};
+    if (state.matches?.length > 100) {
+      stateToSave.matches = state.matches.slice(0, 100);
+    }
+    localStorage.setItem(STATE_KEY, JSON.stringify(stateToSave));
     scheduleFirebaseSync();
   } catch(e) {
     console.warn('[State] saveState fout:', e.message);
@@ -94,7 +99,7 @@ function loadState() {
     const scalarFields = [
       'activeComp','activeScreen','favoriteComps','combiBuilder',
       'openingOdds','lastScanResults','scheduledScanPicks',
-      'backtestPicks','trackerBets','scanLog'
+      'backtestPicks','trackerBets','scanLog','matches','valueScans'
     ];
     scalarFields.forEach(key => {
       if (saved[key] !== undefined) state[key] = saved[key];
