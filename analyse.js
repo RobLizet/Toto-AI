@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.12
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.14
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -699,12 +699,165 @@ function renderAnalyseScanResults(scans) {
   el.innerHTML = html;
 }
 
+// ── Universele Card Pop-up ────────────────────────────────
+function openCardPopup(type, data) {
+  document.getElementById('cardPopupOverlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'cardPopupOverlay';
+  overlay.style.cssText = `position:fixed;inset:0;z-index:9999;
+    background:rgba(15,23,42,.65);backdrop-filter:blur(6px);
+    display:flex;align-items:flex-end;justify-content:center;`;
+  overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
+
+  const close = `<button onclick="document.getElementById('cardPopupOverlay').remove()"
+    style="background:rgba(15,23,42,.08);border:none;border-radius:50%;
+    width:2rem;height:2rem;font-size:1rem;cursor:pointer;color:var(--ink);">✕</button>`;
+
+  let content = '';
+
+  if (type === 'scan') {
+    const s = data;
+    const valColor = (s.value||0) >= 15 ? '#15803d' : (s.value||0) >= 8 ? '#b45309' : '#64748b';
+    const tvSign = (s.value||0) > 0 ? '+' : '';
+    const confColor = (s.confidence||0) >= 8 ? '#16a34a' : (s.confidence||0) >= 6 ? '#d97706' : '#dc2626';
+    content = `
+      <div style="font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:800;color:var(--ink);margin-bottom:.2rem;">
+        ${s.home||s.match?.home||'?'} vs ${s.away||s.match?.away||'?'}
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);margin-bottom:.85rem;">
+        ${s.comp||''} · ${s.date||''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem;">
+        <div style="background:rgba(219,39,119,.1);border:1px solid rgba(219,39,119,.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#be185d;font-weight:700;">PICK</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:800;color:#be185d;margin-top:.2rem;">${s.pickLabel||s.pick||'?'}</div>
+        </div>
+        <div style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#15803d;font-weight:700;">ODDS</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:#15803d;line-height:1;">${parseFloat(s.odds||0).toFixed(2)}</div>
+        </div>
+        <div style="background:rgba(${(s.value||0)>=8?'22,163,74':'180,83,9'},.1);border:1px solid rgba(${(s.value||0)>=8?'22,163,74':'180,83,9'},.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:${valColor};font-weight:700;">VALUE</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:${valColor};line-height:1;">${tvSign}${Math.round(s.value||0)}%</div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:12px;padding:.65rem .85rem;margin-bottom:.75rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;color:var(--sub);">🎯 CONFIDENCE</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${confColor};">${s.confidence||'?'}/10</span>
+        </div>
+        <div style="background:rgba(0,0,0,.08);border-radius:999px;height:7px;overflow:hidden;">
+          <div style="background:${confColor};width:${Math.round((s.confidence||0)/10*100)}%;height:100%;border-radius:999px;"></div>
+        </div>
+        ${s.poissonUsed ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#7c3aed;margin-top:.3rem;">📐 Poisson + AI${s._hasXG?' + xG':''} model gebruikt</div>` : ''}
+        ${s.isSparseData ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#dc2626;margin-top:.2rem;">⚠️ Data schaars</div>` : ''}
+      </div>
+      ${s.reason ? `<div style="background:rgba(255,255,255,.8);border-left:3px solid ${valColor};border-radius:0 12px 12px 0;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.8rem;color:#1e293b;line-height:1.7;">${s.reason}</div>` : ''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <button onclick="document.getElementById('cardPopupOverlay').remove();openBetModal(null,'${s.match?.id||s.id||''}','${s.pick||''}','${(s.pickLabel||'').replace(/'/g,"\\'")}',${s.odds||2})"
+          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(219,39,119,.6));color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">💶 SINGLE BET</button>
+        <button onclick="document.getElementById('cardPopupOverlay').remove();switchScreen('wedstrijden');setTimeout(()=>selectMatchAndAnalyse('${s.match?.id||s.id||''}'),100)"
+          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(124,58,237,.85),rgba(124,58,237,.6));color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">🤖 ANALYSEER</button>
+      </div>`;
+
+  } else if (type === 'bet') {
+    const b = data;
+    const isOpen = b.status === 'pending' || b.status === 'open';
+    const isWin = b.status === 'win';
+    const pnl = isWin ? (b.stake*(b.odds-1)) : isOpen ? 0 : -(b.stake||0);
+    const pnlColor = isWin ? '#15803d' : isOpen ? '#d97706' : '#dc2626';
+    const statusLabel = isWin ? '✅ GEWONNEN' : isOpen ? '⏳ OPEN' : '❌ VERLOREN';
+    content = `
+      <div style="font-family:'DM Sans',sans-serif;font-size:1.1rem;font-weight:800;color:var(--ink);margin-bottom:.2rem;">${b.match||b.matchName||'?'}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);margin-bottom:.85rem;">${b.date||''} · ${b.markt||'1X2'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem;">
+        <div style="background:rgba(219,39,119,.08);border:1px solid rgba(219,39,119,.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#be185d;font-weight:700;">PICK</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:800;color:#be185d;margin-top:.2rem;">${b.pickLabel||b.pick||'?'}</div>
+        </div>
+        <div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#15803d;font-weight:700;">INZET @ ODDS</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#15803d;line-height:1.2;">€${b.stake||0} @ ${parseFloat(b.odds||0).toFixed(2)}</div>
+        </div>
+        <div style="background:rgba(${isWin?'22,163,74':isOpen?'180,83,9':'220,38,38'},.08);border:1px solid rgba(${isWin?'22,163,74':isOpen?'180,83,9':'220,38,38'},.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:${pnlColor};font-weight:700;">STATUS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:800;color:${pnlColor};margin-top:.2rem;">${statusLabel}</div>
+        </div>
+      </div>
+      ${b.note ? `<div style="background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:10px;padding:.6rem .8rem;margin-bottom:.75rem;font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--ink);">📝 ${b.note}</div>` : ''}
+      ${!isOpen ? `<div style="background:rgba(${isWin?'22,163,74':'220,38,38'},.08);border:1px solid rgba(${isWin?'22,163,74':'220,38,38'},.2);border-radius:12px;padding:.7rem;text-align:center;margin-bottom:.75rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">RESULTAAT</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:${pnlColor};">${isWin?'+':''}€${Math.abs(pnl).toFixed(2)}</div>
+      </div>` : ''}`;
+
+  } else if (type === 'match') {
+    const m = data;
+    content = `
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.85rem;">
+        ${m.homeLogo ? `<img src="${m.homeLogo}" style="width:2.5rem;height:2.5rem;object-fit:contain;">` : ''}
+        <div style="flex:1;text-align:center;">
+          <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:800;color:var(--ink);">${m.home} vs ${m.away}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${m.comp||''} · ${m.date||''} ${m.time||''}</div>
+        </div>
+        ${m.awayLogo ? `<img src="${m.awayLogo}" style="width:2.5rem;height:2.5rem;object-fit:contain;">` : ''}
+      </div>
+      ${m.homeOdds !== '—' ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem;">
+        <div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.2);border-radius:12px;padding:.65rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);font-weight:700;">1 THUIS</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#15803d;">${m.homeOdds}</div>
+        </div>
+        <div style="background:rgba(180,83,9,.08);border:1px solid rgba(180,83,9,.2);border-radius:12px;padding:.65rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);font-weight:700;">X GELIJK</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#b45309;">${m.drawOdds}</div>
+        </div>
+        <div style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:12px;padding:.65rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);font-weight:700;">2 UIT</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#dc2626;">${m.awayOdds}</div>
+        </div>
+      </div>` : `<div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--sub);text-align:center;padding:.75rem;margin-bottom:.75rem;">Geen odds beschikbaar</div>`}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <button onclick="document.getElementById('cardPopupOverlay').remove();selectMatchAndAnalyse('${m.id}')"
+          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(219,39,119,.6));color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">🤖 ANALYSEER</button>
+        <button onclick="document.getElementById('cardPopupOverlay').remove();addValuePickToCombi('${m.id}','1','${(m.home||'').replace(/'/g,"\\'")} wint',${m.homeOdds||2},'${(m.home||'').replace(/'/g,"\\'")}','${(m.away||'').replace(/'/g,"\\'")}')"
+          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(124,58,237,.85),rgba(124,58,237,.6));color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">➕ COMBI</button>
+      </div>`;
+  }
+
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
+      background:linear-gradient(160deg,#fdf4ff,#f0f4ff);
+      border-radius:24px 24px 0 0;padding:1.2rem 1.1rem 2rem;
+      box-shadow:0 -8px 40px rgba(15,23,42,.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;
+          background:linear-gradient(135deg,#be185d,#7c3aed);
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+          ${type==='scan'?'VALUE PICK':type==='bet'?'BET DETAILS':type==='match'?'WEDSTRIJD':'TIP'}
+        </div>
+        ${close}
+      </div>
+      ${content}
+    </div>`;
+
+  document.body.appendChild(overlay);
+}
+
 function openValueAnalysis(matchId) {
+  // Eerst zoeken in valueScans voor pop-up
+  const scan = (state.valueScans||[]).find(s =>
+    String(s.match?.id||s.id) === String(matchId)
+  );
+  if (scan) {
+    openCardPopup('scan', scan);
+    return;
+  }
+  // Fallback: navigeer naar analyse tab
   const match = (state.matches||[]).find(m => String(m.id) === String(matchId));
-  if (!match) return;
-  selectMatch(match);
+  if (match) selectMatch(match);
   switchScreen('analyse');
-  setTimeout(() => { if (typeof runAnalyse === 'function') runAnalyse(); }, 300);
+  setTimeout(() => showAnalyseSubTab('analyse'), 80);
 }
 
 // ── AI diepte analyse ─────────────────────────────────────
@@ -1162,6 +1315,10 @@ function renderTop3EnCombi(result) {
   if (!card) return;
   const stars = n => '⭐'.repeat(Math.min(n,5));
   const confColor = n => n >= 8 ? '#16a34a' : n >= 6 ? '#d97706' : '#dc2626';
+
+  // Sla tips op voor pop-up
+  window._top3Tips = result.top3 || [];
+
   const top3Html = (result.top3||[]).map((t,i) => {
     const tv = calcValue(t.vertrouwen * 10, parseFloat(t.odds));
     const tvSign = tv > 0 ? '+' : '';
@@ -1169,7 +1326,7 @@ function renderTop3EnCombi(result) {
     const cc = confColor(t.vertrouwen);
     const cbar = Math.round((t.vertrouwen/10)*100);
     const factoren = Array.isArray(t.factoren) ? t.factoren : [];
-    return `<div style="background:rgba(255,255,255,.82);border:1px solid rgba(28,35,48,.08);border-radius:12px;padding:.75rem .9rem;margin-bottom:.5rem;">
+    return `<div onclick="openTipPopup(${i})" style="background:rgba(255,255,255,.82);border:1px solid rgba(28,35,48,.08);border-radius:12px;padding:.75rem .9rem;margin-bottom:.5rem;cursor:pointer;active:opacity:.85;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
         <div style="flex:1;"><div style="font-size:.88rem;font-weight:700;color:var(--ink);">${i+1}. ${t.match}</div>
           <div style="font-family:monospace;font-size:.52rem;color:#7c3aed;margin-top:2px;">📅 ${t.datum||''}</div>
@@ -1195,6 +1352,7 @@ function renderTop3EnCombi(result) {
       ${t.reden ? `<div style="font-size:.76rem;color:#1e293b;line-height:1.65;margin-bottom:.4rem;padding:.45rem .6rem;background:rgba(255,255,255,.6);border-radius:7px;border-left:2.5px solid ${tvColor};">${t.reden}</div>` : ''}
       ${factoren.length ? `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-bottom:.3rem;">${factoren.map(f=>`<span style="font-family:monospace;font-size:.46rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.18);color:#7c3aed;">${f}</span>`).join('')}</div>` : ''}
       ${t.risico ? `<div style="font-family:monospace;font-size:.47rem;padding:3px 9px;border-radius:999px;display:inline-block;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.18);color:#dc2626;">⚠ ${t.risico}</div>` : ''}
+      <div style="font-family:monospace;font-size:.44rem;color:var(--sub);margin-top:.35rem;text-align:right;">Tik voor details →</div>
     </div>`;
   }).join('');
 
@@ -1247,6 +1405,132 @@ function renderTop3EnCombi(result) {
       🎰 ZET IN BUILDER
     </button>`;
   card.style.display = 'block';
+}
+
+function openTipPopup(index) {
+  const t = (window._top3Tips || [])[index];
+  if (!t) return;
+  const tv = calcValue(t.vertrouwen * 10, parseFloat(t.odds));
+  const tvSign = tv > 0 ? '+' : '';
+  const tvColor = tv >= 15 ? '#15803d' : tv >= 5 ? '#b45309' : '#64748b';
+  const confColor = t.vertrouwen >= 8 ? '#16a34a' : t.vertrouwen >= 6 ? '#d97706' : '#dc2626';
+  const stars = '⭐'.repeat(Math.min(Math.round(t.vertrouwen/2), 5));
+  const factoren = Array.isArray(t.factoren) ? t.factoren : [];
+
+  // Verwijder bestaande popup
+  document.getElementById('tipPopupOverlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'tipPopupOverlay';
+  overlay.style.cssText = `position:fixed;inset:0;z-index:9999;
+    background:rgba(15,23,42,.6);backdrop-filter:blur(6px);
+    display:flex;align-items:flex-end;justify-content:center;
+    animation:fadeIn .15s ease;`;
+  overlay.onclick = e => { if(e.target === overlay) overlay.remove(); };
+
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
+      background:linear-gradient(160deg,#fdf4ff,#f0f4ff);
+      border-radius:24px 24px 0 0;padding:1.2rem 1.1rem 2rem;
+      box-shadow:0 -8px 40px rgba(15,23,42,.2);">
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;
+          background:linear-gradient(135deg,#be185d,#7c3aed);
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+          TIP DETAILS
+        </div>
+        <button onclick="document.getElementById('tipPopupOverlay').remove()"
+          style="background:rgba(15,23,42,.08);border:none;border-radius:50%;
+          width:2rem;height:2rem;font-size:1rem;cursor:pointer;color:var(--ink);">✕</button>
+      </div>
+
+      <!-- Wedstrijd -->
+      <div style="font-family:'DM Sans',sans-serif;font-size:1.15rem;font-weight:800;
+        color:var(--ink);margin-bottom:.25rem;">${t.match}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;
+        color:#7c3aed;margin-bottom:.9rem;">📅 ${t.datum||''} · ${t.markt||'Uitslag'}</div>
+
+      <!-- Pick + odds + value -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.9rem;">
+        <div style="background:rgba(219,39,119,.1);border:1px solid rgba(219,39,119,.25);
+          border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#be185d;font-weight:700;">PICK</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:#be185d;margin-top:.2rem;">${t.pickLabel}</div>
+        </div>
+        <div style="background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);
+          border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#15803d;font-weight:700;">ODDS</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#15803d;line-height:1;">${parseFloat(t.odds||0).toFixed(2)}</div>
+        </div>
+        <div style="background:rgba(${tv>=8?'22,163,74':'180,83,9'},.1);border:1px solid rgba(${tv>=8?'22,163,74':'180,83,9'},.25);
+          border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:${tvColor};font-weight:700;">VALUE</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:${tvColor};line-height:1;">${tvSign}${Math.round(tv)}%</div>
+        </div>
+      </div>
+
+      <!-- Confidence -->
+      <div style="background:rgba(255,255,255,.7);border:1px solid var(--stroke);
+        border-radius:12px;padding:.7rem .9rem;margin-bottom:.75rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:var(--sub);">
+            🎯 ZEKERHEID ${stars}
+          </div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:${confColor};">
+            ${t.vertrouwen}/10
+          </div>
+        </div>
+        <div style="background:rgba(0,0,0,.08);border-radius:999px;height:8px;overflow:hidden;">
+          <div style="background:${confColor};width:${Math.round(t.vertrouwen/10*100)}%;height:100%;
+            border-radius:999px;transition:width .3s;"></div>
+        </div>
+      </div>
+
+      <!-- Analyse -->
+      ${t.reden ? `<div style="background:rgba(255,255,255,.8);border-left:3px solid ${tvColor};
+        border-radius:0 12px 12px 0;padding:.75rem .9rem;margin-bottom:.75rem;
+        font-size:.82rem;color:#1e293b;line-height:1.75;">${t.reden}</div>` : ''}
+
+      <!-- Factoren -->
+      ${factoren.length ? `<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.75rem;">
+        ${factoren.map(f=>`<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;
+          font-weight:700;padding:.2rem .55rem;border-radius:999px;
+          background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
+          color:#7c3aed;">${f}</span>`).join('')}
+      </div>` : ''}
+
+      <!-- Risico -->
+      ${t.risico ? `<div style="background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);
+        border-radius:10px;padding:.55rem .8rem;margin-bottom:.85rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;
+          font-weight:800;color:#dc2626;margin-bottom:.2rem;">⚠ RISICO</div>
+        <div style="font-size:.76rem;color:#7f1d1d;">${t.risico}</div>
+      </div>` : ''}
+
+      <!-- Actie knoppen -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+        <button onclick="document.getElementById('tipPopupOverlay').remove();
+          openBetModal(null,'${t.fixtureId||''}','${t.pick}','${(t.pickLabel||'').replace(/'/g,"\\'")}',${t.odds})"
+          style="padding:.7rem;border-radius:12px;
+          background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(219,39,119,.6));
+          color:#fff;border:none;font-family:'IBM Plex Mono',monospace;
+          font-size:.62rem;font-weight:800;cursor:pointer;">
+          💶 SINGLE BET
+        </button>
+        <button onclick="document.getElementById('tipPopupOverlay').remove();
+          addValuePickToCombi('${t.fixtureId||''}','${t.pick}','${(t.pickLabel||'').replace(/'/g,"\\'")}',${t.odds},'${(t.match||'').replace(/'/g,"\\'")}','')"
+          style="padding:.7rem;border-radius:12px;
+          background:linear-gradient(135deg,rgba(124,58,237,.85),rgba(124,58,237,.6));
+          color:#fff;border:none;font-family:'IBM Plex Mono',monospace;
+          font-size:.62rem;font-weight:800;cursor:pointer;">
+          ➕ COMBI
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
 }
 
 function loadAICombiIntoBuilder() {
