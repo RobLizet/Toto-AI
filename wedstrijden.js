@@ -308,6 +308,11 @@ function renderMatchCard(m) {
   const card = document.createElement('div');
   card.className = 'match-card' + (m.isLive ? ' value-glow' : '');
   card.id = 'match-' + m.id;
+  card.style.cursor = 'pointer';
+  card.onclick = e => {
+    // Alleen pop-up als niet op een knop geklikt
+    if (!e.target.closest('button')) openCardPopup('match', m);
+  };
 
   const scanResult = (state.lastScanResults||[]).find(s => String(s.matchId) === String(m.id));
   const valueBadge = scanResult && scanResult.value >= 5 ? `
