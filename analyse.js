@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.35
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.36
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -195,6 +195,70 @@ function showAnalyseSubTab(tab) {
 }
 
 // ── Value scan (per competitie) ───────────────────────────
+// ── AI Leer-context: statistieken uit scan log ───────────────
+function buildCalibratieContext() {
+  const log = state.scanLog || [];
+  const allPicks = log.flatMap(s => s.picks || []);
+  const settled = allPicks.filter(p => p.status === 'win' || p.status === 'lose');
+
+  if (settled.length < 5) return ''; // Te weinig data
+
+  // Hitrate per pick type
+  const byType = {};
+  settled.forEach(p => {
+    const t = p.pick || '?';
+    if (!byType[t]) byType[t] = {w:0,t:0};
+    byType[t].t++;
+    if (p.status === 'win') byType[t].w++;
+  });
+
+  // Hitrate per value bucket
+  const byValue = {'0-8%':{w:0,t:0}, '8-15%':{w:0,t:0}, '15-25%':{w:0,t:0}, '25%+':{w:0,t:0}};
+  settled.forEach(p => {
+    const v = p.value || 0;
+    const bucket = v < 8 ? '0-8%' : v < 15 ? '8-15%' : v < 25 ? '15-25%' : '25%+';
+    byValue[bucket].t++;
+    if (p.status === 'win') byValue[bucket].w++;
+  });
+
+  // Hitrate per confidence bucket
+  const byConf = {'1-5':{w:0,t:0}, '6-7':{w:0,t:0}, '8-9':{w:0,t:0}, '10':{w:0,t:0}};
+  settled.forEach(p => {
+    const c = p.confidence || 0;
+    const bucket = c <= 5 ? '1-5' : c <= 7 ? '6-7' : c <= 9 ? '8-9' : '10';
+    byConf[bucket].t++;
+    if (p.status === 'win') byConf[bucket].w++;
+  });
+
+  // ROI per pick type
+  const roiByType = {};
+  settled.forEach(p => {
+    const t = p.pick || '?';
+    if (!roiByType[t]) roiByType[t] = 0;
+    roiByType[t] += p.status === 'win' ? (p.odds - 1) : -1;
+  });
+
+  const hr = n => n.t ? Math.round(n.w/n.t*100) + '%(' + n.t + ')' : '—';
+
+  let ctx = `\n\nLEERSTATISTIEKEN UIT ${settled.length} AFGERONDE PICKS:\n`;
+
+  ctx += 'Pick type hitrate: ' + Object.entries(byType)
+    .map(([t,n]) => `${t}=${hr(n)}, ROI=${roiByType[t]>=0?'+':''}${(roiByType[t]/n.t*100).toFixed(0)}%`)
+    .join(' | ') + '\n';
+
+  ctx += 'Value bucket hitrate: ' + Object.entries(byValue)
+    .filter(([,n]) => n.t > 0)
+    .map(([b,n]) => `${b}=${hr(n)}`).join(' | ') + '\n';
+
+  ctx += 'Confidence hitrate: ' + Object.entries(byConf)
+    .filter(([,n]) => n.t > 0)
+    .map(([b,n]) => `${b}=${hr(n)}`).join(' | ') + '\n';
+
+  ctx += 'Gebruik deze statistieken om je picks te kalibreren. Als een pick type historisch slecht presteert, wees kritischer. Als een value bucket goed presteert, geef die meer gewicht.\n';
+
+  return ctx;
+}
+
 async function scanValueAll() {
   if (window._scanBusy) {
     showToast('⚡ Scan loopt nog even...');
@@ -1017,6 +1081,7 @@ Standen: ${standStr}
 Blessures: ${injStr}
 Formaties: ${formationStr}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}`;
 
+    const calibratieCtx = buildCalibratieContext();
     const data = await anthropicFetchWithRetry(null, {
       model: 'claude-sonnet-4-6',
       max_tokens: 1800,
@@ -1041,7 +1106,7 @@ KWALITEITSREGELS:
 - Gebruik specifieke cijfers: "4 van laatste 5 thuis gewonnen", "gemiddeld 2.1 goals per duel"
 - kans = jouw gecombineerde schatting NA overround-correctie van de bookmaker
 - confidence: 8-10 = meerdere ankers bevestigen + rijke data; 6-7 = redelijke data, 1 conflicterend; 1-5 = schaars of sterk divergerend
-- tips array: 2 alternatieve markten (O/U goals, BTTS, Asian handicap) met concrete onderbouwing`,
+- tips array: 2 alternatieve markten (O/U goals, BTTS, Asian handicap) met concrete onderbouwing${calibratieCtx}`,
       messages:[{role:'user',content:`Analyseer:\n${context}`}]
     });
 
