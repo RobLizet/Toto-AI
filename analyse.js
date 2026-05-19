@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.28
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.29
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -639,7 +639,6 @@ function renderAnalyseScanResults(scans) {
     if (s.isSparseData) redenen.push('data schaars');
     if (s.value < DREMPEL.minValue) redenen.push(`value < ${DREMPEL.minValue}%`);
     if ((s.confidence||0) < DREMPEL.minConf) redenen.push(`conf < ${DREMPEL.minConf}/10`);
-    if (!s.poissonUsed) redenen.push('geen Poisson');
 
     return `<div style="display:flex;align-items:center;padding:.5rem .9rem;
       border-bottom:1px solid var(--stroke);cursor:pointer;
@@ -691,7 +690,7 @@ function renderAnalyseScanResults(scans) {
       ${teltNiet.length ? `
         <div style="padding:.35rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.48rem;
           color:var(--sub);background:rgba(15,23,42,.03);border-top:1px solid var(--stroke);">
-          ONDER DREMPEL (value ≥8%, conf ≥6/10, Poisson vereist)
+          ONDER DREMPEL (value ≥8%, conf ≥6/10)
         </div>
         ${teltNiet.map(s => renderPick(s, false)).join('')}
       ` : ''}
