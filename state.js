@@ -2,7 +2,7 @@
 // STATE.JS — Centraal state object + persistence
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v19.24';
+const APP_VERSION = 'v19.25';
 
 const STATE_KEY = 'totoai_state';
 
