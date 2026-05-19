@@ -328,7 +328,8 @@ function renderBetHistory() {
         <span style="color:${l.legStatus==='win'?'#16a34a':l.legStatus==='lose'?'#dc2626':'#94a3b8'};">${l.legStatus==='win'?'✓':l.legStatus==='lose'?'✗':'⏳'}</span>
       </div>`).join('') : '';
     return `
-    <div class="bet-row bet-${b.status||'pending'}" style="cursor:pointer;" data-bet="${JSON.stringify({id:b.id,match:b.matchName||b.match||'',pick:b.pick,pickLabel:b.pickLabel||b.pick,odds:b.odds,stake:b.amount||b.stake,status:b.status,date:b.date,markt:b.markt,note:b.note,payout:b.payout}).replace(/"/g,'&quot;')}">
+    <div class="bet-row bet-${b.status||'pending'}" style="cursor:pointer;"
+      onclick="if(!event.target.closest('button'))openCardPopup('bet',${JSON.stringify({id:b.id,match:b.matchName||b.match||'',pick:b.pick,pickLabel:b.pickLabel||b.pick,odds:b.odds,stake:b.amount||b.stake,status:b.status,date:b.date,markt:b.markt,note:b.note,payout:b.payout}).replace(/"/g,'&quot;')})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
         <div style="flex:1;">
           <div style="font-size:.85rem;font-weight:700;color:var(--ink);">${srcBadge}${b.matchName||b.match||''}${scoreTag}</div>
@@ -348,18 +349,9 @@ function renderBetHistory() {
       </div>
     </div>`;
   }).join('');
-
-  // Event delegation voor pop-up op bet cards
-  list.onclick = function(e) {
-    const card = e.target.closest('.bet-row');
-    if (!card || e.target.closest('button') || e.target.closest('.bet-status')) return;
-    if (typeof openCardPopup !== 'function') return;
-    try {
-      const d = JSON.parse(card.dataset.bet.replace(/&quot;/g, '"'));
-      openCardPopup('bet', d);
-    } catch(err) {}
-  };
 }
+
+// ── BET ACTIES ────────────────────────────────────────────
 
 async function checkBetResult(betId) {
   const bet = state.wallet.bets.find(b => b.id === betId);
@@ -1348,133 +1340,110 @@ function renderValuePicks() {
     const key = String(p.id || p.matchId || p.fixtureId);
     if (!seen.has(key)) { seen.add(key); allPicks.push(p); }
   });
-
-  el.innerHTML = '';
+  allPicks.sort((a, b) => (b.value||0) - (a.value||0));
 
   if (!allPicks.length) {
-    el.innerHTML = `<div style="text-align:center;padding:2rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);">
-      Geen value picks — scan wedstrijden via de Analyse tab.</div>`;
+    el.innerHTML = `
+      <div style="text-align:center;padding:3rem 1rem;">
+        <div style="font-size:2rem;margin-bottom:.75rem;">⚡</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--sub);">
+          Geen value picks beschikbaar.<br>Voer eerst een Value Scan uit via de Analyse tab.
+        </div>
+      </div>`;
     return;
   }
 
-  // Header
-  const header = document.createElement('div');
-  header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;';
-  header.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:800;color:var(--sub);">VALUE PICKS</div>
-    <div id="help-vp" style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${allPicks.length} picks</div>`;
-  el.appendChild(header);
+  const valueClass = v => v >= 20 ? '#15803d' : v >= 10 ? '#b45309' : '#64748b';
+  const valueBg    = v => v >= 20 ? 'rgba(22,163,74,.1)' : v >= 10 ? 'rgba(217,119,6,.08)' : 'rgba(100,116,139,.06)';
+  const valueLbl   = v => v >= 20 ? '🏆 HOGE VALUE' : v >= 10 ? '⚡ VALUE' : '📊 LAGE VALUE';
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;display:flex;align-items:center;gap:.3rem;">VALUE PICKS <span id="help-vp"></span></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${allPicks.length} picks</div>
+    </div>`;
 
   allPicks.forEach(p => {
     const matchName = p.match ? `${p.match.home} vs ${p.match.away}` : (p.matchName || '');
-    const home = matchName.split(' vs ')[0] || '';
-    const away = matchName.split(' vs ')[1] || '';
-    const matchId = String(p.fixtureId || p.matchId || p.id || '');
-    const value = parseFloat(p.value || 0);
-    const conf = parseInt(p.confidence || 0);
-    const odds = parseFloat(p.odds || 0);
-    const comp = (p.match?.comp) || p.comp || p.compName || '';
-    const matchDate = p.matchDate || p.date || '';
-    const matchTime = p.matchTime || p.time || '';
+    const pick      = p.pick || '1';
+    const pickLabel = p.pickLabel || (pick==='1'?'Thuis wint':pick==='X'?'Gelijkspel':'Uit wint');
+    const odds      = parseFloat(p.odds || 2).toFixed(2);
+    const value     = parseFloat(p.value || 0);
+    const conf      = p.confidence || 5;
+    const matchId   = p.id || p.matchId || p.fixtureId;
+    const comp      = p.comp || p.compName || (p.match?.comp) || '';
+    const reason    = p.reason || p.reden || '';
+    const lockLv    = detectLockLevel(matchId, pick);
+    const badge     = lockBadge(lockLv);
 
-    // Lock level
-    const lockLv = value >= (state.settings.tripleMinOdds || 1.5) && value >= (state.settings.tripleMinValue || 8) && conf >= (state.settings.tripleMinConf || 7) ? 'triple'
-                 : value >= 10 && conf >= 6 ? 'double' : 'none';
-    const badge = lockLv === 'triple'
-      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.3);">🏆 TRIPLE LOCK</span>`
-      : lockLv === 'double'
-      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(180,83,9,.1);color:#b45309;border:1px solid rgba(180,83,9,.3);">🔒 DOUBLE</span>`
-      : '';
-
-    const valColor = value >= 20 ? '#15803d' : value >= 10 ? '#b45309' : '#64748b';
-    const valBg = value >= 20 ? 'rgba(22,163,74,.1)' : value >= 10 ? 'rgba(180,83,9,.08)' : 'rgba(100,116,139,.08)';
-    const valLabel = value >= 20 ? '🏆 HOGE VALUE' : value >= 10 ? '⚡ VALUE' : '📊 LAGE VALUE';
-
-    const card = document.createElement('div');
-    card.className = 'value-pick-card';
-    card.style.cssText = `background:var(--card);border:1px solid var(--stroke);border-radius:16px;
-      padding:.85rem 1rem;margin-bottom:.6rem;cursor:pointer;
-      border-left:${lockLv==='triple'?'4px solid #15803d':lockLv==='double'?'4px solid #b45309':'1px solid var(--stroke)'};`;
-
-    card.dataset.id = matchId;
-    card.dataset.pick = p.pick || '';
-    card.dataset.label = p.pickLabel || p.pick || '';
-    card.dataset.odds = odds;
-    card.dataset.value = value;
-    card.dataset.conf = conf;
-    card.dataset.home = home;
-    card.dataset.away = away;
-
-    card.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem;">
-        <div style="flex:1;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">${comp}</div>
-          <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--ink);margin:.15rem 0;">${home} vs ${away}</div>
-          ${matchDate ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">📅 ${matchDate}${matchTime ? ' ' + matchTime : ''}</div>` : ''}
+    html += `
+      <div style="background:var(--card);border:1px solid var(--stroke);border-radius:16px;
+        padding:.9rem 1rem;margin-bottom:.6rem;
+        border-left:${lockLv==='triple'?'4px solid #15803d':lockLv==='double'?'4px solid #b45309':'1px solid var(--stroke)'};">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.45rem;color:var(--sub);">${comp}</div>
+          <div style="display:flex;gap:.3rem;align-items:center;">
+            ${badge}
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;
+              color:${valueClass(value)};background:${valueBg(value)};padding:2px 8px;border-radius:6px;">
+              ${valueLbl(value)} +${value.toFixed(1)}%
+            </div>
+          </div>
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;padding:2px 8px;border-radius:6px;background:${valBg};color:${valColor};">${valLabel} +${value.toFixed(1)}%</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;">${p.pick || ''}</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--sub);">${p.pickLabel || ''}</span>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;margin-left:auto;">${odds.toFixed(2)}</span>
-      </div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.5rem;">
-        ${'⭐'.repeat(Math.min(Math.round(conf/2),5))} ${conf}/10 conf · ½K ${(p.kelly||0).toFixed(1)}% · ${p.reason||''}
-      </div>
-      ${badge ? `<div style="margin-bottom:.4rem;">${badge}</div>` : ''}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-top:.4rem;">
-        <button class="value-inzet-btn"
-          style="padding:.55rem;border-radius:10px;background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.7));
-          color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:800;cursor:pointer;"
-          data-mid="${matchId}" data-pick="${p.pick||''}" data-label="${p.pickLabel||''}" data-odds="${odds}">
-          💰 INZETTEN
-        </button>
-        <button class="value-combi-btn"
-          style="padding:.55rem;border-radius:10px;background:rgba(124,58,237,.1);
-          border:1px solid rgba(124,58,237,.25);color:#7c3aed;font-family:'IBM Plex Mono',monospace;
-          font-size:.58rem;font-weight:800;cursor:pointer;"
-          data-mid="${matchId}" data-pick="${p.pick||''}" data-label="${p.pickLabel||''}"
-          data-odds="${odds}" data-home="${home}" data-away="${away}">
-          + COMBI
-        </button>
+        <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:.4rem;">${matchName}</div>
+        <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${pick}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${pickLabel}</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;margin-left:auto;">${odds}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.45rem;color:var(--sub);">
+            Conf: ${'★'.repeat(Math.min(conf,10))}${'☆'.repeat(Math.max(0,10-conf))} ${conf}/10
+          </div>
+          ${reason ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);max-width:55%;text-align:right;">${reason}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:.4rem;">
+          <button onclick="quickBetFromValue('${matchId}','${pick}','${pickLabel}',${odds})"
+            style="flex:2;padding:.5rem;border-radius:10px;
+            background:linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8));
+            border:none;font-family:'IBM Plex Mono',monospace;font-size:.55rem;
+            font-weight:800;color:#fff;cursor:pointer;">
+            💰 INZETTEN
+          </button>
+          <button class="value-combi-btn"
+            data-mid="${matchId}" data-pick="${pick}"
+            data-label="${pickLabel.replace(/"/g,'&quot;')}"
+            data-odds="${odds}"
+            data-home="${home.replace(/"/g,'&quot;')}"
+            data-away="${away.replace(/"/g,'&quot;')}"
+            style="flex:1;padding:.5rem;border-radius:10px;
+            background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
+            font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;color:#7c3aed;cursor:pointer;">
+            + COMBI
+          </button>
+        </div>
       </div>`;
-
-    card.addEventListener('click', function(e) {
-      if (e.target.closest('button')) return;
-      if (typeof openCardPopup !== 'function') return;
-      openCardPopup('scan', {
-        id: this.dataset.id, match: {id: this.dataset.id},
-        home: this.dataset.home, away: this.dataset.away,
-        pick: this.dataset.pick, pickLabel: this.dataset.label,
-        odds: parseFloat(this.dataset.odds), value: parseFloat(this.dataset.value),
-        confidence: parseInt(this.dataset.conf),
-        reason: '', poissonUsed: true, isSparseData: false
-      });
-    });
-
-    el.appendChild(card);
   });
+  el.innerHTML = html;
 
-  // Event delegation voor knoppen
-  el.querySelectorAll('.value-inzet-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const mid = this.dataset.mid;
-      const pick = this.dataset.pick;
-      const label = this.dataset.label;
-      const odds = parseFloat(this.dataset.odds);
-      if (typeof openBetModal === 'function') openBetModal(null, mid, pick, label, odds);
-    });
-  });
+  // Voeg help knop toe aan Value Picks header
+  const helpVP = document.getElementById('help-vp');
+  if (helpVP && typeof helpBtn === 'function') helpVP.innerHTML = helpBtn('value-picks-tab');
 
+  // v18.9: event delegation voor COMBI knoppen — vermijdt quote-escaping problemen
   el.querySelectorAll('.value-combi-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      addValueToCombiBuilder(this.dataset.mid, this.dataset.pick, this.dataset.label,
-        parseFloat(this.dataset.odds), this.dataset.home, this.dataset.away);
+    btn.addEventListener('click', function() {
+      const mid   = this.dataset.mid;
+      const pick  = this.dataset.pick;
+      const label = this.dataset.label;
+      const odds  = parseFloat(this.dataset.odds);
+      const home  = this.dataset.home;
+      const away  = this.dataset.away;
+      addValueToCombiBuilder(mid, pick, label, odds, home, away);
     });
   });
 }
+
 function quickBetFromValue(matchId, pick, pickLabel, odds) {
   const match = (state.matches||[]).find(m => String(m.id) === String(matchId));
 
