@@ -1381,8 +1381,9 @@ function renderValuePicks() {
     html += `
       <div style="background:var(--card);border:1px solid var(--stroke);border-radius:16px;
         padding:.9rem 1rem;margin-bottom:.6rem;
-        border-left:${lockLv==='triple'?'4px solid #15803d':lockLv==='double'?'4px solid #b45309':'1px solid var(--stroke)'};">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+        padding:.9rem 1rem;margin-bottom:.6rem;
+        border-left:${lockLv==='triple'?'4px solid #15803d':lockLv==='double'?'4px solid #b45309':'1px solid var(--stroke)'};"
+        + " class='value-pick-popup' style='cursor:pointer' data-id='${p.fixtureId||matchId||''}' data-pick='${(p.pick||'').replace(/'/g,'')}' data-label='${(p.pickLabel||p.pick||'').replace(/'/g,'')}' data-odds='${p.odds||2}' data-value='${value}' data-conf='${p.confidence||0}' data-home='${home.replace(/'/g,'')}' data-away='${away.replace(/'/g,'')}'">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.45rem;color:var(--sub);">${comp}</div>
           <div style="display:flex;gap:.3rem;align-items:center;">
             ${badge}
@@ -1392,7 +1393,8 @@ function renderValuePicks() {
             </div>
           </div>
         </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:.4rem;">${matchName}</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:700;color:var(--ink);margin-bottom:.2rem;">${matchName}</div>
+        ${(p.matchDate||p.date) ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.3rem;">📅 ${p.matchDate||p.date||''}${(p.matchTime||p.time) ? ' ' + (p.matchTime||p.time) : ''}</div>` : ''}
         <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
           <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${pick}</span>
           <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${pickLabel}</span>
@@ -1427,6 +1429,26 @@ function renderValuePicks() {
       </div>`;
   });
   el.innerHTML = html;
+
+  // Pop-up via event delegation
+  el.querySelectorAll('.value-pick-popup').forEach(card => {
+    card.addEventListener('click', function(e) {
+      if (e.target.closest('button')) return;
+      if (typeof openCardPopup !== 'function') return;
+      openCardPopup('scan', {
+        id: this.dataset.id,
+        match: {id: this.dataset.id},
+        home: this.dataset.home || '',
+        away: this.dataset.away || '',
+        pick: this.dataset.pick,
+        pickLabel: this.dataset.label,
+        odds: parseFloat(this.dataset.odds),
+        value: parseFloat(this.dataset.value),
+        confidence: parseInt(this.dataset.conf),
+        reason: '', poissonUsed: true, isSparseData: false
+      });
+    });
+  });
 
   // Voeg help knop toe aan Value Picks header
   const helpVP = document.getElementById('help-vp');
