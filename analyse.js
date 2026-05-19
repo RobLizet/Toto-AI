@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.20
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.14
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -1105,7 +1105,7 @@ async function scanAllTodayValue(mode = 'today') {
     m.homeOdds !== '—' && !m.isDone && parseFloat(m.homeOdds) > 1
   );
 
-  if (currentWithOdds.length < 3) {
+  if (currentWithOdds.length < 5) {
     if (btn) { btn.disabled = true; btn.textContent = '⟳ ALLE COMPS LADEN...'; }
 
     // Laad alle competities parallel — volledige scan lijst
@@ -1122,9 +1122,9 @@ async function scanAllTodayValue(mode = 'today') {
     await Promise.all(SCAN_LEAGUE_IDS.map(async leagueId => {
       try {
         const season = leagueId === 1 ? 2026 : 2025;
-        // Gebruik next=50 om komende wedstrijden op te halen (geen datumfilter)
+        const dateParam = mode === 'tomorrow' ? tomorrowStr : todayStr;
         const r = await apiFetch(
-          `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&next=10`,
+          `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&date=${dateParam}&status=NS-1H-HT-2H`,
           null, 8000
         );
         const d = await r.json();
@@ -1152,18 +1152,17 @@ async function scanAllTodayValue(mode = 'today') {
 
   const allWithOdds = (state.matches||[]).filter(m => {
     if (m.homeOdds === '—' || m.isDone || !(parseFloat(m.homeOdds) > 1)) return false;
+    if (m.leagueId && !new Set(Object.values(COMP_IDS)).has(m.leagueId)) return false;
     return true;
   });
 
   let candidates;
-  const in7days = new Date(now.getTime() + 7*86400000).toISOString().split('T')[0];
   if (mode === 'tomorrow') {
-    candidates = allWithOdds.filter(m => { const d = m.dateISO||''; return !d || d >= todayStr; });
+    candidates = allWithOdds.filter(m => { const d = m.dateISO||''; return !d || d === todayStr || d === tomorrowStr; });
     if (!candidates.length) candidates = allWithOdds.slice(0, 25);
   } else {
-    // Pak wedstrijden van vandaag t/m komende 7 dagen
-    const byDate = allWithOdds.filter(m => m.dateISO >= todayStr && m.dateISO <= in7days);
-    candidates = byDate.length ? byDate : allWithOdds;
+    const byDate = allWithOdds.filter(m => m.dateISO === todayStr);
+    candidates = byDate.length ? byDate : allWithOdds.filter(m => !m.dateISO).concat(byDate);
     if (!candidates.length) candidates = allWithOdds.slice(0, 20);
   }
   candidates = candidates.slice(0, 25);
@@ -1810,3 +1809,498 @@ function renderScanLog() {
     const v = p.value||0;
     const b = v<10 ? '0-10%' : v<20 ? '10-20%' : v<30 ? '20-30%' : '30%+';
     vb[b].push(p.status === 'win');
+  });
+
+  function statCard(val, lbl, color) {
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.6rem .4rem;text-align:center;">'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:' + color + ';">' + val + '</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:var(--muted);margin-top:.1rem;">' + lbl + '</div>'
+      + '</div>';
+  }
+
+  function bar(pct, color) {
+    return '<div style="flex:1;background:rgba(15,23,42,.08);border-radius:999px;height:6px;">'
+      + '<div style="height:100%;border-radius:999px;background:' + color + ';width:' + pct + '%;"></div>'
+      + '</div>';
+  }
+
+  function hrColor(hr) {
+    return hr >= 55 ? '#16a34a' : hr >= 45 ? '#d97706' : '#dc2626';
+  }
+
+  let html = '';
+
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">'
+    + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--text);">SCAN LOG</div>'
+    + '<div style="display:flex;gap:.4rem;">'
+    + '<button class="small-action-btn" onclick="verifyScanLog().then(n=>{showToast(n>0?n+\' picks geverifieerd\':\'Geen nieuwe resultaten\');renderScanLog();}).catch(e=>showToast(\'⚠ \'+e.message))">🔄 Verificeer</button>'
+    + '<button class="small-action-btn" onclick="exportScanLogCSV()">📥 CSV</button>'
+    + '<button class="small-action-btn" style="color:#dc2626;" onclick="if(confirm(\'Scan log wissen?\')){state.scanLog=[];saveState();renderScanLog();}">🗑</button>'
+    + '</div></div>';
+
+  html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem;margin-bottom:.8rem;">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">'
+    + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:var(--muted);">VOORTGANG NAAR 100 PICKS</div>'
+    + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:var(--accent);">' + allPicks.length + '/100</div>'
+    + '</div>'
+    + '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:6px;overflow:hidden;">'
+    + '<div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:' + Math.min(100,allPicks.length) + '%;transition:width .4s;"></div>'
+    + '</div></div>';
+
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:.8rem;">'
+    + statCard(allPicks.length, 'PICKS' + helpBtn('scan-log'), '#2563eb')
+    + statCard(hitrate + '%', 'HITRATE' + helpBtn('hitrate'), hrColor(hitrate))
+    + statCard((roi>=0?'+':'') + roi.toFixed(1) + '%', 'ROI' + helpBtn('roi'), roi>=0?'#16a34a':'#dc2626')
+    + statCard(avgValue.toFixed(1) + '%', 'AVG VALUE' + helpBtn('avg-value'), '#7c3aed')
+    + '</div>';
+
+  if (settled.length >= 5) {
+    html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem;margin-bottom:.8rem;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">📐 VALUE KALIBRATIE</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;">';
+    Object.entries(vb).forEach(function(entry) {
+      var range = entry[0], results = entry[1];
+      var tot = results.length;
+      var wr  = tot ? Math.round(results.filter(Boolean).length/tot*100) : null;
+      html += '<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.5rem .3rem;">'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--muted);">' + range + '</div>'
+        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:' + (wr===null?'var(--muted)':hrColor(wr)) + ';">' + (wr===null?'—':wr+'%') + '</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:var(--muted);">' + tot + ' picks</div>'
+        + '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  if (Object.keys(byType).length) {
+    html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem;margin-bottom:.8rem;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">🎯 PER PICK TYPE</div>';
+    Object.entries(byType).sort((a,b)=>b[1].total-a[1].total).forEach(function(entry) {
+      var type = entry[0], s = entry[1];
+      var hr = Math.round(s.wins/s.total*100);
+      html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;width:2.5rem;">' + type + '</div>'
+        + bar(hr, hrColor(hr))
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--muted);width:3.5rem;text-align:right;">' + hr + '% (' + s.total + ')</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (Object.keys(byComp).length > 1) {
+    html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem;margin-bottom:.8rem;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">🏆 PER COMPETITIE</div>';
+    Object.entries(byComp).sort((a,b)=>b[1].total-a[1].total).slice(0,8).forEach(function(entry) {
+      var comp = entry[0], s = entry[1];
+      var hr = Math.round(s.wins/s.total*100);
+      html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + comp + '</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:' + hrColor(hr) + ';font-weight:700;">' + hr + '%</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--muted);">' + s.total + 'x</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">SCANS (' + log.length + ')</div>';
+
+  if (!log.length) {
+    html += '<div style="text-align:center;padding:2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:var(--muted);">'
+      + 'Nog geen scans. Voer een value scan uit via de Scan &amp; Analyse tab.</div>';
+  } else {
+    log.forEach(function(scan, si) {
+      var sw = scan.picks.filter(p=>p.status==='win').length;
+      var sl = scan.picks.filter(p=>p.status==='lose').length;
+      var sp = scan.picks.filter(p=>p.status==='pending').length;
+      html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.75rem 1rem;margin-bottom:.5rem;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;">#' + (log.length-si) + ' &middot; ' + scan.date + ' ' + scan.time + '</div>'
+        + '<div style="display:flex;gap:.3rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
+        + (sw ? '<span style="color:#16a34a;font-weight:700;">' + sw + 'W</span>' : '')
+        + (sl ? '<span style="color:#dc2626;font-weight:700;">' + sl + 'V</span>' : '')
+        + (sp ? '<span style="color:#d97706;">' + sp + '⏳</span>' : '')
+        + '</div></div>';
+      scan.picks.forEach(function(p) {
+        var icon = p.status==='win' ? '✅' : p.status==='lose' ? '❌' : p.status==='void' ? '⬜' : '⏳';
+        // v18.6: handmatige verificatie knop voor pending picks
+        var pickId = String(p.fixtureId || p.id || '');
+        var scanId = String(scan.id || '');
+        var pickType = String(p.pick || '');
+        // v18.6: gebruik data-attributen voor veilige onclick zonder quote-escaping
+        var manualBtn = p.status === 'pending'
+          ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" data-match="' + (p.match||'').replace(/"/g,'') + '" '
+            + 'style="font-family:monospace;font-size:.44rem;padding:2px 7px;border-radius:6px;'
+            + 'background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);'
+            + 'color:#2563eb;cursor:pointer;white-space:nowrap;flex-shrink:0;">✏ Score</button>'
+          : '';
+        html += '<div style="display:flex;align-items:center;gap:.4rem;padding:.3rem 0;border-top:1px solid var(--border);">'
+          + '<div style="width:1.6rem;text-align:center;font-size:.8rem;">' + icon + '</div>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.58rem;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + '</div>'
+          + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">' + (p.pickLabel||p.pick) + ' @ ' + p.odds + ' &middot; ' + (p.value||0).toFixed(1) + '% value &middot; conf ' + p.confidence + '/10</div>'
+          + '</div>'
+          + (p.score ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:var(--muted);">' + p.score + '</div>' : '')
+          + manualBtn
+          + '</div>';
+      });
+      html += '</div>';
+    });
+  }
+
+  el.innerHTML = html;
+
+  // v18.6: event delegation voor Score knoppen (data-attributen aanpak)
+  el.addEventListener('click', function(e) {
+    const btn = e.target.closest('.manual-verify-btn');
+    if (!btn) return;
+    const scanId = btn.dataset.scan;
+    const pickId = btn.dataset.pick;
+    const pickType = btn.dataset.type;
+    const matchName = btn.dataset.match;
+    showManualVerify(scanId, pickId, pickType, matchName);
+  });
+}
+
+function exportScanLogCSV() {
+  const log = state.scanLog || [];
+  if (!log.length) { showToast('Geen scan data'); return; }
+  const rows = [['Scan#','Datum','Tijd','Wedstrijd','Competitie','Pick','Odds','Value%','Confidence','Status','Score']];
+  log.forEach(function(scan, si) {
+    scan.picks.forEach(function(p) {
+      rows.push([
+        log.length - si, scan.date, scan.time,
+        p.match, p.comp||'', p.pickLabel||p.pick,
+        p.odds, (p.value||0).toFixed(1), p.confidence,
+        p.status, p.score||''
+      ]);
+    });
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  downloadFile(csv, 'TOTO-AI-scanlog-' + new Date().toISOString().split('T')[0] + '.csv', 'text/csv;charset=utf-8;');
+  showToast('📥 Scan log gedownload');
+}
+
+// ── Analyse tip knoppen ───────────────────────────────
+function openBetFromAnalyse() {
+  const tip = state.lastAnalyseTip;
+  if (!tip) { showToast('Geen analyse tip beschikbaar'); return; }
+
+  const m = state.selectedMatch;
+  if (m && !state.matches.find(x => String(x.id) === String(m.id))) {
+    state.matches.unshift(m);
+  }
+
+  const title = document.getElementById('bet-modal-title');
+  if (title) title.textContent = (tip.home||'') + ' vs ' + (tip.away||'') + ' — ' + (tip.pickLabel||tip.pick) + ' @ ' + tip.odds;
+
+  const matchInput = document.getElementById('bet-match');
+  if (matchInput) matchInput.value = (tip.home||'') + ' vs ' + (tip.away||'');
+
+  const stakeInput = document.getElementById('bet-stake');
+  if (stakeInput) stakeInput.value = state.settings.defaultBet || 10;
+
+  const oddsInput = document.getElementById('bet-odds');
+  if (oddsInput) oddsInput.value = tip.odds;
+
+  const noteInput = document.getElementById('bet-note');
+  if (noteInput) noteInput.value = tip.pickLabel || tip.pick;
+
+  pendingBet = {
+    match: m || { id: tip.matchId, home: tip.home||'', away: tip.away||'' },
+    pick: tip.pick, pickLabel: tip.pickLabel||tip.pick,
+    odds: parseFloat(tip.odds), markt: '1X2',
+    _origPick: tip.pick, _origPickLabel: tip.pickLabel||tip.pick, _origOdds: parseFloat(tip.odds)
+  };
+
+  const modal = document.getElementById('bet-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+// ── AI Match Chat ─────────────────────────────────────────
+
+let _chatHistory = [];
+let _chatMatchId = null;
+
+function openMatchChat() {
+  const m = state.selectedMatch;
+  if (!m) return;
+
+  if (_chatMatchId !== m.id) {
+    _chatHistory = [];
+    _chatMatchId = m.id;
+    const msgs = document.getElementById('chatMessages');
+    if (msgs) msgs.innerHTML = '';
+  }
+
+  const section = document.getElementById('matchChatSection');
+  const btn = document.getElementById('openChatBtn');
+  if (section) section.style.display = 'block';
+  if (btn) btn.style.display = 'none';
+
+  const sugg = document.getElementById('chatSuggestions');
+  if (sugg && !sugg.children.length) {
+    const suggestions = [
+      'Wat is jouw beste pick?',
+      'Hoe zit het met de verdediging?',
+      'Is er value in de odds?',
+      'Wat zijn de risicofactoren?',
+      'Verwacht je doelpunten?'
+    ];
+    sugg.innerHTML = suggestions.map(s =>
+      `<button onclick="setChatInput('${s}')"
+        style="font-family:monospace;font-size:.46rem;padding:2px 8px;border-radius:999px;
+        background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
+        color:#7c3aed;cursor:pointer;white-space:nowrap;">${s}</button>`
+    ).join('');
+  }
+
+  setTimeout(() => document.getElementById('chatInput')?.focus(), 100);
+}
+
+function setChatInput(text) {
+  const input = document.getElementById('chatInput');
+  if (input) { input.value = text; input.focus(); }
+}
+
+function appendChatMsg(role, text, isLoading = false) {
+  const msgs = document.getElementById('chatMessages');
+  if (!msgs) return;
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.style.cssText = `display:flex;justify-content:${isUser?'flex-end':'flex-start'};margin-bottom:.4rem;`;
+  div.innerHTML = `
+    <div style="max-width:85%;padding:.5rem .7rem;border-radius:${isUser?'12px 12px 2px 12px':'12px 12px 12px 2px'};
+      background:${isUser?'rgba(124,58,237,.15)':'var(--card)'};
+      border:1px solid ${isUser?'rgba(124,58,237,.25)':'var(--stroke)'};
+      font-family:${isUser?'monospace':'inherit'};font-size:.72rem;line-height:1.6;color:var(--ink);">
+      ${isLoading ? '<span style="opacity:.5;">⟳ Nadenken...</span>' : text}
+    </div>`;
+  div.id = isLoading ? 'chat-loading' : '';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+async function sendMatchChat() {
+  const input = document.getElementById('chatInput');
+  const question = input?.value.trim();
+  if (!question) return;
+
+  const m = state.selectedMatch;
+  if (!m) { showToast('Selecteer eerst een wedstrijd'); return; }
+
+  input.value = '';
+  input.disabled = true;
+
+  appendChatMsg('user', question);
+  _chatHistory.push({ role: 'user', content: question });
+
+  appendChatMsg('assistant', '', true);
+
+  try {
+    const matchCtx = state._lastAnalyseContext ||
+      `Wedstrijd: ${m.home} vs ${m.away} | ${m.comp} | ${m.date} ${m.time} | Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
+
+    const analyseSummary = state._lastAnalyseResult ? `
+Vorm: ${state._lastAnalyseResult.vorm || ''}
+Stats: ${state._lastAnalyseResult.stats || ''}
+Kansen: ${state._lastAnalyseResult.kans || ''}
+Advies: ${state._lastAnalyseResult.advies || ''}` : '';
+
+    const historyToSend = _chatHistory.slice(-6);
+
+    const data = await anthropicFetch(null, {
+      model: 'claude-sonnet-4-6',
+      max_tokens: 600,
+      system: `Je bent een voetbalanalist die vragen beantwoordt over een specifieke wedstrijd. 
+Geef korte, directe antwoorden (max 3-4 zinnen). Gebruik de beschikbare data.
+Wedstrijd context:
+${matchCtx}${analyseSummary}`,
+      messages: historyToSend
+    });
+
+    const loading = document.getElementById('chat-loading');
+    if (loading) loading.remove();
+
+    const answer = data.content?.[0]?.text || 'Geen antwoord ontvangen';
+    appendChatMsg('assistant', answer);
+    _chatHistory.push({ role: 'assistant', content: answer });
+
+    if (_chatHistory.length > 20) _chatHistory = _chatHistory.slice(-20);
+
+  } catch(e) {
+    const loading = document.getElementById('chat-loading');
+    if (loading) loading.remove();
+    appendChatMsg('assistant', `⚠ Fout: ${e.message}`);
+  }
+
+  input.disabled = false;
+  input.focus();
+}
+
+function addCombiFromAnalyse() {
+  const tip = state.lastAnalyseTip;
+  if (!tip) { showToast('Geen analyse tip beschikbaar'); return; }
+  if (!state.combiBuilder) state.combiBuilder = [];
+  const exists = state.combiBuilder.some(l => String(l.matchId) === String(tip.matchId));
+  if (exists) { showToast('Al in combi'); return; }
+  state.combiBuilder.push({
+    matchId: tip.matchId,
+    pick: tip.pick,
+    pickLabel: tip.pickLabel || tip.pick,
+    odds: parseFloat(tip.odds),
+    home: tip.home || '',
+    away: tip.away || ''
+  });
+  saveState();
+  showToast('➕ ' + (tip.home||'') + ' toegevoegd aan combi');
+}
+
+
+// ═══════════════════════════════════════════════════════
+// HANDMATIGE VERIFICATIE — v18.6
+// Voor picks waarvan API-Football geen resultaat geeft
+// ═══════════════════════════════════════════════════════
+
+function showManualVerify(scanId, pickId, pick, matchName) {
+  // Verwijder bestaande modal als die er al is
+  const existing = document.getElementById('manual-verify-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'manual-verify-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:9000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);';
+  modal.innerHTML = `
+    <div style="background:var(--card);border-radius:20px 20px 0 0;padding:1.25rem 1.25rem 2rem;
+      width:100%;max-width:480px;box-shadow:0 -8px 32px rgba(15,23,42,.2);">
+      <div style="width:36px;height:4px;background:rgba(15,23,42,.15);border-radius:999px;margin:0 auto .75rem;"></div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);margin-bottom:.3rem;">
+        ✏ SCORE INVOEREN
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--sub);margin-bottom:1rem;line-height:1.6;">
+        ${matchName}<br>
+        Pick: <b style="color:var(--ink);">${pick}</b>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);display:block;margin-bottom:.4rem;">
+          EINDSTAND (bijv. 2-1)
+        </label>
+        <input id="manual-score-input" type="text" placeholder="0-0"
+          style="width:100%;font-family:'Bebas Neue',sans-serif;font-size:1.4rem;text-align:center;
+          padding:.6rem;border-radius:12px;border:2px solid var(--stroke);
+          background:var(--card);color:var(--ink);outline:none;letter-spacing:.1em;"
+          oninput="updateManualPreview('${pick}', this.value)">
+      </div>
+      <div id="manual-verify-preview" style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;
+        text-align:center;padding:.5rem;border-radius:8px;margin-bottom:1rem;min-height:1.5rem;"></div>
+      <div style="display:flex;gap:.5rem;">
+        <button onclick="document.getElementById('manual-verify-modal').remove()"
+          style="flex:1;padding:.65rem;border-radius:12px;background:rgba(15,23,42,.06);
+          border:1px solid var(--stroke);font-family:'IBM Plex Mono',monospace;
+          font-size:.6rem;font-weight:700;color:var(--sub);cursor:pointer;">
+          Annuleren
+        </button>
+        <button onclick="confirmManualVerify('${scanId}','${pickId}','${pick}')"
+          style="flex:2;padding:.65rem;border-radius:12px;
+          background:linear-gradient(135deg,rgba(219,39,119,.85),rgba(124,58,237,.8));
+          color:#fff;border:none;font-family:'IBM Plex Mono',monospace;
+          font-size:.6rem;font-weight:800;cursor:pointer;letter-spacing:.04em;">
+          ✓ BEVESTIGEN
+        </button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+  // Focus input
+  setTimeout(() => document.getElementById('manual-score-input')?.focus(), 100);
+  // Sluit bij tik buiten sheet
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function updateManualPreview(pick, scoreStr) {
+  const preview = document.getElementById('manual-verify-preview');
+  if (!preview) return;
+  const parts = scoreStr.trim().split('-');
+  if (parts.length !== 2) { preview.textContent = ''; return; }
+  const hg = parseInt(parts[0]);
+  const ag = parseInt(parts[1]);
+  if (isNaN(hg) || isNaN(ag)) { preview.textContent = ''; return; }
+
+  let won = false;
+  const t = pick.toUpperCase();
+  if      (t === '1')    won = hg > ag;
+  else if (t === 'X')    won = hg === ag;
+  else if (t === '2')    won = ag > hg;
+  else if (t === '1X')   won = hg >= ag;
+  else if (t === 'X2')   won = ag >= hg;
+  else if (t === 'O2.5') won = (hg + ag) > 2.5;
+  else if (t === 'U2.5') won = (hg + ag) < 2.5;
+  else if (t === 'BTTS-J') won = hg > 0 && ag > 0;
+  else if (t === 'BTTS-N') won = hg === 0 || ag === 0;
+
+  preview.style.background = won ? 'rgba(22,163,74,.1)' : 'rgba(220,38,38,.08)';
+  preview.style.color = won ? '#15803d' : '#dc2626';
+  preview.style.border = `1px solid ${won ? 'rgba(22,163,74,.25)' : 'rgba(220,38,38,.2)'}`;
+  preview.textContent = won ? `✅ WIN — pick ${pick} correct bij ${hg}-${ag}` : `❌ VERLIES — pick ${pick} fout bij ${hg}-${ag}`;
+}
+
+function confirmManualVerify(scanId, pickId, pick) {
+  const input = document.getElementById('manual-score-input');
+  const scoreStr = input?.value.trim();
+  if (!scoreStr || !scoreStr.includes('-')) {
+    showToast('Voer een geldige score in (bijv. 2-1)');
+    return;
+  }
+  const parts = scoreStr.split('-');
+  const hg = parseInt(parts[0]);
+  const ag = parseInt(parts[1]);
+  if (isNaN(hg) || isNaN(ag)) {
+    showToast('Ongeldige score — gebruik formaat 2-1');
+    return;
+  }
+
+  // Zoek de pick in scanLog
+  const log = state.scanLog || [];
+  let found = false;
+
+  log.forEach(scan => {
+    if (String(scan.id) !== String(scanId)) return;
+    scan.picks.forEach(p => {
+      const pId = String(p.fixtureId || p.id || '');
+      if (pId !== String(pickId)) return;
+
+      // Bereken resultaat
+      const t = (p.pick || pick).toUpperCase();
+      let won = false;
+      if      (t === '1')      won = hg > ag;
+      else if (t === 'X')      won = hg === ag;
+      else if (t === '2')      won = ag > hg;
+      else if (t === '1X')     won = hg >= ag;
+      else if (t === 'X2')     won = ag >= hg;
+      else if (t === 'O2.5')   won = (hg + ag) > 2.5;
+      else if (t === 'U2.5')   won = (hg + ag) < 2.5;
+      else if (t === 'BTTS-J') won = hg > 0 && ag > 0;
+      else if (t === 'BTTS-N') won = hg === 0 || ag === 0;
+      else won = false;
+
+      p.status = won ? 'win' : 'lose';
+      p.score = `${hg}-${ag}`;
+      p.verifiedAt = new Date().toISOString();
+      p.verifiedManually = true;
+      found = true;
+    });
+  });
+
+  if (!found) {
+    showToast('Pick niet gevonden in scan log');
+    return;
+  }
+
+  // Sync naar backtest
+  syncScanLogToBacktest();
+  saveState();
+
+  // Sluit modal en herrender
+  document.getElementById('manual-verify-modal')?.remove();
+  showToast(`✅ Score ${hg}-${ag} opgeslagen`);
+  renderScanLog();
+}
