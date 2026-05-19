@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.25
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.27
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -188,7 +188,7 @@ function showAnalyseSubTab(tab) {
 // ── Value scan (per competitie) ───────────────────────────
 async function scanValueAll() {
   if (window._scanBusy) {
-    alert('Er loopt al een scan. Wacht tot die klaar is.');
+    showToast('⚡ Scan loopt nog even...');
     return;
   }
   // v18.6: max 15 candidates om JSON truncatie te voorkomen bij grote batches
@@ -197,7 +197,7 @@ async function scanValueAll() {
   ).slice(0, 15);
 
   if (!candidates.length) {
-    alert('Geen wedstrijden met quotes. Laad eerst wedstrijden via Wedstrijden tabblad.');
+    showToast('Geen wedstrijden met quotes. Laad eerst wedstrijden.');
     return;
   }
 
@@ -1784,8 +1784,7 @@ function renderScanLog() {
   const kwaliPicks = allPicks.filter(p =>
     !p.isSparseData &&
     (p.value||0) >= DREMPEL.minValue &&
-    (p.confidence||0) >= DREMPEL.minConf &&
-    p.poissonUsed
+    (p.confidence||0) >= DREMPEL.minConf
   );
   const settled   = kwaliPicks.filter(p => p.status === 'win' || p.status === 'lose');
   const wins      = settled.filter(p => p.status === 'win');

@@ -27,7 +27,14 @@ function renderDashboard() {
   // Scan log stats
   const scanLog = state.scanLog || [];
   const allPicks = scanLog.flatMap(s => s.picks || []);
-  const settledPicks = allPicks.filter(p => p.status === 'win' || p.status === 'lose');
+  // Alleen kwalitatieve picks voor de 100 teller
+  const DREMPEL = { minValue: 8, minConf: 6 };
+  const kwaliPicks = allPicks.filter(p =>
+    !p.isSparseData &&
+    (p.value||0) >= DREMPEL.minValue &&
+    (p.confidence||0) >= DREMPEL.minConf
+  );
+  const settledPicks = kwaliPicks.filter(p => p.status === 'win' || p.status === 'lose');
   const winPicks = settledPicks.filter(p => p.status === 'win');
   const scanHitrate = settledPicks.length ? Math.round(winPicks.length / settledPicks.length * 100) : null;
   const scanROI = settledPicks.length
@@ -69,10 +76,10 @@ function renderDashboard() {
       onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('log'),100)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">🎯 VOORTGANG NAAR 100 PICKS</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;">${allPicks.length}<span style="font-size:.65rem;color:var(--sub);">/100</span></div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;">${kwaliPicks.length}<span style="font-size:.65rem;color:var(--sub);">/100</span></div>
       </div>
       <div style="background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">
-        <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:${Math.min(100,allPicks.length)}%;transition:width .4s;"></div>
+        <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
       </div>
       ${settledPicks.length ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">${settledPicks.length} afgerond · ${scanHitrate !== null ? scanHitrate + '% hitrate' : '—'} · ROI ${scanROI >= 0 ? '+' : ''}${scanROI.toFixed(1)}%</div>` : `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">Scan wedstrijden om picks te verzamelen →</div>`}
     </div>
