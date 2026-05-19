@@ -818,7 +818,8 @@ function skipScanToday() {
 // ── HANDMATIGE SCAN ───────────────────────────────────
 
 async function runManualScan() {
-  // Gebruik dezelfde logica als de multi-scan knop — alle competities, alle bookmakers
+  // Reset matches zodat scanAllTodayValue altijd alle competities laadt
+  state.matches = [];
   showToast('⚡ Scan gestart — alle competities...');
   switchScreen('analyse');
   setTimeout(() => {
