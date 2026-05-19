@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.27
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.28
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -1143,6 +1143,8 @@ async function scanAllTodayValue(mode = 'today') {
       // Voeg EERST toe aan state.matches zodat fetchOddsForMatches ze kan vinden
       const existingIds = new Set((state.matches||[]).map(m => m.id));
       allMatches.forEach(m => { if (!existingIds.has(m.id)) state.matches.push(m); });
+      // Sla matches op voor persistentie
+      saveState();
 
       // Haal odds op per league — exact dezelfde methode als Wedstrijden scherm
       if (btn) btn.textContent = `⟳ ODDS OPHALEN...`;
