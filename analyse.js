@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.29
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.31
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -31,12 +31,21 @@ function renderAnalyseScreen() {
     <div id="asub-content-scan">
       <div id="analyseScanResults" style="margin-bottom:.5rem;"></div>
       ${hasMatches ? `
-      <button id="valueScanBtn2" onclick="scanValueAll()"
-        style="width:100%;background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(5,150,105,.06));
-        border:1.5px solid rgba(22,163,74,.3);color:#15803d;font-family:'IBM Plex Mono',monospace;
-        font-size:.65rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;margin-bottom:.7rem;">
-        ⚡ SCAN VALUE — alle geladen wedstrijden
-      </button>` : `
+      <div style="display:grid;grid-template-columns:1fr auto;gap:.4rem;margin-bottom:.7rem;">
+        <button id="valueScanBtn2" onclick="scanValueAll()"
+          style="background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(5,150,105,.06));
+          border:1.5px solid rgba(22,163,74,.3);color:#15803d;font-family:'IBM Plex Mono',monospace;
+          font-size:.65rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;">
+          ⚡ SCAN VALUE — alle geladen wedstrijden
+        </button>
+        <button onclick="state.matches=[];saveState();showToast('🔄 Wedstrijden gewist — scan opnieuw');renderAnalyseScreen();"
+          title="Ververs wedstrijden"
+          style="background:rgba(124,58,237,.08);border:1.5px solid rgba(124,58,237,.25);
+          color:#7c3aed;font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:800;
+          padding:.65rem .8rem;border-radius:12px;cursor:pointer;">
+          🔄
+        </button>
+      </div>` : `
       <div style="text-align:center;padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:.7rem;">
         <div style="font-size:2rem;opacity:.3;">⚡</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--sub);line-height:1.75;max-width:240px;">
@@ -635,6 +644,8 @@ function renderAnalyseScanResults(scans) {
     const sign = s.value > 0 ? '+' : '';
     const home = s.match?.home || s.home || '?';
     const away = s.match?.away || s.away || '?';
+    const matchDate = s.match?.date || s.date || '';
+    const matchTime = s.match?.time || s.time || '';
     const redenen = [];
     if (s.isSparseData) redenen.push('data schaars');
     if (s.value < DREMPEL.minValue) redenen.push(`value < ${DREMPEL.minValue}%`);
@@ -654,6 +665,7 @@ function renderAnalyseScanResults(scans) {
             TELT NIET MEE</span>` : `<span style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;
             background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.25);
             color:#15803d;border-radius:4px;padding:.1rem .3rem;font-weight:700;">✓ PICK</span>`}
+          ${matchDate ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">📅 ${matchDate}${matchTime ? ' ' + matchTime : ''}</span>` : ''}
         </div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
           ${s.pickLabel} · ${s.kans||'?'}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):s._hasXG?' (xG)':''} · ${s.reason||''}
@@ -1587,6 +1599,8 @@ function logScanResult(picks) {
       fixtureId:   fixtureId,
       match:       home + ' vs ' + away,
       comp:        (p.match && p.match.comp) || p.comp || p.compName || '',
+      matchDate:   (p.match && p.match.date) || p.matchDate || '',
+      matchTime:   (p.match && p.match.time) || p.matchTime || '',
       pick:        p.pick || '1',
       pickLabel:   p.pickLabel || p.label || '',
       odds:        parseFloat(p.odds || 2),
@@ -1596,6 +1610,7 @@ function logScanResult(picks) {
       kelly:       parseFloat((p.kelly || 0).toFixed(1)),
       reason:      p.reason || '',
       poissonUsed: p.poissonUsed || false,
+      isSparseData: p.isSparseData || false,
       status:      'pending',
       score:       null,
       verifiedAt:  null
@@ -1956,6 +1971,7 @@ function renderScanLog() {
           + '<div style="flex:1;min-width:0;">'
           + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.58rem;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + '</div>'
           + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">' + (p.pickLabel||p.pick) + ' @ ' + p.odds + ' &middot; ' + (p.value||0).toFixed(1) + '% value &middot; conf ' + p.confidence + '/10</div>'
+          + (p.matchDate||p.date ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--muted);">📅 ' + (p.matchDate||p.date||'') + (p.matchTime||p.time ? ' ' + (p.matchTime||p.time) : '') + '</div>' : '')
           + '</div>'
           + (p.score ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:var(--muted);">' + p.score + '</div>' : '')
           + manualBtn
