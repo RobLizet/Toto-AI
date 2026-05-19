@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════
-// AUTH — Firebase authenticatie (optioneel — app werkt zonder login)
+// AUTH — Firebase authenticatie v15.0
+// Fixes: switchLoginTab IDs, Google login popup fallback,
+//        element ID sync met index.html
 // ═══════════════════════════════════════════════════════
 
-let _firebaseAuth  = null;
-let _currentUser   = null;
+let _firebaseAuth = null;
+let _currentUser  = null;
 
 function initFirebaseAuth() {
   try {
@@ -28,7 +30,7 @@ function initFirebaseAuth() {
       }
     }).catch(e => {
       if (e.code && e.code !== 'auth/no-current-user') {
-        console.warn('[Auth] Redirect result:', e.message);
+        console.warn('[Auth] Redirect result fout:', e.code, e.message);
       }
     });
 
@@ -39,163 +41,153 @@ function initFirebaseAuth() {
         console.log('[Auth] Ingelogd:', user.email);
         localStorage.removeItem('totoai_skip_login');
         hideLoginScreen();
-        // Toon in instellingen
-        const userEl = document.getElementById('authUserInfo');
-        if (userEl) {
-          userEl.innerHTML = `✅ <b>${user.displayName||user.email}</b>
-            <button onclick="logoutUser()" style="margin-left:.4rem;font-family:monospace;font-size:.45rem;padding:2px 7px;border-radius:7px;border:1px solid rgba(220,38,38,.3);background:rgba(220,38,38,.08);color:#dc2626;cursor:pointer;">Uitloggen</button>`;
-        }
-        const authSection = document.getElementById('authAccountSection');
-        if (authSection) {
-          authSection.innerHTML = `<div style="font-family:monospace;font-size:.55rem;line-height:1.7;">
-            ✅ Ingelogd als <b>${user.displayName||user.email}</b><br>
-            <button onclick="logoutUser()" style="font-family:monospace;font-size:.5rem;padding:3px 10px;border-radius:8px;border:1px solid rgba(220,38,38,.3);background:rgba(220,38,38,.08);color:#dc2626;cursor:pointer;margin-top:.3rem;">Uitloggen</button>
-          </div>`;
-        }
-        sessionStorage.setItem('totoai_was_logged_in','1');
-        // Toon gebruiker in topbar
-        // Topbar user label
+
+        // Topbar bijwerken
         const topbarUser = document.getElementById('topbar-user');
         if (topbarUser) {
           topbarUser.textContent = user.displayName || user.email?.split('@')[0] || '👤';
           topbarUser.style.display = 'block';
         }
-        // Login knop — groen = ingelogd
-        const loginBtn = document.getElementById('topbar-login-btn');
         const loginDot = document.getElementById('login-status-dot');
-        if (loginBtn) loginBtn.style.display = 'flex';
         if (loginDot) loginDot.style.background = '#16a34a';
-        // Laad keys en data automatisch vanuit Firebase
+        const loginBtn = document.getElementById('topbar-login-btn');
+        if (loginBtn) loginBtn.style.display = 'flex';
+
+        // Auth sectie in instellingen
+        _updateAuthSection(user);
+
+        sessionStorage.setItem('totoai_was_logged_in', '1');
+
+        // Laad keys vanuit Firebase dan start app
         if (typeof loadFromFirebase === 'function') {
           loadFromFirebase().then(() => {
             saveState();
-            // Kosten laden uit Firebase
-            if (typeof loadCostsFromFirebase === 'function') loadCostsFromFirebase();
-            // App tonen na laden
-            const app = document.getElementById('app');
-            const nav = document.getElementById('bottom-nav');
-            const topbar = document.getElementById('topbar');
-            if (app) app.style.display = 'block';
-            if (nav) nav.style.display = 'flex';
-            if (topbar) topbar.style.display = 'flex';
-            if (typeof switchScreen === 'function') switchScreen('dashboard');
-            if (typeof applySettings === 'function') applySettings();
+            _startApp();
             showToast('✅ Keys geladen vanuit Firebase');
-          }).catch(() => {
-            const app = document.getElementById('app');
-            const nav = document.getElementById('bottom-nav');
-            const topbar = document.getElementById('topbar');
-            if (app) app.style.display = 'block';
-            if (nav) nav.style.display = 'flex';
-            if (topbar) topbar.style.display = 'flex';
-            if (typeof switchScreen === 'function') switchScreen('dashboard');
-          });
+          }).catch(() => _startApp());
         } else {
-          const app = document.getElementById('app');
-          const nav = document.getElementById('bottom-nav');
-          const topbar = document.getElementById('topbar');
-          if (app) app.style.display = 'block';
-          if (nav) nav.style.display = 'flex';
-          if (topbar) topbar.style.display = 'flex';
-          if (typeof switchScreen === 'function') switchScreen('dashboard');
+          _startApp();
         }
       } else {
         console.log('[Auth] Niet ingelogd — app werkt zonder auth');
         sessionStorage.removeItem('totoai_was_logged_in');
         hideLoginScreen();
+
         // Topbar — rood = niet ingelogd
-        const topbarUser2 = document.getElementById('topbar-user');
-        if (topbarUser2) topbarUser2.style.display = 'none';
-        const loginBtn2 = document.getElementById('topbar-login-btn');
-        const loginDot2 = document.getElementById('login-status-dot');
-        if (loginBtn2) loginBtn2.style.display = 'flex';
-        if (loginDot2) loginDot2.style.background = '#dc2626';
-        // Start app zonder login
-        const app = document.getElementById('app');
-        const nav = document.getElementById('bottom-nav');
-        const topbar = document.getElementById('topbar');
-        if (app) app.style.display = 'block';
-        if (nav) nav.style.display = 'flex';
-        if (topbar) topbar.style.display = 'flex';
-        if (typeof switchScreen === 'function') switchScreen('dashboard');
+        const topbarUser = document.getElementById('topbar-user');
+        if (topbarUser) topbarUser.style.display = 'none';
+        const loginDot = document.getElementById('login-status-dot');
+        if (loginDot) loginDot.style.background = '#dc2626';
+        const loginBtn = document.getElementById('topbar-login-btn');
+        if (loginBtn) loginBtn.style.display = 'flex';
+
+        _startApp();
       }
     });
   } catch(e) {
     console.error('[Auth] Init mislukt:', e.message);
     hideLoginScreen();
+    _startApp();
   }
 }
 
-// ── LOGIN SCHERM ──────────────────────────────────────
-
-function renderLoginScreen() {
-  // Gebruik altijd het screen-login element uit index.html — niet dynamisch aanmaken
-  showLoginScreen();
+function _startApp() {
+  const app    = document.getElementById('app');
+  const nav    = document.getElementById('bottom-nav');
+  const topbar = document.getElementById('topbar');
+  if (app)    app.style.display    = 'block';
+  if (nav)    nav.style.display    = 'flex';
+  if (topbar) topbar.style.display = 'flex';
+  if (typeof switchScreen === 'function') switchScreen('dashboard');
+  if (typeof applySettings === 'function') applySettings();
 }
+
+function _updateAuthSection(user) {
+  const authSection = document.getElementById('authAccountSection');
+  if (authSection) {
+    authSection.innerHTML = `
+      <div style="font-family:monospace;font-size:.55rem;line-height:1.7;">
+        ✅ Ingelogd als <b>${user.displayName || user.email}</b><br>
+        <button onclick="logoutUser()"
+          style="font-family:monospace;font-size:.5rem;padding:3px 10px;border-radius:8px;
+          border:1px solid rgba(220,38,38,.3);background:rgba(220,38,38,.08);
+          color:#dc2626;cursor:pointer;margin-top:.3rem;">
+          Uitloggen
+        </button>
+      </div>`;
+  }
+}
+
+// ── LOGIN SCHERM ──────────────────────────────────────────
+
 function showLoginScreen() {
-  const ls = document.getElementById('screen-login');
-  if (ls) {
-    ls.style.display = 'flex';
-    ls.style.zIndex = '9000';
-    ls.classList.add('active');
-  }
+  window.location.href = 'login.html';
 }
 
 function hideLoginScreen() {
   const ls = document.getElementById('screen-login');
-  if (ls) {
-    ls.classList.remove('active');
-    ls.style.display = 'none';
+  if (ls) ls.classList.remove('active');
+}
+
+// switchLoginTab — werkt met 'in'/'reg' (index.html) EN 'login'/'register' (legacy)
+function switchLoginTab(tab) {
+  // Normaliseer: 'login' → 'in', 'register' → 'reg'
+  if (tab === 'login')    tab = 'in';
+  if (tab === 'register') tab = 'reg';
+
+  const formIn  = document.getElementById('login-form-in');
+  const formReg = document.getElementById('login-form-reg');
+  const btnIn   = document.getElementById('login-tab-in');
+  const btnReg  = document.getElementById('login-tab-reg');
+  if (!formIn || !formReg) return;
+
+  const activeStyle   = 'linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8))';
+  const inactiveStyle = 'transparent';
+
+  if (tab === 'in') {
+    formIn.style.display  = 'block';
+    formReg.style.display = 'none';
+    if (btnIn)  { btnIn.style.background  = activeStyle;   btnIn.style.color  = '#fff'; }
+    if (btnReg) { btnReg.style.background = inactiveStyle; btnReg.style.color = 'var(--sub)'; }
+  } else {
+    formIn.style.display  = 'none';
+    formReg.style.display = 'block';
+    if (btnIn)  { btnIn.style.background  = inactiveStyle; btnIn.style.color  = 'var(--sub)'; }
+    if (btnReg) { btnReg.style.background = activeStyle;   btnReg.style.color = '#fff'; }
   }
+
+  // Foutmelding wissen
+  const errEl = document.getElementById('loginError');
+  if (errEl) errEl.textContent = '';
 }
 
 function skipLoginAndEnter() {
-  localStorage.setItem('totoai_skip_login','1');
-  localStorage.setItem('totoai_onboarding_done','1');
+  localStorage.setItem('totoai_skip_login', '1');
+  localStorage.setItem('totoai_onboarding_done', '1');
   hideLoginScreen();
-  switchScreen('dashboard');
+  if (typeof switchScreen === 'function') switchScreen('dashboard');
 }
 
 function skipOnboarding() {
-  localStorage.setItem('totoai_onboarding_done','1');
+  localStorage.setItem('totoai_onboarding_done', '1');
   const ob = document.getElementById('onboardingScreen');
-  if (ob) ob.style.display='none';
+  if (ob) ob.style.display = 'none';
   const app = document.getElementById('app');
-  if (app) app.style.display='block';
-  setTimeout(()=>switchScreen('wedstrijden'),300);
+  if (app) app.style.display = 'block';
+  setTimeout(() => { if (typeof switchScreen === 'function') switchScreen('wedstrijden'); }, 300);
 }
 
-function switchLoginTab(tab) {
-  const loginForm    = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
-  const loginBtn     = document.getElementById('loginTabBtn');
-  const registerBtn  = document.getElementById('registerTabBtn');
-  if (!loginForm||!registerForm) return;
-
-  const active='linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8))';
-  const inactive='transparent';
-
-  if (tab==='login') {
-    loginForm.style.display='block'; registerForm.style.display='none';
-    if (loginBtn)    { loginBtn.style.background=active; loginBtn.style.color='#fff'; }
-    if (registerBtn) { registerBtn.style.background=inactive; registerBtn.style.color='var(--sub)'; }
-  } else {
-    loginForm.style.display='none'; registerForm.style.display='block';
-    if (loginBtn)    { loginBtn.style.background=inactive; loginBtn.style.color='var(--sub)'; }
-    if (registerBtn) { registerBtn.style.background=active; registerBtn.style.color='#fff'; }
-  }
-  const errEl=document.getElementById('loginError');
-  if (errEl) errEl.textContent='';
-}
-
-// ── LOGIN ACTIES ─────────────────────────────────────
+// ── LOGIN ACTIES ──────────────────────────────────────────
 
 async function loginWithEmail() {
-  const email    = document.getElementById('login-email')?.value.trim();
-  const password = document.getElementById('login-password')?.value;
+  // Ondersteunt beide ID-stijlen
+  const email    = (document.getElementById('login-email') || document.getElementById('loginEmail'))?.value.trim();
+  const password = (document.getElementById('login-password') || document.getElementById('loginPassword'))?.value;
   const btn      = document.querySelector('#login-form-in .login-submit-btn');
-  if (!email||!password) { showToast('Vul email en wachtwoord in'); return; }
+
+  if (!email || !password) { showToast('Vul email en wachtwoord in'); return; }
   if (btn) { btn.textContent = '⟳ Inloggen...'; btn.disabled = true; }
+
   try {
     if (!_firebaseAuth) throw new Error('Firebase niet beschikbaar');
     await _firebaseAuth.signInWithEmailAndPassword(email, password);
@@ -203,7 +195,7 @@ async function loginWithEmail() {
     const msgs = {
       'auth/user-not-found':    'Geen account gevonden',
       'auth/wrong-password':    'Verkeerd wachtwoord',
-      'auth/invalid-email':     'Ongeldig email adres',
+      'auth/invalid-email':     'Ongeldig emailadres',
       'auth/invalid-credential':'Email of wachtwoord onjuist',
       'auth/too-many-requests': 'Te veel pogingen, probeer later'
     };
@@ -213,23 +205,25 @@ async function loginWithEmail() {
 }
 
 async function registerWithEmail() {
-  const email    = document.getElementById('reg-email')?.value.trim();
-  const password = document.getElementById('reg-password')?.value;
-  const password2= document.getElementById('reg-password2')?.value;
-  const btn      = document.querySelector('#login-form-reg .login-submit-btn');
-  if (!email||!password) { showToast('Vul email en wachtwoord in'); return; }
-  if (password.length<6) { showToast('Wachtwoord min. 6 tekens'); return; }
-  if (password !== password2) { showToast('Wachtwoorden komen niet overeen'); return; }
+  const email     = (document.getElementById('reg-email')      || document.getElementById('registerEmail'))?.value.trim();
+  const password  = (document.getElementById('reg-password')   || document.getElementById('registerPassword'))?.value;
+  const password2 = (document.getElementById('reg-password2'))?.value;
+  const btn       = document.querySelector('#login-form-reg .login-submit-btn');
+
+  if (!email || !password) { showToast('Vul email en wachtwoord in'); return; }
+  if (password.length < 6) { showToast('Wachtwoord min. 6 tekens'); return; }
+  if (password2 !== undefined && password !== password2) { showToast('Wachtwoorden komen niet overeen'); return; }
   if (btn) { btn.textContent = '⟳ Account aanmaken...'; btn.disabled = true; }
+
   try {
     if (!_firebaseAuth) throw new Error('Firebase niet beschikbaar');
     await _firebaseAuth.createUserWithEmailAndPassword(email, password);
     showToast('✅ Account aangemaakt!');
   } catch(e) {
     const msgs = {
-      'auth/email-already-in-use':'Email al in gebruik',
-      'auth/invalid-email':       'Ongeldig email adres',
-      'auth/weak-password':       'Wachtwoord te zwak'
+      'auth/email-already-in-use': 'Email al in gebruik',
+      'auth/invalid-email':        'Ongeldig emailadres',
+      'auth/weak-password':        'Wachtwoord te zwak'
     };
     showToast('❌ ' + (msgs[e.code] || e.message));
     if (btn) { btn.textContent = 'Account aanmaken'; btn.disabled = false; }
@@ -240,40 +234,65 @@ async function loginWithGoogle() {
   try {
     if (!_firebaseAuth) throw new Error('Firebase niet beschikbaar');
     const provider = new firebase.auth.GoogleAuthProvider();
-    showToast('⟳ Doorsturen naar Google...');
-    // Redirect werkt altijd op mobiel/PWA
-    await _firebaseAuth.signInWithRedirect(provider);
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    // Probeer popup eerst (werkt beter in PWA/TWA)
+    // Val terug op redirect als popup geblokkeerd wordt
+    try {
+      showToast('⟳ Google login...');
+      const result = await _firebaseAuth.signInWithPopup(provider);
+      if (result?.user) {
+        showToast('✅ Ingelogd als ' + (result.user.displayName || result.user.email));
+      }
+    } catch(popupErr) {
+      // Popup geblokkeerd of niet ondersteund → redirect
+      if (popupErr.code === 'auth/popup-blocked' ||
+          popupErr.code === 'auth/popup-closed-by-user' ||
+          popupErr.code === 'auth/cancelled-popup-request') {
+        showToast('⟳ Doorsturen naar Google...');
+        await _firebaseAuth.signInWithRedirect(provider);
+      } else {
+        throw popupErr;
+      }
+    }
   } catch(e) {
-    showToast('❌ Google login mislukt: ' + (e.message||e.code));
+    console.error('[Auth] Google login fout:', e.code, e.message);
+    showToast('❌ Google login mislukt: ' + (e.message || e.code));
   }
 }
 
 async function logoutUser() {
   try {
     if (_firebaseAuth) await _firebaseAuth.signOut();
-    showAutoCheckBar('👋 Uitgelogd',2000);
-    // Update auth sectie in instellingen
+    showAutoCheckBar('👋 Uitgelogd', 2000);
+
+    // Topbar reset
+    const topbarUser = document.getElementById('topbar-user');
+    if (topbarUser) topbarUser.style.display = 'none';
+    const loginDot = document.getElementById('login-status-dot');
+    if (loginDot) loginDot.style.background = '#dc2626';
+
+    // Auth sectie reset
     const authSection = document.getElementById('authAccountSection');
     if (authSection) {
-      authSection.innerHTML = `<div style="font-family:monospace;font-size:.55rem;color:var(--sub);margin-bottom:.6rem;line-height:1.6;">
-        Log in om data te synchroniseren tussen apparaten.
-      </div>
-      <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-        <button class="small-action-btn" onclick="showLoginScreen()">🔐 Inloggen / Registreren</button>
-      </div>`;
+      authSection.innerHTML = `
+        <div style="font-family:monospace;font-size:.55rem;color:var(--sub);margin-bottom:.6rem;line-height:1.6;">
+          Log in om data te synchroniseren tussen apparaten.
+        </div>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
+          <button class="small-action-btn" onclick="showLoginScreen()">🔐 Inloggen / Registreren</button>
+        </div>`;
     }
-    const userEl = document.getElementById('authUserInfo');
-    if (userEl) userEl.innerHTML='';
-  } catch(e) {}
+  } catch(e) {
+    console.error('[Auth] Logout fout:', e);
+  }
 }
 
 function handleLoginBtnClick() {
   if (_firebaseAuth && _firebaseAuth.currentUser) {
-    // Al ingelogd — ga naar instellingen account sectie
     switchScreen('instellingen');
     showToast('✅ Ingelogd als ' + (_firebaseAuth.currentUser.displayName || _firebaseAuth.currentUser.email));
   } else {
-    // Niet ingelogd — toon login scherm
     showLoginScreen();
   }
 }
