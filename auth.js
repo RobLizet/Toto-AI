@@ -195,6 +195,8 @@ function showLoginScreen() {
 function hideLoginScreen() {
   const ls = document.getElementById('screen-login');
   if (ls) ls.classList.remove('active');
+  const ls2 = document.getElementById('loginScreen');
+  if (ls2) ls2.style.display = 'none';
 }
 
 function skipLoginAndEnter() {
