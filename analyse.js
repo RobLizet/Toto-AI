@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.14
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.25
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -1105,7 +1105,7 @@ async function scanAllTodayValue(mode = 'today') {
     m.homeOdds !== '—' && !m.isDone && parseFloat(m.homeOdds) > 1
   );
 
-  if (currentWithOdds.length < 5) {
+  if (currentWithOdds.length < 3) {
     if (btn) { btn.disabled = true; btn.textContent = '⟳ ALLE COMPS LADEN...'; }
 
     // Laad alle competities parallel — volledige scan lijst
@@ -1122,9 +1122,9 @@ async function scanAllTodayValue(mode = 'today') {
     await Promise.all(SCAN_LEAGUE_IDS.map(async leagueId => {
       try {
         const season = leagueId === 1 ? 2026 : 2025;
-        const dateParam = mode === 'tomorrow' ? tomorrowStr : todayStr;
+        // Gebruik next=50 om komende wedstrijden op te halen (geen datumfilter)
         const r = await apiFetch(
-          `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&date=${dateParam}&status=NS-1H-HT-2H`,
+          `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&next=10`,
           null, 8000
         );
         const d = await r.json();
@@ -1139,30 +1139,30 @@ async function scanAllTodayValue(mode = 'today') {
     }));
 
     if (allMatches.length > 0) {
-      // Haal odds op voor gevonden wedstrijden
-      if (btn) btn.textContent = `⟳ ODDS OPHALEN (${allMatches.length})...`;
-      try {
-        await fetchOddsForAllMatches(allMatches, null);
-      } catch(e) {}
-      // Voeg toe aan state.matches (dedupliceer)
+      if (btn) btn.textContent = `⟳ WEDSTRIJDEN GEVONDEN (${allMatches.length})...`;
+      // Voeg EERST toe aan state.matches zodat fetchOddsForMatches ze kan vinden
       const existingIds = new Set((state.matches||[]).map(m => m.id));
       allMatches.forEach(m => { if (!existingIds.has(m.id)) state.matches.push(m); });
+
+      // Haal odds op per league — exact dezelfde methode als Wedstrijden scherm
+      if (btn) btn.textContent = `⟳ ODDS OPHALEN...`;
+      const leagueIds = [...new Set(allMatches.map(m => m.leagueId).filter(Boolean))];
+      await Promise.all(leagueIds.map(lid => fetchOddsForMatches(lid, null).catch(()=>{})));
     }
   }
 
   const allWithOdds = (state.matches||[]).filter(m => {
     if (m.homeOdds === '—' || m.isDone || !(parseFloat(m.homeOdds) > 1)) return false;
-    if (m.leagueId && !new Set(Object.values(COMP_IDS)).has(m.leagueId)) return false;
     return true;
   });
 
   let candidates;
   if (mode === 'tomorrow') {
-    candidates = allWithOdds.filter(m => { const d = m.dateISO||''; return !d || d === todayStr || d === tomorrowStr; });
+    candidates = allWithOdds.filter(m => !m.isDone);
     if (!candidates.length) candidates = allWithOdds.slice(0, 25);
   } else {
-    const byDate = allWithOdds.filter(m => m.dateISO === todayStr);
-    candidates = byDate.length ? byDate : allWithOdds.filter(m => !m.dateISO).concat(byDate);
+    // Alle komende wedstrijden met odds — geen datumfilter
+    candidates = allWithOdds.filter(m => !m.isDone);
     if (!candidates.length) candidates = allWithOdds.slice(0, 20);
   }
   candidates = candidates.slice(0, 25);
@@ -1780,13 +1780,20 @@ function renderScanLog() {
 
   const log       = state.scanLog || [];
   const allPicks  = log.flatMap(s => s.picks);
-  const settled   = allPicks.filter(p => p.status === 'win' || p.status === 'lose');
+  const DREMPEL = { minValue: 8, minConf: 6 };
+  const kwaliPicks = allPicks.filter(p =>
+    !p.isSparseData &&
+    (p.value||0) >= DREMPEL.minValue &&
+    (p.confidence||0) >= DREMPEL.minConf &&
+    p.poissonUsed
+  );
+  const settled   = kwaliPicks.filter(p => p.status === 'win' || p.status === 'lose');
   const wins      = settled.filter(p => p.status === 'win');
   const hitrate   = settled.length ? Math.round(wins.length / settled.length * 100) : 0;
   const roi       = settled.length
     ? settled.reduce((s,p) => s + (p.status==='win' ? (p.odds-1) : -1), 0) / settled.length * 100
     : 0;
-  const avgValue  = allPicks.length ? allPicks.reduce((s,p) => s+(p.value||0),0)/allPicks.length : 0;
+  const avgValue  = kwaliPicks.length ? kwaliPicks.reduce((s,p) => s+(p.value||0),0)/kwaliPicks.length : 0;
 
   const byType = {};
   settled.forEach(p => {
@@ -1841,14 +1848,14 @@ function renderScanLog() {
   html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem;margin-bottom:.8rem;">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">'
     + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:var(--muted);">VOORTGANG NAAR 100 PICKS</div>'
-    + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:var(--accent);">' + allPicks.length + '/100</div>'
+    + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:var(--accent);">' + kwaliPicks.length + '/100</div>'
     + '</div>'
     + '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:6px;overflow:hidden;">'
-    + '<div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:' + Math.min(100,allPicks.length) + '%;transition:width .4s;"></div>'
+    + '<div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:' + Math.min(100,kwaliPicks.length) + '%;transition:width .4s;"></div>'
     + '</div></div>';
 
   html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:.8rem;">'
-    + statCard(allPicks.length, 'PICKS' + helpBtn('scan-log'), '#2563eb')
+    + statCard(kwaliPicks.length, 'PICKS' + helpBtn('scan-log'), '#2563eb')
     + statCard(hitrate + '%', 'HITRATE' + helpBtn('hitrate'), hrColor(hitrate))
     + statCard((roi>=0?'+':'') + roi.toFixed(1) + '%', 'ROI' + helpBtn('roi'), roi>=0?'#16a34a':'#dc2626')
     + statCard(avgValue.toFixed(1) + '%', 'AVG VALUE' + helpBtn('avg-value'), '#7c3aed')
@@ -1932,7 +1939,19 @@ function renderScanLog() {
             + 'background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);'
             + 'color:#2563eb;cursor:pointer;white-space:nowrap;flex-shrink:0;">✏ Score</button>'
           : '';
-        html += '<div style="display:flex;align-items:center;gap:.4rem;padding:.3rem 0;border-top:1px solid var(--border);">'
+        var pickData = JSON.stringify({
+          id: String(p.fixtureId||p.id||''),
+          pick: String(p.pick||''),
+          pickLabel: String(p.pickLabel||p.pick||''),
+          odds: p.odds||2,
+          value: p.value||0,
+          confidence: p.confidence||0,
+          match: p.match||'',
+          reason: (p.reason||'').substring(0,100),
+          poissonUsed: !!p.poissonUsed,
+          isSparseData: !!p.isSparseData
+        }).replace(/"/g, '&quot;');
+        html += '<div style="display:flex;align-items:center;gap:.4rem;padding:.3rem 0;border-top:1px solid var(--border);cursor:pointer;" onclick="var d=JSON.parse(this.dataset.p.replace(/&quot;/g,\'\\\"\')); var parts=(d.match||\'\').split(\' vs \'); openCardPopup(\'scan\',{id:d.id,match:{id:d.id},home:parts[0]||\'\',away:parts[1]||\'\',pick:d.pick,pickLabel:d.pickLabel,odds:d.odds,value:d.value,confidence:d.confidence,reason:d.reason,poissonUsed:d.poissonUsed,isSparseData:d.isSparseData})" data-p="' + pickData + '">'
           + '<div style="width:1.6rem;text-align:center;font-size:.8rem;">' + icon + '</div>'
           + '<div style="flex:1;min-width:0;">'
           + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.58rem;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + '</div>'
@@ -1948,8 +1967,22 @@ function renderScanLog() {
 
   el.innerHTML = html;
 
-  // v18.6: event delegation voor Score knoppen (data-attributen aanpak)
-  el.addEventListener('click', function(e) {
+  el.onclick = function(e) {
+    const row = e.target.closest('.scan-pick-row');
+    if (row && !e.target.closest('button')) {
+      if (typeof openCardPopup !== 'function') return;
+      const matchStr = row.dataset.match || '';
+      const parts = matchStr.split(' vs ');
+      openCardPopup('scan', {
+        id: row.dataset.fid, match: {id: row.dataset.fid},
+        home: parts[0]||'', away: parts[1]||'',
+        pick: row.dataset.pick, pickLabel: row.dataset.label,
+        odds: parseFloat(row.dataset.odds), value: parseFloat(row.dataset.value),
+        confidence: parseInt(row.dataset.conf), reason: row.dataset.reason||'',
+        poissonUsed: row.dataset.poisson==='1', isSparseData: row.dataset.sparse==='1'
+      });
+      return;
+    }
     const btn = e.target.closest('.manual-verify-btn');
     if (!btn) return;
     const scanId = btn.dataset.scan;
@@ -1957,7 +1990,7 @@ function renderScanLog() {
     const pickType = btn.dataset.type;
     const matchName = btn.dataset.match;
     showManualVerify(scanId, pickId, pickType, matchName);
-  });
+  };
 }
 
 function exportScanLogCSV() {

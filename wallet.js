@@ -1365,6 +1365,8 @@ function renderValuePicks() {
 
   allPicks.forEach(p => {
     const matchName = p.match ? `${p.match.home} vs ${p.match.away}` : (p.matchName || '');
+    const home      = matchName.split(' vs ')[0] || '';
+    const away      = matchName.split(' vs ')[1] || '';
     const pick      = p.pick || '1';
     const pickLabel = p.pickLabel || (pick==='1'?'Thuis wint':pick==='X'?'Gelijkspel':'Uit wint');
     const odds      = parseFloat(p.odds || 2).toFixed(2);

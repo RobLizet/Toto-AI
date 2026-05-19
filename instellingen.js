@@ -819,7 +819,6 @@ function skipScanToday() {
 
 async function runManualScan() {
   // Reset matches zodat scanAllTodayValue altijd alle competities laadt
-  state.matches = [];
   showToast('⚡ Scan gestart — alle competities...');
   switchScreen('analyse');
   setTimeout(() => {
