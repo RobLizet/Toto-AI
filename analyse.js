@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.33
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.34
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -2007,12 +2007,9 @@ function renderScanLog() {
         var manualBtn = p.status === 'pending'
           ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + (p.pick||'') + '" data-match="' + (p.match||'').replace(/"/g,'') + '" style="font-family:monospace;font-size:.44rem;padding:3px 8px;border-radius:6px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);color:#2563eb;cursor:pointer;">✏ Score</button>'
           : '';
-        html += '<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;'
+        html += '<div class="scan-pick-card" style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;'
           + 'padding:.75rem .9rem;margin-bottom:.4rem;cursor:pointer;'
           + 'border-left:' + (p.status==='win'?'3px solid #16a34a':p.status==='lose'?'3px solid #dc2626':'3px solid #d97706') + ';"'
-          + ' onclick="if(!event.target.closest(\'button\')){var d=JSON.parse(this.dataset.p.replace(/&quot;/g,\'\\"\'));'
-          + 'var parts=(d.match||\'\')\.split(\' vs \');'
-          + 'openCardPopup(\'scan\',{id:d.id,match:{id:d.id},home:parts[0]||\'\'\,away:parts[1]||\'\'\,pick:d.pick,pickLabel:d.pickLabel,odds:d.odds,value:d.value,confidence:d.confidence,reason:d.reason,poissonUsed:d.poissonUsed,isSparseData:d.isSparseData})}"'
           + ' data-p="' + pickData + '">'
           + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">'
           + '<div style="flex:1;">'
@@ -2036,29 +2033,29 @@ function renderScanLog() {
 
   el.innerHTML = html;
 
+  // Event delegation voor pick cards en verify knoppen
   el.onclick = function(e) {
-    const row = e.target.closest('.scan-pick-row');
-    if (row && !e.target.closest('button')) {
+    // Pop-up via data-p attribuut
+    const card = e.target.closest('.scan-pick-card');
+    if (card && !e.target.closest('button')) {
       if (typeof openCardPopup !== 'function') return;
-      const matchStr = row.dataset.match || '';
-      const parts = matchStr.split(' vs ');
-      openCardPopup('scan', {
-        id: row.dataset.fid, match: {id: row.dataset.fid},
-        home: parts[0]||'', away: parts[1]||'',
-        pick: row.dataset.pick, pickLabel: row.dataset.label,
-        odds: parseFloat(row.dataset.odds), value: parseFloat(row.dataset.value),
-        confidence: parseInt(row.dataset.conf), reason: row.dataset.reason||'',
-        poissonUsed: row.dataset.poisson==='1', isSparseData: row.dataset.sparse==='1'
-      });
+      try {
+        const d = JSON.parse(card.dataset.p.replace(/&quot;/g, '"'));
+        const parts = (d.match || '').split(' vs ');
+        openCardPopup('scan', {
+          id: d.id, match: {id: d.id},
+          home: parts[0]||'', away: parts[1]||'',
+          pick: d.pick, pickLabel: d.pickLabel,
+          odds: d.odds, value: d.value,
+          confidence: d.confidence, reason: d.reason||'',
+          poissonUsed: d.poissonUsed, isSparseData: d.isSparseData
+        });
+      } catch(e) {}
       return;
     }
     const btn = e.target.closest('.manual-verify-btn');
     if (!btn) return;
-    const scanId = btn.dataset.scan;
-    const pickId = btn.dataset.pick;
-    const pickType = btn.dataset.type;
-    const matchName = btn.dataset.match;
-    showManualVerify(scanId, pickId, pickType, matchName);
+    showManualVerify(btn.dataset.scan, btn.dataset.pick, btn.dataset.type, btn.dataset.match);
   };
 }
 
