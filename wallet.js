@@ -328,8 +328,7 @@ function renderBetHistory() {
         <span style="color:${l.legStatus==='win'?'#16a34a':l.legStatus==='lose'?'#dc2626':'#94a3b8'};">${l.legStatus==='win'?'✓':l.legStatus==='lose'?'✗':'⏳'}</span>
       </div>`).join('') : '';
     return `
-    <div class="bet-row bet-${b.status||'pending'}" style="cursor:pointer;"
-      onclick="if(!event.target.closest('button'))openCardPopup('bet',${JSON.stringify({id:b.id,match:b.matchName||b.match||'',pick:b.pick,pickLabel:b.pickLabel||b.pick,odds:b.odds,stake:b.amount||b.stake,status:b.status,date:b.date,markt:b.markt,note:b.note,payout:b.payout}).replace(/"/g,'&quot;')})">
+    <div class="bet-row bet-${b.status||'pending'}" style="cursor:pointer;" data-bet="${JSON.stringify({id:b.id,match:b.matchName||b.match||'',pick:b.pick,pickLabel:b.pickLabel||b.pick,odds:b.odds,stake:b.amount||b.stake,status:b.status,date:b.date,markt:b.markt,note:b.note,payout:b.payout}).replace(/"/g,'&quot;')}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
         <div style="flex:1;">
           <div style="font-size:.85rem;font-weight:700;color:var(--ink);">${srcBadge}${b.matchName||b.match||''}${scoreTag}</div>
@@ -349,6 +348,17 @@ function renderBetHistory() {
       </div>
     </div>`;
   }).join('');
+
+  // Event delegation voor pop-up op bet cards
+  list.onclick = function(e) {
+    const card = e.target.closest('.bet-row');
+    if (!card || e.target.closest('button') || e.target.closest('.bet-status')) return;
+    if (typeof openCardPopup !== 'function') return;
+    try {
+      const d = JSON.parse(card.dataset.bet.replace(/&quot;/g, '"'));
+      openCardPopup('bet', d);
+    } catch(err) {}
+  };
 }
 
 // ── BET ACTIES ────────────────────────────────────────────
@@ -624,9 +634,8 @@ function updateBetReturn() {
   const odds  = parseFloat(document.getElementById('bet-odds')?.value)  || 0;
   const ret   = document.getElementById('bet-return-value');
   if (ret) {
-    const uitbetaling = stake * odds;
-    ret.textContent = uitbetaling > 0 ? '€' + uitbetaling.toFixed(2) : '€0.00';
-    ret.style.color = uitbetaling > stake ? '#15803d' : '#64748b';
+    const winst = stake * odds;
+    ret.textContent = winst > 0 ? '€' + winst.toFixed(2) : '€0.00';
   }
 }
 
@@ -646,79 +655,28 @@ function openBetModal(event, matchId, pick, pickLabel, odds) {
   if (title) title.textContent = home + ' vs ' + away;
 
   const pickDisplay = document.getElementById('bet-pick-display');
-  if (pickDisplay) {
-    pickDisplay.innerHTML = '';
-    const s1 = document.createElement('span');
-    s1.style.fontFamily = 'Bebas Neue, sans-serif';
-    s1.style.fontSize = '1.4rem';
-    s1.style.color = 'var(--ink)';
-    s1.textContent = pick;
-    const s2 = document.createElement('span');
-    s2.style.fontFamily = 'IBM Plex Mono, monospace';
-    s2.style.fontSize = '.6rem';
-    s2.style.color = '#be185d';
-    s2.style.fontWeight = '700';
-    s2.style.marginLeft = '.5rem';
-    s2.textContent = pickLabel;
-    pickDisplay.appendChild(s1);
-    pickDisplay.appendChild(s2);
-  }
+  if (pickDisplay) pickDisplay.textContent = pick + ' — ' + pickLabel;
 
   const oddsDisplay = document.getElementById('bet-odds-display');
   if (oddsDisplay) oddsDisplay.textContent = parseFloat(odds).toFixed(2);
 
   const matchInput = document.getElementById('bet-match');
-  if (matchInput) matchInput.value = home !== '?' ? home + ' vs ' + away : '';
+  if (matchInput) matchInput.value = match ? home + ' vs ' + away : '';
 
   const stakeInput = document.getElementById('bet-stake');
   if (stakeInput) stakeInput.value = state.settings.defaultBet || 10;
 
   const oddsInput = document.getElementById('bet-odds');
-  if (oddsInput) oddsInput.value = parseFloat(odds).toFixed(2);
+  if (oddsInput) oddsInput.value = odds;
 
   const noteInput = document.getElementById('bet-note');
   if (noteInput) noteInput.value = pickLabel || pick;
-
-  // Kelly inzetadvies berekenen
-  const kellyAdvisEl = document.getElementById('kelly-advies');
-  if (kellyAdvisEl) {
-    const scanPick = (state.valueScans||[]).find(s =>
-      String(s.match?.id || s.id) === String(matchId) &&
-      s.pick === pick
-    );
-    const kelly = scanPick?.kelly || null;
-    const saldo = state.wallet?.balance || 500;
-    if (kelly && kelly > 0) {
-      const halfKelly = kelly / 2;
-      const advisBedrag = Math.round((halfKelly / 100) * saldo);
-      kellyAdvisEl.innerHTML = `
-        <div style="background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.2);
-          border-radius:10px;padding:.5rem .75rem;margin-bottom:.5rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:#15803d;font-weight:700;margin-bottom:.2rem;">
-            💡 KELLY INZETADVIES
-          </div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--ink);">
-            ½ Kelly: <b>${halfKelly.toFixed(1)}%</b> van €${saldo.toFixed(0)} saldo = 
-            <b style="color:#15803d;">€${advisBedrag}</b>
-          </div>
-          <button onclick="document.getElementById('bet-stake').value=${advisBedrag};updateBetReturn();"
-            style="margin-top:.35rem;font-family:'IBM Plex Mono',monospace;font-size:.48rem;
-            font-weight:800;padding:.25rem .6rem;border-radius:7px;cursor:pointer;
-            background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);color:#15803d;">
-            ✓ Gebruik €${advisBedrag}
-          </button>
-        </div>`;
-      kellyAdvisEl.style.display = 'block';
-    } else {
-      kellyAdvisEl.style.display = 'none';
-    }
-  }
 
   const modal = document.getElementById('bet-modal');
   if (modal) modal.style.display = 'flex';
 
   // Bereken initiële return
-  setTimeout(updateBetReturn, 100);
+  setTimeout(updateBetReturn, 50);
 }
 
 function closeBetModal() {
@@ -1087,18 +1045,6 @@ function updateBacktestStats() {
   set('btTotal',   picks.length);
   set('btHitrate', hitrate);
   set('btRoi',     roi!=='—'?roi+'%':'—');
-  // Help knoppen bij backtest stats
-  ['btTotal','btHitrate','btRoi'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el && typeof helpBtn === 'function') {
-      const key = id === 'btTotal' ? 'scan-log' : id === 'btHitrate' ? 'hitrate' : 'roi';
-      const parent = el.closest('.w-item');
-      if (parent && !parent.querySelector('.help-injected')) {
-        const lbl = parent.querySelector('.w-label');
-        if (lbl) { lbl.innerHTML += helpBtn(key); lbl.classList.add('help-injected'); }
-      }
-    }
-  });
   set('btProfit',  settled.length>0?(profit>=0?'+':'')+profit.toFixed(2)+'€':'—');
 
   // Voortgangsbalk
@@ -1359,7 +1305,7 @@ function renderValuePicks() {
 
   let html = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;display:flex;align-items:center;gap:.3rem;">VALUE PICKS <span id="help-vp"></span></div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;">VALUE PICKS</div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${allPicks.length} picks</div>
     </div>`;
 
@@ -1410,12 +1356,7 @@ function renderValuePicks() {
             font-weight:800;color:#fff;cursor:pointer;">
             💰 INZETTEN
           </button>
-          <button class="value-combi-btn"
-            data-mid="${matchId}" data-pick="${pick}"
-            data-label="${pickLabel.replace(/"/g,'&quot;')}"
-            data-odds="${odds}"
-            data-home="${home.replace(/"/g,'&quot;')}"
-            data-away="${away.replace(/"/g,'&quot;')}"
+          <button onclick="addValueToCombiBuilder('${matchId}','${pick}','${pickLabel}',${odds})"
             style="flex:1;padding:.5rem;border-radius:10px;
             background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
             font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;color:#7c3aed;cursor:pointer;">
@@ -1425,23 +1366,6 @@ function renderValuePicks() {
       </div>`;
   });
   el.innerHTML = html;
-
-  // Voeg help knop toe aan Value Picks header
-  const helpVP = document.getElementById('help-vp');
-  if (helpVP && typeof helpBtn === 'function') helpVP.innerHTML = helpBtn('value-picks-tab');
-
-  // v18.9: event delegation voor COMBI knoppen — vermijdt quote-escaping problemen
-  el.querySelectorAll('.value-combi-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const mid   = this.dataset.mid;
-      const pick  = this.dataset.pick;
-      const label = this.dataset.label;
-      const odds  = parseFloat(this.dataset.odds);
-      const home  = this.dataset.home;
-      const away  = this.dataset.away;
-      addValueToCombiBuilder(mid, pick, label, odds, home, away);
-    });
-  });
 }
 
 function quickBetFromValue(matchId, pick, pickLabel, odds) {
@@ -1488,36 +1412,37 @@ function quickBetFromValue(matchId, pick, pickLabel, odds) {
   if (modal) modal.style.display = 'flex';
 }
 
-function addValueToCombiBuilder(matchId, pick, pickLabel, odds, homeParam, awayParam) {
+function addValueToCombiBuilder(matchId, pick, pickLabel, odds) {
   if (!state.combiBuilder) state.combiBuilder = [];
   const exists = state.combiBuilder.some(l => String(l.matchId) === String(matchId));
-  if (exists) { showToast('Al in combi'); showCombiSlipOverlay(); return; }
+  if (exists) { showToast('Al in combi'); return; }
 
-  // v18.9: gebruik direct meegegeven home/away, anders lookup
+  // v18.9: uitgebreide match lookup via matches, valueScans en valueBacktest
   const match = (state.matches||[]).find(m => String(m.id) === String(matchId));
-  let home = homeParam || match?.home || '?';
-  let away = awayParam || match?.away || '?';
-
-  if (home === '?' || away === '?') {
+  let home = match?.home || '?';
+  let away = match?.away || '?';
+  if (!match) {
+    // Zoek in valueScans — matchId kan s.id of s.match.id zijn
     const scan = (state.valueScans||[]).find(s =>
       String(s.id) === String(matchId) ||
       String(s.match?.id) === String(matchId) ||
       String(s.fixtureId) === String(matchId)
     );
     if (scan) {
-      home = scan.match?.home || scan.home || home;
-      away = scan.match?.away || scan.away || away;
+      home = scan.match?.home || scan.home || '?';
+      away = scan.match?.away || scan.away || '?';
     }
-  }
-  if (home === '?' || away === '?') {
-    const bt = (state.valueBacktest?.picks||[]).find(p =>
-      String(p.fixtureId) === String(matchId) ||
-      String(p.matchId) === String(matchId)
-    );
-    if (bt?.matchName) {
-      const parts = bt.matchName.split(' vs ');
-      home = parts[0]?.trim() || home;
-      away = parts[1]?.trim() || away;
+    if (home === '?' || away === '?') {
+      // Zoek in valueBacktest picks
+      const bt = (state.valueBacktest?.picks||[]).find(p =>
+        String(p.fixtureId) === String(matchId) ||
+        String(p.matchId) === String(matchId)
+      );
+      if (bt?.matchName) {
+        const parts = bt.matchName.split(' vs ');
+        home = parts[0]?.trim() || '?';
+        away = parts[1]?.trim() || '?';
+      }
     }
   }
 
@@ -1534,7 +1459,7 @@ function showCombiSlipOverlay() {
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.id = 'combi-slip-overlay';
-    overlay.style.cssText = 'position:fixed;bottom:72px;left:0;right:0;z-index:8500;padding:0 .75rem;pointer-events:none;box-sizing:border-box;';
+    overlay.style.cssText = 'position:fixed;bottom:70px;left:0;right:0;z-index:8000;padding:0 .75rem;pointer-events:none;';
     document.body.appendChild(overlay);
   }
 
@@ -1546,7 +1471,6 @@ function showCombiSlipOverlay() {
   const payout = (defaultBet * totalOdds).toFixed(2);
 
   overlay.style.pointerEvents = 'all';
-  overlay.style.color = 'var(--ink)';
   overlay.innerHTML = `
     <div style="background:var(--card);border:1px solid rgba(219,39,119,.25);border-radius:16px;
       box-shadow:0 -4px 24px rgba(15,23,42,.15);padding:.75rem 1rem;
