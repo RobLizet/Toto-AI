@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v54';
+const VERSION = 'v62';
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -168,29 +168,26 @@ async function handleProxy(urlParam, request, env) {
 // ── Odds ophalen voor wedstrijden ────────────────────────
 async function fetchOddsForFixtures(fixtureIds, env) {
   const oddsMap = {};
-  const batches = [];
-  for (let i = 0; i < fixtureIds.length; i += 10) {
-    batches.push(fixtureIds.slice(i, i + 10));
-  }
-  for (const batch of batches) {
-    try {
-      const results = await Promise.all(
-        batch.map(id => apif(`/odds?fixture=${id}&bookmaker=8&bet=1`, env))
-      );
-      results.forEach((data, idx) => {
-        const fid = batch[idx];
-        if (!data || !data.length) return;
-        const bookmakers = data[0]?.bookmakers || [];
-        const bm = bookmakers[0];
-        if (!bm) return;
-        const bet = bm.bets?.find(b => b.id === 1);
-        if (!bet) return;
-        const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
-        const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
-        const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
-        if (home > 1) oddsMap[fid] = { home, draw, away };
-      });
-    } catch(e) {}
+  // Alle fixtures parallel ophalen (max 15 tegelijk)
+  try {
+    const results = await Promise.all(
+      fixtureIds.map(id => apif(`/odds?fixture=${id}&bookmaker=8&bet=1`, env))
+    );
+    results.forEach((data, idx) => {
+      const fid = fixtureIds[idx];
+      if (!data || !data.length) return;
+      const bookmakers = data[0]?.bookmakers || [];
+      const bm = bookmakers[0];
+      if (!bm) return;
+      const bet = bm.bets?.find(b => b.id === 1);
+      if (!bet) return;
+      const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
+      const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
+      const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
+      if (home > 1) oddsMap[fid] = { home, draw, away };
+    });
+  } catch(e) {
+    console.error('[Odds] Fout bij ophalen:', e);
   }
   return oddsMap;
 }
@@ -270,37 +267,65 @@ async function runScan(env) {
   const now = new Date();
   const hour = now.getUTCHours() + 1;
 
-  if (hour < 8 || hour >= 20) {
-    console.log(`[Scan] Buiten scanvenster (${hour}:00 CET), skip`);
+  // Lees scanvenster uit Firebase settings (gebruiker kan dit aanpassen)
+  const ownerUid = env.OWNER_UID || 'NpbaXO16xwha4Dm4Jgn9RqTM9Fq1';
+  let scanFrom = 8, scanTo = 20, autoScanEnabled = true;
+  try {
+    const userSettings = await fb(env, `users/${ownerUid}/settings`);
+    if (userSettings) {
+      scanFrom  = userSettings.scanWindowFrom ?? 8;
+      scanTo    = userSettings.scanWindowTo   ?? 20;
+      autoScanEnabled = userSettings.autoScan !== false;
+    }
+  } catch(e) {
+    console.log('[Scan] Settings niet geladen, gebruik defaults');
+  }
+
+  if (!autoScanEnabled) {
+    console.log('[Scan] Auto scan uitgeschakeld door gebruiker, skip');
     return;
   }
 
-  const competities = [88, 94, 39, 78, 61, 135, 140, 2, 1, 40, 79, 10, 33];
+  if (hour < scanFrom || hour >= scanTo) {
+    console.log(`[Scan] Buiten scanvenster (${hour}:00 CET, venster ${scanFrom}:00-${scanTo}:00), skip`);
+    return;
+  }
+  console.log(`[Scan] Start scan (${hour}:00 CET, venster ${scanFrom}:00-${scanTo}:00)`);
+
   let allMatches = [];
 
-  for (const leagueId of competities) {
-    try {
-      const fixtures = await apif(`/fixtures?league=${leagueId}&date=${today}`, env);
-      const matches = fixtures
-        .filter(f => !['FT','AET','PEN','CANC','ABD'].includes(f.fixture?.status?.short))
-        .map(f => ({
-          fixtureId: f.fixture?.id,
-          home: f.teams?.home?.name,
-          away: f.teams?.away?.name,
-          matchDate: today,
-          matchTime: f.fixture?.date,
-          leagueId,
-          leagueName: f.league?.name || '',
-          venue: f.fixture?.venue?.name || '',
-        }));
-      allMatches = allMatches.concat(matches);
-    } catch(e) {
-      console.error(`[Scan] Fout bij league ${leagueId}:`, e);
-    }
+  // Haal ALLE wedstrijden vandaag + morgen op in 2 calls (geen per-league loop)
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  console.log(`[Scan] Fixtures ophalen voor ${today} en ${tomorrowStr}...`);
+  try {
+    const fix1 = await apif(`/fixtures?date=${today}&timezone=Europe/Amsterdam`, env);
+    console.log(`[Scan] Vandaag: ${(fix1||[]).length} fixtures`);
+    const fix2 = await apif(`/fixtures?date=${tomorrowStr}&timezone=Europe/Amsterdam`, env);
+    console.log(`[Scan] Morgen: ${(fix2||[]).length} fixtures`);
+    const fixtures = [...(fix1||[]), ...(fix2||[])];
+    console.log(`[Scan] Totaal: ${fixtures.length} fixtures, filter op NS/TBD...`);
+
+    // Alleen nog te spelen wedstrijden (NS=Not Started, TBD, PST=Postponed)
+    allMatches = fixtures
+      .filter(f => ['NS','TBD','PST'].includes(f.fixture?.status?.short))
+      .map(f => ({
+        fixtureId: f.fixture?.id,
+        home: f.teams?.home?.name,
+        away: f.teams?.away?.name,
+        matchDate: f.fixture?.date?.split('T')[0] || today,
+        matchTime: f.fixture?.date,
+        leagueId: f.league?.id,
+        leagueName: f.league?.name || '',
+        venue: f.fixture?.venue?.name || '',
+      }));
+  } catch(e) {
+    console.error('[Scan] Fout bij fixtures ophalen:', e);
   }
 
   if (!allMatches.length) {
-    console.log('[Scan] Geen wedstrijden gevonden voor vandaag');
+    console.log('[Scan] Geen wedstrijden gevonden voor vandaag/morgen, stop');
     return;
   }
 
@@ -310,7 +335,7 @@ async function runScan(env) {
     return ta - tb;
   });
 
-  const batch = allMatches.slice(0, 40);
+  const batch = allMatches.slice(0, 15); // Max 15 voor worker CPU limit
   console.log(`[Scan] ${batch.length} wedstrijden gevonden, odds ophalen...`);
 
   const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
