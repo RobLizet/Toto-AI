@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.45
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.46
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -2125,7 +2125,120 @@ function renderScanLog() {
     html += '</div>';
   }
 
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">SCANS (' + log.length + ')</div>';
+  // ── 100 PICKS ANALYSE — toont zodra >= 100 picks ──────────
+  if (allPicks.length >= 100) {
+    // Per odds range
+    const byOdds = {'1.0-1.5':[], '1.5-2.0':[], '2.0-3.0':[], '3.0-5.0':[], '5.0+':[]}; 
+    settled.forEach(p => {
+      const o = p.odds || 0;
+      const b = o < 1.5 ? '1.0-1.5' : o < 2.0 ? '1.5-2.0' : o < 3.0 ? '2.0-3.0' : o < 5.0 ? '3.0-5.0' : '5.0+';
+      byOdds[b].push({win: p.status === 'win', roi: p.status === 'win' ? (p.odds-1)*100 : -100});
+    });
+
+    // Per confidence
+    const byConf = {'6':[], '7':[], '8':[], '9':[], '10':[]};
+    settled.forEach(p => {
+      const c = String(Math.min(10, Math.max(6, parseInt(p.confidence) || 7)));
+      if (byConf[c]) byConf[c].push(p.status === 'win');
+    });
+
+    // Best presterende competitie
+    const compStats = {};
+    settled.forEach(p => {
+      const c = p.comp || 'Overig';
+      if (!compStats[c]) compStats[c] = {wins:0, total:0, roi:0};
+      compStats[c].total++;
+      if (p.status === 'win') { compStats[c].wins++; compStats[c].roi += (p.odds-1)*100; }
+      else compStats[c].roi -= 100;
+    });
+    const topComps = Object.entries(compStats)
+      .filter(([,s]) => s.total >= 3)
+      .sort((a,b) => (b[1].roi/b[1].total) - (a[1].roi/a[1].total))
+      .slice(0, 5);
+
+    // Beste pick type
+    const bestType = Object.entries(byType)
+      .filter(([,s]) => s.total >= 5)
+      .sort((a,b) => (b[1].wins/b[1].total) - (a[1].wins/a[1].total))[0];
+
+    // Conclusie gezichtje
+    const face = roi >= 15 && hitrate >= 40 ? '😄' : roi >= 5 || hitrate >= 35 ? '🙂' : roi >= 0 ? '😐' : roi >= -10 ? '😕' : '😞';
+
+    html += '<div style="background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(219,39,119,.06));border:1.5px solid rgba(124,58,237,.2);border-radius:16px;padding:.9rem 1rem;margin-bottom:.8rem;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;">'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;background:linear-gradient(135deg,#7c3aed,#be185d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 100 PICKS ANALYSE</div>'
+      + '<span style="font-size:1.5rem;">' + face + '</span>'
+      + '</div>'
+
+      // Samenvatting
+      + '<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;margin-bottom:.65rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;line-height:1.8;color:var(--sub);">'
+      + '<b style="color:var(--ink);">' + allPicks.length + ' picks</b> geanalyseerd &middot; '
+      + '<b style="color:' + (hitrate>=40?'#16a34a':hitrate>=30?'#d97706':'#dc2626') + ';">' + hitrate + '% hitrate</b> &middot; '
+      + '<b style="color:' + (roi>=0?'#16a34a':'#dc2626') + ';">' + (roi>=0?'+':'') + roi.toFixed(1) + '% ROI</b>'
+      + '</div>'
+
+      // Odds range analyse
+      + '<div style="margin-bottom:.6rem;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin-bottom:.4rem;">📊 ODDS RANGE</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem;">'
+      + Object.entries(byOdds).map(([range, results]) => {
+          const tot = results.length;
+          const wr = tot ? Math.round(results.filter(r=>r.win).length/tot*100) : null;
+          const avgRoi = tot ? results.reduce((s,r)=>s+r.roi,0)/tot : 0;
+          const col = wr===null?'var(--sub)':wr>=50?'#16a34a':wr>=35?'#d97706':'#dc2626';
+          return '<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem .2rem;">'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);">' + range + '</div>'
+            + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:' + col + ';">' + (wr===null?'—':wr+'%') + '</div>'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:var(--sub);">' + tot + 'x</div>'
+            + '</div>';
+        }).join('')
+      + '</div></div>'
+
+      // Confidence analyse
+      + '<div style="margin-bottom:.6rem;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin-bottom:.4rem;">🎯 CONFIDENCE</div>'
+      + '<div style="display:flex;gap:.3rem;align-items:flex-end;height:2.5rem;">'
+      + Object.entries(byConf).map(([conf, results]) => {
+          const tot = results.length;
+          const wr = tot ? Math.round(results.filter(Boolean).length/tot*100) : 0;
+          const col = wr>=50?'#16a34a':wr>=35?'#d97706':'#dc2626';
+          const h = tot ? Math.max(15, Math.round(wr * 0.4)) : 5;
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:' + col + ';font-weight:700;">' + (tot?wr+'%':'—') + '</div>'
+            + '<div style="width:100%;background:' + col + ';border-radius:4px 4px 0 0;height:' + h + 'px;opacity:.8;"></div>'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);">conf ' + conf + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div></div>'
+
+      // Top competities
+      + (topComps.length ? '<div style="margin-bottom:.6rem;">'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin-bottom:.4rem;">🏆 TOP COMPETITIES (min 3 picks)</div>'
+        + topComps.map(([comp, s]) => {
+            const hr = Math.round(s.wins/s.total*100);
+            const avgRoi = (s.roi/s.total).toFixed(1);
+            const col = hr>=50?'#16a34a':hr>=35?'#d97706':'#dc2626';
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem 0;border-bottom:1px solid var(--border);">'
+              + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + comp + '</div>'
+              + '<div style="display:flex;gap:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
+              + '<span style="color:' + col + ';font-weight:700;">' + hr + '%</span>'
+              + '<span style="color:' + (parseFloat(avgRoi)>=0?'#16a34a':'#dc2626') + ';">' + (parseFloat(avgRoi)>=0?'+':'') + avgRoi + '% ROI</span>'
+              + '<span style="color:var(--sub);">' + s.total + 'x</span>'
+              + '</div></div>';
+          }).join('')
+        + '</div>' : '')
+
+      // Beste pick type conclusie
+      + (bestType ? '<div style="background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);border-radius:10px;padding:.5rem .7rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);">'
+        + '💡 <b style="color:var(--ink);">Beste pick type:</b> <span style="color:#16a34a;font-weight:700;">'
+        + (bestType[0]==='1'?'Thuisploeg wint':bestType[0]==='2'?'Uitploeg wint':bestType[0]==='X'?'Gelijkspel':bestType[0])
+        + '</span> · ' + Math.round(bestType[1].wins/bestType[1].total*100) + '% hitrate (' + bestType[1].total + 'x)'
+        + '</div>' : '')
+
+      + '</div>';
+  }
+
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">SCANS (' + log.length + ')</div>';
 
   if (!log.length) {
     html += '<div style="text-align:center;padding:2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:var(--muted);">'
