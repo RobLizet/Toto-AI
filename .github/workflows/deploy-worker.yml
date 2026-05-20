@@ -20,6 +20,10 @@ jobs:
         with:
           node-version: '22'
 
+      - name: ✅ Syntax check cloudworker.js
+        run: |
+          node --check cloudworker.js && echo "✅ Syntax OK — doorgaan met deploy" || (echo "❌ Syntax fout in cloudworker.js — deploy afgebroken" && exit 1)
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
