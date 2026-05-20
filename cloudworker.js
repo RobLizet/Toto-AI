@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v52';
+const VERSION = 'v53';
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -611,7 +611,8 @@ Respond ONLY with valid JSON, no text outside JSON:
   await fb(env, 'daily_tip/latest', 'PUT', tipData);
   await fb(env, `daily_tip/archive/${today}`, 'PUT', tipData);
   console.log('[DailyTip] Tip opgeslagen:', tipData.match, tipData.pickLabel);
-  return tipData;}
+  return tipData;
+}
 
 // ── Daily tip endpoint (/daily-tip) ───────────────────────
 async function handleDailyTip(env) {
@@ -700,6 +701,19 @@ export default {
       return handleAnthropic(request, env);
     }
 
+    if (path === '/scan') {
+      const secret = url.searchParams.get('secret');
+      if (!secret || secret !== env.SCAN_SECRET) {
+        return json({ error: 'Unauthorized' }, 401);
+      }
+      // Voer scan uit op de achtergrond
+      const ctx_dummy = { waitUntil: (p) => p };
+      json({ status: 'scan gestart', version: VERSION });
+      await runScan(env);
+      await verifyYesterdayPicks(env);
+      return json({ status: 'scan klaar', version: VERSION });
+    }
+
     if (path === '/picks') {
       return handleGetPicks(env);
     }
@@ -724,7 +738,7 @@ export default {
     return json({
       version: VERSION,
       status: 'running',
-      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/push', '/daily-tip', '?url=']
+      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/scan', '/push', '/daily-tip', '?url=']
     });
   },
 
