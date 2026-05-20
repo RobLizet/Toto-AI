@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v53';
+const VERSION = 'v54';
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -381,7 +381,7 @@ Geen uitleg, alleen de JSON array.`;
     candidates.forEach(c => {
       if (!c.bookOdds || c.bookOdds <= 1) return;
       const value = calculateValue(c.aiKans, c.bookOdds, c.pick);
-      if (value < 5 || confidence < 7) return;
+      if (value < 5 || confidence < 6) return;
 
       const pickKey = `${m.fixtureId}_${c.pick}`;
       const existing = existingPicks[pickKey];
@@ -431,6 +431,18 @@ Geen uitleg, alleen de JSON array.`;
   const newCount = Object.keys(newPicks).length;
   const lockCount = Object.values(newPicks).filter(p => p.lockLevel !== 'single').length;
   console.log(`[Scan] Klaar: ${newCount} picks opgeslagen, ${lockCount} locks, ${withoutOdds.length} wedstrijden zonder odds`);
+
+  // Schrijf scan_status naar Firebase
+  await fb(env, 'scan_status', 'PUT', {
+    lastRun: new Date().toISOString(),
+    scanDate: today,
+    lastPickCount: newCount,
+    lastMatchCount: analyseBatch.length,
+    lastWithOdds: withOdds.length,
+    lastWithoutOdds: withoutOdds.length,
+    scansToday: ((await fb(env, 'scan_status/scansToday')) || 0) + 1,
+    version: VERSION,
+  });
 
   // Push notificatie voor triple/double locks
   const lockPicks = Object.values(newPicks).filter(p => p.lockLevel === 'triple' || p.lockLevel === 'double');
