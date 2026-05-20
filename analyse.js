@@ -1807,6 +1807,8 @@ function logScanResult(picks) {
       kelly:       parseFloat((p.kelly || 0).toFixed(1)),
       reason:      p.reason || '',
       poissonUsed: p.poissonUsed || false,
+      matchTime:   (p.match && p.match.date) || p.matchTime || p.kickoff || null,
+      matchDate:   (p.match && p.match.dateStr) || p.matchDate || null,
       status:      'pending',
       score:       null,
       verifiedAt:  null
@@ -2147,16 +2149,24 @@ function renderScanLog() {
         + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;">'
         + '#' + (log.length-si) + ' &middot; '
         + (function() {
-            // Speeldatum van eerste pick, anders scan datum
-            var mt = scan.picks && scan.picks[0] && scan.picks[0].matchTime;
-            if (!mt) return scan.date + ' ' + scan.time;
-            var d = new Date(mt);
-            var dd = d.getDate();
-            var mm = d.getMonth()+1;
-            var yy = d.getFullYear();
-            var hh = String(d.getHours()).padStart(2,'0');
-            var min = String(d.getMinutes()).padStart(2,'0');
-            return dd+'-'+mm+'-'+yy+' '+hh+':'+min;
+            // Toon speeldatum/-tijd van picks indien beschikbaar
+            var times = scan.picks
+              .filter(function(p){ return !!p.matchTime; })
+              .map(function(p){ return new Date(p.matchTime).getTime(); })
+              .filter(function(t){ return !isNaN(t); });
+            if (!times.length) return scan.date;
+            times.sort(function(a,b){return a-b;});
+            var earliest = new Date(times[0]);
+            var latest   = new Date(times[times.length-1]);
+            var fmt = function(d) {
+              return d.getDate()+'-'+(d.getMonth()+1)+'-'+d.getFullYear()
+                +' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+            };
+            if (times.length === 1 || earliest.toDateString() === latest.toDateString())
+              return fmt(earliest);
+            // Meerdere dagen: toon datumrange
+            return earliest.getDate()+'-'+(earliest.getMonth()+1)+' t/m '
+              +latest.getDate()+'-'+(latest.getMonth()+1)+'-'+latest.getFullYear();
           })()
         + '</div>'
         + '<div style="display:flex;gap:.4rem;align-items:center;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
