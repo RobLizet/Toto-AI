@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.40
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.46
 // ═══════════════════════════════════════════════════════
 
 // ── Analyse screen render ─────────────────────────────────
@@ -8,7 +8,10 @@ function renderAnalyseScreen() {
   if (!screen) return;
 
   const m = state.selectedMatch;
-  const hasMatches = (state.matches||[]).some(m => m.homeOdds !== '—');
+  // Toon scan-knop als er matches zijn ÓÓF als er al scan-resultaten zijn
+  const hasMatches = (state.matches||[]).some(m => m.homeOdds !== '—')
+    || (state.valueScans||[]).length > 0
+    || (state.lastScanResults||[]).length > 0;
 
   screen.innerHTML = `
     <!-- Sub-tabs -->
@@ -30,13 +33,88 @@ function renderAnalyseScreen() {
     <!-- VALUE SCAN tab -->
     <div id="asub-content-scan">
       <div id="analyseScanResults" style="margin-bottom:.5rem;"></div>
+      <!-- AUTO-SCAN BEHEER PANEEL -->
+      <div id="autoScanPanel" style="background:var(--card);border:1px solid rgba(22,163,74,.2);
+        border-radius:14px;padding:.75rem .9rem;margin-bottom:.6rem;display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:800;color:#15803d;">⏱️ AUTOMATISCHE SCAN</div>
+          <button onclick="document.getElementById('autoScanPanel').style.display='none'"
+            style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.85rem;">✕</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--stroke);">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;color:var(--ink);">AUTO SCAN</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.47rem;color:var(--sub);">Scant dagelijks op value tussen ingestelde tijden</div>
+          </div>
+          <button id="autoScanToggleBtn" onclick="toggleAutoScan()"
+            style="padding:.4rem .85rem;border-radius:10px;font-family:'IBM Plex Mono',monospace;
+            font-size:.55rem;font-weight:800;cursor:pointer;border:1.5px solid;
+            background:rgba(22,163,74,.1);border-color:rgba(22,163,74,.35);color:#15803d;">
+            Inschakelen
+          </button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.6rem 0;">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:.3rem;">SCANVENSTER VAN</div>
+            <input id="scanWindowFrom" type="number" min="0" max="23" step="1"
+              style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:800;
+              padding:.45rem .6rem;border-radius:10px;border:1.5px solid var(--stroke);
+              background:var(--card);color:var(--ink);text-align:center;"
+              value="${state.settings.scanWindowFrom ?? 14}"
+              onchange="state.settings.scanWindowFrom=parseInt(this.value);saveState();updateAutoScanPanelUI()">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:2px;text-align:center;">Uur (0–23)</div>
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);margin-bottom:.3rem;">SCANVENSTER TOT</div>
+            <input id="scanWindowTo" type="number" min="0" max="23" step="1"
+              style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:800;
+              padding:.45rem .6rem;border-radius:10px;border:1.5px solid var(--stroke);
+              background:var(--card);color:var(--ink);text-align:center;"
+              value="${state.settings.scanWindowTo ?? 18}"
+              onchange="state.settings.scanWindowTo=parseInt(this.value);saveState();updateAutoScanPanelUI()">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:2px;text-align:center;">Uur (0–23)</div>
+          </div>
+        </div>
+        <div id="autoScanStatusBar" style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;
+          color:var(--sub);padding:.35rem .5rem;background:rgba(15,23,42,.04);
+          border-radius:8px;margin-bottom:.5rem;min-height:1.2rem;text-align:center;"></div>
+        <div style="display:flex;gap:.4rem;">
+          <button onclick="skipScanToday()"
+            style="flex:1;padding:.5rem;border-radius:10px;background:rgba(15,23,42,.05);
+            border:1px solid var(--stroke);font-family:'IBM Plex Mono',monospace;
+            font-size:.52rem;font-weight:700;color:var(--sub);cursor:pointer;">
+            ⏭ Sla vandaag over
+          </button>
+          <button onclick="startAutoCheckScheduler();showToast('▶ Scheduler gestart')"
+            style="flex:1;padding:.5rem;border-radius:10px;background:rgba(15,23,42,.05);
+            border:1px solid var(--stroke);font-family:'IBM Plex Mono',monospace;
+            font-size:.52rem;font-weight:700;color:var(--sub);cursor:pointer;">
+            ▶ Start scheduler
+          </button>
+          <button onclick="runManualScan()"
+            style="flex:1;padding:.5rem;border-radius:10px;
+            background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(5,150,105,.1));
+            border:1.5px solid rgba(22,163,74,.4);font-family:'IBM Plex Mono',monospace;
+            font-size:.52rem;font-weight:800;color:#15803d;cursor:pointer;">
+            ⚡ Nu scannen
+          </button>
+        </div>
+      </div>
       ${hasMatches ? `
-      <button id="valueScanBtn2" onclick="scanValueAll()"
-        style="width:100%;background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(5,150,105,.06));
-        border:1.5px solid rgba(22,163,74,.3);color:#15803d;font-family:'IBM Plex Mono',monospace;
-        font-size:.65rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;margin-bottom:.7rem;">
-        ⚡ SCAN VALUE — alle geladen wedstrijden
-      </button>` : `
+      <div style="display:flex;gap:.4rem;margin-bottom:.7rem;">
+        <button id="valueScanBtn2" onclick="scanValueAll()"
+          style="flex:1;background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(5,150,105,.06));
+          border:1.5px solid rgba(22,163,74,.3);color:#15803d;font-family:'IBM Plex Mono',monospace;
+          font-size:.65rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;">
+          ⚡ SCAN VALUE — alle geladen wedstrijden
+        </button>
+        <button onclick="toggleAutoScanPanel()"
+          style="padding:.65rem .9rem;border-radius:12px;
+          background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.25);
+          color:#15803d;cursor:pointer;font-size:1rem;" title="Auto-scan instellingen">
+          ⏱️
+        </button>
+      </div>` : `
       <div style="text-align:center;padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:.7rem;">
         <div style="font-size:2rem;opacity:.3;">⚡</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--sub);line-height:1.75;max-width:240px;">
@@ -56,6 +134,13 @@ function renderAnalyseScreen() {
           color:#fff;border:none;font-family:'IBM Plex Mono',monospace;
           font-size:.58rem;font-weight:800;cursor:pointer;opacity:.8;">
           ⚽ Handmatig laden →
+        </button>
+        <button onclick="toggleAutoScanPanel()"
+          style="padding:.5rem 1.1rem;border-radius:12px;
+          background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.25);
+          color:#15803d;font-family:'IBM Plex Mono',monospace;
+          font-size:.58rem;font-weight:700;cursor:pointer;">
+          ⏱️ Scan instellingen
         </button>
       </div>`}
       <div id="valueBanner2" style="display:none;"></div>
@@ -167,32 +252,89 @@ async function autoScanAndSwitch() {
   if (btn) { btn.disabled = true; btn.textContent = '⟳ WEDSTRIJDEN LADEN...'; }
 
   try {
-    // Stap 1: loadTodayAllComps haalt vandaag+morgen op incl. quotes
+    // Stap 1: wis state.matches zodat scanAllTodayValue altijd alle competities laadt
+    state.matches = [];
     showToast('⚡ Wedstrijden ophalen...');
-    await loadTodayAllComps();
 
-    // Stap 2: wacht zodat state.matches + odds volledig gevuld zijn
-    await new Promise(r => setTimeout(r, 500));
-
-    const hasMatches = (state.matches || []).some(m => m.homeOdds !== '—');
-    if (!hasMatches) {
-      showToast('⚠️ Geen wedstrijden met quotes gevonden');
-      if (btn) { btn.disabled = false; btn.textContent = '⚡ AUTOMATISCH SCANNEN →'; }
-      return;
-    }
-
-    // Stap 3: herrender analyse scherm zodat scan-knop zichtbaar is
-    renderAnalyseScreen();
+    // Stap 2: toon scan sub-tab zonder te herrenderen (behoudt UI)
     showAnalyseSubTab('scan');
-    await new Promise(r => setTimeout(r, 150));
+    await new Promise(r => setTimeout(r, 100));
 
-    // Stap 4: start value scan
-    await scanValueAll();
+    // Stap 3: scanAllTodayValue laadt alle competities + odds + doet de value scan
+    await scanAllTodayValue('today');
 
   } catch(e) {
     showToast('❌ Auto-scan mislukt: ' + e.message);
     if (btn) { btn.disabled = false; btn.textContent = '⚡ AUTOMATISCH SCANNEN →'; }
   }
+}
+
+
+// ── Auto-scan panel toggle ─────────────────────────────
+function toggleAutoScanPanel() {
+  const panel = document.getElementById('autoScanPanel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) updateAutoScanPanelUI();
+}
+
+function updateAutoScanPanelUI() {
+  const fromEl = document.getElementById('scanWindowFrom');
+  const toEl   = document.getElementById('scanWindowTo');
+  const btn    = document.getElementById('autoScanToggleBtn');
+  const status = document.getElementById('autoScanStatusBar');
+  if (fromEl) fromEl.value = state.settings.scanWindowFrom ?? 14;
+  if (toEl)   toEl.value   = state.settings.scanWindowTo   ?? 18;
+  if (btn) {
+    const on = state.settings.autoScan;
+    btn.textContent = on ? 'Uitzetten' : 'Inschakelen';
+    btn.style.background    = on ? 'rgba(220,38,38,.1)'   : 'rgba(22,163,74,.1)';
+    btn.style.borderColor   = on ? 'rgba(220,38,38,.35)'  : 'rgba(22,163,74,.35)';
+    btn.style.color         = on ? '#dc2626'              : '#15803d';
+  }
+  if (status) {
+    const from = state.settings.scanWindowFrom ?? 14;
+    const to   = state.settings.scanWindowTo   ?? 18;
+    const skip = state.settings.scanSkipDate === new Date().toDateString();
+    const on   = state.settings.autoScan;
+    if (!on)   status.textContent = '⏸ Auto-scan uitgeschakeld';
+    else if (skip) status.textContent = '⏭ Overgeslagen voor vandaag';
+    else {
+      const h = new Date().getHours();
+      const inWindow = h >= from && h < to;
+      status.textContent = inWindow
+        ? `✅ Actief — scant elk uur tussen ${from}:00–${to}:00`
+        : `⏳ Wacht op scanvenster (${from}:00–${to}:00)`;
+    }
+  }
+}
+
+// ── Scheduler (elk uur checken) ────────────────────────
+let _autoScanIntervalId = null;
+
+function startAutoCheckScheduler() {
+  if (_autoScanIntervalId) clearInterval(_autoScanIntervalId);
+  _autoScanIntervalId = setInterval(checkAndAutoScan, 60 * 60 * 1000); // elk uur
+  checkAndAutoScan(); // meteen checken bij starten
+  updateAutoScanPanelUI();
+}
+
+async function checkAndAutoScan() {
+  if (!state.settings.autoScan) return;
+  if (state.settings.scanSkipDate === new Date().toDateString()) return;
+  const h    = new Date().getHours();
+  const from = state.settings.scanWindowFrom ?? 14;
+  const to   = state.settings.scanWindowTo   ?? 18;
+  if (h < from || h >= to) return;
+  // Voorkom dubbele scan binnen zelfde uur
+  const nowHour = new Date().toISOString().substring(0, 13);
+  if (state.settings.lastAutoScanHour === nowHour) return;
+  state.settings.lastAutoScanHour = nowHour;
+  saveState();
+  showToast(`⚡ Auto-scan gestart (${h}:00)`);
+  await autoScanAndSwitch();
+  updateAutoScanPanelUI();
 }
 
 function showAnalyseSubTab(tab) {
@@ -599,12 +741,40 @@ SCHAARSE DATA:
     renderMatches(state.matches);
 
     // Push notificaties
-    if (state.settings.notifEnabled && 'Notification' in window && Notification.permission === 'granted') {
+    if (state.settings.notifEnabled) {
       const threshold = state.settings.notifThreshold || 15;
-      const strong = scans.filter(s => s.value >= threshold);
-      strong.slice(0, 3).forEach((s, i) => {
-        setTimeout(() => sendValueNotification(s), i * 500);
-      });
+      const strong = scans.filter(s => s.value >= threshold && (s.confidence || 0) >= 6);
+
+      if (strong.length > 0) {
+        // Lokale notificatie (app open / PWA actief)
+        if ('Notification' in window && Notification.permission === 'granted') {
+          strong.slice(0, 3).forEach((s, i) => {
+            setTimeout(() => {
+              if (typeof sendValueNotification === 'function') sendValueNotification(s);
+            }, i * 500);
+          });
+        }
+
+        // OneSignal push (ook als app dicht) — beste pick sturen
+        const top = strong[0];
+        if (typeof sendOneSignalValuePush === 'function') {
+          sendOneSignalValuePush(top);
+        } else if (state.settings.notifPlayerId || state.oneSignalPlayerId) {
+          // Fallback: stuur via Cloudflare Worker
+          const pid = state.settings.notifPlayerId || state.oneSignalPlayerId;
+          const body = `${top.match?.home||''} vs ${top.match?.away||''} · ${top.pickLabel} · odds ${(top.odds||0).toFixed(2)} · +${Math.round(top.value||0)}% value`;
+          fetch('https://toto-ai.zweetzakken.workers.dev/push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              player_id: pid,
+              title: `⚡ ${strong.length} value pick${strong.length > 1 ? 's' : ''} gevonden`,
+              body,
+              data: { matchId: String(top.match?.id || ''), value: top.value }
+            })
+          }).catch(() => {});
+        }
+      }
     }
 
   } catch(e) {
@@ -1637,6 +1807,8 @@ function logScanResult(picks) {
       kelly:       parseFloat((p.kelly || 0).toFixed(1)),
       reason:      p.reason || '',
       poissonUsed: p.poissonUsed || false,
+      matchTime:   (p.match && p.match.date) || p.matchTime || p.kickoff || null,
+      matchDate:   (p.match && p.match.dateStr) || p.matchDate || null,
       status:      'pending',
       score:       null,
       verifiedAt:  null
@@ -1883,7 +2055,17 @@ function renderScanLog() {
   html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem;margin-bottom:.8rem;">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">'
     + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:var(--muted);">VOORTGANG NAAR 100 PICKS</div>'
+    + '<div style="display:flex;align-items:center;gap:.4rem;">'
+    + '<span style="font-size:1.2rem;">' + (function(){
+        if (!settled.length) return '😶';
+        if (roi >= 15 && hitrate >= 40) return '😄';
+        if (roi >= 5  || hitrate >= 35) return '🙂';
+        if (roi >= 0  && hitrate >= 28) return '😐';
+        if (roi >= -10)                  return '😕';
+        return '😞';
+      })() + '</span>'
     + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:var(--accent);">' + allPicks.length + '/100</div>'
+    + '</div>'
     + '</div>'
     + '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:6px;overflow:hidden;">'
     + '<div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:' + Math.min(100,allPicks.length) + '%;transition:width .4s;"></div>'
@@ -1943,7 +2125,120 @@ function renderScanLog() {
     html += '</div>';
   }
 
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">SCANS (' + log.length + ')</div>';
+  // ── 100 PICKS ANALYSE — toont zodra >= 100 picks ──────────
+  if (allPicks.length >= 100) {
+    // Per odds range
+    const byOdds = {'1.0-1.5':[], '1.5-2.0':[], '2.0-3.0':[], '3.0-5.0':[], '5.0+':[]}; 
+    settled.forEach(p => {
+      const o = p.odds || 0;
+      const b = o < 1.5 ? '1.0-1.5' : o < 2.0 ? '1.5-2.0' : o < 3.0 ? '2.0-3.0' : o < 5.0 ? '3.0-5.0' : '5.0+';
+      byOdds[b].push({win: p.status === 'win', roi: p.status === 'win' ? (p.odds-1)*100 : -100});
+    });
+
+    // Per confidence
+    const byConf = {'6':[], '7':[], '8':[], '9':[], '10':[]};
+    settled.forEach(p => {
+      const c = String(Math.min(10, Math.max(6, parseInt(p.confidence) || 7)));
+      if (byConf[c]) byConf[c].push(p.status === 'win');
+    });
+
+    // Best presterende competitie
+    const compStats = {};
+    settled.forEach(p => {
+      const c = p.comp || 'Overig';
+      if (!compStats[c]) compStats[c] = {wins:0, total:0, roi:0};
+      compStats[c].total++;
+      if (p.status === 'win') { compStats[c].wins++; compStats[c].roi += (p.odds-1)*100; }
+      else compStats[c].roi -= 100;
+    });
+    const topComps = Object.entries(compStats)
+      .filter(([,s]) => s.total >= 3)
+      .sort((a,b) => (b[1].roi/b[1].total) - (a[1].roi/a[1].total))
+      .slice(0, 5);
+
+    // Beste pick type
+    const bestType = Object.entries(byType)
+      .filter(([,s]) => s.total >= 5)
+      .sort((a,b) => (b[1].wins/b[1].total) - (a[1].wins/a[1].total))[0];
+
+    // Conclusie gezichtje
+    const face = roi >= 15 && hitrate >= 40 ? '😄' : roi >= 5 || hitrate >= 35 ? '🙂' : roi >= 0 ? '😐' : roi >= -10 ? '😕' : '😞';
+
+    html += '<div style="background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(219,39,119,.06));border:1.5px solid rgba(124,58,237,.2);border-radius:16px;padding:.9rem 1rem;margin-bottom:.8rem;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;">'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;background:linear-gradient(135deg,#7c3aed,#be185d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 100 PICKS ANALYSE</div>'
+      + '<span style="font-size:1.5rem;">' + face + '</span>'
+      + '</div>'
+
+      // Samenvatting
+      + '<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;margin-bottom:.65rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;line-height:1.8;color:var(--sub);">'
+      + '<b style="color:var(--ink);">' + allPicks.length + ' picks</b> geanalyseerd &middot; '
+      + '<b style="color:' + (hitrate>=40?'#16a34a':hitrate>=30?'#d97706':'#dc2626') + ';">' + hitrate + '% hitrate</b> &middot; '
+      + '<b style="color:' + (roi>=0?'#16a34a':'#dc2626') + ';">' + (roi>=0?'+':'') + roi.toFixed(1) + '% ROI</b>'
+      + '</div>'
+
+      // Odds range analyse
+      + '<div style="margin-bottom:.6rem;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin-bottom:.4rem;">📊 ODDS RANGE</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem;">'
+      + Object.entries(byOdds).map(([range, results]) => {
+          const tot = results.length;
+          const wr = tot ? Math.round(results.filter(r=>r.win).length/tot*100) : null;
+          const avgRoi = tot ? results.reduce((s,r)=>s+r.roi,0)/tot : 0;
+          const col = wr===null?'var(--sub)':wr>=50?'#16a34a':wr>=35?'#d97706':'#dc2626';
+          return '<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem .2rem;">'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);">' + range + '</div>'
+            + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:' + col + ';">' + (wr===null?'—':wr+'%') + '</div>'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:var(--sub);">' + tot + 'x</div>'
+            + '</div>';
+        }).join('')
+      + '</div></div>'
+
+      // Confidence analyse
+      + '<div style="margin-bottom:.6rem;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin-bottom:.4rem;">🎯 CONFIDENCE</div>'
+      + '<div style="display:flex;gap:.3rem;align-items:flex-end;height:2.5rem;">'
+      + Object.entries(byConf).map(([conf, results]) => {
+          const tot = results.length;
+          const wr = tot ? Math.round(results.filter(Boolean).length/tot*100) : 0;
+          const col = wr>=50?'#16a34a':wr>=35?'#d97706':'#dc2626';
+          const h = tot ? Math.max(15, Math.round(wr * 0.4)) : 5;
+          return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:' + col + ';font-weight:700;">' + (tot?wr+'%':'—') + '</div>'
+            + '<div style="width:100%;background:' + col + ';border-radius:4px 4px 0 0;height:' + h + 'px;opacity:.8;"></div>'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);">conf ' + conf + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div></div>'
+
+      // Top competities
+      + (topComps.length ? '<div style="margin-bottom:.6rem;">'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin-bottom:.4rem;">🏆 TOP COMPETITIES (min 3 picks)</div>'
+        + topComps.map(([comp, s]) => {
+            const hr = Math.round(s.wins/s.total*100);
+            const avgRoi = (s.roi/s.total).toFixed(1);
+            const col = hr>=50?'#16a34a':hr>=35?'#d97706':'#dc2626';
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem 0;border-bottom:1px solid var(--border);">'
+              + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + comp + '</div>'
+              + '<div style="display:flex;gap:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
+              + '<span style="color:' + col + ';font-weight:700;">' + hr + '%</span>'
+              + '<span style="color:' + (parseFloat(avgRoi)>=0?'#16a34a':'#dc2626') + ';">' + (parseFloat(avgRoi)>=0?'+':'') + avgRoi + '% ROI</span>'
+              + '<span style="color:var(--sub);">' + s.total + 'x</span>'
+              + '</div></div>';
+          }).join('')
+        + '</div>' : '')
+
+      // Beste pick type conclusie
+      + (bestType ? '<div style="background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);border-radius:10px;padding:.5rem .7rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);">'
+        + '💡 <b style="color:var(--ink);">Beste pick type:</b> <span style="color:#16a34a;font-weight:700;">'
+        + (bestType[0]==='1'?'Thuisploeg wint':bestType[0]==='2'?'Uitploeg wint':bestType[0]==='X'?'Gelijkspel':bestType[0])
+        + '</span> · ' + Math.round(bestType[1].wins/bestType[1].total*100) + '% hitrate (' + bestType[1].total + 'x)'
+        + '</div>' : '')
+
+      + '</div>';
+  }
+
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.5rem;">SCANS (' + log.length + ')</div>';
 
   if (!log.length) {
     html += '<div style="text-align:center;padding:2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:var(--muted);">'
@@ -1953,13 +2248,49 @@ function renderScanLog() {
       var sw = scan.picks.filter(p=>p.status==='win').length;
       var sl = scan.picks.filter(p=>p.status==='lose').length;
       var sp = scan.picks.filter(p=>p.status==='pending').length;
+      var scanFace = (function() {
+        if (!sw && !sl) return '😶';
+        var hr = sw / (sw + sl) * 100;
+        if (hr >= 70) return '😄';
+        if (hr >= 50) return '🙂';
+        if (hr >= 35) return '😐';
+        if (hr >= 20) return '😕';
+        return '😞';
+      })();
       html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.75rem 1rem;margin-bottom:.5rem;">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">'
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;">#' + (log.length-si) + ' &middot; ' + scan.date + ' ' + scan.time + '</div>'
-        + '<div style="display:flex;gap:.3rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;">'
+        + '#' + (log.length-si) + ' &middot; '
+        + (function() {
+            // Toon speeldatum/-tijd van picks indien beschikbaar
+            var times = scan.picks
+              .filter(function(p){ return !!p.matchTime; })
+              .map(function(p){ return new Date(p.matchTime).getTime(); })
+              .filter(function(t){ return !isNaN(t); });
+            if (!times.length) return scan.date;
+            times.sort(function(a,b){return a-b;});
+            var earliest = new Date(times[0]);
+            var latest   = new Date(times[times.length-1]);
+            var fmt = function(d) {
+              return d.getDate()+'-'+(d.getMonth()+1)+'-'+d.getFullYear()
+                +' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+            };
+            if (times.length === 1 || earliest.toDateString() === latest.toDateString())
+              return fmt(earliest);
+            // Meerdere dagen: toon datumrange
+            return earliest.getDate()+'-'+(earliest.getMonth()+1)+' t/m '
+              +latest.getDate()+'-'+(latest.getMonth()+1)+'-'+latest.getFullYear();
+          })()
+        + '</div>'
+        + '<div style="display:flex;gap:.4rem;align-items:center;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
         + (sw ? '<span style="color:#16a34a;font-weight:700;">' + sw + 'W</span>' : '')
         + (sl ? '<span style="color:#dc2626;font-weight:700;">' + sl + 'V</span>' : '')
         + (sp ? '<span style="color:#d97706;">' + sp + '⏳</span>' : '')
+              + '<span style="font-size:1rem;">' + scanFace + '</span>'
+        + '<button class="delete-scan-btn" data-scan="' + String(scan.id||'') + '" '
+          + 'style="font-family:monospace;font-size:.44rem;padding:2px 6px;border-radius:6px;'
+          + 'background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);'
+          + 'color:#dc2626;cursor:pointer;margin-left:.2rem;">🗑</button>'
         + '</div></div>';
       scan.picks.forEach(function(p) {
         var icon = p.status==='win' ? '✅' : p.status==='lose' ? '❌' : p.status==='void' ? '⬜' : '⏳';
@@ -1974,6 +2305,10 @@ function renderScanLog() {
             + 'background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);'
             + 'color:#2563eb;cursor:pointer;white-space:nowrap;flex-shrink:0;">✏ Score</button>'
           : '';
+        var deletePickBtn = '<button class="delete-pick-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" '
+          + 'style="font-family:monospace;font-size:.44rem;padding:2px 6px;border-radius:6px;'
+          + 'background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);'
+          + 'color:#dc2626;cursor:pointer;white-space:nowrap;flex-shrink:0;">🗑</button>';
         html += '<div style="display:flex;align-items:center;gap:.4rem;padding:.3rem 0;border-top:1px solid var(--border);">'
           + '<div style="width:1.6rem;text-align:center;font-size:.8rem;">' + icon + '</div>'
           + '<div style="flex:1;min-width:0;">'
@@ -1982,6 +2317,7 @@ function renderScanLog() {
           + '</div>'
           + (p.score ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:var(--muted);">' + p.score + '</div>' : '')
           + manualBtn
+          + deletePickBtn
           + '</div>';
       });
       html += '</div>';
@@ -1989,6 +2325,40 @@ function renderScanLog() {
   }
 
   el.innerHTML = html;
+
+  // Verwijder pick knop
+  el.addEventListener('click', function(e) {
+    const btn = e.target.closest('.delete-pick-btn');
+    if (!btn) return;
+    const scanId = btn.dataset.scan;
+    const pickId = btn.dataset.pick;
+    const pickType = btn.dataset.type;
+    if (!confirm('Pick verwijderen uit scan log?')) return;
+    const scanIdx = state.scanLog.findIndex(s => String(s.id||'') === scanId);
+    if (scanIdx === -1) return;
+    state.scanLog[scanIdx].picks = state.scanLog[scanIdx].picks.filter(p =>
+      !(String(p.fixtureId||p.id||'') === pickId && String(p.pick||'') === pickType)
+    );
+    // Verwijder lege scans
+    if (state.scanLog[scanIdx].picks.length === 0) {
+      state.scanLog.splice(scanIdx, 1);
+    }
+    saveState();
+    renderScanLog();
+    showToast('🗑 Pick verwijderd');
+  });
+
+  // Verwijder hele scan knop
+  el.addEventListener('click', function(e) {
+    const btn = e.target.closest('.delete-scan-btn');
+    if (!btn) return;
+    const scanId = btn.dataset.scan;
+    if (!confirm('Hele scan verwijderen?')) return;
+    state.scanLog = state.scanLog.filter(s => String(s.id||'') !== scanId);
+    saveState();
+    renderScanLog();
+    showToast('🗑 Scan verwijderd');
+  });
 
   // v18.6: event delegation voor Score knoppen (data-attributen aanpak)
   el.addEventListener('click', function(e) {
