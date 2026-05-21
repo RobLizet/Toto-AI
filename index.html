@@ -341,7 +341,7 @@
   function clearFloatingChat() {
     _fabHistory = [];
     var msgs = document.getElementById('fab-chat-messages');
-    if (msgs) msgs.innerHTML = '<div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub,#64748b);text-align:center;padding:.5rem;">Chat gewist. Stel gerust een nieuwe vraag! 👋</div>';
+    if (msgs) msgs.innerHTML = '<div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);text-align:center;padding:.5rem;">Chat gewist. Stel gerust een nieuwe vraag! 👋</div>';
   }
 
   function appendFabMsg(role, text, isLoading) {
@@ -353,7 +353,7 @@
     var bubble = document.createElement('div');
     bubble.style.cssText = 'max-width:85%;padding:.45rem .65rem;border-radius:' +
       (isUser ? '12px 12px 2px 12px' : '12px 12px 12px 2px') + ';' +
-      'font-family:'IBM Plex Mono',monospace;font-size:.5rem;line-height:1.55;' +
+      'font-family:monospace;font-size:.5rem;line-height:1.55;' +
       (isUser
         ? 'background:linear-gradient(135deg,#7c3aed,#be185d);color:#fff;'
         : 'background:rgba(15,23,42,.05);color:var(--ink,#0f172a);border:1px solid rgba(15,23,42,.08);');

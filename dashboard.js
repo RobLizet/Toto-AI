@@ -246,6 +246,8 @@ function renderDashboard() {
 }
 
 function renderDailyTipCard(tip) {
+    const tipCard = document.getElementById('dailyTipCard');
+    if (!tipCard) return;
     // Geen tip of niet gekwalificeerd
     if (!tip || !tip.qualified) {
       tipCard.innerHTML = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:.75rem 1rem;opacity:.6;">
