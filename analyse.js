@@ -839,8 +839,9 @@ function renderAnalyseScanResults(scans) {
 
   // Kwaliteitsdrempel voor de 100 picks
   const DREMPEL = { minValue: 8, minConf: 6 };
-  const teltMee  = scans.filter(s => !s.isSparseData && s.value >= DREMPEL.minValue && (s.confidence||0) >= DREMPEL.minConf && s.poissonUsed);
-  const teltNiet = scans.filter(s =>  s.isSparseData || s.value <  DREMPEL.minValue || (s.confidence||0) <  DREMPEL.minConf || !s.poissonUsed);
+  // Poisson is een bonus maar niet verplicht — hoge value+conf telt altijd mee
+  const teltMee  = scans.filter(s => !s.isSparseData && s.value >= DREMPEL.minValue && (s.confidence||0) >= DREMPEL.minConf);
+  const teltNiet = scans.filter(s =>  s.isSparseData || s.value <  DREMPEL.minValue || (s.confidence||0) <  DREMPEL.minConf);
 
   const renderPick = (s, geldig) => {
     const valColor = !geldig ? '#94a3b8' : s.value >= 15 ? '#15803d' : '#b45309';
@@ -851,7 +852,7 @@ function renderAnalyseScanResults(scans) {
     if (s.isSparseData) redenen.push('data schaars');
     if (s.value < DREMPEL.minValue) redenen.push(`value < ${DREMPEL.minValue}%`);
     if ((s.confidence||0) < DREMPEL.minConf) redenen.push(`conf < ${DREMPEL.minConf}/10`);
-    if (!s.poissonUsed) redenen.push('geen Poisson');
+    // geen Poisson is geen reden meer voor afwijzing
 
     return `<div style="display:flex;align-items:center;padding:.5rem .9rem;
       border-bottom:1px solid var(--stroke);cursor:pointer;
@@ -903,7 +904,7 @@ function renderAnalyseScanResults(scans) {
       ${teltNiet.length ? `
         <div style="padding:.35rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.48rem;
           color:var(--sub);background:rgba(15,23,42,.03);border-top:1px solid var(--stroke);">
-          ONDER DREMPEL (value ≥8%, conf ≥6/10, Poisson vereist)
+          ONDER DREMPEL (value ≥8%, conf ≥6/10)
         </div>
         ${teltNiet.map(s => renderPick(s, false)).join('')}
       ` : ''}
@@ -1831,6 +1832,48 @@ function logScanResult(picks) {
   });
   state.scanLog = log.slice(0, 100);
   saveState();
+
+  // Sync naar Firebase picks/ zodat worker picks en app picks samenkomen
+  syncPicksToFirebase(newPicks);
+}
+
+// ── Sync app picks naar Firebase ─────────────────────────
+async function syncPicksToFirebase(picks) {
+  try {
+    if (!firebase || !firebase.database) return;
+    const db = firebase.database();
+    const updates = {};
+    picks.forEach(p => {
+      const key = String(p.fixtureId || p.id) + '_' + p.pick;
+      updates['picks/' + key] = {
+        fixtureId:   p.fixtureId,
+        home:        p.match ? p.match.split(' vs ')[0] : '',
+        away:        p.match ? p.match.split(' vs ')[1] : '',
+        matchName:   p.match,
+        matchDate:   p.matchDate || today,
+        matchTime:   p.matchTime || null,
+        leagueName:  p.comp || '',
+        pick:        p.pick,
+        pickLabel:   p.pickLabel,
+        odds:        p.odds,
+        value:       p.value,
+        confidence:  p.confidence,
+        aiKans:      p.aiKans || 0,
+        lockLevel:   'single',
+        scanCount:   1,
+        source:      'app',
+        status:      'pending',
+        score:       null,
+        processed:   false,
+        firstScanAt: new Date().toISOString(),
+        lastScanAt:  new Date().toISOString(),
+      };
+    });
+    await db.ref('/').update(updates);
+    console.log('[Sync] ' + picks.length + ' picks gesynchroniseerd naar Firebase');
+  } catch(e) {
+    console.warn('[Sync] Firebase sync mislukt:', e.message);
+  }
 }
 
 async function verifyScanLog() {
