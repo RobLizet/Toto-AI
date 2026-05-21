@@ -649,9 +649,7 @@
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 400,
-          system: systemParts.join('
-
-'),
+          system: systemParts.join('\n\n'),
           messages: _fabHistory
         })
       });
