@@ -393,9 +393,11 @@
 
     try {
       var WORKER_URL = (typeof WORKER !== 'undefined' ? WORKER : 'https://toto-proxy.zweetzakken.workers.dev');
+      var authToken = '';
+      try { var u = firebase.auth().currentUser; if (u) authToken = await u.getIdToken(); } catch(e) {}
       var res = await fetch(WORKER_URL + '/anthropic', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(authToken ? {'Authorization': 'Bearer ' + authToken} : {}) },
         body: JSON.stringify({
           model: 'claude-sonnet-4-6',
           max_tokens: 400,
