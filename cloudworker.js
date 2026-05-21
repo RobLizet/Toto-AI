@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v67'; // v20 Intelligence Core — CLV + Calibratie
+const VERSION = 'v68'; // v20 Intelligence Core — CLV + Calibratie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -506,7 +506,7 @@ async function runWeeklyCalibration(env) {
   }
 }
 
-async function runScan(env) {
+async function runScan(env, force = false) {
   const today = new Date().toISOString().split('T')[0];
   const now = new Date();
   const hour = now.getUTCHours() + 1;
@@ -530,10 +530,11 @@ async function runScan(env) {
     return;
   }
 
-  if (hour < scanFrom || hour >= scanTo) {
+  if (!force && (hour < scanFrom || hour >= scanTo)) {
     console.log(`[Scan] Buiten scanvenster (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC), skip`);
     return;
   }
+  if (force) console.log(`[Scan] Handmatige trigger — scanvenster overgeslagen`);
   console.log(`[Scan] Start scan (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC)`);
 
   let allMatches = [];
@@ -1079,7 +1080,7 @@ export default {
       // Voer scan uit op de achtergrond
       const ctx_dummy = { waitUntil: (p) => p };
       json({ status: 'scan gestart', version: VERSION });
-      await runScan(env);
+      await runScan(env, true); // force=true: tijdvenster overslaan
       await verifyYesterdayPicks(env);
       return json({ status: 'scan klaar', version: VERSION });
     }
