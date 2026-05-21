@@ -2,13 +2,13 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v70'; // v20 Intelligence Core — CLV + Calibratie
+const VERSION = 'v71'; // v20 Intelligence Core — CLV + Calibratie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version',
+  'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version, Authorization',
 };
 
 function json(data, status = 200) {
