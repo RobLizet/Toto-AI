@@ -2412,6 +2412,7 @@ function renderScanLog() {
   // Teken scan log ROI curve
   setTimeout(function() {
     const c = document.getElementById('scanLogChart');
+    if (c) c.width = c.parentElement?.offsetWidth || 320;
     if (!c || settled.length < 2) return;
     const ctx = c.getContext('2d');
     c.width = c.offsetWidth || 320; c.height = 80;
@@ -2446,7 +2447,7 @@ function renderScanLog() {
     });
     ctx.fillStyle='#94a3b8'; ctx.font='9px monospace'; ctx.textAlign='right';
     ctx.fillText((lastVal>=0?'+':'')+lastVal.toFixed(2)+' €/pick', pad.left-2, yP(lastVal)+3);
-  }, 60);
+  }, 200);
 
   // Verwijder pick knop
   el.addEventListener('click', function(e) {

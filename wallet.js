@@ -905,14 +905,17 @@ function renderTracker() {
   }).join('');
 
   // Event delegation voor popup
-  list.onclick = function(e) {
-    if (e.target.closest('button') || e.target.closest('.tracker-result')) return;
-    const row = e.target.closest('[data-trackeridx]');
-    if (!row) return;
-    const idx = parseInt(row.dataset.trackeridx);
-    const bet = (state.tracker.bets||[])[idx];
-    if (bet) showWalletPopup('tracker', bet);
-  };
+  if (!list._popupBound) {
+    list._popupBound = true;
+    list.addEventListener('click', function(e) {
+      if (e.target.closest('button') || e.target.closest('.tracker-result')) return;
+      const row = e.target.closest('[data-trackeridx]');
+      if (!row) return;
+      const idx = parseInt(row.dataset.trackeridx);
+      const bet = (state.tracker.bets||[])[idx];
+      if (bet) showWalletPopup('tracker', bet);
+    });
+  }
 }
 
 function updateTrackerStats() {
@@ -1974,195 +1977,6 @@ function ptSaveFromScan(home, away, pick, pickLabel, odds, value, confidence, po
 
 // ══════════════════════════════════════════════════════════
 // WALLET POPUP — universele detail popup voor alle cards
-// ══════════════════════════════════════════════════════════
-function showWalletPopup(type, data) {
-  const existing = document.getElementById('walletPopupOverlay');
-  if (existing) existing.remove();
-
-  const hrColor = n => n >= 55 ? '#16a34a' : n >= 45 ? '#d97706' : '#dc2626';
-
-  let headerHtml = '';
-  let bodyHtml   = '';
-
-  if (type === 'bet') {
-    // Wallet bet popup
-    const b = data;
-    const pnlText  = b.status==='win'  ? `+€${((b.payout||0)-(b.stake||b.amount||0)).toFixed(2)}`
-                   : b.status==='lose' ? `-€${(b.stake||b.amount||0).toFixed(2)}` : '⏳ Open';
-    const pnlColor = b.status==='win'?'#16a34a':b.status==='lose'?'#dc2626':'#d97706';
-    const icon     = b.status==='win'?'✅':b.status==='lose'?'❌':'⏳';
-    headerHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${b.matchName||b.match||'Weddenschap'}</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${b.date||''}</div>`;
-    const rows = [
-      ['Pick', b.pickLabel||b.pick||'—'],
-      ['Quote', b.odds||'—'],
-      ['Inzet', `€${(b.stake||b.amount||0).toFixed(2)}`],
-      ['Payout', `€${(b.payout||0).toFixed(2)}`],
-      ['P&L', pnlText],
-      ['Markt', b.markt||'—'],
-      ['Bookmaker', b.bookmaker||'—'],
-      ['Score', b.score||'—'],
-      ['Notitie', b.note||'—'],
-    ];
-    bodyHtml = rows.filter(([,v])=>v&&v!=='—').map(([k,v]) =>
-      `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(15,23,42,.06);">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub,#64748b);">${k}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;color:${k==='P&L'?pnlColor:'var(--ink,#0f172a)'};">${v}</div>
-      </div>`).join('');
-    if (b.legs && b.legs.length) {
-      bodyHtml += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin:.7rem 0 .3rem;">COMBI LEGS</div>`;
-      b.legs.forEach((l,i) => {
-        const lc = l.legStatus==='win'?'#16a34a':l.legStatus==='lose'?'#dc2626':'#d97706';
-        bodyHtml += `<div style="background:rgba(15,23,42,.03);border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
-          <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:600;">${l.match||'Leg '+(i+1)}</div>
-          <div style="display:flex;justify-content:space-between;margin-top:.2rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">${l.pick} @ ${l.odds}${l.score?' · '+l.score:''}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:${lc};">${l.legStatus==='win'?'WIN':l.legStatus==='lose'?'VERLIES':'OPEN'}</div>
-          </div></div>`;
-      });
-    }
-
-  } else if (type === 'tracker') {
-    const b = data;
-    const pnlText  = b.status==='win'  ? `+€${(b.payout-b.stake).toFixed(2)}`
-                   : b.status==='lose' ? `-€${b.stake.toFixed(2)}` : '⏳ Open';
-    const pnlColor = b.status==='win'?'#16a34a':b.status==='lose'?'#dc2626':'#d97706';
-    const icon = b.status==='win'?'✅':b.status==='lose'?'❌':'⏳';
-    headerHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${b.match||'Weddenschap'}</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${b.date||''} · ${b.bookmaker||''}</div>`;
-    const rows = [
-      ['Pick', b.pick||'—'],
-      ['Quote', b.odds||'—'],
-      ['Inzet', `€${b.stake?.toFixed(2)||'—'}`],
-      ['Payout', `€${b.payout?.toFixed(2)||'—'}`],
-      ['P&L', pnlText],
-      ['Bron', b.source||'eigen'],
-      ['Score', b.score||'—'],
-      ['Notitie', b.note||'—'],
-    ];
-    bodyHtml = rows.filter(([,v])=>v&&v!=='—').map(([k,v]) =>
-      `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(15,23,42,.06);">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub,#64748b);">${k}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;color:${k==='P&L'?pnlColor:'var(--ink,#0f172a)'};">${v}</div>
-      </div>`).join('');
-    if (b.legs && b.legs.length) {
-      bodyHtml += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin:.7rem 0 .3rem;">COMBI LEGS</div>`;
-      b.legs.forEach((l,i) => {
-        const lc = l.status==='win'?'#16a34a':l.status==='lose'?'#dc2626':'#d97706';
-        bodyHtml += `<div style="background:rgba(15,23,42,.03);border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
-          <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:600;">${l.match||'Leg '+(i+1)}</div>
-          <div style="display:flex;justify-content:space-between;margin-top:.2rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">${l.pick} @ ${l.odds}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:${lc};">${l.status==='win'?'WIN':l.status==='lose'?'VERLIES':'OPEN'}</div>
-          </div></div>`;
-      });
-    }
-
-  } else if (type === 'backtest') {
-    const p = data;
-    const statusTxt = p.status==='win'?'WIN':p.status==='lose'?'VERLIES':'OPEN';
-    const statusColor = p.status==='win'?'#16a34a':p.status==='lose'?'#dc2626':'#d97706';
-    const icon = p.status==='win'?'✅':p.status==='lose'?'❌':'⏳';
-    headerHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${p.matchName||'Pick'}</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${p.date||''} · ${p.comp||''}</div>`;
-    const rows = [
-      ['Pick', p.pickLabel||p.pick||'—'],
-      ['Quote', p.odds||'—'],
-      ['Value', p.value ? p.value+'%' : '—'],
-      ['Confidence', p.confidence ? p.confidence+'/10' : '—'],
-      ['AI kans', p.aiKans ? p.aiKans+'%' : '—'],
-      ['Kelly', p.kelly ? p.kelly+'%' : '—'],
-      ['Status', statusTxt],
-      ['Score', p.score||'—'],
-      ['Poisson+AI', p.poissonUsed?'Ja':'Nee'],
-      ['Bookmaker', p.bookmaker||'—'],
-    ];
-    bodyHtml = rows.filter(([,v])=>v&&v!=='—'&&v!=='Nee').map(([k,v]) =>
-      `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(15,23,42,.06);">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub,#64748b);">${k}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;color:${k==='Status'?statusColor:'var(--ink,#0f172a)'};">${v}</div>
-      </div>`).join('');
-    if (p.reason) {
-      bodyHtml += `<div style="background:rgba(37,99,235,.05);border-left:3px solid #2563eb;border-radius:0 8px 8px 0;padding:.5rem .7rem;margin-top:.5rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#1d4ed8;font-weight:700;margin-bottom:.2rem;">REDEN</div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--ink,#0f172a);line-height:1.6;">${p.reason}</div>
-      </div>`;
-    }
-  }
-
-  const overlay = document.createElement('div');
-  overlay.id = 'walletPopupOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);';
-  overlay.innerHTML = `
-    <div style="background:var(--bg,#f8fafc);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
-        <div>${headerHtml}</div>
-        <button onclick="document.getElementById('walletPopupOverlay').remove()"
-          style="background:rgba(15,23,42,.07);border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;flex-shrink:0;margin-left:.5rem;">✕</button>
-      </div>
-      <div style="overflow-y:auto;padding:.8rem 1rem 1.5rem;flex:1;">${bodyHtml}</div>
-    </div>`;
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-  document.body.appendChild(overlay);
-}
-
-// ══════════════════════════════════════════════════════════
-// TRACKER GRAFIEK
-// ══════════════════════════════════════════════════════════
-function renderTrackerChart() {
-  const wrap = document.getElementById('trackerChartWrap');
-  const canvas = document.getElementById('trackerChart');
-  if (!wrap || !canvas) return;
-  const bets = state.tracker.bets || [];
-  const settled = bets.filter(b => b.status === 'win' || b.status === 'lose');
-  if (settled.length < 2) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  const ctx = canvas.getContext('2d');
-  const W = canvas.offsetWidth || 360, H = 90;
-  canvas.width = W; canvas.height = H;
-  ctx.clearRect(0, 0, W, H);
-  const points = [0];
-  settled.forEach(b => {
-    const last = points[points.length - 1];
-    points.push(last + (b.status === 'win' ? (b.payout - b.stake) : -b.stake));
-  });
-  const minV = Math.min(...points, -1), maxV = Math.max(...points, 1);
-  const range = maxV - minV;
-  const pad = { top: 12, bottom: 14, left: 46, right: 8 };
-  const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
-  const xP = i => pad.left + (i / Math.max(points.length - 1, 1)) * cw;
-  const yP = v => pad.top + ch - ((v - minV) / range) * ch;
-  // Zero lijn
-  ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(148,163,184,.5)'; ctx.lineWidth = 1;
-  const zeroY = yP(0); ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(pad.left + cw, zeroY); ctx.stroke();
-  ctx.setLineDash([]);
-  const lastVal = points[points.length - 1];
-  const isPos = lastVal >= 0, lineColor = isPos ? '#15803d' : '#dc2626';
-  // Gradient fill
-  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
-  grad.addColorStop(0, isPos ? 'rgba(21,128,61,.2)' : 'rgba(220,38,38,.15)');
-  grad.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.beginPath(); ctx.moveTo(xP(0), yP(0));
-  points.forEach((v, i) => { if (i > 0) ctx.lineTo(xP(i), yP(v)); });
-  ctx.lineTo(xP(points.length - 1), H - pad.bottom); ctx.lineTo(xP(0), H - pad.bottom);
-  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
-  // Lijn
-  ctx.beginPath(); ctx.moveTo(xP(0), yP(0));
-  points.forEach((v, i) => { if (i > 0) ctx.lineTo(xP(i), yP(v)); });
-  ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
-  // Dots
-  settled.forEach((b, i) => {
-    ctx.beginPath(); ctx.arc(xP(i + 1), yP(points[i + 1]), 3, 0, Math.PI * 2);
-    ctx.fillStyle = b.status === 'win' ? '#15803d' : '#dc2626';
-    ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-  });
-  // Label
-  ctx.fillStyle = '#94a3b8'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
-  ctx.fillText((lastVal >= 0 ? '+' : '') + '€' + lastVal.toFixed(2), pad.left - 3, yP(lastVal) + 3);
-}
-
-// ══════════════════════════════════════════════════════════
-// WALLET POPUP — detail popup voor alle cards
 // ══════════════════════════════════════════════════════════
 function showWalletPopup(type, data) {
   const existing = document.getElementById('walletPopupOverlay');
