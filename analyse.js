@@ -1,6 +1,37 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.46
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.47
 // ═══════════════════════════════════════════════════════
+
+// ── Anthropic fetch helper ────────────────────────────
+async function anthropicFetch(apiKey, body) {
+  const WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
+  let authToken = '';
+  try {
+    const u = typeof firebase !== 'undefined' && firebase.auth().currentUser;
+    if (u) authToken = await u.getIdToken();
+  } catch(e) {}
+  const res = await fetch(WORKER + '/anthropic', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(authToken ? { 'Authorization': 'Bearer ' + authToken } : {})
+    },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error('Worker HTTP ' + res.status);
+  return await res.json();
+}
+
+async function anthropicFetchWithRetry(apiKey, body, retries = 2) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await anthropicFetch(apiKey, body);
+    } catch(e) {
+      if (i === retries) throw e;
+      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+}
 
 // ── Analyse screen render ─────────────────────────────────
 function renderAnalyseScreen() {
