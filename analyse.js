@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v19.47
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v20.2
 // ═══════════════════════════════════════════════════════
 
 // ── Anthropic fetch helper ────────────────────────────
@@ -2122,6 +2122,7 @@ function renderScanLog() {
     + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--text);">SCAN LOG</div>'
     + '<div style="display:flex;gap:.4rem;">'
     + '<button class="small-action-btn" onclick="verifyScanLog().then(n=>{showToast(n>0?n+\' picks geverifieerd\':\'Geen nieuwe resultaten\');renderScanLog();}).catch(e=>showToast(\'⚠ \'+e.message))">🔄 Verificeer</button>'
+    + '<button class="small-action-btn" onclick="showScanLogStatsPopup()">📊 Stats</button>'
     + '<button class="small-action-btn" onclick="exportScanLogCSV()">📥 CSV</button>'
     + '<button class="small-action-btn" style="color:#dc2626;" onclick="if(confirm(\'Scan log wissen?\')){state.scanLog=[];saveState();renderScanLog();}">🗑</button>'
     + '</div></div>';
@@ -2331,7 +2332,7 @@ function renderScanLog() {
         if (hr >= 20) return '😕';
         return '😞';
       })();
-      html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.75rem 1rem;margin-bottom:.5rem;">'
+      html += '<div onclick="(function(e){if(!e.target.closest(\'button\')) showScanPopup('+si+');}).call(null,event)" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.75rem 1rem;margin-bottom:.5rem;cursor:pointer;transition:box-shadow .15s;" onmouseenter="this.style.boxShadow=\'0 4px 16px rgba(15,23,42,.1)\'" onmouseleave="this.style.boxShadow=\'none\'">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">'
         + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;">'
         + '#' + (log.length-si) + ' &middot; '
@@ -2444,6 +2445,245 @@ function renderScanLog() {
     const matchName = btn.dataset.match;
     showManualVerify(scanId, pickId, pickType, matchName);
   });
+}
+
+
+function showScanPopup(scanIdx) {
+  const log = state.scanLog || [];
+  const scan = log[scanIdx];
+  if (!scan) return;
+
+  const sw = scan.picks.filter(p=>p.status==='win').length;
+  const sl = scan.picks.filter(p=>p.status==='lose').length;
+  const sp = scan.picks.filter(p=>p.status==='pending').length;
+  const scanHr = (sw+sl) ? Math.round(sw/(sw+sl)*100) : null;
+  const hrColor = n => n >= 55 ? '#16a34a' : n >= 45 ? '#d97706' : '#dc2626';
+  const scanFace = (function() {
+    if (!sw && !sl) return '😶';
+    var hr = sw / (sw + sl) * 100;
+    if (hr >= 70) return '😄';
+    if (hr >= 50) return '🙂';
+    if (hr >= 35) return '😐';
+    if (hr >= 20) return '😕';
+    return '😞';
+  })();
+
+  // Verwijder bestaande popup
+  const existing = document.getElementById('scanPopupOverlay');
+  if (existing) existing.remove();
+
+  let picksHtml = '';
+  scan.picks.forEach(function(p) {
+    const icon = p.status==='win' ? '✅' : p.status==='lose' ? '❌' : p.status==='void' ? '⬜' : '⏳';
+    const statusColor = p.status==='win' ? '#16a34a' : p.status==='lose' ? '#dc2626' : p.status==='void' ? '#94a3b8' : '#d97706';
+    const elite = p.elite ? '<span style="background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.25);font-family:'IBM Plex Mono',monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">⭐ ELITE</span>' : '';
+    const lockBadge = p.lock === 'triple' ? '<span style="background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.25);font-family:'IBM Plex Mono',monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🏆 TRIPLE</span>'
+      : p.lock === 'double' ? '<span style="background:rgba(37,99,235,.1);color:#1d4ed8;border:1px solid rgba(37,99,235,.2);font-family:'IBM Plex Mono',monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🔒 DOUBLE</span>' : '';
+
+    picksHtml += `<div style="background:rgba(15,23,42,.03);border:1px solid rgba(15,23,42,.07);border-radius:12px;padding:.7rem .85rem;margin-bottom:.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.35rem;">
+        <div style="display:flex;align-items:center;gap:.4rem;flex:1;min-width:0;">
+          <span style="font-size:1rem;">${icon}</span>
+          <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:700;color:var(--ink,#0f172a);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${p.match||''}</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;color:${statusColor};white-space:nowrap;margin-left:.4rem;">${p.status==='win'?'WIN':p.status==='lose'?'VERLIES':p.status==='void'?'VOID':'PENDING'}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.35rem;">
+        <span style="background:rgba(124,58,237,.1);color:#6d28d9;border:1px solid rgba(124,58,237,.2);font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;padding:2px 7px;border-radius:4px;">${p.pickLabel||p.pick}</span>
+        <span style="background:rgba(15,23,42,.06);color:var(--ink,#0f172a);border:1px solid rgba(15,23,42,.1);font-family:'IBM Plex Mono',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">@ ${p.odds}</span>
+        <span style="background:rgba(37,99,235,.08);color:#1d4ed8;border:1px solid rgba(37,99,235,.18);font-family:'IBM Plex Mono',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">${(p.value||0).toFixed(1)}% value</span>
+        <span style="background:rgba(15,23,42,.04);color:var(--sub,#64748b);border:1px solid rgba(15,23,42,.08);font-family:'IBM Plex Mono',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">conf ${p.confidence}/10</span>
+        ${p.confidenceFinal ? `<span style="background:rgba(219,39,119,.08);color:#be185d;border:1px solid rgba(219,39,119,.2);font-family:'IBM Plex Mono',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">CI ${p.confidenceFinal}</span>` : ''}
+        ${elite}${lockBadge}
+      </div>
+      ${p.comp ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub,#64748b);">${p.comp}${p.score ? ' · Score: <b style='color:var(--ink)'>'+p.score+'</b>' : ''}</div>` : ''}
+    </div>`;
+  });
+
+  const overlay = document.createElement('div');
+  overlay.id = 'scanPopupOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;padding:0;backdrop-filter:blur(2px);';
+  overlay.innerHTML = `
+    <div style="background:var(--bg,#f8fafc);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">
+            SCAN #${log.length - scanIdx}
+            <span style="font-size:1.6rem;margin-left:.3rem;">${scanFace}</span>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${scan.date} · ${scan.time||''}</div>
+        </div>
+        <div style="display:flex;gap:.5rem;align-items:center;">
+          ${scanHr !== null ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;color:${hrColor(scanHr)};">${scanHr}% HR</div>` : ''}
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
+            ${sw ? `<span style="color:#16a34a;">${sw}W</span> ` : ''}${sl ? `<span style="color:#dc2626;">${sl}V</span> ` : ''}${sp ? `<span style="color:#d97706;">${sp}⏳</span>` : ''}
+          </div>
+          <button onclick="document.getElementById('scanPopupOverlay').remove()"
+            style="background:rgba(15,23,42,.07);border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+      </div>
+      <!-- Picks lijst -->
+      <div style="overflow-y:auto;padding:.8rem 1rem 1.5rem;flex:1;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;color:var(--sub,#64748b);margin-bottom:.6rem;">${scan.picks.length} PICKS</div>
+        ${picksHtml}
+      </div>
+    </div>`;
+
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) overlay.remove();
+  });
+  document.body.appendChild(overlay);
+}
+
+
+function showScanLogStatsPopup() {
+  const log = state.scanLog || [];
+  const allPicks = log.flatMap(s => s.picks);
+  const settled  = allPicks.filter(p => p.status === 'win' || p.status === 'lose');
+  const wins     = settled.filter(p => p.status === 'win');
+  const hitrate  = settled.length ? Math.round(wins.length / settled.length * 100) : 0;
+  const roi      = settled.length
+    ? settled.reduce((s,p) => s + (p.status==='win' ? (p.odds-1) : -1), 0) / settled.length * 100 : 0;
+  const avgOdds  = settled.length ? settled.reduce((s,p)=>s+(p.odds||0),0)/settled.length : 0;
+  const avgValue = allPicks.length ? allPicks.reduce((s,p)=>s+(p.value||0),0)/allPicks.length : 0;
+  const hrColor  = n => n >= 55 ? '#16a34a' : n >= 45 ? '#d97706' : '#dc2626';
+
+  // Per type
+  const byType = {};
+  settled.forEach(p => {
+    const t = p.pick||'?';
+    if (!byType[t]) byType[t]={wins:0,total:0};
+    byType[t].total++;
+    if (p.status==='win') byType[t].wins++;
+  });
+
+  // Per competitie
+  const byComp = {};
+  settled.forEach(p => {
+    const c = p.comp||'Overig';
+    if (!byComp[c]) byComp[c]={wins:0,total:0,roi:0};
+    byComp[c].total++;
+    if (p.status==='win') { byComp[c].wins++; byComp[c].roi+=(p.odds-1); }
+    else byComp[c].roi-=1;
+  });
+
+  // Per odds range
+  const byOdds = {'1.0-1.5':[],'1.5-2.0':[],'2.0-3.0':[],'3.0-5.0':[],'5.0+':[]};
+  settled.forEach(p => {
+    const o = p.odds||0;
+    const b = o<1.5?'1.0-1.5':o<2.0?'1.5-2.0':o<3.0?'2.0-3.0':o<5.0?'3.0-5.0':'5.0+';
+    byOdds[b].push(p.status==='win');
+  });
+
+  // Value kalibratie
+  const vb = {'0-10%':[],'10-20%':[],'20-30%':[],'30%+':[]};
+  settled.forEach(p => {
+    const v = p.value||0;
+    const b = v<10?'0-10%':v<20?'10-20%':v<30?'20-30%':'30%+';
+    vb[b].push(p.status==='win');
+  });
+
+  const existing = document.getElementById('scanStatsPopupOverlay');
+  if (existing) existing.remove();
+
+  let body = '';
+
+  // Stat blokken
+  body += `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:.8rem;">
+    ${[
+      ['PICKS TOTAAL', allPicks.length, '#2563eb'],
+      ['AFGEROND', settled.length, '#7c3aed'],
+      ['HITRATE', hitrate+'%', hrColor(hitrate)],
+      ['ROI', (roi>=0?'+':'')+roi.toFixed(1)+'%', roi>=0?'#16a34a':'#dc2626'],
+      ['GEM. ODDS', avgOdds.toFixed(2), '#0f172a'],
+      ['GEM. VALUE', avgValue.toFixed(1)+'%', '#be185d'],
+    ].map(([lbl,val,col]) => `<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;text-align:center;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${col};">${val}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub,#64748b);">${lbl}</div>
+    </div>`).join('')}
+  </div>`;
+
+  // Per pick type
+  if (Object.keys(byType).length) {
+    body += `<div style="background:rgba(15,23,42,.03);border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:var(--sub);margin-bottom:.5rem;">🎯 PER PICK TYPE</div>`;
+    Object.entries(byType).sort((a,b)=>b[1].total-a[1].total).forEach(([type,s]) => {
+      const hr = Math.round(s.wins/s.total*100);
+      body += `<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;min-width:2.5rem;">${type}</div>
+        <div style="flex:1;background:rgba(15,23,42,.08);border-radius:999px;height:6px;">
+          <div style="height:100%;border-radius:999px;background:${hrColor(hr)};width:${hr}%;"></div></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub);min-width:4rem;text-align:right;">${hr}% (${s.total})</div>
+      </div>`;
+    });
+    body += '</div>';
+  }
+
+  // Per competitie
+  if (Object.keys(byComp).length) {
+    body += `<div style="background:rgba(15,23,42,.03);border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:var(--sub);margin-bottom:.5rem;">🏆 PER COMPETITIE</div>`;
+    Object.entries(byComp).sort((a,b)=>(b[1].roi/b[1].total)-(a[1].roi/a[1].total)).slice(0,8).forEach(([comp,s]) => {
+      const hr = Math.round(s.wins/s.total*100);
+      const roi = (s.roi/s.total*100).toFixed(1);
+      body += `<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${comp}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;color:${hrColor(hr)};">${hr}%</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:${parseFloat(roi)>=0?'#16a34a':'#dc2626'};">${parseFloat(roi)>=0?'+':''}${roi}% ROI</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">${s.total}x</div>
+      </div>`;
+    });
+    body += '</div>';
+  }
+
+  // Per odds range
+  body += `<div style="background:rgba(15,23,42,.03);border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:var(--sub);margin-bottom:.5rem;">📊 PER ODDS RANGE</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem;">`;
+  Object.entries(byOdds).forEach(([range,results]) => {
+    const tot = results.length;
+    const wr  = tot ? Math.round(results.filter(Boolean).length/tot*100) : null;
+    body += `<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:8px;padding:.4rem .2rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">${range}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:${wr===null?'var(--sub)':hrColor(wr)};">${wr===null?'—':wr+'%'}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">${tot}x</div>
+    </div>`;
+  });
+  body += '</div></div>';
+
+  // Value kalibratie
+  body += `<div style="background:rgba(15,23,42,.03);border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:var(--sub);margin-bottom:.5rem;">📐 VALUE KALIBRATIE</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;">`;
+  Object.entries(vb).forEach(([range,results]) => {
+    const tot = results.length;
+    const wr  = tot ? Math.round(results.filter(Boolean).length/tot*100) : null;
+    body += `<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:8px;padding:.4rem .2rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">${range}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${wr===null?'var(--sub)':hrColor(wr)};">${wr===null?'—':wr+'%'}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">${tot} picks</div>
+    </div>`;
+  });
+  body += '</div></div>';
+
+  const overlay = document.createElement('div');
+  overlay.id = 'scanStatsPopupOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);';
+  overlay.innerHTML = `
+    <div style="background:var(--bg,#f8fafc);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">📊 SCAN LOG STATISTIEKEN</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub,#64748b);margin-top:.1rem;">${allPicks.length} picks · ${settled.length} afgerond</div>
+        </div>
+        <button onclick="document.getElementById('scanStatsPopupOverlay').remove()"
+          style="background:rgba(15,23,42,.07);border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:.8rem 1rem 1.5rem;flex:1;">${body}</div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
 }
 
 function exportScanLogCSV() {
