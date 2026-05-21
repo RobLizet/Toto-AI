@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TOTO AI — Uitleg & Gids v12</title>
+<title>TOTO AI — Uitleg & Gids v20</title>
 <meta name="theme-color" content="#fce7f3">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -141,7 +141,7 @@ body {
 <div class="app">
 
   <div class="header">
-    <div class="logo">TOTO AI <span style="font-size:1rem;font-family:'IBM Plex Mono',monospace;color:#94a3b8;-webkit-text-fill-color:#94a3b8;">v12</span></div>
+    <div class="logo">TOTO AI <span style="font-size:1rem;font-family:'IBM Plex Mono',monospace;color:#94a3b8;-webkit-text-fill-color:#94a3b8;">v20</span></div>
     <div class="header-btns">
       <button class="pdf-btn" onclick="window.print()">📄 Opslaan als PDF</button>
       <a href="https://toto-ai.app" class="back-btn">← TERUG NAAR APP</a>
@@ -167,6 +167,8 @@ body {
     <a href="#quotes" class="nav-tab">💰 Quotes</a>
     <a href="#stats" class="nav-tab">📊 Stats</a>
     <a href="#data" class="nav-tab">📡 Data</a>
+    <a href="#aichat" class="nav-tab">🤖 AI Chat</a>
+    <a href="#intelligence" class="nav-tab">🧠 Intelligence</a>
   </div>
 
   <!-- TABS UITLEG -->
@@ -196,7 +198,7 @@ body {
     </div>
 
     <div class="card">
-      <div class="card-title">⚡ ANALYSE <span class="new-badge">BIJGEWERKT v12</span></div>
+      <div class="card-title">⚡ ANALYSE <span class="new-badge">BIJGEWERKT v20</span></div>
       <div class="card-text">
         De Analyse tab heeft nu drie sub-tabs:<br><br>
         <b>⚡ Scan & Analyse</b> — value scan van alle geladen wedstrijden + diepgaande AI analyse per wedstrijd.<br><br>
@@ -218,9 +220,8 @@ body {
     </div>
 
     <div class="card">
-      <div class="card-title">⚙️ INSTELLINGEN <span class="new-badge">BIJGEWERKT v12</span></div>
+      <div class="card-title">⚙️ INSTELLINGEN <span class="new-badge">BIJGEWERKT v20</span></div>
       <div class="card-text">
-        • <b>API Keys</b> — Anthropic + API-Football + FootballData<br>
         • <b>Standaard instellingen</b> — startbalans, inzet, bookmaker, competitie<br>
         • <b>Triple Lock criteria</b> — min. odds, value% en confidence instellen<br>
         • <b>🔔 Push notificaties</b> — value alerts en wedstrijd herinneringen<br>
@@ -236,7 +237,7 @@ body {
 
   <!-- SCAN LOG -->
   <div class="section" id="scanlog">
-    <div class="section-title">📊 Scan Log <span class="new-badge">NIEUW v12</span></div>
+    <div class="section-title">📊 Scan Log <span class="new-badge">BIJGEWERKT v20</span></div>
 
     <div class="card">
       <div class="card-title">WAT IS DE SCAN LOG?</div>
@@ -283,7 +284,7 @@ body {
 
   <!-- AUTO SCAN -->
   <div class="section" id="autoscan">
-    <div class="section-title">⏱️ Automatische Scan <span class="new-badge">NIEUW v12</span></div>
+    <div class="section-title">⏱️ Automatische Scan <span class="new-badge">BIJGEWERKT v20</span></div>
 
     <div class="card">
       <div class="card-title">HOE WERKT DE AUTO SCAN?</div>
@@ -591,7 +592,7 @@ body {
       <div class="card-text">
         <b>API-Football</b> — wedstrijden, uitslagen, vorm, statistieken,
         blessures, ranglijsten, live scores, xG, opstellingen<br><br>
-        <b>Anthropic Claude Haiku 4.5</b> — analyseert alle data en
+        <b>Anthropic Claude Sonnet 4.6</b> — analyseert alle data en
         genereert tips. Verzint <b>geen</b> statistieken.<br><br>
         <b>Cloudflare Worker</b> — server-side proxy en automatische scan
       </div>
@@ -609,10 +610,101 @@ body {
     </div>
   </div>
 
+
+  <div class="divider"></div>
+
+  <!-- AI CHAT -->
+  <div class="section" id="aichat">
+    <div class="section-title">🤖 Zwevende AI Chat <span class="new-badge">NIEUW v20</span></div>
+
+    <div class="card">
+      <div class="card-title">WAT IS DE AI CHAT?</div>
+      <div class="card-text">
+        Rechtsonder in de app staat een <b>🤖 knop</b> — de zwevende AI chat.
+        Tik erop om een chatvenster te openen waar je direct vragen kunt stellen
+        aan de TOTO AI assistent.<br><br>
+        De chat is <b>context-aware</b>: als je een wedstrijd of pick geselecteerd
+        hebt, weet de AI automatisch waar je mee bezig bent.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">WAT KUN JE VRAGEN?</div>
+      <div class="card-text">
+        • <b>Picks uitleggen</b> — "Waarom is dit een goede pick?"<br>
+        • <b>Odds vergelijken</b> — "Wat zijn de beste odds voor PSV thuis?"<br>
+        • <b>Strategie</b> — "Welke markt werkt het best bij Serie A?"<br>
+        • <b>Resultaten analyseren</b> — "Hoe gaat het met mijn hitrate?"<br>
+        • <b>Algemene vragen</b> — over betting, value, Poisson etc.
+      </div>
+      <div class="tip-box">
+        <strong>💡 Tip:</strong> De chat onthoudt de laatste 10 berichten. Stel vervolgvragen
+        zonder de context opnieuw uit te leggen.
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- INTELLIGENCE CORE -->
+  <div class="section" id="intelligence">
+    <div class="section-title">🧠 v20 Intelligence Core <span class="new-badge">NIEUW v20</span></div>
+
+    <div class="card">
+      <div class="card-title">CONFIDENCE ENGINE</div>
+      <div class="card-text">
+        Elke pick krijgt een <b>confidenceFinal</b> score (0–100) berekend
+        door de v20 Confidence Engine. Deze houdt rekening met:<br><br>
+        • <b>League factor</b> — betrouwbaarheid van data per competitie<br>
+        • <b>Odds range</b> — picks buiten 1.60–4.50 krijgen straf<br>
+        • <b>Markt factor</b> — 1X2 betrouwbaarder dan exotische markten<br>
+        • <b>Data kwaliteit</b> — hoeveel statistieken beschikbaar zijn<br>
+        • <b>Calibratiefactor</b> — historische prestatie per league
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⭐ ELITE PICKS</div>
+      <div class="card-text">
+        De sterkste picks worden gemarkeerd als <b>Elite</b>:<br><br>
+        <span class="tag tag-green">⭐ ELITE</span> ConfidenceFinal ≥72 + Value ≥8% + Odds 1.60–4.50<br><br>
+        Elite picks krijgen prioriteit bij push notificaties en worden
+        bovenaan de scan resultaten getoond.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 ZELFLEREND SYSTEEM</div>
+      <div class="card-text">
+        Na elke geverifieerde uitslag leert het systeem bij:<br><br>
+        • <b>League calibratie</b> — de factor per competitie wordt bijgesteld
+        op basis van historische hitrate en ROI<br>
+        • <b>CLV (Closing Line Value)</b> — vergelijkt jouw odds met de
+        sluitingskoers. Positieve CLV = je had een voordeel.<br>
+        • <b>Wekelijkse herberekening</b> — elke zondag 06:00 worden alle
+        league factoren opnieuw berekend op basis van alle historische data
+      </div>
+      <div class="info-box">
+        <strong>ℹ️ Hoe meer picks</strong>, hoe beter het systeem wordt. Na 100 picks
+        zijn de calibratiefactoren statistisch betrouwbaar.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📊 ODDS MOVEMENT</div>
+      <div class="card-text">
+        De worker slaat openingsodds op en vergelijkt ze met de huidige odds:<br><br>
+        • <b>Steam move</b> — odds dalen snel = sharp money aan het werk<br>
+        • <b>Drift</b> — odds stijgen = publiek geld op de andere kant<br><br>
+        Een pick waarbij de odds bewegen in jouw richting is sterker.
+      </div>
+    </div>
+  </div>
+
   <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.58rem;
     color:#94a3b8;padding:1rem 0 2rem;">
-    TOTO AI v12 · Made by Rob Borghouts<br>
-    Powered by Anthropic Claude Haiku 4.5 + API-Football + Cloudflare<br><br>
+    TOTO AI v20 · Made by Rob Borghouts<br>
+    Powered by Anthropic Claude Sonnet 4.6 + API-Football + Cloudflare<br><br>
     <a href="changelog.html" style="color:#be185d;text-decoration:none;">📋 Bekijk Changelog →</a>
     &nbsp;·&nbsp;
     <button onclick="window.print()" style="background:none;border:none;color:#be185d;font-family:'IBM Plex Mono',monospace;font-size:.58rem;cursor:pointer;">📄 Opslaan als PDF</button>
