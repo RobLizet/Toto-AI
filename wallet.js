@@ -152,6 +152,9 @@ function renderWalletScreen() {
           <div class="w-item"><div class="w-label">ROI</div><div class="val" id="trRoi">—</div></div>
         </div>
         <div id="smartStatsWrap" style="margin-bottom:.75rem;"></div>
+        <div id="trackerChartWrap" style="margin-bottom:.75rem;display:none;">
+          <canvas id="trackerChart" height="90"></canvas>
+        </div>
         <div style="display:flex;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap;">
           <button class="small-action-btn" style="background:rgba(255,140,0,.1);border-color:rgba(255,140,0,.3);color:#e67e00;font-weight:800;"
             onclick="openJacksPhotoImport()">📸 Importeer van Jacks</button>
@@ -927,6 +930,7 @@ function updateTrackerStats() {
   const el = document.getElementById('trPnl');
   if (el) el.style.color = pnl>=0?'#16a34a':'#dc2626';
   renderSmartStats();
+  renderTrackerChart();
 }
 
 function renderSmartStats() {
@@ -2100,4 +2104,203 @@ function showWalletPopup(type, data) {
     </div>`;
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
   document.body.appendChild(overlay);
+}
+
+// ══════════════════════════════════════════════════════════
+// TRACKER GRAFIEK
+// ══════════════════════════════════════════════════════════
+function renderTrackerChart() {
+  const wrap = document.getElementById('trackerChartWrap');
+  const canvas = document.getElementById('trackerChart');
+  if (!wrap || !canvas) return;
+  const bets = state.tracker.bets || [];
+  const settled = bets.filter(b => b.status === 'win' || b.status === 'lose');
+  if (settled.length < 2) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 360, H = 90;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+  const points = [0];
+  settled.forEach(b => {
+    const last = points[points.length - 1];
+    points.push(last + (b.status === 'win' ? (b.payout - b.stake) : -b.stake));
+  });
+  const minV = Math.min(...points, -1), maxV = Math.max(...points, 1);
+  const range = maxV - minV;
+  const pad = { top: 12, bottom: 14, left: 46, right: 8 };
+  const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
+  const xP = i => pad.left + (i / Math.max(points.length - 1, 1)) * cw;
+  const yP = v => pad.top + ch - ((v - minV) / range) * ch;
+  // Zero lijn
+  ctx.setLineDash([3, 3]); ctx.strokeStyle = 'rgba(148,163,184,.5)'; ctx.lineWidth = 1;
+  const zeroY = yP(0); ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(pad.left + cw, zeroY); ctx.stroke();
+  ctx.setLineDash([]);
+  const lastVal = points[points.length - 1];
+  const isPos = lastVal >= 0, lineColor = isPos ? '#15803d' : '#dc2626';
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+  grad.addColorStop(0, isPos ? 'rgba(21,128,61,.2)' : 'rgba(220,38,38,.15)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.beginPath(); ctx.moveTo(xP(0), yP(0));
+  points.forEach((v, i) => { if (i > 0) ctx.lineTo(xP(i), yP(v)); });
+  ctx.lineTo(xP(points.length - 1), H - pad.bottom); ctx.lineTo(xP(0), H - pad.bottom);
+  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+  // Lijn
+  ctx.beginPath(); ctx.moveTo(xP(0), yP(0));
+  points.forEach((v, i) => { if (i > 0) ctx.lineTo(xP(i), yP(v)); });
+  ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+  // Dots
+  settled.forEach((b, i) => {
+    ctx.beginPath(); ctx.arc(xP(i + 1), yP(points[i + 1]), 3, 0, Math.PI * 2);
+    ctx.fillStyle = b.status === 'win' ? '#15803d' : '#dc2626';
+    ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+  // Label
+  ctx.fillStyle = '#94a3b8'; ctx.font = '9px monospace'; ctx.textAlign = 'right';
+  ctx.fillText((lastVal >= 0 ? '+' : '') + '€' + lastVal.toFixed(2), pad.left - 3, yP(lastVal) + 3);
+}
+
+// ══════════════════════════════════════════════════════════
+// WALLET POPUP — detail popup voor alle cards
+// ══════════════════════════════════════════════════════════
+function showWalletPopup(type, data) {
+  const existing = document.getElementById('walletPopupOverlay');
+  if (existing) existing.remove();
+
+  const hrColor = n => n >= 55 ? '#16a34a' : n >= 45 ? '#d97706' : '#dc2626';
+  let headerHtml = '', bodyHtml = '';
+
+  function makeRows(rows) {
+    return rows.filter(([,v]) => v && v !== '—').map(([k, v, col]) =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(15,23,42,.06);">
+        <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);">${k}</div>
+        <div style="font-family:monospace;font-size:.52rem;font-weight:700;color:${col||'var(--ink,#0f172a)'};">${v}</div>
+      </div>`).join('');
+  }
+
+  if (type === 'backtest') {
+    const p = data;
+    const statusColor = p.status==='win'?'#16a34a':p.status==='lose'?'#dc2626':'#d97706';
+    const icon = p.status==='win'?'✅':p.status==='lose'?'❌':'⏳';
+    headerHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${p.matchName||'Pick'}</div>
+      <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${p.date||''} · ${p.comp||''}</div>`;
+    bodyHtml = makeRows([
+      ['Pick', p.pickLabel||p.pick||'—', null],
+      ['Quote', p.odds||'—', null],
+      ['Value', p.value ? '+'+p.value+'%' : '—', p.value>=15?'#15803d':p.value>=5?'#b45309':null],
+      ['Confidence', p.confidence ? p.confidence+'/10' : '—', p.confidence>=7?'#15803d':p.confidence>=5?'#b45309':'#dc2626'],
+      ['AI kans', p.aiKans ? p.aiKans+'%' : '—', null],
+      ['Kelly', p.kelly ? p.kelly+'%' : '—', null],
+      ['Status', p.status==='win'?'WIN':p.status==='lose'?'VERLIES':'OPEN', statusColor],
+      ['Score', p.score||'—', null],
+      ['Bookmaker', p.bookmaker||'—', null],
+    ]);
+    if (p.reason) {
+      bodyHtml += `<div style="background:rgba(37,99,235,.05);border-left:3px solid #2563eb;border-radius:0 8px 8px 0;padding:.5rem .7rem;margin-top:.6rem;">
+        <div style="font-family:monospace;font-size:.44rem;color:#1d4ed8;font-weight:700;margin-bottom:.2rem;">REDEN</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--ink,#0f172a);line-height:1.6;">${p.reason}</div>
+      </div>`;
+    }
+    // Mini grafiekje in popup
+    const allPicks = state.valueBacktest?.picks || [];
+    const settled = allPicks.filter(x => x.status==='win'||x.status==='lose');
+    if (settled.length >= 2) {
+      bodyHtml += `<div style="margin-top:.8rem;"><div style="font-family:monospace;font-size:.46rem;font-weight:700;color:var(--sub);margin-bottom:.3rem;">ROI CURVE</div>
+        <canvas id="popupBtChart" height="70" style="width:100%;border-radius:8px;"></canvas></div>`;
+    }
+
+  } else if (type === 'tracker') {
+    const b = data;
+    const pnlVal = b.status==='win' ? b.payout - b.stake : b.status==='lose' ? -b.stake : null;
+    const pnlText = pnlVal !== null ? (pnlVal>=0?'+':'')+'€'+pnlVal.toFixed(2) : '⏳ Open';
+    const pnlColor = b.status==='win'?'#16a34a':b.status==='lose'?'#dc2626':'#d97706';
+    const icon = b.status==='win'?'✅':b.status==='lose'?'❌':'⏳';
+    headerHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${b.match||'Weddenschap'}</div>
+      <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${b.date||''} · ${b.bookmaker||''}</div>`;
+    bodyHtml = makeRows([
+      ['Pick', b.pick||'—', null],
+      ['Quote', b.odds||'—', null],
+      ['Inzet', b.stake ? '€'+b.stake.toFixed(2) : '—', null],
+      ['Payout', b.payout ? '€'+b.payout.toFixed(2) : '—', null],
+      ['P&L', pnlText, pnlColor],
+      ['Bron', b.source||'eigen', null],
+      ['Score', b.score||'—', null],
+      ['Notitie', b.note||'—', null],
+    ]);
+    if (b.legs && b.legs.length) {
+      bodyHtml += `<div style="font-family:monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin:.7rem 0 .3rem;">COMBI LEGS</div>`;
+      b.legs.forEach((l,i) => {
+        const lc = l.status==='win'?'#16a34a':l.status==='lose'?'#dc2626':'#d97706';
+        bodyHtml += `<div style="background:rgba(15,23,42,.03);border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
+          <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:600;">${l.match||'Leg '+(i+1)}</div>
+          <div style="display:flex;justify-content:space-between;margin-top:.2rem;">
+            <div style="font-family:monospace;font-size:.46rem;color:var(--sub);">${l.pick} @ ${l.odds}</div>
+            <div style="font-family:monospace;font-size:.46rem;font-weight:700;color:${lc};">${l.status==='win'?'WIN':l.status==='lose'?'VERLIES':'OPEN'}</div>
+          </div></div>`;
+      });
+    }
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'walletPopupOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);';
+  overlay.innerHTML = `
+    <div style="background:var(--bg,#f8fafc);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
+        <div>${headerHtml}</div>
+        <button onclick="document.getElementById('walletPopupOverlay').remove()"
+          style="background:rgba(15,23,42,.07);border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;flex-shrink:0;margin-left:.5rem;">✕</button>
+      </div>
+      <div style="overflow-y:auto;padding:.8rem 1rem 1.5rem;flex:1;">${bodyHtml}</div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+
+  // Teken mini grafiek in popup na render
+  if (type === 'backtest') {
+    setTimeout(() => {
+      const c = document.getElementById('popupBtChart');
+      if (!c) return;
+      const allPicks = state.valueBacktest?.picks || [];
+      const settled = allPicks.filter(x => x.status==='win'||x.status==='lose');
+      if (settled.length < 2) return;
+      const ctx = c.getContext('2d');
+      c.width = c.offsetWidth || 320; c.height = 70;
+      const W = c.width, H = 70;
+      ctx.clearRect(0,0,W,H);
+      const points = [0];
+      settled.forEach(p => { const last = points[points.length-1]; points.push(last + (p.status==='win'?(p.odds-1):-1)); });
+      const minV=Math.min(...points,-0.5), maxV=Math.max(...points,0.5), range=maxV-minV;
+      const pad={top:8,bottom:8,left:8,right:8};
+      const cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
+      const xP=i=>pad.left+(i/Math.max(points.length-1,1))*cw;
+      const yP=v=>pad.top+ch-((v-minV)/range)*ch;
+      const lastVal=points[points.length-1], isPos=lastVal>=0;
+      const lineColor=isPos?'#15803d':'#dc2626';
+      // Zero lijn
+      ctx.setLineDash([2,2]); ctx.strokeStyle='rgba(148,163,184,.4)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(pad.left,yP(0)); ctx.lineTo(pad.left+cw,yP(0)); ctx.stroke();
+      ctx.setLineDash([]);
+      // Gradient
+      const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
+      grad.addColorStop(0,isPos?'rgba(21,128,61,.2)':'rgba(220,38,38,.15)');
+      grad.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.beginPath(); ctx.moveTo(xP(0),yP(0));
+      points.forEach((v,i)=>{ if(i>0) ctx.lineTo(xP(i),yP(v)); });
+      ctx.lineTo(xP(points.length-1),H-pad.bottom); ctx.lineTo(xP(0),H-pad.bottom);
+      ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+      // Lijn
+      ctx.beginPath(); ctx.moveTo(xP(0),yP(0));
+      points.forEach((v,i)=>{ if(i>0) ctx.lineTo(xP(i),yP(v)); });
+      ctx.strokeStyle=lineColor; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
+      // Highlight huidig pick
+      const curIdx = settled.indexOf(data);
+      if (curIdx >= 0) {
+        ctx.beginPath(); ctx.arc(xP(curIdx+1),yP(points[curIdx+1]),5,0,Math.PI*2);
+        ctx.fillStyle='#f59e0b'; ctx.fill();
+        ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+      }
+    }, 80);
+  }
 }

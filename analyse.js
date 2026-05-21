@@ -2153,6 +2153,14 @@ function renderScanLog() {
     + statCard(avgValue.toFixed(1) + '%', 'AVG VALUE' + helpBtn('avg-value'), '#7c3aed')
     + '</div>';
 
+  // ROI curve grafiek
+  if (settled.length >= 2) {
+    html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem;margin-bottom:.8rem;">'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.4rem;">📈 ROI CURVE</div>'
+      + '<canvas id="scanLogChart" height="80" style="width:100%;"></canvas>'
+      + '</div>';
+  }
+
   if (settled.length >= 5) {
     html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem;margin-bottom:.8rem;">'
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">📐 VALUE KALIBRATIE</div>'
@@ -2400,6 +2408,45 @@ function renderScanLog() {
   }
 
   el.innerHTML = html;
+
+  // Teken scan log ROI curve
+  setTimeout(function() {
+    const c = document.getElementById('scanLogChart');
+    if (!c || settled.length < 2) return;
+    const ctx = c.getContext('2d');
+    c.width = c.offsetWidth || 320; c.height = 80;
+    const W = c.width, H = 80;
+    ctx.clearRect(0,0,W,H);
+    const points = [0];
+    settled.forEach(p => { const last=points[points.length-1]; points.push(last+(p.status==='win'?(p.odds-1):-1)); });
+    const minV=Math.min(...points,-0.5), maxV=Math.max(...points,0.5), range=maxV-minV;
+    const pad={top:10,bottom:12,left:38,right:8};
+    const cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
+    const xP=i=>pad.left+(i/Math.max(points.length-1,1))*cw;
+    const yP=v=>pad.top+ch-((v-minV)/range)*ch;
+    const lastVal=points[points.length-1], isPos=lastVal>=0;
+    const lineColor=isPos?'#15803d':'#dc2626';
+    ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(148,163,184,.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pad.left,yP(0)); ctx.lineTo(pad.left+cw,yP(0)); ctx.stroke();
+    ctx.setLineDash([]);
+    const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
+    grad.addColorStop(0,isPos?'rgba(21,128,61,.2)':'rgba(220,38,38,.15)');
+    grad.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.beginPath(); ctx.moveTo(xP(0),yP(0));
+    points.forEach((v,i)=>{ if(i>0) ctx.lineTo(xP(i),yP(v)); });
+    ctx.lineTo(xP(points.length-1),H-pad.bottom); ctx.lineTo(xP(0),H-pad.bottom);
+    ctx.closePath(); ctx.fillStyle=grad; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(xP(0),yP(0));
+    points.forEach((v,i)=>{ if(i>0) ctx.lineTo(xP(i),yP(v)); });
+    ctx.strokeStyle=lineColor; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
+    settled.forEach((p,i) => {
+      ctx.beginPath(); ctx.arc(xP(i+1),yP(points[i+1]),2.5,0,Math.PI*2);
+      ctx.fillStyle=p.status==='win'?'#15803d':'#dc2626';
+      ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+    });
+    ctx.fillStyle='#94a3b8'; ctx.font='9px monospace'; ctx.textAlign='right';
+    ctx.fillText((lastVal>=0?'+':'')+lastVal.toFixed(2)+' €/pick', pad.left-2, yP(lastVal)+3);
+  }, 60);
 
   // Verwijder pick knop
   el.addEventListener('click', function(e) {
