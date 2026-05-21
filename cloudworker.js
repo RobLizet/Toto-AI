@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v68'; // v20 Intelligence Core — CLV + Calibratie
+const VERSION = 'v69'; // v20 Intelligence Core — CLV + Calibratie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -550,8 +550,8 @@ async function runScan(env, force = false) {
   
   try {
     const fixturePromises = SCAN_LEAGUES.flatMap(lid => [
-      apif(`/fixtures?league=${lid}&date=${today}&timezone=Europe/Amsterdam`, env),
-      apif(`/fixtures?league=${lid}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
+      apif(`/fixtures?league=${lid}&season=2026&date=${today}&timezone=Europe/Amsterdam`, env),
+      apif(`/fixtures?league=${lid}&season=2026&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
     ]);
     const fixtureResults = await Promise.all(fixturePromises);
     const fixtures = fixtureResults.flat().filter(Boolean);
