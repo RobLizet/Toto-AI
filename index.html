@@ -49,16 +49,21 @@
     <div class="topbar-right">
       <button id="topbar-login-btn" class="topbar-icon-btn" onclick="handleLoginBtnClick()" title="Account" style="display:none">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-          <polyline points="10 17 15 12 10 7"/>
-          <line x1="15" y1="12" x2="3" y2="12"/>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
         </svg>
         <span id="login-status-dot" style="position:absolute;top:2px;right:2px;width:7px;height:7px;border-radius:50%;background:#dc2626;border:1.5px solid white;display:block"></span>
       </button>
-      <button class="topbar-icon-btn" onclick="switchScreen('instellingen')" title="Instellingen">
+      <button id="topbar-notif-btn" class="topbar-icon-btn" onclick="toggleNotifications();this.classList.add('bell-ring');setTimeout(()=>this.classList.remove('bell-ring'),600)" title="Notificaties">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span id="notif-dot" class="notif-dot" style="display:none"></span>
+      </button>
+      <button class="topbar-icon-btn" onclick="toggleMoreMenu()" title="Meer opties">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
         </svg>
       </button>
     </div>
@@ -123,7 +128,7 @@
   ══════════════════════════════════════════ -->
 
   <!-- Login Screen -->
-  <div id="screen-login" class="screen screen-login" style="display:none;">
+  <div id="screen-login" class="screen screen-login">
     <div class="login-container">
       <div class="login-logo">
         <span class="login-logo-toto">TOTO</span>
@@ -219,213 +224,6 @@
       <span class="bnav-dot" id="dot-wallet"></span>
     </button>
   </nav>
-
-
-  <!-- ══════════════════════════════════════════
-       FLOATING AI CHAT
-  ══════════════════════════════════════════ -->
-
-  <!-- FAB knop -->
-  <button id="fab-chat" onclick="toggleFloatingChat()"
-    style="position:fixed;bottom:7rem;right:1rem;z-index:9999;
-    width:3.2rem;height:3.2rem;border-radius:50%;border:none;cursor:pointer;
-    background:linear-gradient(135deg,#7c3aed,#be185d);
-    box-shadow:0 4px 16px rgba(124,58,237,.4);
-    display:flex;align-items:center;justify-content:center;
-    font-size:1.3rem;transition:transform .2s;">
-    🤖
-  </button>
-
-  <!-- Chat paneel -->
-  <div id="floating-chat-panel"
-    style="position:fixed;bottom:9rem;right:.75rem;z-index:901;
-    width:min(340px, calc(100vw - 1.5rem));
-    background:var(--card, #fff);
-    border:1px solid rgba(124,58,237,.2);
-    border-radius:18px;
-    box-shadow:0 8px 32px rgba(0,0,0,.15);
-    display:none;flex-direction:column;overflow:hidden;
-    max-height:65vh;">
-
-    <!-- Header -->
-    <div style="display:flex;justify-content:space-between;align-items:center;
-      padding:.7rem 1rem;
-      background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(219,39,119,.07));
-      border-bottom:1px solid rgba(124,58,237,.1);">
-      <div style="display:flex;align-items:center;gap:.5rem;">
-        <span style="font-size:1.1rem;">🤖</span>
-        <div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:800;color:var(--ink,#0f172a);">TOTO AI ASSISTENT</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub,#64748b);">Stel vragen over wedstrijden & picks</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:.4rem;align-items:center;">
-        <button onclick="clearFloatingChat()"
-          style="background:none;border:none;cursor:pointer;font-size:.75rem;color:var(--sub,#64748b);padding:2px 6px;border-radius:6px;">🗑</button>
-        <button onclick="toggleFloatingChat()"
-          style="background:none;border:none;cursor:pointer;font-size:1rem;color:var(--sub,#64748b);">✕</button>
-      </div>
-    </div>
-
-    <!-- Context badge -->
-    <div id="fab-context-badge" style="display:none;padding:.3rem .7rem;
-      background:rgba(124,58,237,.06);border-bottom:1px solid rgba(124,58,237,.08);
-      font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#7c3aed;">
-    </div>
-
-    <!-- Messages -->
-    <div id="fab-chat-messages"
-      style="flex:1;overflow-y:auto;padding:.7rem;display:flex;flex-direction:column;gap:.5rem;
-      min-height:8rem;max-height:40vh;">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--sub,#64748b);text-align:center;padding:.5rem;">
-        Hoi! Vraag me alles over voetbalanalyses, picks of wedstrijden. 👋
-      </div>
-    </div>
-
-    <!-- Input -->
-    <div style="padding:.5rem .7rem;border-top:1px solid var(--stroke,rgba(15,23,42,.08));display:flex;gap:.4rem;">
-      <input id="fab-chat-input" type="text"
-        placeholder="Stel een vraag..."
-        style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:.54rem;
-        padding:.45rem .65rem;border-radius:10px;
-        border:1.5px solid rgba(124,58,237,.2);background:var(--bg,#f8fafc);
-        color:var(--ink,#0f172a);outline:none;"
-        onkeydown="if(event.key==='Enter')sendFloatingChat()">
-      <button onclick="sendFloatingChat()"
-        style="padding:.45rem .75rem;border-radius:10px;
-        background:linear-gradient(135deg,#7c3aed,#be185d);
-        color:#fff;border:none;cursor:pointer;font-size:.85rem;">
-        ➤
-      </button>
-    </div>
-  </div>
-
-  <script>
-  // ── Floating Chat ─────────────────────────────────────
-  var _fabHistory = [];
-  var _fabContext = null;
-
-  function toggleFloatingChat() {
-    var panel = document.getElementById('floating-chat-panel');
-    var fab   = document.getElementById('fab-chat');
-    var open  = panel.style.display === 'flex';
-    panel.style.display = open ? 'none' : 'flex';
-    panel.style.flexDirection = 'column';
-    fab.style.transform = open ? 'scale(1)' : 'scale(0.92)';
-    if (!open) {
-      // Update context badge
-      updateFabContext();
-      setTimeout(function() {
-        document.getElementById('fab-chat-input')?.focus();
-        fab.style.transform = 'scale(1)';
-      }, 100);
-    }
-  }
-
-  function updateFabContext() {
-    var badge = document.getElementById('fab-context-badge');
-    if (!badge) return;
-    // Haal actieve wedstrijd of pick op voor context
-    var ctx = '';
-    if (typeof state !== 'undefined' && state.selectedMatch) {
-      ctx = '📍 ' + (state.selectedMatch.home || '') + ' vs ' + (state.selectedMatch.away || '');
-    } else if (typeof state !== 'undefined' && state.currentScreen) {
-      var screens = { dashboard: '🏠 Dashboard', wedstrijden: '⚽ Wedstrijden', analyse: '⚡ Analyse', wallet: '💰 Wallet' };
-      ctx = screens[state.currentScreen] || '';
-    }
-    _fabContext = ctx || null;
-    badge.style.display = ctx ? 'block' : 'none';
-    badge.textContent = ctx;
-  }
-
-  function clearFloatingChat() {
-    _fabHistory = [];
-    var msgs = document.getElementById('fab-chat-messages');
-    if (msgs) msgs.innerHTML = '<div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);text-align:center;padding:.5rem;">Chat gewist. Stel gerust een nieuwe vraag! 👋</div>';
-  }
-
-  function appendFabMsg(role, text, isLoading) {
-    var msgs = document.getElementById('fab-chat-messages');
-    if (!msgs) return;
-    var div = document.createElement('div');
-    var isUser = role === 'user';
-    div.style.cssText = 'display:flex;' + (isUser ? 'justify-content:flex-end;' : 'justify-content:flex-start;');
-    var bubble = document.createElement('div');
-    bubble.style.cssText = 'max-width:85%;padding:.45rem .65rem;border-radius:' +
-      (isUser ? '12px 12px 2px 12px' : '12px 12px 12px 2px') + ';' +
-      'font-family:monospace;font-size:.5rem;line-height:1.55;' +
-      (isUser
-        ? 'background:linear-gradient(135deg,#7c3aed,#be185d);color:#fff;'
-        : 'background:rgba(15,23,42,.05);color:var(--ink,#0f172a);border:1px solid rgba(15,23,42,.08);');
-    bubble.textContent = isLoading ? '...' : text;
-    if (isLoading) bubble.id = 'fab-loading-bubble';
-    div.appendChild(bubble);
-    msgs.appendChild(div);
-    msgs.scrollTop = msgs.scrollHeight;
-    return bubble;
-  }
-
-  async function sendFloatingChat() {
-    var input = document.getElementById('fab-chat-input');
-    var question = input?.value?.trim();
-    if (!question) return;
-    input.value = '';
-
-    appendFabMsg('user', question);
-    _fabHistory.push({ role: 'user', content: question });
-
-    var loadingBubble = appendFabMsg('assistant', '', true);
-
-    // Bouw context op
-    var systemParts = ['Je bent TOTO AI, een Nederlandse voetbal betting analyse assistent. Geef korte, praktische antwoorden in het Nederlands.'];
-
-    if (_fabContext) systemParts.push('Actieve context: ' + _fabContext);
-
-    // Voeg scan log context toe als beschikbaar
-    if (typeof state !== 'undefined' && state.scanLog && state.scanLog.length > 0) {
-      var recentPicks = state.scanLog.slice(0, 3).flatMap(function(s) { return s.picks || []; }).slice(0, 5);
-      if (recentPicks.length) {
-        systemParts.push('Recente picks: ' + recentPicks.map(function(p) {
-          return (p.match||'') + ' – ' + (p.pickLabel||'') + ' @ ' + p.odds + ' (conf ' + p.confidence + '/10, ' + (p.status==='pending'?'pending':p.status) + ')';
-        }).join('; '));
-      }
-    }
-
-    try {
-      var WORKER_URL = (typeof WORKER !== 'undefined' ? WORKER : 'https://toto-proxy.zweetzakken.workers.dev');
-      var authToken = '';
-      try { var u = firebase.auth().currentUser; if (u) authToken = await u.getIdToken(); } catch(e) {}
-      var res = await fetch(WORKER_URL + '/anthropic', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(authToken ? {'Authorization': 'Bearer ' + authToken} : {}) },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 400,
-          system: systemParts.join('
-
-'),
-          messages: _fabHistory
-        })
-      });
-      var data = await res.json();
-      var answer = data?.content?.[0]?.text || '⚠ Geen antwoord ontvangen';
-      if (loadingBubble) loadingBubble.textContent = answer;
-      _fabHistory.push({ role: 'assistant', content: answer });
-      // Bewaar max 10 berichten
-      if (_fabHistory.length > 20) _fabHistory = _fabHistory.slice(-20);
-    } catch(e) {
-      if (loadingBubble) loadingBubble.textContent = '⚠ Fout: ' + e.message;
-    }
-  }
-
-  // Toon FAB zodra app geladen is
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      var fab = document.getElementById('fab-chat');
-      if (fab) fab.style.display = 'flex';
-    }, 1500);
-  });
-  </script>
 
   <!-- ══════════════════════════════════════════
        MODALS
@@ -705,10 +503,6 @@
       serviceWorkerPath: '/OneSignalSDKWorker.js',
       notifyButton: { enable: false },
     });
-    // Player ID ophalen en opslaan zodra SDK klaar is
-    setTimeout(() => {
-      if (typeof initOneSignalPlayerId === 'function') initOneSignalPlayerId();
-    }, 1500);
   });
 
   // ── Firebase Auth init (bepaalt welk scherm getoond wordt) ──
