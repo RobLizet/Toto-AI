@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v69'; // v20 Intelligence Core — CLV + Calibratie
+const VERSION = 'v70'; // v20 Intelligence Core — CLV + Calibratie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -549,10 +549,16 @@ async function runScan(env, force = false) {
   const SCAN_LEAGUES = [39, 88, 94, 78, 61, 135, 140, 2, 3, 848, 40, 119, 1];
   
   try {
-    const fixturePromises = SCAN_LEAGUES.flatMap(lid => [
-      apif(`/fixtures?league=${lid}&season=2026&date=${today}&timezone=Europe/Amsterdam`, env),
-      apif(`/fixtures?league=${lid}&season=2026&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
-    ]);
+    // Seizoen: europese competities lopen aug-mei, dus mei 2026 = season=2025
+    // WK en zomercompetities gebruiken season=2026
+    const WK_LEAGUES = [1, 2, 3, 848]; // WK + internationale toernooien
+    const fixturePromises = SCAN_LEAGUES.flatMap(lid => {
+      const season = WK_LEAGUES.includes(lid) ? 2026 : 2025;
+      return [
+        apif(`/fixtures?league=${lid}&season=${season}&date=${today}&timezone=Europe/Amsterdam`, env),
+        apif(`/fixtures?league=${lid}&season=${season}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
+      ];
+    });
     const fixtureResults = await Promise.all(fixturePromises);
     const fixtures = fixtureResults.flat().filter(Boolean);
     
