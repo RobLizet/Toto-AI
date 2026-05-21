@@ -532,5 +532,141 @@
 })();
 </script>
 
+
+  <!-- ══════════════════════════════════════════
+       ZWEVENDE AI CHAT FAB
+  ══════════════════════════════════════════ -->
+  <button id="fab-chat" onclick="toggleFloatingChat()"
+    style="position:fixed;bottom:7rem;right:1rem;z-index:9999;
+    width:3.2rem;height:3.2rem;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#7c3aed,#be185d);
+    box-shadow:0 4px 16px rgba(124,58,237,.4);
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.3rem;transition:transform .2s;">
+    🤖
+  </button>
+
+  <div id="fab-chat-panel"
+    style="display:none;position:fixed;bottom:11rem;right:1rem;z-index:9998;
+    width:min(340px,90vw);background:var(--bg,#f8fafc);
+    border:1px solid rgba(15,23,42,.1);border-radius:20px;
+    box-shadow:0 8px 32px rgba(15,23,42,.18);overflow:hidden;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;
+      padding:.65rem .9rem .55rem;
+      background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(219,39,119,.06));
+      border-bottom:1px solid rgba(15,23,42,.08);">
+      <div style="font-family:monospace;font-size:.58rem;font-weight:800;color:#0f172a;">🤖 TOTO AI ASSISTENT</div>
+      <div style="display:flex;gap:.4rem;">
+        <button onclick="clearFloatingChat()" style="background:none;border:none;font-size:.75rem;cursor:pointer;color:#64748b;" title="Wis chat">🗑</button>
+        <button onclick="toggleFloatingChat()" style="background:none;border:none;font-size:.9rem;cursor:pointer;color:#64748b;">✕</button>
+      </div>
+    </div>
+    <div id="fab-chat-messages"
+      style="height:220px;overflow-y:auto;padding:.6rem .8rem;display:flex;flex-direction:column;gap:.4rem;">
+      <div style="font-family:monospace;font-size:.48rem;color:#64748b;text-align:center;padding:.5rem;">
+        Stel vragen over wedstrijden & picks 💬
+      </div>
+    </div>
+    <div style="display:flex;gap:.4rem;padding:.5rem .7rem;border-top:1px solid rgba(15,23,42,.08);">
+      <input id="fab-chat-input" type="text" placeholder="Stel een vraag..."
+        style="flex:1;font-family:monospace;font-size:.54rem;
+        border:1px solid rgba(15,23,42,.12);border-radius:10px;padding:.4rem .7rem;
+        background:rgba(15,23,42,.03);outline:none;"
+        onkeydown="if(event.key==='Enter')sendFloatingChat()">
+      <button onclick="sendFloatingChat()"
+        style="background:linear-gradient(135deg,#7c3aed,#be185d);border:none;
+        border-radius:10px;padding:.4rem .75rem;color:#fff;
+        font-family:monospace;font-size:.6rem;font-weight:700;cursor:pointer;">▶</button>
+    </div>
+  </div>
+
+  <script>
+  var _fabHistory = [];
+
+  function toggleFloatingChat() {
+    var panel = document.getElementById('fab-chat-panel');
+    if (!panel) return;
+    var isOpen = panel.style.display === 'flex';
+    panel.style.display = isOpen ? 'none' : 'flex';
+    if (!isOpen) {
+      setTimeout(function() {
+        var inp = document.getElementById('fab-chat-input');
+        if (inp) inp.focus();
+      }, 100);
+    }
+  }
+
+  function clearFloatingChat() {
+    _fabHistory = [];
+    var msgs = document.getElementById('fab-chat-messages');
+    if (msgs) msgs.innerHTML = '<div style="font-family:monospace;font-size:.48rem;color:#64748b;text-align:center;padding:.5rem;">Chat gewist. Stel gerust een nieuwe vraag! 👋</div>';
+  }
+
+  async function sendFloatingChat() {
+    var inp = document.getElementById('fab-chat-input');
+    var msgs = document.getElementById('fab-chat-messages');
+    if (!inp || !msgs) return;
+    var text = inp.value.trim();
+    if (!text) return;
+    inp.value = '';
+
+    // Gebruiker bubble
+    var userBubble = document.createElement('div');
+    userBubble.style.cssText = 'align-self:flex-end;background:linear-gradient(135deg,#7c3aed,#be185d);color:#fff;padding:.4rem .7rem;border-radius:12px 12px 2px 12px;font-family:monospace;font-size:.5rem;max-width:85%;line-height:1.5;';
+    userBubble.textContent = text;
+    msgs.appendChild(userBubble);
+
+    _fabHistory.push({ role: 'user', content: text });
+    if (_fabHistory.length > 20) _fabHistory = _fabHistory.slice(-20);
+
+    // Loading bubble
+    var loadingBubble = document.createElement('div');
+    loadingBubble.style.cssText = 'align-self:flex-start;background:rgba(15,23,42,.06);padding:.4rem .7rem;border-radius:12px 12px 12px 2px;font-family:monospace;font-size:.5rem;max-width:85%;line-height:1.5;color:#64748b;';
+    loadingBubble.textContent = '⟳ Denkt na...';
+    msgs.appendChild(loadingBubble);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    try {
+      var WORKER_URL = 'https://toto-proxy.zweetzakken.workers.dev';
+      var authToken = '';
+      try {
+        var u = typeof firebase !== 'undefined' && firebase.auth().currentUser;
+        if (u) authToken = await u.getIdToken();
+      } catch(e) {}
+
+      var systemParts = ['Je bent TOTO AI assistent. Help de gebruiker met voetbal betting analyse, picks en statistieken. Antwoord in het Nederlands, beknopt en to the point.'];
+      if (typeof state !== 'undefined') {
+        if (state.selectedMatch) systemParts.push('Geselecteerde wedstrijd: ' + (state.selectedMatch.home||'') + ' vs ' + (state.selectedMatch.away||''));
+        if (state.valueScans && state.valueScans.length) systemParts.push('Laatste scan: ' + state.valueScans.length + ' picks');
+      }
+
+      var res = await fetch(WORKER_URL + '/anthropic', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken ? {'Authorization': 'Bearer ' + authToken} : {})
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 400,
+          system: systemParts.join('
+
+'),
+          messages: _fabHistory
+        })
+      });
+      var data = await res.json();
+      var answer = data && data.content && data.content[0] ? data.content[0].text : '⚠ Geen antwoord ontvangen';
+      loadingBubble.textContent = answer;
+      loadingBubble.style.color = '#0f172a';
+      _fabHistory.push({ role: 'assistant', content: answer });
+    } catch(e) {
+      loadingBubble.textContent = '⚠ Fout: ' + e.message;
+      loadingBubble.style.color = '#dc2626';
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+  </script>
+
 </body>
 </html>
