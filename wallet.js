@@ -880,7 +880,8 @@ function renderTracker() {
         <span>${l.match||''} — ${l.pick} @ ${l.odds}</span>
         <span class="tracker-leg-status ${l.status||'pending'}">${l.status==='win'?'✓':l.status==='lose'?'✗':'⏳'}</span>
       </div>`).join('') : '';
-    return `<div class="tracker-row" style="cursor:pointer;" onclick="(function(e){if(!e.target.closest('button'))showWalletPopup('tracker',${JSON.stringify(b).replace(/`/g,"'")});})(event)">
+    const _trackerIdx = (state.tracker.bets||[]).indexOf(b);
+    return `<div class="tracker-row" style="cursor:pointer;" data-trackeridx="${_trackerIdx}">
       <div class="tracker-row-top">
         <div>
           <div class="tracker-match">${b.match||''}${b.score ? ` [${b.score}]`:''}</div>
@@ -899,6 +900,16 @@ function renderTracker() {
       </div>
     </div>`;
   }).join('');
+
+  // Event delegation voor popup
+  list.onclick = function(e) {
+    if (e.target.closest('button') || e.target.closest('.tracker-result')) return;
+    const row = e.target.closest('[data-trackeridx]');
+    if (!row) return;
+    const idx = parseInt(row.dataset.trackeridx);
+    const bet = (state.tracker.bets||[])[idx];
+    if (bet) showWalletPopup('tracker', bet);
+  };
 }
 
 function updateTrackerStats() {
@@ -1003,7 +1014,7 @@ function renderBacktest() {
     const valColor  = p.value>=15?'#15803d':p.value>=5?'#b45309':'#64748b';
     const borderLeft = lockLv==='triple'?'4px solid #15803d':lockLv==='double'?'4px solid #b45309':'4px solid transparent';
     return `
-    <div class="bt-row bt-${p.status||'pending'}" style="border-left:${borderLeft};cursor:pointer;" onclick="(function(e){if(!e.target.closest('button'))showWalletPopup('backtest',${JSON.stringify(p).replace(/`/g,"'")});})(event)">
+    <div class="bt-row bt-${p.status||'pending'}" style="border-left:${borderLeft};cursor:pointer;" data-btidx="${(state.valueBacktest?.picks||[]).indexOf(p)}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem;">
         <div class="bt-match">${p.matchName}</div>
         ${badge ? `<div style="flex-shrink:0;margin-left:.5rem;">${badge}</div>` : ''}
@@ -1030,6 +1041,16 @@ function renderBacktest() {
       </div>
     </div>`;
   }).join('');
+
+  // Event delegation voor popup
+  list.onclick = function(e) {
+    if (e.target.closest('button')) return;
+    const row = e.target.closest('[data-btidx]');
+    if (!row) return;
+    const idx = parseInt(row.dataset.btidx);
+    const pick = (state.valueBacktest?.picks||[])[idx];
+    if (pick) showWalletPopup('backtest', pick);
+  };
 }
 
 function updateBacktestStats() {

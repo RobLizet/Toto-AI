@@ -2476,9 +2476,9 @@ function showScanPopup(scanIdx) {
   scan.picks.forEach(function(p) {
     const icon = p.status==='win' ? '✅' : p.status==='lose' ? '❌' : p.status==='void' ? '⬜' : '⏳';
     const statusColor = p.status==='win' ? '#16a34a' : p.status==='lose' ? '#dc2626' : p.status==='void' ? '#94a3b8' : '#d97706';
-    const elite = p.elite ? '<span style="background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.25);font-family:'IBM Plex Mono',monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">⭐ ELITE</span>' : '';
-    const lockBadge = p.lock === 'triple' ? '<span style="background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.25);font-family:'IBM Plex Mono',monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🏆 TRIPLE</span>'
-      : p.lock === 'double' ? '<span style="background:rgba(37,99,235,.1);color:#1d4ed8;border:1px solid rgba(37,99,235,.2);font-family:'IBM Plex Mono',monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🔒 DOUBLE</span>' : '';
+    const elite = p.elite ? '<span style="background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.25);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">⭐ ELITE</span>' : '';
+    const lockBadge = p.lock === 'triple' ? '<span style="background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.25);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🏆 TRIPLE</span>'
+      : p.lock === 'double' ? '<span style="background:rgba(37,99,235,.1);color:#1d4ed8;border:1px solid rgba(37,99,235,.2);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🔒 DOUBLE</span>' : '';
 
     picksHtml += `<div style="background:rgba(15,23,42,.03);border:1px solid rgba(15,23,42,.07);border-radius:12px;padding:.7rem .85rem;margin-bottom:.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.35rem;">
@@ -2496,7 +2496,7 @@ function showScanPopup(scanIdx) {
         ${p.confidenceFinal ? `<span style="background:rgba(219,39,119,.08);color:#be185d;border:1px solid rgba(219,39,119,.2);font-family:'IBM Plex Mono',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">CI ${p.confidenceFinal}</span>` : ''}
         ${elite}${lockBadge}
       </div>
-      ${p.comp ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub,#64748b);">${p.comp}${p.score ? ' · Score: <b style='color:var(--ink)'>'+p.score+'</b>' : ''}</div>` : ''}
+      ${p.comp ? `<div style="font-family:monospace;font-size:.42rem;color:var(--sub,#64748b);">${p.comp}${p.score ? ' &middot; Score: <b>' + p.score + '</b>' : ''}</div>` : ''}
     </div>`;
   });
 
