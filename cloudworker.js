@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v72'; // v72: Settlement fix — datum normalisatie + 7-daags terugkijkvenster
+const VERSION = 'v73'; // v73: matchDate fix — echte fixture datum ipv scanmoment
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -799,7 +799,7 @@ Geen uitleg, alleen de JSON array.`;
           home: m.home,
           away: m.away,
           matchName: `${m.home} vs ${m.away}`,
-          matchDate: today,
+          matchDate: m.matchDate || today,
           matchTime: m.matchTime,
           leagueId: m.leagueId,
           leagueName: m.leagueName,
