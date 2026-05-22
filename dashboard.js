@@ -73,9 +73,9 @@ function renderDashboard() {
 
     <!-- 100 picks voortgang -->
     <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;"
-      onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('log'),100)">
+      onclick="showPicksModal()">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">ð¯ VOORTGANG NAAR 100 PICKS</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">🎯 VOORTGANG NAAR 100 PICKS</div>
         <div style="display:flex;align-items:center;gap:.4rem;">
           ${settledPicks.length ? (() => {
             if (scanROI >= 15 && scanHitrate >= 40)  return '<span style="font-size:1.3rem;">😄</span>';
@@ -90,7 +90,17 @@ function renderDashboard() {
       <div style="background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">
         <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
       </div>
-      ${settledPicks.length ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">${settledPicks.length} afgerond · ${scanHitrate !== null ? scanHitrate + '% hitrate' : '—'} · ROI ${scanROI >= 0 ? '+' : ''}${scanROI.toFixed(1)}%</div>` : `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">Scan wedstrijden om picks te verzamelen →</div>`}
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">
+        ${kwaliPicks.length === 0 ? 'Scan wedstrijden om picks te verzamelen →' : (() => {
+          const openCount = kwaliPicks.filter(p => !p.status || p.status === 'pending').length;
+          const parts = [];
+          if (openCount > 0)           parts.push(openCount + ' open');
+          if (settledPicks.length > 0) parts.push(settledPicks.length + ' afgerond');
+          if (scanHitrate !== null)     parts.push(scanHitrate + '% hitrate');
+          if (scanROI !== null)         parts.push('ROI ' + (scanROI >= 0 ? '+' : '') + scanROI.toFixed(1) + '%');
+          return parts.join(' · ') || 'Tik voor details →';
+        })()}
+      </div>
     </div>
 
     <!-- Open bets -->
@@ -345,6 +355,80 @@ function openCompKeuze() {
   sheet.appendChild(grid);
 
   // Swipe to close
+  let startY = 0;
+  sheet.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive:true});
+  sheet.addEventListener('touchend', e => { if (e.changedTouches[0].clientY - startY > 80) overlay.remove(); }, {passive:true});
+
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
+}
+
+// ── Picks Modal ──────────────────────────────────────────
+function showPicksModal() {
+  const scanLog = state.scanLog || [];
+  const allPicks = scanLog.flatMap(s => s.picks || []);
+  const DREMPEL = { minValue: 8, minConf: 6 };
+  const kwaliPicks = allPicks.filter(p =>
+    !p.isSparseData &&
+    (p.value||0) >= DREMPEL.minValue &&
+    (p.confidence||0) >= DREMPEL.minConf
+  );
+
+  const settled   = kwaliPicks.filter(p => p.status === 'win' || p.status === 'lose');
+  const open      = kwaliPicks.filter(p => !p.status || p.status === 'pending');
+  const wins      = settled.filter(p => p.status === 'win');
+  const hitrate   = settled.length ? Math.round(wins.length / settled.length * 100) : null;
+  const roi       = settled.length
+    ? (settled.reduce((s,p) => s + (p.status==='win' ? (p.odds-1) : -1), 0) / settled.length * 100)
+    : null;
+
+  const statusIcon = s => s === 'win' ? '✅' : s === 'lose' ? '❌' : '⏳';
+  const statusColor = s => s === 'win' ? '#16a34a' : s === 'lose' ? '#dc2626' : 'var(--sub)';
+
+  // Sorteer: afgerond bovenaan, dan open
+  const sorted = [...settled.reverse(), ...open];
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-end;';
+
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:var(--bg);border-radius:20px 20px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:1rem;';
+
+  sheet.innerHTML = `
+    <div style="width:40px;height:4px;background:rgba(0,0,0,.15);border-radius:2px;margin:0 auto .75rem;"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;margin-bottom:.5rem;">🎯 Picks Overzicht</div>
+
+    <!-- Samenvatting stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.75rem;">
+      ${[
+        ['PICKS', kwaliPicks.length],
+        ['OPEN', open.length],
+        ['HITRATE', hitrate !== null ? hitrate + '%' : '—'],
+        ['ROI', roi !== null ? (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%' : '—'],
+      ].map(([label, val]) => `
+        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:10px;padding:.4rem;text-align:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">${label}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:#be185d;">${val}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Picks lijst -->
+    ${sorted.length === 0 ? '<div style="text-align:center;color:var(--sub);font-size:.8rem;padding:1rem;">Nog geen picks — scan wedstrijden!</div>' :
+      sorted.map(p => `
+        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:10px;padding:.5rem .7rem;margin-bottom:.4rem;display:flex;justify-content:space-between;align-items:center;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">${p.pickLabel||p.pick||'?'} · @${p.odds||'?'} · +${p.value||0}% value</div>
+          </div>
+          <div style="text-align:right;margin-left:.5rem;">
+            <div style="font-size:1rem;">${statusIcon(p.status)}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:${statusColor(p.status)};">${p.status==='win'?'GEWONNEN':p.status==='lose'?'VERLOREN':'OPEN'}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  `;
+
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
   let startY = 0;
   sheet.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive:true});
   sheet.addEventListener('touchend', e => { if (e.changedTouches[0].clientY - startY > 80) overlay.remove(); }, {passive:true});
