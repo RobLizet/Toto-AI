@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v73'; // v73: matchDate fix — echte fixture datum ipv scanmoment
+const VERSION = 'v74'; // v74: Push notificaties met geluid
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1076,7 +1076,12 @@ async function sendPushNotification(env, title, body, data = {}) {
       contents: { en: body, nl: body },
       data,
       android_channel_id: 'value-alerts',
+      android_sound: 'notification',   // geluid op Android
+      ios_sound: 'notification.wav',   // geluid op iOS
       ttl: 3600,
+      priority: 10,                    // hoge prioriteit = doorbreekt DND niet maar wel zichtbaar
+      large_icon: 'https://toto-ai.app/icon-192.png',
+      chrome_web_icon: 'https://toto-ai.app/icon-192.png',
     };
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
