@@ -104,6 +104,19 @@ function loadState() {
     scalarFields.forEach(key => {
       if (saved[key] !== undefined) state[key] = saved[key];
     });
+
+    // Oude wedstrijden opruimen — verwijder matches van vóór vandaag
+    const _todayISO = new Date().toISOString().split('T')[0];
+    if (Array.isArray(state.matches)) {
+      const before = state.matches.length;
+      state.matches = state.matches.filter(m => {
+        const d = m.dateISO || m.date || '';
+        return !d || d >= _todayISO; // bewaar als geen datum of datum >= vandaag
+      });
+      if (state.matches.length < before) {
+        console.log(`[State] ${before - state.matches.length} oude wedstrijden opgeruimd`);
+      }
+    }
   } catch(e) {
     console.warn('[State] loadState fout:', e.message);
   }
