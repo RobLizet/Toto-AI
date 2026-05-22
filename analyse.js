@@ -1926,11 +1926,21 @@ function logScanResult(picks) {
   syncPicksToFirebase(newPicks);
 }
 
-// ── Sync app picks naar Firebase ─────────────────────────
+// Converteert "22-5-2026" naar "2026-05-22" voor Firebase settlement
+function normalizeDateISO(dateStr, fallback) {
+  if (!dateStr) return fallback || new Date().toISOString().split("T")[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateStr)) {
+    var p = dateStr.split("-");
+    return p[2] + "-" + p[1].padStart(2,"0") + "-" + p[0].padStart(2,"0");
+  }
+  try { return new Date(dateStr).toISOString().split("T")[0]; } catch(e) { return fallback; }
+}
+
 async function syncPicksToFirebase(picks) {
   try {
     if (!firebase || !firebase.database) return;
-    const today = new Date().toLocaleDateString('nl-NL');
+    const todayISO = new Date().toISOString().split('T')[0];
     const db = firebase.database();
     const updates = {};
     picks.forEach(p => {
@@ -1940,7 +1950,7 @@ async function syncPicksToFirebase(picks) {
         home:        p.match ? p.match.split(' vs ')[0] : '',
         away:        p.match ? p.match.split(' vs ')[1] : '',
         matchName:   p.match,
-        matchDate:   p.matchDate || today,
+        matchDate:   normalizeDateISO(p.matchDate, todayISO),
         matchTime:   p.matchTime || null,
         leagueName:  p.comp || '',
         pick:        p.pick,
