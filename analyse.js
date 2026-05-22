@@ -603,7 +603,7 @@ async function scanValueAll() {
 
     const dynamicTokens = Math.min(4000, Math.max(1500, candidates.length * 130));
     const data = await anthropicFetch(null, {
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: dynamicTokens,
       temperature: 0,
       system: `RESPOND WITH VALID JSON ONLY. NO TEXT BEFORE OR AFTER JSON. START WITH { END WITH }.
@@ -1266,7 +1266,7 @@ Blessures: ${injStr}
 Formaties: ${formationStr}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}`;
 
     const data = await anthropicFetchWithRetry(null, {
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 1800,
       system: `Je bent een elite voetbalanalist voor een bettingadvies app. JSON only, geen tekst buiten JSON.
 
@@ -1539,13 +1539,19 @@ async function generateCombiTip() {
     }
   }
 
-  // Filter: minimale odds 1.40, moet quotes hebben, niet afgelopen
-  const upcomingMatches = (state.matches||[]).filter(m =>
-    !m.isDone &&
-    m.homeOdds !== '—' &&
-    parseFloat(m.homeOdds) >= 1.40 &&
-    parseFloat(m.awayOdds) >= 1.10
-  );
+  // Filter: minimale odds 1.40, moet quotes hebben, niet afgelopen, alleen vandaag/morgen
+  const _todayStr = new Date().toISOString().split('T')[0];
+  const _tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  const upcomingMatches = (state.matches||[]).filter(m => {
+    if (m.isDone) return false;
+    if (m.homeOdds === '—') return false;
+    if (parseFloat(m.homeOdds) < 1.40) return false;
+    if (parseFloat(m.awayOdds) < 1.10) return false;
+    // Datum check: alleen wedstrijden van vandaag of morgen
+    const mDate = m.dateISO || m.date || '';
+    if (mDate && mDate < _todayStr) return false; // verleden wedstrijden eruit
+    return true;
+  });
 
   if (!upcomingMatches.length) {
     const card = document.getElementById('combiCard');
@@ -1570,7 +1576,7 @@ async function generateCombiTip() {
 
   try {
     const data = await anthropicFetch(null, {
-      model:'claude-sonnet-4-6', max_tokens:1600,
+      model:'claude-sonnet-4-20250514', max_tokens:1600,
       system:`Je bent sportadviseur. JSON only, geen tekst buiten JSON.
 Het veld "match" MOET altijd de exacte teamnamen bevatten: "ThuisTeam vs UitTeam".
 Het veld "fixtureId" MOET de fixtureId zijn uit de invoer.
@@ -2967,7 +2973,7 @@ Advies: ${state._lastAnalyseResult.advies || ''}` : '';
     const historyToSend = _chatHistory.slice(-6);
 
     const data = await anthropicFetch(null, {
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 600,
       system: `Je bent een voetbalanalist die vragen beantwoordt over een specifieke wedstrijd. 
 Geef korte, directe antwoorden (max 3-4 zinnen). Gebruik de beschikbare data.
