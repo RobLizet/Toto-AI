@@ -1810,7 +1810,8 @@ function loadAICombiIntoBuilder() {
 function logScanResult(picks) {
   if (!picks || !picks.length) return;
   const today = new Date().toLocaleDateString('nl-NL');
-  const filtered = picks.filter(p => (p.confidence || 0) >= 7);
+  const todayISO = new Date().toISOString().split('T')[0];
+  const filtered = picks; // Alle picks opslaan, ook onder drempel
   if (!filtered.length) return;
 
   const log = state.scanLog || [];
@@ -1872,6 +1873,7 @@ function logScanResult(picks) {
 async function syncPicksToFirebase(picks) {
   try {
     if (!firebase || !firebase.database) return;
+    const today = new Date().toLocaleDateString('nl-NL');
     const db = firebase.database();
     const updates = {};
     picks.forEach(p => {
