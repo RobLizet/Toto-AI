@@ -66,13 +66,19 @@ async function anthropicFetch(apiKey, body) {
   return await res.json();
 }
 
-async function anthropicFetchWithRetry(apiKey, body, retries = 2) {
+async function anthropicFetchWithRetry(apiKey, body, retries = 3) {
   for (let i = 0; i <= retries; i++) {
     try {
-      return await anthropicFetch(apiKey, body);
+      const result = await anthropicFetch(apiKey, body);
+      return result;
     } catch(e) {
+      const is529 = e.message && e.message.includes('529');
+      const is529b = e.message && e.message.includes('overloaded');
       if (i === retries) throw e;
-      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+      // 529 = overloaded: wacht langer
+      const delay = (is529 || is529b) ? 3000 * (i + 1) : 1000 * (i + 1);
+      console.log('[AI] Retry ' + (i+1) + ' na ' + delay + 'ms (' + e.message + ')');
+      await new Promise(r => setTimeout(r, delay));
     }
   }
 }
