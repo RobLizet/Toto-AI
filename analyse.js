@@ -1,3 +1,47 @@
+
+// ══════════════════════════════════════════════════════════
+// v20 CONFIDENCE ENGINE — zelfde als worker
+// ══════════════════════════════════════════════════════════
+const APP_LEAGUE_FACTORS = {
+  39: 1.10, 140: 1.08, 78: 1.08, 135: 1.07, 61: 1.05,
+  88: 1.04, 94: 1.03, 2: 1.12, 3: 1.08,
+  81: 0.92, 71: 0.90, 253: 0.88
+};
+
+function calculateConfidenceV20(pick, leagueId, calibration) {
+  const leagueFactor = APP_LEAGUE_FACTORS[leagueId] || 0.95;
+  const calFactor = (calibration && calibration[leagueId]) ? calibration[leagueId].factor || 1.0 : 1.0;
+
+  // Odds factor
+  const odds = pick.odds || 2.0;
+  let oddsFactor = 1.0;
+  if (odds >= 1.60 && odds <= 4.50) oddsFactor = 1.0;
+  else if (odds < 1.30 || odds > 6.0) oddsFactor = 0.70;
+  else if (odds < 1.60 || odds > 4.50) oddsFactor = 0.85;
+
+  // Markt factor
+  const pick1 = pick.pick || '1';
+  const marktFactor = ['1','X','2'].includes(pick1) ? 1.0 :
+    ['1X','X2'].includes(pick1) ? 0.90 :
+    pick1.startsWith('O') || pick1.startsWith('U') ? 0.85 : 0.80;
+
+  // Data kwaliteit
+  const hasPoisson = pick.poissonUsed || pick.poissonK1 > 0;
+  const dataFactor = hasPoisson ? 1.0 : 0.85;
+
+  // Basis confidence
+  const baseConf = Math.min((pick.confidence || 5) * 10, 100);
+  const valueFactor = Math.min(1 + (pick.value || 0) / 100, 1.25);
+
+  const confidenceFinal = Math.round(
+    baseConf * leagueFactor * calFactor * oddsFactor * marktFactor * dataFactor * valueFactor
+  );
+
+  const elite = confidenceFinal >= 72 && (pick.value || 0) >= 8 && odds >= 1.60 && odds <= 4.50;
+
+  return { confidenceFinal: Math.min(confidenceFinal, 100), elite };
+}
+
 // ═══════════════════════════════════════════════════════
 // ANALYSE.JS — Value scan, AI analyse, Combi Tips v20.2
 // ═══════════════════════════════════════════════════════
@@ -1846,6 +1890,13 @@ function logScanResult(picks) {
       score:       null,
       verifiedAt:  null
     };
+  }).map(p => {
+    // Bereken confidenceFinal en elite via v20 Confidence Engine
+    const leagueId = (p.comp && typeof p.comp === 'number') ? p.comp : null;
+    const cv = calculateConfidenceV20(p, leagueId, null);
+    p.confidenceFinal = cv.confidenceFinal;
+    p.elite = cv.elite;
+    return p;
   }).filter(p => {
     const key = String(p.fixtureId) + '_' + p.pick;
     if (todayIds.has(key)) return false;
