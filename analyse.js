@@ -1898,7 +1898,7 @@ function logScanResult(picks) {
     };
   }).map(p => {
     // Bereken confidenceFinal en elite via v20 Confidence Engine
-    const leagueId = (p.comp && typeof p.comp === 'number') ? p.comp : null;
+    const leagueId = p.leagueId || (p.match && p.match.leagueId) || (p.match && p.match.comp) || null;
     const cv = calculateConfidenceV20(p, leagueId, null);
     p.confidenceFinal = cv.confidenceFinal;
     p.elite = cv.elite;
