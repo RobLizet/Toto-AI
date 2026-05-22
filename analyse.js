@@ -637,6 +637,11 @@ VALUE DETECTIE:
 - confidence 6-7: 1-2 ankers bevestigen, 1 conflicterend signaal
 - confidence 1-5: schaarse data of sterke divergentie tussen ankers
 
+GELIJKSPEL WAARSCHUWING:
+- Kies ALLEEN gelijkspel (X) als: kansX ≥ 30% EN H2H ook ≥ 30% gelijke spelen EN geen duidelijke favoriet
+- Gelijkspel is de moeilijkste uitkomst om te voorspellen — wees terughoudend
+- Als twijfel tussen X en 1/2: kies altijd de thuisploeg/uitploeg optie
+
 SCHAARSE DATA:
 - "DATA SCHAARS" label: confidence MAX 5, wijk max 5pp af van Poisson/API pred
 - "Beperkte data": confidence MAX 7
@@ -717,7 +722,15 @@ SCHAARSE DATA:
       const favoriteOdds = Math.min(parseFloat(match.homeOdds)||99, parseFloat(match.awayOdds)||99);
       if (favoriteOdds < 1.50) return null;
       const drawPick = picks.find(p => p.pick === 'X');
-      if (drawPick && favoriteOdds < 2.20 && drawPick.value > 0) drawPick.value = Math.min(drawPick.value, 3);
+      if (drawPick && drawPick.value > 0) {
+        // Gelijkspel penalty: moeilijk te voorspellen, altijd cap tenzij sterke signalen
+        const poissonDrawStrong = poisson?.valid && (poisson.kX || 0) >= 32;
+        if (favoriteOdds < 2.20) {
+          drawPick.value = Math.min(drawPick.value, 3);
+        } else if (!poissonDrawStrong) {
+          drawPick.value = Math.min(drawPick.value, 12);
+        }
+      }
 
       picks.sort((a, b) => (b.value||-999) - (a.value||-999));
       const best = picks[0];
