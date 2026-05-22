@@ -728,7 +728,7 @@ SCHAARSE DATA:
         if (favoriteOdds < 2.20) {
           drawPick.value = Math.min(drawPick.value, 3);
         } else if (!poissonDrawStrong) {
-          drawPick.value = Math.min(drawPick.value, 12);
+          drawPick.value = Math.min(drawPick.value, 7);
         }
       }
 
