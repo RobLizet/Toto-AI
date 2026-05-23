@@ -206,7 +206,7 @@ function renderDashboard() {
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">ROI</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${isCalibrated?'#16a34a':'#d97706'};">${isCalibrated?'✓':'${settledPicks.length}/10'}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${isCalibrated?'#16a34a':'#d97706'};">${isCalibrated?'✓':`${settledPicks.length}/10`}</div>
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">${isCalibrated?'AI GECALIB.':'AI LEERT'}</div>
         </div>
       </div>
@@ -231,6 +231,31 @@ function renderDashboard() {
         </div>
       </div>
     </div>` : ''}
+
+    <!-- WK 2026 monitoring blok -->
+    ${(() => {
+      const wkPicks = allPicks.filter(p => p.leagueId === 1 || p.leagueId === '1');
+      const wkSettled = wkPicks.filter(p => p.status === 'win' || p.status === 'lose');
+      const wkDrawPicks = allPicks.filter(p => (p.pick||'').toUpperCase() === 'X');
+      const drawRatio = allPicks.length ? Math.round(wkDrawPicks.length / allPicks.length * 100) : 0;
+      const items = [
+        { label: 'WK PICKS', val: wkPicks.length || '—', ok: true },
+        { label: 'WK SETTLED', val: wkSettled.length || '—', ok: true },
+        { label: 'GELIJKSPEL %', val: allPicks.length ? drawRatio + '%' : '—', ok: drawRatio <= 25 },
+        { label: 'DAILY TIP', val: state._dailyTipCache?.date === new Date().toISOString().split('T')[0] ? '✓' : '—', ok: !!state._dailyTipCache },
+      ];
+      return `
+    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:var(--sub);margin-bottom:.5rem;">📊 WK MONITORING</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;">
+        ${items.map(({label, val, ok}) => `
+          <div style="background:${ok ? 'rgba(22,163,74,.06)' : 'rgba(220,38,38,.06)'};border:1px solid ${ok ? 'rgba(22,163,74,.2)' : 'rgba(220,38,38,.2)'};border-radius:8px;padding:.35rem;text-align:center;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:${ok ? '#16a34a' : '#dc2626'};">${val}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);margin-top:1px;">${label}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+    })()}
 
     <!-- Disclaimer -->
     <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid var(--stroke);margin-top:.5rem;">
