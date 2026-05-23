@@ -1583,10 +1583,12 @@ Het veld "fixtureId" MOET de fixtureId zijn uit de invoer.
 CROSS-COMPETITIE SELECTIE:
 - Kies wedstrijden uit VERSCHILLENDE competities waar mogelijk — meer diversiteit = minder correlatie
 - Top 3 tips: de 3 beste value picks over ALLE beschikbare competities
+- ELKE pick moet een ANDERE wedstrijd zijn — NOOIT twee picks van dezelfde wedstrijd (zelfde fixtureId)
 - Combi: kies 3 legs uit MINIMAAL 2 verschillende competities
 - Vermijd picks uit dezelfde competitie op dezelfde speelronde in de combi (hoge correlatie)
 - Odds tussen 1.40 en 4.00 — NOOIT onder 1.40
 - Geef voorkeur aan: thuisfavorieten met motivatieverschil, ploegen in goede vorm, duidelijke kwaliteitsverschillen
+- GELIJKSPEL VERBOD: kies NOOIT pick "X" (gelijkspel) — altijd "1" (thuis wint) of "2" (uit wint)
 
 {"top3":[
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":8,"reden":"30-40 woorden met concrete redenen","factoren":["",""],"risico":""},
@@ -1612,6 +1614,18 @@ CROSS-COMPETITIE SELECTIE:
         if (m) t.match = `${m.home} vs ${m.away}`;
       }
     });
+
+    // Dedupliceer top3 — max 1 pick per wedstrijd, geen gelijkspel
+    if (result.top3) {
+      const seenFixtures = new Set();
+      result.top3 = result.top3.filter(t => {
+        if (t.pick === 'X') return false; // geen gelijkspel
+        const fid = String(t.fixtureId || t.match);
+        if (seenFixtures.has(fid)) return false;
+        seenFixtures.add(fid);
+        return true;
+      });
+    }
 
     renderTop3EnCombi(result);
   } catch(e) {
