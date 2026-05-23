@@ -2,7 +2,7 @@
 // STATE.JS — Centraal state object + persistence
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v20.7';
+const APP_VERSION = 'v20.8';
 
 const STATE_KEY = 'totoai_state';
 
@@ -107,14 +107,39 @@ function loadState() {
 
     // Oude wedstrijden opruimen — verwijder matches van vóór vandaag
     const _todayISO = new Date().toISOString().split('T')[0];
+    const _cutoffISO = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString().split('T')[0]; // 30 dagen terug
     if (Array.isArray(state.matches)) {
       const before = state.matches.length;
       state.matches = state.matches.filter(m => {
         const d = m.dateISO || m.date || '';
-        return !d || d >= _todayISO; // bewaar als geen datum of datum >= vandaag
+        return !d || d >= _todayISO;
       });
       if (state.matches.length < before) {
         console.log(`[State] ${before - state.matches.length} oude wedstrijden opgeruimd`);
+      }
+    }
+
+    // Oude scanLog entries opruimen — max 30 dagen bewaren
+    if (Array.isArray(state.scanLog)) {
+      const before = state.scanLog.length;
+      state.scanLog = state.scanLog.filter(s => {
+        const d = (s.timestamp || s.date || '').substring(0, 10);
+        return !d || d >= _cutoffISO;
+      });
+      if (state.scanLog.length < before) {
+        console.log(`[State] ${before - state.scanLog.length} oude scanLog entries opgeruimd`);
+      }
+    }
+
+    // Oude valueBacktest picks opruimen — max 30 dagen
+    if (state.valueBacktest && Array.isArray(state.valueBacktest.picks)) {
+      const before = state.valueBacktest.picks.length;
+      state.valueBacktest.picks = state.valueBacktest.picks.filter(p => {
+        const d = (p.matchDate || p.date || p.firstScanAt || '').substring(0, 10);
+        return !d || d >= _cutoffISO;
+      });
+      if (state.valueBacktest.picks.length < before) {
+        console.log(`[State] ${before - state.valueBacktest.picks.length} oude backtest picks opgeruimd`);
       }
     }
   } catch(e) {
