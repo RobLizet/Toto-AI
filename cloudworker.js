@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v74'; // v74: Push notificaties met geluid
+const VERSION = 'v75'; // v75: Scan complete push notificatie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -894,6 +894,15 @@ Geen uitleg, alleen de JSON array.`;
         value: top.value,
       });
     }
+  } else {
+    // Geen nieuwe picks — stuur altijd een scan complete melding zodat je weet dat de scan gedraaid heeft
+    const now2 = new Date();
+    const timeStr = now2.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' });
+    await sendPushNotification(env,
+      `🔍 Scan klaar — ${timeStr}`,
+      `${analyseBatch.length} wedstrijden gescand · Geen nieuwe value picks gevonden`,
+      { type: 'scan_complete', matchCount: analyseBatch.length }
+    );
   }
 }
 
