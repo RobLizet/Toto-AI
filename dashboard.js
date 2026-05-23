@@ -41,6 +41,21 @@ function renderDashboard() {
     ? (settledPicks.reduce((s,p) => s + (p.status==='win' ? (p.odds-1) : -1), 0) / settledPicks.length * 100)
     : null;
 
+  // Borderline picks: net onder de drempel
+  const BORDER = { minValue: 5, minConf: 4 };
+  const borderPicks = allPicks.filter(p =>
+    !p.isSparseData &&
+    !( (p.value||0) >= DREMPEL.minValue && (p.confidence||0) >= DREMPEL.minConf ) &&
+    (p.value||0) >= BORDER.minValue &&
+    (p.confidence||0) >= BORDER.minConf
+  );
+  const borderSettled = borderPicks.filter(p => p.status === 'win' || p.status === 'lose');
+  const borderWins = borderSettled.filter(p => p.status === 'win');
+  const borderHitrate = borderSettled.length ? Math.round(borderWins.length / borderSettled.length * 100) : null;
+  const borderROI = borderSettled.length
+    ? (borderSettled.reduce((s,p) => s + (p.status==='win' ? (p.odds-1) : -1), 0) / borderSettled.length * 100)
+    : null;
+
   // Value picks beschikbaar
   const valuePicks = (state.valueScans||[]).filter(s => s.value >= 5);
   const topValuePick = valuePicks.sort((a,b) => (b.value||0)-(a.value||0))[0];
@@ -71,11 +86,14 @@ function renderDashboard() {
 
   screen.innerHTML = `
 
-    <!-- 100 picks voortgang -->
-    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;"
+    <!-- 100 picks voortgang — officieel trackrecord -->
+    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.5rem;cursor:pointer;"
       onclick="showPicksModal()">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">🎯 VOORTGANG NAAR 100 PICKS</div>
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">🎯 OFFICIEEL TRACKRECORD</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.1rem;">Value ≥8% · Conf ≥6 · Geen sparse data</div>
+        </div>
         <div style="display:flex;align-items:center;gap:.4rem;">
           ${settledPicks.length ? (() => {
             if (scanROI >= 15 && scanHitrate >= 40)  return '<span style="font-size:1.3rem;">😄</span>';
@@ -90,17 +108,48 @@ function renderDashboard() {
       <div style="background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">
         <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
       </div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">
-        ${kwaliPicks.length === 0 ? 'Scan wedstrijden om picks te verzamelen →' : (() => {
-          const openCount = kwaliPicks.filter(p => !p.status || p.status === 'pending').length;
-          const parts = [];
-          if (openCount > 0)           parts.push(openCount + ' open');
-          if (settledPicks.length > 0) parts.push(settledPicks.length + ' afgerond');
-          if (scanHitrate !== null)     parts.push(scanHitrate + '% hitrate');
-          if (scanROI !== null)         parts.push('ROI ' + (scanROI >= 0 ? '+' : '') + scanROI.toFixed(1) + '%');
-          return parts.join(' · ') || 'Tik voor details →';
-        })()}
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;margin-top:.5rem;">
+        ${[
+          { label: 'PICKS', val: kwaliPicks.length, color: '#be185d' },
+          { label: 'SETTLED', val: settledPicks.length, color: 'var(--sub)' },
+          { label: 'HITRATE', val: scanHitrate !== null ? scanHitrate + '%' : '—', color: scanHitrate !== null ? (scanHitrate >= 50 ? '#16a34a' : scanHitrate >= 35 ? '#d97706' : '#dc2626') : 'var(--sub)' },
+          { label: 'ROI', val: scanROI !== null ? (scanROI >= 0 ? '+' : '') + scanROI.toFixed(1) + '%' : '—', color: scanROI !== null ? (scanROI >= 0 ? '#16a34a' : '#dc2626') : 'var(--sub)' },
+        ].map(({label, val, color}) => `
+          <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:8px;padding:.3rem;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:${color};">${val}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${label}</div>
+          </div>`).join('')}
       </div>
+    </div>
+
+    <!-- Borderline picks analyse -->
+    <div style="background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;"
+      onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('log'),150)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:#b45309;">🔍 BORDERLINE ANALYSE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.1rem;">Value 5-8% of conf 4-5 — telt niet mee in trackrecord</div>
+        </div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#b45309;">${borderPicks.length}<span style="font-size:.65rem;color:var(--sub);"> picks</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;">
+        ${[
+          { label: 'PICKS', val: borderPicks.length, color: '#b45309' },
+          { label: 'SETTLED', val: borderSettled.length, color: 'var(--sub)' },
+          { label: 'HITRATE', val: borderHitrate !== null ? borderHitrate + '%' : '—', color: borderHitrate !== null ? (borderHitrate >= 50 ? '#16a34a' : borderHitrate >= 35 ? '#d97706' : '#dc2626') : 'var(--sub)' },
+          { label: 'ROI', val: borderROI !== null ? (borderROI >= 0 ? '+' : '') + borderROI.toFixed(1) + '%' : '—', color: borderROI !== null ? (borderROI >= 0 ? '#16a34a' : '#dc2626') : 'var(--sub)' },
+        ].map(({label, val, color}) => `
+          <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:8px;padding:.3rem;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:${color};">${val}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${label}</div>
+          </div>`).join('')}
+      </div>
+      ${borderPicks.length > 0 && borderHitrate !== null && scanHitrate !== null ? `
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.4rem;padding-top:.4rem;border-top:1px solid rgba(15,23,42,.06);">
+        ${borderHitrate >= scanHitrate
+          ? '⚠️ Borderline picks scoren vergelijkbaar — overweeg drempel te verlagen'
+          : '✅ Drempel correct — officiële picks scoren ' + (scanHitrate - borderHitrate) + '% beter'}
+      </div>` : ''}
     </div>
 
     <!-- Open bets -->
