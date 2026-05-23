@@ -2,7 +2,7 @@
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 //      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v75'; // v75: Scan complete push notificatie
+const VERSION = 'v76'; // v76: Fix generateDailyTip date filter (matchDate ipv date, poissonUsed verwijderd)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -939,14 +939,17 @@ async function generateDailyTip(env) {
   let picks = [];
   try {
     const picksData = await fb(env, 'picks') || {};
+    const tomorrow2 = new Date(); tomorrow2.setDate(tomorrow2.getDate() + 1);
+    const tomorrowStr = tomorrow2.toISOString().split('T')[0];
     picks = Object.values(picksData)
       .filter(p =>
         p.status === 'pending' &&
-        p.date === today &&
+        // matchDate óf date moet vandaag of morgen zijn
+        (p.matchDate === today || p.date === today ||
+         p.matchDate === tomorrowStr || p.date === tomorrowStr) &&
         !p.isSparseData &&
         (p.value || 0) >= 8 &&
-        (p.confidence || 0) >= 6 &&
-        p.poissonUsed
+        (p.confidence || 0) >= 6
       )
       .sort((a, b) => (b.value || 0) - (a.value || 0))
       .slice(0, 5);
