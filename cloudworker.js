@@ -1,8 +1,9 @@
-// TOTO AI WORKER v48
+// TOTO AI WORKER v75
+// v75: Supabase integratie — odds snapshots, sharp money detection, CLV opslag, /analytics endpoint
+// v74: Push notificaties met geluid
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
-//      Voorkomt dat Cloudflare gecachte NS-status teruggeeft voor gespeelde wedstrijden
 
-const VERSION = 'v76'; // v76: Fix generateDailyTip date filter (matchDate ipv date, poissonUsed verwijderd)
+const VERSION = 'v75'; // v75: Supabase integratie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -29,6 +30,163 @@ async function fb(env, path, method = 'GET', body = null) {
   } catch(e) {
     console.error('FB error', e);
     return null;
+  }
+}
+
+// ── Supabase helper ──────────────────────────────────────
+async function sb(env, table, method = 'GET', body = null, query = '') {
+  try {
+    const url = `${env.SUPABASE_URL}/rest/v1/${table}${query}`;
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': env.SUPABASE_KEY,
+        'Authorization': `Bearer ${env.SUPABASE_KEY}`,
+        'Prefer': method === 'POST' ? 'return=minimal' : 'return=representation',
+      },
+      body: body ? JSON.stringify(body) : null,
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      console.error(`[SB] ${method} ${table} fout ${res.status}:`, err);
+      return null;
+    }
+    if (method === 'POST' || method === 'DELETE') return true;
+    return await res.json();
+  } catch(e) {
+    console.error('[SB] fetch fout:', e);
+    return null;
+  }
+}
+
+// ── Supabase: odds snapshots opslaan ─────────────────────
+async function saveOddsSnapshots(oddsMap, matches, env) {
+  const today = new Date().toISOString().split('T')[0];
+  const rows = [];
+  matches.forEach(m => {
+    const odds = oddsMap[m.fixtureId];
+    if (!odds) return;
+    rows.push({
+      fixture_id: m.fixtureId,
+      bookmaker: 8,
+      home_odds: odds.home,
+      draw_odds: odds.draw,
+      away_odds: odds.away,
+      match_date: m.matchDate || today,
+      league_id: m.leagueId || null,
+      captured_at: new Date().toISOString(),
+    });
+  });
+  if (!rows.length) return;
+  await sb(env, 'odds_snapshots', 'POST', rows, '?on_conflict=fixture_id,match_date');
+  console.log(`[SB] ${rows.length} odds snapshots opgeslagen`);
+}
+
+// ── Supabase: sharp money detectie ───────────────────────
+async function detectSharpMoney(oddsMap, matches, env) {
+  const today = new Date().toISOString().split('T')[0];
+  const existing = await sb(env, 'odds_snapshots', 'GET', null,
+    `?match_date=eq.${today}&select=fixture_id,home_odds,draw_odds,away_odds`
+  );
+  if (!existing || !existing.length) return {};
+
+  const openMap = {};
+  existing.forEach(r => {
+    openMap[r.fixture_id] = {
+      home: parseFloat(r.home_odds),
+      draw: parseFloat(r.draw_odds),
+      away: parseFloat(r.away_odds),
+    };
+  });
+
+  const sharpSignals = {};
+  const movements = [];
+  const SHARP_THRESHOLD = 5;
+
+  matches.forEach(m => {
+    const current = oddsMap[m.fixtureId];
+    const opening = openMap[m.fixtureId];
+    if (!current || !opening) return;
+    const pickMap = {
+      '1': { open: opening.home, curr: current.home },
+      'X': { open: opening.draw, curr: current.draw },
+      '2': { open: opening.away, curr: current.away },
+    };
+    Object.entries(pickMap).forEach(([pick, { open, curr }]) => {
+      if (!open || !curr || open <= 1 || curr <= 1) return;
+      const movPct = parseFloat((((curr - open) / open) * 100).toFixed(1));
+      if (Math.abs(movPct) >= SHARP_THRESHOLD) {
+        const direction = movPct < 0 ? 'steam' : 'drift';
+        movements.push({ fixture_id: m.fixtureId, pick, from_odds: open, to_odds: curr,
+          movement_pct: movPct, direction, detected_at: new Date().toISOString() });
+        if (direction === 'steam') {
+          sharpSignals[m.fixtureId] = sharpSignals[m.fixtureId] || {};
+          sharpSignals[m.fixtureId][pick] = { movement: movPct };
+          console.log(`[Sharp] ${m.home} vs ${m.away} — ${pick} ${movPct}% steam`);
+        }
+      }
+    });
+  });
+
+  if (movements.length) {
+    await sb(env, 'odds_movements', 'POST', movements);
+    console.log(`[SB] ${movements.length} odds bewegingen opgeslagen`);
+  }
+  return sharpSignals;
+}
+
+// ── Supabase: CLV opslaan na settlement ──────────────────
+async function saveCLV(pick, clv, won, env) {
+  if (clv === null || clv === undefined) return;
+  await sb(env, 'clv_results', 'POST', [{
+    fixture_id: pick.fixtureId,
+    pick: pick.pick,
+    our_odds: pick.odds,
+    closing_odds: pick.odds,
+    clv_pct: clv,
+    status: won ? 'win' : 'lose',
+    match_date: pick.matchDate || null,
+    league_id: pick.leagueId || null,
+    settled_at: new Date().toISOString(),
+  }]);
+}
+
+// ── Supabase: analytics endpoint ─────────────────────────
+async function handleAnalytics(env) {
+  try {
+    const clvData = await sb(env, 'clv_results', 'GET', null,
+      '?select=clv_pct,status,league_id,match_date&order=settled_at.desc&limit=200'
+    ) || [];
+    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+    const sharpData = await sb(env, 'odds_movements', 'GET', null,
+      `?detected_at=gte.${sevenDaysAgo}T00:00:00Z&direction=eq.steam&order=movement_pct.asc&limit=50`
+    ) || [];
+
+    const withCLV = clvData.filter(r => r.clv_pct !== null);
+    const avgCLV = withCLV.length
+      ? parseFloat((withCLV.reduce((s,r) => s + parseFloat(r.clv_pct), 0) / withCLV.length).toFixed(1))
+      : null;
+
+    return json({
+      clv: {
+        total: clvData.length,
+        avgCLV,
+        positiveCLVPct: withCLV.length
+          ? Math.round(withCLV.filter(r => parseFloat(r.clv_pct) > 0).length / withCLV.length * 100)
+          : null,
+      },
+      sharpMoney: {
+        steamMovements7d: sharpData.length,
+        topSteam: sharpData.slice(0, 5).map(r => ({
+          fixtureId: r.fixture_id, pick: r.pick,
+          movement: r.movement_pct, detectedAt: r.detected_at,
+        })),
+      },
+    });
+  } catch(e) {
+    console.error('[Analytics] fout:', e);
+    return json({ error: 'Analytics mislukt' }, 500);
   }
 }
 
@@ -434,6 +592,8 @@ async function verifyYesterdayPicks(env) {
       verifiedAt: new Date().toISOString(),
       clv: clv, // Closing Line Value
     };
+    // Supabase: CLV opslaan na settlement
+    await saveCLV(pick, clv, won, env);
     updated++;
   }
 
@@ -687,6 +847,10 @@ async function runScan(env, force = false) {
   });
   await fb(env, oddsHistoryPath, 'PUT', newHistory);
 
+  // Supabase: odds snapshots + sharp money detectie
+  await saveOddsSnapshots(oddsMap, batch, env);
+  const sharpSignals = await detectSharpMoney(oddsMap, batch, env);
+
   const withOdds = batch.filter(m => oddsMap[m.fixtureId]);
   const withoutOdds = batch.filter(m => !oddsMap[m.fixtureId]);
 
@@ -766,7 +930,10 @@ Geen uitleg, alleen de JSON array.`;
       // Bereken odds movement
       const openOdds = openingOdds ? openingOdds[c.pick === '1' ? 'home' : c.pick === 'X' ? 'draw' : 'away'] : null;
       const movement = calcOddsMovement(openOdds, c.bookOdds);
-      const marketSignal = calcMarketSignal(movement, c.pick);
+      const sharpBoost = sharpSignals?.[m.fixtureId]?.[c.pick];
+      const marketSignal = sharpBoost
+        ? Math.min(95, calcMarketSignal(movement, c.pick) + 15)
+        : calcMarketSignal(movement, c.pick);
 
       // Data kwaliteit op basis van AI kans spreiding
       const spread = Math.max(ai.h, ai.x, ai.a) - Math.min(ai.h, ai.x, ai.a);
@@ -894,15 +1061,6 @@ Geen uitleg, alleen de JSON array.`;
         value: top.value,
       });
     }
-  } else {
-    // Geen nieuwe picks — stuur altijd een scan complete melding zodat je weet dat de scan gedraaid heeft
-    const now2 = new Date();
-    const timeStr = now2.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' });
-    await sendPushNotification(env,
-      `🔍 Scan klaar — ${timeStr}`,
-      `${analyseBatch.length} wedstrijden gescand · Geen nieuwe value picks gevonden`,
-      { type: 'scan_complete', matchCount: analyseBatch.length }
-    );
   }
 }
 
@@ -939,17 +1097,14 @@ async function generateDailyTip(env) {
   let picks = [];
   try {
     const picksData = await fb(env, 'picks') || {};
-    const tomorrow2 = new Date(); tomorrow2.setDate(tomorrow2.getDate() + 1);
-    const tomorrowStr = tomorrow2.toISOString().split('T')[0];
     picks = Object.values(picksData)
       .filter(p =>
         p.status === 'pending' &&
-        // matchDate óf date moet vandaag of morgen zijn
-        (p.matchDate === today || p.date === today ||
-         p.matchDate === tomorrowStr || p.date === tomorrowStr) &&
+        p.date === today &&
         !p.isSparseData &&
         (p.value || 0) >= 8 &&
-        (p.confidence || 0) >= 6
+        (p.confidence || 0) >= 6 &&
+        p.poissonUsed
       )
       .sort((a, b) => (b.value || 0) - (a.value || 0))
       .slice(0, 5);
@@ -1187,6 +1342,10 @@ export default {
       return json(tip || { error: 'Genereren mislukt' });
     }
 
+    if (path === '/analytics') {
+      return handleAnalytics(env);
+    }
+
     if (path === '/push') {
       return handlePush(request, env);
     }
@@ -1198,7 +1357,7 @@ export default {
     return json({
       version: VERSION,
       status: 'running',
-      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/scan', '/settle', '/push', '/daily-tip', '/calibration', '?url=']
+      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/scan', '/settle', '/push', '/daily-tip', '/analytics', '/calibration', '?url=']
     });
   },
 
