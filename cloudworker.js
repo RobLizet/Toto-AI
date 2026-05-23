@@ -1,9 +1,10 @@
-// TOTO AI WORKER v75
+// TOTO AI WORKER v76
+// v76: Supabase fix — on_conflict header + betere error logging
 // v75: Supabase integratie — odds snapshots, sharp money detection, CLV opslag, /analytics endpoint
 // v74: Push notificaties met geluid
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 
-const VERSION = 'v75'; // v75: Supabase integratie
+const VERSION = 'v76'; // v76: Supabase fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -36,26 +37,36 @@ async function fb(env, path, method = 'GET', body = null) {
 // ── Supabase helper ──────────────────────────────────────
 async function sb(env, table, method = 'GET', body = null, query = '') {
   try {
+    if (!env.SUPABASE_URL || !env.SUPABASE_KEY) {
+      console.error('[SB] Secrets ontbreken — SUPABASE_URL of SUPABASE_KEY niet ingesteld');
+      return null;
+    }
     const url = `${env.SUPABASE_URL}/rest/v1/${table}${query}`;
+    const isUpsert = query.includes('on_conflict');
+    const prefer = isUpsert
+      ? 'return=minimal,resolution=merge-duplicates'
+      : method === 'POST' ? 'return=minimal' : 'return=representation';
     const res = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
         'apikey': env.SUPABASE_KEY,
         'Authorization': `Bearer ${env.SUPABASE_KEY}`,
-        'Prefer': method === 'POST' ? 'return=minimal' : 'return=representation',
+        'Prefer': prefer,
       },
       body: body ? JSON.stringify(body) : null,
     });
+    const responseText = await res.text();
     if (!res.ok) {
-      const err = await res.text();
-      console.error(`[SB] ${method} ${table} fout ${res.status}:`, err);
+      console.error(`[SB] ${method} ${table} fout ${res.status}:`, responseText);
       return null;
     }
-    if (method === 'POST' || method === 'DELETE') return true;
-    return await res.json();
+    console.log(`[SB] ${method} ${table} OK ${res.status}`);
+    if (method === 'DELETE') return true;
+    if (method === 'POST' && !responseText) return true;
+    try { return JSON.parse(responseText); } catch { return true; }
   } catch(e) {
-    console.error('[SB] fetch fout:', e);
+    console.error('[SB] fetch fout:', e.message);
     return null;
   }
 }
