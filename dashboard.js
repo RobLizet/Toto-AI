@@ -130,7 +130,17 @@ function renderDashboard() {
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:#b45309;">🔍 BORDERLINE ANALYSE</div>
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.1rem;">Value 5-8% of conf 4-5 — telt niet mee in trackrecord</div>
         </div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#b45309;">${borderPicks.length}<span style="font-size:.65rem;color:var(--sub);"> picks</span></div>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          ${(() => {
+            if (borderSettled.length === 0) return '<span style="font-size:1.3rem;opacity:.3;">😶</span>';
+            if (borderROI >= 15 && borderHitrate >= 40)  return '<span style="font-size:1.3rem;">😄</span>';
+            if (borderROI >= 5  || borderHitrate >= 35)  return '<span style="font-size:1.3rem;">🙂</span>';
+            if (borderROI >= 0  && borderHitrate >= 28)  return '<span style="font-size:1.3rem;">😐</span>';
+            if (borderROI >= -10)                         return '<span style="font-size:1.3rem;">😕</span>';
+            return '<span style="font-size:1.3rem;">😞</span>';
+          })()}
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#b45309;">${borderPicks.length}<span style="font-size:.65rem;color:var(--sub);"> picks</span></div>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;">
         ${[
