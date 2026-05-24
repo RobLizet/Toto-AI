@@ -428,31 +428,28 @@ async function handleProxy(urlParam, request, env) {
 // ── Odds ophalen voor wedstrijden ────────────────────────
 async function fetchOddsForFixtures(fixtureIds, env) {
   const oddsMap = {};
-  // Gebruik league-gebaseerde odds ipv per-fixture (veel minder subrequests)
-  // Haal unieke leagues op uit batch en pak odds per league
+  function parseOdds(data, fid) {
+    if (!data || !data.length) return false;
+    const bm = data[0]?.bookmakers?.[0];
+    if (!bm) return false;
+    const bet = bm.bets?.find(b => b.id === 1);
+    if (!bet) return false;
+    const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
+    const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
+    const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
+    if (home > 1) { oddsMap[fid] = { home, draw, away }; return true; }
+    return false;
+  }
   try {
-    // Per fixture, sequentieel ophalen met bookmaker 8 eerst dan 6
-    for (const id of fixtureIds) {
-      let found = false;
-      for (const bm_id of [8, 6, 1]) {
-        if (found) break;
-        try {
-          const data = await apif(`/odds?fixture=${id}&bookmaker=${bm_id}&bet=1`, env);
-          if (!data || !data.length) continue;
-          const bm = data[0]?.bookmakers?.[0];
-          if (!bm) continue;
-          const bet = bm.bets?.find(b => b.id === 1);
-          if (!bet) continue;
-          const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
-          const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
-          const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
-          if (home > 1) {
-            oddsMap[id] = { home, draw, away };
-            console.log(`[Odds] fixture ${id} via bm${bm_id}: ${home}/${draw}/${away}`);
-            found = true;
-          }
-        } catch(e) { continue; }
-      }
+    // Ronde 1: alle fixtures parallel via bookmaker 8
+    const r1 = await Promise.all(fixtureIds.map(id => apif(`/odds?fixture=${id}&bookmaker=8&bet=1`, env)));
+    r1.forEach((data, i) => parseOdds(data, fixtureIds[i]));
+
+    // Ronde 2: alleen missing fixtures via bookmaker 6
+    const missing = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing.length) {
+      const r2 = await Promise.all(missing.map(id => apif(`/odds?fixture=${id}&bookmaker=6&bet=1`, env)));
+      r2.forEach((data, i) => parseOdds(data, missing[i]));
     }
   } catch(e) {
     console.error('[Odds] Fout bij ophalen:', e);
