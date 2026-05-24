@@ -1,9 +1,9 @@
-// TOTO AI WORKER v79
-// v79: Subrequest limiet fix — batch kleiner, odds sequentieel, minder parallel calls
-// v78: Bookmaker fallback 8→6→1, scan tijdvenster 4 uur vooruit
+// TOTO AI WORKER v80
+// v80: Verify en scan sequentieel ipv parallel — fix subrequest limiet
+// v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v79'; // v79: subrequest limiet fix
+const VERSION = 'v80'; // v80: sequentieel scan+verify
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -441,11 +441,8 @@ async function fetchOddsForFixtures(fixtureIds, env) {
     return false;
   }
   try {
-    // Ronde 1: alle fixtures parallel via bookmaker 8
     const r1 = await Promise.all(fixtureIds.map(id => apif(`/odds?fixture=${id}&bookmaker=8&bet=1`, env)));
     r1.forEach((data, i) => parseOdds(data, fixtureIds[i]));
-
-    // Ronde 2: alleen missing fixtures via bookmaker 6
     const missing = fixtureIds.filter(id => !oddsMap[id]);
     if (missing.length) {
       const r2 = await Promise.all(missing.map(id => apif(`/odds?fixture=${id}&bookmaker=6&bet=1`, env)));
@@ -771,12 +768,10 @@ async function runScan(env, force = false) {
   console.log(`[Scan] Fixtures ophalen voor ${today} en ${tomorrowStr}...`);
   
   // Haal fixtures op per competitie (zelfde aanpak als app) voor betere coverage
-  // Beperkte leagues voor subrequest budget (max ~10 fixture calls)
   const SCAN_LEAGUES = [39, 88, 78, 61, 135, 140, 2, 3, 848];
   
   try {
     const WK_LEAGUES = [2, 3, 848];
-    // Alleen vandaag ophalen om subrequests te besparen
     const fixturePromises = SCAN_LEAGUES.map(lid => {
       const season = WK_LEAGUES.includes(lid) ? 2026 : 2025;
       return apif(`/fixtures?league=${lid}&season=${season}&date=${today}&timezone=Europe/Amsterdam`, env);
@@ -852,13 +847,12 @@ async function runScan(env, force = false) {
   });
   await fb(env, oddsHistoryPath, 'PUT', newHistory);
 
-  // Supabase: odds snapshots + sharp money detectie (non-blocking)
   let sharpSignals = {};
   try {
     await saveOddsSnapshots(oddsMap, batch, env);
     sharpSignals = await detectSharpMoney(oddsMap, batch, env) || {};
   } catch(e) {
-    console.error('[SB] Supabase fout in scan (non-fatal):', e.message);
+    console.error('[SB] fout (non-fatal):', e.message);
   }
 
   const withOdds = batch.filter(m => oddsMap[m.fixtureId]);
@@ -1375,13 +1369,12 @@ export default {
     const now = new Date();
     const hour = now.getUTCHours();
     const isSunday = now.getUTCDay() === 0;
-    ctx.waitUntil(Promise.all([
-      runScan(env),
-      verifyYesterdayPicks(env),
-      // 06:00 UTC (= 08:00 NL zomertijd): dagelijkse AI tip genereren
-      hour === 6 ? generateDailyTip(env) : Promise.resolve(),
-      // Zondag 06:00 UTC: weekly calibration
-      (isSunday && hour === 6) ? runWeeklyCalibration(env) : Promise.resolve(),
-    ]));
+    // Sequentieel uitvoeren om subrequest limiet niet te overschrijden
+    ctx.waitUntil((async () => {
+      await verifyYesterdayPicks(env);
+      await runScan(env);
+      if (hour === 6) await generateDailyTip(env);
+      if (isSunday && hour === 6) await runWeeklyCalibration(env);
+    })());
   }
 };
