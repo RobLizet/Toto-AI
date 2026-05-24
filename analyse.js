@@ -2170,7 +2170,37 @@ function renderScanLog() {
   }).catch(() => {});
 
   const log       = state.scanLog || [];
-  const allPicks  = log.flatMap(s => s.picks);
+
+  // ── Zoek/filter state ──────────────────────────────
+  if (!window._scanFilter) window._scanFilter = { q:'', conf:'', pick:'', comp:'', status:'' };
+  const F = window._scanFilter;
+
+  // Gefilterde picks voor stats
+  function pickMatchesFilter(p) {
+    if (F.conf   && String(p.confidence) !== F.conf) return false;
+    if (F.pick) {
+      const pl = (p.pickLabel||p.pick||'').toLowerCase();
+      const pm = (p.match||'').toLowerCase();
+      if (F.pick === '1'    && !pl.includes('thuis') && p.pick !== '1') return false;
+      if (F.pick === 'X'    && p.pick !== 'X' && !pl.includes('gelijkspel')) return false;
+      if (F.pick === '2'    && !pl.includes('uit') && p.pick !== '2') return false;
+    }
+    if (F.comp   && (p.comp||'').toLowerCase().indexOf(F.comp.toLowerCase()) === -1) return false;
+    if (F.status && p.status !== F.status) return false;
+    if (F.q) {
+      const q = F.q.toLowerCase();
+      const haystack = ((p.match||'') + ' ' + (p.comp||'') + ' ' + (p.pickLabel||p.pick||'')).toLowerCase();
+      if (haystack.indexOf(q) === -1) return false;
+    }
+    return true;
+  }
+
+  // Filter log: toon alleen scans met minstens 1 matchende pick
+  const filteredLog = F.q || F.conf || F.pick || F.comp || F.status
+    ? log.map(s => ({ ...s, picks: s.picks.filter(pickMatchesFilter) })).filter(s => s.picks.length > 0)
+    : log;
+
+  const allPicks  = filteredLog.flatMap(s => s.picks);
   const settled   = allPicks.filter(p => p.status === 'win' || p.status === 'lose');
   const wins      = settled.filter(p => p.status === 'win');
   const hitrate   = settled.length ? Math.round(wins.length / settled.length * 100) : 0;
@@ -2221,14 +2251,44 @@ function renderScanLog() {
 
   let html = '';
 
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">'
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">'
     + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--text);">SCAN LOG</div>'
     + '<div style="display:flex;gap:.4rem;">'
     + '<button class="small-action-btn" onclick="verifyScanLog().then(n=>{showToast(n>0?n+\' picks geverifieerd\':\'Geen nieuwe resultaten\');renderScanLog();}).catch(e=>showToast(\'⚠ \'+e.message))">🔄 Verificeer</button>'
     + '<button class="small-action-btn" onclick="showScanLogStatsPopup()">📊 Stats</button>'
     + '<button class="small-action-btn" onclick="exportScanLogCSV()">📥 CSV</button>'
-    + '<button class="small-action-btn" style="color:#dc2626;" onclick="if(confirm(\'Scan log wissen?\')){state.scanLog=[];saveState();renderScanLog();}">🗑</button>'
+    + '<button class="small-action-btn" style="color:#dc2626;" onclick="if(confirm(\'Scan log wissen?\')){\'state.scanLog=[];saveState();renderScanLog();}">🗑</button>'
     + '</div></div>';
+
+  // ── Zoek & Filter bar ─────────────────────────────
+  const activeFilters = F.q || F.conf || F.pick || F.comp || F.status;
+  html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.7rem .8rem;margin-bottom:.8rem;">'
+    + '<div style="display:flex;gap:.4rem;margin-bottom:.5rem;">'
+    + '<input id="scanSearchQ" type="text" placeholder="🔍 Zoek wedstrijd, competitie..." value="' + (F.q||'') + '" '
+    + 'oninput="window._scanFilter.q=this.value;renderScanLog()" '
+    + 'style="flex:1;padding:.35rem .6rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--text);outline:none;" />'
+    + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\'};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
+    + '</div>'
+    + '<div style="display:flex;gap:.3rem;flex-wrap:wrap;">'
+    + '<select onchange="window._scanFilter.conf=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.conf?'rgba(124,58,237,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<option value="">Conf</option>'
+    + [6,7,8,9,10].map(c => '<option value="'+c+'"'+(F.conf===String(c)?' selected':'')+'>conf '+c+'</option>').join('')
+    + '</select>'
+    + '<select onchange="window._scanFilter.pick=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.pick?'rgba(124,58,237,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<option value="">Pick type</option>'
+    + '<option value="1"'+(F.pick==="1"?' selected':'')+'>🏠 Thuis</option>'
+    + '<option value="X"'+(F.pick==="X"?' selected':'')+'>🤝 Gelijk</option>'
+    + '<option value="2"'+(F.pick==="2"?' selected':'')+'>✈️ Uit</option>'
+    + '</select>'
+    + '<select onchange="window._scanFilter.status=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.status?'rgba(124,58,237,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<option value="">Status</option>'
+    + '<option value="win"'+(F.status==="win"?' selected':'')+'>✅ Win</option>'
+    + '<option value="lose"'+(F.status==="lose"?' selected':'')+'>❌ Verlies</option>'
+    + '<option value="pending"'+(F.status==="pending"?' selected':'')+'>⏳ Open</option>'
+    + '</select>'
+    + '</div>'
+    + (activeFilters ? '<div style="margin-top:.4rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">' + allPicks.length + ' picks gevonden in ' + filteredLog.length + ' scans</div>' : '')
+    + '</div>';
 
 
   html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:.8rem;">'
@@ -2293,8 +2353,9 @@ function renderScanLog() {
     html += '</div>';
   }
 
-  // ── 100 PICKS ANALYSE — toont zodra >= 100 picks ──────────
-  if (allPicks.length >= 100) {
+  // ── PICKS ANALYSE — toont elke 100 picks (100, 200, 300...) ──
+  const _milestone = Math.floor(allPicks.length / 100) * 100;
+  if (_milestone >= 100) {
     // Per odds range
     const byOdds = {'1.0-1.5':[], '1.5-2.0':[], '2.0-3.0':[], '3.0-5.0':[], '5.0+':[]}; 
     settled.forEach(p => {
@@ -2334,7 +2395,7 @@ function renderScanLog() {
 
     html += '<div style="background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(219,39,119,.06));border:1.5px solid rgba(124,58,237,.2);border-radius:16px;padding:.9rem 1rem;margin-bottom:.8rem;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;">'
-      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;background:linear-gradient(135deg,#7c3aed,#be185d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 100 PICKS ANALYSE</div>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;background:linear-gradient(135deg,#7c3aed,#be185d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 ' + _milestone + ' PICKS ANALYSE</div>'
       + '<span style="font-size:1.5rem;">' + face + '</span>'
       + '</div>'
 
@@ -2412,7 +2473,7 @@ function renderScanLog() {
     html += '<div style="text-align:center;padding:2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:var(--muted);">'
       + 'Nog geen scans. Voer een value scan uit via de Scan &amp; Analyse tab.</div>';
   } else {
-    log.forEach(function(scan, si) {
+    filteredLog.forEach(function(scan, si) {
       var sw = scan.picks.filter(p=>p.status==='win').length;
       var sl = scan.picks.filter(p=>p.status==='lose').length;
       var sp = scan.picks.filter(p=>p.status==='pending').length;
