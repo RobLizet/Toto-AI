@@ -1,10 +1,9 @@
-// TOTO AI WORKER v76
-// v76: Supabase fix — on_conflict header + betere error logging
+// TOTO AI WORKER v75
 // v75: Supabase integratie — odds snapshots, sharp money detection, CLV opslag, /analytics endpoint
 // v74: Push notificaties met geluid
 // v47: Cache-bypass voor fixture verificatie calls (_cb parameter)
 
-const VERSION = 'v76'; // v76: Supabase fix
+const VERSION = 'v75'; // v75: Supabase integratie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -37,36 +36,26 @@ async function fb(env, path, method = 'GET', body = null) {
 // ── Supabase helper ──────────────────────────────────────
 async function sb(env, table, method = 'GET', body = null, query = '') {
   try {
-    if (!env.SUPABASE_URL || !env.SUPABASE_KEY) {
-      console.error('[SB] Secrets ontbreken — SUPABASE_URL of SUPABASE_KEY niet ingesteld');
-      return null;
-    }
     const url = `${env.SUPABASE_URL}/rest/v1/${table}${query}`;
-    const isUpsert = query.includes('on_conflict');
-    const prefer = isUpsert
-      ? 'return=minimal,resolution=merge-duplicates'
-      : method === 'POST' ? 'return=minimal' : 'return=representation';
     const res = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
         'apikey': env.SUPABASE_KEY,
         'Authorization': `Bearer ${env.SUPABASE_KEY}`,
-        'Prefer': prefer,
+        'Prefer': method === 'POST' ? 'return=minimal' : 'return=representation',
       },
       body: body ? JSON.stringify(body) : null,
     });
-    const responseText = await res.text();
     if (!res.ok) {
-      console.error(`[SB] ${method} ${table} fout ${res.status}:`, responseText);
+      const err = await res.text();
+      console.error(`[SB] ${method} ${table} fout ${res.status}:`, err);
       return null;
     }
-    console.log(`[SB] ${method} ${table} OK ${res.status}`);
-    if (method === 'DELETE') return true;
-    if (method === 'POST' && !responseText) return true;
-    try { return JSON.parse(responseText); } catch { return true; }
+    if (method === 'POST' || method === 'DELETE') return true;
+    return await res.json();
   } catch(e) {
-    console.error('[SB] fetch fout:', e.message);
+    console.error('[SB] fetch fout:', e);
     return null;
   }
 }
@@ -603,8 +592,8 @@ async function verifyYesterdayPicks(env) {
       verifiedAt: new Date().toISOString(),
       clv: clv, // Closing Line Value
     };
-    // Supabase: CLV opslaan na settlement
-    await saveCLV(pick, clv, won, env);
+    // Supabase: CLV opslaan na settlement (non-blocking)
+    try { await saveCLV(pick, clv, won, env); } catch(e) { console.error('[SB] CLV save fout:', e.message); }
     updated++;
   }
 
@@ -858,9 +847,14 @@ async function runScan(env, force = false) {
   });
   await fb(env, oddsHistoryPath, 'PUT', newHistory);
 
-  // Supabase: odds snapshots + sharp money detectie
-  await saveOddsSnapshots(oddsMap, batch, env);
-  const sharpSignals = await detectSharpMoney(oddsMap, batch, env);
+  // Supabase: odds snapshots + sharp money detectie (non-blocking)
+  let sharpSignals = {};
+  try {
+    await saveOddsSnapshots(oddsMap, batch, env);
+    sharpSignals = await detectSharpMoney(oddsMap, batch, env) || {};
+  } catch(e) {
+    console.error('[SB] Supabase fout in scan (non-fatal):', e.message);
+  }
 
   const withOdds = batch.filter(m => oddsMap[m.fixtureId]);
   const withoutOdds = batch.filter(m => !oddsMap[m.fixtureId]);
