@@ -514,6 +514,9 @@ async function loadFromFirebase() {
     if (state.settings.footballKey)  localStorage.setItem('totoai_key_football',  state.settings.footballKey);
     if (d.vapidPublicKey) state.settings.vapidPublicKey=d.vapidPublicKey;
 
+    // Laad ook kosten uit Firebase
+    await loadCostsFromFirebase();
+
     try {
       const br = await fetch(`${FB_DB}/${basePath}/backup.json?auth=${token}`);
       if (br.ok) {
@@ -667,14 +670,34 @@ async function loadCostsFromFirebase() {
     const snap = await firebase.database().ref(`users/${uid}/costs`).get();
     if (snap.exists()) {
       const fbCosts = snap.val();
-      // Neem het hoogste van localStorage en Firebase
       const local = state.costs || {calls:0,tokensIn:0,tokensOut:0,totalUSD:0};
-      state.costs = {
-        calls:    Math.max(local.calls||0,    fbCosts.calls||0),
-        tokensIn: Math.max(local.tokensIn||0, fbCosts.tokensIn||0),
-        tokensOut:Math.max(local.tokensOut||0,fbCosts.tokensOut||0),
-        totalUSD: Math.max(local.totalUSD||0, fbCosts.totalUSD||0),
-      };
+      // Firebase is leidend als lastUpdated nieuwer is, anders optellen
+      const fbNewer = fbCosts.lastUpdated && (!local.lastUpdated || fbCosts.lastUpdated > local.lastUpdated);
+      if (fbNewer) {
+        // Firebase heeft nieuwere data — gebruik Firebase als basis + voeg lokale nieuwe toe
+        const localNew = {
+          calls:    Math.max(0, (local.calls||0)    - (fbCosts.calls||0)),
+          tokensIn: Math.max(0, (local.tokensIn||0) - (fbCosts.tokensIn||0)),
+          tokensOut:Math.max(0, (local.tokensOut||0)- (fbCosts.tokensOut||0)),
+          totalUSD: Math.max(0, (local.totalUSD||0) - (fbCosts.totalUSD||0)),
+        };
+        state.costs = {
+          calls:    (fbCosts.calls||0)    + localNew.calls,
+          tokensIn: (fbCosts.tokensIn||0) + localNew.tokensIn,
+          tokensOut:(fbCosts.tokensOut||0)+ localNew.tokensOut,
+          totalUSD: (fbCosts.totalUSD||0) + localNew.totalUSD,
+          lastUpdated: fbCosts.lastUpdated,
+        };
+      } else {
+        // Lokale data is nieuwer — neem hoogste
+        state.costs = {
+          calls:    Math.max(local.calls||0,    fbCosts.calls||0),
+          tokensIn: Math.max(local.tokensIn||0, fbCosts.tokensIn||0),
+          tokensOut:Math.max(local.tokensOut||0,fbCosts.tokensOut||0),
+          totalUSD: Math.max(local.totalUSD||0, fbCosts.totalUSD||0),
+          lastUpdated: local.lastUpdated || fbCosts.lastUpdated,
+        };
+      }
       saveState();
       updateCostUI();
     }
@@ -698,6 +721,7 @@ function trackTokenUsage(model, inputTokens, outputTokens) {
   state.costs.tokensIn  += inputTokens||0;
   state.costs.tokensOut += outputTokens||0;
   state.costs.totalUSD  += cost;
+  state.costs.lastUpdated = new Date().toISOString();
   saveState();
   updateCostUI();
   // Async sync naar Firebase

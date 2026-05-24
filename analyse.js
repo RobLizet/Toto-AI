@@ -2230,24 +2230,6 @@ function renderScanLog() {
     + '<button class="small-action-btn" style="color:#dc2626;" onclick="if(confirm(\'Scan log wissen?\')){state.scanLog=[];saveState();renderScanLog();}">🗑</button>'
     + '</div></div>';
 
-  html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.8rem 1rem;margin-bottom:.8rem;">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">'
-    + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:var(--muted);">VOORTGANG NAAR 100 PICKS</div>'
-    + '<div style="display:flex;align-items:center;gap:.4rem;">'
-    + '<span style="font-size:1.2rem;">' + (function(){
-        if (!settled.length) return '😶';
-        if (roi >= 15 && hitrate >= 40) return '😄';
-        if (roi >= 5  || hitrate >= 35) return '🙂';
-        if (roi >= 0  && hitrate >= 28) return '😐';
-        if (roi >= -10)                  return '😕';
-        return '😞';
-      })() + '</span>'
-    + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:var(--accent);">' + allPicks.length + '/100</div>'
-    + '</div>'
-    + '</div>'
-    + '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:6px;overflow:hidden;">'
-    + '<div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:' + Math.min(100,allPicks.length) + '%;transition:width .4s;"></div>'
-    + '</div></div>';
 
   html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:.8rem;">'
     + statCard(allPicks.length, 'PICKS' + helpBtn('scan-log'), '#2563eb')
