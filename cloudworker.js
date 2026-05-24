@@ -1,9 +1,9 @@
-// TOTO AI WORKER v78
-// v78: Scan tijdvenster uitgebreid — NS wedstrijden tot 4 uur vooruit
-// v77: Supabase non-blocking + Prefer header fix
+// TOTO AI WORKER v79
+// v79: Subrequest limiet fix — batch kleiner, odds sequentieel, minder parallel calls
+// v78: Bookmaker fallback 8→6→1, scan tijdvenster 4 uur vooruit
 // v75: Supabase integratie
 
-const VERSION = 'v78'; // v78: scan tijdvenster fix
+const VERSION = 'v79'; // v79: subrequest limiet fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -428,30 +428,31 @@ async function handleProxy(urlParam, request, env) {
 // ── Odds ophalen voor wedstrijden ────────────────────────
 async function fetchOddsForFixtures(fixtureIds, env) {
   const oddsMap = {};
-  const BOOKMAKERS = [8, 6, 1]; // Probeer in volgorde
+  // Gebruik league-gebaseerde odds ipv per-fixture (veel minder subrequests)
+  // Haal unieke leagues op uit batch en pak odds per league
   try {
-    for (const bm_id of BOOKMAKERS) {
-      const missing = fixtureIds.filter(id => !oddsMap[id]);
-      if (!missing.length) break;
-      const results = await Promise.all(
-        missing.map(id => apif(`/odds?fixture=${id}&bookmaker=${bm_id}&bet=1`, env))
-      );
-      results.forEach((data, idx) => {
-        const fid = missing[idx];
-        if (!data || !data.length) return;
-        const bookmakers = data[0]?.bookmakers || [];
-        const bm = bookmakers[0];
-        if (!bm) return;
-        const bet = bm.bets?.find(b => b.id === 1);
-        if (!bet) return;
-        const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
-        const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
-        const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
-        if (home > 1) {
-          oddsMap[fid] = { home, draw, away };
-          console.log(`[Odds] fixture ${fid} odds via bookmaker ${bm_id}`);
-        }
-      });
+    // Per fixture, sequentieel ophalen met bookmaker 8 eerst dan 6
+    for (const id of fixtureIds) {
+      let found = false;
+      for (const bm_id of [8, 6, 1]) {
+        if (found) break;
+        try {
+          const data = await apif(`/odds?fixture=${id}&bookmaker=${bm_id}&bet=1`, env);
+          if (!data || !data.length) continue;
+          const bm = data[0]?.bookmakers?.[0];
+          if (!bm) continue;
+          const bet = bm.bets?.find(b => b.id === 1);
+          if (!bet) continue;
+          const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
+          const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
+          const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
+          if (home > 1) {
+            oddsMap[id] = { home, draw, away };
+            console.log(`[Odds] fixture ${id} via bm${bm_id}: ${home}/${draw}/${away}`);
+            found = true;
+          }
+        } catch(e) { continue; }
+      }
     }
   } catch(e) {
     console.error('[Odds] Fout bij ophalen:', e);
@@ -773,18 +774,15 @@ async function runScan(env, force = false) {
   console.log(`[Scan] Fixtures ophalen voor ${today} en ${tomorrowStr}...`);
   
   // Haal fixtures op per competitie (zelfde aanpak als app) voor betere coverage
-  const SCAN_LEAGUES = [39, 88, 94, 78, 61, 135, 140, 2, 3, 848, 40, 119, 1];
+  // Beperkte leagues voor subrequest budget (max ~10 fixture calls)
+  const SCAN_LEAGUES = [39, 88, 78, 61, 135, 140, 2, 3, 848];
   
   try {
-    // Seizoen: europese competities lopen aug-mei, dus mei 2026 = season=2025
-    // WK en zomercompetities gebruiken season=2026
-    const WK_LEAGUES = [1, 2, 3, 848]; // WK + internationale toernooien
-    const fixturePromises = SCAN_LEAGUES.flatMap(lid => {
+    const WK_LEAGUES = [2, 3, 848];
+    // Alleen vandaag ophalen om subrequests te besparen
+    const fixturePromises = SCAN_LEAGUES.map(lid => {
       const season = WK_LEAGUES.includes(lid) ? 2026 : 2025;
-      return [
-        apif(`/fixtures?league=${lid}&season=${season}&date=${today}&timezone=Europe/Amsterdam`, env),
-        apif(`/fixtures?league=${lid}&season=${season}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
-      ];
+      return apif(`/fixtures?league=${lid}&season=${season}&date=${today}&timezone=Europe/Amsterdam`, env);
     });
     const fixtureResults = await Promise.all(fixturePromises);
     const fixtures = fixtureResults.flat().filter(Boolean);
@@ -837,7 +835,7 @@ async function runScan(env, force = false) {
     return ta - tb;
   });
 
-  const batch = allMatches.slice(0, 15); // Max 15 voor worker CPU limit
+  const batch = allMatches.slice(0, 8); // Max 8 voor subrequest limiet
   console.log(`[Scan] ${batch.length} wedstrijden gevonden, odds ophalen...`);
 
   const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
