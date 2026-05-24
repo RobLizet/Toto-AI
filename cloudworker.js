@@ -428,27 +428,35 @@ async function handleProxy(urlParam, request, env) {
 // ── Odds ophalen voor wedstrijden ────────────────────────
 async function fetchOddsForFixtures(fixtureIds, env) {
   const oddsMap = {};
-  // Alle fixtures parallel ophalen (max 15 tegelijk)
+  const BOOKMAKERS = [8, 6, 1]; // Probeer in volgorde
   try {
-    const results = await Promise.all(
-      fixtureIds.map(id => apif(`/odds?fixture=${id}&bookmaker=8&bet=1`, env))
-    );
-    results.forEach((data, idx) => {
-      const fid = fixtureIds[idx];
-      if (!data || !data.length) return;
-      const bookmakers = data[0]?.bookmakers || [];
-      const bm = bookmakers[0];
-      if (!bm) return;
-      const bet = bm.bets?.find(b => b.id === 1);
-      if (!bet) return;
-      const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
-      const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
-      const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
-      if (home > 1) oddsMap[fid] = { home, draw, away };
-    });
+    for (const bm_id of BOOKMAKERS) {
+      const missing = fixtureIds.filter(id => !oddsMap[id]);
+      if (!missing.length) break;
+      const results = await Promise.all(
+        missing.map(id => apif(`/odds?fixture=${id}&bookmaker=${bm_id}&bet=1`, env))
+      );
+      results.forEach((data, idx) => {
+        const fid = missing[idx];
+        if (!data || !data.length) return;
+        const bookmakers = data[0]?.bookmakers || [];
+        const bm = bookmakers[0];
+        if (!bm) return;
+        const bet = bm.bets?.find(b => b.id === 1);
+        if (!bet) return;
+        const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
+        const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
+        const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
+        if (home > 1) {
+          oddsMap[fid] = { home, draw, away };
+          console.log(`[Odds] fixture ${fid} odds via bookmaker ${bm_id}`);
+        }
+      });
+    }
   } catch(e) {
     console.error('[Odds] Fout bij ophalen:', e);
   }
+  console.log(`[Odds] ${Object.keys(oddsMap).length}/${fixtureIds.length} fixtures met odds`);
   return oddsMap;
 }
 
