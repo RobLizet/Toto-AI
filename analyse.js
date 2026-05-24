@@ -43,7 +43,7 @@ function calculateConfidenceV20(pick, leagueId, calibration) {
 }
 
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v20.2
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v20.9
 // ═══════════════════════════════════════════════════════
 
 // ── Anthropic fetch helper ────────────────────────────
@@ -2172,7 +2172,7 @@ function renderScanLog() {
   const log       = state.scanLog || [];
 
   // ── Zoek/filter state ──────────────────────────────
-  if (!window._scanFilter) window._scanFilter = { q:'', conf:'', pick:'', comp:'', status:'' };
+  if (!window._scanFilter) window._scanFilter = { q:'', conf:'', pick:'', comp:'', status:'', odds:'', sort:'newest', sharp:false };
   const F = window._scanFilter;
 
   // Gefilterde picks voor stats
@@ -2187,6 +2187,15 @@ function renderScanLog() {
     }
     if (F.comp   && (p.comp||'').toLowerCase().indexOf(F.comp.toLowerCase()) === -1) return false;
     if (F.status && p.status !== F.status) return false;
+    if (F.odds) {
+      const o = parseFloat(p.odds) || 0;
+      if (F.odds === '1.0-1.5' && !(o >= 1.0 && o < 1.5)) return false;
+      if (F.odds === '1.5-2.0' && !(o >= 1.5 && o < 2.0)) return false;
+      if (F.odds === '2.0-3.0' && !(o >= 2.0 && o < 3.0)) return false;
+      if (F.odds === '3.0-5.0' && !(o >= 3.0 && o < 5.0)) return false;
+      if (F.odds === '5.0+'    && !(o >= 5.0)) return false;
+    }
+    if (F.sharp && !p.sharp) return false;
     if (F.q) {
       const q = F.q.toLowerCase();
       const haystack = ((p.match||'') + ' ' + (p.comp||'') + ' ' + (p.pickLabel||p.pick||'')).toLowerCase();
@@ -2196,9 +2205,23 @@ function renderScanLog() {
   }
 
   // Filter log: toon alleen scans met minstens 1 matchende pick
-  const filteredLog = F.q || F.conf || F.pick || F.comp || F.status
+  const _anyFilter = F.q || F.conf || F.pick || F.comp || F.status || F.odds || F.sharp;
+  let filteredLog = _anyFilter
     ? log.map(s => ({ ...s, picks: s.picks.filter(pickMatchesFilter) })).filter(s => s.picks.length > 0)
-    : log;
+    : [...log];
+
+  // Sortering
+  if (F.sort === 'value') {
+    filteredLog = filteredLog.map(s => ({ ...s, picks: [...s.picks].sort((a,b) => (b.value||0)-(a.value||0)) }));
+    filteredLog.sort((a,b) => Math.max(...b.picks.map(p=>p.value||0)) - Math.max(...a.picks.map(p=>p.value||0)));
+  } else if (F.sort === 'odds') {
+    filteredLog = filteredLog.map(s => ({ ...s, picks: [...s.picks].sort((a,b) => (b.odds||0)-(a.odds||0)) }));
+    filteredLog.sort((a,b) => Math.max(...b.picks.map(p=>p.odds||0)) - Math.max(...a.picks.map(p=>p.odds||0)));
+  } else if (F.sort === 'conf') {
+    filteredLog = filteredLog.map(s => ({ ...s, picks: [...s.picks].sort((a,b) => (b.confidence||0)-(a.confidence||0)) }));
+    filteredLog.sort((a,b) => Math.max(...b.picks.map(p=>p.confidence||0)) - Math.max(...a.picks.map(p=>p.confidence||0)));
+  }
+  // 'newest' = default volgorde (al gesorteerd)
 
   const allPicks  = filteredLog.flatMap(s => s.picks);
   const settled   = allPicks.filter(p => p.status === 'win' || p.status === 'lose');
@@ -2261,13 +2284,13 @@ function renderScanLog() {
     + '</div></div>';
 
   // ── Zoek & Filter bar ─────────────────────────────
-  const activeFilters = F.q || F.conf || F.pick || F.comp || F.status;
+  const activeFilters = F.q || F.conf || F.pick || F.comp || F.status || F.odds || F.sharp || F.sort !== 'newest';
   html += '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.7rem .8rem;margin-bottom:.8rem;">'
     + '<div style="display:flex;gap:.4rem;margin-bottom:.5rem;">'
     + '<input id="scanSearchQ" type="text" placeholder="🔍 Zoek wedstrijd, competitie..." value="' + (F.q||'') + '" '
     + 'oninput="window._scanFilter.q=this.value;renderScanLog()" '
     + 'style="flex:1;padding:.35rem .6rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--text);outline:none;" />'
-    + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\'};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
+    + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\',odds:\'\',sort:\'newest\',sharp:false};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
     + '</div>'
     + '<div style="display:flex;gap:.3rem;flex-wrap:wrap;">'
     + '<select onchange="window._scanFilter.conf=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.conf?'rgba(124,58,237,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
@@ -2286,6 +2309,30 @@ function renderScanLog() {
     + '<option value="lose"'+(F.status==="lose"?' selected':'')+'>❌ Verlies</option>'
     + '<option value="pending"'+(F.status==="pending"?' selected':'')+'>⏳ Open</option>'
     + '</select>'
+
+    // Odds range filter
+    + '<select onchange="window._scanFilter.odds=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.odds?'rgba(124,58,237,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<option value="">Odds</option>'
+    + '<option value="1.0-1.5"'+(F.odds==="1.0-1.5"?' selected':'')+'>1.0–1.5</option>'
+    + '<option value="1.5-2.0"'+(F.odds==="1.5-2.0"?' selected':'')+'>1.5–2.0</option>'
+    + '<option value="2.0-3.0"'+(F.odds==="2.0-3.0"?' selected':'')+'>2.0–3.0 ⭐</option>'
+    + '<option value="3.0-5.0"'+(F.odds==="3.0-5.0"?' selected':'')+'>3.0–5.0</option>'
+    + '<option value="5.0+"'+(F.odds==="5.0+"?' selected':'')+'>5.0+</option>'
+    + '</select>'
+
+    // Sorteer optie
+    + '<select onchange="window._scanFilter.sort=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.sort!=="newest"?'rgba(124,58,237,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<option value="newest"'+(F.sort==="newest"?' selected':'')+'>🕐 Nieuwst</option>'
+    + '<option value="value"'+(F.sort==="value"?' selected':'')+'>📈 Value%</option>'
+    + '<option value="odds"'+(F.sort==="odds"?' selected':'')+'>🎯 Odds</option>'
+    + '<option value="conf"'+(F.sort==="conf"?' selected':'')+'>🔒 Conf</option>'
+    + '</select>'
+
+    // Sharp money toggle
+    + '<button onclick="window._scanFilter.sharp=!window._scanFilter.sharp;renderScanLog()" '
+    + 'style="padding:.28rem .6rem;border-radius:8px;border:1px solid ' + (F.sharp?'rgba(239,68,68,.4)':'var(--border)') + ';background:' + (F.sharp?'rgba(239,68,68,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:' + (F.sharp?'#ef4444':'var(--text)') + ';cursor:pointer;white-space:nowrap;">'
+    + '🔥 Sharp' + (F.sharp?' ON':'') + '</button>'
+
     + '</div>'
     + (activeFilters ? '<div style="margin-top:.4rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">' + allPicks.length + ' picks gevonden in ' + filteredLog.length + ' scans</div>' : '')
     + '</div>';
@@ -2538,10 +2585,11 @@ function renderScanLog() {
           + 'style="font-family:monospace;font-size:.44rem;padding:2px 6px;border-radius:6px;'
           + 'background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);'
           + 'color:#dc2626;cursor:pointer;white-space:nowrap;flex-shrink:0;">🗑</button>';
+        const sharpBadge = p.sharp ? '<span style="font-size:.38rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;margin-left:.3rem;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">🔥 SHARP ' + (p.sharpMove ? p.sharpMove.toFixed(1)+'%' : '') + '</span>' : '';
         html += '<div style="display:flex;align-items:center;gap:.4rem;padding:.3rem 0;border-top:1px solid var(--border);">'
           + '<div style="width:1.6rem;text-align:center;font-size:.8rem;">' + icon + '</div>'
           + '<div style="flex:1;min-width:0;">'
-          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.58rem;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + '</div>'
+          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.58rem;font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + sharpBadge + '</div>'
           + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">' + (p.pickLabel||p.pick) + ' @ ' + p.odds + ' &middot; ' + (p.value||0).toFixed(1) + '% value &middot; conf ' + p.confidence + '/10</div>'
           + '</div>'
           + (p.score ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:var(--muted);">' + p.score + '</div>' : '')
