@@ -1,8 +1,9 @@
-// TOTO AI WORKER v77
+// TOTO AI WORKER v78
+// v78: Scan tijdvenster uitgebreid — NS wedstrijden tot 4 uur vooruit
 // v77: Supabase non-blocking + Prefer header fix
 // v75: Supabase integratie
 
-const VERSION = 'v77'; // v77: Supabase fix
+const VERSION = 'v78'; // v78: scan tijdvenster fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -35,36 +36,28 @@ async function fb(env, path, method = 'GET', body = null) {
 // ── Supabase helper ──────────────────────────────────────
 async function sb(env, table, method = 'GET', body = null, query = '') {
   try {
-    if (!env.SUPABASE_URL || !env.SUPABASE_KEY) {
-      console.error('[SB] Secrets ontbreken');
-      return null;
-    }
     const url = `${env.SUPABASE_URL}/rest/v1/${table}${query}`;
-    const isUpsert = query.includes('on_conflict');
-    const prefer = isUpsert
-      ? 'return=minimal,resolution=merge-duplicates'
-      : method === 'POST' ? 'return=minimal' : 'return=representation';
     const res = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
         'apikey': env.SUPABASE_KEY,
         'Authorization': `Bearer ${env.SUPABASE_KEY}`,
-        'Prefer': prefer,
+        'Prefer': query.includes('on_conflict')
+          ? 'return=minimal,resolution=merge-duplicates'
+          : method === 'POST' ? 'return=minimal' : 'return=representation',
       },
       body: body ? JSON.stringify(body) : null,
     });
-    const responseText = await res.text();
     if (!res.ok) {
-      console.error(`[SB] ${method} ${table} fout ${res.status}:`, responseText);
+      const err = await res.text();
+      console.error(`[SB] ${method} ${table} fout ${res.status}:`, err);
       return null;
     }
-    console.log(`[SB] ${method} ${table} OK ${res.status}`);
-    if (method === 'DELETE') return true;
-    if (method === 'POST' && !responseText) return true;
-    try { return JSON.parse(responseText); } catch { return true; }
+    if (method === 'POST' || method === 'DELETE') return true;
+    return await res.json();
   } catch(e) {
-    console.error('[SB] fetch fout:', e.message);
+    console.error('[SB] fetch fout:', e);
     return null;
   }
 }
@@ -601,8 +594,8 @@ async function verifyYesterdayPicks(env) {
       verifiedAt: new Date().toISOString(),
       clv: clv, // Closing Line Value
     };
-    // Supabase: CLV opslaan na settlement (non-blocking)
-    try { await saveCLV(pick, clv, won, env); } catch(e) { console.error('[SB] CLV save fout:', e.message); }
+    // Supabase: CLV opslaan na settlement
+    await saveCLV(pick, clv, won, env);
     updated++;
   }
 
@@ -807,7 +800,7 @@ async function runScan(env, force = false) {
         const kickoff = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
         const isLive = ['1H','2H','HT','ET','BT','P'].includes(status);
         const isNS = ['NS','TBD','PST'].includes(status);
-        return isLive || (isNS && kickoff > now - 30 * 60 * 1000);
+        return isLive || (isNS && kickoff > now - 60 * 60 * 1000 && kickoff < now + 4 * 60 * 60 * 1000);
       })
       .map(f => ({
         fixtureId: f.fixture?.id,
