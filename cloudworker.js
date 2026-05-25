@@ -1,11 +1,11 @@
-// TOTO AI WORKER v84
-// v84: Fix force=true overrulet nu ook autoScanEnabled — handmatige scan werkte niet
+// TOTO AI WORKER v85
+// v85: Handmatige scan pakt alle wedstrijden van de dag (niet alleen komende 4u)
 // v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v84'; // v84: force fix // v83: datum-gebaseerde league switching
+const VERSION = 'v85'; // v85: force scan tijdvenster fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -798,13 +798,18 @@ async function runScan(env, force = false) {
     console.log(`[Scan] ${unique.length} unieke fixtures gevonden over ${SCAN_LEAGUES.length} leagues`);
 
     const nowMs = Date.now();
+    // Bij handmatige scan: alle wedstrijden van vandaag (tot midnight +1u)
+    // Bij automatische scan: alleen wedstrijden die binnen 4u beginnen
+    const endOfDay = new Date(today + 'T23:59:59').getTime() + 60 * 60 * 1000;
+    const timeWindow = force ? endOfDay : nowMs + 4 * 60 * 60 * 1000;
+
     allMatches = unique
       .filter(f => {
         const status = f.fixture?.status?.short;
         const kickoff = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
         const isLive = ['1H','2H','HT','ET','BT','P'].includes(status);
         const isNS = ['NS','TBD','PST'].includes(status);
-        return isLive || (isNS && kickoff > nowMs - 60 * 60 * 1000 && kickoff < nowMs + 4 * 60 * 60 * 1000);
+        return isLive || (isNS && kickoff > nowMs - 60 * 60 * 1000 && kickoff < timeWindow);
       })
       .map(f => ({
         fixtureId: f.fixture?.id,
