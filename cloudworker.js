@@ -1,10 +1,10 @@
 // TOTO AI WORKER v81
-// v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
+// v81: Scan batch 3, analyse calls beperkt, verify herschreven
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v81'; // v81: verify subrequest fix
+const VERSION = 'v81'; // v81: subrequest fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -291,7 +291,7 @@ function calcMarketSignal(movement, pick) {
 }
 
 // ── Fetch met retry ──────────────────────────────────────
-async function fetchWithRetry(url, options, retries = 2) {
+async function fetchWithRetry(url, options, retries = 0) { // retries=0: geen retry voor subrequest budget
   for (let i = 0; i <= retries; i++) {
     try {
       const res = await fetch(url, options);
@@ -494,9 +494,7 @@ function normalizeDate(dateStr) {
 async function verifyYesterdayPicks(env) {
   const today = new Date();
   today.setHours(0,0,0,0);
-
   const picks = await fb(env, 'picks') || {};
-
   const cutoff = new Date(today);
   cutoff.setDate(cutoff.getDate() - 7);
   const cutoffStr = cutoff.toISOString().split('T')[0];
@@ -509,36 +507,28 @@ async function verifyYesterdayPicks(env) {
     return normalized >= cutoffStr && normalized < todayStr;
   });
 
-  if (!toVerify.length) {
-    console.log('[Verify] Geen pending picks om te verifiëren');
-    return;
-  }
-
+  if (!toVerify.length) { console.log('[Verify] Geen pending picks'); return; }
   console.log(`[Verify] ${toVerify.length} picks te verifiëren`);
 
-  // Max 10 picks per run — specifieke fixture IDs ophalen (niet alle FT wedstrijden)
-  const batch = toVerify.slice(0, 10);
+  // Max 8 picks — specifieke fixture IDs (niet alle FT wedstrijden)
+  const batch = toVerify.slice(0, 8);
   const fixtureIds = [...new Set(batch.map(([, p]) => p.fixtureId).filter(Boolean))];
 
-  // Parallel fixture resultaten ophalen — max 10 calls
   const fixtureResults = await Promise.all(
     fixtureIds.map(id => apif(`/fixtures?id=${id}`, env))
   );
 
   const resultMap = {};
   fixtureResults.forEach((data, i) => {
-    const fid = String(fixtureIds[i]);
     const f = data?.[0];
     if (!f) return;
-    const status = f.fixture?.status?.short;
-    if (!['FT','AET','PEN'].includes(status)) return;
-    resultMap[fid] = { home: f.goals?.home ?? 0, away: f.goals?.away ?? 0, status };
+    if (!['FT','AET','PEN'].includes(f.fixture?.status?.short)) return;
+    resultMap[String(fixtureIds[i])] = { home: f.goals?.home ?? 0, away: f.goals?.away ?? 0 };
   });
 
-  console.log(`[Verify] ${Object.keys(resultMap).length}/${fixtureIds.length} fixtures met resultaat`);
+  console.log(`[Verify] ${Object.keys(resultMap).length}/${fixtureIds.length} met resultaat`);
   if (!Object.keys(resultMap).length) return;
 
-  // CLV odds parallel ophalen voor picks met resultaat
   const picksWithResult = batch.filter(([, p]) => resultMap[String(p.fixtureId)]);
   const clvOdds = await Promise.all(
     picksWithResult.map(([, p]) => apif(`/odds?fixture=${p.fixtureId}&bookmaker=8&bet=1`, env))
@@ -549,7 +539,6 @@ async function verifyYesterdayPicks(env) {
     const [id, pick] = picksWithResult[i];
     const result = resultMap[String(pick.fixtureId)];
     if (!result) continue;
-
     const hg = result.home, ag = result.away;
     let won = false;
     const p = pick.betType || pick.pick || '1';
@@ -562,625 +551,20 @@ async function verifyYesterdayPicks(env) {
 
     let clv = null;
     try {
-      const closingOdds = clvOdds[i];
-      if (closingOdds?.length > 0) {
-        const bm = closingOdds[0]?.bookmakers?.[0];
-        const bet = bm?.bets?.find(b => b.id === 1);
+      const co = clvOdds[i];
+      if (co?.length > 0) {
+        const bet = co[0]?.bookmakers?.[0]?.bets?.find(b => b.id === 1);
         if (bet) {
-          const closingOdd = parseFloat(
-            bet.values?.find(v =>
-              (p === '1' && v.value === 'Home') ||
-              (p === 'X' && v.value === 'Draw') ||
-              (p === '2' && v.value === 'Away')
-            )?.odd || 0
-          );
-          if (closingOdd > 1 && pick.odds > 1) {
-            clv = parseFloat(((pick.odds / closingOdd - 1) * 100).toFixed(1));
-          }
+          const cOdd = parseFloat(bet.values?.find(v =>
+            (p==='1'&&v.value==='Home')||(p==='X'&&v.value==='Draw')||(p==='2'&&v.value==='Away')
+          )?.odd || 0);
+          if (cOdd > 1 && pick.odds > 1) clv = parseFloat(((pick.odds/cOdd-1)*100).toFixed(1));
         }
       }
     } catch(e) {}
 
-    picks[id] = {
-      ...pick,
-      score: `${hg}-${ag}`,
-      status: won ? 'win' : 'lose',
-      processed: true,
-      verifiedAt: new Date().toISOString(),
-      clv,
-    };
-    try { awa// TOTO AI WORKER v81
-// v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
-// v80: Sequentieel scan+verify
-// v79: Subrequest fixes, bookmaker fallback, tijdvenster
-// v75: Supabase integratie
-
-const VERSION = 'v81'; // v81: verify subrequest fix
-const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version, Authorization',
-};
-
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...CORS }
-  });
-}
-
-async function fb(env, path, method = 'GET', body = null) {
-  try {
-    const res = await fetch(`${FB_DB}/${path}.json?auth=${env.FB_API_KEY}`, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : null
-    });
-    return await res.json();
-  } catch(e) {
-    console.error('FB error', e);
-    return null;
-  }
-}
-
-// ── Supabase helper ──────────────────────────────────────
-async function sb(env, table, method = 'GET', body = null, query = '') {
-  try {
-    const url = `${env.SUPABASE_URL}/rest/v1/${table}${query}`;
-    const res = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': env.SUPABASE_KEY,
-        'Authorization': `Bearer ${env.SUPABASE_KEY}`,
-        'Prefer': query.includes('on_conflict')
-          ? 'resolution=merge-duplicates'
-          : method === 'POST' ? 'return=minimal' : 'return=representation',
-      },
-      body: body ? JSON.stringify(body) : null,
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      console.error(`[SB] ${method} ${table} fout ${res.status}:`, err);
-      return null;
-    }
-    if (method === 'POST' || method === 'DELETE') return true;
-    return await res.json();
-  } catch(e) {
-    console.error('[SB] fetch fout:', e);
-    return null;
-  }
-}
-
-// ── Supabase: odds snapshots opslaan ─────────────────────
-async function saveOddsSnapshots(oddsMap, matches, env) {
-  const today = new Date().toISOString().split('T')[0];
-  const rows = [];
-  matches.forEach(m => {
-    const odds = oddsMap[m.fixtureId];
-    if (!odds) return;
-    rows.push({
-      fixture_id: m.fixtureId,
-      bookmaker: 8,
-      home_odds: odds.home,
-      draw_odds: odds.draw,
-      away_odds: odds.away,
-      match_date: m.matchDate || today,
-      league_id: m.leagueId || null,
-      captured_at: new Date().toISOString(),
-    });
-  });
-  if (!rows.length) return;
-  await sb(env, 'odds_snapshots', 'POST', rows, '?on_conflict=fixture_id,match_date');
-  console.log(`[SB] ${rows.length} odds snapshots opgeslagen`);
-}
-
-// ── Supabase: sharp money detectie ───────────────────────
-async function detectSharpMoney(oddsMap, matches, env) {
-  const today = new Date().toISOString().split('T')[0];
-  const existing = await sb(env, 'odds_snapshots', 'GET', null,
-    `?match_date=eq.${today}&select=fixture_id,home_odds,draw_odds,away_odds`
-  );
-  if (!existing || !existing.length) return {};
-
-  const openMap = {};
-  existing.forEach(r => {
-    openMap[r.fixture_id] = {
-      home: parseFloat(r.home_odds),
-      draw: parseFloat(r.draw_odds),
-      away: parseFloat(r.away_odds),
-    };
-  });
-
-  const sharpSignals = {};
-  const movements = [];
-  const SHARP_THRESHOLD = 5;
-
-  matches.forEach(m => {
-    const current = oddsMap[m.fixtureId];
-    const opening = openMap[m.fixtureId];
-    if (!current || !opening) return;
-    const pickMap = {
-      '1': { open: opening.home, curr: current.home },
-      'X': { open: opening.draw, curr: current.draw },
-      '2': { open: opening.away, curr: current.away },
-    };
-    Object.entries(pickMap).forEach(([pick, { open, curr }]) => {
-      if (!open || !curr || open <= 1 || curr <= 1) return;
-      const movPct = parseFloat((((curr - open) / open) * 100).toFixed(1));
-      if (Math.abs(movPct) >= SHARP_THRESHOLD) {
-        const direction = movPct < 0 ? 'steam' : 'drift';
-        movements.push({ fixture_id: m.fixtureId, pick, from_odds: open, to_odds: curr,
-          movement_pct: movPct, direction, detected_at: new Date().toISOString() });
-        if (direction === 'steam') {
-          sharpSignals[m.fixtureId] = sharpSignals[m.fixtureId] || {};
-          sharpSignals[m.fixtureId][pick] = { movement: movPct };
-          console.log(`[Sharp] ${m.home} vs ${m.away} — ${pick} ${movPct}% steam`);
-        }
-      }
-    });
-  });
-
-  if (movements.length) {
-    await sb(env, 'odds_movements', 'POST', movements);
-    console.log(`[SB] ${movements.length} odds bewegingen opgeslagen`);
-  }
-  return sharpSignals;
-}
-
-// ── Supabase: CLV opslaan na settlement ──────────────────
-async function saveCLV(pick, clv, won, env) {
-  if (clv === null || clv === undefined) return;
-  await sb(env, 'clv_results', 'POST', [{
-    fixture_id: pick.fixtureId,
-    pick: pick.pick,
-    our_odds: pick.odds,
-    closing_odds: pick.odds,
-    clv_pct: clv,
-    status: won ? 'win' : 'lose',
-    match_date: pick.matchDate || null,
-    league_id: pick.leagueId || null,
-    settled_at: new Date().toISOString(),
-  }]);
-}
-
-// ── Supabase: analytics endpoint ─────────────────────────
-async function handleAnalytics(env) {
-  try {
-    const clvData = await sb(env, 'clv_results', 'GET', null,
-      '?select=clv_pct,status,league_id,match_date&order=settled_at.desc&limit=200'
-    ) || [];
-    const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
-    const sharpData = await sb(env, 'odds_movements', 'GET', null,
-      `?detected_at=gte.${sevenDaysAgo}T00:00:00Z&direction=eq.steam&order=movement_pct.asc&limit=50`
-    ) || [];
-
-    const withCLV = clvData.filter(r => r.clv_pct !== null);
-    const avgCLV = withCLV.length
-      ? parseFloat((withCLV.reduce((s,r) => s + parseFloat(r.clv_pct), 0) / withCLV.length).toFixed(1))
-      : null;
-
-    return json({
-      clv: {
-        total: clvData.length,
-        avgCLV,
-        positiveCLVPct: withCLV.length
-          ? Math.round(withCLV.filter(r => parseFloat(r.clv_pct) > 0).length / withCLV.length * 100)
-          : null,
-      },
-      sharpMoney: {
-        steamMovements7d: sharpData.length,
-        topSteam: sharpData.slice(0, 5).map(r => ({
-          fixtureId: r.fixture_id, pick: r.pick,
-          movement: r.movement_pct, detectedAt: r.detected_at,
-        })),
-      },
-    });
-  } catch(e) {
-    console.error('[Analytics] fout:', e);
-    return json({ error: 'Analytics mislukt' }, 500);
-  }
-}
-
-
-// ═══════════════════════════════════════════════════════
-// v20 INTELLIGENCE CORE
-// ═══════════════════════════════════════════════════════
-
-// League kwaliteitsfactoren (hogere factor = betrouwbaardere data)
-const LEAGUE_FACTORS = {
-  39: 1.10,  // Premier League
-  140: 1.08, // La Liga
-  78: 1.08,  // Bundesliga
-  135: 1.07, // Serie A
-  61: 1.05,  // Ligue 1
-  88: 1.00,  // Eredivisie
-  94: 0.95,  // Jupiler Pro
-  2: 1.12,   // Champions League
-  3: 1.10,   // Europa League
-  848: 1.05, // Conference League
-  40: 0.98,  // Championship
-  119: 0.90, // Eredivisie playoffs
-};
-
-// Odds bucket factoren (meest value zit in 1.5-3.5)
-const ODDS_BUCKET_FACTORS = {
-  '1.0-1.5': 0.75,
-  '1.5-2.0': 0.95,
-  '2.0-2.5': 1.05,
-  '2.5-3.0': 1.08,
-  '3.0-3.5': 1.05,
-  '3.5-5.0': 0.90,
-  '5.0+':    0.70,
-};
-
-function getOddsBucket(odds) {
-  if (odds < 1.5) return '1.0-1.5';
-  if (odds < 2.0) return '1.5-2.0';
-  if (odds < 2.5) return '2.0-2.5';
-  if (odds < 3.0) return '2.5-3.0';
-  if (odds < 3.5) return '3.0-3.5';
-  if (odds < 5.0) return '3.5-5.0';
-  return '5.0+';
-}
-
-// Confidence Engine v1
-function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, leagueId, odds, calibFactor }) {
-  // Gebruik historische calibratie factor als die beschikbaar is, anders statische
-  const staticFactor = LEAGUE_FACTORS[leagueId] || 0.92;
-  const leagueFactor = calibFactor ? (staticFactor * 0.5 + calibFactor * 0.5) : staticFactor;
-  const bucketFactor = ODDS_BUCKET_FACTORS[getOddsBucket(odds)] || 0.90;
-
-  // Gewogen score (0-100)
-  const raw =
-    (Math.min(modelProb, 100) * 0.40) +   // AI kans gewicht
-    (Math.min(Math.max(value, 0), 50) * 2 * 0.30) + // value gewicht (max 50% = 100pts)
-    (Math.min(dataQuality, 100) * 0.20) +  // datakwaliteit
-    (Math.min(marketSignal, 100) * 0.10);  // marktsignaal
-
-  const final = Math.max(0, Math.min(100, raw * leagueFactor * bucketFactor));
-
-  return {
-    raw: parseFloat(raw.toFixed(1)),
-    final: parseFloat(final.toFixed(1)),
-    leagueFactor,
-    bucketFactor,
-    // Vertaal naar 1-10 schaal voor compatibiliteit
-    score: Math.max(1, Math.min(10, Math.round(final / 10))),
-  };
-}
-
-// Elite pick detectie
-function isElitePick({ confidenceFinal, value, odds }) {
-  return (
-    confidenceFinal >= 72 &&
-    value >= 8 &&
-    odds >= 1.60 &&
-    odds <= 4.50
-  );
-}
-
-// Odds movement berekenen
-function calcOddsMovement(openingOdds, currentOdds) {
-  if (!openingOdds || !currentOdds) return null;
-  const movement = ((currentOdds - openingOdds) / openingOdds) * 100;
-  return parseFloat(movement.toFixed(1));
-}
-
-// Marktsignaal op basis van odds beweging
-function calcMarketSignal(movement, pick) {
-  if (movement === null) return 50; // neutraal
-  // Dalende odds = meer actie = sterker signaal voor die uitkomst
-  if (movement < -10) return 80;  // scherpe daling = sharp money
-  if (movement < -5)  return 70;
-  if (movement < -2)  return 60;
-  if (movement > 10)  return 30;  // stijging = markt gaat tegen je
-  if (movement > 5)   return 40;
-  return 50;
-}
-
-// ── Fetch met retry ──────────────────────────────────────
-async function fetchWithRetry(url, options, retries = 2) {
-  for (let i = 0; i <= retries; i++) {
-    try {
-      const res = await fetch(url, options);
-      if (res.ok) return res;
-      if (i === retries) return res;
-      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
-    } catch(e) {
-      if (i === retries) throw e;
-      await new Promise(r => setTimeout(r, 1000 * (i + 1)));
-    }
-  }
-}
-
-// ── API-Football helper ──────────────────────────────────
-async function apif(path, env) {
-  const key = env.FOOTBALL_KEY || '';
-  const hosts = [
-    {
-      url: 'https://v3.football.api-sports.io' + path,
-      headers: { 'x-apisports-key': key }
-    },
-    {
-      url: 'https://api-football-v1.p.rapidapi.com/v3' + path,
-      headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': 'api-football-v1.p.rapidapi.com' }
-    }
-  ];
-  for (const host of hosts) {
-    try {
-      const res = await fetchWithRetry(host.url, {
-        headers: host.headers,
-        cf: { cacheTtl: 0, cacheEverything: false }
-      });
-      const data = await res.json();
-      if (data.errors?.token || data.errors?.key) continue;
-      return data.response || [];
-    } catch(e) { continue; }
-  }
-  return [];
-}
-
-// ── API-Football proxy (/apif/*) ─────────────────────────
-async function handleAPIFootball(path, env, bypassCache = false) {
-  const key = env.FOOTBALL_KEY || '';
-
-  // v47: verwijder _cb cache-bypass parameter voor de echte API call
-  const cleanPath = path.replace(/[&?]_cb=\d+/, '').replace(/\?&/, '?');
-
-  const hosts = [
-    {
-      url: 'https://v3.football.api-sports.io' + cleanPath,
-      headers: { 'x-apisports-key': key }
-    },
-    {
-      url: 'https://api-football-v1.p.rapidapi.com/v3' + cleanPath,
-      headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': 'api-football-v1.p.rapidapi.com' }
-    }
-  ];
-
-  for (const host of hosts) {
-    try {
-      // v47: bij cache-bypass geen Cloudflare cache gebruiken
-      const fetchOptions = { headers: host.headers };
-      if (bypassCache) {
-        fetchOptions.cf = { cacheEverything: false, cacheTtl: 0 };
-      }
-
-      const res = await fetchWithRetry(host.url, fetchOptions);
-      const data = await res.json();
-      if (data.errors?.token || data.errors?.key) continue;
-
-      // v47: bij cache-bypass ook no-cache headers in response
-      const responseHeaders = { 'Content-Type': 'application/json', ...CORS };
-      if (bypassCache) {
-        responseHeaders['Cache-Control'] = 'no-store, no-cache, must-revalidate';
-        responseHeaders['X-Cache-Bypass'] = '1';
-      }
-
-      return new Response(JSON.stringify(data), {
-        status: 200,
-        headers: responseHeaders
-      });
-    } catch(e) { continue; }
-  }
-  return json({ errors: { token: 'No valid API key' }, response: [] }, 401);
-}
-
-// ── Football-data.org proxy (/fd/*) ──────────────────────
-async function handleFD(path, env) {
-  const url = 'https://api.football-data.org' + path;
-  const res = await fetchWithRetry(url, {
-    headers: { 'X-Auth-Token': env.FD_KEY || '' }
-  });
-  const data = await res.json();
-  return json(data);
-}
-
-// ── Anthropic proxy (/anthropic) ────────────────────────
-async function handleAnthropic(request, env) {
-  const body = await request.text();
-  const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': env.ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body
-  });
-  const data = await res.json();
-  return json(data, res.status);
-}
-
-// ── Generic URL proxy (?url=...) ────────────────────────
-async function handleProxy(urlParam, request, env) {
-  const targetUrl = decodeURIComponent(urlParam);
-  const isAnthropic = targetUrl.includes('api.anthropic.com');
-  const headers = { 'Content-Type': 'application/json' };
-  if (isAnthropic) {
-    headers['x-api-key'] = env.ANTHROPIC_KEY;
-    headers['anthropic-version'] = '2023-06-01';
-  }
-  const init = { method: request.method, headers };
-  if (request.method !== 'GET') init.body = await request.text();
-  const res = await fetchWithRetry(targetUrl, init);
-  const data = await res.text();
-  return new Response(data, {
-    status: res.status,
-    headers: {
-      'Content-Type': res.headers.get('Content-Type') || 'application/json',
-      ...CORS
-    }
-  });
-}
-
-// ── Odds ophalen voor wedstrijden ────────────────────────
-async function fetchOddsForFixtures(fixtureIds, env) {
-  const oddsMap = {};
-  function parseOdds(data, fid) {
-    if (!data || !data.length) return false;
-    const bm = data[0]?.bookmakers?.[0];
-    if (!bm) return false;
-    const bet = bm.bets?.find(b => b.id === 1);
-    if (!bet) return false;
-    const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
-    const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
-    const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
-    if (home > 1) { oddsMap[fid] = { home, draw, away }; return true; }
-    return false;
-  }
-  try {
-    const r1 = await Promise.all(fixtureIds.map(id => apif(`/odds?fixture=${id}&bookmaker=8&bet=1`, env)));
-    r1.forEach((data, i) => parseOdds(data, fixtureIds[i]));
-    const missing = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing.length) {
-      const r2 = await Promise.all(missing.map(id => apif(`/odds?fixture=${id}&bookmaker=6&bet=1`, env)));
-      r2.forEach((data, i) => parseOdds(data, missing[i]));
-    }
-  } catch(e) {
-    console.error('[Odds] Fout bij ophalen:', e);
-  }
-  console.log(`[Odds] ${Object.keys(oddsMap).length}/${fixtureIds.length} fixtures met odds`);
-  return oddsMap;
-}
-
-// ── Poisson value berekening ─────────────────────────────
-function impliedProb(odds) {
-  if (!odds || odds <= 1) return 0;
-  return 1 / odds;
-}
-
-function calculateValue(aiKans, bookOdds, pick) {
-  if (!bookOdds || bookOdds <= 1) return 0;
-  const aiProb = aiKans / 100;
-  const implProb = impliedProb(bookOdds);
-  const value = ((aiProb / implProb) - 1) * 100;
-  return parseFloat(value.toFixed(1));
-}
-
-// ── Datum normalisatie helper ─────────────────────────────
-// Converteert "22-5-2026", "2026-05-22", "2026-5-22" allemaal naar "2026-05-22"
-function normalizeDate(dateStr) {
-  if (!dateStr) return null;
-  // Al in ISO formaat (YYYY-MM-DD)?
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-  // Nederlands formaat: D-M-YYYY of DD-MM-YYYY
-  const parts = String(dateStr).split('-');
-  if (parts.length === 3 && parts[2].length === 4) {
-    const day   = parts[0].padStart(2, '0');
-    const month = parts[1].padStart(2, '0');
-    const year  = parts[2];
-    return `${year}-${month}-${day}`;
-  }
-  // Fallback: probeer Date parse
-  try {
-    return new Date(dateStr).toISOString().split('T')[0];
-  } catch(e) { return null; }
-}
-
-// ── Auto-verificatie: pending picks van afgelopen 7 dagen checken ─────────
-async function verifyYesterdayPicks(env) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
-  const picks = await fb(env, 'picks') || {};
-
-  const cutoff = new Date(today);
-  cutoff.setDate(cutoff.getDate() - 7);
-  const cutoffStr = cutoff.toISOString().split('T')[0];
-  const todayStr  = today.toISOString().split('T')[0];
-
-  const toVerify = Object.entries(picks).filter(([id, p]) => {
-    if (p.processed !== false || p.status !== 'pending') return false;
-    const normalized = normalizeDate(p.matchDate);
-    if (!normalized) return false;
-    return normalized >= cutoffStr && normalized < todayStr;
-  });
-
-  if (!toVerify.length) {
-    console.log('[Verify] Geen pending picks om te verifiëren');
-    return;
-  }
-
-  console.log(`[Verify] ${toVerify.length} picks te verifiëren`);
-
-  // Max 10 picks per run — specifieke fixture IDs ophalen (niet alle FT wedstrijden)
-  const batch = toVerify.slice(0, 10);
-  const fixtureIds = [...new Set(batch.map(([, p]) => p.fixtureId).filter(Boolean))];
-
-  // Parallel fixture resultaten ophalen — max 10 calls
-  const fixtureResults = await Promise.all(
-    fixtureIds.map(id => apif(`/fixtures?id=${id}`, env))
-  );
-
-  const resultMap = {};
-  fixtureResults.forEach((data, i) => {
-    const fid = String(fixtureIds[i]);
-    const f = data?.[0];
-    if (!f) return;
-    const status = f.fixture?.status?.short;
-    if (!['FT','AET','PEN'].includes(status)) return;
-    resultMap[fid] = { home: f.goals?.home ?? 0, away: f.goals?.away ?? 0, status };
-  });
-
-  console.log(`[Verify] ${Object.keys(resultMap).length}/${fixtureIds.length} fixtures met resultaat`);
-  if (!Object.keys(resultMap).length) return;
-
-  // CLV odds parallel ophalen voor picks met resultaat
-  const picksWithResult = batch.filter(([, p]) => resultMap[String(p.fixtureId)]);
-  const clvOdds = await Promise.all(
-    picksWithResult.map(([, p]) => apif(`/odds?fixture=${p.fixtureId}&bookmaker=8&bet=1`, env))
-  );
-
-  let updated = 0;
-  for (let i = 0; i < picksWithResult.length; i++) {
-    const [id, pick] = picksWithResult[i];
-    const result = resultMap[String(pick.fixtureId)];
-    if (!result) continue;
-
-    const hg = result.home, ag = result.away;
-    let won = false;
-    const p = pick.betType || pick.pick || '1';
-    if (p === '1') won = hg > ag;
-    else if (p === '2') won = ag > hg;
-    else if (p === 'X') won = hg === ag;
-    else if (p === 'O2.5') won = (hg + ag) > 2.5;
-    else if (p === 'U2.5') won = (hg + ag) < 2.5;
-    else if (p === 'BTTS-J') won = hg > 0 && ag > 0;
-
-    let clv = null;
-    try {
-      const closingOdds = clvOdds[i];
-      if (closingOdds?.length > 0) {
-        const bm = closingOdds[0]?.bookmakers?.[0];
-        const bet = bm?.bets?.find(b => b.id === 1);
-        if (bet) {
-          const closingOdd = parseFloat(
-            bet.values?.find(v =>
-              (p === '1' && v.value === 'Home') ||
-              (p === 'X' && v.value === 'Draw') ||
-              (p === '2' && v.value === 'Away')
-            )?.odd || 0
-          );
-          if (closingOdd > 1 && pick.odds > 1) {
-            clv = parseFloat(((pick.odds / closingOdd - 1) * 100).toFixed(1));
-          }
-        }
-      }
-    } catch(e) {}
-
-    picks[id] = {
-      ...pick,
-      score: `${hg}-${ag}`,
-      status: won ? 'win' : 'lose',
-      processed: true,
-      verifiedAt: new Date().toISOString(),
-      clv,
-    };
-    try { await saveCLV(pick, clv, won, env); } catch(e) { console.error('[SB] CLV fout:', e.message); }
+    picks[id] = { ...pick, score:`${hg}-${ag}`, status:won?'win':'lose', processed:true, verifiedAt:new Date().toISOString(), clv };
+    try { await saveCLV(pick, clv, won, env); } catch(e) {}
     updated++;
   }
 
@@ -1400,7 +784,7 @@ async function runScan(env, force = false) {
     return ta - tb;
   });
 
-  const batch = allMatches.slice(0, 8); // Max 8 voor subrequest limiet
+  const batch = allMatches.slice(0, 3); // Max 3 voor subrequest limiet (50 max)
   console.log(`[Scan] ${batch.length} wedstrijden gevonden, odds ophalen...`);
 
   const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
@@ -1901,8 +1285,7 @@ export default {
       // Voer scan uit op de achtergrond
       const ctx_dummy = { waitUntil: (p) => p };
       json({ status: 'scan gestart', version: VERSION });
-      await runScan(env, true); // force=true: tijdvenster overslaan
-      // Verify alleen bij cron — niet bij handmatige scan (subrequest budget)
+      await runScan(env, true);
       return json({ status: 'scan klaar', version: VERSION });
     }
 
