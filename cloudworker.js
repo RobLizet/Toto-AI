@@ -1,11 +1,11 @@
-// TOTO AI WORKER v89
-// v89: HMAC token beveiliging op /scan, /settle, /debug-scan
+// TOTO AI WORKER v91
+// v91: Supabase keepalive ping in verifyYesterdayPicks — voorkomt pauzeren gratis project
 // v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v89'; // v85: force scan tijdvenster fix
+const VERSION = 'v91'; // v85: force scan tijdvenster fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -289,10 +289,10 @@ function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, l
 // Elite pick detectie
 function isElitePick({ confidenceFinal, value, odds }) {
   return (
-    confidenceFinal >= 72 &&
-    value >= 8 &&
-    odds >= 1.60 &&
-    odds <= 4.50
+    confidenceFinal >= 65 &&  // verlaagd van 72 → 65 (meer elite picks in 7-8 tier)
+    value >= 6 &&             // verlaagd van 8 → 6
+    odds >= 1.50 &&           // verlaagd van 1.60 → 1.50
+    odds <= 5.00              // verhoogd van 4.50 → 5.00
   );
 }
 
@@ -509,6 +509,14 @@ function normalizeDate(dateStr) {
 
 // ── Auto-verificatie: pending picks van afgelopen 7 dagen checken ─────────
 async function verifyYesterdayPicks(env) {
+  // Supabase keepalive — voorkomt automatisch pauzeren gratis project
+  try {
+    await sb(env, 'clv_results', 'GET', null, '?limit=1&select=id');
+    console.log('[Keepalive] Supabase ping OK');
+  } catch(e) {
+    console.log('[Keepalive] Supabase ping mislukt (non-fatal):', e.message);
+  }
+
   const today = new Date();
   today.setHours(0,0,0,0);
 
