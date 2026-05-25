@@ -1,11 +1,11 @@
-// TOTO AI WORKER v86
-// v86: Fixture fetch nu ook morgen — MLS/Brasileirao spelen nachts NL-tijd
+// TOTO AI WORKER v87
+// v87: Debug-scan endpoint toegevoegd voor diagnose
 // v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v86'; // v85: force scan tijdvenster fix
+const VERSION = 'v87'; // v85: force scan tijdvenster fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1317,6 +1317,39 @@ export default {
       }
       await runScan(env, true);
       return json({ status: 'scan klaar', version: VERSION });
+    }
+
+    if (path === '/debug-scan') {
+      const secret = url.searchParams.get('secret');
+      if (!secret || secret !== env.SCAN_SECRET) return json({ error: 'Unauthorized' }, 401);
+      const log = [];
+      try {
+        const schedule = await fb(env, 'scan_schedule');
+        log.push({ step: 'scan_schedule', value: schedule });
+        const today = new Date().toISOString().split('T')[0];
+        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        log.push({ step: 'dates', today, tomorrowStr });
+
+        // Test 1 league (MLS vandaag)
+        const mlsToday = await apif(`/fixtures?league=253&season=2026&date=${today}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'mls_today', count: mlsToday?.length, statuses: mlsToday?.map(f => f.fixture?.status?.short) });
+        const mlsTomorrow = await apif(`/fixtures?league=253&season=2026&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'mls_tomorrow', count: mlsTomorrow?.length, statuses: mlsTomorrow?.map(f => f.fixture?.status?.short) });
+
+        // Test Brasileirao
+        const bra = await apif(`/fixtures?league=71&season=2026&date=${today}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'brasileirao_today', count: bra?.length, statuses: bra?.map(f => f.fixture?.status?.short) });
+        const braTomorrow = await apif(`/fixtures?league=71&season=2026&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'brasileirao_tomorrow', count: braTomorrow?.length, statuses: braTomorrow?.map(f => f.fixture?.status?.short) });
+
+        // Test Argentina
+        const arg = await apif(`/fixtures?league=128&season=2026&date=${today}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'argentina_today', count: arg?.length });
+      } catch(e) {
+        log.push({ step: 'ERROR', error: e.message });
+      }
+      return json({ debug: log, version: VERSION });
     }
 
     if (path === '/picks') {
