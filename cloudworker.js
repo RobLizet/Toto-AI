@@ -1,11 +1,11 @@
-// TOTO AI WORKER v91
-// v91: Supabase keepalive ping in verifyYesterdayPicks — voorkomt pauzeren gratis project
+// TOTO AI WORKER v92
+// v92: /keepalive endpoint toegevoegd
 // v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v91'; // v85: force scan tijdvenster fix
+const VERSION = 'v92'; // v85: force scan tijdvenster fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1377,6 +1377,15 @@ export default {
         log.push({ step: 'ERROR', error: e.message });
       }
       return json({ debug: log, version: VERSION });
+    }
+
+    if (path === '/keepalive') {
+      try {
+        const result = await sb(env, 'clv_results', 'GET', null, '?limit=1&select=id');
+        return json({ ok: true, supabase: result !== null ? 'online' : 'geen data', version: VERSION });
+      } catch(e) {
+        return json({ ok: false, error: e.message }, 500);
+      }
     }
 
     if (path === '/picks') {
