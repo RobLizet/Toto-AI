@@ -1,9 +1,10 @@
-// TOTO AI WORKER v80
-// v80: Verify en scan sequentieel ipv parallel — fix subrequest limiet
+// TOTO AI WORKER v81
+// v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
+// v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v80'; // v80: sequentieel scan+verify
+const VERSION = 'v81'; // v81: verify subrequest fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -496,8 +497,6 @@ async function verifyYesterdayPicks(env) {
 
   const picks = await fb(env, 'picks') || {};
 
-  // Selecteer alle pending picks waarvan de wedstrijd al gespeeld had moeten zijn
-  // (matchDate genormaliseerd < vandaag, dus gisteren of ouder, max 7 dagen terug)
   const cutoff = new Date(today);
   cutoff.setDate(cutoff.getDate() - 7);
   const cutoffStr = cutoff.toISOString().split('T')[0];
@@ -507,7 +506,6 @@ async function verifyYesterdayPicks(env) {
     if (p.processed !== false || p.status !== 'pending') return false;
     const normalized = normalizeDate(p.matchDate);
     if (!normalized) return false;
-    // Alleen wedstrijden die al gespeeld zijn (< vandaag) en niet te oud (> cutoff)
     return normalized >= cutoffStr && normalized < todayStr;
   });
 
@@ -516,45 +514,42 @@ async function verifyYesterdayPicks(env) {
     return;
   }
 
-  // Groepeer per datum voor efficiënte API calls
-  const dateGroups = {};
-  toVerify.forEach(([id, p]) => {
-    const d = normalizeDate(p.matchDate);
-    if (!dateGroups[d]) dateGroups[d] = [];
-    dateGroups[d].push([id, p]);
+  console.log(`[Verify] ${toVerify.length} picks te verifiëren`);
+
+  // Max 10 picks per run — specifieke fixture IDs ophalen (niet alle FT wedstrijden)
+  const batch = toVerify.slice(0, 10);
+  const fixtureIds = [...new Set(batch.map(([, p]) => p.fixtureId).filter(Boolean))];
+
+  // Parallel fixture resultaten ophalen — max 10 calls
+  const fixtureResults = await Promise.all(
+    fixtureIds.map(id => apif(`/fixtures?id=${id}`, env))
+  );
+
+  const resultMap = {};
+  fixtureResults.forEach((data, i) => {
+    const fid = String(fixtureIds[i]);
+    const f = data?.[0];
+    if (!f) return;
+    const status = f.fixture?.status?.short;
+    if (!['FT','AET','PEN'].includes(status)) return;
+    resultMap[fid] = { home: f.goals?.home ?? 0, away: f.goals?.away ?? 0, status };
   });
 
-  console.log(`[Verify] ${toVerify.length} picks over ${Object.keys(dateGroups).length} datums`);
+  console.log(`[Verify] ${Object.keys(resultMap).length}/${fixtureIds.length} fixtures met resultaat`);
+  if (!Object.keys(resultMap).length) return;
 
-  // Haal per datum de FT fixtures op
-  const resultMapByDate = {};
-  for (const dateStr of Object.keys(dateGroups)) {
-    const fixtures = await apif(`/fixtures?date=${dateStr}&status=FT`, env);
-    const map = {};
-    (fixtures || []).forEach(f => {
-      map[String(f.fixture.id)] = {
-        home: f.goals.home ?? 0,
-        away: f.goals.away ?? 0,
-        status: f.fixture.status.short
-      };
-    });
-    resultMapByDate[dateStr] = map;
-    console.log(`[Verify] ${dateStr}: ${Object.keys(map).length} FT wedstrijden gevonden`);
-  }
-
-  // Bouw gecombineerde resultMap (fixtureId → resultaat)
-  const resultMap = {};
-  Object.values(resultMapByDate).forEach(map => Object.assign(resultMap, map));
-
-  if (!Object.keys(resultMap).length) {
-    console.log('[Verify] Geen FT resultaten gevonden');
-    return;
-  }
+  // CLV odds parallel ophalen voor picks met resultaat
+  const picksWithResult = batch.filter(([, p]) => resultMap[String(p.fixtureId)]);
+  const clvOdds = await Promise.all(
+    picksWithResult.map(([, p]) => apif(`/odds?fixture=${p.fixtureId}&bookmaker=8&bet=1`, env))
+  );
 
   let updated = 0;
-  for (const [id, pick] of toVerify) {
+  for (let i = 0; i < picksWithResult.length; i++) {
+    const [id, pick] = picksWithResult[i];
     const result = resultMap[String(pick.fixtureId)];
     if (!result) continue;
+
     const hg = result.home, ag = result.away;
     let won = false;
     const p = pick.betType || pick.pick || '1';
@@ -565,15 +560,13 @@ async function verifyYesterdayPicks(env) {
     else if (p === 'U2.5') won = (hg + ag) < 2.5;
     else if (p === 'BTTS-J') won = hg > 0 && ag > 0;
 
-    // CLV: haal sluitingskoers op en bereken Closing Line Value
     let clv = null;
     try {
-      const closingOdds = await apif(`/odds?fixture=${pick.fixtureId}&bookmaker=8&bet=1`, env);
-      if (closingOdds && closingOdds.length > 0) {
+      const closingOdds = clvOdds[i];
+      if (closingOdds?.length > 0) {
         const bm = closingOdds[0]?.bookmakers?.[0];
         const bet = bm?.bets?.find(b => b.id === 1);
         if (bet) {
-          const p = pick.pick;
           const closingOdd = parseFloat(
             bet.values?.find(v =>
               (p === '1' && v.value === 'Home') ||
@@ -582,7 +575,6 @@ async function verifyYesterdayPicks(env) {
             )?.odd || 0
           );
           if (closingOdd > 1 && pick.odds > 1) {
-            // CLV = (jouw odds / sluitingskoers - 1) * 100
             clv = parseFloat(((pick.odds / closingOdd - 1) * 100).toFixed(1));
           }
         }
@@ -595,23 +587,13 @@ async function verifyYesterdayPicks(env) {
       status: won ? 'win' : 'lose',
       processed: true,
       verifiedAt: new Date().toISOString(),
-      clv: clv, // Closing Line Value
+      clv,
     };
-    // Supabase: CLV opslaan na settlement
-    await saveCLV(pick, clv, won, env);
+    try { await saveCLV(pick, clv, won, env); } catch(e) { console.error('[SB] CLV fout:', e.message); }
     updated++;
   }
 
-  if (updated > 0) {
-    await fb(env, 'picks', 'PUT', picks);
-    console.log(`[Verify] ${updated} picks geverifieerd (meerdere datums)`);
 
-    // Update league calibratie data na verificatie
-    await updateLeagueCalibration(env, picks, toVerify.map(([id]) => id));
-  }
-}
-
-// ── League calibratie bijwerken na verificatie ────────────
 async function updateLeagueCalibration(env, picks, updatedIds) {
   try {
     const calibration = await fb(env, 'calibration') || {};
@@ -1329,7 +1311,7 @@ export default {
       const ctx_dummy = { waitUntil: (p) => p };
       json({ status: 'scan gestart', version: VERSION });
       await runScan(env, true); // force=true: tijdvenster overslaan
-      await verifyYesterdayPicks(env);
+      // Verify alleen bij cron — niet bij handmatige scan (subrequest budget)
       return json({ status: 'scan klaar', version: VERSION });
     }
 
