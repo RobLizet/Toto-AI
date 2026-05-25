@@ -1,5 +1,5 @@
-// TOTO AI Service Worker v11.1 — Standaard push zonder Firebase
-const SW_VERSION = '11.1';
+// TOTO AI Service Worker v21.0 — Standaard push zonder Firebase
+const SW_VERSION = '21.0';
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
