@@ -1,11 +1,11 @@
-// TOTO AI WORKER v88
-// v88: Auto-scan uit cron verwijderd, actieve Scandinavische leagues toegevoegd
+// TOTO AI WORKER v89
+// v89: HMAC token beveiliging op /scan, /settle, /debug-scan
 // v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v88'; // v85: force scan tijdvenster fix
+const VERSION = 'v89'; // v85: force scan tijdvenster fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -19,6 +19,33 @@ function json(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS }
   });
+}
+
+// ── HMAC token verificatie ────────────────────────────────
+// Token = HMAC-SHA256(SCAN_SECRET + timestamp_minute)
+// Geldig binnen TOKEN_WINDOW_MINUTES minuten
+const TOKEN_WINDOW_MINUTES = 2;
+
+async function generateHMAC(secret, timestampMinute) {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const msgData = encoder.encode(String(timestampMinute));
+  const key = await crypto.subtle.importKey(
+    'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, msgData);
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyHMAC(token, secret) {
+  if (!token || !secret) return false;
+  const nowMinute = Math.floor(Date.now() / 60000);
+  // Check huidige minuut + vorige window (TOKEN_WINDOW_MINUTES)
+  for (let i = 0; i <= TOKEN_WINDOW_MINUTES; i++) {
+    const expected = await generateHMAC(secret, nowMinute - i);
+    if (token === expected) return true;
+  }
+  return false;
 }
 
 async function fb(env, path, method = 'GET', body = null) {
@@ -1294,8 +1321,8 @@ export default {
     }
 
     if (path === '/settle') {
-      const secret = url.searchParams.get('secret');
-      if (!secret || secret !== env.SCAN_SECRET) {
+      const token = url.searchParams.get('token');
+      if (!await verifyHMAC(token, env.SCAN_SECRET)) {
         return json({ error: 'Unauthorized' }, 401);
       }
       await verifyYesterdayPicks(env);
@@ -1303,8 +1330,8 @@ export default {
     }
 
     if (path === '/scan') {
-      const secret = url.searchParams.get('secret');
-      if (!secret || secret !== env.SCAN_SECRET) {
+      const token = url.searchParams.get('token');
+      if (!await verifyHMAC(token, env.SCAN_SECRET)) {
         return json({ error: 'Unauthorized' }, 401);
       }
       await runScan(env, true);
@@ -1312,8 +1339,8 @@ export default {
     }
 
     if (path === '/debug-scan') {
-      const secret = url.searchParams.get('secret');
-      if (!secret || secret !== env.SCAN_SECRET) return json({ error: 'Unauthorized' }, 401);
+      const token = url.searchParams.get('token');
+      if (!await verifyHMAC(token, env.SCAN_SECRET)) return json({ error: 'Unauthorized' }, 401);
       const log = [];
       try {
         const schedule = await fb(env, 'scan_schedule');
