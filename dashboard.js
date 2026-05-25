@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// DASHBOARD.JS — v19.1 verbeterd dashboard
+// DASHBOARD.JS — v19.2 WK-aware: live banner, dynamische competitie lijst
 // ═══════════════════════════════════════════════════════
 
 async function fetchDailyTip() {
@@ -41,21 +41,6 @@ function renderDashboard() {
     ? (settledPicks.reduce((s,p) => s + (p.status==='win' ? (p.odds-1) : -1), 0) / settledPicks.length * 100)
     : null;
 
-  // Borderline picks: net onder de drempel
-  const BORDER = { minValue: 5, minConf: 4 };
-  const borderPicks = allPicks.filter(p =>
-    !p.isSparseData &&
-    !( (p.value||0) >= DREMPEL.minValue && (p.confidence||0) >= DREMPEL.minConf ) &&
-    (p.value||0) >= BORDER.minValue &&
-    (p.confidence||0) >= BORDER.minConf
-  );
-  const borderSettled = borderPicks.filter(p => p.status === 'win' || p.status === 'lose');
-  const borderWins = borderSettled.filter(p => p.status === 'win');
-  const borderHitrate = borderSettled.length ? Math.round(borderWins.length / borderSettled.length * 100) : null;
-  const borderROI = borderSettled.length
-    ? (borderSettled.reduce((s,p) => s + (p.status==='win' ? (p.odds-1) : -1), 0) / borderSettled.length * 100)
-    : null;
-
   // Value picks beschikbaar
   const valuePicks = (state.valueScans||[]).filter(s => s.value >= 5);
   const topValuePick = valuePicks.sort((a,b) => (b.value||0)-(a.value||0))[0];
@@ -79,6 +64,8 @@ function renderDashboard() {
   const wkDays = wkDiff > 0 ? Math.floor(wkDiff / (1000*60*60*24)) : 0;
   const wkHours = wkDiff > 0 ? Math.floor((wkDiff % (1000*60*60*24)) / (1000*60*60)) : 0;
   const wkMins = wkDiff > 0 ? Math.floor((wkDiff % (1000*60*60)) / (1000*60)) : 0;
+  const wkEnd = new Date('2026-07-20T00:00:00');
+  const wkEndDiff = wkEnd - now;
 
   // Calibratie status
   const calibMeta = window._calibrationCache?.meta || {};
@@ -86,14 +73,11 @@ function renderDashboard() {
 
   screen.innerHTML = `
 
-    <!-- 100 picks voortgang — officieel trackrecord -->
-    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.5rem;cursor:pointer;"
+    <!-- 100 picks voortgang -->
+    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;"
       onclick="showPicksModal()">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
-        <div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">🎯 OFFICIEEL TRACKRECORD</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.1rem;">Value ≥8% · Conf ≥6 · Geen sparse data</div>
-        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">🎯 VOORTGANG NAAR 100 PICKS</div>
         <div style="display:flex;align-items:center;gap:.4rem;">
           ${settledPicks.length ? (() => {
             if (scanROI >= 15 && scanHitrate >= 40)  return '<span style="font-size:1.3rem;">😄</span>';
@@ -108,58 +92,17 @@ function renderDashboard() {
       <div style="background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">
         <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;margin-top:.5rem;">
-        ${[
-          { label: 'PICKS', val: kwaliPicks.length, color: '#be185d' },
-          { label: 'SETTLED', val: settledPicks.length, color: 'var(--sub)' },
-          { label: 'HITRATE', val: scanHitrate !== null ? scanHitrate + '%' : '—', color: scanHitrate !== null ? (scanHitrate >= 50 ? '#16a34a' : scanHitrate >= 35 ? '#d97706' : '#dc2626') : 'var(--sub)' },
-          { label: 'ROI', val: scanROI !== null ? (scanROI >= 0 ? '+' : '') + scanROI.toFixed(1) + '%' : '—', color: scanROI !== null ? (scanROI >= 0 ? '#16a34a' : '#dc2626') : 'var(--sub)' },
-        ].map(({label, val, color}) => `
-          <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:8px;padding:.3rem;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:${color};">${val}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${label}</div>
-          </div>`).join('')}
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">
+        ${kwaliPicks.length === 0 ? 'Scan wedstrijden om picks te verzamelen →' : (() => {
+          const openCount = kwaliPicks.filter(p => !p.status || p.status === 'pending').length;
+          const parts = [];
+          if (openCount > 0)           parts.push(openCount + ' open');
+          if (settledPicks.length > 0) parts.push(settledPicks.length + ' afgerond');
+          if (scanHitrate !== null)     parts.push(scanHitrate + '% hitrate');
+          if (scanROI !== null)         parts.push('ROI ' + (scanROI >= 0 ? '+' : '') + scanROI.toFixed(1) + '%');
+          return parts.join(' · ') || 'Tik voor details →';
+        })()}
       </div>
-    </div>
-
-    <!-- Borderline picks analyse -->
-    <div style="background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;"
-      onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('log'),150)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
-        <div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:#b45309;">🔍 BORDERLINE ANALYSE</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.1rem;">Value 5-8% of conf 4-5 — telt niet mee in trackrecord</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:.4rem;">
-          ${(() => {
-            if (borderSettled.length === 0) return '<span style="font-size:1.3rem;opacity:.3;">😶</span>';
-            if (borderROI >= 15 && borderHitrate >= 40)  return '<span style="font-size:1.3rem;">😄</span>';
-            if (borderROI >= 5  || borderHitrate >= 35)  return '<span style="font-size:1.3rem;">🙂</span>';
-            if (borderROI >= 0  && borderHitrate >= 28)  return '<span style="font-size:1.3rem;">😐</span>';
-            if (borderROI >= -10)                         return '<span style="font-size:1.3rem;">😕</span>';
-            return '<span style="font-size:1.3rem;">😞</span>';
-          })()}
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#b45309;">${borderPicks.length}<span style="font-size:.65rem;color:var(--sub);"> picks</span></div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;">
-        ${[
-          { label: 'PICKS', val: borderPicks.length, color: '#b45309' },
-          { label: 'SETTLED', val: borderSettled.length, color: 'var(--sub)' },
-          { label: 'HITRATE', val: borderHitrate !== null ? borderHitrate + '%' : '—', color: borderHitrate !== null ? (borderHitrate >= 50 ? '#16a34a' : borderHitrate >= 35 ? '#d97706' : '#dc2626') : 'var(--sub)' },
-          { label: 'ROI', val: borderROI !== null ? (borderROI >= 0 ? '+' : '') + borderROI.toFixed(1) + '%' : '—', color: borderROI !== null ? (borderROI >= 0 ? '#16a34a' : '#dc2626') : 'var(--sub)' },
-        ].map(({label, val, color}) => `
-          <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:8px;padding:.3rem;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:${color};">${val}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${label}</div>
-          </div>`).join('')}
-      </div>
-      ${borderPicks.length > 0 && borderHitrate !== null && scanHitrate !== null ? `
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.4rem;padding-top:.4rem;border-top:1px solid rgba(15,23,42,.06);">
-        ${borderHitrate >= scanHitrate
-          ? '⚠️ Borderline picks scoren vergelijkbaar — overweeg drempel te verlagen'
-          : '✅ Drempel correct — officiële picks scoren ' + (scanHitrate - borderHitrate) + '% beter'}
-      </div>` : ''}
     </div>
 
     <!-- Open bets -->
@@ -265,7 +208,7 @@ function renderDashboard() {
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">ROI</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${isCalibrated?'#16a34a':'#d97706'};">${isCalibrated?'✓':`${settledPicks.length}/10`}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${isCalibrated?'#16a34a':'#d97706'};">${isCalibrated?'✓':'${settledPicks.length}/10'}</div>
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">${isCalibrated?'AI GECALIB.':'AI LEERT'}</div>
         </div>
       </div>
@@ -274,7 +217,7 @@ function renderDashboard() {
       </div>
     </div>` : ''}
 
-    <!-- WK 2026 countdown -->
+    <!-- WK 2026 countdown / live banner -->
     ${wkDiff > 0 ? `
     <div style="background:linear-gradient(135deg,rgba(219,39,119,.08),rgba(124,58,237,.06));
       border:1px solid rgba(219,39,119,.2);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;cursor:pointer;"
@@ -289,32 +232,22 @@ function renderDashboard() {
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">Start 11 juni</div>
         </div>
       </div>
-    </div>` : ''}
-
-    <!-- WK 2026 monitoring blok -->
-    ${(() => {
-      const wkPicks = allPicks.filter(p => p.leagueId === 1 || p.leagueId === '1');
-      const wkSettled = wkPicks.filter(p => p.status === 'win' || p.status === 'lose');
-      const wkDrawPicks = allPicks.filter(p => (p.pick||'').toUpperCase() === 'X');
-      const drawRatio = allPicks.length ? Math.round(wkDrawPicks.length / allPicks.length * 100) : 0;
-      const items = [
-        { label: 'WK PICKS', val: wkPicks.length || '—', ok: true },
-        { label: 'WK SETTLED', val: wkSettled.length || '—', ok: true },
-        { label: 'GELIJKSPEL %', val: allPicks.length ? drawRatio + '%' : '—', ok: drawRatio <= 25 },
-        { label: 'DAILY TIP', val: state._dailyTipCache?.date === new Date().toISOString().split('T')[0] ? '✓' : '—', ok: !!state._dailyTipCache },
-      ];
-      return `
-    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:var(--sub);margin-bottom:.5rem;">📊 WK MONITORING</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;">
-        ${items.map(({label, val, ok}) => `
-          <div style="background:${ok ? 'rgba(22,163,74,.06)' : 'rgba(220,38,38,.06)'};border:1px solid ${ok ? 'rgba(22,163,74,.2)' : 'rgba(220,38,38,.2)'};border-radius:8px;padding:.35rem;text-align:center;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:.85rem;color:${ok ? '#16a34a' : '#dc2626'};">${val}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);margin-top:1px;">${label}</div>
-          </div>`).join('')}
+    </div>` : wkEndDiff > 0 ? `
+    <div style="background:linear-gradient(135deg,rgba(220,38,38,.12),rgba(234,179,8,.08));
+      border:1px solid rgba(220,38,38,.3);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;cursor:pointer;animation:pulse-red 2s infinite;"
+      onclick="switchScreen('wedstrijden');setTimeout(()=>selectComp('wk2026'),300)">
+      <style>@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.3)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}</style>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#dc2626;">🔴 WK 2026 LIVE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.15rem;">United States · Mexico · Canada</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:#dc2626;">BEZIG</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">Finale: 19 juli</div>
+        </div>
       </div>
-    </div>`;
-    })()}
+    </div>` : ''}
 
     <!-- Disclaimer -->
     <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid var(--stroke);margin-top:.5rem;">
@@ -412,15 +345,39 @@ function openCompKeuze() {
   sheet.appendChild(hdr);
 
   // Competitie grid
-  const COMPS = typeof COMP_LIST !== 'undefined' ? COMP_LIST : [
-    {key:'eredivisie',flag:'🇳🇱',name:'Eredivisie'},{key:'kkd',flag:'🇳🇱',name:'KKD'},
-    {key:'premier',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',name:'Premier League'},{key:'championship',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',name:'Championship'},
-    {key:'bundesliga',flag:'🇩🇪',name:'Bundesliga'},{key:'bundesliga2',flag:'🇩🇪',name:'2. Bundesliga'},
-    {key:'ligue1',flag:'🇫🇷',name:'Ligue 1'},{key:'seriea',flag:'🇮🇹',name:'Serie A'},
-    {key:'laliga',flag:'🇪🇸',name:'La Liga'},{key:'champions',flag:'⭐',name:'Champions League'},
-    {key:'jupiler',flag:'🇧🇪',name:'Jupiler'},{key:'superlig',flag:'🇹🇷',name:'Süper Lig'},
-    {key:'wk2026',flag:'🏆',name:'WK 2026'}
+  // Dynamische competitie lijst op basis van huidige datum
+  const _now = new Date();
+  const _wkStart = new Date('2026-06-11');
+  const _wkEnd   = new Date('2026-07-20');
+  const _euroEnd  = new Date('2026-06-01');
+  const _isWKActive = _now >= _wkStart && _now < _wkEnd;
+  const _isPreEuroEnd = _now < _euroEnd;
+
+  const EURO_COMPS = [
+    {key:'premier',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',name:'Premier League'},
+    {key:'laliga',flag:'🇪🇸',name:'La Liga'},
+    {key:'seriea',flag:'🇮🇹',name:'Serie A'},
+    {key:'bundesliga',flag:'🇩🇪',name:'Bundesliga'},
+    {key:'ligue1',flag:'🇫🇷',name:'Ligue 1'},
+    {key:'champions',flag:'⭐',name:'Champions League'},
+    {key:'eredivisie',flag:'🇳🇱',name:'Eredivisie'},
   ];
+  const ZOMER_COMPS = [
+    {key:'brasileirao',flag:'🇧🇷',name:'Brasileirão'},
+    {key:'argentina',flag:'🇦🇷',name:'Liga Argentina'},
+    {key:'mls',flag:'🇺🇸',name:'MLS'},
+  ];
+  const WK_COMP = [{key:'wk2026',flag:'🏆',name:'WK 2026'}];
+
+  let COMPS;
+  if (_isWKActive) {
+    COMPS = [...WK_COMP, ...ZOMER_COMPS];
+  } else if (_isPreEuroEnd) {
+    COMPS = [...EURO_COMPS, ...ZOMER_COMPS, ...WK_COMP];
+  } else {
+    // 1 jun – 10 jun en post-WK
+    COMPS = [...WK_COMP, ...ZOMER_COMPS, ...EURO_COMPS];
+  }
 
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;';
