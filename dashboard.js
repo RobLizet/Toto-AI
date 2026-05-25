@@ -1,5 +1,57 @@
 // ═══════════════════════════════════════════════════════
-// DASHBOARD.JS — v19.2 WK-aware: live banner, dynamische competitie lijst
+
+// ── HMAC token generator (moet overeenkomen met worker) ──
+// Token = HMAC-SHA256(SCAN_SECRET + timestamp_minute)
+const SCAN_SECRET = 'totoai2026'; // Zelfde als SCAN_SECRET in Cloudflare env
+// Admin UIDs — voeg jouw Firebase UID toe
+const ADMIN_UIDS = ['JOUW_FIREBASE_UID_HIER'];
+
+function checkAdminStatus() {
+  const uid = window.firebase?.auth?.()?.currentUser?.uid
+    || (typeof auth !== 'undefined' && auth?.currentUser?.uid)
+    || null;
+  window._isAdmin = uid ? ADMIN_UIDS.includes(uid) : false;
+}
+const WORKER_URL  = 'https://toto-proxy.zweetzakken.workers.dev';
+
+async function generateScanToken() {
+  const encoder = new TextEncoder();
+  const nowMinute = Math.floor(Date.now() / 60000);
+  const keyData = encoder.encode(SCAN_SECRET);
+  const msgData = encoder.encode(String(nowMinute));
+  const key = await crypto.subtle.importKey(
+    'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, msgData);
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function triggerWorkerScan() {
+  try {
+    const token = await generateScanToken();
+    const res = await fetch(`${WORKER_URL}/scan?token=${token}`);
+    const data = await res.json();
+    return data;
+  } catch(e) {
+    console.error('[Scan] Worker scan fout:', e);
+    return { error: e.message };
+  }
+}
+
+async function triggerWorkerSettle() {
+  try {
+    const token = await generateScanToken();
+    const res = await fetch(`${WORKER_URL}/settle?token=${token}`);
+    const data = await res.json();
+    return data;
+  } catch(e) {
+    console.error('[Settle] Fout:', e);
+    return { error: e.message };
+  }
+}
+
+
+// DASHBOARD.JS — v19.3 HMAC scan tokens, admin scan knop
 // ═══════════════════════════════════════════════════════
 
 async function fetchDailyTip() {
@@ -215,6 +267,27 @@ function renderDashboard() {
       <div style="background:rgba(15,23,42,.06);border-radius:999px;height:5px;overflow:hidden;margin-top:.5rem;">
         <div style="background:linear-gradient(90deg,#be185d,#7c3aed);height:100%;border-radius:999px;width:${Math.min(100,settledPicks.length)}%;transition:width .4s;"></div>
       </div>
+    </div>` : ''}
+
+    <!-- Admin: Worker scan & settle knoppen -->
+    ${window._isAdmin ? `
+    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;">
+      <button onclick="(async()=>{
+        this.disabled=true;this.textContent='⟳ Scannen...';
+        const r=await triggerWorkerScan();
+        this.disabled=false;this.textContent='🔍 Worker Scan';
+        alert(r.status||r.error||JSON.stringify(r));
+      })()" style="flex:1;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.3);
+        border-radius:10px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;
+        font-weight:700;color:#7c3aed;cursor:pointer;">🔍 Worker Scan</button>
+      <button onclick="(async()=>{
+        this.disabled=true;this.textContent='⟳ Settlen...';
+        const r=await triggerWorkerSettle();
+        this.disabled=false;this.textContent='✅ Settle';
+        alert(r.status||r.error||JSON.stringify(r));
+      })()" style="flex:1;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.3);
+        border-radius:10px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;
+        font-weight:700;color:#15803d;cursor:pointer;">✅ Settle</button>
     </div>` : ''}
 
     <!-- WK 2026 countdown / live banner -->
