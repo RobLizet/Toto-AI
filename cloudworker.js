@@ -1,11 +1,11 @@
-// TOTO AI WORKER v82
-// v82: Fix ontbrekende sluitende } in verifyYesterdayPicks — bouwfout opgelost
+// TOTO AI WORKER v83
+// v83: Datum-gebaseerde league switching — hybride Europees/zomer, WK-only tijdens toernooi
 // v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v82'; // v82: syntax fix verifyYesterdayPicks
+const VERSION = 'v83'; // v83: datum-gebaseerde league switching
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -740,14 +740,50 @@ async function runScan(env, force = false) {
 
   console.log(`[Scan] Fixtures ophalen voor ${today} en ${tomorrowStr}...`);
 
-  const SCAN_LEAGUES = [39, 88, 78, 61, 135, 140, 2, 3, 848];
+  // ── Datum-gebaseerde league selectie ──────────────────────
+  // WK: 11 juni – 19 juli 2026
+  // Pre-WK (nu t/m 10 juni): Europese finales + WK + zomer
+  // WK actief (11 jun – 19 jul): alleen WK
+  // Post-WK (20 jul+): WK voorbij, zomer competities
+  const dateNow = new Date(today);
+  const wkStart  = new Date('2026-06-11');
+  const wkEnd    = new Date('2026-07-20'); // dag na finale
+  const euroEnd  = new Date('2026-06-01'); // Europese competities klaar
+
+  const isWKActive  = dateNow >= wkStart && dateNow < wkEnd;
+  const isPreWK     = dateNow < wkStart;
+  const isPostWK    = dateNow >= wkEnd;
+
+  // League IDs met bijbehorend seizoen
+  const EURO_LEAGUES    = [{ id: 39, s: 2025 }, { id: 140, s: 2025 }, { id: 135, s: 2025 }, { id: 2, s: 2026 }, { id: 3, s: 2026 }, { id: 848, s: 2026 }];
+  const ZOMER_LEAGUES   = [{ id: 71, s: 2026 }, { id: 128, s: 2026 }, { id: 253, s: 2026 }]; // Brasileirão A, Argentina Liga, MLS
+  const WK_LEAGUE       = [{ id: 1, s: 2026 }]; // WK 2026
+
+  let leagueConfig;
+  if (isWKActive) {
+    // Alleen WK tijdens toernooi
+    leagueConfig = WK_LEAGUE;
+    console.log('[Scan] 🏆 WK actief — alleen WK league (ID 1)');
+  } else if (isPreWK && dateNow >= euroEnd) {
+    // 1 juni – 10 juni: Europese competities klaar, WK bijna — zomer + WK
+    leagueConfig = [...ZOMER_LEAGUES, ...WK_LEAGUE];
+    console.log('[Scan] Pre-WK: zomercompetities + WK');
+  } else if (isPreWK) {
+    // Nu t/m 31 mei: Europese finales + zomer hybride
+    leagueConfig = [...EURO_LEAGUES, ...ZOMER_LEAGUES];
+    console.log('[Scan] Hybride: Europese finales + zomercompetities');
+  } else {
+    // Post-WK: zomercompetities
+    leagueConfig = [...ZOMER_LEAGUES];
+    console.log('[Scan] Post-WK: zomercompetities');
+  }
+
+  const SCAN_LEAGUES = leagueConfig.map(l => l.id);
 
   try {
-    const WK_LEAGUES = [2, 3, 848];
-    const fixturePromises = SCAN_LEAGUES.map(lid => {
-      const season = WK_LEAGUES.includes(lid) ? 2026 : 2025;
-      return apif(`/fixtures?league=${lid}&season=${season}&date=${today}&timezone=Europe/Amsterdam`, env);
-    });
+    const fixturePromises = leagueConfig.map(({ id, s }) =>
+      apif(`/fixtures?league=${id}&season=${s}&date=${today}&timezone=Europe/Amsterdam`, env)
+    );
     const fixtureResults = await Promise.all(fixturePromises);
     const fixtures = fixtureResults.flat().filter(Boolean);
 
