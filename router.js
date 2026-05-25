@@ -18,7 +18,7 @@ function switchScreen(name) {
 
   // Update header back knop (toon alleen op sub-screens)
   const backBtn = document.getElementById('backBtn');
-  const mainScreens = ['dashboard','wedstrijden','analyse','wallet','instellingen','analytics'];
+  const mainScreens = ['dashboard','wedstrijden','analyse','wallet','instellingen','analytics','wk2026'];
   if (backBtn) backBtn.classList.toggle('visible', !mainScreens.includes(name));
 
   // Render logica per screen
@@ -56,6 +56,9 @@ function switchScreen(name) {
       break;
     case 'analytics':
       if (typeof renderAnalyticsScreen === 'function') renderAnalyticsScreen();
+      break;
+    case 'wk2026':
+      if (typeof renderWK2026Screen === 'function') renderWK2026Screen();
       break;
   }
 

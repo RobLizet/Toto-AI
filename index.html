@@ -90,6 +90,13 @@
         </svg>
         📊 Stats & Analytics
       </button>
+      <button class="more-menu-item" onclick="switchScreen('wk2026');closeMoreMenu()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="6"/>
+          <path d="M12 14v7M8 21h8"/>
+        </svg>
+        🏆 WK 2026 Voorspelling
+      </button>
       <button class="more-menu-item" onclick="saveToFirebase();closeMoreMenu()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -198,6 +205,11 @@
   <!-- Analytics Screen -->
   <div id="screen-analytics" class="screen screen-analytics">
     <!-- Gevuld door renderAnalyticsScreen() -->
+  </div>
+
+  <!-- WK 2026 Screen -->
+  <div id="screen-wk2026" class="screen screen-wk2026">
+    <!-- Gevuld door renderWK2026Screen() -->
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -476,6 +488,7 @@
 <script src="wallet.js?v=1779429278"></script>
 <script src="instellingen.js?v=1779429278"></script>
 <script src="analytics.js?v=2100"></script>
+<script src="wk2026.js?v=2100"></script>
 
 <!-- 7. App Init -->
 <script>

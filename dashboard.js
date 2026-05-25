@@ -269,6 +269,12 @@ function renderDashboard() {
       </div>
     </div>` : ''}
 
+    <!-- WK 2026 AI Voorspelling widget -->
+    <div id="wk-dashboard-widget" style="background:linear-gradient(135deg,rgba(220,38,38,.06),rgba(190,24,93,.04));
+      border:1px solid rgba(220,38,38,.15);border-radius:14px;padding:.7rem .85rem;margin-bottom:.75rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ Laden...</div>
+    </div>
+
     <!-- Admin: Worker scan & settle knoppen -->
     ${window._isAdmin ? `
     <div style="display:flex;gap:.5rem;margin-bottom:.75rem;">
@@ -332,6 +338,9 @@ function renderDashboard() {
       Made by Rob Borghouts
     </div>
   `;
+
+  // Laad WK widget na render
+  if (typeof renderWKDashboardWidget === 'function') setTimeout(renderWKDashboardWidget, 50);
 
   // Laad dagelijkse tip na render
   const cachedTip = state._dailyTipCache;
