@@ -187,6 +187,11 @@
     <!-- Gevuld door renderInstellingen() -->
   </div>
 
+  <!-- Analytics Screen -->
+  <div id="screen-analytics" class="screen screen-analytics">
+    <!-- Gevuld door renderAnalyticsScreen() -->
+  </div>
+
   <!-- ══════════════════════════════════════════
        BOTTOM NAVIGATION
   ══════════════════════════════════════════ -->
@@ -222,6 +227,15 @@
       </svg>
       <span>Wallet</span>
       <span class="bnav-dot" id="dot-wallet"></span>
+    </button>
+    <button class="bnav-btn" data-screen="analytics" onclick="switchScreen('analytics')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+      <span>Stats</span>
+      <span class="bnav-dot" id="dot-analytics"></span>
     </button>
   </nav>
 
@@ -461,6 +475,7 @@
 <script src="analyse.js?v=1779429278"></script>
 <script src="wallet.js?v=1779429278"></script>
 <script src="instellingen.js?v=1779429278"></script>
+<script src="analytics.js?v=2100"></script>
 
 <!-- 7. App Init -->
 <script>
@@ -666,5 +681,5 @@
   }
   </script>
 
-</body>
+  </body>
 </html>
