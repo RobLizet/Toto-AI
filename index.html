@@ -82,6 +82,14 @@
         </svg>
         Instellingen
       </button>
+      <button class="more-menu-item" onclick="switchScreen('analytics');closeMoreMenu()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        📊 Stats & Analytics
+      </button>
       <button class="more-menu-item" onclick="saveToFirebase();closeMoreMenu()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -228,15 +236,7 @@
       <span>Wallet</span>
       <span class="bnav-dot" id="dot-wallet"></span>
     </button>
-    <button class="bnav-btn" data-screen="analytics" onclick="switchScreen('analytics')">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="20" x2="18" y2="10"/>
-        <line x1="12" y1="20" x2="12" y2="4"/>
-        <line x1="6" y1="20" x2="6" y2="14"/>
-      </svg>
-      <span>Stats</span>
-      <span class="bnav-dot" id="dot-analytics"></span>
-    </button>
+
   </nav>
 
   <!-- ══════════════════════════════════════════
