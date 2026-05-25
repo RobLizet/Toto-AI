@@ -1,11 +1,11 @@
-// TOTO AI WORKER v83
-// v83: Datum-gebaseerde league switching — hybride Europees/zomer, WK-only tijdens toernooi
+// TOTO AI WORKER v84
+// v84: Fix force=true overrulet nu ook autoScanEnabled — handmatige scan werkte niet
 // v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v83'; // v83: datum-gebaseerde league switching
+const VERSION = 'v84'; // v84: force fix // v83: datum-gebaseerde league switching
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -721,7 +721,7 @@ async function runScan(env, force = false) {
     console.log('[Scan] scan_schedule niet geladen, gebruik defaults');
   }
 
-  if (!autoScanEnabled) {
+  if (!autoScanEnabled && !force) {
     console.log('[Scan] Auto scan uitgeschakeld via scan_schedule, skip');
     return;
   }
@@ -730,7 +730,7 @@ async function runScan(env, force = false) {
     console.log(`[Scan] Buiten scanvenster (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC), skip`);
     return;
   }
-  if (force) console.log(`[Scan] Handmatige trigger — scanvenster overgeslagen`);
+  if (force) console.log(`[Scan] Handmatige trigger — autoScan en scanvenster overgeslagen`);
   console.log(`[Scan] Start scan (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC)`);
 
   let allMatches = [];
