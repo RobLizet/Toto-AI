@@ -1,5 +1,6 @@
 // TOTO AI WORKER v96
 // v96: Automatische scan weer aan — Noorwegen (113) + Zweden (103) actief
+//      Tijdvenster uitgebreid van 4u naar 24u (vond anders geen avondwedstrijden)
 //      /scan-test endpoint voor pipeline verificatie (HMAC, geen Firebase write)
 // v95: Marathonbet (1) + Betsson (36) toegevoegd als odds fallback voor Scandinavische leagues
 
@@ -861,7 +862,9 @@ async function runScan(env, force = false) {
     // Bij handmatige scan: alle wedstrijden van vandaag (tot midnight +1u)
     // Bij automatische scan: alleen wedstrijden die binnen 4u beginnen
     const endOfDay = new Date(today + 'T23:59:59').getTime() + 60 * 60 * 1000;
-    const timeWindow = force ? endOfDay : nowMs + 4 * 60 * 60 * 1000;
+    // Automatische scan: wedstrijden binnen 24u (vandaag + vanavond + morgenochtend)
+    // Handmatige scan (force): alle wedstrijden van vandaag t/m midnight
+    const timeWindow = force ? endOfDay : nowMs + 24 * 60 * 60 * 1000;
 
     allMatches = unique
       .filter(f => {
