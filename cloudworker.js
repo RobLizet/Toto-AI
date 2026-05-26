@@ -1,11 +1,11 @@
-// TOTO AI WORKER v94
-// v94: /check-odds endpoint — test alle bookmakers voor een fixture
+// TOTO AI WORKER v95
+// v95: Marathonbet (1) + Betsson (36) toegevoegd als odds fallback voor Scandinavische leagues
 // v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v94'; // v85: force scan tijdvenster fix
+const VERSION = 'v95'; // v85: force scan tijdvenster fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -481,11 +481,25 @@ async function fetchOddsForFixtures(fixtureIds, env) {
       r3.forEach((data, i) => parseOdds(data, missing3[i]));
     }
 
-    // Stap 4: Bwin (4) als laatste fallback
+    // Stap 4: Bwin (4)
     const missing4 = fixtureIds.filter(id => !oddsMap[id]);
     if (missing4.length) {
       const r4 = await Promise.all(missing4.map(id => apif(`/odds?fixture=${id}&bookmaker=4&bet=1`, env)));
       r4.forEach((data, i) => parseOdds(data, missing4[i]));
+    }
+
+    // Stap 5: Marathonbet (1) — goede Scandinavische coverage
+    const missing5 = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing5.length) {
+      const r5 = await Promise.all(missing5.map(id => apif(`/odds?fixture=${id}&bookmaker=1&bet=1`, env)));
+      r5.forEach((data, i) => parseOdds(data, missing5[i]));
+    }
+
+    // Stap 6: Betsson (36) — Scandinavische markt
+    const missing6 = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing6.length) {
+      const r6 = await Promise.all(missing6.map(id => apif(`/odds?fixture=${id}&bookmaker=36&bet=1`, env)));
+      r6.forEach((data, i) => parseOdds(data, missing6[i]));
     }
   } catch(e) {
     console.error('[Odds] Fout bij ophalen:', e);
