@@ -35,7 +35,9 @@ const COMP_NAMES = {
   premier: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', beker: '🏆 KNVB Beker', champions: '⭐ Champions League',
   ligue1: '🇫🇷 Ligue 1', seriea: '🇮🇹 Serie A', nations: '🌍 Nations League',
   jupiler: '🇧🇪 Jupiler Pro League', laliga: '🇪🇸 La Liga', championship: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship',
-  bundesliga2: '🇩🇪 2. Bundesliga', superlig: '🇹🇷 Süper Lig', wk2026: '🏆 WK 2026'
+  bundesliga2: '🇩🇪 2. Bundesliga', superlig: '🇹🇷 Süper Lig', wk2026: '🏆 WK 2026',
+  norway: '🇳🇴 Eliteserien', sweden: '🇸🇪 Allsvenskan',
+  europa: '🟠 Europa League', conference: '🟢 Conference League',
 };
 
 const FD_CODES = {
@@ -221,7 +223,9 @@ function parseFDMatch(m, compName) {
 }
 
 function getCurrentSeason(comp) {
-  if (comp === 'wk2026') return 2026;
+  // WK + Scandinavische competities draaien in seizoen 2026
+  const season2026 = ['wk2026', 'norway', 'sweden', 'europa', 'conference', 'champions'];
+  if (season2026.includes(comp)) return 2026;
   return 2025;
 }
 

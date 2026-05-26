@@ -4,26 +4,45 @@
 // ═══════════════════════════════════════════════════════
 
 // ── Competitie definities ────────────────────────────────
-const COMP_LIST = [
-  { key:'eredivisie', flag:'🇳🇱', name:'Eredivisie' },
-  { key:'kkd',        flag:'🇳🇱', name:'KKD' },
-  { key:'premier',    flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',  name:'Premier League' },
-  { key:'championship',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' },
-  { key:'bundesliga', flag:'🇩🇪', name:'Bundesliga' },
-  { key:'bundesliga2',flag:'🇩🇪', name:'2. Bundesliga' },
-  { key:'ligue1',     flag:'🇫🇷', name:'Ligue 1' },
-  { key:'seriea',     flag:'🇮🇹', name:'Serie A' },
-  { key:'laliga',     flag:'🇪🇸', name:'La Liga' },
-  { key:'champions',  flag:'⭐',  name:'Champions League' },
-  { key:'jupiler',    flag:'🇧🇪', name:'Jupiler' },
-  { key:'superlig',   flag:'🇹🇷', name:'Süper Lig' },
-  { key:'nations',      flag:'🌍',  name:'Nations League' },
-  { key:'intvriendsch', flag:'🌍',  name:'Int. Vriendsch.' },
-  { key:'wkkwal',       flag:'🏆',  name:'WK Kwalificatie' },
-  { key:'ekkwal',       flag:'🏆',  name:'EK Kwalificatie' },
-  { key:'beker',        flag:'🏆',  name:'KNVB Beker' },
-  { key:'wk2026',     flag:'🏆',  name:'WK 2026' },
-];
+// ── Datum-gebaseerde competitie lijst ────────────────────
+function getActiveCOMPLIST() {
+  const now = new Date();
+  const wkStart = new Date('2026-06-11');
+  const wkEnd   = new Date('2026-07-20');
+  const euroEnd = new Date('2026-06-01');
+  const isWK    = now >= wkStart && now < wkEnd;
+  const isPreEuroEnd = now < euroEnd;
+
+  const WK       = [{ key:'wk2026',    flag:'🏆', name:'WK 2026' }];
+  const SCANDI   = [
+    { key:'norway',   flag:'🇳🇴', name:'Eliteserien' },
+    { key:'sweden',   flag:'🇸🇪', name:'Allsvenskan' },
+  ];
+  const EUROPEES = [
+    { key:'champions',  flag:'⭐',  name:'Champions' },
+    { key:'europa',     flag:'🟠',  name:'Europa League' },
+    { key:'conference', flag:'🟢',  name:'Conference' },
+    { key:'premier',    flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',  name:'Premier' },
+    { key:'laliga',     flag:'🇪🇸', name:'La Liga' },
+    { key:'bundesliga', flag:'🇩🇪', name:'Bundesliga' },
+    { key:'seriea',     flag:'🇮🇹', name:'Serie A' },
+    { key:'ligue1',     flag:'🇫🇷', name:'Ligue 1' },
+    { key:'eredivisie', flag:'🇳🇱', name:'Eredivisie' },
+    { key:'jupiler',    flag:'🇧🇪', name:'Jupiler' },
+    { key:'superlig',   flag:'🇹🇷', name:'Süper Lig' },
+  ];
+  const OVERIG = [
+    { key:'nations',      flag:'🌍', name:'Nations League' },
+    { key:'intvriendsch', flag:'🌍', name:'Int. Vriendsch.' },
+    { key:'beker',        flag:'🏆', name:'KNVB Beker' },
+  ];
+
+  if (isWK)          return [...WK, ...SCANDI, ...OVERIG];
+  if (!isPreEuroEnd) return [...WK, ...SCANDI, ...EUROPEES, ...OVERIG];
+  return              [...EUROPEES, ...SCANDI, ...WK, ...OVERIG];
+}
+
+const COMP_LIST = getActiveCOMPLIST();
 
 let _scanCompFilter = new Set();
 let scanCompFilter = new Set();
