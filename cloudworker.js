@@ -892,6 +892,17 @@ async function runScan(env, force = false) {
 
   if (!allMatches.length) {
     console.log('[Scan] Geen wedstrijden gevonden voor vandaag/morgen, stop');
+    // Toch scan_status bijwerken zodat Firebase toont dat scan draait
+    await fb(env, 'scan_status', 'PUT', {
+      lastRun: new Date().toISOString(),
+      lastMatchCount: 0,
+      lastPickCount: 0,
+      lastWithOdds: 0,
+      lastWithoutOdds: 0,
+      scanDate: today,
+      version: VERSION,
+      scansToday: ((await fb(env, 'scan_status/scansToday')) || 0) + 1,
+    });
     return;
   }
 
