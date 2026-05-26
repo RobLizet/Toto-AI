@@ -1,6 +1,6 @@
 // TOTO AI WORKER v96
-// v96: /scan-test endpoint — test automatische scan met Noorwegen (113) + Zweden (103)
-//      Geen Firebase write, verbose output, HMAC auth, seizoen 2026
+// v96: Automatische scan weer aan — Noorwegen (113) + Zweden (103) actief
+//      /scan-test endpoint voor pipeline verificatie (HMAC, geen Firebase write)
 // v95: Marathonbet (1) + Betsson (36) toegevoegd als odds fallback voor Scandinavische leagues
 
 const VERSION = 'v96'; // v96: /scan-test endpoint
@@ -1725,11 +1725,11 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    // Auto-scan tijdelijk uitgeschakeld — scan via dashboard /scan endpoint
     const now = new Date();
     const hour = now.getUTCHours();
     const isSunday = now.getUTCDay() === 0;
     ctx.waitUntil((async () => {
+      await runScan(env);
       await verifyYesterdayPicks(env);
       if (hour === 6) await generateDailyTip(env);
       if (isSunday && hour === 6) await runWeeklyCalibration(env);
