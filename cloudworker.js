@@ -1,11 +1,9 @@
-// TOTO AI WORKER v95
+// TOTO AI WORKER v96
+// v96: /scan-test endpoint — test automatische scan met Noorwegen (113) + Zweden (103)
+//      Geen Firebase write, verbose output, HMAC auth, seizoen 2026
 // v95: Marathonbet (1) + Betsson (36) toegevoegd als odds fallback voor Scandinavische leagues
-// v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
-// v80: Sequentieel scan+verify
-// v79: Subrequest fixes, bookmaker fallback, tijdvenster
-// v75: Supabase integratie
 
-const VERSION = 'v95'; // v85: force scan tijdvenster fix
+const VERSION = 'v96'; // v96: /scan-test endpoint
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -240,6 +238,8 @@ const LEAGUE_FACTORS = {
   848: 1.05, // Conference League
   40: 0.98,  // Championship
   119: 0.90, // Eredivisie playoffs
+  113: 0.88, // Eliteserien Noorwegen (apr–nov, seizoen 2026)
+  103: 0.88, // Allsvenskan Zweden (apr–nov, seizoen 2026)
 };
 
 // Odds bucket factoren (meest value zit in 1.5-3.5)
@@ -1127,6 +1127,232 @@ Geen uitleg, alleen de JSON array.`;
   }
 }
 
+// ── Scan test: test automatische scan pipeline — GEEN Firebase write ─────────
+// Default: Eliteserien NO (113) + Allsvenskan SE (103), beide seizoen 2026
+// Gebruik: /scan-test?token=HMAC&league=113,103
+// Geeft volledige verbose output: fixtures, odds, AI, value picks, verdict
+async function runScanTest(env, leagueIds = [113, 103]) {
+  const today = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+  // Seizoen-aware: Scandinavische + WK competities = 2026
+  const SEASON_2026 = new Set([1, 2, 3, 113, 103, 71, 253, 128, 848]);
+  const getSeason = (lid) => SEASON_2026.has(lid) ? 2026 : 2025;
+
+  const log = [`[ScanTest] Start — leagues: ${leagueIds.join(', ')}, datum: ${today} + ${tomorrowStr}`];
+
+  // ── Stap 1: Fixtures ophalen (vandaag + morgen) ──
+  const allFixtures = [];
+  const seen = new Set();
+
+  await Promise.all(leagueIds.flatMap(lid => {
+    const season = getSeason(lid);
+    log.push(`[ScanTest] League ${lid} → seizoen ${season}`);
+    return [today, tomorrowStr].map(date =>
+      apif(`/fixtures?league=${lid}&season=${season}&date=${date}&timezone=Europe/Amsterdam`, env)
+        .then(fixtures => {
+          (fixtures || []).forEach(f => {
+            const id = f.fixture?.id;
+            if (id && !seen.has(id)) { seen.add(id); allFixtures.push(f); }
+          });
+        })
+        .catch(e => log.push(`[ScanTest] Fixtures fout league ${lid} ${date}: ${e.message}`))
+    );
+  }));
+
+  log.push(`[ScanTest] ${allFixtures.length} unieke fixtures gevonden`);
+
+  // ── Stap 2: Filter — NS/live, binnen tijdvenster ──
+  const nowMs = Date.now();
+  // scan-test = altijd force mode: alle wedstrijden vandaag+morgen
+  const endOfTomorrow = new Date(tomorrowStr + 'T23:59:59').getTime() + 60 * 60 * 1000;
+
+  const allMatches = allFixtures
+    .filter(f => {
+      const status  = f.fixture?.status?.short;
+      const kickoff = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
+      const isLive  = ['1H','2H','HT','ET','BT','P'].includes(status);
+      const isNS    = ['NS','TBD','PST'].includes(status);
+      return isLive || (isNS && kickoff < endOfTomorrow);
+    })
+    .map(f => ({
+      fixtureId:  f.fixture?.id,
+      home:       f.teams?.home?.name  || '?',
+      away:       f.teams?.away?.name  || '?',
+      matchDate:  f.fixture?.date?.split('T')[0] || today,
+      matchTime:  f.fixture?.date || null,
+      leagueId:   f.league?.id,
+      leagueName: f.league?.name || '',
+      status:     f.fixture?.status?.short || 'NS',
+    }))
+    .sort((a, b) => new Date(a.matchTime || 0) - new Date(b.matchTime || 0));
+
+  log.push(`[ScanTest] ${allMatches.length} wedstrijden na NS/live filter`);
+
+  if (!allMatches.length) {
+    return {
+      ok: true, leagues: leagueIds, today, tomorrow: tomorrowStr,
+      matchesFound: 0, withOdds: 0, aiResultsCount: 0,
+      picks: [], allMatches: [], log,
+      verdict: '⚠️ Geen wedstrijden gevonden — controleer seizoen en leagueId',
+      note: '⚠️ TEST — geen Firebase write'
+    };
+  }
+
+  // ── Stap 3: Odds ophalen (zelfde functie als productie, incl. Scandinavische bookmaker fallbacks) ──
+  const batch = allMatches.slice(0, 10);
+  const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
+  const oddsMap = await fetchOddsForFixtures(fixtureIds, env);
+  log.push(`[ScanTest] Odds: ${Object.keys(oddsMap).length}/${batch.length} fixtures gedekt`);
+  batch.forEach(m => {
+    const o = oddsMap[m.fixtureId];
+    log.push(`[ScanTest]   ${m.home} vs ${m.away} (${m.matchDate}) → ${o ? `${o.home}/${o.draw}/${o.away}` : 'geen odds'}`);
+  });
+
+  // ── Stap 4: AI analyse (zelfde prompt als productie) ──
+  const analyseBatch = batch.filter(m => oddsMap[m.fixtureId]);
+  const analyseBatchFull = analyseBatch.length > 0 ? analyseBatch : batch;
+
+  const prompt = `Je bent een voetbalanalyst. Analyseer deze ${analyseBatchFull.length} wedstrijden en geef voor ELKE wedstrijd:
+1. Kans thuisploeg wint (0-100)
+2. Kans gelijkspel (0-100)
+3. Kans uitploeg wint (0-100)
+4. Confidence in analyse (1-10)
+
+Houd rekening met: recente vorm, historische H2H, thuisvoordeel, competitieniveau.
+
+Wedstrijden:
+${analyseBatchFull.map((m, i) => {
+  const odds = oddsMap[m.fixtureId];
+  const oddsStr = odds ? ` | Odds: ${odds.home}/${odds.draw}/${odds.away}` : ' | geen odds';
+  return `${i+1}. ${m.home} vs ${m.away} (${m.leagueName}, ${m.matchDate})${oddsStr}`;
+}).join('\n')}
+
+Antwoord ALLEEN met een JSON array: [{"h":50,"x":25,"a":25,"c":7},...]
+Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
+
+  let aiResults = [];
+  let aiError = null;
+  try {
+    const aiRes = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': env.ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const aiData = await aiRes.json();
+    const text = aiData?.content?.[0]?.text || '[]';
+    const matchArr = text.match(/\[[\s\S]*?\]/);
+    if (matchArr) {
+      aiResults = JSON.parse(matchArr[0]);
+      log.push(`[ScanTest] AI: ${aiResults.length} resultaten ontvangen`);
+    } else {
+      aiError = 'Geen JSON array in AI response: ' + text.substring(0, 120);
+      log.push(`[ScanTest] AI FOUT: ${aiError}`);
+    }
+  } catch(e) {
+    aiError = e.message;
+    log.push(`[ScanTest] AI FOUT: ${e.message}`);
+  }
+
+  // ── Stap 5: Value berekening (zelfde logica als productie, maar geen Firebase write) ──
+  const leagueCalibration = await fb(env, 'calibration') || {};
+  const picks = [];
+
+  analyseBatchFull.forEach((m, i) => {
+    const ai   = aiResults[i] || { h: 50, x: 25, a: 25, c: 5 };
+    const odds = oddsMap[m.fixtureId] || {};
+
+    [
+      { pick: '1', label: `${m.home} wint`, aiKans: ai.h, bookOdds: odds.home },
+      { pick: 'X', label: 'Gelijkspel',     aiKans: ai.x, bookOdds: odds.draw },
+      { pick: '2', label: `${m.away} wint`,  aiKans: ai.a, bookOdds: odds.away },
+    ].forEach(c => {
+      if (!c.bookOdds || c.bookOdds <= 1) return;
+      const value = calculateValue(c.aiKans, c.bookOdds, c.pick);
+      if (value < 3) return;
+
+      const spread      = Math.max(ai.h, ai.x, ai.a) - Math.min(ai.h, ai.x, ai.a);
+      const dataQuality = Math.min(100, 50 + spread);
+      const conf = calculateConfidenceV20({
+        modelProb: c.aiKans, value, dataQuality,
+        marketSignal: 50,
+        leagueId: m.leagueId,
+        odds: c.bookOdds,
+        calibFactor: leagueCalibration[String(m.leagueId)]?.factor || null,
+      });
+
+      if (conf.score < 5) return;
+
+      picks.push({
+        match:      `${m.home} vs ${m.away}`,
+        leagueName: m.leagueName,
+        matchDate:  m.matchDate,
+        pick:       c.pick,
+        pickLabel:  c.label,
+        odds:       c.bookOdds,
+        value:      parseFloat(value.toFixed(1)),
+        aiKans:     Math.round(c.aiKans),
+        confidence: conf.score,
+        confidenceFinal: conf.final,
+        elite:      isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds }),
+      });
+    });
+  });
+
+  picks.sort((a, b) => b.value - a.value);
+
+  const strongPicks  = picks.filter(p => p.value >= 5 && p.confidence >= 5);
+  const elitePicks   = picks.filter(p => p.elite);
+  log.push(`[ScanTest] ${picks.length} value picks (≥3%), ${strongPicks.length} sterk (≥5%), ${elitePicks.length} elite`);
+
+  const verdict = elitePicks.length > 0
+    ? `✅ ${elitePicks.length} elite pick(s) — pipeline werkt, klaar voor productie`
+    : strongPicks.length > 0
+      ? `✅ ${strongPicks.length} sterke picks (≥5% value, conf≥5) — pipeline werkt correct`
+      : picks.length > 0
+        ? `⚠️ ${picks.length} zwakke picks (≥3%) — odds mogelijk te efficiënt vandaag`
+        : Object.keys(oddsMap).length === 0
+          ? `⚠️ Geen odds — bookmakers hebben nog geen quotes voor deze wedstrijden`
+          : `ℹ️ Geen value gevonden — markt efficiënt vandaag`;
+
+  return {
+    ok:              true,
+    leagues:         leagueIds,
+    today,
+    tomorrow:        tomorrowStr,
+    matchesFound:    allMatches.length,
+    matchesAnalysed: analyseBatchFull.length,
+    withOdds:        Object.keys(oddsMap).length,
+    aiResultsCount:  aiResults.length,
+    aiError:         aiError || null,
+    totalPicks:      picks.length,
+    strongPicks:     strongPicks.length,
+    elitePicks:      elitePicks.length,
+    picks:           picks.slice(0, 15),
+    allMatches:      batch.map(m => ({
+      fixtureId: m.fixtureId,
+      match:     `${m.home} vs ${m.away}`,
+      league:    m.leagueName,
+      date:      m.matchDate,
+      status:    m.status,
+      hasOdds:   !!oddsMap[m.fixtureId],
+      odds:      oddsMap[m.fixtureId] || null,
+    })),
+    log,
+    verdict,
+    note: '⚠️ TEST — geen picks opgeslagen in Firebase',
+  };
+}
+
 // ── Endpoint: haal picks op voor app ────────────────────
 async function handleGetPicks(env) {
   const picks = await fb(env, 'picks') || {};
@@ -1476,6 +1702,17 @@ export default {
       return handlePush(request, env);
     }
 
+    if (path === '/scan-test') {
+      const token = url.searchParams.get('token');
+      if (!await verifyHMAC(token, env.SCAN_SECRET)) return json({ error: 'Unauthorized' }, 401);
+      // ?league=113,103 of enkel ?league=113
+      // Default: Eliteserien NO (113) + Allsvenskan SE (103)
+      const leagueParam = url.searchParams.get('league') || '113,103';
+      const leagueIds = leagueParam.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+      const result = await runScanTest(env, leagueIds);
+      return json(result);
+    }
+
     if (url.searchParams.get('url')) {
       return handleProxy(url.searchParams.get('url'), request, env);
     }
@@ -1483,7 +1720,7 @@ export default {
     return json({
       version: VERSION,
       status: 'running',
-      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/scan', '/settle', '/push', '/daily-tip', '/analytics', '?url=']
+      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/scan', '/scan-test', '/settle', '/debug-scan', '/check-odds', '/keepalive', '/push', '/daily-tip', '/analytics', '?url=']
     });
   },
 
