@@ -1,11 +1,11 @@
-// TOTO AI WORKER v82
-// v82: Fix ontbrekende sluitende } in verifyYesterdayPicks — bouwfout opgelost
+// TOTO AI WORKER v94
+// v94: /check-odds endpoint — test alle bookmakers voor een fixture
 // v81: Verify herschreven — specifieke fixture IDs ipv alle FT wedstrijden
 // v80: Sequentieel scan+verify
 // v79: Subrequest fixes, bookmaker fallback, tijdvenster
 // v75: Supabase integratie
 
-const VERSION = 'v82'; // v82: syntax fix verifyYesterdayPicks
+const VERSION = 'v94'; // v85: force scan tijdvenster fix
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -19,6 +19,33 @@ function json(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS }
   });
+}
+
+// ── HMAC token verificatie ────────────────────────────────
+// Token = HMAC-SHA256(SCAN_SECRET + timestamp_minute)
+// Geldig binnen TOKEN_WINDOW_MINUTES minuten
+const TOKEN_WINDOW_MINUTES = 2;
+
+async function generateHMAC(secret, timestampMinute) {
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  const msgData = encoder.encode(String(timestampMinute));
+  const key = await crypto.subtle.importKey(
+    'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, msgData);
+  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyHMAC(token, secret) {
+  if (!token || !secret) return false;
+  const nowMinute = Math.floor(Date.now() / 60000);
+  // Check huidige minuut + vorige window (TOKEN_WINDOW_MINUTES)
+  for (let i = 0; i <= TOKEN_WINDOW_MINUTES; i++) {
+    const expected = await generateHMAC(secret, nowMinute - i);
+    if (token === expected) return true;
+  }
+  return false;
 }
 
 async function fb(env, path, method = 'GET', body = null) {
@@ -262,10 +289,10 @@ function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, l
 // Elite pick detectie
 function isElitePick({ confidenceFinal, value, odds }) {
   return (
-    confidenceFinal >= 72 &&
-    value >= 8 &&
-    odds >= 1.60 &&
-    odds <= 4.50
+    confidenceFinal >= 65 &&  // verlaagd van 72 → 65 (meer elite picks in 7-8 tier)
+    value >= 6 &&             // verlaagd van 8 → 6
+    odds >= 1.50 &&           // verlaagd van 1.60 → 1.50
+    odds <= 5.00              // verhoogd van 4.50 → 5.00
   );
 }
 
@@ -436,12 +463,29 @@ async function fetchOddsForFixtures(fixtureIds, env) {
     return false;
   }
   try {
+    // Stap 1: Bet365 (8)
     const r1 = await Promise.all(fixtureIds.map(id => apif(`/odds?fixture=${id}&bookmaker=8&bet=1`, env)));
     r1.forEach((data, i) => parseOdds(data, fixtureIds[i]));
-    const missing = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing.length) {
-      const r2 = await Promise.all(missing.map(id => apif(`/odds?fixture=${id}&bookmaker=6&bet=1`, env)));
-      r2.forEach((data, i) => parseOdds(data, missing[i]));
+
+    // Stap 2: William Hill (6) voor missende
+    const missing2 = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing2.length) {
+      const r2 = await Promise.all(missing2.map(id => apif(`/odds?fixture=${id}&bookmaker=6&bet=1`, env)));
+      r2.forEach((data, i) => parseOdds(data, missing2[i]));
+    }
+
+    // Stap 3: Unibet/Jacks (16) — goed voor Scandinavische leagues
+    const missing3 = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing3.length) {
+      const r3 = await Promise.all(missing3.map(id => apif(`/odds?fixture=${id}&bookmaker=16&bet=1`, env)));
+      r3.forEach((data, i) => parseOdds(data, missing3[i]));
+    }
+
+    // Stap 4: Bwin (4) als laatste fallback
+    const missing4 = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing4.length) {
+      const r4 = await Promise.all(missing4.map(id => apif(`/odds?fixture=${id}&bookmaker=4&bet=1`, env)));
+      r4.forEach((data, i) => parseOdds(data, missing4[i]));
     }
   } catch(e) {
     console.error('[Odds] Fout bij ophalen:', e);
@@ -482,6 +526,14 @@ function normalizeDate(dateStr) {
 
 // ── Auto-verificatie: pending picks van afgelopen 7 dagen checken ─────────
 async function verifyYesterdayPicks(env) {
+  // Supabase keepalive — voorkomt automatisch pauzeren gratis project
+  try {
+    await sb(env, 'clv_results', 'GET', null, '?limit=1&select=id');
+    console.log('[Keepalive] Supabase ping OK');
+  } catch(e) {
+    console.log('[Keepalive] Supabase ping mislukt (non-fatal):', e.message);
+  }
+
   const today = new Date();
   today.setHours(0,0,0,0);
 
@@ -721,7 +773,7 @@ async function runScan(env, force = false) {
     console.log('[Scan] scan_schedule niet geladen, gebruik defaults');
   }
 
-  if (!autoScanEnabled) {
+  if (!autoScanEnabled && !force) {
     console.log('[Scan] Auto scan uitgeschakeld via scan_schedule, skip');
     return;
   }
@@ -730,7 +782,7 @@ async function runScan(env, force = false) {
     console.log(`[Scan] Buiten scanvenster (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC), skip`);
     return;
   }
-  if (force) console.log(`[Scan] Handmatige trigger — scanvenster overgeslagen`);
+  if (force) console.log(`[Scan] Handmatige trigger — autoScan en scanvenster overgeslagen`);
   console.log(`[Scan] Start scan (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC)`);
 
   let allMatches = [];
@@ -740,14 +792,44 @@ async function runScan(env, force = false) {
 
   console.log(`[Scan] Fixtures ophalen voor ${today} en ${tomorrowStr}...`);
 
-  const SCAN_LEAGUES = [39, 88, 78, 61, 135, 140, 2, 3, 848];
+  // ── Actieve leagues (handmatig bijgehouden) ───────────────
+  // WK: 11 jun – 19 jul 2026 (league 1)
+  // Scandinavisch: lopen maart–december door (kleine pauze WK-periode)
+  // CL/EL/ECL finales: t/m eind mei
+  const dateNow = new Date(today);
+  const wkStart = new Date('2026-06-11');
+  const wkEnd   = new Date('2026-07-20');
+  const isWKActive = dateNow >= wkStart && dateNow < wkEnd;
+
+  let leagueConfig;
+  if (isWKActive) {
+    // Alleen WK
+    leagueConfig = [{ id: 1, s: 2026 }];
+    console.log('[Scan] 🏆 WK actief — alleen WK (ID 1)');
+  } else {
+    // Actieve competities buiten WK-periode:
+    // 88 Eredivisie playoffs, 113 Eliteserien NO, 113→ check, 
+    // 103 Allsvenskan SE, 2/3/848 CL/EL/ECL (t/m eind mei)
+    leagueConfig = [
+      { id: 1,   s: 2026 }, // WK 2026 (pre/post WK wedstrijden)
+      { id: 113, s: 2026 }, // Eliteserien Noorwegen (mrt–dec)
+      { id: 103, s: 2026 }, // Allsvenskan Zweden (apr–nov)
+      { id: 2,   s: 2026 }, // Champions League
+      { id: 3,   s: 2026 }, // Europa League
+      { id: 848, s: 2026 }, // Conference League
+      { id: 88,  s: 2025 }, // Eredivisie (playoffs)
+    ];
+    console.log('[Scan] Actieve leagues: WK + Scandinavisch + Europees');
+  }
+
+  const SCAN_LEAGUES = leagueConfig.map(l => l.id);
 
   try {
-    const WK_LEAGUES = [2, 3, 848];
-    const fixturePromises = SCAN_LEAGUES.map(lid => {
-      const season = WK_LEAGUES.includes(lid) ? 2026 : 2025;
-      return apif(`/fixtures?league=${lid}&season=${season}&date=${today}&timezone=Europe/Amsterdam`, env);
-    });
+    // Haal vandaag + morgen op — MLS/Brasileirao spelen 's nachts NL-tijd
+    const fixturePromises = leagueConfig.flatMap(({ id, s }) => [
+      apif(`/fixtures?league=${id}&season=${s}&date=${today}&timezone=Europe/Amsterdam`, env),
+      apif(`/fixtures?league=${id}&season=${s}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
+    ]);
     const fixtureResults = await Promise.all(fixturePromises);
     const fixtures = fixtureResults.flat().filter(Boolean);
 
@@ -762,13 +844,18 @@ async function runScan(env, force = false) {
     console.log(`[Scan] ${unique.length} unieke fixtures gevonden over ${SCAN_LEAGUES.length} leagues`);
 
     const nowMs = Date.now();
+    // Bij handmatige scan: alle wedstrijden van vandaag (tot midnight +1u)
+    // Bij automatische scan: alleen wedstrijden die binnen 4u beginnen
+    const endOfDay = new Date(today + 'T23:59:59').getTime() + 60 * 60 * 1000;
+    const timeWindow = force ? endOfDay : nowMs + 4 * 60 * 60 * 1000;
+
     allMatches = unique
       .filter(f => {
         const status = f.fixture?.status?.short;
         const kickoff = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
         const isLive = ['1H','2H','HT','ET','BT','P'].includes(status);
         const isNS = ['NS','TBD','PST'].includes(status);
-        return isLive || (isNS && kickoff > nowMs - 60 * 60 * 1000 && kickoff < nowMs + 4 * 60 * 60 * 1000);
+        return isLive || (isNS && kickoff > nowMs - 60 * 60 * 1000 && kickoff < timeWindow);
       })
       .map(f => ({
         fixtureId: f.fixture?.id,
@@ -1259,8 +1346,8 @@ export default {
     }
 
     if (path === '/settle') {
-      const secret = url.searchParams.get('secret');
-      if (!secret || secret !== env.SCAN_SECRET) {
+      const token = url.searchParams.get('token');
+      if (!await verifyHMAC(token, env.SCAN_SECRET)) {
         return json({ error: 'Unauthorized' }, 401);
       }
       await verifyYesterdayPicks(env);
@@ -1268,12 +1355,90 @@ export default {
     }
 
     if (path === '/scan') {
-      const secret = url.searchParams.get('secret');
-      if (!secret || secret !== env.SCAN_SECRET) {
+      const token = url.searchParams.get('token');
+      if (!await verifyHMAC(token, env.SCAN_SECRET)) {
         return json({ error: 'Unauthorized' }, 401);
       }
       await runScan(env, true);
       return json({ status: 'scan klaar', version: VERSION });
+    }
+
+    if (path === '/debug-scan') {
+      const token = url.searchParams.get('token');
+      if (!await verifyHMAC(token, env.SCAN_SECRET)) return json({ error: 'Unauthorized' }, 401);
+      const log = [];
+      try {
+        const schedule = await fb(env, 'scan_schedule');
+        log.push({ step: 'scan_schedule', value: schedule });
+        const today = new Date().toISOString().split('T')[0];
+        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        log.push({ step: 'dates', today, tomorrowStr });
+
+        // Test 1 league (MLS vandaag)
+        const mlsToday = await apif(`/fixtures?league=253&season=2026&date=${today}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'mls_today', count: mlsToday?.length, statuses: mlsToday?.map(f => f.fixture?.status?.short) });
+        const mlsTomorrow = await apif(`/fixtures?league=253&season=2026&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'mls_tomorrow', count: mlsTomorrow?.length, statuses: mlsTomorrow?.map(f => f.fixture?.status?.short) });
+
+        // Test Brasileirao
+        const bra = await apif(`/fixtures?league=71&season=2026&date=${today}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'brasileirao_today', count: bra?.length, statuses: bra?.map(f => f.fixture?.status?.short) });
+        const braTomorrow = await apif(`/fixtures?league=71&season=2026&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'brasileirao_tomorrow', count: braTomorrow?.length, statuses: braTomorrow?.map(f => f.fixture?.status?.short) });
+
+        // Test Argentina
+        const arg = await apif(`/fixtures?league=128&season=2026&date=${today}&timezone=Europe/Amsterdam`, env);
+        log.push({ step: 'argentina_today', count: arg?.length });
+      } catch(e) {
+        log.push({ step: 'ERROR', error: e.message });
+      }
+      return json({ debug: log, version: VERSION });
+    }
+
+    if (path === '/check-odds') {
+      // Test welke bookmakers odds hebben voor een fixture
+      // Gebruik: /check-odds?fixture=1490324
+      const fixtureId = url.searchParams.get('fixture');
+      if (!fixtureId) return json({ error: 'fixture parameter verplicht' }, 400);
+      const BOOKMAKERS = [
+        { id: 1,  name: 'Marathonbet' },
+        { id: 4,  name: 'Bwin' },
+        { id: 6,  name: 'William Hill' },
+        { id: 8,  name: 'Bet365' },
+        { id: 10, name: 'Unibet' },
+        { id: 16, name: 'Betfair' },
+        { id: 18, name: 'Pinnacle' },
+        { id: 36, name: 'Betsson' },
+        { id: 44, name: 'NordicBet' },
+        { id: 54, name: 'Betway' },
+      ];
+      const results = await Promise.all(
+        BOOKMAKERS.map(async bm => {
+          try {
+            const data = await apif(`/odds?fixture=${fixtureId}&bookmaker=${bm.id}&bet=1`, env);
+            const bet = data?.[0]?.bookmakers?.[0]?.bets?.find(b => b.id === 1);
+            const home = parseFloat(bet?.values?.find(v => v.value === 'Home')?.odd || 0);
+            const draw = parseFloat(bet?.values?.find(v => v.value === 'Draw')?.odd || 0);
+            const away = parseFloat(bet?.values?.find(v => v.value === 'Away')?.odd || 0);
+            const hasOdds = home > 1;
+            return { ...bm, hasOdds, odds: hasOdds ? { home, draw, away } : null };
+          } catch(e) {
+            return { ...bm, hasOdds: false, error: e.message };
+          }
+        })
+      );
+      const withOdds = results.filter(r => r.hasOdds);
+      return json({ fixture: fixtureId, found: withOdds.length, bookmakers: results, version: VERSION });
+    }
+
+    if (path === '/keepalive') {
+      try {
+        const result = await sb(env, 'clv_results', 'GET', null, '?limit=1&select=id');
+        return json({ ok: true, supabase: result !== null ? 'online' : 'geen data', version: VERSION });
+      } catch(e) {
+        return json({ ok: false, error: e.message }, 500);
+      }
     }
 
     if (path === '/picks') {
@@ -1309,12 +1474,12 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
+    // Auto-scan tijdelijk uitgeschakeld — scan via dashboard /scan endpoint
     const now = new Date();
     const hour = now.getUTCHours();
     const isSunday = now.getUTCDay() === 0;
     ctx.waitUntil((async () => {
       await verifyYesterdayPicks(env);
-      await runScan(env);
       if (hour === 6) await generateDailyTip(env);
       if (isSunday && hour === 6) await runWeeklyCalibration(env);
     })());
