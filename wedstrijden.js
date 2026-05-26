@@ -679,7 +679,7 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
   let oddsData = cached;
 
   if (!oddsData) {
-    const bookmakers = [8, 6, 1, 5, 11, 3, 4, 7, 2];
+    const bookmakers = [8, 6, 1, 16, 36, 5, 11, 3, 4, 7, 2]; // 16=Betfair, 36=Betsson voor Scandinavisch
     const season = leagueId === 1 ? 2026 : 2025;
     const leagueMatch = (state.matches || []).find(m => String(m.leagueId) === String(leagueId));
     const matchDate = leagueMatch?.dateISO || new Date().toISOString().split('T')[0];
@@ -752,7 +752,7 @@ async function fetchOddsForAllMatches(matches, _apiKey) {
     let oddsData = typeof _cacheGet === 'function' ? _cacheGet(cacheKey) : null;
 
     if (!oddsData) {
-      const bookmakers = [8, 6, 1]; // Max 3 bookmakers voor snelheid
+      const bookmakers = [8, 6, 1, 16, 36]; // 16=Betfair, 36=Betsson voor Scandinavisch
       for (const bm of bookmakers) {
         try {
           const matchDate = byLeague[leagueId]?.[0]?.dateISO || new Date().toISOString().split('T')[0];
