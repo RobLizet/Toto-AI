@@ -680,7 +680,8 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
 
   if (!oddsData) {
     const bookmakers = [8, 6, 1, 16, 36, 5, 11, 3, 4, 7, 2]; // 16=Betfair, 36=Betsson voor Scandinavisch
-    const season = leagueId === 1 ? 2026 : 2025;
+    const SEASON_2026_LEAGUES = [1, 2, 3, 848, 103, 113]; // WK, CL, EL, ECL, Eliteserien, Allsvenskan
+    const season = SEASON_2026_LEAGUES.includes(Number(leagueId)) ? 2026 : 2025;
     const leagueMatch = (state.matches || []).find(m => String(m.leagueId) === String(leagueId));
     const matchDate = leagueMatch?.dateISO || new Date().toISOString().split('T')[0];
 
@@ -756,7 +757,8 @@ async function fetchOddsForAllMatches(matches, _apiKey) {
       for (const bm of bookmakers) {
         try {
           const matchDate = byLeague[leagueId]?.[0]?.dateISO || new Date().toISOString().split('T')[0];
-          const season = parseInt(leagueId) === 1 ? 2026 : 2025;
+          const SEASON_2026_LEAGUES2 = [1, 2, 3, 848, 103, 113];
+          const season = SEASON_2026_LEAGUES2.includes(parseInt(leagueId)) ? 2026 : 2025;
           // Eerst op datum proberen
           const r = await apiFetch(
             `https://v3.football.api-sports.io/odds?league=${leagueId}&season=${season}&date=${matchDate}&bookmaker=${bm}`,
