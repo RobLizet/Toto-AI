@@ -15,4 +15,3 @@ crons = ["0 6 * * *", "0 12-16 * * *"]
 # ONESIGNAL_API_KEY — OneSignal REST API key
 # SCAN_SECRET      — Willekeurig wachtwoord voor handmatige /scan trigger
 # FD_KEY           — Football-data.org key (optioneel)
-{
