@@ -386,3 +386,19 @@ body.dark .analyse-stat-cell { background:rgba(255,255,255,.06); }
 /* Premier League vlag fix - emoji werkt niet op alle platforms */
 #comp-premier .flag::before { content: none; }
 #comp-premier .flag { font-size: .7rem !important; letter-spacing: -.1em; }
+
+/* ── ANALYTICS ───────────────────────────────────────── */
+.screen-analytics { padding: .75rem .9rem 2rem; }
+.analytics-block {
+  background:var(--card);border:1px solid var(--stroke);border-radius:16px;
+  padding:.85rem 1rem;margin-bottom:.7rem;
+}
+.analytics-block-title {
+  font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;
+  color:var(--sub);letter-spacing:.08em;margin-bottom:.65rem;
+}
+.analytics-stat-card {
+  background:rgba(15,23,42,.04);border-radius:10px;padding:.5rem;text-align:center;
+}
+body.dark .analytics-block { background:rgba(255,255,255,.04); }
+body.dark .analytics-stat-card { background:rgba(255,255,255,.06); }
