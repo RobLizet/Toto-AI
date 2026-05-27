@@ -374,9 +374,14 @@ async function scanValueAll(silent = false) {
     return;
   }
   // v21.0: max 15 candidates om JSON truncatie te voorkomen bij grote batches
-  const candidates = (state.matches||[]).filter(m =>
-    m.homeOdds !== '—' && !m.isDone && parseFloat(m.homeOdds) > 1
-  ).slice(0, 15);
+  // v21.1: alle drie odds moeten geldig zijn — voorkomt HTTP 400 bij incomplete odds
+  const candidates = (state.matches||[]).filter(m => {
+    const h = parseFloat(m.homeOdds), d = parseFloat(m.drawOdds), a = parseFloat(m.awayOdds);
+    return !m.isDone
+      && m.homeOdds !== '—' && m.drawOdds !== '—' && m.awayOdds !== '—'
+      && h > 1 && d > 1 && a > 1
+      && !isNaN(h) && !isNaN(d) && !isNaN(a);
+  }).slice(0, 15);
 
   if (!candidates.length) {
     if (!silent) alert('Geen wedstrijden met quotes. Laad eerst wedstrijden via Wedstrijden tabblad.');
@@ -518,6 +523,8 @@ async function scanValueAll(silent = false) {
       return line;
     }).join('\n\n');
 
+    // v21.1: guard — lege context mag nooit naar Anthropic
+    if (!ctx || ctx.trim().length < 20) throw new Error('Lege scan context — geen geldige wedstrijden');
     const dynamicTokens = Math.min(4000, Math.max(1500, candidates.length * 130));
     const data = await anthropicFetch(null, {
       model: 'claude-sonnet-4-20250514',
