@@ -16,10 +16,3 @@ crons = ["0 6 * * *", "0 12-16 * * *"]
 # SCAN_SECRET      — Willekeurig wachtwoord voor handmatige /scan trigger
 # FD_KEY           — Football-data.org key (optioneel)
 {
-  "observability": {
-    "logs": {
-      "enabled": true,
-      "invocation_logs": true
-    }
-  }
-}
