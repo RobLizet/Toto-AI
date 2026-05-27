@@ -1,385 +1,353 @@
-// ANALYTICS.JS — v21.0
-// Supabase + Firebase analytics dashboard
-// CLV, ROI, Sharp Money, Confidence calibratie
+// ═══════════════════════════════════════════════════════
+// ANALYTICS.JS — Stats & Analytics scherm v1.0
+// Toont CLV, sharp money, league breakdown, ROI trend
+// Data: /analytics endpoint (Supabase) + lokale scanLog
+// ═══════════════════════════════════════════════════════
 
-// ── Render analytics scherm ──────────────────────────────
-function renderAnalyticsScreen() {
-  const el = document.getElementById('screen-analytics');
-  if (!el) return;
-  el.innerHTML = `
-    <div style="padding:.75rem .9rem 5rem;max-width:420px;margin:0 auto;">
+const ANALYTICS_WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
 
-      <!-- Header -->
-      <div style="margin-bottom:1rem;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--ink);letter-spacing:.03em;">📊 ANALYTICS</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-top:.1rem;">PERFORMANCE · CLV · SHARP MONEY</div>
-      </div>
+// ── Hoofd render functie ─────────────────────────────
+async function renderAnalyticsScreen() {
+  const screen = document.getElementById('screen-analytics');
+  if (!screen) return;
 
-      <!-- Loading state -->
-      <div id="analytics-loading" style="text-align:center;padding:2rem 0;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">⟳ Data ophalen...</div>
-      </div>
+  // Toon laadstatus
+  screen.innerHTML = _analyticsLoadingHTML();
 
-      <!-- Content (hidden until loaded) -->
-      <div id="analytics-content" style="display:none;">
+  // Lokale data berekenen
+  const local = _calcLocalStats();
 
-        <!-- KPI blokken rij 1 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
-          <div id="kpi-roi" style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem .8rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);font-weight:700;">TOTALE ROI</div>
-            <div id="kpi-roi-val" style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;margin-top:.15rem;">—</div>
-            <div id="kpi-roi-sub" style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.1rem;">— picks gesetteld</div>
-          </div>
-          <div id="kpi-clv" style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem .8rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);font-weight:700;">GEM. CLV</div>
-            <div id="kpi-clv-val" style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;margin-top:.15rem;">—</div>
-            <div id="kpi-clv-sub" style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.1rem;">closing line value</div>
-          </div>
-        </div>
-
-        <!-- KPI blokken rij 2 -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.75rem;">
-          <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.6rem .7rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);font-weight:700;">HITRATE</div>
-            <div id="kpi-hitrate" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin-top:.1rem;">—</div>
-          </div>
-          <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.6rem .7rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);font-weight:700;">GEM. ODDS</div>
-            <div id="kpi-odds" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin-top:.1rem;">—</div>
-          </div>
-          <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.6rem .7rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);font-weight:700;">CLV > 0%</div>
-            <div id="kpi-clv-pos" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;margin-top:.1rem;">—</div>
-          </div>
-        </div>
-
-        <!-- CLV uitleg banner -->
-        <div id="clv-banner" style="display:none;background:linear-gradient(135deg,rgba(21,128,61,.08),rgba(16,185,129,.05));
-          border:1px solid rgba(21,128,61,.2);border-radius:14px;padding:.65rem .85rem;margin-bottom:.75rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;color:#15803d;">✅ POSITIEVE EDGE GEDETECTEERD</div>
-          <div id="clv-banner-text" style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--ink);margin-top:.2rem;"></div>
-        </div>
-
-        <div id="clv-warn-banner" style="display:none;background:rgba(220,38,38,.06);
-          border:1px solid rgba(220,38,38,.2);border-radius:14px;padding:.65rem .85rem;margin-bottom:.75rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;color:#dc2626;">⚠️ NEGATIEVE CLV</div>
-          <div style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--sub);margin-top:.2rem;">Model pakt systematisch slechtere odds dan sluiting. Calibratie nodig.</div>
-        </div>
-
-        <!-- ROI per confidence tier -->
-        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem .85rem;margin-bottom:.5rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:var(--sub);margin-bottom:.6rem;">📈 ROI PER CONFIDENCE TIER</div>
-          <div id="conf-tiers" style="display:flex;flex-direction:column;gap:.35rem;"></div>
-          <div id="conf-empty" style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);display:none;">Nog te weinig data per tier</div>
-        </div>
-
-        <!-- ROI per odds range -->
-        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem .85rem;margin-bottom:.5rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:var(--sub);margin-bottom:.6rem;">🎯 ROI PER ODDS RANGE</div>
-          <div id="odds-ranges" style="display:flex;flex-direction:column;gap:.35rem;"></div>
-        </div>
-
-        <!-- ROI per league -->
-        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem .85rem;margin-bottom:.5rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:var(--sub);margin-bottom:.6rem;">🏆 ROI PER COMPETITIE</div>
-          <div id="league-rows" style="display:flex;flex-direction:column;gap:.35rem;"></div>
-          <div id="league-empty" style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);display:none;">Nog geen gesettelde picks per competitie</div>
-        </div>
-
-        <!-- Sharp Money (Supabase) -->
-        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem .85rem;margin-bottom:.5rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:var(--sub);margin-bottom:.6rem;">🔥 SHARP MONEY (LAATSTE 7 DAGEN)</div>
-          <div id="sharp-rows" style="display:flex;flex-direction:column;gap:.35rem;"></div>
-          <div id="sharp-empty" style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);display:none;">Geen steam movements gedetecteerd</div>
-        </div>
-
-        <!-- Laatste 30 dagen ROI -->
-        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem .85rem;margin-bottom:.5rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:var(--sub);margin-bottom:.6rem;">📅 LAATSTE 30 DAGEN</div>
-          <div id="recent-rows" style="display:flex;flex-direction:column;gap:.35rem;"></div>
-          <div id="recent-empty" style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);display:none;">Nog geen recente picks</div>
-        </div>
-
-        <!-- Footer meta -->
-        <div style="text-align:center;padding:.5rem 0 1rem;">
-          <div id="analytics-meta" style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);"></div>
-          <button onclick="loadAnalytics()" style="margin-top:.5rem;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);
-            border-radius:999px;padding:.3rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;
-            color:#7c3aed;cursor:pointer;font-weight:700;">↻ VERVERSEN</button>
-        </div>
-
-      </div>
-    </div>
-  `;
-
-  loadAnalytics();
-}
-
-// ── Data laden ───────────────────────────────────────────
-async function loadAnalytics() {
-  const loading = document.getElementById('analytics-loading');
-  const content = document.getElementById('analytics-content');
-  if (loading) loading.style.display = 'block';
-  if (content) content.style.display = 'none';
-
+  // Worker data ophalen
+  let workerData = null;
   try {
-    // Parallel: Firebase picks + Supabase analytics
-    const [picksData, supabaseData] = await Promise.all([
-      loadFirebasePicks(),
-      loadSupabaseAnalytics(),
-    ]);
-
-    renderAnalyticsContent(picksData, supabaseData);
+    const r = await fetch(ANALYTICS_WORKER + '/analytics');
+    if (r.ok) workerData = await r.json();
   } catch(e) {
-    console.error('[Analytics] Fout:', e);
-    if (loading) loading.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#dc2626;">⚠️ Laden mislukt: ${e.message}</div>`;
+    console.warn('[Analytics] Worker niet bereikbaar:', e.message);
   }
+
+  screen.innerHTML = _analyticsHTML(local, workerData);
 }
 
-async function loadFirebasePicks() {
-  try {
-    const WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
-    const res = await fetch(`${WORKER}/picks`);
-    const data = await res.json();
-    return data.picks || [];
-  } catch(e) {
-    console.warn('[Analytics] Firebase picks fout:', e.message);
-    return [];
-  }
-}
+// ── Lokale statistieken berekenen uit scanLog ────────
+function _calcLocalStats() {
+  const scanLog = state.scanLog || [];
+  const allPicks = scanLog.flatMap(s => s.picks || []);
+  const DREMPEL = { minValue: 8, minConf: 6 };
 
-async function loadSupabaseAnalytics() {
-  try {
-    const WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
-    const res = await fetch(`${WORKER}/analytics`);
-    return await res.json();
-  } catch(e) {
-    console.warn('[Analytics] Supabase fout:', e.message);
-    return null;
-  }
-}
+  const kwali = allPicks.filter(p =>
+    !p.isSparseData &&
+    (p.value||0) >= DREMPEL.minValue &&
+    (p.confidence||0) >= DREMPEL.minConf
+  );
+  const settled = kwali.filter(p => p.status === 'win' || p.status === 'lose');
+  const wins = settled.filter(p => p.status === 'win');
 
-// ── Render content ───────────────────────────────────────
-function renderAnalyticsContent(picks, supabase) {
-  const settled = picks.filter(p => p.status === 'win' || p.status === 'lose');
-  const wins    = settled.filter(p => p.status === 'win');
-  const total   = settled.length;
-
-  // ── KPIs ────────────────────────────────────────────────
-  const roi = total > 0
-    ? settled.reduce((s, p) => s + (p.status === 'win' ? (p.odds - 1) * 100 : -100), 0) / total
-    : null;
-  const hitrate = total > 0 ? (wins.length / total * 100) : null;
-  const avgOdds = total > 0
-    ? settled.reduce((s, p) => s + (p.odds || 0), 0) / total
-    : null;
-
-  // ROI kleur
-  const roiColor = roi === null ? 'var(--sub)' : roi >= 10 ? '#15803d' : roi >= 0 ? '#2563eb' : '#dc2626';
-  const roiVal   = roi === null ? '—' : `${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%`;
-
-  document.getElementById('kpi-roi-val').textContent = roiVal;
-  document.getElementById('kpi-roi-val').style.color = roiColor;
-  document.getElementById('kpi-roi-sub').textContent = `${total} picks gesetteld`;
-
-  document.getElementById('kpi-hitrate').textContent = hitrate !== null ? `${hitrate.toFixed(0)}%` : '—';
-  document.getElementById('kpi-hitrate').style.color = hitrate === null ? 'var(--sub)' : hitrate >= 50 ? '#15803d' : hitrate >= 35 ? '#2563eb' : '#dc2626';
-
-  document.getElementById('kpi-odds').textContent = avgOdds !== null ? avgOdds.toFixed(2) : '—';
-
-  // CLV van Supabase
-  const clv = supabase?.clv;
-  if (clv?.avgCLV !== null && clv?.avgCLV !== undefined) {
-    const clvColor = clv.avgCLV >= 2 ? '#15803d' : clv.avgCLV >= 0 ? '#2563eb' : '#dc2626';
-    document.getElementById('kpi-clv-val').textContent = `${clv.avgCLV >= 0 ? '+' : ''}${clv.avgCLV}%`;
-    document.getElementById('kpi-clv-val').style.color = clvColor;
-    document.getElementById('kpi-clv-sub').textContent = `${clv.total} picks met CLV`;
-    document.getElementById('kpi-clv-pos').textContent = clv.positiveCLVPct !== null ? `${clv.positiveCLVPct}%` : '—';
-    document.getElementById('kpi-clv-pos').style.color = clv.positiveCLVPct >= 55 ? '#15803d' : 'var(--sub)';
-
-    // Banner
-    if (clv.avgCLV >= 1) {
-      document.getElementById('clv-banner').style.display = 'block';
-      document.getElementById('clv-banner-text').textContent =
-        `Gemiddeld ${clv.avgCLV}% betere odds dan sluiting over ${clv.total} picks. ${clv.positiveCLVPct}% heeft positieve CLV. Dit wijst op structurele edge.`;
-    } else if (clv.avgCLV < 0) {
-      document.getElementById('clv-warn-banner').style.display = 'block';
+  // ROI trend per 10 picks
+  const roiTrend = [];
+  let runningROI = 0;
+  settled.forEach((p, i) => {
+    runningROI += p.status === 'win' ? (p.odds - 1) * 100 : -100;
+    if ((i + 1) % 5 === 0 || i === settled.length - 1) {
+      roiTrend.push({ n: i + 1, roi: parseFloat((runningROI / (i + 1)).toFixed(1)) });
     }
-  } else {
-    document.getElementById('kpi-clv-val').textContent = '—';
-    document.getElementById('kpi-clv-sub').textContent = 'nog geen CLV data';
-    document.getElementById('kpi-clv-pos').textContent = '—';
-  }
-
-  // ── ROI per confidence tier ──────────────────────────────
-  const confTiers = { '1-4': [], '5-6': [], '7-8': [], '9-10': [] };
-  settled.forEach(p => {
-    const c = p.confidence || 0;
-    if (c <= 4) confTiers['1-4'].push(p);
-    else if (c <= 6) confTiers['5-6'].push(p);
-    else if (c <= 8) confTiers['7-8'].push(p);
-    else confTiers['9-10'].push(p);
   });
 
-  const confEl = document.getElementById('conf-tiers');
-  const confEmpty = document.getElementById('conf-empty');
-  const confRows = Object.entries(confTiers)
-    .filter(([, arr]) => arr.length > 0)
-    .map(([tier, arr]) => {
-      const r = arr.reduce((s, p) => s + (p.status === 'win' ? (p.odds - 1) * 100 : -100), 0) / arr.length;
-      const w = arr.filter(p => p.status === 'win').length;
-      return { tier, roi: r, total: arr.length, wins: w };
-    });
-
-  if (confRows.length === 0) {
-    confEmpty.style.display = 'block';
-  } else {
-    confEl.innerHTML = confRows.map(r => roiRow(`Conf ${r.tier}/10`, r.roi, r.total, r.wins)).join('');
-  }
-
-  // ── ROI per odds range ───────────────────────────────────
-  const oddsRanges = { '1.0–1.5': [], '1.5–2.0': [], '2.0–2.5': [], '2.5–3.5': [], '3.5+': [] };
+  // Per pick type (1/X/2)
+  const byPick = { '1': { w:0, t:0 }, 'X': { w:0, t:0 }, '2': { w:0, t:0 } };
   settled.forEach(p => {
-    const o = p.odds || 0;
-    if (o < 1.5) oddsRanges['1.0–1.5'].push(p);
-    else if (o < 2.0) oddsRanges['1.5–2.0'].push(p);
-    else if (o < 2.5) oddsRanges['2.0–2.5'].push(p);
-    else if (o < 3.5) oddsRanges['2.5–3.5'].push(p);
-    else oddsRanges['3.5+'].push(p);
+    const key = p.pick || '1';
+    if (byPick[key]) { byPick[key].t++; if (p.status==='win') byPick[key].w++; }
   });
 
-  document.getElementById('odds-ranges').innerHTML = Object.entries(oddsRanges)
-    .filter(([, arr]) => arr.length > 0)
-    .map(([range, arr]) => {
-      const r = arr.reduce((s, p) => s + (p.status === 'win' ? (p.odds - 1) * 100 : -100), 0) / arr.length;
-      const w = arr.filter(p => p.status === 'win').length;
-      return roiRow(`@ ${range}`, r, arr.length, w);
-    }).join('') || `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">Nog geen data</div>`;
-
-  // ── ROI per league ───────────────────────────────────────
-  const leagueMap = {};
+  // Per league
+  const byLeague = {};
   settled.forEach(p => {
-    const key = p.leagueName || p.leagueId || 'Onbekend';
-    if (!leagueMap[key]) leagueMap[key] = [];
-    leagueMap[key].push(p);
+    const lid = String(p.leagueId || 'Onbekend');
+    const name = p.leagueName || p.comp || ('League ' + lid);
+    if (!byLeague[lid]) byLeague[lid] = { name, wins: 0, total: 0, roi: 0 };
+    byLeague[lid].total++;
+    if (p.status === 'win') {
+      byLeague[lid].wins++;
+      byLeague[lid].roi += (p.odds - 1) * 100;
+    } else {
+      byLeague[lid].roi -= 100;
+    }
   });
 
-  const leagueEl = document.getElementById('league-rows');
-  const leagueEmpty = document.getElementById('league-empty');
-  const leagueRows = Object.entries(leagueMap)
-    .sort((a, b) => b[1].length - a[1].length)
-    .map(([name, arr]) => {
-      const r = arr.reduce((s, p) => s + (p.status === 'win' ? (p.odds - 1) * 100 : -100), 0) / arr.length;
-      const w = arr.filter(p => p.status === 'win').length;
-      return roiRow(name, r, arr.length, w);
-    });
+  // Per odds bucket
+  const byBucket = {};
+  const bucketLabel = (o) => {
+    if (o < 1.5) return '1.0–1.5';
+    if (o < 2.0) return '1.5–2.0';
+    if (o < 2.5) return '2.0–2.5';
+    if (o < 3.0) return '2.5–3.0';
+    if (o < 4.0) return '3.0–4.0';
+    return '4.0+';
+  };
+  settled.forEach(p => {
+    const b = bucketLabel(p.odds || 2);
+    if (!byBucket[b]) byBucket[b] = { wins: 0, total: 0 };
+    byBucket[b].total++;
+    if (p.status === 'win') byBucket[b].wins++;
+  });
 
-  if (leagueRows.length === 0) {
-    leagueEmpty.style.display = 'block';
-  } else {
-    leagueEl.innerHTML = leagueRows.join('');
-  }
+  // Confidence correlatie
+  const confBuckets = { 'laag (1–4)': {w:0,t:0}, 'midden (5–7)': {w:0,t:0}, 'hoog (8–10)': {w:0,t:0} };
+  settled.forEach(p => {
+    const c = p.confidence || 5;
+    const key = c <= 4 ? 'laag (1–4)' : c <= 7 ? 'midden (5–7)' : 'hoog (8–10)';
+    confBuckets[key].t++;
+    if (p.status === 'win') confBuckets[key].w++;
+  });
 
-  // ── Sharp money ──────────────────────────────────────────
-  const sharpEl = document.getElementById('sharp-rows');
-  const sharpEmpty = document.getElementById('sharp-empty');
-  const steamData = supabase?.sharpMoney?.topSteam || [];
-
-  if (!steamData.length) {
-    sharpEmpty.style.display = 'block';
-  } else {
-    sharpEl.innerHTML = steamData.map(s => `
-      <div style="display:flex;justify-content:space-between;align-items:center;
-        padding:.4rem .5rem;background:rgba(220,38,38,.05);border-radius:8px;border:1px solid rgba(220,38,38,.1);">
-        <div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;color:#dc2626;">
-            🔥 fixture ${s.fixtureId} · ${s.pick}
-          </div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);margin-top:.1rem;">
-            ${new Date(s.detectedAt).toLocaleDateString('nl-NL')}
-          </div>
-        </div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#dc2626;">
-          ${s.movement > 0 ? '+' : ''}${s.movement}%
-        </div>
-      </div>`).join('');
-    document.getElementById('sharp-rows').previousElementSibling &&
-      (document.getElementById('sharp-rows').previousElementSibling.innerHTML =
-        `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:var(--sub);margin-bottom:.6rem;">🔥 SHARP MONEY — ${supabase.sharpMoney.steamMovements7d} steam(s) afgelopen 7d</div>`);
-  }
-
-  // ── Laatste 30 dagen ─────────────────────────────────────
-  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const recent = settled
-    .filter(p => p.verifiedAt && new Date(p.verifiedAt) >= cutoff)
-    .sort((a, b) => new Date(b.verifiedAt) - new Date(a.verifiedAt))
-    .slice(0, 10);
-
-  const recentEl = document.getElementById('recent-rows');
-  const recentEmpty = document.getElementById('recent-empty');
-
-  if (!recent.length) {
-    recentEmpty.style.display = 'block';
-  } else {
-    const recentRoi = recent.reduce((s, p) => s + (p.status === 'win' ? (p.odds - 1) * 100 : -100), 0) / recent.length;
-    recentEl.innerHTML = `
-      <div style="display:flex;justify-content:space-between;margin-bottom:.4rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">ROI laatste ${recent.length} picks</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${recentRoi >= 0 ? '#15803d' : '#dc2626'};">
-          ${recentRoi >= 0 ? '+' : ''}${recentRoi.toFixed(1)}%
-        </div>
-      </div>
-      ${recent.map(p => `
-        <div style="display:flex;justify-content:space-between;align-items:center;
-          padding:.3rem 0;border-bottom:1px solid var(--stroke);">
-          <div>
-            <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:600;color:var(--ink);">
-              ${p.matchName || '?'}
-            </div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">
-              ${p.pickLabel || p.pick} · @ ${parseFloat(p.odds||0).toFixed(2)} · conf ${p.confidence||'?'}/10
-            </div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;
-              color:${p.status==='win'?'#15803d':'#dc2626'};">
-              ${p.status === 'win' ? '✅ WIN' : '❌ LOSE'}
-            </div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">
-              ${p.verifiedAt ? new Date(p.verifiedAt).toLocaleDateString('nl-NL') : ''}
-            </div>
-          </div>
-        </div>`).join('')}`;
-  }
-
-  // ── Meta footer ──────────────────────────────────────────
-  document.getElementById('analytics-meta').textContent =
-    `Bijgewerkt: ${new Date().toLocaleTimeString('nl-NL')} · ${total} picks gesetteld · v${APP_VERSION}`;
-
-  // Toon content
-  document.getElementById('analytics-loading').style.display = 'none';
-  document.getElementById('analytics-content').style.display = 'block';
+  return {
+    total: kwali.length,
+    settled: settled.length,
+    wins: wins.length,
+    hitrate: settled.length ? Math.round(wins.length / settled.length * 100) : null,
+    roi: settled.length
+      ? parseFloat((settled.reduce((s,p) => s + (p.status==='win'?(p.odds-1):-1), 0) / settled.length * 100).toFixed(1))
+      : null,
+    avgOdds: settled.length
+      ? parseFloat((settled.reduce((s,p) => s + (p.odds||0), 0) / settled.length).toFixed(2))
+      : null,
+    avgValue: settled.length
+      ? parseFloat((settled.reduce((s,p) => s + (p.value||0), 0) / settled.length).toFixed(1))
+      : null,
+    roiTrend,
+    byPick,
+    byLeague: Object.entries(byLeague)
+      .sort((a,b) => b[1].total - a[1].total)
+      .slice(0, 8),
+    byBucket: Object.entries(byBucket)
+      .sort((a,b) => {
+        const order = ['1.0–1.5','1.5–2.0','2.0–2.5','2.5–3.0','3.0–4.0','4.0+'];
+        return order.indexOf(a[0]) - order.indexOf(b[0]);
+      }),
+    confBuckets: Object.entries(confBuckets),
+    scansTotal: scanLog.length,
+    openPicks: kwali.filter(p => !p.status || p.status === 'pending').length,
+  };
 }
 
-// ── Helper: ROI rij renderen ─────────────────────────────
-function roiRow(label, roi, total, wins) {
-  const roiColor = roi >= 10 ? '#15803d' : roi >= 0 ? '#2563eb' : '#dc2626';
-  const barWidth = Math.min(100, Math.abs(roi) * 2);
-  const barColor = roi >= 0 ? 'rgba(21,128,61,.3)' : 'rgba(220,38,38,.3)';
-  const hitrate  = total > 0 ? Math.round(wins / total * 100) : 0;
-  return `
-    <div style="padding:.3rem 0;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.2rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--ink);">${label}</div>
-        <div style="display:flex;align-items:center;gap:.4rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">${wins}/${total} · ${hitrate}%</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:${roiColor};">
-            ${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%
-          </div>
-        </div>
-      </div>
-      <div style="height:3px;background:var(--stroke);border-radius:2px;overflow:hidden;">
-        <div style="height:100%;width:${barWidth}%;background:${barColor};border-radius:2px;transition:width .4s;"></div>
-      </div>
-    </div>`;
+// ── Loading HTML ──────────────────────────────────────
+function _analyticsLoadingHTML() {
+  return '<div style="padding:2rem;text-align:center;">' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:var(--sub);">📊 Analytics laden...</div>' +
+    '</div>';
+}
+
+// ── Hoofd HTML builder ────────────────────────────────
+function _analyticsHTML(local, worker) {
+  let html = '';
+
+  // ── Header ──
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">';
+  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--ink);">📊 STATS & ANALYTICS</div>';
+  html += '<button onclick="renderAnalyticsScreen()" style="background:none;border:1px solid var(--stroke);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:var(--sub);cursor:pointer;">↻ Vernieuwen</button>';
+  html += '</div>';
+
+  // ── KPI row ──
+  html += '<div class="analytics-block">';
+  html += '<div class="analytics-block-title">OVERZICHT</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
+  html += _kpi('PICKS TOTAAL', local.total + '/100', '#be185d');
+  html += _kpi('SETTLED', local.settled, '#7c3aed');
+  html += _kpi('HITRATE', local.hitrate !== null ? local.hitrate + '%' : '—', local.hitrate !== null && local.hitrate >= 50 ? '#16a34a' : '#dc2626');
+  html += _kpi('ROI', local.roi !== null ? (local.roi >= 0 ? '+' : '') + local.roi + '%' : '—', local.roi !== null && local.roi >= 0 ? '#16a34a' : '#dc2626');
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;">';
+  html += _kpiSmall('GEM. ODDS', local.avgOdds || '—');
+  html += _kpiSmall('GEM. VALUE', local.avgValue ? local.avgValue + '%' : '—');
+  html += _kpiSmall('OPEN', local.openPicks);
+  html += '</div>';
+
+  // Voortgangsbalk
+  html += '<div style="margin-top:.65rem;">';
+  html += '<div style="display:flex;justify-content:space-between;margin-bottom:.25rem;">';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">VOORTGANG NAAR 100 PICKS</div>';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">' + local.total + '/100</div>';
+  html += '</div>';
+  html += '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:6px;overflow:hidden;">';
+  html += '<div style="background:linear-gradient(90deg,#be185d,#7c3aed);height:100%;border-radius:999px;width:' + Math.min(100, local.total) + '%;transition:width .4s;"></div>';
+  html += '</div></div></div>';
+
+  // ── ROI Trend ──
+  if (local.roiTrend.length >= 2) {
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">ROI TREND</div>';
+    html += _roiTrendChart(local.roiTrend);
+    html += '</div>';
+  }
+
+  // ── Per pick type ──
+  if (local.settled > 0) {
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">UITSLAG TYPE</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">';
+    ['1','X','2'].forEach(pick => {
+      const d = local.byPick[pick];
+      const hr = d.t > 0 ? Math.round(d.w / d.t * 100) : null;
+      html += '<div class="analytics-stat-card">';
+      html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:var(--ink);">' + pick + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.7rem;font-weight:800;color:' + (hr!==null&&hr>=50?'#16a34a':'#dc2626') + ';">' + (hr !== null ? hr + '%' : '—') + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">' + d.w + '/' + d.t + ' wins</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // ── Per odds bucket ──
+  if (local.byBucket.length > 0) {
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">HITRATE PER ODDS</div>';
+    local.byBucket.forEach(([bucket, d]) => {
+      const hr = d.total > 0 ? Math.round(d.wins / d.total * 100) : 0;
+      const barW = Math.min(100, hr);
+      html += '<div style="margin-bottom:.5rem;">';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:.2rem;">';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--ink);">' + bucket + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);">' + hr + '% (' + d.wins + '/' + d.total + ')</div>';
+      html += '</div>';
+      html += '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:5px;overflow:hidden;">';
+      html += '<div style="background:' + (hr >= 50 ? '#16a34a' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + barW + '%;transition:width .4s;"></div>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // ── Confidence correlatie ──
+  if (local.settled >= 5) {
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">CONFIDENCE vs RESULTAAT</div>';
+    local.confBuckets.forEach(([label, d]) => {
+      const hr = d.t > 0 ? Math.round(d.w / d.t * 100) : 0;
+      html += '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--sub);min-width:80px;">' + label + '</div>';
+      html += '<div style="flex:1;background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">';
+      html += '<div style="background:' + (hr >= 50 ? '#16a34a' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + hr + '%;transition:width .4s;"></div>';
+      html += '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:var(--ink);min-width:36px;text-align:right;">' + hr + '%</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);min-width:32px;">' + d.w + '/' + d.t + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ── Per league ──
+  if (local.byLeague.length > 0) {
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">PER COMPETITIE</div>';
+    local.byLeague.forEach(([lid, d]) => {
+      const hr = d.total > 0 ? Math.round(d.wins / d.total * 100) : 0;
+      const roi = parseFloat((d.roi / d.total).toFixed(1));
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--stroke);">';
+      html += '<div style="flex:1;">';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--ink);">' + d.name + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">' + d.total + ' picks · ' + d.wins + ' wins</div>';
+      html += '</div>';
+      html += '<div style="text-align:right;">';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:' + (hr>=50?'#16a34a':'#dc2626') + ';">' + hr + '%</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:' + (roi>=0?'#16a34a':'#dc2626') + ';">' + (roi>=0?'+':'') + roi + '% ROI</div>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // ── Supabase CLV data ──
+  if (worker && worker.clv) {
+    const clv = worker.clv;
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.42rem;font-weight:400;color:var(--sub);">via Supabase</span></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">';
+    html += _kpiSmall('TOTAAL', clv.total || 0);
+    html += _kpiSmall('GEM. CLV', clv.avgCLV !== null ? (clv.avgCLV >= 0 ? '+' : '') + clv.avgCLV + '%' : '—');
+    html += _kpiSmall('POSITIEF', clv.positiveCLVPct !== null ? clv.positiveCLVPct + '%' : '—');
+    html += '</div>';
+    if (clv.total === 0) {
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);margin-top:.5rem;text-align:center;">CLV data verschijnt na settlements via Worker v98+</div>';
+    }
+    html += '</div>';
+  }
+
+  // ── Sharp Money ──
+  if (worker && worker.sharpMoney) {
+    const sm = worker.sharpMoney;
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">SHARP MONEY <span style="font-size:.42rem;font-weight:400;color:var(--sub);">laatste 7 dagen</span></div>';
+    if (sm.steamMovements7d === 0) {
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);text-align:center;padding:.5rem 0;">Geen steam movements gedetecteerd</div>';
+    } else {
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#d97706;margin-bottom:.5rem;">🔥 ' + sm.steamMovements7d + ' steam movements</div>';
+      if (sm.topSteam && sm.topSteam.length) {
+        sm.topSteam.forEach(s => {
+          html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid var(--stroke);">';
+          html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--ink);">Fixture ' + s.fixtureId + ' · Pick ' + s.pick + '</div>';
+          html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:800;color:#d97706;">' + s.movement + '%</div>';
+          html += '</div>';
+        });
+      }
+    }
+    html += '</div>';
+  }
+
+  // ── Lege state ──
+  if (local.settled === 0 && !worker) {
+    html += '<div style="text-align:center;padding:2rem;opacity:.5;">';
+    html += '<div style="font-size:2rem;margin-bottom:.5rem;">📊</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:var(--sub);">Nog geen settled picks — scan wedstrijden om data op te bouwen.</div>';
+    html += '</div>';
+  }
+
+  // ── Footer ──
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);text-align:center;padding:.75rem;margin-top:.25rem;">';
+  html += 'Lokale data · ' + local.scansTotal + ' scans · Worker v98 Supabase';
+  html += '</div>';
+
+  return html;
+}
+
+// ── ROI trend mini-chart (SVG) ────────────────────────
+function _roiTrendChart(trend) {
+  if (trend.length < 2) return '';
+  const W = 300, H = 70, PAD = 8;
+  const rois = trend.map(t => t.roi);
+  const min = Math.min(...rois, -5);
+  const max = Math.max(...rois, 5);
+  const range = max - min || 1;
+  const x = (i) => PAD + (i / (trend.length - 1)) * (W - PAD * 2);
+  const y = (v) => H - PAD - ((v - min) / range) * (H - PAD * 2);
+  const zeroY = y(0);
+
+  let path = trend.map((t, i) => (i === 0 ? 'M' : 'L') + x(i).toFixed(1) + ',' + y(t.roi).toFixed(1)).join(' ');
+  const lastROI = rois[rois.length - 1];
+  const lineColor = lastROI >= 0 ? '#16a34a' : '#dc2626';
+
+  let svg = '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="display:block;margin:.4rem 0;">';
+  // Zero lijn
+  svg += '<line x1="' + PAD + '" y1="' + zeroY.toFixed(1) + '" x2="' + (W-PAD) + '" y2="' + zeroY.toFixed(1) + '" stroke="rgba(15,23,42,.15)" stroke-width="1" stroke-dasharray="3,3"/>';
+  // ROI lijn
+  svg += '<path d="' + path + '" fill="none" stroke="' + lineColor + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  // Labels
+  svg += '<text x="' + PAD + '" y="' + (H - 1) + '" font-family="IBM Plex Mono" font-size="8" fill="rgba(15,23,42,.4)">n=1</text>';
+  svg += '<text x="' + (W - PAD) + '" y="' + (H - 1) + '" font-family="IBM Plex Mono" font-size="8" fill="rgba(15,23,42,.4)" text-anchor="end">n=' + trend[trend.length-1].n + '</text>';
+  svg += '<text x="' + x(trend.length-1) + '" y="' + Math.max(10, y(lastROI) - 4) + '" font-family="IBM Plex Mono" font-size="9" font-weight="bold" fill="' + lineColor + '" text-anchor="middle">' + (lastROI>=0?'+':'') + lastROI + '%</text>';
+  svg += '</svg>';
+  return svg;
+}
+
+// ── Helpers ───────────────────────────────────────────
+function _kpi(label, value, color) {
+  return '<div style="background:rgba(15,23,42,.04);border-radius:10px;padding:.5rem .6rem;">' +
+    '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:' + color + ';line-height:1.1;">' + value + '</div>' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:var(--sub);margin-top:1px;">' + label + '</div>' +
+    '</div>';
+}
+
+function _kpiSmall(label, value) {
+  return '<div style="background:rgba(15,23,42,.04);border-radius:8px;padding:.4rem .5rem;text-align:center;">' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:var(--ink);">' + value + '</div>' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);margin-top:1px;">' + label + '</div>' +
+    '</div>';
 }
