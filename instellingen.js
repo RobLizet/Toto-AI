@@ -662,54 +662,55 @@ const ANTHROPIC_PRICES = {
   'default':                   { input: 0.000003,   output: 0.000015   }
 };
 
-// Laad kosten uit Firebase bij opstarten
+// Laad kosten uit Supabase via worker
 async function loadCostsFromFirebase() {
   try {
     const uid = firebase.auth().currentUser?.uid;
     if (!uid) return;
-    const snap = await firebase.database().ref(`users/${uid}/costs`).get();
-    if (snap.exists()) {
-      const fbCosts = snap.val();
-      const local = state.costs || {calls:0,tokensIn:0,tokensOut:0,totalUSD:0};
-      // Firebase is leidend als lastUpdated nieuwer is, anders optellen
-      const fbNewer = fbCosts.lastUpdated && (!local.lastUpdated || fbCosts.lastUpdated > local.lastUpdated);
-      if (fbNewer) {
-        // Firebase heeft nieuwere data — gebruik Firebase als basis + voeg lokale nieuwe toe
-        const localNew = {
-          calls:    Math.max(0, (local.calls||0)    - (fbCosts.calls||0)),
-          tokensIn: Math.max(0, (local.tokensIn||0) - (fbCosts.tokensIn||0)),
-          tokensOut:Math.max(0, (local.tokensOut||0)- (fbCosts.tokensOut||0)),
-          totalUSD: Math.max(0, (local.totalUSD||0) - (fbCosts.totalUSD||0)),
-        };
-        state.costs = {
-          calls:    (fbCosts.calls||0)    + localNew.calls,
-          tokensIn: (fbCosts.tokensIn||0) + localNew.tokensIn,
-          tokensOut:(fbCosts.tokensOut||0)+ localNew.tokensOut,
-          totalUSD: (fbCosts.totalUSD||0) + localNew.totalUSD,
-          lastUpdated: fbCosts.lastUpdated,
-        };
-      } else {
-        // Lokale data is nieuwer — neem hoogste
-        state.costs = {
-          calls:    Math.max(local.calls||0,    fbCosts.calls||0),
-          tokensIn: Math.max(local.tokensIn||0, fbCosts.tokensIn||0),
-          tokensOut:Math.max(local.tokensOut||0,fbCosts.tokensOut||0),
-          totalUSD: Math.max(local.totalUSD||0, fbCosts.totalUSD||0),
-          lastUpdated: local.lastUpdated || fbCosts.lastUpdated,
-        };
-      }
-      saveState();
-      updateCostUI();
+    const resp = await fetch(`${WORKER}/user-costs?uid=${uid}`);
+    if (!resp.ok) return;
+    const sbCosts = await resp.json();
+    if (!sbCosts) return;
+    const local = state.costs || {calls:0,tokensIn:0,tokensOut:0,totalUSD:0};
+    const sbNewer = sbCosts.lastUpdated && (!local.lastUpdated || sbCosts.lastUpdated > local.lastUpdated);
+    if (sbNewer) {
+      const localNew = {
+        calls:    Math.max(0, (local.calls||0)    - (sbCosts.calls||0)),
+        tokensIn: Math.max(0, (local.tokensIn||0) - (sbCosts.tokensIn||0)),
+        tokensOut:Math.max(0, (local.tokensOut||0)- (sbCosts.tokensOut||0)),
+        totalUSD: Math.max(0, (local.totalUSD||0) - (sbCosts.totalUSD||0)),
+      };
+      state.costs = {
+        calls:    (sbCosts.calls||0)    + localNew.calls,
+        tokensIn: (sbCosts.tokensIn||0) + localNew.tokensIn,
+        tokensOut:(sbCosts.tokensOut||0)+ localNew.tokensOut,
+        totalUSD: (sbCosts.totalUSD||0) + localNew.totalUSD,
+        lastUpdated: sbCosts.lastUpdated,
+      };
+    } else {
+      state.costs = {
+        calls:    Math.max(local.calls||0,    sbCosts.calls||0),
+        tokensIn: Math.max(local.tokensIn||0, sbCosts.tokensIn||0),
+        tokensOut:Math.max(local.tokensOut||0,sbCosts.tokensOut||0),
+        totalUSD: Math.max(local.totalUSD||0, sbCosts.totalUSD||0),
+        lastUpdated: local.lastUpdated || sbCosts.lastUpdated,
+      };
     }
+    saveState();
+    updateCostUI();
   } catch(e) {}
 }
 
-// Sla kosten op in Firebase
+// Sla kosten op in Supabase via worker
 async function saveCostsToFirebase() {
   try {
     const uid = firebase.auth().currentUser?.uid;
     if (!uid) return;
-    await firebase.database().ref(`users/${uid}/costs`).set(state.costs);
+    await fetch(`${WORKER}/user-costs?uid=${uid}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state.costs),
+    });
   } catch(e) {}
 }
 
