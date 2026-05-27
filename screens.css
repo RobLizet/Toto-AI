@@ -132,18 +132,75 @@
 }
 .sort-btn.active { background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.35);color:#7c3aed; }
 
-/* ── ANALYSE ──────────────────────────────────────── */
-.analyse-subtabs { display:flex;gap:.3rem;margin-bottom:.75rem; }
-.analyse-subtab {
-  flex:1;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
-  padding:.5rem;border-radius:12px;cursor:pointer;text-align:center;
-  background:rgba(255,255,255,.7);border:1.5px solid var(--stroke);color:var(--sub);
+/* ── ANALYSE — one-page layout v21.1 ─────────────── */
+.analyse-block {
+  background:var(--card);border:1px solid var(--stroke);border-radius:16px;
+  padding:.85rem 1rem;margin-bottom:.7rem;
+}
+.analyse-block-header {
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;
+}
+.analyse-block-title {
+  font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:800;
+  color:var(--ink);letter-spacing:.06em;display:flex;align-items:center;gap:.4rem;
+}
+.analyse-block-icon { font-size:.85rem; }
+.analyse-header-btn {
+  background:none;border:1px solid var(--stroke);border-radius:8px;
+  color:var(--sub);cursor:pointer;padding:.3rem .55rem;font-size:.75rem;
   transition:all .15s;
 }
-.analyse-subtab.active {
-  background:linear-gradient(135deg,rgba(219,39,119,.12),rgba(124,58,237,.1));
-  border-color:rgba(219,39,119,.4);color:#be185d;
+.analyse-header-btn:hover { background:rgba(22,163,74,.08);color:#15803d;border-color:rgba(22,163,74,.3); }
+.analyse-btn-primary {
+  width:100%;background:linear-gradient(135deg,rgba(22,163,74,.1),rgba(5,150,105,.06));
+  border:1.5px solid rgba(22,163,74,.3);color:#15803d;font-family:'IBM Plex Mono',monospace;
+  font-size:.62rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;
+  letter-spacing:.03em;transition:all .15s;display:block;text-align:center;
 }
+.analyse-btn-primary:hover { background:linear-gradient(135deg,rgba(22,163,74,.16),rgba(5,150,105,.1));border-color:rgba(22,163,74,.5); }
+.analyse-btn-ai {
+  width:100%;background:linear-gradient(135deg,rgba(219,39,119,.12),rgba(124,58,237,.1));
+  border:1.5px solid rgba(219,39,119,.3);color:#be185d;font-family:'IBM Plex Mono',monospace;
+  font-size:.62rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;
+  letter-spacing:.03em;margin-bottom:.6rem;display:block;text-align:center;
+}
+.analyse-btn-secondary {
+  background:rgba(15,23,42,.05);border:1px solid var(--stroke);color:var(--sub);
+  font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:700;
+  padding:.5rem 1rem;border-radius:10px;cursor:pointer;display:block;text-align:center;
+}
+.analyse-btn-ghost {
+  background:rgba(15,23,42,.04);border:1px solid var(--stroke);color:var(--sub);
+  font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+  padding:.4rem .6rem;border-radius:8px;cursor:pointer;text-align:center;
+}
+.analyse-empty {
+  text-align:center;padding:1rem 0;display:flex;flex-direction:column;align-items:center;
+}
+.analyse-match-card {
+  background:rgba(15,23,42,.03);border:1px solid var(--stroke);border-radius:12px;
+  padding:.65rem .8rem;margin-bottom:.65rem;
+}
+.analyse-odds-cell {
+  text-align:center;background:rgba(255,255,255,.7);border:1px solid var(--stroke);
+  border-radius:8px;padding:.3rem;
+}
+.analyse-odds-label { font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub); }
+.analyse-odds-val { font-family:'Bebas Neue',sans-serif;font-size:.95rem;color:var(--ink); }
+.analyse-stat-cell {
+  text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem .3rem;
+}
+.analyse-stat-val { font-family:'Bebas Neue',sans-serif;font-size:.95rem;color:var(--ink); }
+.analyse-stat-label { font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-top:1px; }
+.analyse-progress-bar {
+  background:rgba(15,23,42,.06);border-radius:999px;height:5px;overflow:hidden;margin-top:.4rem;
+}
+
+/* Dark mode overrides */
+body.dark .analyse-block { background:rgba(255,255,255,.04); }
+body.dark .analyse-match-card { background:rgba(255,255,255,.04); }
+body.dark .analyse-odds-cell { background:rgba(255,255,255,.06); }
+body.dark .analyse-stat-cell { background:rgba(255,255,255,.06); }
 
 /* Analyse sectie cards */
 .analyse-section-card {
