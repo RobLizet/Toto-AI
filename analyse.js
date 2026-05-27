@@ -43,7 +43,7 @@ function calculateConfidenceV20(pick, leagueId, calibration) {
 }
 
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v21.0
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v21.1
 // ═══════════════════════════════════════════════════════
 
 // ── Anthropic fetch helper ────────────────────────────
@@ -54,6 +54,13 @@ async function anthropicFetch(apiKey, body) {
     const u = typeof firebase !== 'undefined' && firebase.auth().currentUser;
     if (u) authToken = await u.getIdToken();
   } catch(e) {}
+  // v21.1: valideer body vóór verzenden — voorkomt 400 bij lege/ongeldige requests
+  if (!body || !body.messages || !body.messages.length) {
+    throw new Error('Ongeldige API body: messages ontbreekt');
+  }
+  if (!body.messages[0].content || !String(body.messages[0].content).trim()) {
+    throw new Error('Ongeldige API body: lege message content');
+  }
   const res = await fetch(WORKER + '/anthropic', {
     method: 'POST',
     headers: {
@@ -62,7 +69,17 @@ async function anthropicFetch(apiKey, body) {
     },
     body: JSON.stringify(body)
   });
-  if (!res.ok) throw new Error('Worker HTTP ' + res.status);
+  if (!res.ok) {
+    // Lees de error body voor debugging
+    let errMsg = 'Worker HTTP ' + res.status;
+    try {
+      const errData = await res.json();
+      const detail = errData?.error?.message || errData?.error || errData?.message || '';
+      if (detail) errMsg += ': ' + String(detail).substring(0, 80);
+    } catch(e) {}
+    console.error('[AI] Fout:', errMsg);
+    throw new Error(errMsg);
+  }
   return await res.json();
 }
 
