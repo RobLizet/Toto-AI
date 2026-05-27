@@ -1,13 +1,11 @@
-// TOTO AI WORKER v97
+// TOTO AI WORKER v98
+// v98: Firebase → Supabase migratie voor picks, calibration, scan_status, daily_tips, user_costs
+//      LeagueConfig uitgebreid: Scandinavië + Brasileirao + Copa Lib + MLS + K League + J-League + Portugal
+//      fb() blijft als schrijf-fallback tijdens transitie
 // v97: handleAnthropic valideert body vóór doorsturen — voorkomt HTTP 400 loop bij multiscan
-//      Lege messages array of invalide JSON geeft direct 400 terug met duidelijke foutmelding
-//      400-errors worden gelogd in Worker console voor debugging
 // v96: Automatische scan weer aan — Noorwegen (113) + Zweden (103) actief
-//      Tijdvenster uitgebreid van 4u naar 24u (vond anders geen avondwedstrijden)
-//      /scan-test endpoint voor pipeline verificatie (HMAC, geen Firebase write)
-// v95: Marathonbet (1) + Betsson (36) toegevoegd als odds fallback voor Scandinavische leagues
 
-const VERSION = 'v97'; // v97: handleAnthropic body validatie
+const VERSION = 'v98'; // v98: Firebase → Supabase migratie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -114,6 +112,134 @@ async function saveOddsSnapshots(oddsMap, matches, env) {
   if (!rows.length) return;
   await sb(env, 'odds_snapshots', 'POST', rows, '?on_conflict=fixture_id,match_date');
   console.log(`[SB] ${rows.length} odds snapshots opgeslagen`);
+}
+
+// ── Supabase: picks ophalen ──────────────────────────────
+async function sbGetPicks(env) {
+  const rows = await sb(env, 'picks', 'GET', null,
+    '?select=*&order=last_scan_at.desc&limit=200'
+  ) || [];
+  const result = {};
+  rows.forEach(r => {
+    result[r.id] = {
+      fixtureId: r.fixture_id, home: r.home, away: r.away,
+      matchName: r.match_name, matchDate: r.match_date, matchTime: r.match_time,
+      leagueId: r.league_id, leagueName: r.league_name,
+      pick: r.pick, pickLabel: r.pick_label,
+      odds: r.odds ? parseFloat(r.odds) : null,
+      value: r.value ? parseFloat(r.value) : null,
+      aiKans: r.ai_kans, confidence: r.confidence ? parseFloat(r.confidence) : null,
+      confidenceRaw: r.confidence_raw ? parseFloat(r.confidence_raw) : null,
+      confidenceFinal: r.confidence_final,
+      leagueFactor: r.league_factor ? parseFloat(r.league_factor) : null,
+      bucketFactor: r.bucket_factor ? parseFloat(r.bucket_factor) : null,
+      oddsMovement: r.odds_movement ? parseFloat(r.odds_movement) : null,
+      marketSignal: r.market_signal, elite: r.elite,
+      calibFactor: r.calib_factor ? parseFloat(r.calib_factor) : null,
+      poissonK1: r.poisson_k1, poissonKX: r.poisson_kx, poissonK2: r.poisson_k2,
+      scanCount: r.scan_count, lockLevel: r.lock_level,
+      lastScanAt: r.last_scan_at, firstScanAt: r.first_scan_at,
+      status: r.status, score: r.score, processed: r.processed,
+      verifiedAt: r.verified_at, source: r.source,
+    };
+  });
+  return result;
+}
+
+// ── Supabase: picks opslaan (upsert) ─────────────────────
+async function sbSavePicks(picksObj, env) {
+  const rows = Object.entries(picksObj).map(([key, p]) => ({
+    id: key,
+    fixture_id: p.fixtureId, home: p.home, away: p.away,
+    match_name: p.matchName, match_date: p.matchDate || null,
+    match_time: p.matchTime || null, league_id: p.leagueId || null,
+    league_name: p.leagueName || null, pick: p.pick, pick_label: p.pickLabel || null,
+    odds: p.odds || null, value: p.value || null, ai_kans: p.aiKans || null,
+    confidence: p.confidence || null, confidence_raw: p.confidenceRaw || null,
+    confidence_final: p.confidenceFinal || null,
+    league_factor: p.leagueFactor || null, bucket_factor: p.bucketFactor || null,
+    odds_movement: p.oddsMovement || null, market_signal: p.marketSignal || null,
+    elite: p.elite || false, calib_factor: p.calibFactor || null,
+    poisson_k1: p.poissonK1 || null, poisson_kx: p.poissonKX || null, poisson_k2: p.poissonK2 || null,
+    scan_count: p.scanCount || 1, lock_level: p.lockLevel || 'single',
+    last_scan_at: p.lastScanAt || new Date().toISOString(),
+    first_scan_at: p.firstScanAt || new Date().toISOString(),
+    status: p.status || 'pending', score: p.score || null,
+    processed: p.processed || false, verified_at: p.verifiedAt || null,
+    source: p.source || 'scheduled', updated_at: new Date().toISOString(),
+  }));
+  if (!rows.length) return;
+  await sb(env, 'picks', 'POST', rows, '?on_conflict=id');
+  console.log('[SB] ' + rows.length + ' picks upserted');
+}
+
+// ── Supabase: calibration ophalen ────────────────────────
+async function sbGetCalibration(env) {
+  const rows = await sb(env, 'league_calibration', 'GET', null, '?select=*') || [];
+  const result = {};
+  rows.forEach(r => {
+    result[r.league_id] = {
+      leagueName: r.league_name, wins: r.wins, total: r.total,
+      roi: parseFloat(r.roi), avgValue: parseFloat(r.avg_value),
+      avgConf: parseFloat(r.avg_conf), clvSum: parseFloat(r.clv_sum),
+      clvCount: r.clv_count, factor: parseFloat(r.factor),
+      historicalHitrate: r.historical_hitrate ? parseFloat(r.historical_hitrate) : null,
+      historicalRoi: r.historical_roi ? parseFloat(r.historical_roi) : null,
+      totalPicks: r.total_picks, weeklyUpdatedAt: r.weekly_updated_at,
+      lastUpdated: r.last_updated,
+    };
+  });
+  return result;
+}
+
+// ── Supabase: calibration opslaan (upsert) ───────────────
+async function sbSaveCalibration(calibObj, env) {
+  const rows = Object.entries(calibObj).map(([lid, c]) => ({
+    league_id: lid, league_name: c.leagueName || null,
+    wins: c.wins || 0, total: c.total || 0, roi: c.roi || 0,
+    avg_value: c.avgValue || 0, avg_conf: c.avgConf || 0,
+    clv_sum: c.clvSum || 0, clv_count: c.clvCount || 0, factor: c.factor || 1.0,
+    historical_hitrate: c.historicalHitrate || null,
+    historical_roi: c.historicalRoi || null,
+    total_picks: c.totalPicks || 0, weekly_updated_at: c.weeklyUpdatedAt || null,
+    last_updated: new Date().toISOString(),
+  }));
+  if (!rows.length) return;
+  await sb(env, 'league_calibration', 'POST', rows, '?on_conflict=league_id');
+  console.log('[SB] ' + rows.length + ' league calibraties opgeslagen');
+}
+
+// ── Supabase: scan_status updaten ────────────────────────
+async function sbUpdateScanStatus(data, env) {
+  await sb(env, 'scan_status', 'POST', [{
+    id: 'current',
+    last_run: data.lastRun || new Date().toISOString(),
+    scan_date: data.scanDate || null,
+    last_pick_count: data.lastPickCount || 0,
+    last_match_count: data.lastMatchCount || 0,
+    last_with_odds: data.lastWithOdds || 0,
+    last_without_odds: data.lastWithoutOdds || 0,
+    scans_today: data.scansToday || 0,
+    version: data.version || VERSION,
+    updated_at: new Date().toISOString(),
+  }], '?on_conflict=id');
+}
+
+// ── Supabase: daily tip opslaan ──────────────────────────
+async function sbSaveDailyTip(tipData, env) {
+  if (!tipData) return;
+  const today = new Date().toISOString().split('T')[0];
+  await sb(env, 'daily_tips', 'POST', [{
+    id: tipData.date || today,
+    tip_date: tipData.date || today,
+    fixture_id: tipData.fixtureId || null,
+    home: tipData.home || null, away: tipData.away || null,
+    pick: tipData.pick || null, odds: tipData.odds || null,
+    confidence: tipData.confidence || null,
+    reasoning: tipData.reasoning || tipData.tipText || null,
+    status: tipData.status || 'pending',
+    is_no_tip: tipData.noTip || false,
+  }], '?on_conflict=id');
 }
 
 // ── Supabase: sharp money detectie ───────────────────────
@@ -578,7 +704,7 @@ async function verifyYesterdayPicks(env) {
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  const picks = await fb(env, 'picks') || {};
+  const picks = await sbGetPicks(env);
 
   const cutoff = new Date(today);
   cutoff.setDate(cutoff.getDate() - 7);
@@ -681,7 +807,8 @@ async function verifyYesterdayPicks(env) {
   }
 
   if (updated > 0) {
-    await fb(env, 'picks', 'PUT', picks);
+    await sbSavePicks(picks, env);
+    await fb(env, 'picks', 'PUT', picks); // FB fallback
     console.log(`[Verify] ${updated} picks gesetteld`);
     await updateLeagueCalibration(env, picks, updatedIds);
   }
@@ -690,7 +817,7 @@ async function verifyYesterdayPicks(env) {
 // ── League calibratie bijwerken na settlement ─────────────
 async function updateLeagueCalibration(env, picks, updatedIds) {
   try {
-    const calibration = await fb(env, 'calibration') || {};
+    const calibration = await sbGetCalibration(env);
 
     updatedIds.forEach(id => {
       const pick = picks[id];
@@ -737,7 +864,8 @@ async function updateLeagueCalibration(env, picks, updatedIds) {
       calibration[leagueId] = cal;
     });
 
-    await fb(env, 'calibration', 'PUT', calibration);
+    await sbSaveCalibration(calibration, env);
+    await fb(env, 'calibration', 'PUT', calibration); // FB fallback
     console.log('[Calibratie] Bijgewerkt voor', updatedIds.length, 'picks');
   } catch(e) {
     console.error('[Calibratie] Fout:', e.message);
@@ -748,8 +876,8 @@ async function updateLeagueCalibration(env, picks, updatedIds) {
 async function runWeeklyCalibration(env) {
   console.log('[WeeklyCalib] Start wekelijkse calibratie...');
   try {
-    const calibration = await fb(env, 'calibration') || {};
-    const picks = await fb(env, 'picks') || {};
+    const calibration = await sbGetCalibration(env);
+    const picks = await sbGetPicks(env);
 
     const leagueStats = {};
     Object.values(picks).forEach(p => {
@@ -780,7 +908,8 @@ async function runWeeklyCalibration(env) {
       calibration[lid].weeklyUpdatedAt = new Date().toISOString();
     });
 
-    await fb(env, 'calibration', 'PUT', calibration);
+    await sbSaveCalibration(calibration, env);
+    await fb(env, 'calibration', 'PUT', calibration); // FB fallback
     console.log(`[WeeklyCalib] ${Object.keys(leagueStats).length} leagues gecalibreerd`);
 
     const totalPicks = Object.values(picks).filter(p => p.status !== 'pending').length;
@@ -852,15 +981,29 @@ async function runScan(env, force = false) {
     // 88 Eredivisie playoffs, 113 Eliteserien NO, 113→ check, 
     // 103 Allsvenskan SE, 2/3/848 CL/EL/ECL (t/m eind mei)
     leagueConfig = [
-      { id: 1,   s: 2026 }, // WK 2026 (pre/post WK wedstrijden)
-      { id: 113, s: 2026 }, // Eliteserien Noorwegen (mrt–dec)
-      { id: 103, s: 2026 }, // Allsvenskan Zweden (apr–nov)
+      // ── Internationaal ──
+      { id: 1,   s: 2026 }, // WK 2026
+      { id: 4,   s: 2026 }, // WK kwalificatie Europa
+      // ── Scandinavië (zomercompetities, volop actief) ──
+      { id: 113, s: 2026 }, // Eliteserien Noorwegen
+      { id: 103, s: 2026 }, // Allsvenskan Zweden
+      { id: 119, s: 2026 }, // Superliga Denemarken
+      { id: 129, s: 2026 }, // Veikkausliiga Finland
+      // ── Zuid-Amerika (actief jun–nov) ──
+      { id: 71,  s: 2026 }, // Brasileirao Série A
+      { id: 239, s: 2026 }, // Copa Libertadores
+      // ── Noord-Amerika ──
+      { id: 253, s: 2026 }, // MLS
+      // ── Azië/Oceanie ──
+      { id: 292, s: 2026 }, // K League Zuid-Korea
+      { id: 98,  s: 2025 }, // J-League Japan
+      // ── Europa eindcompetities (playoffs/finales) ──
       { id: 2,   s: 2026 }, // Champions League
       { id: 3,   s: 2026 }, // Europa League
       { id: 848, s: 2026 }, // Conference League
-      { id: 88,  s: 2025 }, // Eredivisie (playoffs)
+      { id: 94,  s: 2024 }, // Primeira Liga Portugal
     ];
-    console.log('[Scan] Actieve leagues: WK + Scandinavisch + Europees');
+    console.log('[Scan] Actieve leagues: WK + Scandinavië + Zuid-Amerika + MLS + Azië');
   }
 
   const SCAN_LEAGUES = leagueConfig.map(l => l.id);
@@ -919,16 +1062,12 @@ async function runScan(env, force = false) {
   if (!allMatches.length) {
     console.log('[Scan] Geen wedstrijden gevonden voor vandaag/morgen, stop');
     // Toch scan_status bijwerken zodat Firebase toont dat scan draait
-    await fb(env, 'scan_status', 'PUT', {
-      lastRun: new Date().toISOString(),
-      lastMatchCount: 0,
-      lastPickCount: 0,
-      lastWithOdds: 0,
-      lastWithoutOdds: 0,
-      scanDate: today,
-      version: VERSION,
-      scansToday: ((await fb(env, 'scan_status/scansToday')) || 0) + 1,
-    });
+    const scansToday0 = ((await fb(env, 'scan_status/scansToday')) || 0) + 1;
+    const scanData0 = { lastRun: new Date().toISOString(), lastMatchCount: 0,
+      lastPickCount: 0, lastWithOdds: 0, lastWithoutOdds: 0,
+      scanDate: today, version: VERSION, scansToday: scansToday0 };
+    await sbUpdateScanStatus(scanData0, env);
+    await fb(env, 'scan_status', 'PUT', scanData0); // FB fallback
     return;
   }
 
@@ -1013,9 +1152,9 @@ Geen uitleg, alleen de JSON array.`;
   }
 
   const newPicks = {};
-  const existingPicks = await fb(env, 'picks') || {};
+  const existingPicks = await sbGetPicks(env);
   const todayHistory = await fb(env, `odds_history/${today}`) || {};
-  const leagueCalibration = await fb(env, 'calibration') || {};
+  const leagueCalibration = await sbGetCalibration(env);
   console.log(`[Scan] ${Object.keys(leagueCalibration).length} league calibraties geladen`);
 
   analyseBatch.forEach((m, i) => {
@@ -1112,22 +1251,20 @@ Geen uitleg, alleen de JSON array.`;
     .sort((a, b) => new Date(b[1].lastScanAt || 0) - new Date(a[1].lastScanAt || 0))
     .slice(0, 200);
 
-  await fb(env, 'picks', 'PUT', Object.fromEntries(entries));
+  await sbSavePicks(Object.fromEntries(entries), env);
+  await fb(env, 'picks', 'PUT', Object.fromEntries(entries)); // FB tijdelijk als fallback
 
   const newCount = Object.keys(newPicks).length;
   const lockCount = Object.values(newPicks).filter(p => p.lockLevel !== 'single').length;
   console.log(`[Scan] Klaar: ${newCount} picks opgeslagen, ${lockCount} locks, ${withoutOdds.length} wedstrijden zonder odds`);
 
-  await fb(env, 'scan_status', 'PUT', {
-    lastRun: new Date().toISOString(),
-    scanDate: today,
-    lastPickCount: newCount,
-    lastMatchCount: analyseBatch.length,
-    lastWithOdds: withOdds.length,
-    lastWithoutOdds: withoutOdds.length,
-    scansToday: ((await fb(env, 'scan_status/scansToday')) || 0) + 1,
-    version: VERSION,
-  });
+  const scansToday1 = ((await fb(env, 'scan_status/scansToday')) || 0) + 1;
+  const scanData1 = { lastRun: new Date().toISOString(), scanDate: today,
+    lastPickCount: newCount, lastMatchCount: analyseBatch.length,
+    lastWithOdds: withOdds.length, lastWithoutOdds: withoutOdds.length,
+    scansToday: scansToday1, version: VERSION };
+  await sbUpdateScanStatus(scanData1, env);
+  await fb(env, 'scan_status', 'PUT', scanData1); // FB fallback
 
   const elitePicks = Object.values(newPicks).filter(p => p.elite);
   const lockPicks = Object.values(newPicks).filter(p => p.lockLevel === 'triple' || p.lockLevel === 'double');
@@ -1304,7 +1441,7 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
   }
 
   // ── Stap 5: Value berekening (zelfde logica als productie, maar geen Firebase write) ──
-  const leagueCalibration = await fb(env, 'calibration') || {};
+  const leagueCalibration = await sbGetCalibration(env);
   const picks = [];
 
   analyseBatchFull.forEach((m, i) => {
@@ -1395,7 +1532,7 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
 
 // ── Endpoint: haal picks op voor app ────────────────────
 async function handleGetPicks(env) {
-  const picks = await fb(env, 'picks') || {};
+  const picks = await sbGetPicks(env);
   const arr = Object.values(picks)
     .filter(p => p.status === 'pending' || p.status === 'win' || p.status === 'lose')
     .sort((a, b) => (b.value || 0) - (a.value || 0));
@@ -1421,7 +1558,7 @@ async function generateDailyTip(env) {
 
   let picks = [];
   try {
-    const picksData = await fb(env, 'picks') || {};
+    const picksData = await sbGetPicks(env);
     picks = Object.values(picksData)
       .filter(p =>
         p.status === 'pending' &&
@@ -1446,7 +1583,8 @@ async function generateDailyTip(env) {
       generatedAt: new Date().toISOString(),
       version: VERSION
     };
-    await fb(env, 'daily_tip/latest', 'PUT', noTip);
+    await sbSaveDailyTip(noTip, env);
+    await fb(env, 'daily_tip/latest', 'PUT', noTip); // FB fallback
     console.log('[DailyTip] Geen gekwalificeerde picks vandaag.');
     return noTip;
   }
@@ -1531,8 +1669,9 @@ Respond ONLY with valid JSON, no text outside JSON:
     };
   }
 
+  await sbSaveDailyTip(tipData, env);
   await fb(env, 'daily_tip/latest', 'PUT', tipData);
-  await fb(env, `daily_tip/archive/${today}`, 'PUT', tipData);
+  await fb(env, `daily_tip/archive/${today}`, 'PUT', tipData); // FB fallback
   console.log('[DailyTip] Tip opgeslagen:', tipData.match, tipData.pickLabel);
   return tipData;
 }
@@ -1598,6 +1737,38 @@ async function handlePush(request, env) {
   } catch(e) {
     return json({ error: e.message }, 500);
   }
+}
+
+// ── User costs endpoint (/user-costs) ───────────────────
+async function handleUserCosts(request, env) {
+  const url = new URL(request.url);
+  const uid = url.searchParams.get('uid');
+  if (!uid) return json({ error: 'uid verplicht' }, 400);
+
+  if (request.method === 'GET') {
+    const rows = await sb(env, 'user_costs', 'GET', null, `?uid=eq.${uid}&select=*`);
+    if (!rows || !rows.length) return json(null);
+    const r = rows[0];
+    return json({
+      calls: r.calls, tokensIn: r.tokens_in, tokensOut: r.tokens_out,
+      totalUSD: parseFloat(r.total_usd), lastUpdated: r.last_updated
+    });
+  }
+
+  if (request.method === 'POST') {
+    const body = await request.json();
+    await sb(env, 'user_costs', 'POST', [{
+      uid,
+      calls: body.calls || 0,
+      tokens_in: body.tokensIn || 0,
+      tokens_out: body.tokensOut || 0,
+      total_usd: body.totalUSD || 0,
+      last_updated: body.lastUpdated || new Date().toISOString(),
+    }], '?on_conflict=uid');
+    return json({ ok: true });
+  }
+
+  return json({ error: 'Method not allowed' }, 405);
 }
 
 // ── Main fetch handler ───────────────────────────────────
@@ -1721,6 +1892,10 @@ export default {
       }
     }
 
+    if (path === '/user-costs') {
+      return handleUserCosts(request, env);
+    }
+
     if (path === '/picks') {
       return handleGetPicks(env);
     }
@@ -1760,7 +1935,7 @@ export default {
     return json({
       version: VERSION,
       status: 'running',
-      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/scan', '/scan-test', '/settle', '/debug-scan', '/check-odds', '/keepalive', '/push', '/daily-tip', '/analytics', '?url=']
+      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/user-costs', '/scan', '/scan-test', '/settle', '/debug-scan', '/check-odds', '/keepalive', '/push', '/daily-tip', '/analytics', '?url=']
     });
   },
 
