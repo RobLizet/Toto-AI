@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════
-// WEDSTRIJDEN.JS — matches, comp chips, value scan, combi
+// WEDSTRIJDEN.JS v9
+// v9: Sharp money badge + odds movement indicator op wedstrijdkaarten — matches, comp chips, value scan, combi
 // v18.4: vriendelijke lege states, skeleton loading
 // ═══════════════════════════════════════════════════════
 
@@ -328,6 +329,66 @@ function renderMatches(matches) {
   }
 }
 
+
+// ── Odds movement detectie voor sharp money badge ────────
+function getOddsMovement(matchId) {
+  if (!matchId || !state.openingOdds) return null;
+  const key = String(matchId);
+  const opening = state.openingOdds[key];
+  const current = (state.bookmakerOdds || {})[key];
+  if (!opening || !current) return null;
+
+  const results = [];
+  [
+    { pick: '1', label: 'Thuis', open: opening.home, cur: current.home },
+    { pick: 'X', label: 'Gelijk', open: opening.draw, cur: current.draw },
+    { pick: '2', label: 'Uit',    open: opening.away, cur: current.away },
+  ].forEach(({ pick, label, open, cur }) => {
+    if (!open || !cur || open <= 1 || cur <= 1) return;
+    const pct = ((cur - open) / open) * 100;
+    if (Math.abs(pct) >= 5) {
+      results.push({ pick, label, pct: parseFloat(pct.toFixed(1)), open, cur });
+    }
+  });
+
+  if (!results.length) return null;
+  return results.sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
+}
+
+function renderOddsMovementBadge(matchId) {
+  const movements = getOddsMovement(matchId);
+  if (!movements || !movements.length) return '';
+
+  const top = movements[0];
+  // Odds daalt = geld stroomt op die uitkomst = sharp money
+  const isSharp = top.pct < -5;
+  const isRising = top.pct > 5;
+
+  if (isSharp) {
+    return `<div style="display:inline-flex;align-items:center;gap:.2rem;font-family:'IBM Plex Mono',monospace;
+      font-size:.38rem;font-weight:700;color:#15803d;background:rgba(22,163,74,.1);
+      border:1px solid rgba(22,163,74,.3);border-radius:999px;padding:2px 7px;margin-top:.25rem;">
+      🦈 Sharp geld · ${top.label} ${top.pct.toFixed(1)}%
+    </div>`;
+  }
+  if (isRising) {
+    return `<div style="display:inline-flex;align-items:center;gap:.2rem;font-family:'IBM Plex Mono',monospace;
+      font-size:.38rem;font-weight:700;color:#dc2626;background:rgba(220,38,38,.08);
+      border:1px solid rgba(220,38,38,.2);border-radius:999px;padding:2px 7px;margin-top:.25rem;">
+      📈 Odds stijgt · ${top.label} +${top.pct.toFixed(1)}%
+    </div>`;
+  }
+  return '';
+}
+
+function renderOddsArrow(open, cur) {
+  if (!open || !cur || open <= 1 || cur <= 1) return '';
+  const pct = ((cur - open) / open) * 100;
+  if (Math.abs(pct) < 2) return '';
+  const down = pct < 0;
+  return `<span style="font-size:.45rem;color:${down?'#15803d':'#dc2626'};margin-left:.2rem;">${down?'▼':'▲'}${Math.abs(pct).toFixed(0)}%</span>`;
+}
+
 function renderMatchCard(m) {
   if (!m) return null;
   const card = document.createElement('div');
@@ -340,6 +401,7 @@ function renderMatchCard(m) {
   };
 
   const scanResult = (state.lastScanResults||[]).find(s => String(s.matchId) === String(m.id));
+  const sharpBadge = renderOddsMovementBadge(m.id);
   const valueBadge = scanResult && scanResult.value >= 5 ? `
     <div style="position:absolute;top:8px;right:8px;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:900;
       color:${scanResult.value >= 15 ? '#15803d' : '#b45309'};
@@ -371,29 +433,30 @@ function renderMatchCard(m) {
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;
           color:var(--sub);letter-spacing:.08em;margin-bottom:.3rem;">1 THUIS</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#16a34a;line-height:1;">${m.homeOdds}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#16a34a;line-height:1;">${m.homeOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.home, parseFloat(m.homeOdds))}</div>
       </button>
       <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','X','Gelijkspel',${m.drawOdds})"
         style="background:var(--card);border:1px solid var(--stroke);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;
           color:var(--sub);letter-spacing:.08em;margin-bottom:.3rem;">X GELIJK</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#d97706;line-height:1;">${m.drawOdds}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#d97706;line-height:1;">${m.drawOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.draw, parseFloat(m.drawOdds))}</div>
       </button>
       <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','2','Uit wint',${m.awayOdds})"
         style="background:var(--card);border:1px solid var(--stroke);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;
           color:var(--sub);letter-spacing:.08em;margin-bottom:.3rem;">2 UIT</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#dc2626;line-height:1;">${m.awayOdds}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#dc2626;line-height:1;">${m.awayOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.away, parseFloat(m.awayOdds))}</div>
       </button>
     </div>
-    <div style="text-align:right;padding:.0rem .9rem .4rem;">
+    <div style="padding:0 .9rem .1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.3rem;">
       <button onclick="event.stopPropagation();openJacks('${m.id}')"
         style="background:none;border:none;font-family:'IBM Plex Mono',monospace;font-size:.48rem;
         color:var(--sub);cursor:pointer;text-decoration:underline;">
         🎰 Andere quotes gebruiken
       </button>
+      ${sharpBadge}
     </div>` : `
     <!-- v18.4: geen odds — vriendelijke melding ipv leeg -->
     <div style="padding:.4rem .9rem .5rem;">
@@ -727,6 +790,25 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
     if (h)    match.homeOdds = parseFloat(h.odd).toFixed(2);
     if (draw) match.drawOdds = parseFloat(draw.odd).toFixed(2);
     if (a)    match.awayOdds = parseFloat(a.odd).toFixed(2);
+    // Sla opening odds op als ze nog niet bestaan (voor movement detectie)
+    if (h && draw && a) {
+      if (!state.openingOdds) state.openingOdds = {};
+      if (!state.openingOdds[fid]) {
+        state.openingOdds[fid] = {
+          home: parseFloat(h.odd),
+          draw: parseFloat(draw.odd),
+          away: parseFloat(a.odd),
+          ts: Date.now()
+        };
+      }
+      // Huidige odds ook opslaan in bookmakerOdds voor movement vergelijking
+      if (!state.bookmakerOdds) state.bookmakerOdds = {};
+      state.bookmakerOdds[fid] = {
+        home: parseFloat(h.odd),
+        draw: parseFloat(draw.odd),
+        away: parseFloat(a.odd),
+      };
+    }
     if (h && draw && a) {
       const inv = 1/parseFloat(h.odd) + 1/parseFloat(draw.odd) + 1/parseFloat(a.odd);
       match.homePct = Math.round((1/parseFloat(h.odd))/inv*100);
