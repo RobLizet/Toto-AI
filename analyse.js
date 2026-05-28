@@ -43,7 +43,8 @@ function calculateConfidenceV20(pick, leagueId, calibration) {
 }
 
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v21.1
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v27
+// v27: Scan log klikbaar — renderScanLog bij laden + klik op header
 // ═══════════════════════════════════════════════════════
 
 // ── Anthropic fetch helper ────────────────────────────
@@ -267,11 +268,17 @@ function renderAnalyseScreen() {
 
   // ── 5. SCAN LOG ──
   html += '<div class="analyse-block" id="analyse-scanlog-block">';
-  html += '<div class="analyse-block-header"><div class="analyse-block-title"><span class="analyse-block-icon">📋</span> SCAN LOG</div></div>';
+  html += '<div class="analyse-block-header" onclick="document.getElementById(\'analyse-scanlog-block\').scrollIntoView({behavior:\'smooth\'});renderScanLog();" style="cursor:pointer;">';
+  html += '<div class="analyse-block-title"><span class="analyse-block-icon">📋</span> SCAN LOG</div>';
+  html += '<span style="font-size:.7rem;color:var(--sub);font-family:\'IBM Plex Mono\',monospace;">tik om te laden ▼</span>';
+  html += '</div>';
   html += '<div id="scan-log-content"></div>';
   html += '</div>';
 
   screen.innerHTML = html;
+
+  // Scan log direct laden bij openen analyse scherm
+  setTimeout(() => renderScanLog(), 100);
 }
 
 
