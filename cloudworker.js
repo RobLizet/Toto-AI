@@ -1,11 +1,9 @@
-// TOTO AI WORKER v98
-// v98: Firebase → Supabase migratie voor picks, calibration, scan_status, daily_tips, user_costs
-//      LeagueConfig uitgebreid: Scandinavië + Brasileirao + Copa Lib + MLS + K League + J-League + Portugal
-//      fb() blijft als schrijf-fallback tijdens transitie
-// v97: handleAnthropic valideert body vóór doorsturen — voorkomt HTTP 400 loop bij multiscan
-// v96: Automatische scan weer aan — Noorwegen (113) + Zweden (103) actief
+// TOTO AI WORKER v80
+// v80: Verify en scan sequentieel ipv parallel — fix subrequest limiet
+// v79: Subrequest fixes, bookmaker fallback, tijdvenster
+// v75: Supabase integratie
 
-const VERSION = 'v99'; // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
+const VERSION = 'v80'; // v80: sequentieel scan+verify
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -19,33 +17,6 @@ function json(data, status = 200) {
     status,
     headers: { 'Content-Type': 'application/json', ...CORS }
   });
-}
-
-// ── HMAC token verificatie ────────────────────────────────
-// Token = HMAC-SHA256(SCAN_SECRET + timestamp_minute)
-// Geldig binnen TOKEN_WINDOW_MINUTES minuten
-const TOKEN_WINDOW_MINUTES = 2;
-
-async function generateHMAC(secret, timestampMinute) {
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const msgData = encoder.encode(String(timestampMinute));
-  const key = await crypto.subtle.importKey(
-    'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, msgData);
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function verifyHMAC(token, secret) {
-  if (!token || !secret) return false;
-  const nowMinute = Math.floor(Date.now() / 60000);
-  // Check huidige minuut + vorige window (TOKEN_WINDOW_MINUTES)
-  for (let i = 0; i <= TOKEN_WINDOW_MINUTES; i++) {
-    const expected = await generateHMAC(secret, nowMinute - i);
-    if (token === expected) return true;
-  }
-  return false;
 }
 
 async function fb(env, path, method = 'GET', body = null) {
@@ -80,7 +51,7 @@ async function sb(env, table, method = 'GET', body = null, query = '') {
     });
     if (!res.ok) {
       const err = await res.text();
-      console.error(`[SB] ${method} ${table} fout ${res.status}:`, err);
+      console.error(`[SB] ${method} ${table} fout ${res.status}:`, err, '| body:', body ? JSON.stringify(body).slice(0, 300) : 'null');
       return null;
     }
     if (method === 'POST' || method === 'DELETE') return true;
@@ -112,134 +83,6 @@ async function saveOddsSnapshots(oddsMap, matches, env) {
   if (!rows.length) return;
   await sb(env, 'odds_snapshots', 'POST', rows, '?on_conflict=fixture_id,match_date');
   console.log(`[SB] ${rows.length} odds snapshots opgeslagen`);
-}
-
-// ── Supabase: picks ophalen ──────────────────────────────
-async function sbGetPicks(env) {
-  const rows = await sb(env, 'picks', 'GET', null,
-    '?select=*&order=last_scan_at.desc&limit=200'
-  ) || [];
-  const result = {};
-  rows.forEach(r => {
-    result[r.id] = {
-      fixtureId: r.fixture_id, home: r.home, away: r.away,
-      matchName: r.match_name, matchDate: r.match_date, matchTime: r.match_time,
-      leagueId: r.league_id, leagueName: r.league_name,
-      pick: r.pick, pickLabel: r.pick_label,
-      odds: r.odds ? parseFloat(r.odds) : null,
-      value: r.value ? parseFloat(r.value) : null,
-      aiKans: r.ai_kans, confidence: r.confidence ? parseFloat(r.confidence) : null,
-      confidenceRaw: r.confidence_raw ? parseFloat(r.confidence_raw) : null,
-      confidenceFinal: r.confidence_final,
-      leagueFactor: r.league_factor ? parseFloat(r.league_factor) : null,
-      bucketFactor: r.bucket_factor ? parseFloat(r.bucket_factor) : null,
-      oddsMovement: r.odds_movement ? parseFloat(r.odds_movement) : null,
-      marketSignal: r.market_signal, elite: r.elite,
-      calibFactor: r.calib_factor ? parseFloat(r.calib_factor) : null,
-      poissonK1: r.poisson_k1, poissonKX: r.poisson_kx, poissonK2: r.poisson_k2,
-      scanCount: r.scan_count, lockLevel: r.lock_level,
-      lastScanAt: r.last_scan_at, firstScanAt: r.first_scan_at,
-      status: r.status, score: r.score, processed: r.processed,
-      verifiedAt: r.verified_at, source: r.source,
-    };
-  });
-  return result;
-}
-
-// ── Supabase: picks opslaan (upsert) ─────────────────────
-async function sbSavePicks(picksObj, env) {
-  const rows = Object.entries(picksObj).map(([key, p]) => ({
-    id: key,
-    fixture_id: p.fixtureId, home: p.home, away: p.away,
-    match_name: p.matchName, match_date: p.matchDate || null,
-    match_time: p.matchTime || null, league_id: p.leagueId || null,
-    league_name: p.leagueName || null, pick: p.pick, pick_label: p.pickLabel || null,
-    odds: p.odds || null, value: p.value || null, ai_kans: p.aiKans || null,
-    confidence: p.confidence || null, confidence_raw: p.confidenceRaw || null,
-    confidence_final: p.confidenceFinal || null,
-    league_factor: p.leagueFactor || null, bucket_factor: p.bucketFactor || null,
-    odds_movement: p.oddsMovement || null, market_signal: p.marketSignal || null,
-    elite: p.elite || false, calib_factor: p.calibFactor || null,
-    poisson_k1: p.poissonK1 || null, poisson_kx: p.poissonKX || null, poisson_k2: p.poissonK2 || null,
-    scan_count: p.scanCount || 1, lock_level: p.lockLevel || 'single',
-    last_scan_at: p.lastScanAt || new Date().toISOString(),
-    first_scan_at: p.firstScanAt || new Date().toISOString(),
-    status: p.status || 'pending', score: p.score || null,
-    processed: p.processed || false, verified_at: p.verifiedAt || null,
-    source: p.source || 'scheduled', updated_at: new Date().toISOString(),
-  }));
-  if (!rows.length) return;
-  await sb(env, 'picks', 'POST', rows, '?on_conflict=id');
-  console.log('[SB] ' + rows.length + ' picks upserted');
-}
-
-// ── Supabase: calibration ophalen ────────────────────────
-async function sbGetCalibration(env) {
-  const rows = await sb(env, 'league_calibration', 'GET', null, '?select=*') || [];
-  const result = {};
-  rows.forEach(r => {
-    result[r.league_id] = {
-      leagueName: r.league_name, wins: r.wins, total: r.total,
-      roi: parseFloat(r.roi), avgValue: parseFloat(r.avg_value),
-      avgConf: parseFloat(r.avg_conf), clvSum: parseFloat(r.clv_sum),
-      clvCount: r.clv_count, factor: parseFloat(r.factor),
-      historicalHitrate: r.historical_hitrate ? parseFloat(r.historical_hitrate) : null,
-      historicalRoi: r.historical_roi ? parseFloat(r.historical_roi) : null,
-      totalPicks: r.total_picks, weeklyUpdatedAt: r.weekly_updated_at,
-      lastUpdated: r.last_updated,
-    };
-  });
-  return result;
-}
-
-// ── Supabase: calibration opslaan (upsert) ───────────────
-async function sbSaveCalibration(calibObj, env) {
-  const rows = Object.entries(calibObj).map(([lid, c]) => ({
-    league_id: lid, league_name: c.leagueName || null,
-    wins: c.wins || 0, total: c.total || 0, roi: c.roi || 0,
-    avg_value: c.avgValue || 0, avg_conf: c.avgConf || 0,
-    clv_sum: c.clvSum || 0, clv_count: c.clvCount || 0, factor: c.factor || 1.0,
-    historical_hitrate: c.historicalHitrate || null,
-    historical_roi: c.historicalRoi || null,
-    total_picks: c.totalPicks || 0, weekly_updated_at: c.weeklyUpdatedAt || null,
-    last_updated: new Date().toISOString(),
-  }));
-  if (!rows.length) return;
-  await sb(env, 'league_calibration', 'POST', rows, '?on_conflict=league_id');
-  console.log('[SB] ' + rows.length + ' league calibraties opgeslagen');
-}
-
-// ── Supabase: scan_status updaten ────────────────────────
-async function sbUpdateScanStatus(data, env) {
-  await sb(env, 'scan_status', 'POST', [{
-    id: 'current',
-    last_run: data.lastRun || new Date().toISOString(),
-    scan_date: data.scanDate || null,
-    last_pick_count: data.lastPickCount || 0,
-    last_match_count: data.lastMatchCount || 0,
-    last_with_odds: data.lastWithOdds || 0,
-    last_without_odds: data.lastWithoutOdds || 0,
-    scans_today: data.scansToday || 0,
-    version: data.version || VERSION,
-    updated_at: new Date().toISOString(),
-  }], '?on_conflict=id');
-}
-
-// ── Supabase: daily tip opslaan ──────────────────────────
-async function sbSaveDailyTip(tipData, env) {
-  if (!tipData) return;
-  const today = new Date().toISOString().split('T')[0];
-  await sb(env, 'daily_tips', 'POST', [{
-    id: tipData.date || today,
-    tip_date: tipData.date || today,
-    fixture_id: tipData.fixtureId || null,
-    home: tipData.home || null, away: tipData.away || null,
-    pick: tipData.pick || null, odds: tipData.odds || null,
-    confidence: tipData.confidence || null,
-    reasoning: tipData.reasoning || tipData.tipText || null,
-    status: tipData.status || 'pending',
-    is_no_tip: tipData.noTip || false,
-  }], '?on_conflict=id');
 }
 
 // ── Supabase: sharp money detectie ───────────────────────
@@ -298,15 +141,18 @@ async function detectSharpMoney(oddsMap, matches, env) {
 // ── Supabase: CLV opslaan na settlement ──────────────────
 async function saveCLV(pick, clv, won, env) {
   if (clv === null || clv === undefined) return;
+  if (!pick.fixtureId) return; // fixture_id is NOT NULL
+  const fixtureId = parseInt(pick.fixtureId);
+  if (!fixtureId || isNaN(fixtureId)) return;
   await sb(env, 'clv_results', 'POST', [{
-    fixture_id: pick.fixtureId,
-    pick: pick.pick,
-    our_odds: pick.odds,
-    closing_odds: pick.odds,
-    clv_pct: clv,
+    fixture_id: fixtureId,
+    pick: String(pick.pick || ''),
+    our_odds: parseFloat(pick.odds) || null,
+    closing_odds: parseFloat(pick.odds) || null,
+    clv_pct: parseFloat(clv) || null,
     status: won ? 'win' : 'lose',
     match_date: pick.matchDate || null,
-    league_id: pick.leagueId || null,
+    league_id: pick.leagueId ? parseInt(pick.leagueId) : null,
     settled_at: new Date().toISOString(),
   }]);
 }
@@ -368,8 +214,6 @@ const LEAGUE_FACTORS = {
   848: 1.05, // Conference League
   40: 0.98,  // Championship
   119: 0.90, // Eredivisie playoffs
-  113: 0.88, // Eliteserien Noorwegen (apr–nov, seizoen 2026)
-  103: 0.88, // Allsvenskan Zweden (apr–nov, seizoen 2026)
 };
 
 // Odds bucket factoren (meest value zit in 1.5-3.5)
@@ -395,15 +239,17 @@ function getOddsBucket(odds) {
 
 // Confidence Engine v1
 function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, leagueId, odds, calibFactor }) {
+  // Gebruik historische calibratie factor als die beschikbaar is, anders statische
   const staticFactor = LEAGUE_FACTORS[leagueId] || 0.92;
   const leagueFactor = calibFactor ? (staticFactor * 0.5 + calibFactor * 0.5) : staticFactor;
   const bucketFactor = ODDS_BUCKET_FACTORS[getOddsBucket(odds)] || 0.90;
 
+  // Gewogen score (0-100)
   const raw =
-    (Math.min(modelProb, 100) * 0.40) +
-    (Math.min(Math.max(value, 0), 50) * 2 * 0.30) +
-    (Math.min(dataQuality, 100) * 0.20) +
-    (Math.min(marketSignal, 100) * 0.10);
+    (Math.min(modelProb, 100) * 0.40) +   // AI kans gewicht
+    (Math.min(Math.max(value, 0), 50) * 2 * 0.30) + // value gewicht (max 50% = 100pts)
+    (Math.min(dataQuality, 100) * 0.20) +  // datakwaliteit
+    (Math.min(marketSignal, 100) * 0.10);  // marktsignaal
 
   const final = Math.max(0, Math.min(100, raw * leagueFactor * bucketFactor));
 
@@ -412,6 +258,7 @@ function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, l
     final: parseFloat(final.toFixed(1)),
     leagueFactor,
     bucketFactor,
+    // Vertaal naar 1-10 schaal voor compatibiliteit
     score: Math.max(1, Math.min(10, Math.round(final / 10))),
   };
 }
@@ -419,10 +266,10 @@ function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, l
 // Elite pick detectie
 function isElitePick({ confidenceFinal, value, odds }) {
   return (
-    confidenceFinal >= 65 &&  // verlaagd van 72 → 65 (meer elite picks in 7-8 tier)
-    value >= 6 &&             // verlaagd van 8 → 6
-    odds >= 1.50 &&           // verlaagd van 1.60 → 1.50
-    odds <= 5.00              // verhoogd van 4.50 → 5.00
+    confidenceFinal >= 72 &&
+    value >= 8 &&
+    odds >= 1.60 &&
+    odds <= 4.50
   );
 }
 
@@ -435,11 +282,12 @@ function calcOddsMovement(openingOdds, currentOdds) {
 
 // Marktsignaal op basis van odds beweging
 function calcMarketSignal(movement, pick) {
-  if (movement === null) return 50;
-  if (movement < -10) return 80;
+  if (movement === null) return 50; // neutraal
+  // Dalende odds = meer actie = sterker signaal voor die uitkomst
+  if (movement < -10) return 80;  // scherpe daling = sharp money
   if (movement < -5)  return 70;
   if (movement < -2)  return 60;
-  if (movement > 10)  return 30;
+  if (movement > 10)  return 30;  // stijging = markt gaat tegen je
   if (movement > 5)   return 40;
   return 50;
 }
@@ -490,6 +338,7 @@ async function apif(path, env) {
 async function handleAPIFootball(path, env, bypassCache = false) {
   const key = env.FOOTBALL_KEY || '';
 
+  // v47: verwijder _cb cache-bypass parameter voor de echte API call
   const cleanPath = path.replace(/[&?]_cb=\d+/, '').replace(/\?&/, '?');
 
   const hosts = [
@@ -505,6 +354,7 @@ async function handleAPIFootball(path, env, bypassCache = false) {
 
   for (const host of hosts) {
     try {
+      // v47: bij cache-bypass geen Cloudflare cache gebruiken
       const fetchOptions = { headers: host.headers };
       if (bypassCache) {
         fetchOptions.cf = { cacheEverything: false, cacheTtl: 0 };
@@ -514,6 +364,7 @@ async function handleAPIFootball(path, env, bypassCache = false) {
       const data = await res.json();
       if (data.errors?.token || data.errors?.key) continue;
 
+      // v47: bij cache-bypass ook no-cache headers in response
       const responseHeaders = { 'Content-Type': 'application/json', ...CORS };
       if (bypassCache) {
         responseHeaders['Cache-Control'] = 'no-store, no-cache, must-revalidate';
@@ -541,26 +392,7 @@ async function handleFD(path, env) {
 
 // ── Anthropic proxy (/anthropic) ────────────────────────
 async function handleAnthropic(request, env) {
-  // v97: valideer body vóór doorsturen naar Anthropic — voorkomt 400-loop bij multiscan
-  let body;
-  try {
-    body = await request.text();
-    const parsed = JSON.parse(body);
-    if (!parsed.messages || !Array.isArray(parsed.messages) || parsed.messages.length === 0) {
-      console.error('[Anthropic] Body afgewezen: messages array leeg of ontbreekt');
-      return json({ error: 'messages array leeg of ontbreekt', type: 'invalid_request' }, 400);
-    }
-    // Check of content van het eerste message niet leeg is
-    const firstMsg = parsed.messages[0];
-    if (!firstMsg.content || (typeof firstMsg.content === 'string' && !firstMsg.content.trim())) {
-      console.error('[Anthropic] Body afgewezen: eerste message heeft lege content');
-      return json({ error: 'message content is leeg', type: 'invalid_request' }, 400);
-    }
-  } catch(e) {
-    console.error('[Anthropic] Body afgewezen: invalide JSON —', e.message);
-    return json({ error: 'Invalide JSON body: ' + e.message, type: 'invalid_request' }, 400);
-  }
-
+  const body = await request.text();
   const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -571,10 +403,6 @@ async function handleAnthropic(request, env) {
     body
   });
   const data = await res.json();
-  // Log 400s van Anthropic zelf voor debugging
-  if (res.status === 400) {
-    console.error('[Anthropic] 400 van Anthropic API:', JSON.stringify(data).substring(0, 300));
-  }
   return json(data, res.status);
 }
 
@@ -616,43 +444,12 @@ async function fetchOddsForFixtures(fixtureIds, env) {
     return false;
   }
   try {
-    // Stap 1: Bet365 (8)
     const r1 = await Promise.all(fixtureIds.map(id => apif(`/odds?fixture=${id}&bookmaker=8&bet=1`, env)));
     r1.forEach((data, i) => parseOdds(data, fixtureIds[i]));
-
-    // Stap 2: William Hill (6) voor missende
-    const missing2 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing2.length) {
-      const r2 = await Promise.all(missing2.map(id => apif(`/odds?fixture=${id}&bookmaker=6&bet=1`, env)));
-      r2.forEach((data, i) => parseOdds(data, missing2[i]));
-    }
-
-    // Stap 3: Unibet/Jacks (16) — goed voor Scandinavische leagues
-    const missing3 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing3.length) {
-      const r3 = await Promise.all(missing3.map(id => apif(`/odds?fixture=${id}&bookmaker=16&bet=1`, env)));
-      r3.forEach((data, i) => parseOdds(data, missing3[i]));
-    }
-
-    // Stap 4: Bwin (4)
-    const missing4 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing4.length) {
-      const r4 = await Promise.all(missing4.map(id => apif(`/odds?fixture=${id}&bookmaker=4&bet=1`, env)));
-      r4.forEach((data, i) => parseOdds(data, missing4[i]));
-    }
-
-    // Stap 5: Marathonbet (1) — goede Scandinavische coverage
-    const missing5 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing5.length) {
-      const r5 = await Promise.all(missing5.map(id => apif(`/odds?fixture=${id}&bookmaker=1&bet=1`, env)));
-      r5.forEach((data, i) => parseOdds(data, missing5[i]));
-    }
-
-    // Stap 6: Betsson (36) — Scandinavische markt
-    const missing6 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing6.length) {
-      const r6 = await Promise.all(missing6.map(id => apif(`/odds?fixture=${id}&bookmaker=36&bet=1`, env)));
-      r6.forEach((data, i) => parseOdds(data, missing6[i]));
+    const missing = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing.length) {
+      const r2 = await Promise.all(missing.map(id => apif(`/odds?fixture=${id}&bookmaker=6&bet=1`, env)));
+      r2.forEach((data, i) => parseOdds(data, missing[i]));
     }
   } catch(e) {
     console.error('[Odds] Fout bij ophalen:', e);
@@ -676,9 +473,12 @@ function calculateValue(aiKans, bookOdds, pick) {
 }
 
 // ── Datum normalisatie helper ─────────────────────────────
+// Converteert "22-5-2026", "2026-05-22", "2026-5-22" allemaal naar "2026-05-22"
 function normalizeDate(dateStr) {
   if (!dateStr) return null;
+  // Al in ISO formaat (YYYY-MM-DD)?
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  // Nederlands formaat: D-M-YYYY of DD-MM-YYYY
   const parts = String(dateStr).split('-');
   if (parts.length === 3 && parts[2].length === 4) {
     const day   = parts[0].padStart(2, '0');
@@ -686,6 +486,7 @@ function normalizeDate(dateStr) {
     const year  = parts[2];
     return `${year}-${month}-${day}`;
   }
+  // Fallback: probeer Date parse
   try {
     return new Date(dateStr).toISOString().split('T')[0];
   } catch(e) { return null; }
@@ -693,18 +494,10 @@ function normalizeDate(dateStr) {
 
 // ── Auto-verificatie: pending picks van afgelopen 7 dagen checken ─────────
 async function verifyYesterdayPicks(env) {
-  // Supabase keepalive — voorkomt automatisch pauzeren gratis project
-  try {
-    await sb(env, 'clv_results', 'GET', null, '?limit=1&select=id');
-    console.log('[Keepalive] Supabase ping OK');
-  } catch(e) {
-    console.log('[Keepalive] Supabase ping mislukt (non-fatal):', e.message);
-  }
-
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  const picks = await sbGetPicks(env);
+  const picks = await fb(env, 'picks') || {};
 
   const cutoff = new Date(today);
   cutoff.setDate(cutoff.getDate() - 7);
@@ -725,11 +518,12 @@ async function verifyYesterdayPicks(env) {
 
   console.log(`[Verify] ${toVerify.length} picks te verifiëren`);
 
-  // Max 10 picks per run
+  // ── EFFICIËNT: haal alleen de specifieke fixture IDs op ──
+  // Max 10 picks tegelijk om binnen subrequest budget te blijven
   const batch = toVerify.slice(0, 10);
   const fixtureIds = [...new Set(batch.map(([, p]) => p.fixtureId).filter(Boolean))];
 
-  // Parallel fixture resultaten ophalen
+  // Één API call per fixture (parallel, max 10)
   const fixtureResults = await Promise.all(
     fixtureIds.map(id => apif(`/fixtures?id=${id}`, env))
   );
@@ -741,21 +535,27 @@ async function verifyYesterdayPicks(env) {
     if (!f) return;
     const status = f.fixture?.status?.short;
     if (!['FT','AET','PEN'].includes(status)) return;
-    resultMap[fid] = { home: f.goals?.home ?? 0, away: f.goals?.away ?? 0, status };
+    resultMap[fid] = {
+      home: f.goals?.home ?? 0,
+      away: f.goals?.away ?? 0,
+      status
+    };
   });
 
   console.log(`[Verify] ${Object.keys(resultMap).length}/${fixtureIds.length} fixtures met resultaat`);
-  if (!Object.keys(resultMap).length) return;
 
-  // CLV odds parallel ophalen voor picks met resultaat
+  if (!Object.keys(resultMap).length) {
+    console.log('[Verify] Geen FT resultaten gevonden');
+    return;
+  }
+
+  // CLV odds parallel ophalen voor alle picks met resultaat
   const picksWithResult = batch.filter(([, p]) => resultMap[String(p.fixtureId)]);
   const clvOdds = await Promise.all(
     picksWithResult.map(([, p]) => apif(`/odds?fixture=${p.fixtureId}&bookmaker=8&bet=1`, env))
   );
 
   let updated = 0;
-  const updatedIds = [];
-
   for (let i = 0; i < picksWithResult.length; i++) {
     const [id, pick] = picksWithResult[i];
     const result = resultMap[String(pick.fixtureId)];
@@ -771,6 +571,7 @@ async function verifyYesterdayPicks(env) {
     else if (p === 'U2.5') won = (hg + ag) < 2.5;
     else if (p === 'BTTS-J') won = hg > 0 && ag > 0;
 
+    // CLV berekening
     let clv = null;
     try {
       const closingOdds = clvOdds[i];
@@ -800,24 +601,23 @@ async function verifyYesterdayPicks(env) {
       verifiedAt: new Date().toISOString(),
       clv,
     };
-
     try { await saveCLV(pick, clv, won, env); } catch(e) { console.error('[SB] CLV fout:', e.message); }
     updated++;
-    updatedIds.push(id);
   }
 
   if (updated > 0) {
-    await sbSavePicks(picks, env);
-    await fb(env, 'picks', 'PUT', picks); // FB fallback
-    console.log(`[Verify] ${updated} picks gesetteld`);
-    await updateLeagueCalibration(env, picks, updatedIds);
+    await fb(env, 'picks', 'PUT', picks);
+    console.log(`[Verify] ${updated} picks geverifieerd (meerdere datums)`);
+
+    // Update league calibratie data na verificatie
+    await updateLeagueCalibration(env, picks, toVerify.map(([id]) => id));
   }
 }
 
-// ── League calibratie bijwerken na settlement ─────────────
+// ── League calibratie bijwerken na verificatie ────────────
 async function updateLeagueCalibration(env, picks, updatedIds) {
   try {
-    const calibration = await sbGetCalibration(env);
+    const calibration = await fb(env, 'calibration') || {};
 
     updatedIds.forEach(id => {
       const pick = picks[id];
@@ -851,10 +651,12 @@ async function updateLeagueCalibration(env, picks, updatedIds) {
         cal.clvCount++;
       }
 
+      // Herbereken factor op basis van werkelijke hitrate vs verwachte
       if (cal.total >= 5) {
         const actualHitrate  = cal.wins / cal.total;
         const expectedHitrate = 1 / (cal.avgValue / 100 + 1) * (1 + cal.avgConf / 10);
         const ratio = actualHitrate / Math.max(0.1, expectedHitrate);
+        // Smooth factor aanpassing (max 20% verschil per update)
         cal.factor = parseFloat(Math.max(0.70, Math.min(1.30,
           cal.factor * 0.8 + ratio * 0.2
         )).toFixed(3));
@@ -864,21 +666,23 @@ async function updateLeagueCalibration(env, picks, updatedIds) {
       calibration[leagueId] = cal;
     });
 
-    await sbSaveCalibration(calibration, env);
-    await fb(env, 'calibration', 'PUT', calibration); // FB fallback
+    await fb(env, 'calibration', 'PUT', calibration);
     console.log('[Calibratie] Bijgewerkt voor', updatedIds.length, 'picks');
   } catch(e) {
     console.error('[Calibratie] Fout:', e.message);
   }
 }
 
+// ── Scheduled value scan ─────────────────────────────────
+
 // ── Weekly calibratie job (zondag 06:00 UTC) ─────────────
 async function runWeeklyCalibration(env) {
   console.log('[WeeklyCalib] Start wekelijkse calibratie...');
   try {
-    const calibration = await sbGetCalibration(env);
-    const picks = await sbGetPicks(env);
+    const calibration = await fb(env, 'calibration') || {};
+    const picks = await fb(env, 'picks') || {};
 
+    // Herbereken alle league factoren op basis van alle historische picks
     const leagueStats = {};
     Object.values(picks).forEach(p => {
       if (p.status === 'pending') return;
@@ -893,11 +697,14 @@ async function runWeeklyCalibration(env) {
       }
     });
 
+    // Update factoren
     Object.entries(leagueStats).forEach(([lid, stats]) => {
-      if (stats.total < 5) return;
+      if (stats.total < 5) return; // te weinig data
       const hitrate = stats.wins / stats.total;
       const avgRoi = stats.roi / stats.total;
-      const roiFactor = 1 + (avgRoi / 1000);
+
+      // Factor op basis van ROI: positieve ROI = hogere factor
+      const roiFactor = 1 + (avgRoi / 1000); // +10% ROI = +1% factor
       const newFactor = parseFloat(Math.max(0.70, Math.min(1.30, roiFactor)).toFixed(3));
 
       if (!calibration[lid]) calibration[lid] = { leagueName: stats.name };
@@ -908,10 +715,10 @@ async function runWeeklyCalibration(env) {
       calibration[lid].weeklyUpdatedAt = new Date().toISOString();
     });
 
-    await sbSaveCalibration(calibration, env);
-    await fb(env, 'calibration', 'PUT', calibration); // FB fallback
+    await fb(env, 'calibration', 'PUT', calibration);
     console.log(`[WeeklyCalib] ${Object.keys(leagueStats).length} leagues gecalibreerd`);
 
+    // Push notificatie met weekoverzicht
     const totalPicks = Object.values(picks).filter(p => p.status !== 'pending').length;
     const wins = Object.values(picks).filter(p => p.status === 'win').length;
     const hitrate = totalPicks > 0 ? Math.round(wins / totalPicks * 100) : 0;
@@ -924,12 +731,12 @@ async function runWeeklyCalibration(env) {
   }
 }
 
-// ── Scheduled value scan ─────────────────────────────────
 async function runScan(env, force = false) {
   const today = new Date().toISOString().split('T')[0];
   const now = new Date();
   const hour = now.getUTCHours() + 1;
 
+  // Lees scanvenster uit scan_schedule in Firebase
   let scanFrom = 6, scanTo = 18, autoScanEnabled = true, maxPerDay = 5;
   try {
     const schedule = await fb(env, 'scan_schedule');
@@ -943,7 +750,7 @@ async function runScan(env, force = false) {
     console.log('[Scan] scan_schedule niet geladen, gebruik defaults');
   }
 
-  if (!autoScanEnabled && !force) {
+  if (!autoScanEnabled) {
     console.log('[Scan] Auto scan uitgeschakeld via scan_schedule, skip');
     return;
   }
@@ -952,79 +759,30 @@ async function runScan(env, force = false) {
     console.log(`[Scan] Buiten scanvenster (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC), skip`);
     return;
   }
-  if (force) console.log(`[Scan] Handmatige trigger — autoScan en scanvenster overgeslagen`);
+  if (force) console.log(`[Scan] Handmatige trigger — scanvenster overgeslagen`);
   console.log(`[Scan] Start scan (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC)`);
 
   let allMatches = [];
 
+  // Haal ALLE wedstrijden vandaag + morgen op in 2 calls (geen per-league loop)
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
   console.log(`[Scan] Fixtures ophalen voor ${today} en ${tomorrowStr}...`);
-
-  // ── Actieve leagues (handmatig bijgehouden) ───────────────
-  // WK: 11 jun – 19 jul 2026 (league 1)
-  // Scandinavisch: lopen maart–december door (kleine pauze WK-periode)
-  // CL/EL/ECL finales: t/m eind mei
-  const dateNow = new Date(today);
-  const wkStart = new Date('2026-06-11');
-  const wkEnd   = new Date('2026-07-20');
-  const isWKActive = dateNow >= wkStart && dateNow < wkEnd;
-
-  let leagueConfig;
-  if (isWKActive) {
-    // Alleen WK
-    leagueConfig = [{ id: 1, s: 2026 }];
-    console.log('[Scan] 🏆 WK actief — alleen WK (ID 1)');
-  } else {
-    // Actieve competities buiten WK-periode:
-    // 88 Eredivisie playoffs, 113 Eliteserien NO, 113→ check, 
-    // 103 Allsvenskan SE, 2/3/848 CL/EL/ECL (t/m eind mei)
-    leagueConfig = [
-      // ── Internationaal ──
-      { id: 1,   s: 2026 }, // WK 2026
-      { id: 4,   s: 2026 }, // WK kwalificatie Europa
-      // ── Scandinavië (zomercompetities, volop actief) ──
-      { id: 113, s: 2026 }, // Eliteserien Noorwegen
-      { id: 103, s: 2026 }, // Allsvenskan Zweden
-      { id: 119, s: 2026 }, // Superliga Denemarken
-      { id: 129, s: 2026 }, // Veikkausliiga Finland
-      // ── Zuid-Amerika (actief jun–nov) ──
-      { id: 71,  s: 2026 }, // Brasileirao Série A
-      { id: 239, s: 2026 }, // Copa Libertadores
-      // ── Noord-Amerika ──
-      { id: 253, s: 2026 }, // MLS
-      // ── Azië/Oceanie ──
-      { id: 292, s: 2026 }, // K League Zuid-Korea
-      { id: 98,  s: 2025 }, // J-League Japan
-      // ── Europa eindcompetities (playoffs/finales) ──
-      { id: 2,   s: 2026 }, // Champions League
-      { id: 3,   s: 2026 }, // Europa League
-      { id: 848, s: 2026 }, // Conference League
-      { id: 94,  s: 2024 }, // Primeira Liga Portugal
-    ];
-    console.log('[Scan] Actieve leagues: WK + Scandinavië + Zuid-Amerika + MLS + Azië');
-  }
-
-  // Leagues die UTC timezone gebruiken — date= werkt niet, gebruik next=15
-  const NEXT_LEAGUES = new Set([113, 103, 119, 129, 253, 71, 239, 292, 98]);
-
-  const SCAN_LEAGUES = leagueConfig.map(l => l.id);
-
+  
+  // Haal fixtures op per competitie (zelfde aanpak als app) voor betere coverage
+  const SCAN_LEAGUES = [39, 88, 78, 61, 135, 140, 2, 3, 848];
+  
   try {
-    // Haal vandaag + morgen op — UTC leagues via next= (timezone fix)
-    const fixturePromises = leagueConfig.flatMap(({ id, s }) => {
-      if (NEXT_LEAGUES.has(id)) {
-        return [apif(`/fixtures?league=${id}&season=${s}&next=15`, env)];
-      }
-      return [
-        apif(`/fixtures?league=${id}&season=${s}&date=${today}&timezone=Europe/Amsterdam`, env),
-        apif(`/fixtures?league=${id}&season=${s}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
-      ];
+    const WK_LEAGUES = [2, 3, 848];
+    const fixturePromises = SCAN_LEAGUES.map(lid => {
+      const season = WK_LEAGUES.includes(lid) ? 2026 : 2025;
+      return apif(`/fixtures?league=${lid}&season=${season}&date=${today}&timezone=Europe/Amsterdam`, env);
     });
     const fixtureResults = await Promise.all(fixturePromises);
     const fixtures = fixtureResults.flat().filter(Boolean);
-
+    
+    // Dedupliceer op fixtureId
     const seen = new Set();
     const unique = fixtures.filter(f => {
       const id = f.fixture?.id;
@@ -1032,24 +790,18 @@ async function runScan(env, force = false) {
       seen.add(id);
       return true;
     });
-
+    
     console.log(`[Scan] ${unique.length} unieke fixtures gevonden over ${SCAN_LEAGUES.length} leagues`);
 
-    const nowMs = Date.now();
-    // Bij handmatige scan: alle wedstrijden van vandaag (tot midnight +1u)
-    // Bij automatische scan: alleen wedstrijden die binnen 4u beginnen
-    const endOfDay = new Date(today + 'T23:59:59').getTime() + 60 * 60 * 1000;
-    // Automatische scan: wedstrijden binnen 24u (vandaag + vanavond + morgenochtend)
-    // Handmatige scan (force): alle wedstrijden van vandaag t/m midnight
-    const timeWindow = force ? endOfDay : nowMs + 24 * 60 * 60 * 1000;
-
+    // Filter: alleen nog te spelen + live wedstrijden
+    const now = Date.now();
     allMatches = unique
       .filter(f => {
         const status = f.fixture?.status?.short;
         const kickoff = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
         const isLive = ['1H','2H','HT','ET','BT','P'].includes(status);
         const isNS = ['NS','TBD','PST'].includes(status);
-        return isLive || (isNS && kickoff > nowMs - 60 * 60 * 1000 && kickoff < timeWindow);
+        return isLive || (isNS && kickoff > now - 60 * 60 * 1000 && kickoff < now + 4 * 60 * 60 * 1000);
       })
       .map(f => ({
         fixtureId: f.fixture?.id,
@@ -1061,7 +813,7 @@ async function runScan(env, force = false) {
         leagueName: f.league?.name || '',
         venue: f.fixture?.venue?.name || '',
       }));
-
+    
     console.log(`[Scan] ${allMatches.length} wedstrijden na filter (NS/live)`);
   } catch(e) {
     console.error('[Scan] Fout bij fixtures ophalen:', e);
@@ -1069,13 +821,6 @@ async function runScan(env, force = false) {
 
   if (!allMatches.length) {
     console.log('[Scan] Geen wedstrijden gevonden voor vandaag/morgen, stop');
-    const scansToday0 = ((await fb(env, 'scan_status/scansToday')) || 0) + 1;
-    const scanData0 = { lastRun: new Date().toISOString(), lastMatchCount: 0,
-      lastPickCount: 0, lastWithOdds: 0, lastWithoutOdds: 0,
-      scanDate: today, version: VERSION, scansToday: scansToday0 };
-    await sbUpdateScanStatus(scanData0, env);
-    await fb(env, 'scan_status', 'PUT', scanData0);
-    await sendPushNotification(env, '🔍 Scan voltooid', `Geen wedstrijden gevonden voor ${today}`, { type: 'scan_empty' });
     return;
   }
 
@@ -1085,13 +830,14 @@ async function runScan(env, force = false) {
     return ta - tb;
   });
 
-  const batch = allMatches.slice(0, 8);
+  const batch = allMatches.slice(0, 8); // Max 8 voor subrequest limiet
   console.log(`[Scan] ${batch.length} wedstrijden gevonden, odds ophalen...`);
 
   const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
   const oddsMap = await fetchOddsForFixtures(fixtureIds, env);
   console.log(`[Scan] Odds gevonden voor ${Object.keys(oddsMap).length} wedstrijden`);
 
+  // Sla opening odds op in Firebase voor movement tracking
   const oddsHistoryPath = `odds_history/${today}`;
   const existingHistory = await fb(env, oddsHistoryPath) || {};
   const newHistory = { ...existingHistory };
@@ -1160,9 +906,13 @@ Geen uitleg, alleen de JSON array.`;
   }
 
   const newPicks = {};
-  const existingPicks = await sbGetPicks(env);
+  const existingPicks = await fb(env, 'picks') || {};
+
+  // Laad odds history voor movement tracking
   const todayHistory = await fb(env, `odds_history/${today}`) || {};
-  const leagueCalibration = await sbGetCalibration(env);
+
+  // Laad league calibratie factoren voor confidence engine
+  const leagueCalibration = await fb(env, 'calibration') || {};
   console.log(`[Scan] ${Object.keys(leagueCalibration).length} league calibraties geladen`);
 
   analyseBatch.forEach((m, i) => {
@@ -1182,8 +932,9 @@ Geen uitleg, alleen de JSON array.`;
     candidates.forEach(c => {
       if (!c.bookOdds || c.bookOdds <= 1) return;
       const value = calculateValue(c.aiKans, c.bookOdds, c.pick);
-      if (value < 3) return;
+      if (value < 3) return; // ruimer initieel filter, confidence engine filtert verder
 
+      // Bereken odds movement
       const openOdds = openingOdds ? openingOdds[c.pick === '1' ? 'home' : c.pick === 'X' ? 'draw' : 'away'] : null;
       const movement = calcOddsMovement(openOdds, c.bookOdds);
       const sharpBoost = sharpSignals?.[m.fixtureId]?.[c.pick];
@@ -1191,9 +942,11 @@ Geen uitleg, alleen de JSON array.`;
         ? Math.min(95, calcMarketSignal(movement, c.pick) + 15)
         : calcMarketSignal(movement, c.pick);
 
+      // Data kwaliteit op basis van AI kans spreiding
       const spread = Math.max(ai.h, ai.x, ai.a) - Math.min(ai.h, ai.x, ai.a);
-      const dataQuality = Math.min(100, 50 + spread);
+      const dataQuality = Math.min(100, 50 + spread); // meer spreiding = meer overtuiging
 
+      // Confidence Engine v20 + calibratie factor
       const conf = calculateConfidenceV20({
         modelProb: c.aiKans,
         value,
@@ -1204,6 +957,7 @@ Geen uitleg, alleen de JSON array.`;
         calibFactor: leagueCalibration[String(m.leagueId)]?.factor || null,
       });
 
+      // Filter: minimum conf score 5/10 en value > 3%
       if (conf.score < 5 || value < 3) return;
 
       const elite = isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds });
@@ -1228,14 +982,14 @@ Geen uitleg, alleen de JSON array.`;
           odds: c.bookOdds,
           value: parseFloat(value.toFixed(1)),
           aiKans: Math.round(c.aiKans),
-          confidence: conf.score,
-          confidenceRaw: conf.raw,
-          confidenceFinal: conf.final,
+          confidence: conf.score,         // 1-10 schaal
+          confidenceRaw: conf.raw,        // 0-100 engine score
+          confidenceFinal: conf.final,    // 0-100 na factoren
           leagueFactor: conf.leagueFactor,
           bucketFactor: conf.bucketFactor,
-          oddsMovement: movement,
-          marketSignal,
-          elite,
+          oddsMovement: movement,         // % beweging tov opening
+          marketSignal,                   // 0-100 marktsignaal
+          elite,                          // boolean
           calibFactor: leagueCalibration[String(m.leagueId)]?.factor || null,
           poissonK1: Math.round(ai.h),
           poissonKX: Math.round(ai.x),
@@ -1259,21 +1013,25 @@ Geen uitleg, alleen de JSON array.`;
     .sort((a, b) => new Date(b[1].lastScanAt || 0) - new Date(a[1].lastScanAt || 0))
     .slice(0, 200);
 
-  await sbSavePicks(Object.fromEntries(entries), env);
-  await fb(env, 'picks', 'PUT', Object.fromEntries(entries)); // FB tijdelijk als fallback
+  await fb(env, 'picks', 'PUT', Object.fromEntries(entries));
 
   const newCount = Object.keys(newPicks).length;
   const lockCount = Object.values(newPicks).filter(p => p.lockLevel !== 'single').length;
   console.log(`[Scan] Klaar: ${newCount} picks opgeslagen, ${lockCount} locks, ${withoutOdds.length} wedstrijden zonder odds`);
 
-  const scansToday1 = ((await fb(env, 'scan_status/scansToday')) || 0) + 1;
-  const scanData1 = { lastRun: new Date().toISOString(), scanDate: today,
-    lastPickCount: newCount, lastMatchCount: analyseBatch.length,
-    lastWithOdds: withOdds.length, lastWithoutOdds: withoutOdds.length,
-    scansToday: scansToday1, version: VERSION };
-  await sbUpdateScanStatus(scanData1, env);
-  await fb(env, 'scan_status', 'PUT', scanData1); // FB fallback
+  // Schrijf scan_status naar Firebase
+  await fb(env, 'scan_status', 'PUT', {
+    lastRun: new Date().toISOString(),
+    scanDate: today,
+    lastPickCount: newCount,
+    lastMatchCount: analyseBatch.length,
+    lastWithOdds: withOdds.length,
+    lastWithoutOdds: withoutOdds.length,
+    scansToday: ((await fb(env, 'scan_status/scansToday')) || 0) + 1,
+    version: VERSION,
+  });
 
+  // Push notificatie — elite picks krijgen prioriteit
   const elitePicks = Object.values(newPicks).filter(p => p.elite);
   const lockPicks = Object.values(newPicks).filter(p => p.lockLevel === 'triple' || p.lockLevel === 'double');
   const pushPicks = elitePicks.length > 0 ? elitePicks : lockPicks;
@@ -1282,268 +1040,40 @@ Geen uitleg, alleen de JSON array.`;
     console.log(`[Scan] ${elitePicks.length} elite picks gevonden!`);
   }
 
-  if (pushPicks.length > 0) {
-    const top = pushPicks.sort((a, b) => (b.value || 0) - (a.value || 0))[0];
-    const icon = top.lockLevel === 'triple' ? '🔒🔒🔒' : top.elite ? '⭐' : '🔒🔒';
-    const title = top.elite
-      ? `${icon} Elite pick gevonden!`
-      : `${icon} ${top.lockLevel === 'triple' ? 'Triple' : 'Double'} Lock gevonden!`;
+  // Vervang lockPicks met pushPicks voor notificaties
+  const lockPicks2 = pushPicks;
+  if (lockPicks2.length > 0) {
+    const top = lockPicks2.sort((a, b) => (b.value || 0) - (a.value || 0))[0];
+    const icon = top.lockLevel === 'triple' ? '🔒🔒🔒' : '🔒🔒';
+    const title = `${icon} ${top.lockLevel === 'triple' ? 'Triple' : 'Double'} Lock gevonden!`;
     const body = `${top.matchName} · ${top.pickLabel} @ ${top.odds} · +${Math.round(top.value)}% value`;
     await sendPushNotification(env, title, body, {
-      type: 'value_alert', matchId: String(top.fixtureId),
-      pick: top.pick, value: top.value, lockLevel: top.lockLevel,
+      type: 'value_alert',
+      matchId: String(top.fixtureId),
+      pick: top.pick,
+      value: top.value,
+      lockLevel: top.lockLevel,
     });
   } else if (newCount > 0) {
+    // Gewone value picks: alleen pushen als ≥2 nieuwe picks
     const valuePicks = Object.values(newPicks).filter(p => (p.value || 0) >= 15 && (p.confidence || 0) >= 7);
     if (valuePicks.length >= 1) {
       const top = valuePicks[0];
       const title = `⚡ ${valuePicks.length} sterke value pick${valuePicks.length > 1 ? 's' : ''} gevonden`;
       const body = `${top.matchName} · ${top.pickLabel} @ ${top.odds} · +${Math.round(top.value)}% value`;
       await sendPushNotification(env, title, body, {
-        type: 'value_alert', matchId: String(top.fixtureId),
-        pick: top.pick, value: top.value,
+        type: 'value_alert',
+        matchId: String(top.fixtureId),
+        pick: top.pick,
+        value: top.value,
       });
-    } else {
-      const title = `🔍 Scan voltooid — ${newCount} pick${newCount > 1 ? 's' : ''} toegevoegd`;
-      const body = `${allMatches.length} wedstrijden gescand · ${Object.keys(oddsMap || {}).length} met odds`;
-      await sendPushNotification(env, title, body, { type: 'scan_done' });
     }
-  } else {
-    const title = `🔍 Scan voltooid — geen nieuwe picks`;
-    const body = `${allMatches.length} wedstrijden gescand · geen value gevonden`;
-    await sendPushNotification(env, title, body, { type: 'scan_done' });
   }
-}
-
-// ── Scan test: test automatische scan pipeline — GEEN Firebase write ─────────
-// Default: Eliteserien NO (113) + Allsvenskan SE (103), beide seizoen 2026
-// Gebruik: /scan-test?token=HMAC&league=113,103
-// Geeft volledige verbose output: fixtures, odds, AI, value picks, verdict
-async function runScanTest(env, leagueIds = [113, 103]) {
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
-
-  // Seizoen-aware: Scandinavische + WK competities = 2026
-  const SEASON_2026 = new Set([1, 2, 3, 113, 103, 71, 253, 128, 848]);
-  const getSeason = (lid) => SEASON_2026.has(lid) ? 2026 : 2025;
-
-  const log = [`[ScanTest] Start — leagues: ${leagueIds.join(', ')}, datum: ${today} + ${tomorrowStr}`];
-
-  // ── Stap 1: Fixtures ophalen (vandaag + morgen) ──
-  const allFixtures = [];
-  const seen = new Set();
-
-  await Promise.all(leagueIds.flatMap(lid => {
-    const season = getSeason(lid);
-    log.push(`[ScanTest] League ${lid} → seizoen ${season}`);
-    return [today, tomorrowStr].map(date =>
-      apif(`/fixtures?league=${lid}&season=${season}&date=${date}&timezone=Europe/Amsterdam`, env)
-        .then(fixtures => {
-          (fixtures || []).forEach(f => {
-            const id = f.fixture?.id;
-            if (id && !seen.has(id)) { seen.add(id); allFixtures.push(f); }
-          });
-        })
-        .catch(e => log.push(`[ScanTest] Fixtures fout league ${lid} ${date}: ${e.message}`))
-    );
-  }));
-
-  log.push(`[ScanTest] ${allFixtures.length} unieke fixtures gevonden`);
-
-  // ── Stap 2: Filter — NS/live, binnen tijdvenster ──
-  const nowMs = Date.now();
-  // scan-test = altijd force mode: alle wedstrijden vandaag+morgen
-  const endOfTomorrow = new Date(tomorrowStr + 'T23:59:59').getTime() + 60 * 60 * 1000;
-
-  const allMatches = allFixtures
-    .filter(f => {
-      const status  = f.fixture?.status?.short;
-      const kickoff = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
-      const isLive  = ['1H','2H','HT','ET','BT','P'].includes(status);
-      const isNS    = ['NS','TBD','PST'].includes(status);
-      return isLive || (isNS && kickoff < endOfTomorrow);
-    })
-    .map(f => ({
-      fixtureId:  f.fixture?.id,
-      home:       f.teams?.home?.name  || '?',
-      away:       f.teams?.away?.name  || '?',
-      matchDate:  f.fixture?.date?.split('T')[0] || today,
-      matchTime:  f.fixture?.date || null,
-      leagueId:   f.league?.id,
-      leagueName: f.league?.name || '',
-      status:     f.fixture?.status?.short || 'NS',
-    }))
-    .sort((a, b) => new Date(a.matchTime || 0) - new Date(b.matchTime || 0));
-
-  log.push(`[ScanTest] ${allMatches.length} wedstrijden na NS/live filter`);
-
-  if (!allMatches.length) {
-    return {
-      ok: true, leagues: leagueIds, today, tomorrow: tomorrowStr,
-      matchesFound: 0, withOdds: 0, aiResultsCount: 0,
-      picks: [], allMatches: [], log,
-      verdict: '⚠️ Geen wedstrijden gevonden — controleer seizoen en leagueId',
-      note: '⚠️ TEST — geen Firebase write'
-    };
-  }
-
-  // ── Stap 3: Odds ophalen (zelfde functie als productie, incl. Scandinavische bookmaker fallbacks) ──
-  const batch = allMatches.slice(0, 10);
-  const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
-  const oddsMap = await fetchOddsForFixtures(fixtureIds, env);
-  log.push(`[ScanTest] Odds: ${Object.keys(oddsMap).length}/${batch.length} fixtures gedekt`);
-  batch.forEach(m => {
-    const o = oddsMap[m.fixtureId];
-    log.push(`[ScanTest]   ${m.home} vs ${m.away} (${m.matchDate}) → ${o ? `${o.home}/${o.draw}/${o.away}` : 'geen odds'}`);
-  });
-
-  // ── Stap 4: AI analyse (zelfde prompt als productie) ──
-  const analyseBatch = batch.filter(m => oddsMap[m.fixtureId]);
-  const analyseBatchFull = analyseBatch.length > 0 ? analyseBatch : batch;
-
-  const prompt = `Je bent een voetbalanalyst. Analyseer deze ${analyseBatchFull.length} wedstrijden en geef voor ELKE wedstrijd:
-1. Kans thuisploeg wint (0-100)
-2. Kans gelijkspel (0-100)
-3. Kans uitploeg wint (0-100)
-4. Confidence in analyse (1-10)
-
-Houd rekening met: recente vorm, historische H2H, thuisvoordeel, competitieniveau.
-
-Wedstrijden:
-${analyseBatchFull.map((m, i) => {
-  const odds = oddsMap[m.fixtureId];
-  const oddsStr = odds ? ` | Odds: ${odds.home}/${odds.draw}/${odds.away}` : ' | geen odds';
-  return `${i+1}. ${m.home} vs ${m.away} (${m.leagueName}, ${m.matchDate})${oddsStr}`;
-}).join('\n')}
-
-Antwoord ALLEEN met een JSON array: [{"h":50,"x":25,"a":25,"c":7},...]
-Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
-
-  let aiResults = [];
-  let aiError = null;
-  try {
-    const aiRes = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': env.ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const aiData = await aiRes.json();
-    const text = aiData?.content?.[0]?.text || '[]';
-    const matchArr = text.match(/\[[\s\S]*?\]/);
-    if (matchArr) {
-      aiResults = JSON.parse(matchArr[0]);
-      log.push(`[ScanTest] AI: ${aiResults.length} resultaten ontvangen`);
-    } else {
-      aiError = 'Geen JSON array in AI response: ' + text.substring(0, 120);
-      log.push(`[ScanTest] AI FOUT: ${aiError}`);
-    }
-  } catch(e) {
-    aiError = e.message;
-    log.push(`[ScanTest] AI FOUT: ${e.message}`);
-  }
-
-  // ── Stap 5: Value berekening (zelfde logica als productie, maar geen Firebase write) ──
-  const leagueCalibration = await sbGetCalibration(env);
-  const picks = [];
-
-  analyseBatchFull.forEach((m, i) => {
-    const ai   = aiResults[i] || { h: 50, x: 25, a: 25, c: 5 };
-    const odds = oddsMap[m.fixtureId] || {};
-
-    [
-      { pick: '1', label: `${m.home} wint`, aiKans: ai.h, bookOdds: odds.home },
-      { pick: 'X', label: 'Gelijkspel',     aiKans: ai.x, bookOdds: odds.draw },
-      { pick: '2', label: `${m.away} wint`,  aiKans: ai.a, bookOdds: odds.away },
-    ].forEach(c => {
-      if (!c.bookOdds || c.bookOdds <= 1) return;
-      const value = calculateValue(c.aiKans, c.bookOdds, c.pick);
-      if (value < 3) return;
-
-      const spread      = Math.max(ai.h, ai.x, ai.a) - Math.min(ai.h, ai.x, ai.a);
-      const dataQuality = Math.min(100, 50 + spread);
-      const conf = calculateConfidenceV20({
-        modelProb: c.aiKans, value, dataQuality,
-        marketSignal: 50,
-        leagueId: m.leagueId,
-        odds: c.bookOdds,
-        calibFactor: leagueCalibration[String(m.leagueId)]?.factor || null,
-      });
-
-      if (conf.score < 5) return;
-
-      picks.push({
-        match:      `${m.home} vs ${m.away}`,
-        leagueName: m.leagueName,
-        matchDate:  m.matchDate,
-        pick:       c.pick,
-        pickLabel:  c.label,
-        odds:       c.bookOdds,
-        value:      parseFloat(value.toFixed(1)),
-        aiKans:     Math.round(c.aiKans),
-        confidence: conf.score,
-        confidenceFinal: conf.final,
-        elite:      isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds }),
-      });
-    });
-  });
-
-  picks.sort((a, b) => b.value - a.value);
-
-  const strongPicks  = picks.filter(p => p.value >= 5 && p.confidence >= 5);
-  const elitePicks   = picks.filter(p => p.elite);
-  log.push(`[ScanTest] ${picks.length} value picks (≥3%), ${strongPicks.length} sterk (≥5%), ${elitePicks.length} elite`);
-
-  const verdict = elitePicks.length > 0
-    ? `✅ ${elitePicks.length} elite pick(s) — pipeline werkt, klaar voor productie`
-    : strongPicks.length > 0
-      ? `✅ ${strongPicks.length} sterke picks (≥5% value, conf≥5) — pipeline werkt correct`
-      : picks.length > 0
-        ? `⚠️ ${picks.length} zwakke picks (≥3%) — odds mogelijk te efficiënt vandaag`
-        : Object.keys(oddsMap).length === 0
-          ? `⚠️ Geen odds — bookmakers hebben nog geen quotes voor deze wedstrijden`
-          : `ℹ️ Geen value gevonden — markt efficiënt vandaag`;
-
-  return {
-    ok:              true,
-    leagues:         leagueIds,
-    today,
-    tomorrow:        tomorrowStr,
-    matchesFound:    allMatches.length,
-    matchesAnalysed: analyseBatchFull.length,
-    withOdds:        Object.keys(oddsMap).length,
-    aiResultsCount:  aiResults.length,
-    aiError:         aiError || null,
-    totalPicks:      picks.length,
-    strongPicks:     strongPicks.length,
-    elitePicks:      elitePicks.length,
-    picks:           picks.slice(0, 15),
-    allMatches:      batch.map(m => ({
-      fixtureId: m.fixtureId,
-      match:     `${m.home} vs ${m.away}`,
-      league:    m.leagueName,
-      date:      m.matchDate,
-      status:    m.status,
-      hasOdds:   !!oddsMap[m.fixtureId],
-      odds:      oddsMap[m.fixtureId] || null,
-    })),
-    log,
-    verdict,
-    note: '⚠️ TEST — geen picks opgeslagen in Firebase',
-  };
 }
 
 // ── Endpoint: haal picks op voor app ────────────────────
 async function handleGetPicks(env) {
-  const picks = await sbGetPicks(env);
+  const picks = await fb(env, 'picks') || {};
   const arr = Object.values(picks)
     .filter(p => p.status === 'pending' || p.status === 'win' || p.status === 'lose')
     .sort((a, b) => (b.value || 0) - (a.value || 0));
@@ -1552,13 +1082,16 @@ async function handleGetPicks(env) {
 
 
 // ═══════════════════════════════════════════════════════
-// DAGELIJKSE AI TIP
+// DAGELIJKSE AI TIP — v19.3
+// Elke dag om 08:00 UTC: haal picks op + genereer AI tip
+// Opgeslagen in Firebase onder daily_tip/
 // ═══════════════════════════════════════════════════════
 
 async function generateDailyTip(env) {
   console.log('[DailyTip] Genereren dagelijkse tip...');
   const today = new Date().toISOString().split('T')[0];
 
+  // Check of er al een tip is voor vandaag
   try {
     const existing = await fb(env, 'daily_tip/latest');
     if (existing?.date === today) {
@@ -1567,9 +1100,10 @@ async function generateDailyTip(env) {
     }
   } catch(e) {}
 
+  // Haal picks op uit Firebase — alleen kwalitatieve picks
   let picks = [];
   try {
-    const picksData = await sbGetPicks(env);
+    const picksData = await fb(env, 'picks') || {};
     picks = Object.values(picksData)
       .filter(p =>
         p.status === 'pending' &&
@@ -1585,6 +1119,7 @@ async function generateDailyTip(env) {
     console.warn('[DailyTip] Picks ophalen mislukt:', e.message);
   }
 
+  // Geen kwalitatieve picks → geen tip vandaag
   if (!picks.length) {
     const noTip = {
       date: today,
@@ -1594,12 +1129,12 @@ async function generateDailyTip(env) {
       generatedAt: new Date().toISOString(),
       version: VERSION
     };
-    await sbSaveDailyTip(noTip, env);
-    await fb(env, 'daily_tip/latest', 'PUT', noTip); // FB fallback
+    await fb(env, 'daily_tip/latest', 'PUT', noTip);
     console.log('[DailyTip] Geen gekwalificeerde picks vandaag.');
     return noTip;
   }
 
+  // Bouw prompt voor Claude — gestructureerde JSON output
   const picksText = picks
     .map(p => `- ${p.matchName || '?'}: ${p.pickLabel} @ ${p.odds} (value: +${Math.round(p.value||0)}%, conf: ${p.confidence}/10, Poisson: ${p.poissonUsed ? 'ja' : 'nee'})`)
     .join('\n');
@@ -1662,6 +1197,7 @@ Respond ONLY with valid JSON, no text outside JSON:
     };
   } catch(e) {
     console.error('[DailyTip] Fout:', e.message);
+    // Neem gewoon de top pick zonder AI samenvatting
     const top = picks[0];
     tipData = {
       date: today,
@@ -1680,9 +1216,8 @@ Respond ONLY with valid JSON, no text outside JSON:
     };
   }
 
-  await sbSaveDailyTip(tipData, env);
   await fb(env, 'daily_tip/latest', 'PUT', tipData);
-  await fb(env, `daily_tip/archive/${today}`, 'PUT', tipData); // FB fallback
+  await fb(env, `daily_tip/archive/${today}`, 'PUT', tipData);
   console.log('[DailyTip] Tip opgeslagen:', tipData.match, tipData.pickLabel);
   return tipData;
 }
@@ -1697,6 +1232,7 @@ async function handleDailyTip(env) {
     return json({ error: e.message }, 500);
   }
 }
+
 
 // ── OneSignal push notificatie ────────────────────────────
 async function sendPushNotification(env, title, body, data = {}) {
@@ -1714,10 +1250,10 @@ async function sendPushNotification(env, title, body, data = {}) {
       contents: { en: body, nl: body },
       data,
       android_channel_id: 'value-alerts',
-      android_sound: 'notification',
-      ios_sound: 'notification.wav',
+      android_sound: 'notification',   // geluid op Android
+      ios_sound: 'notification.wav',   // geluid op iOS
       ttl: 3600,
-      priority: 10,
+      priority: 10,                    // hoge prioriteit = doorbreekt DND niet maar wel zichtbaar
       large_icon: 'https://toto-ai.app/icon-192.png',
       chrome_web_icon: 'https://toto-ai.app/icon-192.png',
     };
@@ -1750,38 +1286,6 @@ async function handlePush(request, env) {
   }
 }
 
-// ── User costs endpoint (/user-costs) ───────────────────
-async function handleUserCosts(request, env) {
-  const url = new URL(request.url);
-  const uid = url.searchParams.get('uid');
-  if (!uid) return json({ error: 'uid verplicht' }, 400);
-
-  if (request.method === 'GET') {
-    const rows = await sb(env, 'user_costs', 'GET', null, `?uid=eq.${uid}&select=*`);
-    if (!rows || !rows.length) return json(null);
-    const r = rows[0];
-    return json({
-      calls: r.calls, tokensIn: r.tokens_in, tokensOut: r.tokens_out,
-      totalUSD: parseFloat(r.total_usd), lastUpdated: r.last_updated
-    });
-  }
-
-  if (request.method === 'POST') {
-    const body = await request.json();
-    await sb(env, 'user_costs', 'POST', [{
-      uid,
-      calls: body.calls || 0,
-      tokens_in: body.tokensIn || 0,
-      tokens_out: body.tokensOut || 0,
-      total_usd: body.totalUSD || 0,
-      last_updated: body.lastUpdated || new Date().toISOString(),
-    }], '?on_conflict=uid');
-    return json({ ok: true });
-  }
-
-  return json({ error: 'Method not allowed' }, 405);
-}
-
 // ── Main fetch handler ───────────────────────────────────
 export default {
   async fetch(request, env) {
@@ -1794,7 +1298,10 @@ export default {
 
     if (path.startsWith('/apif/') || path.startsWith('/apif?')) {
       const apiPath = path.replace('/apif', '') + (url.search || '');
+
+      // v47: detecteer cache-bypass parameter (_cb=timestamp)
       const bypassCache = url.searchParams.has('_cb');
+
       return handleAPIFootball(apiPath, env, bypassCache);
     }
 
@@ -1808,8 +1315,8 @@ export default {
     }
 
     if (path === '/settle') {
-      const token = url.searchParams.get('token');
-      if (!await verifyHMAC(token, env.SCAN_SECRET)) {
+      const secret = url.searchParams.get('secret');
+      if (!secret || secret !== env.SCAN_SECRET) {
         return json({ error: 'Unauthorized' }, 401);
       }
       await verifyYesterdayPicks(env);
@@ -1817,136 +1324,19 @@ export default {
     }
 
     if (path === '/scan') {
-      const token = url.searchParams.get('token');
-      if (!await verifyHMAC(token, env.SCAN_SECRET)) {
+      const secret = url.searchParams.get('secret');
+      if (!secret || secret !== env.SCAN_SECRET) {
         return json({ error: 'Unauthorized' }, 401);
       }
-      await runScan(env, true);
+      // Voer scan uit op de achtergrond
+      const ctx_dummy = { waitUntil: (p) => p };
+      json({ status: 'scan gestart', version: VERSION });
+      await runScan(env, true); // force=true: tijdvenster overslaan
+      // Verify alleen bij cron — niet bij handmatige scan (subrequest limiet)
       return json({ status: 'scan klaar', version: VERSION });
     }
 
-    if (path === '/debug-scan') {
-      const token = url.searchParams.get('token');
-      if (!await verifyHMAC(token, env.SCAN_SECRET)) return json({ error: 'Unauthorized' }, 401);
-      const log = [];
-      try {
-        const schedule = await fb(env, 'scan_schedule');
-        log.push({ step: 'scan_schedule', value: schedule });
-        const today = new Date().toISOString().split('T')[0];
-        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = tomorrow.toISOString().split('T')[0];
-        log.push({ step: 'dates', today, tomorrowStr });
-
-        // Test 1 league (MLS vandaag)
-        const mlsToday = await apif(`/fixtures?league=253&season=2026&date=${today}&timezone=Europe/Amsterdam`, env);
-        log.push({ step: 'mls_today', count: mlsToday?.length, statuses: mlsToday?.map(f => f.fixture?.status?.short) });
-        const mlsTomorrow = await apif(`/fixtures?league=253&season=2026&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env);
-        log.push({ step: 'mls_tomorrow', count: mlsTomorrow?.length, statuses: mlsTomorrow?.map(f => f.fixture?.status?.short) });
-
-        // Test Brasileirao
-        const bra = await apif(`/fixtures?league=71&season=2026&date=${today}&timezone=Europe/Amsterdam`, env);
-        log.push({ step: 'brasileirao_today', count: bra?.length, statuses: bra?.map(f => f.fixture?.status?.short) });
-        const braTomorrow = await apif(`/fixtures?league=71&season=2026&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env);
-        log.push({ step: 'brasileirao_tomorrow', count: braTomorrow?.length, statuses: braTomorrow?.map(f => f.fixture?.status?.short) });
-
-        // Test Argentina
-        const arg = await apif(`/fixtures?league=128&season=2026&date=${today}&timezone=Europe/Amsterdam`, env);
-        log.push({ step: 'argentina_today', count: arg?.length });
-      } catch(e) {
-        log.push({ step: 'ERROR', error: e.message });
-      }
-      return json({ debug: log, version: VERSION });
-    }
-
-    if (path === '/check-odds') {
-      // Test welke bookmakers odds hebben voor een fixture
-      // Gebruik: /check-odds?fixture=1490324
-      const fixtureId = url.searchParams.get('fixture');
-      if (!fixtureId) return json({ error: 'fixture parameter verplicht' }, 400);
-      const BOOKMAKERS = [
-        { id: 1,  name: 'Marathonbet' },
-        { id: 4,  name: 'Bwin' },
-        { id: 6,  name: 'William Hill' },
-        { id: 8,  name: 'Bet365' },
-        { id: 10, name: 'Unibet' },
-        { id: 16, name: 'Betfair' },
-        { id: 18, name: 'Pinnacle' },
-        { id: 36, name: 'Betsson' },
-        { id: 44, name: 'NordicBet' },
-        { id: 54, name: 'Betway' },
-      ];
-      const results = await Promise.all(
-        BOOKMAKERS.map(async bm => {
-          try {
-            const data = await apif(`/odds?fixture=${fixtureId}&bookmaker=${bm.id}&bet=1`, env);
-            const bet = data?.[0]?.bookmakers?.[0]?.bets?.find(b => b.id === 1);
-            const home = parseFloat(bet?.values?.find(v => v.value === 'Home')?.odd || 0);
-            const draw = parseFloat(bet?.values?.find(v => v.value === 'Draw')?.odd || 0);
-            const away = parseFloat(bet?.values?.find(v => v.value === 'Away')?.odd || 0);
-            const hasOdds = home > 1;
-            return { ...bm, hasOdds, odds: hasOdds ? { home, draw, away } : null };
-          } catch(e) {
-            return { ...bm, hasOdds: false, error: e.message };
-          }
-        })
-      );
-      const withOdds = results.filter(r => r.hasOdds);
-      return json({ fixture: fixtureId, found: withOdds.length, bookmakers: results, version: VERSION });
-    }
-
-    if (path === '/keepalive') {
-      try {
-        const result = await sb(env, 'clv_results', 'GET', null, '?limit=1&select=id');
-        return json({ ok: true, supabase: result !== null ? 'online' : 'geen data', version: VERSION });
-      } catch(e) {
-        return json({ ok: false, error: e.message }, 500);
-      }
-    }
-
-    if (path === '/user-costs') {
-      return handleUserCosts(request, env);
-    }
-
     if (path === '/picks') {
-      if (request.method === 'POST') {
-        // Handmatige scan picks opslaan in Supabase (vanuit app)
-        try {
-          const body = await request.json();
-          const picks = Array.isArray(body) ? body : [body];
-          if (!picks.length) return json({ ok: false, error: 'Geen picks' });
-          const rows = picks.map(p => ({
-            id: p.id || `${p.matchDate || 'x'}_${(p.matchName || 'x').replace(/\s/g,'_').replace(/'/g,'')}_${p.pick || '1'}`,
-            fixture_id: p.fixtureId || null,
-            home: p.home || null, away: p.away || null,
-            match_name: p.matchName || null,
-            match_date: p.matchDate || null,
-            match_time: p.matchTime || null,
-            league_id: p.leagueId || null,
-            league_name: p.leagueName || null,
-            pick: p.pick || null,
-            pick_label: p.pickLabel || null,
-            odds: p.odds || null,
-            value: p.value || null,
-            ai_kans: p.aiKans || null,
-            confidence: p.confidence || null,
-            confidence_final: p.confidenceFinal || null,
-            elite: p.elite || false,
-            lock_level: p.lockLevel || 'single',
-            scan_count: p.scanCount || 1,
-            status: p.status || 'pending',
-            source: p.source || 'manual_scan',
-            first_scan_at: p.firstScanAt || new Date().toISOString(),
-            last_scan_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }));
-          await sb(env, 'picks', 'POST', rows, '?on_conflict=id');
-          console.log(`[Picks] ${rows.length} handmatige picks opgeslagen in Supabase`);
-          return json({ ok: true, saved: rows.length });
-        } catch(e) {
-          console.error('[Picks] POST fout:', e.message);
-          return json({ ok: false, error: e.message }, 500);
-        }
-      }
       return handleGetPicks(env);
     }
 
@@ -1967,17 +1357,6 @@ export default {
       return handlePush(request, env);
     }
 
-    if (path === '/scan-test') {
-      const token = url.searchParams.get('token');
-      if (!await verifyHMAC(token, env.SCAN_SECRET)) return json({ error: 'Unauthorized' }, 401);
-      // ?league=113,103 of enkel ?league=113
-      // Default: Eliteserien NO (113) + Allsvenskan SE (103)
-      const leagueParam = url.searchParams.get('league') || '113,103';
-      const leagueIds = leagueParam.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
-      const result = await runScanTest(env, leagueIds);
-      return json(result);
-    }
-
     if (url.searchParams.get('url')) {
       return handleProxy(url.searchParams.get('url'), request, env);
     }
@@ -1985,7 +1364,7 @@ export default {
     return json({
       version: VERSION,
       status: 'running',
-      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/user-costs', '/scan', '/scan-test', '/settle', '/debug-scan', '/check-odds', '/keepalive', '/push', '/daily-tip', '/analytics', '?url=']
+      routes: ['/apif/*', '/fd/*', '/anthropic', '/picks', '/scan', '/settle', '/push', '/daily-tip', '/analytics', '/calibration', '?url=']
     });
   },
 
@@ -1993,9 +1372,10 @@ export default {
     const now = new Date();
     const hour = now.getUTCHours();
     const isSunday = now.getUTCDay() === 0;
+    // Sequentieel uitvoeren om subrequest limiet niet te overschrijden
     ctx.waitUntil((async () => {
-      await runScan(env);
       await verifyYesterdayPicks(env);
+      await runScan(env);
       if (hour === 6) await generateDailyTip(env);
       if (isSunday && hour === 6) await runWeeklyCalibration(env);
     })());
