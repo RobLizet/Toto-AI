@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════
-// WALLET SCREEN v13
-// v13: "Waarom deze pick?" signalen in backtest cards + resultatenpagina verbeterd
+// WALLET SCREEN v14
+// v14: Killer resultatenpagina — ROI 7 dagen, win streak, beste league, elite hitrate, CLV
+// v13: "Waarom deze pick?" signalen in backtest cards
 
 let trackerType = 'single';
 let trackerLegs = [];
@@ -197,6 +198,9 @@ function renderWalletScreen() {
           <div class="w-item"><div class="w-label">ROI</div><div class="val" id="btRoi">—</div></div>
           <div class="w-item"><div class="w-label">Winst/€</div><div class="val" id="btProfit">—</div></div>
         </div>
+
+        <!-- Killer stats — ROI 7d, win streak, beste league, elite, CLV -->
+        <div id="btKillerStats" style="display:none;background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.8rem 1rem;margin-bottom:.75rem;"></div>
 
         <!-- Voortgangsbalk naar 100 picks -->
         <div id="btProgressWrap" style="background:var(--card);border:1px solid var(--stroke);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;">
@@ -1067,8 +1071,8 @@ function updateBacktestStats() {
   if (!state.valueBacktest) return;
   const picks   = state.valueBacktest.picks||[];
   const settled = picks.filter(p => p.status==='win'||p.status==='lose');
-  const wins    = picks.filter(p => p.status==='win').length;
-  const hitrate = settled.length>0 ? Math.round(wins/settled.length*100)+'%' : '—';
+  const wins    = settled.filter(p => p.status==='win');
+  const hitrate = settled.length>0 ? Math.round(wins.length/settled.length*100)+'%' : '—';
   let profit=0;
   settled.forEach(p => { profit += p.status==='win' ? (p.odds-1) : -1; });
   const roi = settled.length>0 ? ((profit/settled.length)*100).toFixed(1) : '—';
@@ -1088,6 +1092,116 @@ function updateBacktestStats() {
   const chartWrap = document.getElementById('btChartWrap');
   if (chartWrap) chartWrap.style.display = settled.length>1?'block':'none';
   renderBacktestChart(settled);
+
+  // ── Killer stats sectie ──────────────────────────────
+  renderKillerStats(picks, settled);
+}
+
+function renderKillerStats(picks, settled) {
+  const el = document.getElementById('btKillerStats');
+  if (!el) return;
+  if (!settled.length) { el.style.display='none'; return; }
+  el.style.display='block';
+
+  // ROI laatste 7 dagen
+  const now7  = new Date(); now7.setDate(now7.getDate() - 7);
+  const last7  = settled.filter(p => p.date && new Date(p.date.split('-').reverse().join('-')) >= now7);
+  let profit7  = 0;
+  last7.forEach(p => { profit7 += p.status==='win' ? (p.odds-1) : -1; });
+  const roi7   = last7.length ? ((profit7/last7.length)*100).toFixed(1) : null;
+  const roi7Color = !roi7 ? '#94a3b8' : parseFloat(roi7)>=0 ? '#15803d' : '#dc2626';
+
+  // Win streak
+  const sortedSettled = [...settled].sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
+  let streak=0, maxStreak=0, cur=0;
+  sortedSettled.forEach(p => {
+    if (p.status==='win') { cur++; if(cur>maxStreak) maxStreak=cur; }
+    else cur=0;
+  });
+  // Huidige streak (meest recente)
+  for (const p of sortedSettled) {
+    if (p.status==='win') streak++;
+    else break;
+  }
+
+  // Beste league
+  const byLeague = {};
+  settled.forEach(p => {
+    const l = p.comp || p.leagueName || p.competitie || '?';
+    if (!byLeague[l]) byLeague[l] = { wins:0, total:0, profit:0 };
+    byLeague[l].total++;
+    if (p.status==='win') { byLeague[l].wins++; byLeague[l].profit += (p.odds-1); }
+    else byLeague[l].profit -= 1;
+  });
+  const bestLeague = Object.entries(byLeague)
+    .filter(([,v]) => v.total >= 3)
+    .sort((a,b) => (b[1].profit/b[1].total) - (a[1].profit/a[1].total))[0];
+
+  // Elite picks resultaten
+  const elitePicks = settled.filter(p => p.elite || (p.confidence>=8 && p.value>=15));
+  const eliteWins  = elitePicks.filter(p => p.status==='win');
+  const eliteHr    = elitePicks.length ? Math.round(eliteWins.length/elitePicks.length*100) : null;
+
+  // CLV score (als closing odds beschikbaar)
+  const clvPicks = settled.filter(p => p.closingOdds && p.odds);
+  let clvAvg = null;
+  if (clvPicks.length >= 3) {
+    const clvSum = clvPicks.reduce((s,p) => s + ((p.odds / p.closingOdds - 1) * 100), 0);
+    clvAvg = (clvSum / clvPicks.length).toFixed(1);
+  }
+
+  // Renderen
+  el.innerHTML = `
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">⚡ STATS OVERZICHT</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+
+      <!-- ROI laatste 7 dagen -->
+      <div style="background:rgba(15,23,42,.04);border:1px solid var(--border);border-radius:10px;padding:.5rem .6rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${roi7Color};">${roi7 !== null ? (parseFloat(roi7)>=0?'+':'')+roi7+'%' : '—'}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">ROI LAATSTE 7 DAGEN</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${last7.length} picks gesetteld</div>
+      </div>
+
+      <!-- Win streak -->
+      <div style="background:rgba(15,23,42,.04);border:1px solid var(--border);border-radius:10px;padding:.5rem .6rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${streak>=3?'#15803d':streak>=1?'#b45309':'#94a3b8'};">${streak}🔥</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">HUIDIGE WIN STREAK</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">Max: ${maxStreak} op rij</div>
+      </div>
+
+      <!-- Beste league -->
+      <div style="background:rgba(15,23,42,.04);border:1px solid var(--border);border-radius:10px;padding:.5rem .6rem;">
+        ${bestLeague ? `
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;color:#15803d;line-height:1.1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${bestLeague[0]}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">BESTE LEAGUE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${Math.round(bestLeague[1].wins/bestLeague[1].total*100)}% hitrate · ${bestLeague[1].total}x</div>
+        ` : `
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;color:#94a3b8;">—</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">BESTE LEAGUE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">Min 3 picks nodig</div>
+        `}
+      </div>
+
+      <!-- Elite picks -->
+      <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:.5rem .6rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#7c3aed;">${eliteHr !== null ? eliteHr+'%' : '—'}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">⭐ ELITE HITRATE</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${eliteWins.length}/${elitePicks.length} gewonnen</div>
+      </div>
+
+      ${clvAvg !== null ? `
+      <!-- CLV score -->
+      <div style="background:rgba(15,23,42,.04);border:1px solid var(--border);border-radius:10px;padding:.5rem .6rem;grid-column:1/-1;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${parseFloat(clvAvg)>=0?'#15803d':'#dc2626'};">${parseFloat(clvAvg)>=0?'+':''}${clvAvg}% CLV</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">CLOSING LINE VALUE</div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);text-align:right;">Gebaseerd op ${clvPicks.length} picks<br>+ CLV = betere odds dan markt</div>
+        </div>
+      </div>` : ''}
+
+    </div>`;
 }
 
 function renderTripleLockHitrate() {
