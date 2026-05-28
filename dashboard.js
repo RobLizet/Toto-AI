@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════
-// dashboard.js v13
+// dashboard.js v14
+// v14: Killer stats resultatenpagina (wallet)
 // v13: "Waarom deze pick?" signalen, bullshitfilter waarschuwing
 
 // ── Pick signalen — snelle uitleg per pick ────────────────
