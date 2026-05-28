@@ -44,7 +44,8 @@ function calculateConfidenceV20(pick, leagueId, calibration) {
 
 // ═══════════════════════════════════════════════════════
 // ANALYSE.JS — Value scan, AI analyse, Combi Tips v27
-// v27: Scan log klikbaar — renderScanLog bij laden + klik op header
+// v27: Scan log klikbaar + auto laden bij openen
+//      syncPicksToFirebase ook naar Supabase via worker POST /picks
 // ═══════════════════════════════════════════════════════
 
 // ── Anthropic fetch helper ────────────────────────────
@@ -268,7 +269,7 @@ function renderAnalyseScreen() {
 
   // ── 5. SCAN LOG ──
   html += '<div class="analyse-block" id="analyse-scanlog-block">';
-  html += '<div class="analyse-block-header" onclick="document.getElementById(\'analyse-scanlog-block\').scrollIntoView({behavior:\'smooth\'});renderScanLog();" style="cursor:pointer;">';
+  html += '<div class="analyse-block-header" onclick="renderScanLog();" style="cursor:pointer;">';
   html += '<div class="analyse-block-title"><span class="analyse-block-icon">📋</span> SCAN LOG</div>';
   html += '<span style="font-size:.7rem;color:var(--sub);font-family:\'IBM Plex Mono\',monospace;">tik om te laden ▼</span>';
   html += '</div>';
@@ -276,8 +277,6 @@ function renderAnalyseScreen() {
   html += '</div>';
 
   screen.innerHTML = html;
-
-  // Scan log direct laden bij openen analyse scherm
   setTimeout(() => renderScanLog(), 100);
 }
 
@@ -1929,36 +1928,61 @@ async function syncPicksToFirebase(picks) {
     const todayISO = new Date().toISOString().split('T')[0];
     const db = firebase.database();
     const updates = {};
+    const supabasePicks = [];
+
     picks.forEach(p => {
       const key = String(p.fixtureId || p.id) + '_' + p.pick;
-      updates['picks/' + key] = {
-        fixtureId:   p.fixtureId,
-        home:        p.match ? p.match.split(' vs ')[0] : '',
-        away:        p.match ? p.match.split(' vs ')[1] : '',
-        matchName:   p.match,
-        matchDate:   normalizeDateISO(p.matchDate, todayISO),
-        matchTime:   p.matchTime || null,
-        leagueName:  p.comp || '',
-        pick:        p.pick,
-        pickLabel:   p.pickLabel,
-        odds:        p.odds,
-        value:       p.value,
+      const matchDate = normalizeDateISO(p.matchDate, todayISO);
+      const pickObj = {
+        fixtureId:       p.fixtureId,
+        home:            p.match ? p.match.split(' vs ')[0] : '',
+        away:            p.match ? p.match.split(' vs ')[1] : '',
+        matchName:       p.match,
+        matchDate,
+        matchTime:       p.matchTime || null,
+        leagueName:      p.comp || '',
+        pick:            p.pick,
+        pickLabel:       p.pickLabel,
+        odds:            p.odds,
+        value:           p.value,
         confidence:      p.confidence,
         confidenceFinal: p.confidenceFinal || null,
         elite:           p.elite || false,
         aiKans:          p.aiKans || 0,
         lockLevel:       'single',
-        scanCount:   1,
-        source:      'app',
-        status:      'pending',
-        score:       null,
-        processed:   false,
-        firstScanAt: new Date().toISOString(),
-        lastScanAt:  new Date().toISOString(),
+        scanCount:       1,
+        source:          'manual_scan',
+        status:          'pending',
+        score:           null,
+        processed:       false,
+        firstScanAt:     new Date().toISOString(),
+        lastScanAt:      new Date().toISOString(),
       };
+      updates['picks/' + key] = pickObj;
+      supabasePicks.push({ ...pickObj, id: key });
     });
+
+    // Firebase sync
     await db.ref('/').update(updates);
     console.log('[Sync] ' + picks.length + ' picks gesynchroniseerd naar Firebase');
+
+    // Supabase sync via worker POST /picks
+    try {
+      const workerUrl = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://toto-proxy.zweetzakken.workers.dev') + '/picks';
+      const res = await fetch(workerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(supabasePicks),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        console.log('[Sync] ' + data.saved + ' picks gesynchroniseerd naar Supabase');
+      } else {
+        console.warn('[Sync] Supabase sync fout:', data.error);
+      }
+    } catch(e) {
+      console.warn('[Sync] Supabase sync mislukt:', e.message);
+    }
   } catch(e) {
     console.warn('[Sync] Firebase sync mislukt:', e.message);
   }

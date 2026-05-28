@@ -1,6 +1,39 @@
 // ═══════════════════════════════════════════════════════
+// dashboard.js v13
+// v13: "Waarom deze pick?" signalen, bullshitfilter waarschuwing
 
-// ── HMAC token generator (moet overeenkomen met worker) ──
+// ── Pick signalen — snelle uitleg per pick ────────────────
+function buildPickReasons(p) {
+  const signals = [];
+  if ((p.value||0) >= 20)      signals.push({ icon: '🔥', text: 'Hoge value +' + Math.round(p.value) + '%', color: '#15803d' });
+  else if ((p.value||0) >= 10) signals.push({ icon: '⚡', text: 'Value +' + Math.round(p.value) + '%', color: '#b45309' });
+  if ((p.confidence||0) >= 8)  signals.push({ icon: '🎯', text: 'Hoge confidence ' + p.confidence + '/10', color: '#15803d' });
+  else if ((p.confidence||0) >= 6) signals.push({ icon: '🎲', text: 'Conf ' + p.confidence + '/10', color: '#b45309' });
+  const lock = p.lockLevel || (typeof detectLockLevel === 'function' ? detectLockLevel(p.fixtureId, p.pick) : 'single');
+  if (lock === 'triple')       signals.push({ icon: '🔒', text: 'Triple Lock — 3x bevestigd', color: '#15803d' });
+  else if (lock === 'double')  signals.push({ icon: '🔒', text: 'Double Lock — 2x bevestigd', color: '#b45309' });
+  if (p.elite)                 signals.push({ icon: '⭐', text: 'Elite pick', color: '#7c3aed' });
+  if (p.poissonUsed || (p.poissonK1 && p.poissonK2))
+    signals.push({ icon: '📐', text: 'Poisson + AI model', color: '#64748b' });
+  if (p.aiKans && p.odds) {
+    const diff = (p.aiKans||0) - Math.round(100 / p.odds);
+    if (diff >= 10)      signals.push({ icon: '📊', text: 'Odds verkeerd geprijsd (+' + diff + '%)', color: '#15803d' });
+    else if (diff >= 5)  signals.push({ icon: '📊', text: 'Lichte mispricing (+' + diff + '%)', color: '#b45309' });
+  }
+  if (p.isSparseData || (p.confidence||0) < 5)
+    signals.push({ icon: '⚠️', text: 'Weinig data — lagere betrouwbaarheid', color: '#dc2626' });
+  return signals;
+}
+
+function renderPickReasons(p) {
+  const signals = buildPickReasons(p);
+  if (!signals.length) return '';
+  return `<div style="display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.35rem;">
+    ${signals.map(s => `<span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
+  </div>`;
+}
+
+
 // Token = HMAC-SHA256(SCAN_SECRET + timestamp_minute)
 const SCAN_SECRET = 'totoai2026'; // Zelfde als SCAN_SECRET in Cloudflare env
 // Admin UIDs — voeg jouw Firebase UID toe
@@ -538,15 +571,18 @@ function showPicksModal() {
     <!-- Picks lijst -->
     ${sorted.length === 0 ? '<div style="text-align:center;color:var(--sub);font-size:.8rem;padding:1rem;">Nog geen picks — scan wedstrijden!</div>' :
       sorted.map(p => `
-        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:10px;padding:.5rem .7rem;margin-bottom:.4rem;display:flex;justify-content:space-between;align-items:center;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">${p.pickLabel||p.pick||'?'} · @${p.odds||'?'} · +${p.value||0}% value</div>
+        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:10px;padding:.5rem .7rem;margin-bottom:.4rem;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">${p.pickLabel||p.pick||'?'} · @${p.odds||'?'} · +${p.value||0}% value</div>
+            </div>
+            <div style="text-align:right;margin-left:.5rem;">
+              <div style="font-size:1rem;">${statusIcon(p.status)}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:${statusColor(p.status)};">${p.status==='win'?'GEWONNEN':p.status==='lose'?'VERLOREN':'OPEN'}</div>
+            </div>
           </div>
-          <div style="text-align:right;margin-left:.5rem;">
-            <div style="font-size:1rem;">${statusIcon(p.status)}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:${statusColor(p.status)};">${p.status==='win'?'GEWONNEN':p.status==='lose'?'VERLOREN':'OPEN'}</div>
-          </div>
+          ${renderPickReasons(p)}
         </div>`).join('')}
     </div>
   `;

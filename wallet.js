@@ -1,10 +1,6 @@
 // ═══════════════════════════════════════════════════════
-// WALLET SCREEN v20.2 — wallet, tracker, resultaten (backtest+picks samengevoegd)
-// Wijzigingen v14.9:
-// - Picks tab samengevoegd met Backtest → nu "Resultaten"
-// - Lock-detectie: auto Double/Triple Lock badge op basis van scan history
-// - Scan Log: teamnamen fix, confidence>=7 filter, dedup (zie analyse.js)
-// ═══════════════════════════════════════════════════════
+// WALLET SCREEN v13
+// v13: "Waarom deze pick?" signalen in backtest cards + resultatenpagina verbeterd
 
 let trackerType = 'single';
 let trackerLegs = [];
@@ -1034,10 +1030,17 @@ function renderBacktest() {
         <span style="color:var(--sub);">📊 ${p.bookmaker||'?'}</span>
         ${p.poissonUsed ? '<span style="color:#7c3aed;">P+AI</span>' : ''}
       </div>
-      <div style="font-family:monospace;font-size:.52rem;color:var(--sub);margin-bottom:.35rem;line-height:1.5;">
+      <div style="font-family:monospace;font-size:.52rem;color:var(--sub);margin-bottom:.25rem;line-height:1.5;">
         AI ${p.aiKans}% kans · ½ Kelly ${p.kelly}% · ${p.reason||''}
         ${p.score ? `<b style="color:var(--ink);"> [${p.score}]</b>` : ''}
       </div>
+      ${typeof buildPickReasons === 'function' ? (() => {
+        const signals = buildPickReasons(p);
+        if (!signals.length) return '';
+        return `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-bottom:.35rem;">
+          ${signals.map(s => `<span style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
+        </div>`;
+      })() : ''}
       <div class="bt-footer">
         <div style="display:flex;gap:.4rem;align-items:center;">
           ${p.status==='pending' ? `<button onclick="checkBacktestPick('${p.id}')" class="check-btn">🔍 CHECK</button>` : ''}
@@ -2015,6 +2018,18 @@ function showWalletPopup(type, data) {
         <div style="font-family:monospace;font-size:.44rem;color:#1d4ed8;font-weight:700;margin-bottom:.2rem;">REDEN</div>
         <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--ink,#0f172a);line-height:1.6;">${p.reason}</div>
       </div>`;
+    }
+    // Signalen sectie
+    if (typeof buildPickReasons === 'function') {
+      const signals = buildPickReasons(p);
+      if (signals.length) {
+        bodyHtml += `<div style="margin-top:.6rem;">
+          <div style="font-family:monospace;font-size:.44rem;font-weight:700;color:var(--sub);margin-bottom:.3rem;">SIGNALEN</div>
+          <div style="display:flex;flex-wrap:wrap;gap:.25rem;">
+            ${signals.map(s => `<span style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
+          </div>
+        </div>`;
+      }
     }
     // Mini grafiekje in popup
     const allPicks = state.valueBacktest?.picks || [];

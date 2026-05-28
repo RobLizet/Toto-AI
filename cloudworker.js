@@ -1,13 +1,11 @@
-// TOTO AI WORKER v99
-// v99: Fix Scandinavische/MLS/Aziatische leagues — UTC timezone mismatch opgelost
-//      date= werkte niet voor deze leagues, nu via next=15 (timezone-onafhankelijk)
+// TOTO AI WORKER v98
 // v98: Firebase → Supabase migratie voor picks, calibration, scan_status, daily_tips, user_costs
 //      LeagueConfig uitgebreid: Scandinavië + Brasileirao + Copa Lib + MLS + K League + J-League + Portugal
 //      fb() blijft als schrijf-fallback tijdens transitie
 // v97: handleAnthropic valideert body vóór doorsturen — voorkomt HTTP 400 loop bij multiscan
 // v96: Automatische scan weer aan — Noorwegen (113) + Zweden (103) actief
 
-const VERSION = 'v99'; // v98: Firebase → Supabase migratie
+const VERSION = 'v99'; // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1008,18 +1006,15 @@ async function runScan(env, force = false) {
     console.log('[Scan] Actieve leagues: WK + Scandinavië + Zuid-Amerika + MLS + Azië');
   }
 
-  // Leagues die UTC timezone gebruiken in API-Football — date= werkt niet correct
-  // Deze leagues ophalen via next= ipv date= om timezone mismatch te vermijden
+  // Leagues die UTC timezone gebruiken — date= werkt niet, gebruik next=15
   const NEXT_LEAGUES = new Set([113, 103, 119, 129, 253, 71, 239, 292, 98]);
 
   const SCAN_LEAGUES = leagueConfig.map(l => l.id);
 
   try {
-    // Haal vandaag + morgen op — MLS/Brasileirao spelen 's nachts NL-tijd
-    // Scandinavische/Amerikaanse/Aziatische leagues via next= (UTC timezone fix)
+    // Haal vandaag + morgen op — UTC leagues via next= (timezone fix)
     const fixturePromises = leagueConfig.flatMap(({ id, s }) => {
       if (NEXT_LEAGUES.has(id)) {
-        // next=15 haalt de eerstvolgende 15 wedstrijden op — timezone-onafhankelijk
         return [apif(`/fixtures?league=${id}&season=${s}&next=15`, env)];
       }
       return [
@@ -1295,11 +1290,8 @@ Geen uitleg, alleen de JSON array.`;
       : `${icon} ${top.lockLevel === 'triple' ? 'Triple' : 'Double'} Lock gevonden!`;
     const body = `${top.matchName} · ${top.pickLabel} @ ${top.odds} · +${Math.round(top.value)}% value`;
     await sendPushNotification(env, title, body, {
-      type: 'value_alert',
-      matchId: String(top.fixtureId),
-      pick: top.pick,
-      value: top.value,
-      lockLevel: top.lockLevel,
+      type: 'value_alert', matchId: String(top.fixtureId),
+      pick: top.pick, value: top.value, lockLevel: top.lockLevel,
     });
   } else if (newCount > 0) {
     const valuePicks = Object.values(newPicks).filter(p => (p.value || 0) >= 15 && (p.confidence || 0) >= 7);
@@ -1308,19 +1300,15 @@ Geen uitleg, alleen de JSON array.`;
       const title = `⚡ ${valuePicks.length} sterke value pick${valuePicks.length > 1 ? 's' : ''} gevonden`;
       const body = `${top.matchName} · ${top.pickLabel} @ ${top.odds} · +${Math.round(top.value)}% value`;
       await sendPushNotification(env, title, body, {
-        type: 'value_alert',
-        matchId: String(top.fixtureId),
-        pick: top.pick,
-        value: top.value,
+        type: 'value_alert', matchId: String(top.fixtureId),
+        pick: top.pick, value: top.value,
       });
     } else {
-      // Picks gevonden maar geen elite/lock/sterk — toch melden
       const title = `🔍 Scan voltooid — ${newCount} pick${newCount > 1 ? 's' : ''} toegevoegd`;
       const body = `${allMatches.length} wedstrijden gescand · ${Object.keys(oddsMap || {}).length} met odds`;
       await sendPushNotification(env, title, body, { type: 'scan_done' });
     }
   } else {
-    // Wedstrijden gevonden maar geen nieuwe picks
     const title = `🔍 Scan voltooid — geen nieuwe picks`;
     const body = `${allMatches.length} wedstrijden gescand · geen value gevonden`;
     await sendPushNotification(env, title, body, { type: 'scan_done' });
@@ -1920,6 +1908,45 @@ export default {
     }
 
     if (path === '/picks') {
+      if (request.method === 'POST') {
+        // Handmatige scan picks opslaan in Supabase (vanuit app)
+        try {
+          const body = await request.json();
+          const picks = Array.isArray(body) ? body : [body];
+          if (!picks.length) return json({ ok: false, error: 'Geen picks' });
+          const rows = picks.map(p => ({
+            id: p.id || `${p.matchDate || 'x'}_${(p.matchName || 'x').replace(/\s/g,'_').replace(/'/g,'')}_${p.pick || '1'}`,
+            fixture_id: p.fixtureId || null,
+            home: p.home || null, away: p.away || null,
+            match_name: p.matchName || null,
+            match_date: p.matchDate || null,
+            match_time: p.matchTime || null,
+            league_id: p.leagueId || null,
+            league_name: p.leagueName || null,
+            pick: p.pick || null,
+            pick_label: p.pickLabel || null,
+            odds: p.odds || null,
+            value: p.value || null,
+            ai_kans: p.aiKans || null,
+            confidence: p.confidence || null,
+            confidence_final: p.confidenceFinal || null,
+            elite: p.elite || false,
+            lock_level: p.lockLevel || 'single',
+            scan_count: p.scanCount || 1,
+            status: p.status || 'pending',
+            source: p.source || 'manual_scan',
+            first_scan_at: p.firstScanAt || new Date().toISOString(),
+            last_scan_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }));
+          await sb(env, 'picks', 'POST', rows, '?on_conflict=id');
+          console.log(`[Picks] ${rows.length} handmatige picks opgeslagen in Supabase`);
+          return json({ ok: true, saved: rows.length });
+        } catch(e) {
+          console.error('[Picks] POST fout:', e.message);
+          return json({ ok: false, error: e.message }, 500);
+        }
+      }
       return handleGetPicks(env);
     }
 
