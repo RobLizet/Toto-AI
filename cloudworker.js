@@ -1,11 +1,13 @@
-// TOTO AI WORKER v98
+// TOTO AI WORKER v99
+// v99: Fix Scandinavische/MLS/Aziatische leagues — UTC timezone mismatch opgelost
+//      date= werkte niet voor deze leagues, nu via next=15 (timezone-onafhankelijk)
 // v98: Firebase → Supabase migratie voor picks, calibration, scan_status, daily_tips, user_costs
 //      LeagueConfig uitgebreid: Scandinavië + Brasileirao + Copa Lib + MLS + K League + J-League + Portugal
 //      fb() blijft als schrijf-fallback tijdens transitie
 // v97: handleAnthropic valideert body vóór doorsturen — voorkomt HTTP 400 loop bij multiscan
 // v96: Automatische scan weer aan — Noorwegen (113) + Zweden (103) actief
 
-const VERSION = 'v98'; // v98: Firebase → Supabase migratie
+const VERSION = 'v99'; // v98: Firebase → Supabase migratie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1006,14 +1008,25 @@ async function runScan(env, force = false) {
     console.log('[Scan] Actieve leagues: WK + Scandinavië + Zuid-Amerika + MLS + Azië');
   }
 
+  // Leagues die UTC timezone gebruiken in API-Football — date= werkt niet correct
+  // Deze leagues ophalen via next= ipv date= om timezone mismatch te vermijden
+  const NEXT_LEAGUES = new Set([113, 103, 119, 129, 253, 71, 239, 292, 98]);
+
   const SCAN_LEAGUES = leagueConfig.map(l => l.id);
 
   try {
     // Haal vandaag + morgen op — MLS/Brasileirao spelen 's nachts NL-tijd
-    const fixturePromises = leagueConfig.flatMap(({ id, s }) => [
-      apif(`/fixtures?league=${id}&season=${s}&date=${today}&timezone=Europe/Amsterdam`, env),
-      apif(`/fixtures?league=${id}&season=${s}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
-    ]);
+    // Scandinavische/Amerikaanse/Aziatische leagues via next= (UTC timezone fix)
+    const fixturePromises = leagueConfig.flatMap(({ id, s }) => {
+      if (NEXT_LEAGUES.has(id)) {
+        // next=15 haalt de eerstvolgende 15 wedstrijden op — timezone-onafhankelijk
+        return [apif(`/fixtures?league=${id}&season=${s}&next=15`, env)];
+      }
+      return [
+        apif(`/fixtures?league=${id}&season=${s}&date=${today}&timezone=Europe/Amsterdam`, env),
+        apif(`/fixtures?league=${id}&season=${s}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
+      ];
+    });
     const fixtureResults = await Promise.all(fixturePromises);
     const fixtures = fixtureResults.flat().filter(Boolean);
 
@@ -1061,13 +1074,13 @@ async function runScan(env, force = false) {
 
   if (!allMatches.length) {
     console.log('[Scan] Geen wedstrijden gevonden voor vandaag/morgen, stop');
-    // Toch scan_status bijwerken zodat Firebase toont dat scan draait
     const scansToday0 = ((await fb(env, 'scan_status/scansToday')) || 0) + 1;
     const scanData0 = { lastRun: new Date().toISOString(), lastMatchCount: 0,
       lastPickCount: 0, lastWithOdds: 0, lastWithoutOdds: 0,
       scanDate: today, version: VERSION, scansToday: scansToday0 };
     await sbUpdateScanStatus(scanData0, env);
-    await fb(env, 'scan_status', 'PUT', scanData0); // FB fallback
+    await fb(env, 'scan_status', 'PUT', scanData0);
+    await sendPushNotification(env, '🔍 Scan voltooid', `Geen wedstrijden gevonden voor ${today}`, { type: 'scan_empty' });
     return;
   }
 
@@ -1300,7 +1313,17 @@ Geen uitleg, alleen de JSON array.`;
         pick: top.pick,
         value: top.value,
       });
+    } else {
+      // Picks gevonden maar geen elite/lock/sterk — toch melden
+      const title = `🔍 Scan voltooid — ${newCount} pick${newCount > 1 ? 's' : ''} toegevoegd`;
+      const body = `${allMatches.length} wedstrijden gescand · ${Object.keys(oddsMap || {}).length} met odds`;
+      await sendPushNotification(env, title, body, { type: 'scan_done' });
     }
+  } else {
+    // Wedstrijden gevonden maar geen nieuwe picks
+    const title = `🔍 Scan voltooid — geen nieuwe picks`;
+    const body = `${allMatches.length} wedstrijden gescand · geen value gevonden`;
+    await sendPushNotification(env, title, body, { type: 'scan_done' });
   }
 }
 
