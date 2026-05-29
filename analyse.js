@@ -44,7 +44,7 @@ function calculateConfidenceV20(pick, leagueId, calibration) {
 
 // ═══════════════════════════════════════════════════════
 // ANALYSE.JS — Value scan, AI analyse, Combi Tips v30
-// v30: Speeldatum + tijd toegevoegd aan scan log en pick kaarten
+// v30: Speeldatum + tijd in kaarten + DEDUP dubbele picks (toggle voor alle duplicaten)
 // v29: Timezone fix handmatige scan — Scandinavische leagues via next=
 //      Bullshitfilter, League Stats, Supabase sync
 // v28: League stats hitrate/ROI/betrouwbaarheid
@@ -2145,6 +2145,75 @@ function syncScanLogToBacktest() {
   saveState();
 }
 
+// ── Opschonen: verwijder oude pending duplicaten uit opslag ──
+async function cleanupDuplicatePicks() {
+  const log = state.scanLog || [];
+  if (!log.length) { showToast('Geen scans om op te schonen'); return; }
+
+  // Tel hoeveel duplicaten er zijn (pending, zelfde fixtureId+pick)
+  const seen = new Set();
+  let removed = 0;
+
+  // Loop nieuwste-eerst zodat we de meest recente pending behouden
+  const cleanedLog = log.map(scan => {
+    const keptPicks = (scan.picks || []).filter(p => {
+      // Settled altijd behouden
+      if (p.status === 'win' || p.status === 'lose') return true;
+      const key = (p.fixtureId || p.match || '') + '_' + (p.pick || '');
+      if (seen.has(key)) { removed++; return false; }
+      seen.add(key);
+      return true;
+    });
+    return { ...scan, picks: keptPicks };
+  }).filter(scan => (scan.picks || []).length > 0); // lege scans verwijderen
+
+  if (removed === 0) {
+    showToast('Geen duplicaten gevonden ✓');
+    return;
+  }
+
+  if (!confirm(`${removed} dubbele pending picks verwijderen? Settled picks blijven behouden.`)) return;
+
+  // Opslaan in state
+  state.scanLog = cleanedLog;
+  saveState();
+
+  // Firebase opschonen — verwijder de hele picks node en herschrijf
+  try {
+    if (firebase && firebase.database) {
+      const db = firebase.database();
+      const updates = {};
+      const todayISO = new Date().toISOString().split('T')[0];
+      // Herbouw picks node vanuit de schoongemaakte log
+      const allPicks = cleanedLog.flatMap(s => s.picks || []);
+      // Eerst hele node wissen
+      await db.ref('picks').remove();
+      // Dan opnieuw vullen
+      allPicks.forEach(p => {
+        if (!p.fixtureId) return;
+        const key = String(p.fixtureId) + '_' + p.pick;
+        updates['picks/' + key] = {
+          fixtureId: p.fixtureId,
+          matchName: p.match || p.matchName || '',
+          matchDate: p.matchDate || p.date || todayISO,
+          matchTime: p.matchTime || p.time || null,
+          leagueName: p.comp || p.leagueName || '',
+          pick: p.pick, pickLabel: p.pickLabel,
+          odds: p.odds, value: p.value, confidence: p.confidence,
+          status: p.status || 'pending', score: p.score || null,
+          scanCount: p.scanCount || 1, source: p.source || 'app',
+        };
+      });
+      if (Object.keys(updates).length) await db.ref('/').update(updates);
+    }
+  } catch(e) {
+    console.warn('[Cleanup] Firebase opschonen fout:', e.message);
+  }
+
+  showToast(`✅ ${removed} duplicaten verwijderd`);
+  renderScanLog();
+}
+
 function renderScanLog() {
   const el = document.getElementById('scan-log-content');
   if (!el) return;
@@ -2159,7 +2228,7 @@ function renderScanLog() {
   const log       = state.scanLog || [];
 
   // ── Zoek/filter state ──────────────────────────────
-  if (!window._scanFilter) window._scanFilter = { q:'', conf:'', pick:'', comp:'', status:'', odds:'', sort:'newest', sharp:false };
+  if (!window._scanFilter) window._scanFilter = { q:'', conf:'', pick:'', comp:'', status:'', odds:'', sort:'newest', sharp:false, showDuplicates:false };
   const F = window._scanFilter;
 
   // Gefilterde picks voor stats
@@ -2209,6 +2278,26 @@ function renderScanLog() {
     filteredLog.sort((a,b) => Math.max(...b.picks.map(p=>p.confidence||0)) - Math.max(...a.picks.map(p=>p.confidence||0)));
   }
   // 'newest' = default volgorde (al gesorteerd)
+
+  // ── DEDUP: verberg oudere pending duplicaten van dezelfde wedstrijd ──
+  // Settled picks (win/lose) blijven altijd staan. Voor pending picks houden
+  // we alleen de meest recente per fixtureId+pick.
+  if (!F.showDuplicates) {
+    const seenPending = new Set();
+    // filteredLog is nieuwste-eerst, dus eerste voorkomen = meest recent
+    filteredLog = filteredLog.map(scan => {
+      const filteredPicks = (scan.picks || []).filter(p => {
+        // Settled picks altijd tonen
+        if (p.status === 'win' || p.status === 'lose') return true;
+        // Pending: dedup op fixtureId (of match naam als fixtureId ontbreekt)
+        const key = (p.fixtureId || p.match || '') + '_' + (p.pick || '');
+        if (seenPending.has(key)) return false;
+        seenPending.add(key);
+        return true;
+      });
+      return { ...scan, picks: filteredPicks };
+    }).filter(scan => scan.picks.length > 0);
+  }
 
   const allPicks  = filteredLog.flatMap(s => s.picks);
   const settled   = allPicks.filter(p => p.status === 'win' || p.status === 'lose');
@@ -2277,7 +2366,7 @@ function renderScanLog() {
     + '<input id="scanSearchQ" type="text" placeholder="🔍 Zoek wedstrijd, competitie..." value="' + (F.q||'') + '" '
     + 'oninput="window._scanFilter.q=this.value;renderScanLog()" '
     + 'style="flex:1;padding:.35rem .6rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--text);outline:none;" />'
-    + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\',odds:\'\',sort:\'newest\',sharp:false};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
+    + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\',odds:\'\',sort:\'newest\',sharp:false,showDuplicates:false};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
     + '</div>'
     + '<div style="display:flex;gap:.3rem;flex-wrap:wrap;">'
     + '<select onchange="window._scanFilter.conf=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.conf?'rgba(124,58,237,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
@@ -2319,6 +2408,14 @@ function renderScanLog() {
     + '<button onclick="window._scanFilter.sharp=!window._scanFilter.sharp;renderScanLog()" '
     + 'style="padding:.28rem .6rem;border-radius:8px;border:1px solid ' + (F.sharp?'rgba(239,68,68,.4)':'var(--border)') + ';background:' + (F.sharp?'rgba(239,68,68,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:' + (F.sharp?'#ef4444':'var(--text)') + ';cursor:pointer;white-space:nowrap;">'
     + '🔥 Sharp' + (F.sharp?' ON':'') + '</button>'
+
+    + '<button onclick="window._scanFilter.showDuplicates=!window._scanFilter.showDuplicates;renderScanLog()" '
+    + 'style="padding:.28rem .6rem;border-radius:8px;border:1px solid ' + (F.showDuplicates?'rgba(124,58,237,.4)':'var(--border)') + ';background:' + (F.showDuplicates?'rgba(124,58,237,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:' + (F.showDuplicates?'#7c3aed':'var(--text)') + ';cursor:pointer;white-space:nowrap;">'
+    + '\u{1F501} Duplicaten' + (F.showDuplicates?' ON':'') + '</button>'
+
+    + '<button onclick="cleanupDuplicatePicks()" '
+    + 'style="padding:.28rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.3);background:rgba(220,38,38,.06);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#dc2626;cursor:pointer;white-space:nowrap;">'
+    + '\u{1F9F9} Opschonen</button>'
 
     + '</div>'
     + (activeFilters ? '<div style="margin-top:.4rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">' + allPicks.length + ' picks gevonden in ' + filteredLog.length + ' scans</div>' : '')
