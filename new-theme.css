@@ -1,0 +1,997 @@
+/* ═══════════════════════════════════════════════════════════════
+   NEW-THEME.CSS — TOTO AI v20.3+
+   Drop deze file ín index.html NA screens.css:
+     <link rel="stylesheet" href="new-theme.css" />
+   Geen JS-wijzigingen nodig. Alle bestaande classes blijven werken.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── DESIGN TOKENS ─────────────────────────────────────────── */
+:root {
+  --navy:       #1b2646;
+  --navy2:      #243058;
+  --green:      #25d48a;
+  --green2:     #1db974;
+  --green-pale: #e5f9f0;
+  --green-dark: #0d7a4a;
+  --amber:      #f5a623;
+  --amber-pale: #fef6e6;
+  --red:        #e8404a;
+  --red-pale:   #fdecea;
+  --blue-pale:  #eff6ff;
+
+  /* Override bestaande tokens */
+  --bg:     #eef2f9;
+  --bg1:    #eef2f9;
+  --card:   #ffffff;
+  --border: rgba(27,38,70,0.08);
+  --stroke: rgba(27,38,70,0.08);
+  --ink:    #1b2646;
+  --text:   #1b2646;
+  --sub:    #7c8aaa;
+  --muted:  #7c8aaa;
+  --accent: #1db974;
+
+  --font-main: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
+  --r:  14px;
+  --rs: 10px;
+}
+
+/* Import Plus Jakarta Sans */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+/* ── BASE ───────────────────────────────────────────────────── */
+body {
+  font-family: var(--font-main) !important;
+  background: var(--bg) !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  background: var(--bg) !important;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── TOPBAR ─────────────────────────────────────────────────── */
+.topbar {
+  background: #fff !important;
+  border-bottom: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  padding: 13px 16px 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.topbar-logo {
+  font-family: var(--font-main) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.5px !important;
+  color: var(--navy) !important;
+  background: none !important;
+  -webkit-text-fill-color: unset !important;
+}
+
+.topbar-ai {
+  color: var(--green2) !important;
+}
+
+.topbar-version {
+  font-family: var(--font-main) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: var(--sub) !important;
+  background: var(--blue-pale) !important;
+  border: 1px solid rgba(59,130,246,.15) !important;
+  padding: 2px 7px !important;
+  border-radius: 5px !important;
+  margin-left: 6px !important;
+}
+
+.topbar-user {
+  font-size: 11px !important;
+  color: var(--sub) !important;
+  font-family: var(--font-main) !important;
+}
+
+.topbar-icon-btn {
+  background: none !important;
+  border: none !important;
+  color: var(--sub) !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background .15s !important;
+}
+.topbar-icon-btn:hover { background: rgba(27,38,70,.06) !important; }
+
+/* ── BOTTOM NAV ─────────────────────────────────────────────── */
+.bottom-nav {
+  background: #fff !important;
+  border-top: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  height: 68px !important;
+  padding: 0 4px !important;
+}
+
+.bnav-btn {
+  font-family: var(--font-main) !important;
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  color: #a8b4cc !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 6px 4px !important;
+  gap: 3px !important;
+  transition: color .15s, background .15s !important;
+}
+
+.bnav-btn svg { color: #a8b4cc !important; transition: color .15s !important; }
+
+.bnav-btn.active {
+  color: var(--navy) !important;
+  background: rgba(27,38,70,.05) !important;
+}
+.bnav-btn.active svg { color: var(--navy) !important; }
+
+.bnav-dot-line { display: none !important; }
+
+/* ── SCREENS ────────────────────────────────────────────────── */
+.screen {
+  padding: 14px 14px 6px !important;
+}
+
+/* ── CARDS (algemeen) ───────────────────────────────────────── */
+.match-card,
+.analyse-block,
+.wallet-big,
+.analytics-block,
+.open-bets-strip,
+.worker-pick-row,
+.bt-card,
+.dash-card,
+.nav-card,
+.dash-nav-card,
+.backtest-card {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r) !important;
+  box-shadow: none !important;
+}
+
+/* ── SECTIE HEADERS ─────────────────────────────────────────── */
+.section-header span,
+.section-header {
+  font-family: var(--font-main) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--navy) !important;
+  letter-spacing: 0.3px !important;
+  background: none !important;
+}
+
+/* ── COMPETITIE CHIPS ───────────────────────────────────────── */
+.comp-chip,
+.scan-comp-chip {
+  font-family: var(--font-main) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  padding: 5px 13px !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  color: var(--sub) !important;
+  border: 1px solid rgba(27,38,70,.12) !important;
+  transition: all .15s !important;
+}
+.comp-chip.active,
+.scan-comp-chip.on {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border-color: var(--navy) !important;
+}
+
+/* ── MATCH CARD ─────────────────────────────────────────────── */
+.match-card {
+  padding: 13px 14px !important;
+  margin-bottom: 9px !important;
+}
+
+/* Odds pills */
+.odds-btn {
+  background: var(--blue-pale) !important;
+  border: 1px solid transparent !important;
+  border-radius: var(--rs) !important;
+  font-family: var(--font-main) !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  color: var(--navy) !important;
+  padding: 7px 4px !important;
+  transition: all .15s !important;
+}
+.odds-btn.value-highlight,
+.odds-btn[data-value="true"] {
+  background: var(--green-pale) !important;
+  border-color: rgba(29,185,116,.2) !important;
+  color: var(--green2) !important;
+}
+
+/* Analyse knop op match card */
+.analyse-btn,
+.match-analyse-btn {
+  background: var(--navy) !important;
+  color: #fff !important;
+  font-family: var(--font-main) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  border-radius: var(--rs) !important;
+  border: none !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+}
+
+/* Value badge op cards */
+.value-badge {
+  background: var(--green-pale) !important;
+  color: var(--green-dark) !important;
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  padding: 5px 10px !important;
+  border: 1px solid rgba(29,185,116,.2) !important;
+}
+
+/* ── VALUE SCAN BANNER ──────────────────────────────────────── */
+.value-banner {
+  background: var(--green-pale) !important;
+  border: 1px solid rgba(29,185,116,.2) !important;
+  border-radius: var(--r) !important;
+  box-shadow: none !important;
+}
+
+.value-banner-title {
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--green-dark) !important;
+  background: none !important;
+  -webkit-text-fill-color: unset !important;
+}
+
+/* ── ANALYSE SCREEN ─────────────────────────────────────────── */
+.analyse-block {
+  padding: 14px 15px !important;
+  margin-bottom: 10px !important;
+}
+
+.analyse-block-title {
+  font-family: var(--font-main) !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  color: var(--navy) !important;
+  letter-spacing: 0.2px !important;
+}
+
+.analyse-btn-primary {
+  background: var(--navy) !important;
+  border: none !important;
+  color: #fff !important;
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border-radius: var(--r) !important;
+  padding: 11px !important;
+}
+.analyse-btn-primary:hover { background: var(--navy2) !important; }
+
+.analyse-btn-ai {
+  background: linear-gradient(135deg, var(--navy), var(--navy2)) !important;
+  border: none !important;
+  color: #fff !important;
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border-radius: var(--r) !important;
+}
+
+.analyse-btn-secondary {
+  background: rgba(27,38,70,.06) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--sub) !important;
+  font-family: var(--font-main) !important;
+  font-size: 12px !important;
+  border-radius: var(--rs) !important;
+}
+
+.analyse-match-card {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r) !important;
+  box-shadow: none !important;
+}
+
+/* ── MULTI-SCAN KNOPPEN ─────────────────────────────────────── */
+.multi-scan-btn {
+  font-family: var(--font-main) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: var(--r) !important;
+  background: #fff !important;
+  color: var(--navy) !important;
+  border: 1.5px solid var(--border) !important;
+  padding: 9px 10px !important;
+}
+.multi-scan-btn.primary {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+/* ── WALLET SCREEN ──────────────────────────────────────────── */
+
+/* Hero saldo card */
+.wallet-big {
+  background: var(--navy) !important;
+  border-radius: var(--r) !important;
+  border: none !important;
+  padding: 18px 16px !important;
+  margin-bottom: 10px !important;
+}
+
+.wallet-big-label {
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.5) !important;
+  text-transform: none !important;
+  margin-bottom: 4px !important;
+  letter-spacing: 0 !important;
+}
+
+.wallet-big .amount,
+#bigBalance {
+  font-family: var(--font-main) !important;
+  font-size: 30px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  letter-spacing: -0.5px !important;
+  background: none !important;
+  -webkit-text-fill-color: unset !important;
+}
+
+.wallet-action-btn {
+  font-family: var(--font-main) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  background: rgba(255,255,255,.12) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  border-radius: 9px !important;
+  padding: 7px 14px !important;
+  transition: background .15s !important;
+}
+.wallet-action-btn:hover { background: rgba(255,255,255,.2) !important; }
+.wallet-action-btn.danger {
+  background: rgba(232,64,74,.25) !important;
+  border-color: rgba(232,64,74,.4) !important;
+  color: #fca5a5 !important;
+}
+
+/* Wallet strip (stats rij) */
+.wallet-strip {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)) !important;
+  gap: 7px !important;
+  margin-bottom: 10px !important;
+}
+
+.w-item {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--rs) !important;
+  padding: 9px 6px !important;
+  text-align: center !important;
+}
+
+.w-label {
+  font-family: var(--font-main) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: var(--sub) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px !important;
+  margin-bottom: 3px !important;
+}
+
+.w-item .val {
+  font-family: var(--font-main) !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: var(--navy) !important;
+}
+
+/* Wallet subtabs */
+.wallet-subtabs {
+  display: flex !important;
+  gap: 5px !important;
+  margin-bottom: 12px !important;
+  padding: 3px !important;
+  background: #fff !important;
+  border-radius: 30px !important;
+  border: 1px solid var(--border) !important;
+}
+
+.wsub-btn {
+  flex: 1 !important;
+  font-family: var(--font-main) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  padding: 7px 4px !important;
+  border-radius: 26px !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--sub) !important;
+  cursor: pointer !important;
+  transition: all .2s !important;
+  box-shadow: none !important;
+}
+
+/* Active wsub-btn wordt ingesteld via JS setWalletSubTab — wij zorgen dat de inline style goed staat */
+/* Overschrijf de gradient uit wallet.js met navy */
+
+/* Stat mini card */
+.stat-mini-card {
+  flex: 1 !important;
+  background: var(--blue-pale) !important;
+  border-radius: var(--rs) !important;
+  border: none !important;
+  padding: 9px 8px !important;
+  text-align: center !important;
+}
+.stat-mini-label {
+  font-family: var(--font-main) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: var(--sub) !important;
+  text-transform: uppercase !important;
+  margin-bottom: 3px !important;
+}
+.stat-mini-val {
+  font-family: var(--font-main) !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: var(--navy) !important;
+}
+
+/* Chart wrap */
+.wallet-chart-wrap {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r) !important;
+  padding: 12px 14px !important;
+  margin-bottom: 10px !important;
+}
+
+.chart-view-btn,
+.chart-src-btn {
+  font-family: var(--font-main) !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  padding: 4px 9px !important;
+  border: 1px solid var(--border) !important;
+  background: transparent !important;
+  color: var(--sub) !important;
+  cursor: pointer !important;
+}
+.chart-view-btn.active,
+.chart-src-btn.active {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border-color: var(--navy) !important;
+}
+
+/* Export knop */
+.export-btn {
+  font-family: var(--font-main) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  background: rgba(27,38,70,.06) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--navy) !important;
+  border-radius: var(--rs) !important;
+  padding: 8px 14px !important;
+  margin-bottom: 10px !important;
+  width: 100% !important;
+  cursor: pointer !important;
+}
+
+/* Bet history rows */
+.bet-row,
+.bet-item {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--rs) !important;
+  margin-bottom: 6px !important;
+}
+
+/* Tracker */
+.tracker-filter-row {
+  display: flex !important;
+  gap: 5px !important;
+  flex-wrap: wrap !important;
+  margin-bottom: 8px !important;
+}
+
+.tracker-filter,
+.bt-filter-btn {
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 5px 11px !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(27,38,70,.12) !important;
+  background: #fff !important;
+  color: var(--sub) !important;
+  cursor: pointer !important;
+  transition: all .15s !important;
+}
+.tracker-filter.active,
+.bt-filter-btn.active {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border-color: var(--navy) !important;
+}
+
+/* Backtest subtabs */
+.bt-subtabs {
+  display: flex !important;
+  gap: 5px !important;
+  margin-bottom: 9px !important;
+}
+.bt-subtab {
+  font-family: var(--font-main) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  padding: 7px 16px !important;
+  border-radius: var(--rs) !important;
+  border: 1px solid var(--border) !important;
+  background: #fff !important;
+  color: var(--sub) !important;
+  cursor: pointer !important;
+}
+.bt-subtab.active {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border-color: var(--navy) !important;
+}
+
+/* Voortgangsbalk */
+#btProgressWrap {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r) !important;
+}
+
+#btProgressBar {
+  background: linear-gradient(90deg, var(--navy), var(--green)) !important;
+}
+
+/* ── ADD TRACKER BTN ────────────────────────────────────────── */
+.add-tracker-btn {
+  background: var(--navy) !important;
+  color: #fff !important;
+  font-family: var(--font-main) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  border: none !important;
+  border-radius: 9px !important;
+  padding: 7px 14px !important;
+  cursor: pointer !important;
+}
+
+.small-action-btn {
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  padding: 6px 11px !important;
+  cursor: pointer !important;
+  background: rgba(27,38,70,.06) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--navy) !important;
+}
+
+/* ── DASHBOARD ──────────────────────────────────────────────── */
+.dash-stats { gap: 7px !important; }
+
+.dash-stat {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--rs) !important;
+  box-shadow: none !important;
+}
+
+.dash-stat-val {
+  font-family: var(--font-main) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: var(--navy) !important;
+}
+
+.dash-stat-lbl {
+  font-family: var(--font-main) !important;
+  font-size: 9px !important;
+  color: var(--sub) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.3px !important;
+}
+
+.dash-card,
+.nav-card,
+.dash-nav-card {
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r) !important;
+}
+
+.dash-nav-card:nth-child(1) { background: rgba(37,99,235,.05) !important; border-color: rgba(37,99,235,.15) !important; }
+.dash-nav-card:nth-child(2) { background: rgba(37,99,235,.05) !important; border-color: rgba(37,99,235,.15) !important; }
+.dash-nav-card:nth-child(3) { background: rgba(29,185,116,.05) !important; border-color: rgba(29,185,116,.15) !important; }
+.dash-nav-card:nth-child(4) { background: rgba(245,166,35,.05) !important; border-color: rgba(245,166,35,.15) !important; }
+
+.dash-nav-title,
+.nav-card-title {
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--navy) !important;
+  letter-spacing: 0 !important;
+  background: none !important;
+  -webkit-text-fill-color: unset !important;
+}
+
+.dash-nav-sub,
+.nav-card-sub {
+  font-family: var(--font-main) !important;
+  font-size: 10.5px !important;
+  color: var(--sub) !important;
+}
+
+.dash-nav-badge:nth-child(1) { color: #2563eb !important; }
+
+/* Worker pick rows */
+.worker-pick-row {
+  border-radius: var(--rs) !important;
+  padding: 9px 12px !important;
+  margin-bottom: 5px !important;
+  box-shadow: none !important;
+}
+
+.wpr-match {
+  font-family: var(--font-main) !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: var(--navy) !important;
+}
+
+.wpr-pick {
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  color: var(--navy2) !important;
+}
+
+.wpr-value {
+  font-family: var(--font-main) !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: var(--green2) !important;
+}
+
+/* WK Countdown */
+.wk-countdown {
+  background: var(--navy) !important;
+  border: none !important;
+  border-radius: var(--r) !important;
+}
+
+.wk-countdown-title {
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--green) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.wk-countdown-days {
+  font-family: var(--font-main) !important;
+  font-size: 36px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+}
+
+.wk-countdown-sub {
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  color: rgba(255,255,255,.5) !important;
+}
+
+/* ── MODALS ─────────────────────────────────────────────────── */
+.modal-box {
+  border-radius: 20px !important;
+  background: #fff !important;
+  box-shadow: 0 20px 60px rgba(27,38,70,.18) !important;
+}
+
+.modal-title {
+  font-family: var(--font-main) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--navy) !important;
+}
+
+.modal-label {
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--sub) !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.modal-input,
+.modal-select {
+  font-family: var(--font-main) !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  color: var(--navy) !important;
+  background: #fff !important;
+}
+.modal-input:focus, .modal-select:focus {
+  border-color: var(--navy2) !important;
+  outline: none !important;
+}
+
+.modal-confirm-btn {
+  background: var(--navy) !important;
+  color: #fff !important;
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border: none !important;
+  border-radius: var(--rs) !important;
+  padding: 11px !important;
+}
+
+.modal-cancel-btn {
+  background: rgba(27,38,70,.07) !important;
+  color: var(--sub) !important;
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border: none !important;
+  border-radius: var(--rs) !important;
+  padding: 11px !important;
+}
+
+.quick-stake-preset {
+  background: var(--blue-pale) !important;
+  border: 1px solid rgba(59,130,246,.15) !important;
+  color: var(--navy) !important;
+  font-family: var(--font-main) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  padding: 7px 12px !important;
+}
+
+/* ── COMPETITIE DETAIL MODAL ────────────────────────────────── */
+.cd-title {
+  font-family: var(--font-main) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: var(--navy) !important;
+  letter-spacing: 0 !important;
+}
+
+.cd-subtitle { font-family: var(--font-main) !important; }
+
+.cd-tab {
+  font-family: var(--font-main) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  padding: 5px 13px !important;
+  border-radius: 20px !important;
+  background: #fff !important;
+  color: var(--sub) !important;
+  border: 1px solid var(--border) !important;
+}
+.cd-tab.active {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border-color: var(--navy) !important;
+}
+
+.st-team-name { font-size: 12px !important; font-weight: 700 !important; color: var(--navy) !important; }
+.st-pts { font-family: var(--font-main) !important; font-size: 14px !important; font-weight: 800 !important; color: var(--navy) !important; }
+
+/* ── MORE MENU ──────────────────────────────────────────────── */
+.more-menu-panel {
+  background: #fff !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 8px 32px rgba(27,38,70,.12) !important;
+  overflow: hidden !important;
+}
+
+.more-menu-item {
+  font-family: var(--font-main) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--navy) !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+.more-menu-item:last-child { border-bottom: none !important; }
+.more-menu-item:hover { background: rgba(27,38,70,.04) !important; }
+
+/* ── TOAST ──────────────────────────────────────────────────── */
+#toastMsg {
+  font-family: var(--font-main) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  background: var(--navy) !important;
+  border-radius: 10px !important;
+  padding: 8px 18px !important;
+}
+
+/* ── HELP KNOP ──────────────────────────────────────────────── */
+button[onclick*="showHelp"] {
+  background: rgba(27,38,70,.08) !important;
+  border: 1px solid rgba(27,38,70,.12) !important;
+  color: var(--sub) !important;
+  border-radius: 999px !important;
+}
+
+/* ── SORT KNOPPEN ───────────────────────────────────────────── */
+.sort-btn {
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border-radius: 20px !important;
+}
+.sort-btn.active {
+  background: var(--navy) !important;
+  color: #fff !important;
+  border-color: var(--navy) !important;
+}
+
+/* ── ANALYTICS SCREEN ───────────────────────────────────────── */
+.analytics-block {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r) !important;
+  box-shadow: none !important;
+}
+
+.analytics-block-title {
+  font-family: var(--font-main) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--sub) !important;
+  letter-spacing: 0.4px !important;
+  text-transform: uppercase !important;
+}
+
+.analytics-stat-card {
+  background: var(--blue-pale) !important;
+  border-radius: var(--rs) !important;
+}
+
+/* ── DARK MODE ──────────────────────────────────────────────── */
+body.dark {
+  --bg:       #0f1520 !important;
+  --bg1:      #0f1520 !important;
+  --card:     #1a2236 !important;
+  --border:   rgba(255,255,255,.08) !important;
+  --stroke:   rgba(255,255,255,.08) !important;
+  --ink:      #e8edf5 !important;
+  --text:     #e8edf5 !important;
+  --sub:      #7c8aaa !important;
+  --muted:    #7c8aaa !important;
+  --blue-pale: rgba(59,130,246,.12) !important;
+}
+
+body.dark .topbar,
+body.dark .bottom-nav,
+body.dark .more-menu-panel {
+  background: #1a2236 !important;
+}
+
+body.dark .match-card,
+body.dark .analyse-block,
+body.dark .analytics-block,
+body.dark .wallet-chart-wrap,
+body.dark .open-bets-strip,
+body.dark .worker-pick-row,
+body.dark #btProgressWrap,
+body.dark .stat-mini-card,
+body.dark .w-item,
+body.dark .wallet-subtabs,
+body.dark .cd-tab,
+body.dark .modal-box {
+  background: #1a2236 !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+
+body.dark .wallet-big { background: #0d1929 !important; }
+body.dark .wk-countdown { background: #0d1929 !important; }
+
+body.dark .wsub-btn,
+body.dark .tracker-filter,
+body.dark .bt-filter-btn,
+body.dark .bt-subtab,
+body.dark .comp-chip,
+body.dark .scan-comp-chip {
+  background: transparent !important;
+  color: var(--sub) !important;
+}
+
+body.dark .dash-stat-val,
+body.dark .w-item .val,
+body.dark .stat-mini-val,
+body.dark #bigBalance {
+  color: #e8edf5 !important;
+}
+
+body.dark .odds-btn { background: rgba(255,255,255,.07) !important; color: #e8edf5 !important; }
+body.dark .odds-btn.value-highlight { background: rgba(29,185,116,.15) !important; }
+
+/* ── FAB AI CHAT (stijl bijwerken) ──────────────────────────── */
+#fab-chat {
+  background: var(--navy) !important;
+  box-shadow: 0 4px 16px rgba(27,38,70,.3) !important;
+}
+
+/* ── SCROLLBAR ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(27,38,70,.15); border-radius: 4px; }
+
+/* ── SWIPE HINTS ────────────────────────────────────────────── */
+.win-hint { background: var(--green-pale) !important; color: var(--green-dark) !important; }
+.lose-hint { background: var(--red-pale) !important; color: var(--red) !important; }
+
+/* ── LOCK BADGES ────────────────────────────────────────────── */
+/* Triple lock = groen, double lock = amber — kleuren al goed in wallet.js */
+
+/* ── TABEL STIJLEN IN MODALS ────────────────────────────────── */
+.cd-standings-row {
+  background: #fff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 9px !important;
+}
+body.dark .cd-standings-row { background: #1a2236 !important; }
+
+/* ── ANIMATIES ──────────────────────────────────────────────── */
+.screen.active { animation: fadeInScreen .2s ease; }
+@keyframes fadeInScreen {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.match-card, .analyse-block, .wallet-big, .w-item, .league-card {
+  transition: transform .15s, box-shadow .15s;
+}
+.match-card:active, .worker-pick-row:active { transform: scale(.99) !important; }
