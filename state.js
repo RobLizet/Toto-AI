@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
+// v30: Versienummer update — topbar toont v30
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v28';
+const APP_VERSION = 'v30';
 
 const STATE_KEY = 'totoai_state';
 
