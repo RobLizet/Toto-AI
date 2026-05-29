@@ -7,105 +7,6 @@ const APP_LEAGUE_FACTORS = {
   88: 1.04, 94: 1.03, 2: 1.12, 3: 1.08,
   81: 0.92, 71: 0.90, 253: 0.88
 };
-// ── Bullshitfilter configuratie ──────────────────────────
-const LEAGUE_TRUST = {
-  // Top tier — volledig vertrouwd
-  39: 'top', 140: 'top', 78: 'top', 135: 'top', 61: 'top',
-  2: 'top', 3: 'top', 848: 'top',
-  // Goed — betrouwbaar
-  88: 'good', 94: 'good', 40: 'good', 78: 'good',
-  103: 'good', 113: 'good', // Noorwegen + Zweden
-  71: 'good', 253: 'good', // Brazilië + MLS
-  // Matig — lagere confidence
-  98: 'medium', 292: 'medium', 128: 'medium', 239: 'medium',
-  // Onbekend = default medium
-};
-
-// Leagues waar we nooit picks op willen (te weinig data/te exotisch)
-const LEAGUE_BLACKLIST = new Set([
-  // Kyrgyzstan, Tajikistan, Turkmenistan, Nepal, Bangladesh etc.
-  // worden herkend via naam check (geen vaste IDs)
-]);
-
-const EXOTIC_KEYWORDS = [
-  'kyrgyz','tajik','turkmen','nepal','bangladesh','myanmar','cambodia',
-  'bhutan','laos','mongolia','maldives','macau','guam','samoa',
-  'san marino','gibraltar','faroe','andorra','liechtenstein'
-];
-
-function getBullshitScore(pick) {
-  const warnings = [];
-  let score = 0; // 0 = ok, hoger = meer zorgen
-
-  // 1. Exotische competitie
-  const leagueName = (pick.comp || pick.leagueName || '').toLowerCase();
-  if (EXOTIC_KEYWORDS.some(k => leagueName.includes(k))) {
-    warnings.push({ icon: '🚩', text: 'Exotische competitie — weinig data', severity: 'high' });
-    score += 3;
-  }
-
-  // 2. League trust level
-  const trust = LEAGUE_TRUST[pick.leagueId];
-  if (!trust || trust === 'medium') {
-    // Niet top/good — lagere betrouwbaarheid
-    if (!trust) {
-      warnings.push({ icon: '❓', text: 'Onbekende competitie', severity: 'medium' });
-      score += 1;
-    }
-  }
-
-  // 3. Data schaars
-  if (pick.isSparseData) {
-    warnings.push({ icon: '⚠️', text: 'Weinig historische data', severity: 'high' });
-    score += 2;
-  }
-
-  // 4. Lage confidence na alle factoren
-  if ((pick.confidence || 0) < 5) {
-    warnings.push({ icon: '📉', text: 'Lage model confidence', severity: 'medium' });
-    score += 1;
-  }
-
-  // 5. Extreme odds (te laag of te hoog = risico)
-  const odds = pick.odds || 0;
-  if (odds > 0 && odds < 1.30) {
-    warnings.push({ icon: '🔒', text: 'Odds te laag — weinig marge', severity: 'medium' });
-    score += 1;
-  }
-  if (odds > 8.0) {
-    warnings.push({ icon: '🎲', text: 'Hoge odds — hogere variance', severity: 'medium' });
-    score += 1;
-  }
-
-  // 6. Late odds chaos — als odds > 15% bewogen zijn vlak voor aftrap
-  if (pick.oddsMovement && Math.abs(pick.oddsMovement) > 15) {
-    warnings.push({ icon: '🌀', text: 'Grote odds beweging — markt onzeker', severity: 'high' });
-    score += 2;
-  }
-
-  return { score, warnings, isSafe: score === 0, isWarning: score >= 1 && score <= 2, isDangerous: score >= 3 };
-}
-
-function renderBullshitBadge(pick) {
-  const { score, warnings, isDangerous, isWarning } = getBullshitScore(pick);
-  if (!warnings.length) return '';
-
-  const color = isDangerous ? '#dc2626' : isWarning ? '#b45309' : '#64748b';
-  const bg    = isDangerous ? 'rgba(220,38,38,.08)' : isWarning ? 'rgba(180,83,9,.08)' : 'rgba(100,116,139,.08)';
-  const label = isDangerous ? 'Hoog risico' : 'Let op';
-
-  return `<div style="margin-top:.3rem;padding:.3rem .4rem;background:${bg};border:1px solid ${color}33;border-radius:8px;">
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;font-weight:700;color:${color};margin-bottom:.2rem;">
-      ${isDangerous ? '🚨' : '⚠️'} ${label}
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:.2rem;">
-      ${warnings.map(w => `<span style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:${color};
-        background:${bg};border:1px solid ${color}22;border-radius:4px;padding:.05rem .25rem;">${w.icon} ${w.text}</span>`).join('')}
-    </div>
-  </div>`;
-}
-
-
 
 function calculateConfidenceV20(pick, leagueId, calibration) {
   const leagueFactor = APP_LEAGUE_FACTORS[leagueId] || 0.95;
@@ -143,9 +44,9 @@ function calculateConfidenceV20(pick, leagueId, calibration) {
 
 // ═══════════════════════════════════════════════════════
 // ANALYSE.JS — Value scan, AI analyse, Combi Tips v29
-// v29: Bullshitfilter — exotische leagues, weinig data, late odds chaos
+// v29: Timezone fix handmatige scan — Scandinavische leagues via next=
+//      Bullshitfilter, League Stats, Supabase sync
 // v28: League stats hitrate/ROI/betrouwbaarheid
-// v27: Scan log klikbaar, Supabase sync
 // ═══════════════════════════════════════════════════════
 
 // ── Anthropic fetch helper ────────────────────────────
@@ -985,15 +886,7 @@ function renderAnalyseScanResults(scans) {
   // Kwaliteitsdrempel voor de 100 picks
   const DREMPEL = { minValue: 8, minConf: 6 };
   // Poisson is een bonus maar niet verplicht — hoge value+conf telt altijd mee
-  const teltMee  = scans.filter(s => {
-    if (s.isSparseData) return false;
-    if (s.value < DREMPEL.minValue) return false;
-    if ((s.confidence||0) < DREMPEL.minConf) return false;
-    // Bullshitfilter: exotische competities uitsluiten
-    const leagueName = (s.comp || s.leagueName || '').toLowerCase();
-    if (typeof EXOTIC_KEYWORDS !== 'undefined' && EXOTIC_KEYWORDS.some(k => leagueName.includes(k))) return false;
-    return true;
-  });
+  const teltMee  = scans.filter(s => !s.isSparseData && s.value >= DREMPEL.minValue && (s.confidence||0) >= DREMPEL.minConf);
   const teltNiet = scans.filter(s =>  s.isSparseData || s.value <  DREMPEL.minValue || (s.confidence||0) <  DREMPEL.minConf);
 
   const renderPick = (s, geldig) => {
@@ -1118,11 +1011,6 @@ function openCardPopup(type, data) {
         </div>
         ${s.poissonUsed ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#7c3aed;margin-top:.3rem;">📐 Poisson + AI${s._hasXG?' + xG':''} model gebruikt</div>` : ''}
         ${s.isSparseData ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#dc2626;margin-top:.2rem;">⚠️ Data schaars</div>` : ''}
-        ${typeof renderBullshitBadge === 'function' ? renderBullshitBadge({
-          comp: s.comp, leagueName: s.leagueName, leagueId: s.leagueId,
-          isSparseData: s.isSparseData, confidence: s.confidence,
-          odds: s.odds, oddsMovement: s.oddsMovement
-        }) : ''}
       </div>
       ${s.reason ? `<div style="background:rgba(255,255,255,.8);border-left:3px solid ${valColor};border-radius:0 12px 12px 0;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.8rem;color:#1e293b;line-height:1.7;">${s.reason}</div>` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
@@ -1492,12 +1380,19 @@ async function scanAllTodayValue(mode = 'today') {
 
     await Promise.all(SCAN_LEAGUE_IDS.map(async leagueId => {
       try {
-        const season = leagueId === 1 ? 2026 : 2025;
+        // Seizoen: Scandinavische competities + WK = 2026, rest = 2025
+        const SEASON_2026_IDS = new Set([1, 2, 3, 103, 113, 119, 129, 253, 848]);
+        const season = SEASON_2026_IDS.has(leagueId) ? 2026 : 2025;
         const dateParam = mode === 'tomorrow' ? tomorrowStr : todayStr;
-        const r = await apiFetch(
-          `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&date=${dateParam}&status=NS-1H-HT-2H`,
-          null, 8000
-        );
+        // Fix: Scandinavische leagues gebruiken UTC — haal via next= op ipv date=
+        const UTC_LEAGUES = new Set([103, 113, 119, 129, 253]);
+        let fixtureUrl;
+        if (UTC_LEAGUES.has(leagueId)) {
+          fixtureUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&next=15`;
+        } else {
+          fixtureUrl = `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&date=${dateParam}&timezone=Europe/Amsterdam&status=NS-1H-HT-2H`;
+        }
+        const r = await apiFetch(fixtureUrl, null, 8000);
         const d = await r.json();
         (d.response || []).forEach(f => {
           const m = parseAPIMatch(f);
