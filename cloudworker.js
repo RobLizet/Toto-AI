@@ -1,10 +1,11 @@
-// TOTO AI WORKER v100
+// TOTO AI WORKER v101
+// v101: Push naar owner player ID (OWNER_PLAYER_ID secret) + Subscribed Users segment
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
 //       Kosten tracking per call in Supabase user_costs (input/output tokens)
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v100'; // v100: rate limiting + kosten tracking
+const VERSION = 'v101'; // v101: push naar owner player ID + Subscribed Users segment
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1760,37 +1761,42 @@ async function handleDailyTip(env) {
 
 // ── OneSignal push notificatie ────────────────────────────
 async function sendPushNotification(env, title, body, data = {}) {
-  const appId = env.ONESIGNAL_APP_ID;
+  const appId  = env.ONESIGNAL_APP_ID;
   const apiKey = env.ONESIGNAL_API_KEY;
   if (!appId || !apiKey) {
     console.log('[Push] OneSignal keys niet geconfigureerd, skip');
     return;
   }
   try {
+    // Stuur naar owner player ID als beschikbaar, anders All segment
+    const ownerPlayerId = env.OWNER_PLAYER_ID;
+    const targeting = ownerPlayerId
+      ? { include_subscription_ids: [ownerPlayerId] }
+      : { included_segments: ['Subscribed Users'] };
+
     const payload = {
       app_id: appId,
-      included_segments: ['All'],
-      headings: { en: title, nl: title },
-      contents: { en: body, nl: body },
+      ...targeting,
+      headings:  { en: title, nl: title },
+      contents:  { en: body,  nl: body  },
       data,
       android_channel_id: 'value-alerts',
       android_sound: 'notification',
-      ios_sound: 'notification.wav',
-      ttl: 3600,
-      priority: 10,
-      large_icon: 'https://toto-ai.app/icon-192.png',
+      ios_sound:     'notification.wav',
       chrome_web_icon: 'https://toto-ai.app/icon-192.png',
+      ttl:      3600,
+      priority: 10,
     };
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type':  'application/json',
         'Authorization': `Basic ${apiKey}`,
       },
       body: JSON.stringify(payload),
     });
     const result = await res.json();
-    console.log('[Push] Verstuurd:', result.id || result.errors || JSON.stringify(result));
+    console.log('[Push] Verstuurd:', result.id || JSON.stringify(result.errors) || JSON.stringify(result));
   } catch(e) {
     console.error('[Push] Fout:', e.message);
   }
