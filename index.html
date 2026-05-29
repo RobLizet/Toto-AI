@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f1117" />
+  <meta name="theme-color" content="#1b2646" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="TOTO AI" />
@@ -17,12 +17,13 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
 
   <!-- CSS -->
   <link rel="stylesheet" href="base.css" />
   <link rel="stylesheet" href="components.css" />
   <link rel="stylesheet" href="screens.css" />
+  <link rel="stylesheet" href="new-theme.css" />
 
   <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -464,31 +465,34 @@
      JAVASCRIPT — volgorde is belangrijk
 ══════════════════════════════════════════ -->
 
+<!-- 0. Versie fallback (wordt overschreven door state.js indien aanwezig) -->
+<script>if(typeof APP_VERSION==='undefined') window.APP_VERSION='v30.0';</script>
+
 <!-- 1. State -->
-<script src="state.js?v=1779429278"></script>
+<script src="state.js?v=3000"></script>
 
 <!-- 2. API -->
-<script src="api.js?v=1779429278"></script>
+<script src="api.js?v=3000"></script>
 
 <!-- 3. Utils -->
-<script src="football.js?v=1779429278"></script>
-<script src="ui.js?v=1779429278"></script>
-<script src="notifications.js?v=1779429278"></script>
+<script src="football.js?v=3000"></script>
+<script src="ui.js?v=3000"></script>
+<script src="notifications.js?v=3000"></script>
 
 <!-- 4. Router -->
-<script src="router.js?v=1779429278"></script>
+<script src="router.js?v=3000"></script>
 
 <!-- 5. Auth -->
-<script src="auth.js?v=1779429278"></script>
+<script src="auth.js?v=3000"></script>
 
 <!-- 6. Screens -->
-<script src="dashboard.js?v=1779429278"></script>
-<script src="wedstrijden.js?v=1779429278"></script>
-<script src="analyse.js?v=1779429278"></script>
-<script src="wallet.js?v=1779429278"></script>
-<script src="instellingen.js?v=1779429278"></script>
-<script src="analytics.js?v=2100"></script>
-<script src="wk2026.js?v=2100"></script>
+<script src="dashboard.js?v=3000"></script>
+<script src="wedstrijden.js?v=3000"></script>
+<script src="analyse.js?v=3000"></script>
+<script src="wallet.js?v=3000"></script>
+<script src="instellingen.js?v=3000"></script>
+<script src="analytics.js?v=3000"></script>
+<script src="wk2026.js?v=3000"></script>
 
 <!-- 7. App Init -->
 <script>
