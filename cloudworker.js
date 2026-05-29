@@ -1,11 +1,12 @@
-// TOTO AI WORKER v101
-// v101: Push naar owner player ID (OWNER_PLAYER_ID secret) + Subscribed Users segment
+// TOTO AI WORKER v102
+// v102: Push naar Total Subscriptions segment — werkt ongeacht device herregistratie
+// v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
 //       Kosten tracking per call in Supabase user_costs (input/output tokens)
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v101'; // v101: push naar owner player ID + Subscribed Users segment
+const VERSION = 'v102'; // v102: push naar Total Subscriptions segment (stabiel, geen ID nodig)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1768,11 +1769,12 @@ async function sendPushNotification(env, title, body, data = {}) {
     return;
   }
   try {
-    // Stuur naar owner player ID als beschikbaar, anders All segment
+    // Stuur standaard naar alle subscribers via segment (stabiel, geen ID nodig).
+    // Als OWNER_PLAYER_ID expliciet gezet is, gebruik die (voor gerichte tests).
     const ownerPlayerId = env.OWNER_PLAYER_ID;
     const targeting = ownerPlayerId
       ? { include_subscription_ids: [ownerPlayerId] }
-      : { included_segments: ['Subscribed Users'] };
+      : { included_segments: ['Total Subscriptions'] };
 
     const payload = {
       app_id: appId,
