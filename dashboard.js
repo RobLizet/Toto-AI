@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════
-// dashboard.js v14
+// dashboard.js v15
+// v15: Live scores tab — pending picks met live stand + win/verlies, ververst 60s
 // v14: Killer stats resultatenpagina (wallet)
 // v13: "Waarom deze pick?" signalen, bullshitfilter waarschuwing
 
@@ -158,6 +159,14 @@ function renderDashboard() {
   const isCalibrated = (calibMeta.settledBets || 0) >= 10;
 
   screen.innerHTML = `
+
+    <!-- Dashboard tabs -->
+    <div style="display:flex;gap:.4rem;margin-bottom:.75rem;background:rgba(15,23,42,.04);border-radius:12px;padding:.25rem;">
+      <button id="dashTabOverview" onclick="switchDashTab('overview')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);">📊 OVERZICHT</button>
+      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:var(--sub);">🔴 LIVE</button>
+    </div>
+
+    <div id="dashOverviewContent">
 
     <!-- 100 picks voortgang -->
     <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;"
@@ -370,6 +379,16 @@ function renderDashboard() {
 
     <div style="font-family:'Dancing Script',cursive;font-size:.75rem;color:var(--sub);text-align:center;padding:.5rem 0 1rem;">
       Made by Rob Borghouts
+    </div>
+    </div><!-- /dashOverviewContent -->
+
+    <!-- Live scores content -->
+    <div id="dashLiveContent" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">🔴 LIVE STANDEN VAN JE PICKS</div>
+        <button onclick="loadLiveScores()" style="background:none;border:1px solid var(--stroke);border-radius:8px;padding:.25rem .5rem;font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);cursor:pointer;">⟳ Ververs</button>
+      </div>
+      <div id="liveScoresList"><div style="text-align:center;padding:2rem;color:var(--sub);font-family:'IBM Plex Mono',monospace;font-size:.5rem;">Tik op LIVE om standen te laden...</div></div>
     </div>
   `;
 
@@ -595,4 +614,162 @@ function showPicksModal() {
 
   overlay.appendChild(sheet);
   document.body.appendChild(overlay);
+}
+
+// ═══════════════════════════════════════════════════════
+// LIVE SCORES TAB — dashboard v15
+// Toont pending picks met live stand + win/verlies indicatie, ververst elke 60s
+// ═══════════════════════════════════════════════════════
+
+let _liveScoresInterval = null;
+
+function switchDashTab(tab) {
+  const overviewBtn = document.getElementById('dashTabOverview');
+  const liveBtn     = document.getElementById('dashTabLive');
+  const overviewContent = document.getElementById('dashOverviewContent');
+  const liveContent     = document.getElementById('dashLiveContent');
+  if (!overviewContent || !liveContent) return;
+
+  if (tab === 'live') {
+    overviewContent.style.display = 'none';
+    liveContent.style.display = 'block';
+    overviewBtn.style.background = 'transparent';
+    overviewBtn.style.color = 'var(--sub)';
+    overviewBtn.style.boxShadow = 'none';
+    liveBtn.style.background = 'var(--card)';
+    liveBtn.style.color = 'var(--text)';
+    liveBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,.1)';
+    loadLiveScores();
+    // Auto-refresh elke 60s zolang tab open is
+    if (_liveScoresInterval) clearInterval(_liveScoresInterval);
+    _liveScoresInterval = setInterval(loadLiveScores, 60000);
+  } else {
+    overviewContent.style.display = 'block';
+    liveContent.style.display = 'none';
+    liveBtn.style.background = 'transparent';
+    liveBtn.style.color = 'var(--sub)';
+    liveBtn.style.boxShadow = 'none';
+    overviewBtn.style.background = 'var(--card)';
+    overviewBtn.style.color = 'var(--text)';
+    overviewBtn.style.boxShadow = '0 1px 3px rgba(0,0,0,.1)';
+    // Stop auto-refresh
+    if (_liveScoresInterval) { clearInterval(_liveScoresInterval); _liveScoresInterval = null; }
+  }
+}
+
+async function loadLiveScores() {
+  const list = document.getElementById('liveScoresList');
+  if (!list) return;
+
+  // Verzamel pending picks uit scanLog
+  const scanLog = state.scanLog || [];
+  const allPicks = scanLog.flatMap(s => s.picks || []);
+  const pendingPicks = allPicks.filter(p => p.status === 'pending' && p.fixtureId);
+
+  // Dedup op fixtureId + pick
+  const seen = new Set();
+  const uniquePicks = [];
+  pendingPicks.forEach(p => {
+    const key = p.fixtureId + '_' + p.pick;
+    if (!seen.has(key)) { seen.add(key); uniquePicks.push(p); }
+  });
+
+  if (!uniquePicks.length) {
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--sub);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;line-height:1.6;">Geen openstaande picks om live te volgen.<br>Doe eerst een scan!</div>';
+    return;
+  }
+
+  // Haal live data op voor de fixture IDs
+  const fixtureIds = [...new Set(uniquePicks.map(p => p.fixtureId))];
+  try {
+    const idsParam = fixtureIds.join('-');
+    const r = await fetch(`${WORKER_URL}/apif/fixtures?ids=${idsParam}`);
+    const d = await r.json();
+    const fixtures = {};
+    (d.response || []).forEach(f => { fixtures[f.fixture.id] = f; });
+
+    list.innerHTML = uniquePicks.map(p => {
+      const fx = fixtures[p.fixtureId];
+      if (!fx) {
+        return liveCardHtml(p, null);
+      }
+      return liveCardHtml(p, fx);
+    }).join('');
+
+    // Update tijd
+    const now = new Date();
+    list.innerHTML += `<div style="text-align:center;padding:.5rem;color:var(--sub);font-family:'IBM Plex Mono',monospace;font-size:.4rem;">Laatst bijgewerkt: ${now.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ververst elke 60s</div>`;
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">Fout bij laden live data. Probeer opnieuw.</div>';
+  }
+}
+
+function liveCardHtml(pick, fx) {
+  const matchName = pick.match || pick.matchName || '?';
+
+  // Geen live data — wedstrijd nog niet begonnen of al klaar
+  if (!fx) {
+    return `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;">${matchName}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.2rem;">${pick.pickLabel||pick.pick} @ ${pick.odds} · ⏳ Nog niet begonnen</div>
+    </div>`;
+  }
+
+  const status = fx.fixture.status.short; // NS, 1H, HT, 2H, FT etc.
+  const elapsed = fx.fixture.status.elapsed;
+  const homeGoals = fx.goals.home ?? 0;
+  const awayGoals = fx.goals.away ?? 0;
+  const homeTeam = fx.teams.home.name;
+  const awayTeam = fx.teams.away.name;
+
+  const isLive = ['1H','2H','HT','ET','BT','P','LIVE'].includes(status);
+  const isDone = ['FT','AET','PEN'].includes(status);
+  const notStarted = status === 'NS';
+
+  // Bepaal of pick momenteel wint
+  let pickWinning = false;
+  if (pick.pick === '1') pickWinning = homeGoals > awayGoals;
+  else if (pick.pick === '2') pickWinning = awayGoals > homeGoals;
+  else if (pick.pick === 'X') pickWinning = homeGoals === awayGoals;
+
+  // Status indicator
+  let statusBadge, statusColor, borderColor;
+  if (notStarted) {
+    statusBadge = '⏳ Nog niet begonnen';
+    statusColor = '#64748b';
+    borderColor = 'var(--stroke)';
+  } else if (isLive) {
+    statusBadge = status === 'HT' ? '⏸ RUST' : `🔴 LIVE ${elapsed}'`;
+    statusColor = pickWinning ? '#15803d' : '#dc2626';
+    borderColor = pickWinning ? 'rgba(22,163,74,.4)' : 'rgba(220,38,38,.4)';
+  } else if (isDone) {
+    statusBadge = pickWinning ? '✅ GEWONNEN' : '❌ VERLOREN';
+    statusColor = pickWinning ? '#15803d' : '#dc2626';
+    borderColor = pickWinning ? 'rgba(22,163,74,.4)' : 'rgba(220,38,38,.4)';
+  } else {
+    statusBadge = status;
+    statusColor = '#64748b';
+    borderColor = 'var(--stroke)';
+  }
+
+  const winIndicator = (isLive || isDone)
+    ? (pickWinning
+        ? '<span style="color:#15803d;font-weight:700;">✓ Pick wint</span>'
+        : '<span style="color:#dc2626;font-weight:700;">✗ Pick verliest</span>')
+    : '';
+
+  return `<div style="background:var(--card);border:1.5px solid ${borderColor};border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;font-weight:700;color:${statusColor};">${statusBadge}</span>
+      ${winIndicator ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;">${winIndicator}</span>` : ''}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+      <div style="flex:1;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:${pick.pick==='1'?'700':'400'};">${homeTeam}</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--text);min-width:50px;text-align:center;">${homeGoals} - ${awayGoals}</div>
+      <div style="flex:1;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:${pick.pick==='2'?'700':'400'};">${awayTeam}</div>
+    </div>
+    <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.35rem;padding-top:.35rem;border-top:1px solid var(--stroke);">
+      🎯 ${pick.pickLabel||pick.pick} @ ${pick.odds} · +${pick.value||0}% value
+    </div>
+  </div>`;
 }
