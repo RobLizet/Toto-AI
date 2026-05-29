@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════
 // dashboard.js v16
-// v16: Speeldatum + tijd toegevoegd aan live scores kaarten
+// v16: Speeldatum + tijd in live kaarten + dedup 100-picks teller
 // v15: Live scores tab — pending picks met live stand + win/verlies, ververst 60s
 // v14: Killer stats resultatenpagina (wallet)
 // v13: "Waarom deze pick?" signalen, bullshitfilter waarschuwing
@@ -114,7 +114,16 @@ function renderDashboard() {
 
   // Scan log stats
   const scanLog = state.scanLog || [];
-  const allPicks = scanLog.flatMap(s => s.picks || []);
+  const allPicksRaw = scanLog.flatMap(s => s.picks || []);
+  // Dedup op fixtureId+pick — settled altijd behouden, pending alleen meest recente
+  const _seenDash = new Set();
+  const allPicks = allPicksRaw.filter(p => {
+    if (p.status === 'win' || p.status === 'lose') return true;
+    const key = (p.fixtureId || p.match || '') + '_' + (p.pick || '');
+    if (_seenDash.has(key)) return false;
+    _seenDash.add(key);
+    return true;
+  });
   // Alleen kwalitatieve picks voor de 100 teller
   const DREMPEL = { minValue: 8, minConf: 6 };
   const kwaliPicks = allPicks.filter(p =>
