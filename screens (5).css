@@ -1,0 +1,352 @@
+/* ==========================================================================
+   TOTO AI - PREMIUM SPORT-TECH DESIGN (v30 - FULL RESET)
+   ========================================================================== */
+
+/* --- BASIS & ACHTERGROND --- */
+body, .app-container {
+    background: linear-gradient(180deg, #0B1519 0%, #04383F 100%) !important;
+    color: #FFFFFF !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    padding-bottom: 75px; /* Ruimte voor de bottom nav */
+    box-sizing: border-box;
+}
+
+/* --- APP HEADER --- */
+.app-header {
+    background: rgba(11, 21, 25, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 15px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.app-header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #FFFFFF;
+}
+
+/* --- SCHERM LOGICA (PWA router) --- */
+.app-screen {
+    display: none;
+    padding: 15px;
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+.app-screen.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- CARD 1: STATS / VOORTGANG (Lichte Premium Kaart) --- */
+.stats-card-light {
+    background-color: #F4F7F6 !important;
+    border-radius: 18px !important;
+    padding: 20px !important;
+    margin: 0 0 20px 0 !important;
+    color: #0A192F !important;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.stats-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.stats-card-title {
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #0A192F;
+}
+
+.radial-badge {
+    background: #0A192F;
+    color: #FFF;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    border: 3px solid #00BEC4;
+}
+
+.progress-container-new {
+    background-color: #E0E6E5;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+    margin: 10px 0 6px 0;
+}
+
+.progress-bar-new {
+    background: linear-gradient(90deg, #0A192F 0%, #00BEC4 100%);
+    height: 100%;
+    border-radius: 10px;
+}
+
+.progress-subtext {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+/* 4-kolommen grid in stats */
+.stats-grid-new {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #E0E6E5;
+    padding-top: 15px;
+    margin-top: 10px;
+}
+
+.stat-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.stat-val-dark {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0A192F;
+}
+
+.stat-val-teal {
+    font-size: 16px;
+    font-weight: 700;
+    color: #00BEC4;
+}
+
+.stat-lbl-dark {
+    font-size: 9px;
+    font-weight: 600;
+    color: #777;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 25px;
+    background-color: #E0E6E5;
+}
+
+/* --- CARD 2: HOME MENU GRID (Glassmorphism) --- */
+.menu-grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.menu-card-dark {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 165px;
+    backdrop-filter: blur(10px);
+    transition: background 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.menu-card-dark:active {
+    background: rgba(255, 255, 255, 0.08) !important;
+    transform: scale(0.97);
+}
+
+.menu-card-icon {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.menu-card-title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #FFFFFF !important;
+    margin: 4px 0 !important;
+    letter-spacing: 0.5px;
+}
+
+.menu-card-desc {
+    font-size: 11px !important;
+    color: #8A99AD !important;
+    line-height: 1.4 !important;
+    margin: 0 0 10px 0 !important;
+    flex-grow: 1;
+}
+
+.menu-card-tag {
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    color: #00BEC4 !important;
+    letter-spacing: 0.5px;
+}
+
+/* --- GENERIEKE INTERFACE ELEMENTEN --- */
+.sub-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    color: #8A99AD;
+    text-transform: uppercase;
+}
+
+/* Knoppen binnen de schermen */
+.btn-primary {
+    background: linear-gradient(90deg, #00BEC4 0%, #008B90 100%);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    width: 100%;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-primary:active {
+    opacity: 0.9;
+}
+
+/* --- SCHERM SPECIFIEKE ELEMENTEN --- */
+
+/* Wedstrijden / Matches */
+.match-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.match-row:last-child {
+    border-bottom: none;
+}
+
+.match-teams {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.match-odds {
+    background: rgba(0, 190, 196, 0.1);
+    color: #00BEC4;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* Wallet / Grafieken */
+.wallet-balance {
+    font-size: 28px;
+    font-weight: 800;
+    color: #FFFFFF;
+    margin: 5px 0;
+}
+
+.chart-placeholder {
+    height: 150px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding-top: 20px;
+}
+
+.chart-bar {
+    flex: 1;
+    background: linear-gradient(180deg, #00BEC4 0%, rgba(0,190,196,0.2) 100%);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.5s ease;
+}
+
+/* --- BOTTOM NAVIGATION BAR --- */
+.bottom-nav-new {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 65px;
+    background: rgba(11, 21, 25, 0.95) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom); /* iOS notch support */
+}
+
+.nav-item-new {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #8A99AD !important;
+    font-size: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    background: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    flex: 1;
+    height: 100%;
+    border: none;
+    outline: none;
+}
+
+.nav-item-new svg {
+    margin-bottom: 4px;
+    transition: transform 0.2s, stroke 0.2s;
+}
+
+.nav-item-new.active {
+    color: #00BEC4 !important;
+}
+
+.nav-item-new.active svg {
+    stroke: #00BEC4 !important;
+    transform: translateY(-2px);
+}
