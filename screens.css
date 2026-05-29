@@ -402,3 +402,137 @@ body.dark .analyse-stat-cell { background:rgba(255,255,255,.06); }
 }
 body.dark .analytics-block { background:rgba(255,255,255,.04); }
 body.dark .analytics-stat-card { background:rgba(255,255,255,.06); }
+/* ═══════════════════════════════════════════════════════
+   SCREENS v30 PATCH — dashboard nav kaarten, scan cards
+   Voeg dit toe aan het einde van screens.css
+═══════════════════════════════════════════════════════ */
+
+/* ── Dashboard nav kaarten (v30 navy/goud stijl) ─── */
+.dash-nav-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+  margin-bottom: .85rem;
+}
+.dash-nav-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: .85rem .9rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  transition: transform .15s, box-shadow .15s;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: var(--shadow2);
+  position: relative; overflow: hidden;
+}
+.dash-nav-card::after {
+  content: attr(data-icon);
+  position: absolute; bottom: -.5rem; right: -.5rem;
+  font-size: 3.5rem; opacity: .05; pointer-events: none;
+}
+.dash-nav-card:active { transform: scale(.97); }
+.dash-nav-icon  { font-size: 1.45rem; }
+.dash-nav-title { font-family: 'Bebas Neue', sans-serif; font-size: .95rem; color: var(--navy); letter-spacing: .03em; line-height: 1.2; }
+.dash-nav-sub   { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; color: var(--sub); line-height: 1.5; flex: 1; }
+.dash-nav-badge { font-family: 'IBM Plex Mono', monospace; font-size: .5rem; font-weight: 800; }
+
+/* Kaart kleuren */
+.dash-nav-card:nth-child(1) { background: rgba(15,23,42,.04);    border-color: rgba(15,23,42,.12); }
+.dash-nav-card:nth-child(1) .dash-nav-badge { color: #2563eb; }
+.dash-nav-card:nth-child(2) { background: rgba(184,146,42,.06); border-color: rgba(184,146,42,.2); }
+.dash-nav-card:nth-child(2) .dash-nav-badge { color: var(--gold); }
+.dash-nav-card:nth-child(3) { background: rgba(219,39,119,.06); border-color: rgba(219,39,119,.18); }
+.dash-nav-card:nth-child(3) .dash-nav-badge { color: #be185d; }
+.dash-nav-card:nth-child(4) { background: rgba(15,23,42,.04);   border-color: rgba(15,23,42,.10); }
+.dash-nav-card:nth-child(4) .dash-nav-badge { color: #64748b; }
+
+/* ── Scan kaarten (v30 stijl) ────────────────────── */
+.scan-log-card {
+  background: #fff;
+  border: 1px solid rgba(26,31,60,.10);
+  border-radius: 16px;
+  padding: .8rem 1rem;
+  margin-bottom: .6rem;
+  box-shadow: 0 2px 8px rgba(26,31,60,.07);
+  cursor: pointer;
+  transition: box-shadow .15s, transform .12s;
+}
+.scan-log-card:active {
+  box-shadow: 0 5px 18px rgba(26,31,60,.13);
+  transform: scale(.99);
+}
+.scan-log-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: .45rem; padding-bottom: .38rem;
+  border-bottom: 1px solid rgba(201,168,76,.2);
+}
+.scan-log-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .52rem; font-weight: 800; color: var(--navy);
+}
+.scan-log-num em { font-style: normal; color: var(--gold); }
+
+/* Status badges */
+.scan-badge-win  { font-family:'IBM Plex Mono',monospace; font-size:.4rem; font-weight:700; border-radius:99px; padding:.1rem .42rem; background:#dcfce7; color:#15803d; }
+.scan-badge-lose { font-family:'IBM Plex Mono',monospace; font-size:.4rem; font-weight:700; border-radius:99px; padding:.1rem .42rem; background:#fee2e2; color:#dc2626; }
+.scan-badge-open { font-family:'IBM Plex Mono',monospace; font-size:.4rem; font-weight:700; border-radius:99px; padding:.1rem .42rem; background:rgba(201,168,76,.15); color:#92710a; }
+
+/* Pick rij */
+.scan-pick-row {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .38rem 0;
+  border-top: 1px solid rgba(26,31,60,.07);
+}
+.scan-pick-icon  { width: 1.4rem; text-align: center; font-size: .82rem; flex-shrink: 0; }
+.scan-pick-name  { font-family: 'DM Sans', sans-serif; font-size: .6rem; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scan-pick-meta  { font-family: 'IBM Plex Mono', monospace; font-size: .42rem; color: var(--muted); margin-top: .08rem; }
+.scan-pick-odds  { color: var(--navy); font-weight: 700; }
+.scan-pick-value-hi { color: #15803d; font-weight: 700; }
+.scan-pick-value-md { color: #b45309; font-weight: 700; }
+.scan-score-pill { font-family:'IBM Plex Mono',monospace; font-size:.5rem; font-weight:700; color:var(--navy); background:rgba(26,31,60,.07); border-radius:6px; padding:.1rem .4rem; flex-shrink:0; }
+.scan-score-btn  { font-family:'IBM Plex Mono',monospace; font-size:.42rem; font-weight:600; padding:3px 8px; border-radius:8px; background:rgba(26,31,60,.06); border:1px solid rgba(26,31,60,.14); color:var(--navy); cursor:pointer; white-space:nowrap; flex-shrink:0; }
+
+/* ── Stat cards (4-grid) v30 ─────────────────────── */
+.stat-card-v30 {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: .68rem .4rem;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(15,23,42,.07);
+}
+.stat-card-v30 .val { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; line-height: 1; }
+.stat-card-v30 .lbl { font-family: 'IBM Plex Mono', monospace; font-size: .38rem; color: var(--muted); margin-top: .15rem; letter-spacing: .03em; }
+
+/* ── Wallet saldo kaart ──────────────────────────── */
+.wallet-bal-card {
+  background: linear-gradient(135deg, var(--navy) 0%, #2d3461 100%);
+  border-radius: 18px; padding: 1.1rem 1.2rem; margin-bottom: .65rem;
+  box-shadow: 0 4px 18px rgba(26,31,60,.25); position: relative; overflow: hidden;
+}
+.wallet-bal-card::before { content:''; position:absolute; top:-20px; right:-20px; width:100px; height:100px; background:rgba(255,255,255,.04); border-radius:50%; }
+.wallet-bal-card .label  { font-family:'IBM Plex Mono',monospace; font-size:.46rem; color:rgba(255,255,255,.55); letter-spacing:.08em; margin-bottom:.3rem; }
+.wallet-bal-card .amount { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; color:#fff; letter-spacing:.03em; line-height:1; }
+.wallet-bal-card .sub    { font-family:'IBM Plex Mono',monospace; font-size:.44rem; color:rgba(255,255,255,.5); margin-top:.25rem; }
+.wallet-bal-card .roi    { font-weight:700; color:#22c55e; }
+
+/* ── Match row v30 ────────────────────────────────── */
+.match-row-v30 {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .55rem .85rem; background: var(--card);
+  border: 1px solid var(--stroke); border-radius: 13px;
+  margin-bottom: .45rem; box-shadow: var(--shadow2);
+  cursor: pointer; transition: transform .12s;
+}
+.match-row-v30:active { transform: scale(.98); }
+.match-row-v30 .time  { font-family:'IBM Plex Mono',monospace; font-size:.46rem; color:var(--muted); width:2.2rem; flex-shrink:0; }
+.match-row-v30 .name  { font-family:'DM Sans',sans-serif; font-size:.62rem; font-weight:700; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.match-row-v30 .comp  { font-family:'IBM Plex Mono',monospace; font-size:.4rem; color:var(--muted); margin-top:.08rem; }
+.odds-pill-v30        { font-family:'IBM Plex Mono',monospace; font-size:.44rem; font-weight:700; padding:.22rem .45rem; border-radius:7px; background:rgba(26,31,60,.06); border:1px solid rgba(26,31,60,.1); color:var(--navy); }
+.odds-pill-v30.val    { background:rgba(22,163,74,.1); border-color:rgba(22,163,74,.25); color:#15803d; }
+
+body.dark .scan-log-card { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
+body.dark .wallet-bal-card { background: linear-gradient(135deg,#1e2340 0%,#252c52 100%); }
