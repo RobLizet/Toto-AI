@@ -43,7 +43,8 @@ function calculateConfidenceV20(pick, leagueId, calibration) {
 }
 
 // ═══════════════════════════════════════════════════════
-// ANALYSE.JS — Value scan, AI analyse, Combi Tips v29
+// ANALYSE.JS — Value scan, AI analyse, Combi Tips v30
+// v30: Speeldatum + tijd toegevoegd aan scan log en pick kaarten
 // v29: Timezone fix handmatige scan — Scandinavische leagues via next=
 //      Bullshitfilter, League Stats, Supabase sync
 // v28: League stats hitrate/ROI/betrouwbaarheid
@@ -985,7 +986,7 @@ function openCardPopup(type, data) {
         ${s.home||s.match?.home||'?'} vs ${s.away||s.match?.away||'?'}
       </div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);margin-bottom:.85rem;">
-        ${s.comp||''} · ${s.date||''}
+        ${s.comp||''} ${(s.date||s.time) ? '· 📅 ' + [s.date, s.time].filter(Boolean).join(' ') : ''}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem;">
         <div style="background:rgba(219,39,119,.1);border:1px solid rgba(219,39,119,.2);border-radius:12px;padding:.6rem;text-align:center;">

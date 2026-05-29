@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════
-// WALLET SCREEN v14
+// WALLET SCREEN v15
+// v15: Speeldatum + tijd toegevoegd aan pick kaarten en popup
 // v14: Killer resultatenpagina — ROI 7 dagen, win streak, beste league, elite hitrate, CLV
 // v13: "Waarom deze pick?" signalen in backtest cards
 
@@ -1027,7 +1028,7 @@ function renderBacktest() {
         ${badge ? `<div style="flex-shrink:0;margin-left:.5rem;">${badge}</div>` : ''}
       </div>
       <div class="bt-meta">
-        <span>📅 ${p.date}</span>
+        <span>📅 ${p.date}${p.matchTime||p.time ? ' ' + (p.matchTime||p.time) : ''}</span>
         <span style="font-weight:700;color:${valColor}">⚡ +${p.value}%</span>
         <span>🎯 ${p.pickLabel} @ ${p.odds}</span>
         <span style="color:${confColor}">🎲 ${p.confidence}/10</span>
@@ -2115,7 +2116,7 @@ function showWalletPopup(type, data) {
     const statusColor = p.status==='win'?'#16a34a':p.status==='lose'?'#dc2626':'#d97706';
     const icon = p.status==='win'?'✅':p.status==='lose'?'❌':'⏳';
     headerHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${p.matchName||'Pick'}</div>
-      <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${p.date||''} · ${p.comp||''}</div>`;
+      <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">📅 ${p.date||''}${p.matchTime||p.time ? ' ' + (p.matchTime||p.time) : ''} · ${p.comp||''}</div>`;
     bodyHtml = makeRows([
       ['Pick', p.pickLabel||p.pick||'—', null],
       ['Quote', p.odds||'—', null],

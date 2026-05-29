@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════
-// dashboard.js v15
+// dashboard.js v16
+// v16: Speeldatum + tijd toegevoegd aan live scores kaarten
 // v15: Live scores tab — pending picks met live stand + win/verlies, ververst 60s
 // v14: Killer stats resultatenpagina (wallet)
 // v13: "Waarom deze pick?" signalen, bullshitfilter waarschuwing
@@ -709,9 +710,10 @@ function liveCardHtml(pick, fx) {
 
   // Geen live data — wedstrijd nog niet begonnen of al klaar
   if (!fx) {
+    const dt = [pick.matchDate||pick.date, pick.matchTime||pick.time].filter(Boolean).join(' ');
     return `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;">
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;">${matchName}</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.2rem;">${pick.pickLabel||pick.pick} @ ${pick.odds} · ⏳ Nog niet begonnen</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.2rem;">${pick.pickLabel||pick.pick} @ ${pick.odds}${dt ? ' · 📅 ' + dt : ''} · ⏳ Nog niet begonnen</div>
     </div>`;
   }
 
@@ -721,6 +723,12 @@ function liveCardHtml(pick, fx) {
   const awayGoals = fx.goals.away ?? 0;
   const homeTeam = fx.teams.home.name;
   const awayTeam = fx.teams.away.name;
+  // Kickoff datum/tijd uit fixture
+  let kickoffStr = '';
+  if (fx.fixture.date) {
+    const ko = new Date(fx.fixture.date);
+    kickoffStr = ko.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit'}) + ' ' + ko.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+  }
 
   const isLive = ['1H','2H','HT','ET','BT','P','LIVE'].includes(status);
   const isDone = ['FT','AET','PEN'].includes(status);
@@ -770,6 +778,7 @@ function liveCardHtml(pick, fx) {
     </div>
     <div style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);margin-top:.35rem;padding-top:.35rem;border-top:1px solid var(--stroke);">
       🎯 ${pick.pickLabel||pick.pick} @ ${pick.odds} · +${pick.value||0}% value
+      ${kickoffStr ? `<br>📅 ${kickoffStr}` : ''}
     </div>
   </div>`;
 }
