@@ -437,6 +437,24 @@ async function checkAndAutoScan() {
   updateAutoScanPanelUI();
 }
 
+function setAnalyseSubTab(tab) {
+  window._analyseActiveTab = tab;
+  ['scan','ai','stats','log'].forEach(function(t) {
+    var btn     = document.getElementById('atab-' + t);
+    var content = document.getElementById('at-' + t + '-content');
+    if (btn) {
+      btn.style.background = t === tab ? '#152038' : 'transparent';
+      btn.style.color      = t === tab ? '#fff' : '#607080';
+    }
+    if (content) content.style.display = t === tab ? 'block' : 'none';
+  });
+  if (tab === 'log') {
+    setTimeout(function() {
+      try { if (typeof renderScanLog === 'function') renderScanLog(); } catch(e) {}
+    }, 50);
+  }
+}
+
 function showAnalyseSubTab(tab) {
   // v21.1: geen tabs meer — scroll naar sectie
   const scrollMap = {
