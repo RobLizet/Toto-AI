@@ -298,86 +298,6 @@ function renderAnalyseScreen() {
   html += '<div id="valueBanner2" style="display:none;margin-top:.4rem;"></div>';
   html += '</div>';
 
-  // ── 2. AI ANALYSE ──
-  html += '<div class="analyse-block">';
-  html += '<div class="analyse-block-header">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg></span> AI ANALYSE</div>';
-  html += '</div>';
-
-  if (!m) {
-    html += '<div class="analyse-empty" style="padding:1.25rem 0;">';
-    html += '<div style="font-size:1.8rem;opacity:.25;margin-bottom:.5rem;">🤖</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:var(--sub);line-height:1.7;margin-bottom:.8rem;">Tik op een wedstrijd en kies ANALYSE voor een diepte-analyse.</div>';
-    html += '<button onclick="switchScreen(\'wedstrijden\')" class="analyse-btn-secondary" style="width:auto;padding:.5rem 1.1rem;">⚽ Naar Wedstrijden</button>';
-    html += '</div>';
-  } else {
-    html += '<div class="analyse-match-card">';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--sub);margin-bottom:.3rem;">' + (m.comp||'') + ' · ' + (m.date||'') + ' ' + (m.time||'') + '</div>';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">';
-    html += '<div style="font-size:.9rem;font-weight:800;color:var(--ink);flex:1;">' + m.home + '</div>';
-    html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--ink);padding:0 .75rem;">' + (m.score||'VS') + '</div>';
-    html += '<div style="font-size:.9rem;font-weight:800;color:var(--ink);text-align:right;flex:1;">' + m.away + '</div>';
-    html += '</div>';
-    if (m.homeOdds !== '—') {
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.3rem;">';
-      html += '<div class="analyse-odds-cell"><div class="analyse-odds-label">1</div><div class="analyse-odds-val">' + m.homeOdds + '</div></div>';
-      html += '<div class="analyse-odds-cell"><div class="analyse-odds-label">X</div><div class="analyse-odds-val">' + m.drawOdds + '</div></div>';
-      html += '<div class="analyse-odds-cell"><div class="analyse-odds-label">2</div><div class="analyse-odds-val">' + m.awayOdds + '</div></div>';
-      html += '</div>';
-    }
-    html += '</div>';
-    html += '<button id="analyseBtn" onclick="runAnalyse()" class="analyse-btn-ai">🤖 ANALYSEER — ' + m.home + ' vs ' + m.away + '</button>';
-    html += '<div id="analyseOutput" style="display:none;">';
-    html += '<div id="entityChips" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.7rem;"></div>';
-    html += '<div id="rb-vorm"></div><div id="rb-stats"></div><div id="rb-tactiek"></div>';
-    html += '<div id="rb-kans"></div><div id="rb-risico"></div><div id="rb-advies"></div><div id="rb-tip"></div>';
-    html += '<div id="matchChatSection" style="display:none;margin-top:.75rem;">';
-    html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:#085c3a;">💬 VRAAG AAN AI</div>';
-    html += '<button onclick="document.getElementById(\'matchChatSection\').style.display=\'none\'" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.8rem;margin-left:auto;">✕</button>';
-    html += '</div>';
-    html += '<div id="chatMessages" style="max-height:260px;overflow-y:auto;margin-bottom:.5rem;"></div>';
-    html += '<div style="display:flex;gap:.4rem;">';
-    html += '<input id="chatInput" type="text" placeholder="Stel een vraag..." style="flex:1;font-family:monospace;font-size:.58rem;padding:.45rem .65rem;border-radius:8px;border:1px solid rgba(21,32,56,0.15);background:#dde5ee;color:var(--ink);outline:none;" onkeydown="if(event.key===\'Enter\')sendMatchChat()">';
-    html += '<button onclick="sendMatchChat()" style="padding:.45rem .7rem;border-radius:8px;background:rgba(10,138,95,.12);border:1px solid rgba(10,138,95,.25);color:#085c3a;cursor:pointer;">➤</button>';
-    html += '</div>';
-    html += '<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.4rem;" id="chatSuggestions"></div>';
-    html += '</div>';
-    html += '<button id="openChatBtn" onclick="openMatchChat()" style="width:100%;margin-top:.5rem;padding:.45rem;border-radius:8px;background:rgba(10,138,95,.07);border:1px solid rgba(10,138,95,.18);font-family:monospace;font-size:.55rem;font-weight:700;color:#085c3a;cursor:pointer;display:none;">💬 Vraag stellen aan AI</button>';
-    html += '</div>';
-  }
-  html += '</div>';
-
-  // ── 3. STATISTIEKEN ──
-  if (scanROI !== null || weekScans.length > 0) {
-    html += '<div class="analyse-block">';
-    html += '<div class="analyse-block-header">';
-    html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> STATISTIEKEN</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);">' + settledPicks.length + '/100 picks</div>';
-    html += '</div>';
-
-    if (scanROI !== null) {
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.4rem;letter-spacing:.06em;">TRACKRECORD</div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.7rem;">';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (scanHitrate>=50?'#0a8a5f':'#dc2626') + ';">' + scanHitrate + '%</div><div class="analyse-stat-label">HITRATE</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (scanROI>=0?'#0a8a5f':'#dc2626') + ';">' + (scanROI>=0?'+':'') + scanROI + '%</div><div class="analyse-stat-label">ROI</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (isCalibrated?'#0a8a5f':'#d97706') + ';">' + (isCalibrated?'✓':(settledPicks.length+'/10')) + '</div><div class="analyse-stat-label">' + (isCalibrated?'GECALIB.':'AI LEERT') + '</div></div>';
-      html += '</div>';
-      html += '<div class="analyse-progress-bar"><div style="background:linear-gradient(90deg,#0a8a5f,#085c3a);height:100%;border-radius:999px;width:' + Math.min(100,settledPicks.length) + '%;transition:width .4s;"></div></div>';
-    }
-
-    if (weekScans.length > 0) {
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin:' + (scanROI!==null?'.7rem':'0') + ' 0 .4rem;letter-spacing:.06em;">DEZE WEEK</div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.35rem;">';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#0a8a5f;">' + weekScans.length + '</div><div class="analyse-stat-label">SCANS</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#085c3a;">' + weekPicks.length + '</div><div class="analyse-stat-label">PICKS</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (weekHR!==null&&weekHR>=50?'#0a8a5f':'#dc2626') + ';">' + (weekHR!==null?weekHR+'%':'—') + '</div><div class="analyse-stat-label">HITRATE</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#0a8a5f;">' + weekPicks.filter(p=>p.status==='pending').length + '</div><div class="analyse-stat-label">OPEN</div></div>';
-      html += '</div>';
-    }
-    html += '</div>';
-  }
-
   // ── 4. COMBI TIPS ──
   html += '<div class="analyse-block">';
   html += '<div class="analyse-block-header"><div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v3c0 3.3 2.7 6 6 6h6c3.3 0 6-2.7 6-6V5a1 1 0 0 0-1-1h-3"/><path d="M7 4h10v8a5 5 0 0 1-10 0V4z"/></svg></span> COMBI TIPS</div></div>';
@@ -395,47 +315,72 @@ function renderAnalyseScreen() {
   html += '</div>';
 
   // Sluit scan tab div
+  html += '<div id="scan-log-content" style="margin-top:.5rem;"></div>';
   html += '</div>'; // at-scan-content
 
-  // AI Analyse tab (inhoud al in html gebouwd door bestaande code blokken 2)
+  // AI Analyse tab
   html += '<div id="at-ai-content" style="display:'+aiVisible+'">';
-  // AI Analyse blok wordt hieronder toegevoegd door bestaande code
-
-  // Stats tab — analytics inhoud
-  html += '</div>'; // at-ai-content
-  html += '<div id="at-stats-content" style="display:'+statsVisible+'">';
-  // Analytics wordt inline gebouwd
-  const localStats = typeof _calcLocalStats === 'function' ? _calcLocalStats() : null;
-  if (localStats) {
-    html += '<div class="analytics-block" style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
-    html += '<div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11px;font-weight:700;color:#607080;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:10px;">Trackrecord · ' + localStats.settled.length + '/100 picks</div>';
-    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">';
-    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:18px;font-weight:800;color:' + (localStats.hitrate>=50?'#0a8a5f':'#e8404a') + ';">' + (localStats.hitrate!==null?localStats.hitrate+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Hitrate</div></div>';
-    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:18px;font-weight:800;color:' + (localStats.roi>=0?'#0a8a5f':'#e8404a') + ';">' + (localStats.roi!==null?(localStats.roi>=0?'+':'')+localStats.roi.toFixed(1)+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">ROI</div></div>';
-    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:18px;font-weight:800;color:' + (localStats.settled.length>=10?'#0a8a5f':'#f5a623') + ';">' + (localStats.settled.length>=10?'✓':localStats.settled.length+'/10') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">' + (localStats.settled.length>=10?'Gecalib.':'AI Leert') + '</div></div>';
-    html += '</div>';
-    html += '<div style="background:rgba(21,32,56,.08);border-radius:999px;height:5px;overflow:hidden;"><div style="height:100%;width:'+Math.min(100,localStats.settled.length)+'%;border-radius:999px;background:linear-gradient(90deg,#152038,#0a8a5f);transition:width .4s;"></div></div>';
-    html += '</div>';
-
-    // League breakdown
-    if (localStats.leagueBreakdown && localStats.leagueBreakdown.length) {
-      html += '<div class="analytics-block" style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
-      html += '<div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Top Competities</div>';
-      localStats.leagueBreakdown.slice(0,6).forEach(l => {
-        const hr = l.wins && l.settled ? Math.round(l.wins/l.settled*100) : 0;
-        const roi = l.settled ? parseFloat(((l.wins*(l.avgOdds-1)-l.losses)/l.settled*100).toFixed(1)) : 0;
-        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(21,32,56,.1);">';
-        html += '<div style="font-size:12px;font-weight:600;color:#152038;">' + (l.name||l.league||l.comp||'?') + '</div>';
-        html += '<div style="display:flex;gap:8px;font-size:11px;font-weight:700;">';
-        html += '<span style="color:' + (hr>=50?'#0a8a5f':'#f5a623') + ';">' + hr + '%</span>';
-        html += '<span style="color:' + (roi>=0?'#085c3a':'#e8404a') + ';">' + (roi>=0?'+':'') + roi + '% ROI</span>';
-        html += '<span style="color:#607080;">' + l.settled + 'x</span>';
-        html += '</div></div>';
-      });
-      html += '</div>';
-    }
+  if (!m) {
+    html += '<div class="analyse-block"><div class="analyse-block-header"><div class="analyse-block-title">AI Analyse</div></div>';
+    html += '<div style="text-align:center;padding:1.5rem 0;color:#607080;">';
+    html += '<div style="font-size:13px;font-weight:700;color:#152038;margin-bottom:6px;">Selecteer een wedstrijd</div>';
+    html += '<div style="font-size:11px;margin-bottom:12px;">Tik op een wedstrijd → Analyse voor diepte-analyse</div>';
+    html += '<button onclick="switchScreen(\'wedstrijden\')" class="analyse-btn-ai" style="width:auto;padding:9px 18px;">⚽ Naar Wedstrijden</button>';
+    html += '</div></div>';
   } else {
-    html += '<div style="text-align:center;padding:2rem;color:#607080;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:13px;">Doe eerst een value scan om statistieken te zien.</div>';
+    html += '<div class="analyse-match-card">';
+    html += '<div style="font-size:10px;color:#607080;margin-bottom:4px;">' + (m.comp||'') + ' · ' + (m.date||'') + ' ' + (m.time||'') + '</div>';
+    html += '<div style="display:flex;align-items:center;margin-bottom:6px;">';
+    html += '<div style="font-size:14px;font-weight:800;color:#152038;flex:1;">' + m.home + '</div>';
+    html += '<div style="font-size:18px;font-weight:800;color:#152038;padding:0 12px;">' + (m.score||'VS') + '</div>';
+    html += '<div style="font-size:14px;font-weight:800;color:#152038;flex:1;text-align:right;">' + m.away + '</div>';
+    html += '</div></div>';
+    html += '<button id="analyseBtn" onclick="runAnalyse()" class="analyse-btn-ai">🤖 ANALYSEER — ' + m.home + ' vs ' + m.away + '</button>';
+    html += '<div id="analyseOutput" style="display:none;"><div id="entityChips" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.7rem;"></div>';
+    html += '<div id="rb-vorm"></div><div id="rb-stats"></div><div id="rb-tactiek"></div>';
+    html += '<div id="rb-kans"></div><div id="rb-risico"></div><div id="rb-advies"></div><div id="rb-tip"></div></div>';
+  }
+  html += '</div>'; // at-ai-content
+
+  // Stats tab — analytics data
+  html += '<div id="at-stats-content" style="display:'+statsVisible+'">';
+  try {
+    const _log = state.scanLog || [];
+    const _allP = _log.flatMap(s => s.picks || []);
+    const _kwali = _allP.filter(p => !p.isSparseData && (p.value||0) >= 8 && (p.confidence||0) >= 6);
+    const _settled = _kwali.filter(p => p.status === 'win' || p.status === 'lose');
+    const _wins = _settled.filter(p => p.status === 'win');
+    const _hr = _settled.length ? Math.round(_wins.length / _settled.length * 100) : null;
+    const _roi = _settled.length ? parseFloat((_settled.reduce((s,p) => s+(p.status==='win'?(p.odds-1):-1),0)/_settled.length*100).toFixed(1)) : null;
+
+    html += '<div style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
+    html += '<div style="font-size:11px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Trackrecord · ' + _settled.length + '/100 picks</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">';
+    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (_hr!==null&&_hr>=50?'#0a8a5f':'#e8404a') + ';">' + (_hr!==null?_hr+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Hitrate</div></div>';
+    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (_roi!==null&&_roi>=0?'#0a8a5f':'#e8404a') + ';">' + (_roi!==null?(_roi>=0?'+':'')+_roi.toFixed(1)+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">ROI</div></div>';
+    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (_settled.length>=10?'#0a8a5f':'#f5a623') + ';">' + (_settled.length>=10?'✓':_settled.length+'/10') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">' + (_settled.length>=10?'Gecalib.':'AI Leert') + '</div></div>';
+    html += '</div>';
+    html += '<div style="background:rgba(21,32,56,.1);border-radius:999px;height:5px;overflow:hidden;"><div style="height:100%;width:' + Math.min(100,_settled.length) + '%;background:linear-gradient(90deg,#152038,#0a8a5f);border-radius:999px;"></div></div>';
+    html += '</div>';
+
+    // Week stats
+    const _wkStart = new Date(); _wkStart.setDate(_wkStart.getDate()-_wkStart.getDay()); _wkStart.setHours(0,0,0,0);
+    const _wkScans = _log.filter(s => new Date(s.timestamp||0) >= _wkStart);
+    const _wkPicks = _wkScans.flatMap(s => s.picks||[]);
+    if (_wkScans.length > 0) {
+      html += '<div style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
+      html += '<div style="font-size:11px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Deze Week</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+      html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#152038;">' + _wkScans.length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Scans</div></div>';
+      html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#152038;">' + _wkPicks.length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Picks</div></div>';
+      const _wkS = _wkPicks.filter(p=>p.status==='win'||p.status==='lose');
+      const _wkHR = _wkS.length ? Math.round(_wkPicks.filter(p=>p.status==='win').length/_wkS.length*100) : null;
+      html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:' + (_wkHR!==null&&_wkHR>=50?'#0a8a5f':'#607080') + ';">' + (_wkHR!==null?_wkHR+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Hitrate</div></div>';
+      html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#e8404a;">' + _wkPicks.filter(p=>!p.status||p.status==='pending').length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Open</div></div>';
+      html += '</div></div>';
+    }
+  } catch(_e) {
+    html += '<div style="padding:1rem;color:#607080;font-size:12px;text-align:center;">Scan eerst wedstrijden om statistieken te zien.</div>';
   }
   html += '</div>'; // at-stats-content
 
