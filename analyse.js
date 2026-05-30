@@ -237,28 +237,45 @@ function renderAnalyseScreen() {
 
   let html = '';
 
+  // ── SUB-TABS (Value Scan / AI Analyse / Stats / Scan Log) ──
+  const activeAnalyseTab = window._analyseActiveTab || 'scan';
+  html += '<div style="display:flex;gap:5px;padding:3px;background:#d5dfe9;border-radius:30px;border:1px solid rgba(21,32,56,.15);margin-bottom:12px;">';
+  html += '<button id="atab-scan" onclick="setAnalyseSubTab(\'scan\')" style="flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;' + (activeAnalyseTab==='scan'?'background:#152038;color:#fff;':'background:transparent;color:#607080;') + '">Value Scan</button>';
+  html += '<button id="atab-ai" onclick="setAnalyseSubTab(\'ai\')" style="flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;' + (activeAnalyseTab==='ai'?'background:#152038;color:#fff;':'background:transparent;color:#607080;') + '">AI Analyse</button>';
+  html += '<button id="atab-stats" onclick="setAnalyseSubTab(\'stats\')" style="flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;' + (activeAnalyseTab==='stats'?'background:#152038;color:#fff;':'background:transparent;color:#607080;') + '">Stats</button>';
+  html += '<button id="atab-log" onclick="setAnalyseSubTab(\'log\')" style="flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;' + (activeAnalyseTab==='log'?'background:#152038;color:#fff;':'background:transparent;color:#607080;') + '">Scan Log</button>';
+  html += '</div>';
+
+  // Wrap alle content in tab divs
+  const scanVisible  = activeAnalyseTab==='scan'  ? 'block' : 'none';
+  const aiVisible    = activeAnalyseTab==='ai'    ? 'block' : 'none';
+  const statsVisible = activeAnalyseTab==='stats' ? 'block' : 'none';
+  const logVisible   = activeAnalyseTab==='log'   ? 'block' : 'none';
+
+  html += '<div id="at-scan-content"  style="display:'+scanVisible+'">';
+
   // ── 1. VALUE SCAN ──
   html += '<div class="analyse-block">';
   html += '<div class="analyse-block-header">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span> VALUE SCAN</div>';
+  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span> VALUE SCAN</div>';
   html += '<button onclick="toggleAutoScanPanel()" class="analyse-header-btn" title="Scan instellingen">⏱</button>';
   html += '</div>';
 
   // Auto-scan paneel
-  html += '<div id="autoScanPanel" style="display:none;background:rgba(0,190,196,.04);border:1px solid rgba(0,190,196,.2);border-radius:12px;padding:.75rem .9rem;margin-bottom:.6rem;">';
+  html += '<div id="autoScanPanel" style="display:none;background:rgba(10,138,95,.04);border:1px solid rgba(10,138,95,.2);border-radius:12px;padding:.75rem .9rem;margin-bottom:.6rem;">';
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:#00BEC4;">AUTOMATISCHE SCAN</div>';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:#0a8a5f;">AUTOMATISCHE SCAN</div>';
   html += '<button onclick="document.getElementById(\'autoScanPanel\').style.display=\'none\'" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.85rem;">✕</button>';
   html += '</div>';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(0,190,196,.15);margin-bottom:.5rem;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(10,138,95,.15);margin-bottom:.5rem;">';
   html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">Dagelijks scannen tussen ingestelde tijden</div>';
-  html += '<button id="autoScanToggleBtn" onclick="toggleAutoScan()" style="padding:.35rem .8rem;border-radius:8px;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;cursor:pointer;border:1.5px solid;background:rgba(0,190,196,.1);border-color:rgba(0,190,196,.35);color:#00BEC4;white-space:nowrap;">Inschakelen</button>';
+  html += '<button id="autoScanToggleBtn" onclick="toggleAutoScan()" style="padding:.35rem .8rem;border-radius:8px;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;cursor:pointer;border:1.5px solid;background:rgba(10,138,95,.1);border-color:rgba(10,138,95,.35);color:#0a8a5f;white-space:nowrap;">Inschakelen</button>';
   html += '</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
   html += '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.25rem;">VAN (uur)</div>';
-  html += '<input id="scanWindowFrom" type="number" min="0" max="23" step="1" style="width:100%;font-family:\'IBM Plex Mono\',monospace;font-size:.75rem;font-weight:800;padding:.4rem .6rem;border-radius:8px;border:1.5px solid var(--stroke);background:var(--card);color:var(--ink);text-align:center;" value="' + (state.settings.scanWindowFrom ?? 14) + '" onchange="state.settings.scanWindowFrom=parseInt(this.value);saveState();updateAutoScanPanelUI()"></div>';
+  html += '<input id="scanWindowFrom" type="number" min="0" max="23" step="1" style="width:100%;font-family:\'IBM Plex Mono\',monospace;font-size:.75rem;font-weight:800;padding:.4rem .6rem;border-radius:8px;border:1.5px solid rgba(21,32,56,0.15);background:#dde5ee;color:var(--ink);text-align:center;" value="' + (state.settings.scanWindowFrom ?? 14) + '" onchange="state.settings.scanWindowFrom=parseInt(this.value);saveState();updateAutoScanPanelUI()"></div>';
   html += '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.25rem;">TOT (uur)</div>';
-  html += '<input id="scanWindowTo" type="number" min="0" max="23" step="1" style="width:100%;font-family:\'IBM Plex Mono\',monospace;font-size:.75rem;font-weight:800;padding:.4rem .6rem;border-radius:8px;border:1.5px solid var(--stroke);background:var(--card);color:var(--ink);text-align:center;" value="' + (state.settings.scanWindowTo ?? 18) + '" onchange="state.settings.scanWindowTo=parseInt(this.value);saveState();updateAutoScanPanelUI()"></div>';
+  html += '<input id="scanWindowTo" type="number" min="0" max="23" step="1" style="width:100%;font-family:\'IBM Plex Mono\',monospace;font-size:.75rem;font-weight:800;padding:.4rem .6rem;border-radius:8px;border:1.5px solid rgba(21,32,56,0.15);background:#dde5ee;color:var(--ink);text-align:center;" value="' + (state.settings.scanWindowTo ?? 18) + '" onchange="state.settings.scanWindowTo=parseInt(this.value);saveState();updateAutoScanPanelUI()"></div>';
   html += '</div>';
   html += '<div id="autoScanStatusBar" style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);padding:.3rem .5rem;background:rgba(15,23,42,.04);border-radius:6px;margin-bottom:.4rem;text-align:center;min-height:1rem;"></div>';
   html += '<div style="display:flex;gap:.4rem;">';
@@ -284,7 +301,7 @@ function renderAnalyseScreen() {
   // ── 2. AI ANALYSE ──
   html += '<div class="analyse-block">';
   html += '<div class="analyse-block-header">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg></span> AI ANALYSE</div>';
+  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg></span> AI ANALYSE</div>';
   html += '</div>';
 
   if (!m) {
@@ -316,17 +333,17 @@ function renderAnalyseScreen() {
     html += '<div id="rb-kans"></div><div id="rb-risico"></div><div id="rb-advies"></div><div id="rb-tip"></div>';
     html += '<div id="matchChatSection" style="display:none;margin-top:.75rem;">';
     html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:#00a8ad;">💬 VRAAG AAN AI</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:#085c3a;">💬 VRAAG AAN AI</div>';
     html += '<button onclick="document.getElementById(\'matchChatSection\').style.display=\'none\'" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.8rem;margin-left:auto;">✕</button>';
     html += '</div>';
     html += '<div id="chatMessages" style="max-height:260px;overflow-y:auto;margin-bottom:.5rem;"></div>';
     html += '<div style="display:flex;gap:.4rem;">';
-    html += '<input id="chatInput" type="text" placeholder="Stel een vraag..." style="flex:1;font-family:monospace;font-size:.58rem;padding:.45rem .65rem;border-radius:8px;border:1px solid var(--stroke);background:var(--card);color:var(--ink);outline:none;" onkeydown="if(event.key===\'Enter\')sendMatchChat()">';
-    html += '<button onclick="sendMatchChat()" style="padding:.45rem .7rem;border-radius:8px;background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.25);color:#00a8ad;cursor:pointer;">➤</button>';
+    html += '<input id="chatInput" type="text" placeholder="Stel een vraag..." style="flex:1;font-family:monospace;font-size:.58rem;padding:.45rem .65rem;border-radius:8px;border:1px solid rgba(21,32,56,0.15);background:#dde5ee;color:var(--ink);outline:none;" onkeydown="if(event.key===\'Enter\')sendMatchChat()">';
+    html += '<button onclick="sendMatchChat()" style="padding:.45rem .7rem;border-radius:8px;background:rgba(10,138,95,.12);border:1px solid rgba(10,138,95,.25);color:#085c3a;cursor:pointer;">➤</button>';
     html += '</div>';
     html += '<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.4rem;" id="chatSuggestions"></div>';
     html += '</div>';
-    html += '<button id="openChatBtn" onclick="openMatchChat()" style="width:100%;margin-top:.5rem;padding:.45rem;border-radius:8px;background:rgba(0,190,196,.07);border:1px solid rgba(0,190,196,.18);font-family:monospace;font-size:.55rem;font-weight:700;color:#00a8ad;cursor:pointer;display:none;">💬 Vraag stellen aan AI</button>';
+    html += '<button id="openChatBtn" onclick="openMatchChat()" style="width:100%;margin-top:.5rem;padding:.45rem;border-radius:8px;background:rgba(10,138,95,.07);border:1px solid rgba(10,138,95,.18);font-family:monospace;font-size:.55rem;font-weight:700;color:#085c3a;cursor:pointer;display:none;">💬 Vraag stellen aan AI</button>';
     html += '</div>';
   }
   html += '</div>';
@@ -335,27 +352,27 @@ function renderAnalyseScreen() {
   if (scanROI !== null || weekScans.length > 0) {
     html += '<div class="analyse-block">';
     html += '<div class="analyse-block-header">';
-    html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> STATISTIEKEN</div>';
+    html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> STATISTIEKEN</div>';
     html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);">' + settledPicks.length + '/100 picks</div>';
     html += '</div>';
 
     if (scanROI !== null) {
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.4rem;letter-spacing:.06em;">TRACKRECORD</div>';
       html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.7rem;">';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (scanHitrate>=50?'#00BEC4':'#dc2626') + ';">' + scanHitrate + '%</div><div class="analyse-stat-label">HITRATE</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (scanROI>=0?'#00BEC4':'#dc2626') + ';">' + (scanROI>=0?'+':'') + scanROI + '%</div><div class="analyse-stat-label">ROI</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (isCalibrated?'#00BEC4':'#d97706') + ';">' + (isCalibrated?'✓':(settledPicks.length+'/10')) + '</div><div class="analyse-stat-label">' + (isCalibrated?'GECALIB.':'AI LEERT') + '</div></div>';
+      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (scanHitrate>=50?'#0a8a5f':'#dc2626') + ';">' + scanHitrate + '%</div><div class="analyse-stat-label">HITRATE</div></div>';
+      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (scanROI>=0?'#0a8a5f':'#dc2626') + ';">' + (scanROI>=0?'+':'') + scanROI + '%</div><div class="analyse-stat-label">ROI</div></div>';
+      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (isCalibrated?'#0a8a5f':'#d97706') + ';">' + (isCalibrated?'✓':(settledPicks.length+'/10')) + '</div><div class="analyse-stat-label">' + (isCalibrated?'GECALIB.':'AI LEERT') + '</div></div>';
       html += '</div>';
-      html += '<div class="analyse-progress-bar"><div style="background:linear-gradient(90deg,#00BEC4,#00a8ad);height:100%;border-radius:999px;width:' + Math.min(100,settledPicks.length) + '%;transition:width .4s;"></div></div>';
+      html += '<div class="analyse-progress-bar"><div style="background:linear-gradient(90deg,#0a8a5f,#085c3a);height:100%;border-radius:999px;width:' + Math.min(100,settledPicks.length) + '%;transition:width .4s;"></div></div>';
     }
 
     if (weekScans.length > 0) {
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin:' + (scanROI!==null?'.7rem':'0') + ' 0 .4rem;letter-spacing:.06em;">DEZE WEEK</div>';
       html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.35rem;">';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#2563eb;">' + weekScans.length + '</div><div class="analyse-stat-label">SCANS</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#00a8ad;">' + weekPicks.length + '</div><div class="analyse-stat-label">PICKS</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (weekHR!==null&&weekHR>=50?'#00BEC4':'#dc2626') + ';">' + (weekHR!==null?weekHR+'%':'—') + '</div><div class="analyse-stat-label">HITRATE</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#00BEC4;">' + weekPicks.filter(p=>p.status==='pending').length + '</div><div class="analyse-stat-label">OPEN</div></div>';
+      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#0a8a5f;">' + weekScans.length + '</div><div class="analyse-stat-label">SCANS</div></div>';
+      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#085c3a;">' + weekPicks.length + '</div><div class="analyse-stat-label">PICKS</div></div>';
+      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (weekHR!==null&&weekHR>=50?'#0a8a5f':'#dc2626') + ';">' + (weekHR!==null?weekHR+'%':'—') + '</div><div class="analyse-stat-label">HITRATE</div></div>';
+      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#0a8a5f;">' + weekPicks.filter(p=>p.status==='pending').length + '</div><div class="analyse-stat-label">OPEN</div></div>';
       html += '</div>';
     }
     html += '</div>';
@@ -363,24 +380,74 @@ function renderAnalyseScreen() {
 
   // ── 4. COMBI TIPS ──
   html += '<div class="analyse-block">';
-  html += '<div class="analyse-block-header"><div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v3c0 3.3 2.7 6 6 6h6c3.3 0 6-2.7 6-6V5a1 1 0 0 0-1-1h-3"/><path d="M7 4h10v8a5 5 0 0 1-10 0V4z"/></svg></span> COMBI TIPS</div></div>';
-  html += '<button id="combiGenBtn" onclick="generateCombiTip()" class="analyse-btn-primary" style="background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.8));color:#fff;border:none;">⚡ GENEREER TOP 3 TIPS + COMBI</button>';
+  html += '<div class="analyse-block-header"><div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v3c0 3.3 2.7 6 6 6h6c3.3 0 6-2.7 6-6V5a1 1 0 0 0-1-1h-3"/><path d="M7 4h10v8a5 5 0 0 1-10 0V4z"/></svg></span> COMBI TIPS</div></div>';
+  html += '<button id="combiGenBtn" onclick="generateCombiTip()" class="analyse-btn-primary" style="background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.8));color:#fff;border:none;">⚡ GENEREER TOP 3 TIPS + COMBI</button>';
   html += '<div id="combiCard" style="display:none;margin-top:.6rem;"></div>';
   html += '</div>';
 
   // ── 5. SCAN LOG ──
   html += '<div class="analyse-block" id="analyse-scanlog-block">';
   html += '<div class="analyse-block-header" onclick="renderScanLog();" style="cursor:pointer;">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> SCAN LOG</div>';
+  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> SCAN LOG</div>';
   html += '<span style="font-size:.7rem;color:var(--sub);font-family:\'IBM Plex Mono\',monospace;">tik om te laden ▼</span>';
   html += '</div>';
   html += '<div id="scan-log-content"></div>';
   html += '</div>';
 
+  // Sluit scan tab div
+  html += '</div>'; // at-scan-content
+
+  // AI Analyse tab (inhoud al in html gebouwd door bestaande code blokken 2)
+  html += '<div id="at-ai-content" style="display:'+aiVisible+'">';
+  // AI Analyse blok wordt hieronder toegevoegd door bestaande code
+
+  // Stats tab — analytics inhoud
+  html += '</div>'; // at-ai-content
+  html += '<div id="at-stats-content" style="display:'+statsVisible+'">';
+  // Analytics wordt inline gebouwd
+  const localStats = typeof _calcLocalStats === 'function' ? _calcLocalStats() : null;
+  if (localStats) {
+    html += '<div class="analytics-block" style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
+    html += '<div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11px;font-weight:700;color:#607080;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:10px;">Trackrecord · ' + localStats.settled.length + '/100 picks</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">';
+    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:18px;font-weight:800;color:' + (localStats.hitrate>=50?'#0a8a5f':'#e8404a') + ';">' + (localStats.hitrate!==null?localStats.hitrate+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Hitrate</div></div>';
+    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:18px;font-weight:800;color:' + (localStats.roi>=0?'#0a8a5f':'#e8404a') + ';">' + (localStats.roi!==null?(localStats.roi>=0?'+':'')+localStats.roi.toFixed(1)+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">ROI</div></div>';
+    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:18px;font-weight:800;color:' + (localStats.settled.length>=10?'#0a8a5f':'#f5a623') + ';">' + (localStats.settled.length>=10?'✓':localStats.settled.length+'/10') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">' + (localStats.settled.length>=10?'Gecalib.':'AI Leert') + '</div></div>';
+    html += '</div>';
+    html += '<div style="background:rgba(21,32,56,.08);border-radius:999px;height:5px;overflow:hidden;"><div style="height:100%;width:'+Math.min(100,localStats.settled.length)+'%;border-radius:999px;background:linear-gradient(90deg,#152038,#0a8a5f);transition:width .4s;"></div></div>';
+    html += '</div>';
+
+    // League breakdown
+    if (localStats.leagueBreakdown && localStats.leagueBreakdown.length) {
+      html += '<div class="analytics-block" style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
+      html += '<div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Top Competities</div>';
+      localStats.leagueBreakdown.slice(0,6).forEach(l => {
+        const hr = l.wins && l.settled ? Math.round(l.wins/l.settled*100) : 0;
+        const roi = l.settled ? parseFloat(((l.wins*(l.avgOdds-1)-l.losses)/l.settled*100).toFixed(1)) : 0;
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(21,32,56,.1);">';
+        html += '<div style="font-size:12px;font-weight:600;color:#152038;">' + (l.name||l.league||l.comp||'?') + '</div>';
+        html += '<div style="display:flex;gap:8px;font-size:11px;font-weight:700;">';
+        html += '<span style="color:' + (hr>=50?'#0a8a5f':'#f5a623') + ';">' + hr + '%</span>';
+        html += '<span style="color:' + (roi>=0?'#085c3a':'#e8404a') + ';">' + (roi>=0?'+':'') + roi + '% ROI</span>';
+        html += '<span style="color:#607080;">' + l.settled + 'x</span>';
+        html += '</div></div>';
+      });
+      html += '</div>';
+    }
+  } else {
+    html += '<div style="text-align:center;padding:2rem;color:#607080;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:13px;">Doe eerst een value scan om statistieken te zien.</div>';
+  }
+  html += '</div>'; // at-stats-content
+
+  html += '<div id="at-log-content" style="display:'+logVisible+'">';
+  // Scan log wordt hieronder door renderScanLog gevuld
+  html += '<div id="scan-log-content-inner"></div>';
+  html += '</div>'; // at-log-content
+
   screen.innerHTML = html;
   } catch(e) {
     console.error('[renderAnalyseScreen] fout:', e.message, e.stack);
-    screen.innerHTML = '<div style="padding:2rem;text-align:center;color:#00BEC4;">⚡ Analyse laden...</div>';
+    screen.innerHTML = '<div style="padding:2rem;text-align:center;color:#0a8a5f;">⚡ Analyse laden...</div>';
     return;
   }
   // Veilig laden van scan log
@@ -393,6 +460,30 @@ function renderAnalyseScreen() {
   }, 150);
 }
 
+
+
+// ── ANALYSE SUB-TAB SWITCH ────────────────────────────
+function setAnalyseSubTab(tab) {
+  window._analyseActiveTab = tab;
+  ['scan','ai','stats','log'].forEach(t => {
+    const btn = document.getElementById('atab-' + t);
+    const content = document.getElementById('at-' + t + '-content');
+    if (btn) {
+      btn.style.background = t === tab ? '#152038' : 'transparent';
+      btn.style.color      = t === tab ? '#fff' : '#607080';
+    }
+    if (content) content.style.display = t === tab ? 'block' : 'none';
+  });
+  if (tab === 'log') {
+    setTimeout(() => { if (typeof renderScanLog === 'function') renderScanLog(); }, 50);
+  }
+  if (tab === 'stats') {
+    // Stats worden inline gerenderd bij renderAnalyseScreen
+  }
+}
+
+// Alias voor backward compat
+function showAnalyseSubTab(tab) { setAnalyseSubTab(tab); }
 
 // ── Auto-scan: laad wedstrijden (vandaag+morgen) + scan direct ──
 async function autoScanAndSwitch() {
@@ -437,9 +528,9 @@ function updateAutoScanPanelUI() {
   if (btn) {
     const on = state.settings.autoScan;
     btn.textContent = on ? 'Uitzetten' : 'Inschakelen';
-    btn.style.background    = on ? 'rgba(220,38,38,.1)'   : 'rgba(0,190,196,.1)';
-    btn.style.borderColor   = on ? 'rgba(220,38,38,.35)'  : 'rgba(0,190,196,.35)';
-    btn.style.color         = on ? '#dc2626'              : '#00BEC4';
+    btn.style.background    = on ? 'rgba(220,38,38,.1)'   : 'rgba(10,138,95,.1)';
+    btn.style.borderColor   = on ? 'rgba(220,38,38,.35)'  : 'rgba(10,138,95,.35)';
+    btn.style.color         = on ? '#dc2626'              : '#0a8a5f';
   }
   if (status) {
     const from = state.settings.scanWindowFrom ?? 14;
@@ -865,7 +956,7 @@ SCHAARSE DATA:
     });
     if (savedCount > 0) {
       saveState();
-      showFirebaseStatus(`⚡ ${savedCount} value-pick${savedCount>1?'s':''} opgeslagen in Backtest`, '#00BEC4');
+      showFirebaseStatus(`⚡ ${savedCount} value-pick${savedCount>1?'s':''} opgeslagen in Backtest`, '#0a8a5f');
     }
 
     // Sla scan resultaten op
@@ -963,24 +1054,24 @@ function renderValueBannerInAnalyse(displayScans, total) {
   const medCount = displayScans.filter(s => s.value >= 5 && s.value < 15).length;
   const html = `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .9rem;
-      background:linear-gradient(135deg,rgba(0,190,196,.08),rgba(5,150,105,.05));
-      border-bottom:1px solid rgba(0,190,196,.15);">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#00BEC4;">⚡ VALUE SCAN</div>
+      background:linear-gradient(135deg,rgba(10,138,95,.08),rgba(5,150,105,.05));
+      border-bottom:1px solid rgba(10,138,95,.15);">
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#0a8a5f;">⚡ VALUE SCAN</div>
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">
-        <span style="color:#00BEC4;font-weight:700;">${highCount} sterk</span> · <span style="color:#b45309;font-weight:700;">${medCount} licht</span>
+        <span style="color:#0a8a5f;font-weight:700;">${highCount} sterk</span> · <span style="color:#b45309;font-weight:700;">${medCount} licht</span>
       </div>
     </div>
     ${displayScans.slice(0,6).map(s => {
-      const cls = s.value >= 15 ? '#00BEC4' : '#b45309';
+      const cls = s.value >= 15 ? '#0a8a5f' : '#b45309';
       const sign = s.value > 0 ? '+' : '';
-      return `<div style="display:flex;align-items:center;padding:.55rem .9rem;border-bottom:1px solid var(--stroke);cursor:pointer;" onclick="openValueAnalysis('${s.match.id}')">
+      return `<div style="display:flex;align-items:center;padding:.55rem .9rem;border-bottom:1px solid rgba(21,32,56,0.15);cursor:pointer;" onclick="openValueAnalysis('${s.match.id}')">
         <div style="flex:1;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${s.match.home} vs ${s.match.away}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">${s.pickLabel} · ${s.kans}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):s._hasXG?' (xG)':''} · ${s.reason}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--sub);">📊 ${s.bookmaker||''} · ½K ${(s.kelly||0).toFixed(1)}% · 🎲 ${s.confidence||'?'}/10</div>
         </div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:${cls};">${sign}${Math.round(s.value)}%</div>
-        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#00BEC4;margin-left:.5rem;">${(s.odds||0).toFixed(2)}</div>
+        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#0a8a5f;margin-left:.5rem;">${(s.odds||0).toFixed(2)}</div>
       </div>`;
     }).join('')}
     <div style="padding:.4rem .9rem;text-align:right;">
@@ -1010,7 +1101,7 @@ function renderAnalyseScanResults(scans) {
   const teltNiet = scans.filter(s =>  s.isSparseData || s.value <  DREMPEL.minValue || (s.confidence||0) <  DREMPEL.minConf);
 
   const renderPick = (s, geldig) => {
-    const valColor = !geldig ? '#94a3b8' : s.value >= 15 ? '#00BEC4' : '#b45309';
+    const valColor = !geldig ? '#94a3b8' : s.value >= 15 ? '#0a8a5f' : '#b45309';
     const sign = s.value > 0 ? '+' : '';
     const home = s.match?.home || s.home || '?';
     const away = s.match?.away || s.away || '?';
@@ -1021,7 +1112,7 @@ function renderAnalyseScanResults(scans) {
     // geen Poisson is geen reden meer voor afwijzing
 
     return `<div style="display:flex;align-items:center;padding:.5rem .9rem;
-      border-bottom:1px solid var(--stroke);cursor:pointer;
+      border-bottom:1px solid rgba(21,32,56,0.15);cursor:pointer;
       ${!geldig ? 'opacity:.45;' : ''}"
       onclick="openValueAnalysis('${s.match?.id || s.id}')">
       <div style="flex:1;">
@@ -1032,8 +1123,8 @@ function renderAnalyseScanResults(scans) {
             background:rgba(148,163,184,.15);border:1px solid rgba(148,163,184,.3);
             color:#94a3b8;border-radius:4px;padding:.1rem .3rem;font-weight:700;">
             TELT NIET MEE</span>` : `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;
-            background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);
-            color:#00BEC4;border-radius:4px;padding:.1rem .3rem;font-weight:700;">✓ PICK</span>`}
+            background:rgba(10,138,95,.1);border:1px solid rgba(10,138,95,.25);
+            color:#0a8a5f;border-radius:4px;padding:.1rem .3rem;font-weight:700;">✓ PICK</span>`}
         </div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">
           ${s.pickLabel} · ${s.kans||'?'}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):s._hasXG?' (xG)':''} · ${s.reason||''}
@@ -1047,7 +1138,7 @@ function renderAnalyseScanResults(scans) {
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:${valColor};">
           ${sign}${Math.round(s.value)}%
         </div>
-        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:${geldig ? '#00BEC4' : '#94a3b8'};">
+        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:${geldig ? '#0a8a5f' : '#94a3b8'};">
           ${(s.odds||0).toFixed(2)}
         </div>
       </div>
@@ -1055,12 +1146,12 @@ function renderAnalyseScanResults(scans) {
   };
 
   const html = `
-    <div style="background:var(--card);border:1px solid rgba(0,190,196,.25);border-radius:14px;
+    <div style="background:#dde5ee;border:1px solid rgba(10,138,95,.25);border-radius:14px;
       overflow:hidden;margin-bottom:.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:center;
-        padding:.55rem .9rem;background:linear-gradient(135deg,rgba(0,190,196,.08),rgba(5,150,105,.05));
-        border-bottom:1px solid rgba(0,190,196,.15);">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:800;color:#00BEC4;">
+        padding:.55rem .9rem;background:linear-gradient(135deg,rgba(10,138,95,.08),rgba(5,150,105,.05));
+        border-bottom:1px solid rgba(10,138,95,.15);">
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:800;color:#0a8a5f;">
           ⚡ SCAN RESULTATEN · ${teltMee.length} picks <span style="color:var(--sub);font-weight:400;">van ${scans.length}</span>
         </div>
         <button onclick="document.getElementById('analyseScanResults').innerHTML=''"
@@ -1069,7 +1160,7 @@ function renderAnalyseScanResults(scans) {
       ${teltMee.map(s => renderPick(s, true)).join('')}
       ${teltNiet.length ? `
         <div style="padding:.35rem .9rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;
-          color:var(--sub);background:rgba(15,23,42,.03);border-top:1px solid var(--stroke);">
+          color:var(--sub);background:rgba(15,23,42,.03);border-top:1px solid rgba(21,32,56,0.15);">
           ONDER DREMPEL (value ≥8%, conf ≥6/10)
         </div>
         ${teltNiet.map(s => renderPick(s, false)).join('')}
@@ -1097,9 +1188,9 @@ function openCardPopup(type, data) {
 
   if (type === 'scan') {
     const s = data;
-    const valColor = (s.value||0) >= 15 ? '#00BEC4' : (s.value||0) >= 8 ? '#b45309' : '#64748b';
+    const valColor = (s.value||0) >= 15 ? '#0a8a5f' : (s.value||0) >= 8 ? '#b45309' : '#64748b';
     const tvSign = (s.value||0) > 0 ? '+' : '';
-    const confColor = (s.confidence||0) >= 8 ? '#00BEC4' : (s.confidence||0) >= 6 ? '#d97706' : '#dc2626';
+    const confColor = (s.confidence||0) >= 8 ? '#0a8a5f' : (s.confidence||0) >= 6 ? '#d97706' : '#dc2626';
     content = `
       <div style="font-family:\'DM Sans\',sans-serif;font-size:1.1rem;font-weight:800;color:var(--ink);margin-bottom:.2rem;">
         ${s.home||s.match?.home||'?'} vs ${s.away||s.match?.away||'?'}
@@ -1108,20 +1199,20 @@ function openCardPopup(type, data) {
         ${s.comp||''} · ${s.date||''}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem;">
-        <div style="background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.2);border-radius:12px;padding:.6rem;text-align:center;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#00BEC4;font-weight:700;">PICK</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;font-weight:800;color:#00BEC4;margin-top:.2rem;">${s.pickLabel||s.pick||'?'}</div>
+        <div style="background:rgba(10,138,95,.1);border:1px solid rgba(10,138,95,.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#0a8a5f;font-weight:700;">PICK</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;font-weight:800;color:#0a8a5f;margin-top:.2rem;">${s.pickLabel||s.pick||'?'}</div>
         </div>
-        <div style="background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.2);border-radius:12px;padding:.6rem;text-align:center;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#00BEC4;font-weight:700;">ODDS</div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.35rem;color:#00BEC4;line-height:1;">${parseFloat(s.odds||0).toFixed(2)}</div>
+        <div style="background:rgba(10,138,95,.1);border:1px solid rgba(10,138,95,.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#0a8a5f;font-weight:700;">ODDS</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.35rem;color:#0a8a5f;line-height:1;">${parseFloat(s.odds||0).toFixed(2)}</div>
         </div>
         <div style="background:rgba(${(s.value||0)>=8?'22,163,74':'180,83,9'},.1);border:1px solid rgba(${(s.value||0)>=8?'22,163,74':'180,83,9'},.2);border-radius:12px;padding:.6rem;text-align:center;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:${valColor};font-weight:700;">VALUE</div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.35rem;color:${valColor};line-height:1;">${tvSign}${Math.round(s.value||0)}%</div>
         </div>
       </div>
-      <div style="background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:12px;padding:.65rem .85rem;margin-bottom:.75rem;">
+      <div style="background:rgba(255,255,255,.7);border:1px solid rgba(21,32,56,0.15);border-radius:12px;padding:.65rem .85rem;margin-bottom:.75rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
           <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:var(--sub);">🎯 CONFIDENCE</span>
           <span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${confColor};">${s.confidence||'?'}/10</span>
@@ -1129,7 +1220,7 @@ function openCardPopup(type, data) {
         <div style="background:rgba(0,0,0,.08);border-radius:999px;height:7px;overflow:hidden;">
           <div style="background:${confColor};width:${Math.round((s.confidence||0)/10*100)}%;height:100%;border-radius:999px;"></div>
         </div>
-        ${s.poissonUsed ? `<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#00a8ad;margin-top:.3rem;">📐 Poisson + AI${s._hasXG?' + xG':''} model gebruikt</div>` : ''}
+        ${s.poissonUsed ? `<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#085c3a;margin-top:.3rem;">📐 Poisson + AI${s._hasXG?' + xG':''} model gebruikt</div>` : ''}
         ${s.isSparseData ? `<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#dc2626;margin-top:.2rem;">⚠️ Data schaars</div>` : ''}
         ${typeof renderBullshitBadge === 'function' ? renderBullshitBadge({
           comp: s.comp, leagueName: s.leagueName, leagueId: s.leagueId,
@@ -1140,9 +1231,9 @@ function openCardPopup(type, data) {
       ${s.reason ? `<div style="background:rgba(255,255,255,.8);border-left:3px solid ${valColor};border-radius:0 12px 12px 0;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.8rem;color:#1e293b;line-height:1.7;">${s.reason}</div>` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
         <button onclick="document.getElementById('cardPopupOverlay').remove();openBetModal(null,'${s.match?.id||s.id||''}','${s.pick||''}','${(s.pickLabel||'').replace(/'/g,"\\'")}',${s.odds||2})"
-          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">💶 SINGLE BET</button>
+          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">💶 SINGLE BET</button>
         <button onclick="document.getElementById('cardPopupOverlay').remove();switchScreen('wedstrijden');setTimeout(()=>selectMatchAndAnalyse('${s.match?.id||s.id||''}'),100)"
-          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">🤖 ANALYSEER</button>
+          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">🤖 ANALYSEER</button>
       </div>`;
 
   } else if (type === 'bet') {
@@ -1150,26 +1241,26 @@ function openCardPopup(type, data) {
     const isOpen = b.status === 'pending' || b.status === 'open';
     const isWin = b.status === 'win';
     const pnl = isWin ? (b.stake*(b.odds-1)) : isOpen ? 0 : -(b.stake||0);
-    const pnlColor = isWin ? '#00BEC4' : isOpen ? '#d97706' : '#dc2626';
+    const pnlColor = isWin ? '#0a8a5f' : isOpen ? '#d97706' : '#dc2626';
     const statusLabel = isWin ? '✅ GEWONNEN' : isOpen ? '⏳ OPEN' : '❌ VERLOREN';
     content = `
       <div style="font-family:\'DM Sans\',sans-serif;font-size:1.1rem;font-weight:800;color:var(--ink);margin-bottom:.2rem;">${b.match||b.matchName||'?'}</div>
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);margin-bottom:.85rem;">${b.date||''} · ${b.markt||'1X2'}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem;">
-        <div style="background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);border-radius:12px;padding:.6rem;text-align:center;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#00BEC4;font-weight:700;">PICK</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;font-weight:800;color:#00BEC4;margin-top:.2rem;">${b.pickLabel||b.pick||'?'}</div>
+        <div style="background:rgba(10,138,95,.08);border:1px solid rgba(10,138,95,.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#0a8a5f;font-weight:700;">PICK</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;font-weight:800;color:#0a8a5f;margin-top:.2rem;">${b.pickLabel||b.pick||'?'}</div>
         </div>
-        <div style="background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);border-radius:12px;padding:.6rem;text-align:center;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#00BEC4;font-weight:700;">INZET @ ODDS</div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;line-height:1.2;">€${b.stake||0} @ ${parseFloat(b.odds||0).toFixed(2)}</div>
+        <div style="background:rgba(10,138,95,.08);border:1px solid rgba(10,138,95,.2);border-radius:12px;padding:.6rem;text-align:center;">
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#0a8a5f;font-weight:700;">INZET @ ODDS</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#0a8a5f;line-height:1.2;">€${b.stake||0} @ ${parseFloat(b.odds||0).toFixed(2)}</div>
         </div>
         <div style="background:rgba(${isWin?'22,163,74':isOpen?'180,83,9':'220,38,38'},.08);border:1px solid rgba(${isWin?'22,163,74':isOpen?'180,83,9':'220,38,38'},.2);border-radius:12px;padding:.6rem;text-align:center;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:${pnlColor};font-weight:700;">STATUS</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:${pnlColor};margin-top:.2rem;">${statusLabel}</div>
         </div>
       </div>
-      ${b.note ? `<div style="background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:10px;padding:.6rem .8rem;margin-bottom:.75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:var(--ink);">📝 ${b.note}</div>` : ''}
+      ${b.note ? `<div style="background:rgba(255,255,255,.7);border:1px solid rgba(21,32,56,0.15);border-radius:10px;padding:.6rem .8rem;margin-bottom:.75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:var(--ink);">📝 ${b.note}</div>` : ''}
       ${!isOpen ? `<div style="background:rgba(${isWin?'22,163,74':'220,38,38'},.08);border:1px solid rgba(${isWin?'22,163,74':'220,38,38'},.2);border-radius:12px;padding:.7rem;text-align:center;margin-bottom:.75rem;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">RESULTAAT</div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;color:${pnlColor};">${isWin?'+':''}€${Math.abs(pnl).toFixed(2)}</div>
@@ -1188,9 +1279,9 @@ function openCardPopup(type, data) {
       </div>
       ${m.homeOdds !== '—' ? `
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem;">
-        <div style="background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);border-radius:12px;padding:.65rem;text-align:center;">
+        <div style="background:rgba(10,138,95,.08);border:1px solid rgba(10,138,95,.2);border-radius:12px;padding:.65rem;text-align:center;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);font-weight:700;">1 THUIS</div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#00BEC4;">${m.homeOdds}</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#0a8a5f;">${m.homeOdds}</div>
         </div>
         <div style="background:rgba(180,83,9,.08);border:1px solid rgba(180,83,9,.2);border-radius:12px;padding:.65rem;text-align:center;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);font-weight:700;">X GELIJK</div>
@@ -1203,9 +1294,9 @@ function openCardPopup(type, data) {
       </div>` : `<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:var(--sub);text-align:center;padding:.75rem;margin-bottom:.75rem;">Geen odds beschikbaar</div>`}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
         <button onclick="document.getElementById('cardPopupOverlay').remove();selectMatchAndAnalyse('${m.id}')"
-          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">🤖 ANALYSEER</button>
+          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">🤖 ANALYSEER</button>
         <button onclick="document.getElementById('cardPopupOverlay').remove();addValuePickToCombi('${m.id}','1','${(m.home||'').replace(/'/g,"\\'")} wint',${m.homeOdds||2},'${(m.home||'').replace(/'/g,"\\'")}','${(m.away||'').replace(/'/g,"\\'")}')"
-          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">➕ COMBI</button>
+          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">➕ COMBI</button>
       </div>`;
   }
 
@@ -1216,7 +1307,7 @@ function openCardPopup(type, data) {
       box-shadow:0 -8px 40px rgba(15,23,42,.2);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;">
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;
-          background:linear-gradient(135deg,#00BEC4,#00a8ad);
+          background:linear-gradient(135deg,#0a8a5f,#085c3a);
           -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
           ${type==='scan'?'VALUE PICK':type==='bet'?'BET DETAILS':type==='match'?'WEDSTRIJD':'TIP'}
         </div>
@@ -1378,42 +1469,42 @@ KWALITEITSREGELS:
     const result = JSON.parse(raw.substring(js, je + 1));
 
     const sectionCard = (icon, title, content, color) => `
-      <div style="background:var(--card);border:1px solid var(--stroke);border-radius:12px;padding:.8rem .9rem;margin-bottom:.6rem;">
+      <div style="background:#dde5ee;border:1px solid rgba(21,32,56,0.15);border-radius:12px;padding:.8rem .9rem;margin-bottom:.6rem;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;
           color:${color||'var(--sub)'};letter-spacing:.07em;margin-bottom:.4rem;">${icon} ${title}</div>
         <div style="font-size:.82rem;line-height:1.7;color:var(--ink);">${content}</div>
       </div>`;
 
-    fill('vorm',    sectionCard('⚡', 'VORM', result.vorm || '—', '#2563eb'));
+    fill('vorm',    sectionCard('⚡', 'VORM', result.vorm || '—', '#0a8a5f'));
     const predBadge = predictions?.advice
-      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API: ${predictions.advice}${predictions.percent?.home !== null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
+      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#0a8a5f;">💡 API: ${predictions.advice}${predictions.percent?.home !== null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
       : '';
-    fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
+    fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#085c3a;">📐 ${poissonStr}</span>` : '') + predBadge, '#085c3a'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', result.tactiek || '—', '#d97706'));
-    fill('kans',    sectionCard('🎯', 'KANSEN', result.kans || '—', '#00BEC4'));
+    fill('kans',    sectionCard('🎯', 'KANSEN', result.kans || '—', '#0a8a5f'));
     fill('risico',  sectionCard('⚠️', 'RISICO', result.risico || '—', '#dc2626'));
-    fill('advies',  sectionCard('💡', 'ADVIES', result.advies || '—', '#00BEC4'));
+    fill('advies',  sectionCard('💡', 'ADVIES', result.advies || '—', '#0a8a5f'));
 
     // Tip sectie
     const tip = result.tip;
     if (tip && tip.pick) {
       state.lastAnalyseTip = { ...tip, matchId: m.id, home: m.home, away: m.away };
       const tv = calcValue(tip.kans, parseFloat(tip.odds));
-      const tvColor = tv >= 15 ? '#00BEC4' : tv >= 5 ? '#b45309' : '#64748b';
-      const kleur = tip.kans >= 70 ? '#00BEC4' : tip.kans >= 55 ? '#d97706' : '#dc2626';
+      const tvColor = tv >= 15 ? '#0a8a5f' : tv >= 5 ? '#b45309' : '#64748b';
+      const kleur = tip.kans >= 70 ? '#0a8a5f' : tip.kans >= 55 ? '#d97706' : '#dc2626';
       const conf = tip.confidence || 5;
-      const confKleur = conf >= 8 ? '#00BEC4' : conf >= 6 ? '#d97706' : '#dc2626';
+      const confKleur = conf >= 8 ? '#0a8a5f' : conf >= 6 ? '#d97706' : '#dc2626';
       const sterren = '⭐'.repeat(Math.min(tip.sterren||3, 5)) + '☆'.repeat(5 - Math.min(tip.sterren||3, 5));
 
       document.getElementById('rb-tip').innerHTML = `
-        <div style="background:linear-gradient(135deg,rgba(0,190,196,.06),rgba(0,190,196,.06));
-          border:1px solid rgba(0,190,196,.15);border-radius:14px;padding:.9rem;margin-bottom:.6rem;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;font-weight:700;letter-spacing:.05em;margin-bottom:.4rem;">🏆 BESTE TIP · ${tip.markt||'Uitslag'}</div>
+        <div style="background:linear-gradient(135deg,rgba(10,138,95,.06),rgba(10,138,95,.06));
+          border:1px solid rgba(10,138,95,.15);border-radius:14px;padding:.9rem;margin-bottom:.6rem;">
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#0a8a5f;font-weight:700;letter-spacing:.05em;margin-bottom:.4rem;">🏆 BESTE TIP · ${tip.markt||'Uitslag'}</div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:var(--ink);margin-bottom:.3rem;">${tip.pick} — ${tip.pickLabel}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;color:#374151;margin-bottom:.5rem;">Quote: <b>${tip.odds}</b> &nbsp;·&nbsp; ${sterren}</div>
           ${tv !== null ? `
-          <div style="display:flex;justify-content:space-between;align-items:center;background:${tv>=5?'rgba(0,190,196,.08)':'rgba(100,116,139,.05)'};
-            border:1px solid ${tv>=5?'rgba(0,190,196,.2)':'rgba(15,23,42,.08)'};border-radius:9px;padding:.5rem .7rem;margin-bottom:.6rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;background:${tv>=5?'rgba(10,138,95,.08)':'rgba(100,116,139,.05)'};
+            border:1px solid ${tv>=5?'rgba(10,138,95,.2)':'rgba(15,23,42,.08)'};border-radius:9px;padding:.5rem .7rem;margin-bottom:.6rem;">
             <div>
               <div style="font-family:monospace;font-size:.52rem;color:var(--sub);font-weight:700;">⚡ VALUE</div>
               <div style="font-family:monospace;font-size:.5rem;color:var(--sub);">${tip.kans}% × ${tip.odds}</div>
@@ -1430,7 +1521,7 @@ KWALITEITSREGELS:
           </div>
           <div style="font-size:.8rem;line-height:1.7;color:#1e293b;margin-bottom:.6rem;padding:.6rem .7rem;
             background:rgba(255,255,255,.7);border-radius:8px;">${tip.redenering||'—'}</div>
-          <div style="background:rgba(255,255,255,.7);border:1px solid var(--stroke);border-radius:9px;padding:.6rem .7rem;margin-bottom:.6rem;">
+          <div style="background:rgba(255,255,255,.7);border:1px solid rgba(21,32,56,0.15);border-radius:9px;padding:.6rem .7rem;margin-bottom:.6rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem;">
               <span style="font-family:monospace;font-size:.52rem;font-weight:700;color:#475569;">🎯 CONFIDENCE</span>
               <span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${confKleur};">${conf}/10</span>
@@ -1442,13 +1533,13 @@ KWALITEITSREGELS:
           </div>
           <div style="display:flex;gap:.4rem;">
             <button onclick="openBetModal(null,'${m.id}','${tip.pick}','${(tip.pickLabel||'').replace(/'/g,"\\'")}',${tip.odds})"
-              style="flex:1;padding:.45rem;border-radius:10px;background:rgba(0,190,196,.12);
-              border:1px solid rgba(0,190,196,.3);font-family:monospace;font-size:.58rem;font-weight:700;
-              color:#00BEC4;cursor:pointer;">💶 SINGLE BET</button>
+              style="flex:1;padding:.45rem;border-radius:10px;background:rgba(10,138,95,.12);
+              border:1px solid rgba(10,138,95,.3);font-family:monospace;font-size:.58rem;font-weight:700;
+              color:#0a8a5f;cursor:pointer;">💶 SINGLE BET</button>
             <button onclick="addValuePickToCombi('${m.id}','${tip.pick}','${(tip.pickLabel||'').replace(/'/g,"\\'")}',${tip.odds},'${(m.home||'').replace(/'/g,"\\'")}','${(m.away||'').replace(/'/g,"\\'")}')"
-              style="flex:1;padding:.45rem;border-radius:10px;background:rgba(0,190,196,.1);
-              border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.58rem;font-weight:700;
-              color:#00a8ad;cursor:pointer;">➕ COMBI</button>
+              style="flex:1;padding:.45rem;border-radius:10px;background:rgba(10,138,95,.1);
+              border:1px solid rgba(10,138,95,.25);font-family:monospace;font-size:.58rem;font-weight:700;
+              color:#085c3a;cursor:pointer;">➕ COMBI</button>
           </div>
         </div>`;
       const chip = document.getElementById('ec-tip');
@@ -1579,11 +1670,11 @@ async function generateCombiTip() {
   if (!allMatches.length) {
     const card = document.getElementById('combiCard');
     if (card) {
-      card.innerHTML = `<div style="text-align:center;padding:1.5rem;background:var(--card);border:1px solid var(--stroke);border-radius:14px;">
+      card.innerHTML = `<div style="text-align:center;padding:1.5rem;background:#dde5ee;border:1px solid rgba(21,32,56,0.15);border-radius:14px;">
         <div style="font-size:1.8rem;margin-bottom:.5rem;">⚽</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:var(--ink);margin-bottom:.4rem;">GEEN WEDSTRIJDEN GELADEN</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:var(--sub);margin-bottom:.8rem;line-height:1.6;">Laad eerst wedstrijden via het Wedstrijden tabblad om combi tips te genereren.</div>
-        <button onclick="switchScreen('wedstrijden')" style="padding:.55rem 1.2rem;border-radius:10px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.8));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">⚽ Naar Wedstrijden →</button>
+        <button onclick="switchScreen('wedstrijden')" style="padding:.55rem 1.2rem;border-radius:10px;background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.8));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">⚽ Naar Wedstrijden →</button>
       </div>`;
       card.style.display = 'block';
     }
@@ -1634,7 +1725,7 @@ async function generateCombiTip() {
   if (!upcomingMatches.length) {
     const card = document.getElementById('combiCard');
     if (card) {
-      card.innerHTML = `<div style="text-align:center;padding:1.5rem;background:var(--card);border:1px solid var(--stroke);border-radius:14px;">
+      card.innerHTML = `<div style="text-align:center;padding:1.5rem;background:#dde5ee;border:1px solid rgba(21,32,56,0.15);border-radius:14px;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:var(--sub);line-height:1.7;">Geen wedstrijden met bruikbare quotes (min. 1.40).<br>Laad meer wedstrijden of kies een andere competitie.</div>
       </div>`;
       card.style.display = 'block';
@@ -1719,7 +1810,7 @@ function renderTop3EnCombi(result) {
   const card = document.getElementById('combiCard');
   if (!card) return;
   const stars = n => '⭐'.repeat(Math.min(n,5));
-  const confColor = n => n >= 8 ? '#00BEC4' : n >= 6 ? '#d97706' : '#dc2626';
+  const confColor = n => n >= 8 ? '#0a8a5f' : n >= 6 ? '#d97706' : '#dc2626';
 
   // Sla tips op voor pop-up
   window._top3Tips = result.top3 || [];
@@ -1727,22 +1818,22 @@ function renderTop3EnCombi(result) {
   const top3Html = (result.top3||[]).map((t,i) => {
     const tv = calcValue(t.vertrouwen * 10, parseFloat(t.odds));
     const tvSign = tv > 0 ? '+' : '';
-    const tvColor = tv >= 15 ? '#00BEC4' : tv >= 5 ? '#b45309' : tv >= 0 ? '#64748b' : '#dc2626';
+    const tvColor = tv >= 15 ? '#0a8a5f' : tv >= 5 ? '#b45309' : tv >= 0 ? '#64748b' : '#dc2626';
     const cc = confColor(t.vertrouwen);
     const cbar = Math.round((t.vertrouwen/10)*100);
     const factoren = Array.isArray(t.factoren) ? t.factoren : [];
     return `<div onclick="openTipPopup(${i})" style="background:rgba(255,255,255,.82);border:1px solid rgba(28,35,48,.08);border-radius:12px;padding:.75rem .9rem;margin-bottom:.5rem;cursor:pointer;active:opacity:.85;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
         <div style="flex:1;"><div style="font-size:.88rem;font-weight:700;color:var(--ink);">${i+1}. ${t.match}</div>
-          <div style="font-family:monospace;font-size:.52rem;color:#00a8ad;margin-top:2px;">📅 ${t.datum||''}</div>
+          <div style="font-family:monospace;font-size:.52rem;color:#085c3a;margin-top:2px;">📅 ${t.datum||''}</div>
         </div>
         <div style="text-align:right;margin-left:.8rem;">
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#00BEC4;">${parseFloat(t.odds||0).toFixed(2)}</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#0a8a5f;">${parseFloat(t.odds||0).toFixed(2)}</div>
           ${tv !== null ? `<div style="font-family:monospace;font-size:.5rem;font-weight:800;color:${tvColor};">⚡ ${tvSign}${Math.round(tv)}% val</div>` : ''}
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;flex-wrap:wrap;">
-        <span style="font-family:monospace;font-size:.6rem;background:rgba(0,190,196,.1);color:#00BEC4;padding:2px 9px;border-radius:4px;font-weight:700;">${t.pick} — ${t.pickLabel}</span>
+        <span style="font-family:monospace;font-size:.6rem;background:rgba(10,138,95,.1);color:#0a8a5f;padding:2px 9px;border-radius:4px;font-weight:700;">${t.pick} — ${t.pickLabel}</span>
         <span style="font-size:.72rem;">${stars(Math.round(t.vertrouwen/2))}</span>
       </div>
       <div style="margin-bottom:.45rem;">
@@ -1755,7 +1846,7 @@ function renderTop3EnCombi(result) {
         </div>
       </div>
       ${t.reden ? `<div style="font-size:.76rem;color:#1e293b;line-height:1.65;margin-bottom:.4rem;padding:.45rem .6rem;background:rgba(255,255,255,.6);border-radius:7px;border-left:2.5px solid ${tvColor};">${t.reden}</div>` : ''}
-      ${factoren.length ? `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-bottom:.3rem;">${factoren.map(f=>`<span style="font-family:monospace;font-size:.46rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.18);color:#00a8ad;">${f}</span>`).join('')}</div>` : ''}
+      ${factoren.length ? `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-bottom:.3rem;">${factoren.map(f=>`<span style="font-family:monospace;font-size:.46rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(10,138,95,.08);border:1px solid rgba(10,138,95,.18);color:#085c3a;">${f}</span>`).join('')}</div>` : ''}
       ${t.risico ? `<div style="font-family:monospace;font-size:.47rem;padding:3px 9px;border-radius:999px;display:inline-block;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.18);color:#dc2626;">⚠ ${t.risico}</div>` : ''}
       <div style="font-family:monospace;font-size:.44rem;color:var(--sub);margin-top:.35rem;text-align:right;">Tik voor details →</div>
     </div>`;
@@ -1772,40 +1863,40 @@ function renderTop3EnCombi(result) {
       background:rgba(255,255,255,.7);border-radius:10px;margin-bottom:.4rem;border:1px solid rgba(28,35,48,.08);">
       <div style="flex:1;">
         <div style="font-size:.82rem;font-weight:700;color:var(--ink);">${i+1}. ${l.match}</div>
-        <div style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📅 ${l.datum||''}</div>
-        <div style="font-family:monospace;font-size:.55rem;color:#00BEC4;font-weight:700;margin-top:3px;">${l.pick} — ${l.pickLabel}</div>
+        <div style="font-family:monospace;font-size:.5rem;color:#085c3a;">📅 ${l.datum||''}</div>
+        <div style="font-family:monospace;font-size:.55rem;color:#0a8a5f;font-weight:700;margin-top:3px;">${l.pick} — ${l.pickLabel}</div>
       </div>
-      <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:#00BEC4;">${parseFloat(l.odds||0).toFixed(2)}</div>
+      <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:#0a8a5f;">${parseFloat(l.odds||0).toFixed(2)}</div>
     </div>`).join('');
 
   window._lastAICombi = legs;
 
   card.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;">
-      <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;color:#00BEC4;">🏆 TOP 3 TIPS</div>
+      <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;color:#0a8a5f;">🏆 TOP 3 TIPS</div>
       <div style="font-family:monospace;font-size:.5rem;color:var(--sub);">📅 ${new Date().toLocaleString('nl-NL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
     </div>
     ${top3Html}
     <div style="height:1px;background:rgba(28,35,48,.08);margin:1rem 0;"></div>
-    <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;color:#00BEC4;margin-bottom:.6rem;">⚡ AI COMBI</div>
+    <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;color:#0a8a5f;margin-bottom:.6rem;">⚡ AI COMBI</div>
     ${legsHtml}
     <div style="background:rgba(255,255,255,.85);border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:.85rem;margin:.7rem 0;">
       <div style="font-size:.84rem;line-height:1.75;color:var(--ink);margin-bottom:.5rem;">${combi.redenering||''}</div>
-      ${combi.synergie ? `<div style="background:rgba(0,190,196,.06);border-left:3px solid #2563eb;padding:.5rem .7rem;border-radius:0 8px 8px 0;margin-bottom:.4rem;">
-        <div style="font-family:monospace;font-size:.52rem;color:#2563eb;font-weight:700;">🔗 SYNERGIE</div>
+      ${combi.synergie ? `<div style="background:rgba(10,138,95,.06);border-left:3px solid #0a8a5f;padding:.5rem .7rem;border-radius:0 8px 8px 0;margin-bottom:.4rem;">
+        <div style="font-family:monospace;font-size:.52rem;color:#0a8a5f;font-weight:700;">🔗 SYNERGIE</div>
         <div style="font-size:.78rem;">${combi.synergie}</div></div>` : ''}
       ${combi.risico ? `<div style="background:rgba(220,38,38,.05);border-left:3px solid #dc2626;padding:.5rem .7rem;border-radius:0 8px 8px 0;">
         <div style="font-family:monospace;font-size:.52rem;color:#dc2626;font-weight:700;">⚠ RISICO</div>
         <div style="font-size:.78rem;">${combi.risico}</div></div>` : ''}
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,190,196,.08);border-radius:10px;padding:.65rem .9rem;margin-bottom:.7rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(10,138,95,.08);border-radius:10px;padding:.65rem .9rem;margin-bottom:.7rem;">
       <div><div style="font-size:.5rem;color:#475569;font-family:monospace;">QUOTE</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;">${totalOdds.toFixed(2)}</div></div>
       <div style="text-align:center;"><div style="font-size:.5rem;color:#475569;font-family:monospace;">KANS</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;color:#d97706;">${kansStr}%</div></div>
-      <div style="text-align:right;"><div style="font-size:.5rem;color:#475569;font-family:monospace;">€${defaultBet}</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;color:#00BEC4;">€${payout}</div></div>
+      <div style="text-align:right;"><div style="font-size:.5rem;color:#475569;font-family:monospace;">€${defaultBet}</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;color:#0a8a5f;">€${payout}</div></div>
     </div>
     <button onclick="loadAICombiIntoBuilder()"
-      style="width:100%;background:linear-gradient(135deg,rgba(0,190,196,.2),rgba(0,190,196,.2));
-      border:1px solid rgba(0,190,196,.35);color:var(--ink);font-family:monospace;font-size:.65rem;
+      style="width:100%;background:linear-gradient(135deg,rgba(10,138,95,.2),rgba(10,138,95,.2));
+      border:1px solid rgba(10,138,95,.35);color:var(--ink);font-family:monospace;font-size:.65rem;
       font-weight:700;padding:.7rem;border-radius:10px;cursor:pointer;">
       🎰 ZET IN BUILDER
     </button>`;
@@ -1817,8 +1908,8 @@ function openTipPopup(index) {
   if (!t) return;
   const tv = calcValue(t.vertrouwen * 10, parseFloat(t.odds));
   const tvSign = tv > 0 ? '+' : '';
-  const tvColor = tv >= 15 ? '#00BEC4' : tv >= 5 ? '#b45309' : '#64748b';
-  const confColor = t.vertrouwen >= 8 ? '#00BEC4' : t.vertrouwen >= 6 ? '#d97706' : '#dc2626';
+  const tvColor = tv >= 15 ? '#0a8a5f' : tv >= 5 ? '#b45309' : '#64748b';
+  const confColor = t.vertrouwen >= 8 ? '#0a8a5f' : t.vertrouwen >= 6 ? '#d97706' : '#dc2626';
   const stars = '⭐'.repeat(Math.min(Math.round(t.vertrouwen/2), 5));
   const factoren = Array.isArray(t.factoren) ? t.factoren : [];
 
@@ -1842,7 +1933,7 @@ function openTipPopup(index) {
       <!-- Header -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;
-          background:linear-gradient(135deg,#00BEC4,#00a8ad);
+          background:linear-gradient(135deg,#0a8a5f,#085c3a);
           -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
           TIP DETAILS
         </div>
@@ -1855,19 +1946,19 @@ function openTipPopup(index) {
       <div style="font-family:\'DM Sans\',sans-serif;font-size:1.15rem;font-weight:800;
         color:var(--ink);margin-bottom:.25rem;">${t.match}</div>
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;
-        color:#00a8ad;margin-bottom:.9rem;">📅 ${t.datum||''} · ${t.markt||'Uitslag'}</div>
+        color:#085c3a;margin-bottom:.9rem;">📅 ${t.datum||''} · ${t.markt||'Uitslag'}</div>
 
       <!-- Pick + odds + value -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.9rem;">
-        <div style="background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);
+        <div style="background:rgba(10,138,95,.1);border:1px solid rgba(10,138,95,.25);
           border-radius:12px;padding:.6rem;text-align:center;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#00BEC4;font-weight:700;">PICK</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#00BEC4;margin-top:.2rem;">${t.pickLabel}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#0a8a5f;font-weight:700;">PICK</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#0a8a5f;margin-top:.2rem;">${t.pickLabel}</div>
         </div>
-        <div style="background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);
+        <div style="background:rgba(10,138,95,.1);border:1px solid rgba(10,138,95,.25);
           border-radius:12px;padding:.6rem;text-align:center;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#00BEC4;font-weight:700;">ODDS</div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#00BEC4;line-height:1;">${parseFloat(t.odds||0).toFixed(2)}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#0a8a5f;font-weight:700;">ODDS</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#0a8a5f;line-height:1;">${parseFloat(t.odds||0).toFixed(2)}</div>
         </div>
         <div style="background:rgba(${tv>=8?'22,163,74':'180,83,9'},.1);border:1px solid rgba(${tv>=8?'22,163,74':'180,83,9'},.25);
           border-radius:12px;padding:.6rem;text-align:center;">
@@ -1877,7 +1968,7 @@ function openTipPopup(index) {
       </div>
 
       <!-- Confidence -->
-      <div style="background:rgba(255,255,255,.7);border:1px solid var(--stroke);
+      <div style="background:rgba(255,255,255,.7);border:1px solid rgba(21,32,56,0.15);
         border-radius:12px;padding:.7rem .9rem;margin-bottom:.75rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:var(--sub);">
@@ -1902,8 +1993,8 @@ function openTipPopup(index) {
       ${factoren.length ? `<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.75rem;">
         ${factoren.map(f=>`<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;
           font-weight:700;padding:.2rem .55rem;border-radius:999px;
-          background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);
-          color:#00a8ad;">${f}</span>`).join('')}
+          background:rgba(10,138,95,.08);border:1px solid rgba(10,138,95,.2);
+          color:#085c3a;">${f}</span>`).join('')}
       </div>` : ''}
 
       <!-- Risico -->
@@ -1919,7 +2010,7 @@ function openTipPopup(index) {
         <button onclick="document.getElementById('tipPopupOverlay').remove();
           openBetModal(null,'${t.fixtureId||''}','${t.pick}','${(t.pickLabel||'').replace(/'/g,"\\'")}',${t.odds})"
           style="padding:.7rem;border-radius:12px;
-          background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));
+          background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.6));
           color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;
           font-size:.62rem;font-weight:800;cursor:pointer;">
           💶 SINGLE BET
@@ -1927,7 +2018,7 @@ function openTipPopup(index) {
         <button onclick="document.getElementById('tipPopupOverlay').remove();
           addValuePickToCombi('${t.fixtureId||''}','${t.pick}','${(t.pickLabel||'').replace(/'/g,"\\'")}',${t.odds},'${(t.match||'').replace(/'/g,"\\'")}','')"
           style="padding:.7rem;border-radius:12px;
-          background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));
+          background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.6));
           color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;
           font-size:.62rem;font-weight:800;cursor:pointer;">
           ➕ COMBI
@@ -2373,7 +2464,7 @@ function renderScanLog() {
   }
 
   function hrColor(hr) {
-    return hr >= 55 ? '#00BEC4' : hr >= 45 ? '#d97706' : '#dc2626';
+    return hr >= 55 ? '#0a8a5f' : hr >= 45 ? '#d97706' : '#dc2626';
   }
 
   let html = '';
@@ -2397,17 +2488,17 @@ function renderScanLog() {
     + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\',odds:\'\',sort:\'newest\',sharp:false};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
     + '</div>'
     + '<div style="display:flex;gap:.3rem;flex-wrap:wrap;">'
-    + '<select onchange="window._scanFilter.conf=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.conf?'rgba(0,190,196,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.conf=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.conf?'rgba(10,138,95,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Conf</option>'
     + [6,7,8,9,10].map(c => '<option value="'+c+'"'+(F.conf===String(c)?' selected':'')+'>conf '+c+'</option>').join('')
     + '</select>'
-    + '<select onchange="window._scanFilter.pick=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.pick?'rgba(0,190,196,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.pick=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.pick?'rgba(10,138,95,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Pick type</option>'
     + '<option value="1"'+(F.pick==="1"?' selected':'')+'>🏠 Thuis</option>'
     + '<option value="X"'+(F.pick==="X"?' selected':'')+'>🤝 Gelijk</option>'
     + '<option value="2"'+(F.pick==="2"?' selected':'')+'>✈️ Uit</option>'
     + '</select>'
-    + '<select onchange="window._scanFilter.status=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.status?'rgba(0,190,196,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.status=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.status?'rgba(10,138,95,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Status</option>'
     + '<option value="win"'+(F.status==="win"?' selected':'')+'>✅ Win</option>'
     + '<option value="lose"'+(F.status==="lose"?' selected':'')+'>❌ Verlies</option>'
@@ -2415,7 +2506,7 @@ function renderScanLog() {
     + '</select>'
 
     // Odds range filter
-    + '<select onchange="window._scanFilter.odds=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.odds?'rgba(0,190,196,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.odds=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.odds?'rgba(10,138,95,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Odds</option>'
     + '<option value="1.0-1.5"'+(F.odds==="1.0-1.5"?' selected':'')+'>1.0–1.5</option>'
     + '<option value="1.5-2.0"'+(F.odds==="1.5-2.0"?' selected':'')+'>1.5–2.0</option>'
@@ -2425,7 +2516,7 @@ function renderScanLog() {
     + '</select>'
 
     // Sorteer optie
-    + '<select onchange="window._scanFilter.sort=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.sort!=="newest"?'rgba(0,190,196,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.sort=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid var(--border);background:' + (F.sort!=="newest"?'rgba(10,138,95,.12)':'var(--bg)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
     + '<option value="newest"'+(F.sort==="newest"?' selected':'')+'>🕐 Nieuwst</option>'
     + '<option value="value"'+(F.sort==="value"?' selected':'')+'>📈 Value%</option>'
     + '<option value="odds"'+(F.sort==="odds"?' selected':'')+'>🎯 Odds</option>'
@@ -2443,10 +2534,10 @@ function renderScanLog() {
 
 
   html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:.8rem;">'
-    + statCard(allPicks.length, 'PICKS' + helpBtn('scan-log'), '#2563eb')
+    + statCard(allPicks.length, 'PICKS' + helpBtn('scan-log'), '#0a8a5f')
     + statCard(hitrate + '%', 'HITRATE' + helpBtn('hitrate'), hrColor(hitrate))
-    + statCard((roi>=0?'+':'') + roi.toFixed(1) + '%', 'ROI' + helpBtn('roi'), roi>=0?'#00BEC4':'#dc2626')
-    + statCard(avgValue.toFixed(1) + '%', 'AVG VALUE' + helpBtn('avg-value'), '#00a8ad')
+    + statCard((roi>=0?'+':'') + roi.toFixed(1) + '%', 'ROI' + helpBtn('roi'), roi>=0?'#0a8a5f':'#dc2626')
+    + statCard(avgValue.toFixed(1) + '%', 'AVG VALUE' + helpBtn('avg-value'), '#085c3a')
     + '</div>';
 
   // ROI curve grafiek
@@ -2544,17 +2635,17 @@ function renderScanLog() {
     // Conclusie gezichtje
     const face = roi >= 15 && hitrate >= 40 ? '😄' : roi >= 5 || hitrate >= 35 ? '🙂' : roi >= 0 ? '😐' : roi >= -10 ? '😕' : '😞';
 
-    html += '<div style="background:linear-gradient(135deg,rgba(0,190,196,.08),rgba(0,190,196,.06));border:1.5px solid rgba(0,190,196,.2);border-radius:16px;padding:.9rem 1rem;margin-bottom:.8rem;">'
+    html += '<div style="background:linear-gradient(135deg,rgba(10,138,95,.08),rgba(10,138,95,.06));border:1.5px solid rgba(10,138,95,.2);border-radius:16px;padding:.9rem 1rem;margin-bottom:.8rem;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;">'
-      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;background:linear-gradient(135deg,#00a8ad,#00BEC4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 ' + _milestone + ' PICKS ANALYSE</div>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;background:linear-gradient(135deg,#085c3a,#0a8a5f);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 ' + _milestone + ' PICKS ANALYSE</div>'
       + '<span style="font-size:1.5rem;">' + face + '</span>'
       + '</div>'
 
       // Samenvatting
       + '<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;margin-bottom:.65rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;line-height:1.8;color:var(--sub);">'
       + '<b style="color:var(--ink);">' + allPicks.length + ' picks</b> geanalyseerd &middot; '
-      + '<b style="color:' + (hitrate>=40?'#00BEC4':hitrate>=30?'#d97706':'#dc2626') + ';">' + hitrate + '% hitrate</b> &middot; '
-      + '<b style="color:' + (roi>=0?'#00BEC4':'#dc2626') + ';">' + (roi>=0?'+':'') + roi.toFixed(1) + '% ROI</b>'
+      + '<b style="color:' + (hitrate>=40?'#0a8a5f':hitrate>=30?'#d97706':'#dc2626') + ';">' + hitrate + '% hitrate</b> &middot; '
+      + '<b style="color:' + (roi>=0?'#0a8a5f':'#dc2626') + ';">' + (roi>=0?'+':'') + roi.toFixed(1) + '% ROI</b>'
       + '</div>'
 
       // Odds range analyse
@@ -2565,7 +2656,7 @@ function renderScanLog() {
           const tot = results.length;
           const wr = tot ? Math.round(results.filter(r=>r.win).length/tot*100) : null;
           const avgRoi = tot ? results.reduce((s,r)=>s+r.roi,0)/tot : 0;
-          const col = wr===null?'var(--sub)':wr>=50?'#00BEC4':wr>=35?'#d97706':'#dc2626';
+          const col = wr===null?'var(--sub)':wr>=50?'#0a8a5f':wr>=35?'#d97706':'#dc2626';
           return '<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem .2rem;">'
             + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);">' + range + '</div>'
             + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:' + col + ';">' + (wr===null?'—':wr+'%') + '</div>'
@@ -2581,7 +2672,7 @@ function renderScanLog() {
       + Object.entries(byConf).map(([conf, results]) => {
           const tot = results.length;
           const wr = tot ? Math.round(results.filter(Boolean).length/tot*100) : 0;
-          const col = wr>=50?'#00BEC4':wr>=35?'#d97706':'#dc2626';
+          const col = wr>=50?'#0a8a5f':wr>=35?'#d97706':'#dc2626';
           const h = tot ? Math.max(15, Math.round(wr * 0.4)) : 5;
           return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">'
             + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:' + col + ';font-weight:700;">' + (tot?wr+'%':'—') + '</div>'
@@ -2597,20 +2688,20 @@ function renderScanLog() {
         + topComps.map(([comp, s]) => {
             const hr = Math.round(s.wins/s.total*100);
             const avgRoi = (s.roi/s.total).toFixed(1);
-            const col = hr>=50?'#00BEC4':hr>=35?'#d97706':'#dc2626';
+            const col = hr>=50?'#0a8a5f':hr>=35?'#d97706':'#dc2626';
             return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem 0;border-bottom:1px solid var(--border);">'
               + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + comp + '</div>'
               + '<div style="display:flex;gap:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
               + '<span style="color:' + col + ';font-weight:700;">' + hr + '%</span>'
-              + '<span style="color:' + (parseFloat(avgRoi)>=0?'#00BEC4':'#dc2626') + ';">' + (parseFloat(avgRoi)>=0?'+':'') + avgRoi + '% ROI</span>'
+              + '<span style="color:' + (parseFloat(avgRoi)>=0?'#0a8a5f':'#dc2626') + ';">' + (parseFloat(avgRoi)>=0?'+':'') + avgRoi + '% ROI</span>'
               + '<span style="color:var(--sub);">' + s.total + 'x</span>'
               + '</div></div>';
           }).join('')
         + '</div>' : '')
 
       // Beste pick type conclusie
-      + (bestType ? '<div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.5rem .7rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);">'
-        + '💡 <b style="color:var(--ink);">Beste pick type:</b> <span style="color:#00BEC4;font-weight:700;">'
+      + (bestType ? '<div style="background:rgba(10,138,95,.06);border:1px solid rgba(10,138,95,.2);border-radius:10px;padding:.5rem .7rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);">'
+        + '💡 <b style="color:var(--ink);">Beste pick type:</b> <span style="color:#0a8a5f;font-weight:700;">'
         + (bestType[0]==='1'?'Thuisploeg wint':bestType[0]==='2'?'Uitploeg wint':bestType[0]==='X'?'Gelijkspel':bestType[0])
         + '</span> · ' + Math.round(bestType[1].wins/bestType[1].total*100) + '% hitrate (' + bestType[1].total + 'x)'
         + '</div>' : '')
@@ -2670,7 +2761,7 @@ function renderScanLog() {
           })()
         + '</div>'
         + '<div style="display:flex;gap:.4rem;align-items:center;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
-        + (sw ? '<span style="background:#dcfce7;color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;font-weight:700;border-radius:99px;padding:.1rem .4rem;">' + sw + 'W</span>' : '')
+        + (sw ? '<span style="background:#dcfce7;color:#0a8a5f;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;font-weight:700;border-radius:99px;padding:.1rem .4rem;">' + sw + 'W</span>' : '')
         + (sl ? '<span style="background:#fee2e2;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;font-weight:700;border-radius:99px;padding:.1rem .4rem;">' + sl + 'V</span>' : '')
         + (sp ? '<span style="background:rgba(201,168,76,.15);color:#92710a;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;font-weight:700;border-radius:99px;padding:.1rem .4rem;">' + sp + '⏳</span>' : '')
               + '<span style="font-size:1rem;">' + scanFace + '</span>'
@@ -2689,15 +2780,15 @@ function renderScanLog() {
         var manualBtn = p.status === 'pending'
           ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" data-match="' + (p.match||'').replace(/"/g,'') + '" '
             + 'style="font-family:monospace;font-size:.44rem;padding:2px 7px;border-radius:6px;'
-            + 'background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);'
-            + 'color:#2563eb;cursor:pointer;white-space:nowrap;flex-shrink:0;">✏ Score</button>'
+            + 'background:rgba(10,138,95,.08);border:1px solid rgba(10,138,95,.2);'
+            + 'color:#0a8a5f;cursor:pointer;white-space:nowrap;flex-shrink:0;">✏ Score</button>'
           : '';
         var deletePickBtn = '<button class="delete-pick-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" '
           + 'style="font-family:monospace;font-size:.44rem;padding:2px 6px;border-radius:6px;'
           + 'background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);'
           + 'color:#dc2626;cursor:pointer;white-space:nowrap;flex-shrink:0;">🗑</button>';
         const sharpBadge = p.sharp ? '<span style="font-size:.38rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;margin-left:.3rem;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">🔥 SHARP ' + (p.sharpMove ? p.sharpMove.toFixed(1)+'%' : '') + '</span>' : '';
-        const vColor = (p.value||0) >= 20 ? '#00BEC4' : (p.value||0) >= 10 ? '#b45309' : '#64748b';
+        const vColor = (p.value||0) >= 20 ? '#0a8a5f' : (p.value||0) >= 10 ? '#b45309' : '#64748b';
         html += '<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-top:1px solid rgba(26,31,60,.07);">'
           + '<div style="width:1.5rem;text-align:center;font-size:.85rem;flex-shrink:0;">' + icon + '</div>'
           + '<div style="flex:1;min-width:0;">'
@@ -2732,7 +2823,7 @@ function renderScanLog() {
     const xP=i=>pad.left+(i/Math.max(points.length-1,1))*cw;
     const yP=v=>pad.top+ch-((v-minV)/range)*ch;
     const lastVal=points[points.length-1], isPos=lastVal>=0;
-    const lineColor=isPos?'#00BEC4':'#dc2626';
+    const lineColor=isPos?'#0a8a5f':'#dc2626';
     ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(148,163,184,.4)'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(pad.left,yP(0)); ctx.lineTo(pad.left+cw,yP(0)); ctx.stroke();
     ctx.setLineDash([]);
@@ -2748,7 +2839,7 @@ function renderScanLog() {
     ctx.strokeStyle=lineColor; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
     settled.forEach((p,i) => {
       ctx.beginPath(); ctx.arc(xP(i+1),yP(points[i+1]),2.5,0,Math.PI*2);
-      ctx.fillStyle=p.status==='win'?'#00BEC4':'#dc2626';
+      ctx.fillStyle=p.status==='win'?'#0a8a5f':'#dc2626';
       ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
     });
     ctx.fillStyle='#94a3b8'; ctx.font='9px monospace'; ctx.textAlign='right';
@@ -2811,7 +2902,7 @@ function showScanPopup(scanIdx) {
   const sl = scan.picks.filter(p=>p.status==='lose').length;
   const sp = scan.picks.filter(p=>p.status==='pending').length;
   const scanHr = (sw+sl) ? Math.round(sw/(sw+sl)*100) : null;
-  const hrColor = n => n >= 55 ? '#00BEC4' : n >= 45 ? '#d97706' : '#dc2626';
+  const hrColor = n => n >= 55 ? '#0a8a5f' : n >= 45 ? '#d97706' : '#dc2626';
   const scanFace = (function() {
     if (!sw && !sl) return '😶';
     var hr = sw / (sw + sl) * 100;
@@ -2829,10 +2920,10 @@ function showScanPopup(scanIdx) {
   let picksHtml = '';
   scan.picks.forEach(function(p) {
     const icon = p.status==='win' ? '✅' : p.status==='lose' ? '❌' : p.status==='void' ? '⬜' : '⏳';
-    const statusColor = p.status==='win' ? '#00BEC4' : p.status==='lose' ? '#dc2626' : p.status==='void' ? '#94a3b8' : '#d97706';
-    const elite = p.elite ? '<span style="background:rgba(0,190,196,.12);color:#00BEC4;border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">⭐ ELITE</span>' : '';
-    const lockBadge = p.lock === 'triple' ? '<span style="background:rgba(0,190,196,.12);color:#00BEC4;border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🏆 TRIPLE</span>'
-      : p.lock === 'double' ? '<span style="background:rgba(0,190,196,.1);color:#1d4ed8;border:1px solid rgba(0,190,196,.2);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🔒 DOUBLE</span>' : '';
+    const statusColor = p.status==='win' ? '#0a8a5f' : p.status==='lose' ? '#dc2626' : p.status==='void' ? '#94a3b8' : '#d97706';
+    const elite = p.elite ? '<span style="background:rgba(10,138,95,.12);color:#0a8a5f;border:1px solid rgba(10,138,95,.25);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">⭐ ELITE</span>' : '';
+    const lockBadge = p.lock === 'triple' ? '<span style="background:rgba(10,138,95,.12);color:#0a8a5f;border:1px solid rgba(10,138,95,.25);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🏆 TRIPLE</span>'
+      : p.lock === 'double' ? '<span style="background:rgba(10,138,95,.1);color:#1d4ed8;border:1px solid rgba(10,138,95,.2);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🔒 DOUBLE</span>' : '';
 
     picksHtml += `<div style="background:rgba(15,23,42,.03);border:1px solid rgba(15,23,42,.07);border-radius:12px;padding:.7rem .85rem;margin-bottom:.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.35rem;">
@@ -2843,11 +2934,11 @@ function showScanPopup(scanIdx) {
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:${statusColor};white-space:nowrap;margin-left:.4rem;">${p.status==='win'?'WIN':p.status==='lose'?'VERLIES':p.status==='void'?'VOID':'PENDING'}</div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.35rem;">
-        <span style="background:rgba(0,190,196,.1);color:#6d28d9;border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;padding:2px 7px;border-radius:4px;">${p.pickLabel||p.pick}</span>
+        <span style="background:rgba(10,138,95,.1);color:#6d28d9;border:1px solid rgba(10,138,95,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;padding:2px 7px;border-radius:4px;">${p.pickLabel||p.pick}</span>
         <span style="background:rgba(15,23,42,.06);color:var(--ink,#0f172a);border:1px solid rgba(15,23,42,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">@ ${p.odds}</span>
-        <span style="background:rgba(0,190,196,.08);color:#1d4ed8;border:1px solid rgba(0,190,196,.18);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">${(p.value||0).toFixed(1)}% value</span>
+        <span style="background:rgba(10,138,95,.08);color:#1d4ed8;border:1px solid rgba(10,138,95,.18);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">${(p.value||0).toFixed(1)}% value</span>
         <span style="background:rgba(15,23,42,.04);color:var(--sub,#64748b);border:1px solid rgba(15,23,42,.08);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">conf ${p.confidence}/10</span>
-        ${p.confidenceFinal ? `<span style="background:rgba(0,190,196,.08);color:#00BEC4;border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">CI ${p.confidenceFinal}</span>` : ''}
+        ${p.confidenceFinal ? `<span style="background:rgba(10,138,95,.08);color:#0a8a5f;border:1px solid rgba(10,138,95,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">CI ${p.confidenceFinal}</span>` : ''}
         ${elite}${lockBadge}
       </div>
       ${p.comp ? `<div style="font-family:monospace;font-size:.42rem;color:var(--sub,#64748b);">${p.comp}${p.score ? ' &middot; Score: <b>' + p.score + '</b>' : ''}</div>` : ''}
@@ -2871,7 +2962,7 @@ function showScanPopup(scanIdx) {
         <div style="display:flex;gap:.5rem;align-items:center;">
           ${scanHr !== null ? `<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:${hrColor(scanHr)};">${scanHr}% HR</div>` : ''}
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">
-            ${sw ? `<span style="color:#00BEC4;">${sw}W</span> ` : ''}${sl ? `<span style="color:#dc2626;">${sl}V</span> ` : ''}${sp ? `<span style="color:#d97706;">${sp}⏳</span>` : ''}
+            ${sw ? `<span style="color:#0a8a5f;">${sw}W</span> ` : ''}${sl ? `<span style="color:#dc2626;">${sl}V</span> ` : ''}${sp ? `<span style="color:#d97706;">${sp}⏳</span>` : ''}
           </div>
           <button onclick="document.getElementById('scanPopupOverlay').remove()"
             style="background:rgba(15,23,42,.07);border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
@@ -2901,7 +2992,7 @@ function showScanLogStatsPopup() {
     ? settled.reduce((s,p) => s + (p.status==='win' ? (p.odds-1) : -1), 0) / settled.length * 100 : 0;
   const avgOdds  = settled.length ? settled.reduce((s,p)=>s+(p.odds||0),0)/settled.length : 0;
   const avgValue = allPicks.length ? allPicks.reduce((s,p)=>s+(p.value||0),0)/allPicks.length : 0;
-  const hrColor  = n => n >= 55 ? '#00BEC4' : n >= 45 ? '#d97706' : '#dc2626';
+  const hrColor  = n => n >= 55 ? '#0a8a5f' : n >= 45 ? '#d97706' : '#dc2626';
 
   // Per type
   const byType = {};
@@ -2946,12 +3037,12 @@ function showScanLogStatsPopup() {
   // Stat blokken
   body += `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-bottom:.8rem;">
     ${[
-      ['PICKS TOTAAL', allPicks.length, '#2563eb'],
-      ['AFGEROND', settled.length, '#00a8ad'],
+      ['PICKS TOTAAL', allPicks.length, '#0a8a5f'],
+      ['AFGEROND', settled.length, '#085c3a'],
       ['HITRATE', hitrate+'%', hrColor(hitrate)],
-      ['ROI', (roi>=0?'+':'')+roi.toFixed(1)+'%', roi>=0?'#00BEC4':'#dc2626'],
+      ['ROI', (roi>=0?'+':'')+roi.toFixed(1)+'%', roi>=0?'#0a8a5f':'#dc2626'],
       ['GEM. ODDS', avgOdds.toFixed(2), '#0f172a'],
-      ['GEM. VALUE', avgValue.toFixed(1)+'%', '#00BEC4'],
+      ['GEM. VALUE', avgValue.toFixed(1)+'%', '#0a8a5f'],
     ].map(([lbl,val,col]) => `<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;text-align:center;">
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${col};">${val}</div>
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub,#64748b);">${lbl}</div>
@@ -2984,7 +3075,7 @@ function showScanLogStatsPopup() {
       body += `<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.3rem;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${comp}</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:${hrColor(hr)};">${hr}%</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:${parseFloat(roi)>=0?'#00BEC4':'#dc2626'};">${parseFloat(roi)>=0?'+':''}${roi}% ROI</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:${parseFloat(roi)>=0?'#0a8a5f':'#dc2626'};">${parseFloat(roi)>=0?'+':''}${roi}% ROI</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">${s.total}x</div>
       </div>`;
     });
@@ -3128,8 +3219,8 @@ function openMatchChat() {
     sugg.innerHTML = suggestions.map(s =>
       `<button onclick="setChatInput('${s}')"
         style="font-family:monospace;font-size:.46rem;padding:2px 8px;border-radius:999px;
-        background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);
-        color:#00a8ad;cursor:pointer;white-space:nowrap;">${s}</button>`
+        background:rgba(10,138,95,.08);border:1px solid rgba(10,138,95,.2);
+        color:#085c3a;cursor:pointer;white-space:nowrap;">${s}</button>`
     ).join('');
   }
 
@@ -3149,8 +3240,8 @@ function appendChatMsg(role, text, isLoading = false) {
   div.style.cssText = `display:flex;justify-content:${isUser?'flex-end':'flex-start'};margin-bottom:.4rem;`;
   div.innerHTML = `
     <div style="max-width:85%;padding:.5rem .7rem;border-radius:${isUser?'12px 12px 2px 12px':'12px 12px 12px 2px'};
-      background:${isUser?'rgba(0,190,196,.15)':'var(--card)'};
-      border:1px solid ${isUser?'rgba(0,190,196,.25)':'var(--stroke)'};
+      background:${isUser?'rgba(10,138,95,.15)':'#dde5ee'};
+      border:1px solid ${isUser?'rgba(10,138,95,.25)':'rgba(21,32,56,0.15)'};
       font-family:${isUser?'monospace':'inherit'};font-size:.72rem;line-height:1.6;color:var(--ink);">
       ${isLoading ? '<span style="opacity:.5;">⟳ Nadenken...</span>' : text}
     </div>`;
@@ -3250,7 +3341,7 @@ function showManualVerify(scanId, pickId, pick, matchName) {
   modal.id = 'manual-verify-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:9000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);';
   modal.innerHTML = `
-    <div style="background:var(--card);border-radius:20px 20px 0 0;padding:1.25rem 1.25rem 2rem;
+    <div style="background:#dde5ee;border-radius:20px 20px 0 0;padding:1.25rem 1.25rem 2rem;
       width:100%;max-width:480px;box-shadow:0 -8px 32px rgba(15,23,42,.2);">
       <div style="width:36px;height:4px;background:rgba(15,23,42,.15);border-radius:999px;margin:0 auto .75rem;"></div>
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:var(--ink);margin-bottom:.3rem;">
@@ -3266,8 +3357,8 @@ function showManualVerify(scanId, pickId, pick, matchName) {
         </label>
         <input id="manual-score-input" type="text" placeholder="0-0"
           style="width:100%;font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;text-align:center;
-          padding:.6rem;border-radius:12px;border:2px solid var(--stroke);
-          background:var(--card);color:var(--ink);outline:none;letter-spacing:.1em;"
+          padding:.6rem;border-radius:12px;border:2px solid rgba(21,32,56,0.15);
+          background:#dde5ee;color:var(--ink);outline:none;letter-spacing:.1em;"
           oninput="updateManualPreview('${pick}', this.value)">
       </div>
       <div id="manual-verify-preview" style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;
@@ -3275,13 +3366,13 @@ function showManualVerify(scanId, pickId, pick, matchName) {
       <div style="display:flex;gap:.5rem;">
         <button onclick="document.getElementById('manual-verify-modal').remove()"
           style="flex:1;padding:.65rem;border-radius:12px;background:rgba(15,23,42,.06);
-          border:1px solid var(--stroke);font-family:\'IBM Plex Mono\',monospace;
+          border:1px solid rgba(21,32,56,0.15);font-family:\'IBM Plex Mono\',monospace;
           font-size:.6rem;font-weight:700;color:var(--sub);cursor:pointer;">
           Annuleren
         </button>
         <button onclick="confirmManualVerify('${scanId}','${pickId}','${pick}')"
           style="flex:2;padding:.65rem;border-radius:12px;
-          background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.8));
+          background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.8));
           color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;
           font-size:.6rem;font-weight:800;cursor:pointer;letter-spacing:.04em;">
           ✓ BEVESTIGEN
@@ -3317,9 +3408,9 @@ function updateManualPreview(pick, scoreStr) {
   else if (t === 'BTTS-J') won = hg > 0 && ag > 0;
   else if (t === 'BTTS-N') won = hg === 0 || ag === 0;
 
-  preview.style.background = won ? 'rgba(0,190,196,.1)' : 'rgba(220,38,38,.08)';
-  preview.style.color = won ? '#00BEC4' : '#dc2626';
-  preview.style.border = `1px solid ${won ? 'rgba(0,190,196,.25)' : 'rgba(220,38,38,.2)'}`;
+  preview.style.background = won ? 'rgba(10,138,95,.1)' : 'rgba(220,38,38,.08)';
+  preview.style.color = won ? '#0a8a5f' : '#dc2626';
+  preview.style.border = `1px solid ${won ? 'rgba(10,138,95,.25)' : 'rgba(220,38,38,.2)'}`;
   preview.textContent = won ? `✅ WIN — pick ${pick} correct bij ${hg}-${ag}` : `❌ VERLIES — pick ${pick} fout bij ${hg}-${ag}`;
 }
 
