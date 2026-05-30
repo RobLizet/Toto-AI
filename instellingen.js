@@ -13,10 +13,10 @@ function renderInstellingen() {
           <div class="topbar-logo">TOTO AI</div>
           <div class="made-by">Instellingen</div>
         </div>
-        <div id="authUserInfo" style="margin-left:auto;font-family:monospace;font-size:.52rem;color:var(--sub);text-align:right;max-width:200px;"></div>
+        <div id="authUserInfo" style="margin-left:auto;font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);text-align:right;max-width:200px;"></div>
       </div>
 
-      <div id="firebaseStatus" style="display:none;font-family:monospace;font-size:.52rem;padding:.35rem .75rem;border-radius:10px;margin-bottom:.75rem;background:rgba(10,138,95,.08);color:#0a8a5f;"></div>
+      <div id="firebaseStatus" style="display:none;font-family:monospace;font-size:.52rem;padding:.35rem .75rem;border-radius:10px;margin-bottom:.75rem;background:rgba(22,163,74,.08);color:#00BEC4;"></div>
 
       <!-- API KEYS -->
       <div class="settings-section">
@@ -29,7 +29,7 @@ function renderInstellingen() {
             <input class="settings-input" id="settAnthropicKey" type="password" placeholder="sk-ant-...">
             <button class="key-vis-btn" onclick="toggleKeyVisibility('settAnthropicKey',this)">👁</button>
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:var(--sub);margin-top:2px;">Voor AI-analyse · console.anthropic.com</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">Voor AI-analyse · console.anthropic.com</div>
         </div>
 
         <div class="settings-field">
@@ -38,7 +38,7 @@ function renderInstellingen() {
             <input class="settings-input" id="settFootballKey" type="password" placeholder="Optioneel (server heeft eigen key)">
             <button class="key-vis-btn" onclick="toggleKeyVisibility('settFootballKey',this)">👁</button>
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:var(--sub);margin-top:2px;">Jouw eigen Football API key (rapidapi.com)</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">Jouw eigen Football API key (rapidapi.com)</div>
         </div>
 
         <div class="settings-field">
@@ -47,7 +47,7 @@ function renderInstellingen() {
             <input class="settings-input" id="settFdKey" type="password" placeholder="Optioneel">
             <button class="key-vis-btn" onclick="toggleKeyVisibility('settFdKey',this)">👁</button>
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:var(--sub);margin-top:2px;">football-data.org voor gratis quotes</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">football-data.org voor gratis quotes</div>
         </div>
       </div>
 
@@ -58,7 +58,7 @@ function renderInstellingen() {
         <div class="settings-field">
           <label class="settings-label">Startbalans (€)</label>
           <input class="settings-input" id="settStartBalance" type="number" min="0" step="50">
-          <div style="font-family:monospace;font-size:.47rem;color:var(--sub);margin-top:2px;">Huidig saldo: <span id="currentBalanceDisplay">—</span></div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">Huidig saldo: <span id="currentBalanceDisplay">—</span></div>
         </div>
 
         <div class="settings-field">
@@ -98,7 +98,7 @@ function renderInstellingen() {
       <!-- TRIPLE LOCK INSTELLINGEN -->
       <div class="settings-section">
         <div class="settings-section-title">🏆 TRIPLE LOCK CRITERIA</div>
-        <div style="font-family:monospace;font-size:.52rem;color:var(--sub);margin-bottom:.75rem;line-height:1.5;">
+        <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);margin-bottom:.75rem;line-height:1.5;">
           Picks die aan alle criteria voldoen worden als Triple Lock gemarkeerd.
         </div>
 
@@ -125,7 +125,7 @@ function renderInstellingen() {
         <div class="settings-row">
           <div>
             <div class="settings-label">Notificaties</div>
-            <div style="font-family:monospace;font-size:.47rem;color:var(--sub);">Value alerts en wedstrijd herinneringen</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);">Value alerts en wedstrijd herinneringen</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;">
             <button id="notifToggleBtn" class="toggle-btn" onclick="toggleNotifications()">Inschakelen</button>
@@ -137,7 +137,7 @@ function renderInstellingen() {
           <div class="settings-field" style="margin-top:.5rem;">
             <label class="settings-label">Value drempel (%)</label>
             <input class="settings-input" id="notifThreshold" type="number" min="5" max="50" step="5">
-            <div style="font-family:monospace;font-size:.47rem;color:var(--sub);margin-top:2px;">Minimale value % voor push alert</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">Minimale value % voor push alert</div>
           </div>
 
           <div class="settings-field">
@@ -157,8 +157,8 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">⏱️ AUTOMATISCHE SCAN</div>
         <div class="settings-row">
-          <div style="font-family:monospace;font-size:.5rem;color:var(--sub);line-height:1.6;">
-            Auto-scan instellingen zijn verplaatst naar de <b style="color:var(--ink);">Analyse tab</b>.<br>
+          <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.5);line-height:1.6;">
+            Auto-scan instellingen zijn verplaatst naar de <b style="color:#ffffff;">Analyse tab</b>.<br>
             Tik op ⏱️ naast de scan-knop om het paneel te openen.
           </div>
           <button class="small-action-btn" onclick="switchScreen('analyse');showAnalyseSubTab('scan');setTimeout(toggleAutoScanPanel,150)">
@@ -181,7 +181,7 @@ function renderInstellingen() {
         <div class="settings-row">
           <div>
             <div class="settings-label">Auto-dark</div>
-            <div style="font-family:monospace;font-size:.47rem;color:var(--sub);">Schakel automatisch naar dark bij nacht</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);">Schakel automatisch naar dark bij nacht</div>
           </div>
           <button id="autoDarkBtn" class="toggle-btn" onclick="toggleAutoDark()">Uit</button>
         </div>
@@ -203,12 +203,12 @@ function renderInstellingen() {
       <!-- CLOUD BACKUP (Firebase) -->
       <div class="settings-section">
         <div class="settings-section-title">☁️ CLOUD BACKUP</div>
-        <div id="fbAutoSyncStatus" style="display:none;font-family:monospace;font-size:.5rem;color:#0a8a5f;margin-bottom:.5rem;">✅ Auto-sync actief</div>
-        <div id="fbBackupInfo" style="font-family:monospace;font-size:.52rem;color:var(--sub);margin-bottom:.75rem;line-height:1.5;">Laden...</div>
+        <div id="fbAutoSyncStatus" style="display:none;font-family:monospace;font-size:.5rem;color:#00BEC4;margin-bottom:.5rem;">✅ Auto-sync actief</div>
+        <div id="fbBackupInfo" style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);margin-bottom:.75rem;line-height:1.5;">Laden...</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-          <button class="small-action-btn" onclick="saveToFirebase().then(()=>showFirebaseStatus('✅ Opgeslagen!','#0a8a5f')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#dc2626'))">☁️ Opslaan</button>
+          <button class="small-action-btn" onclick="saveToFirebase().then(()=>showFirebaseStatus('✅ Opgeslagen!','#00BEC4')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#dc2626'))">☁️ Opslaan</button>
           <button class="small-action-btn" onclick="restoreFromFirebase()">🔄 Herstellen</button>
-          <button class="small-action-btn" style="background:rgba(13,158,110,.1);border-color:rgba(13,158,110,.3);color:#0d9e6e;font-weight:800;" onclick="importFromFirebaseBtn()">📥 Importeer alles</button>
+          <button class="small-action-btn" style="background:rgba(0,168,173,.1);border-color:rgba(0,168,173,.3);color:#00a8ad;font-weight:800;" onclick="importFromFirebaseBtn()">📥 Importeer alles</button>
         </div>
         <div id="backupStatus" style="display:none;font-family:monospace;font-size:.55rem;padding:.5rem .75rem;border-radius:10px;margin-top:.5rem;"></div>
       </div>
@@ -253,7 +253,7 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">👤 ACCOUNT</div>
         <div id="authAccountSection">
-          <div style="font-family:monospace;font-size:.55rem;color:var(--sub);margin-bottom:.6rem;line-height:1.6;">
+          <div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.5);margin-bottom:.6rem;line-height:1.6;">
             Log in om data te synchroniseren tussen apparaten.
           </div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
@@ -269,7 +269,7 @@ function renderInstellingen() {
           ⚠️ Controleer of je Firebase Database Rules correct zijn ingesteld.<br>
           Open Firebase Console → Realtime Database → Rules
         </div>
-        <div style="font-family:monospace;font-size:.48rem;background:rgba(15,23,42,.05);border-radius:10px;padding:.6rem .8rem;color:var(--sub);margin-bottom:.5rem;white-space:pre-wrap;">{
+        <div style="font-family:monospace;font-size:.48rem;background:rgba(15,23,42,.05);border-radius:10px;padding:.6rem .8rem;color:rgba(255,255,255,.5);margin-bottom:.5rem;white-space:pre-wrap;">{
   "rules": {
     "users": {
       "$uid": {
@@ -290,11 +290,11 @@ function renderInstellingen() {
       <!-- APP INFO -->
       <div class="settings-section">
         <div class="settings-section-title">ℹ️ APP INFO</div>
-        <div style="font-family:monospace;font-size:.52rem;color:var(--sub);line-height:1.8;">
+        <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);line-height:1.8;">
           <div>TOTO AI <span id='appVersionLabel'></span> · AppsMadeByRobB</div>
           <div>🌐 toto-ai.app</div>
           <div>📧 zweetzakken@gmail.com</div>
-          <div style="margin-top:.4rem;font-size:.47rem;color:var(--sub);">
+          <div style="margin-top:.4rem;font-size:.47rem;color:rgba(255,255,255,.5);">
             ⚠️ Uitsluitend voor entertainment en educatie. Geen echt gokadvies.
             Speel verantwoord · 18+ · Verslavingslijn: 0900-1090
           </div>
@@ -330,15 +330,15 @@ function saveSettings() {
   if (state.settings.footballKey)  localStorage.setItem('totoai_key_football',  state.settings.footballKey);
 
   saveState(); updateNotifUI();
-  showFirebaseStatus('✅ Opgeslagen!','#0a8a5f');
+  showFirebaseStatus('✅ Opgeslagen!','#00BEC4');
 
   const btn = document.querySelector('.save-settings-btn');
   if (btn) {
     const orig = btn.textContent;
-    btn.textContent='✅ OPGESLAGEN!'; btn.style.background='linear-gradient(135deg,#0a8a5f,#085c3a)';
+    btn.textContent='✅ OPGESLAGEN!'; btn.style.background='linear-gradient(135deg,#00BEC4,#00a8ad)';
     setTimeout(()=>{ btn.textContent=orig; btn.style.background=''; },2000);
   }
-  saveToFirebase().then(()=>showFirebaseStatus('🔥 Gesynchroniseerd','#0a8a5f')).catch(()=>{});
+  saveToFirebase().then(()=>showFirebaseStatus('🔥 Gesynchroniseerd','#00BEC4')).catch(()=>{});
 }
 
 function applySettings() {
@@ -375,7 +375,7 @@ function applySettings() {
     const hasA = !!state.settings.anthropicKey;
     if (hasA) {
       statusEl.innerHTML = '✅ Anthropic key aanwezig — volledige AI analyse beschikbaar';
-      statusEl.style.color = '#0a8a5f';
+      statusEl.style.color = '#00BEC4';
     } else {
       statusEl.innerHTML = '⚠️ Geen Anthropic key — alleen Poisson analyse · Worker heeft API-Football key';
       statusEl.style.color = '#d97706';
@@ -469,7 +469,7 @@ async function saveToFirebase() {
 
 async function restoreFromFirebase() {
   if (!confirm('Wallet + Tracker herstellen vanuit de cloud?\nLokale data wordt overschreven als de cloud meer bets heeft.')) return;
-  showFirebaseStatus('🔄 Ophalen...','#0a8a5f');
+  showFirebaseStatus('🔄 Ophalen...','#2563eb');
   try {
     const token = await _fbAuthToken();
     const user = firebase.auth().currentUser;
@@ -485,7 +485,7 @@ async function restoreFromFirebase() {
     if (b.valueBacktest) state.valueBacktest = b.valueBacktest;
     saveState(); updateWalletUI();
     try { renderTracker(); updateTrackerStats(); } catch(e) {}
-    showFirebaseStatus(`✅ Hersteld: ${fbW} wallet bets, ${fbT} tracker bets`,'#0a8a5f');
+    showFirebaseStatus(`✅ Hersteld: ${fbW} wallet bets, ${fbT} tracker bets`,'#00BEC4');
     loadFbBackupInfo();
   } catch(e) { showFirebaseStatus('⚠ '+e.message,'#e74c3c'); }
 }
@@ -525,7 +525,7 @@ async function loadFromFirebase() {
           const localC=state.wallet.bets.length, fbC=b.wallet.bets?.length||0;
           if (fbC>localC||(fbC>0&&localC===0)) {
             state.wallet=b.wallet;
-            showFirebaseStatus(`☁️ Wallet gesynchroniseerd (${fbC} bets)`,'#0a8a5f');
+            showFirebaseStatus(`☁️ Wallet gesynchroniseerd (${fbC} bets)`,'#00BEC4');
           }
         }
         if (b?.tracker) {
@@ -544,7 +544,7 @@ async function loadFromFirebase() {
           const localSL=state.scanLog?.length||0, fbSL=b.scanLog.length||0;
           if (fbSL>localSL) {
             state.scanLog=b.scanLog;
-            showFirebaseStatus(`📊 Scan log hersteld (${fbSL} scans)`,'#0d9e6e');
+            showFirebaseStatus(`📊 Scan log hersteld (${fbSL} scans)`,'#00a8ad');
           }
         }
       }
@@ -560,14 +560,14 @@ async function importFromFirebaseBtn() {
     showFirebaseStatus('⚠ Log eerst in om te importeren', '#dc2626');
     return;
   }
-  showFirebaseStatus('⟳ Alles importeren van Firebase...', '#0a8a5f');
+  showFirebaseStatus('⟳ Alles importeren van Firebase...', '#2563eb');
   try {
     await loadFromFirebase();
     saveState();
     try { applySettings(); } catch(e) {}
     try { updateWalletUI(); } catch(e) {}
     try { renderTracker(); updateTrackerStats(); } catch(e) {}
-    showFirebaseStatus('✅ Alles geïmporteerd van Firebase', '#0a8a5f');
+    showFirebaseStatus('✅ Alles geïmporteerd van Firebase', '#00BEC4');
     loadFbBackupInfo();
   } catch(e) {
     showFirebaseStatus('⚠ Import mislukt: ' + e.message, '#dc2626');
@@ -612,7 +612,7 @@ function exportBackup() {
   const datum=new Date().toLocaleDateString('nl-NL').replace(/\//g,'-');
   a.href=url; a.download=`totoai-backup-${datum}.json`; a.click();
   URL.revokeObjectURL(url);
-  showBackupStatus('✅ Gedownload!','#0a8a5f');
+  showBackupStatus('✅ Gedownload!','#00BEC4');
 }
 
 function importBackup(event) {
@@ -629,7 +629,7 @@ function importBackup(event) {
       if (b.settings) Object.assign(state.settings,b.settings);
       saveState(); applySettings();
       try { updateWalletUI(); } catch(e) {}
-      showBackupStatus(`✅ Hersteld! ${b.wallet.bets?.length||0} weddenschappen`,'#0a8a5f');
+      showBackupStatus(`✅ Hersteld! ${b.wallet.bets?.length||0} weddenschappen`,'#00BEC4');
     } catch(err) { showBackupStatus('⚠ Fout: '+err.message,'#dc2626'); }
     event.target.value='';
   };
@@ -640,7 +640,7 @@ function showBackupStatus(msg, color) {
   const el=document.getElementById('backupStatus');
   if (!el) return;
   el.style.display='block'; el.style.color=color;
-  el.style.background=color==='#0a8a5f'?'rgba(10,138,95,.08)':'rgba(220,38,38,.08)';
+  el.style.background=color==='#00BEC4'?'rgba(22,163,74,.08)':'rgba(220,38,38,.08)';
   el.style.border=`1px solid ${color}33`; el.textContent=msg;
   setTimeout(()=>el.style.display='none',5000);
 }
@@ -758,13 +758,13 @@ function updateNotifUI() {
   const enabled=state.settings.notifEnabled&&Notification.permission==='granted';
   if (btn) {
     btn.textContent=enabled?'Uitschakelen':'Inschakelen';
-    btn.style.background=enabled?'rgba(220,38,38,.08)':'rgba(10,138,95,.08)';
-    btn.style.color=enabled?'#dc2626':'#0a8a5f';
-    btn.style.borderColor=enabled?'rgba(220,38,38,.3)':'rgba(10,138,95,.3)';
+    btn.style.background=enabled?'rgba(220,38,38,.08)':'rgba(22,163,74,.08)';
+    btn.style.color=enabled?'#dc2626':'#00BEC4';
+    btn.style.borderColor=enabled?'rgba(220,38,38,.3)':'rgba(22,163,74,.3)';
   }
   if (badge) {
     if (Notification.permission==='granted') {
-      badge.textContent='✅ Toegestaan'; badge.style.background='rgba(10,138,95,.1)'; badge.style.color='#0a8a5f';
+      badge.textContent='✅ Toegestaan'; badge.style.background='rgba(22,163,74,.1)'; badge.style.color='#00BEC4';
     } else if (Notification.permission==='denied') {
       badge.textContent='❌ Geweigerd'; badge.style.background='rgba(220,38,38,.1)'; badge.style.color='#dc2626';
     } else {
