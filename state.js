@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v31: Nieuw thema, analytics in analyse, instellingen eigen tab
+// v30: Versienummer update — topbar toont v30
 // ═══════════════════════════════════════════════════════
 
 const APP_VERSION = 'v31';
