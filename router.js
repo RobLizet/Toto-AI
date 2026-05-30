@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════
 // ROUTER.JS — switchScreen, bottom nav, back button
-// v31: instellingen eigen tab, 5-tab nav (touchend + backdrop)
+// v30: menu close fix voor mobiel (touchend + backdrop)
 // ═══════════════════════════════════════════════════════
 
 // switchScreen is de nieuwe naam, switchTab is de alias (legacy)
@@ -51,11 +51,10 @@ function switchScreen(name) {
       break;
     case 'instellingen':
       if (typeof renderInstellingen === 'function') renderInstellingen();
-      if (typeof updateCostUI === 'function') updateCostUI();
+      updateCostUI();
       break;
     case 'analytics':
-      // Analytics is nu onderdeel van Analyse tab
-      switchScreen('analyse');
+      if (typeof renderAnalyticsScreen === 'function') renderAnalyticsScreen();
       break;
     case 'wk2026':
       if (typeof renderWK2026Screen === 'function') renderWK2026Screen();
