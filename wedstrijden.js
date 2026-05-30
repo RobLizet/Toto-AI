@@ -58,16 +58,40 @@ function renderWedstrijdenScreen() {
 
   screen.innerHTML = `
     <!-- AutoCheck bar -->
-    <div id="autoCheckBar" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#00BEC4;
+    <div id="autoCheckBar" style="display:none;font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:#00BEC4;
       background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);border-radius:8px;
       padding:.4rem .8rem;margin-bottom:.7rem;transition:opacity .35s;"></div>
 
+    <!-- ══ HOOFD TABS ══ -->
+    <div style="display:flex;gap:.3rem;background:rgba(255,255,255,.04);border-radius:12px;padding:.25rem;margin-bottom:.75rem;border:1px solid rgba(255,255,255,.08);">
+      <button id="wtab-wedstrijden" onclick="setWedstrijdenTab('wedstrijden')"
+        style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.25rem;background:rgba(0,190,196,.15);color:#00BEC4;box-shadow:0 1px 4px rgba(0,0,0,.2);">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+        Wedstrijden
+      </button>
+      <button id="wtab-vandaag" onclick="setWedstrijdenTab('vandaag')"
+        style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.25rem;background:transparent;color:rgba(255,255,255,.4);">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Vandaag
+      </button>
+      <button id="wtab-value" onclick="setWedstrijdenTab('value')"
+        style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.25rem;background:transparent;color:rgba(255,255,255,.4);">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Value Picks
+      </button>
+      <button id="wtab-live" onclick="setWedstrijdenTab('live')"
+        style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.25rem;background:transparent;color:rgba(255,255,255,.4);">
+        <span style="width:7px;height:7px;background:#ef4444;border-radius:50%;animation:blink .9s infinite;box-shadow:0 0 5px #ef4444;flex-shrink:0;display:inline-block;"></span>
+        Live
+      </button>
+    </div>
+
     <!-- Scan resultaten panel -->
     <div id="scanResultsPanel" style="display:none;"></div>
+    <div id="valueBanner" style="display:none;background:rgba(255,255,255,.05);border:1px solid rgba(0,190,196,.25);border-radius:16px;padding:.9rem;margin-bottom:.85rem;"></div>
 
-    <!-- Value banner (multi-scan results) -->
-    <div id="valueBanner" style="display:none;background:var(--card);border:1px solid rgba(0,190,196,.25);
-      border-radius:16px;padding:.9rem;margin-bottom:.85rem;box-shadow:var(--shadow2);"></div>
+    <!-- ══ TAB: WEDSTRIJDEN ══ -->
+    <div id="wtab-content-wedstrijden">
 
     <!-- Competitie tiles - compact grid -->
     <div style="margin-bottom:.6rem;">
@@ -84,7 +108,7 @@ function renderWedstrijdenScreen() {
             ontouchend="handleCompTouchEnd('${c.key}')"
             onclick="handleCompTap('${c.key}')">
             <div style="font-size:1.1rem;line-height:1.2;">${c.flag}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;font-weight:700;
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;
               color:${isActive?'#00BEC4':'var(--sub)'};overflow:hidden;white-space:nowrap;
               text-overflow:ellipsis;max-width:100%;padding:0 2px;">${shortName}</div>
           </div>`;
@@ -95,19 +119,19 @@ function renderWedstrijdenScreen() {
     <!-- Acties balk -->
     <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
       <button id="multiModeBtn" onclick="toggleMultiMode()"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
         padding:.35rem .8rem;border-radius:999px;cursor:pointer;
         background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.3);color:#00BEC4;">
         📌 MULTI-SCAN
       </button>
       <button onclick="loadTodayAllComps()"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
         padding:.35rem .8rem;border-radius:999px;cursor:pointer;
         background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.25);color:#00BEC4;">
         📅 VANDAAG
       </button>
       <button onclick="openCompDetail(state.activeComp)"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
         padding:.35rem .8rem;border-radius:999px;cursor:pointer;
         background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.25);color:#00BEC4;">
         📊 STAND & INFO
@@ -115,7 +139,7 @@ function renderWedstrijdenScreen() {
     </div>
 
     <!-- Multi-scan hint -->
-    <div id="multiModeHint" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#00BEC4;
+    <div id="multiModeHint" style="display:none;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;
       background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.15);border-radius:8px;
       padding:.4rem .8rem;margin-bottom:.5rem;">
       ✓ Multi-modus actief — tik op competities om te selecteren
@@ -126,20 +150,20 @@ function renderWedstrijdenScreen() {
       background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:12px;
       padding:.55rem .9rem;margin-bottom:.7rem;gap:.5rem;">
       <div style="flex:1;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;">📌 MULTI-SCAN</div>
-        <div id="multiScanComps" style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;">📌 MULTI-SCAN</div>
+        <div id="multiScanComps" style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--sub);">
           ${favs.length >= 2 ? favs.map(c => COMP_NAMES[c]?.split(' ').slice(1).join(' ') || c).join(' · ') : 'Selecteer nog een competitie'}
         </div>
       </div>
       <div style="display:flex;gap:.4rem;">
         <button id="multiScanBtn" onclick="runMultiScan()"
-          style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:800;
+          style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:800;
           padding:.4rem .8rem;border-radius:999px;cursor:pointer;
           background:rgba(0,190,196,.15);border:1px solid rgba(0,190,196,.4);color:#00BEC4;">
           ⚡ SCAN ALLES
         </button>
         <button onclick="clearFavoriteComps()"
-          style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;padding:.35rem .65rem;
+          style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;padding:.35rem .65rem;
           border-radius:999px;background:transparent;border:1px solid var(--stroke);color:var(--sub);cursor:pointer;">
           ✕
         </button>
@@ -149,7 +173,7 @@ function renderWedstrijdenScreen() {
     <!-- Handmatig wedstrijd toevoegen -->
     <div style="margin-bottom:.6rem;">
       <button onclick="toggleManualMatchSection()"
-        style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
         padding:.35rem .8rem;border-radius:999px;
         background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:var(--sub);cursor:pointer;">
         ➕ Wedstrijd handmatig toevoegen
@@ -157,7 +181,7 @@ function renderWedstrijdenScreen() {
     </div>
     <div id="manualMatchSection" style="display:none;background:var(--card);border:1px solid var(--stroke);
       border-radius:14px;padding:.9rem;margin-bottom:.7rem;">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:var(--sub);margin-bottom:.6rem;">HANDMATIGE INVOER</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:var(--sub);margin-bottom:.6rem;">HANDMATIGE INVOER</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem;">
         <input id="manualHome" type="text" placeholder="Thuisploeg" style="font-family:monospace;font-size:.62rem;padding:.4rem .6rem;border-radius:8px;border:1px solid var(--stroke);background:var(--card);color:var(--ink);outline:none;">
         <input id="manualAway" type="text" placeholder="Uitploeg" style="font-family:monospace;font-size:.62rem;padding:.4rem .6rem;border-radius:8px;border:1px solid var(--stroke);background:var(--card);color:var(--ink);outline:none;">
@@ -175,13 +199,13 @@ function renderWedstrijdenScreen() {
     </div>
 
     <!-- Match loading -->
-    <div id="match-loading" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);text-align:center;padding:.5rem 0;"></div>
+    <div id="match-loading" style="display:none;font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:var(--muted);text-align:center;padding:.5rem 0;"></div>
 
     <!-- Today/tomorrow scan buttons -->
     <div id="scanAllTodayBtn" style="display:none;width:100%;margin-bottom:.5rem;">
       <button onclick="scanAllTodayValue('today')"
         style="width:100%;background:linear-gradient(135deg,rgba(0,190,196,.12),rgba(5,150,105,.08));
-        border:1.5px solid rgba(0,190,196,.3);color:#00BEC4;font-family:'IBM Plex Mono',monospace;
+        border:1.5px solid rgba(0,190,196,.3);color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;
         font-size:.62rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;">
         ⚡ SCAN ALLES VANDAAG
       </button>
@@ -189,14 +213,14 @@ function renderWedstrijdenScreen() {
     <div id="scanTomorrowBtn" style="display:none;width:100%;margin-bottom:.7rem;">
       <button onclick="scanAllTodayValue('tomorrow')"
         style="width:100%;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);
-        color:#2563eb;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
+        color:#2563eb;font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:700;
         padding:.55rem;border-radius:10px;cursor:pointer;">
         📅 SCAN MORGEN
       </button>
     </div>
     <div id="allCompsLoading" style="display:none;flex-direction:column;align-items:center;padding:1.5rem;gap:.6rem;">
       <div style="width:24px;height:24px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);">Wedstrijden laden...</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:var(--sub);">Wedstrijden laden...</div>
     </div>
 
     <!-- Match lijst -->
@@ -206,12 +230,57 @@ function renderWedstrijdenScreen() {
     <div id="scanValueSection" style="margin-top:.5rem;display:none;">
       <button onclick="scanValueAll()"
         style="width:100%;background:linear-gradient(135deg,rgba(0,190,196,.1),rgba(5,150,105,.06));
-        border:1.5px solid rgba(0,190,196,.3);color:#00BEC4;font-family:'IBM Plex Mono',monospace;
+        border:1.5px solid rgba(0,190,196,.3);color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;
         font-size:.65rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;"
         id="valueScanBtn">
         ⚡ SCAN VALUE
       </button>
       <button onclick="showHelp('value-scan')" style="background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.2);border-radius:999px;width:1.6rem;height:1.6rem;font-size:.65rem;cursor:pointer;color:#00a8ad;margin-left:.4rem;font-weight:800;">?</button>
+    </div>
+
+    </div><!-- /wtab-content-wedstrijden -->
+
+    <!-- ══ TAB: VANDAAG ══ -->
+    <div id="wtab-content-vandaag" style="display:none;">
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.08em;margin-bottom:.65rem;display:flex;align-items:center;gap:.4rem;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        ALLE WEDSTRIJDEN VANDAAG
+      </div>
+      <div id="allCompsLoadingVandaag" style="display:none;flex-direction:column;align-items:center;padding:2rem;gap:.6rem;">
+        <div style="width:24px;height:24px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.5);">Wedstrijden laden...</div>
+      </div>
+      <div id="vandaagMatchList" class="match-list"></div>
+      <div id="vandaagEmpty" style="display:none;text-align:center;padding:2.5rem 1rem;">
+        <div style="font-size:2rem;margin-bottom:.5rem;">📅</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);">Geen wedstrijden vandaag gevonden</div>
+        <button onclick="loadVandaagTab()" style="margin-top:.8rem;padding:.45rem .9rem;border-radius:10px;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;cursor:pointer;">↺ Opnieuw laden</button>
+      </div>
+    </div>
+
+    <!-- ══ TAB: VALUE PICKS ══ -->
+    <div id="wtab-content-value" style="display:none;">
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.08em;margin-bottom:.65rem;display:flex;align-items:center;gap:.4rem;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        VALUE PICKS — OPEN BETS
+      </div>
+      <div id="wedValuePicksList"></div>
+    </div>
+
+    <!-- ══ TAB: LIVE ══ -->
+    <div id="wtab-content-live" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem;">
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.08em;display:flex;align-items:center;gap:.4rem;">
+          <span style="width:8px;height:8px;background:#ef4444;border-radius:50%;animation:blink .9s infinite;box-shadow:0 0 5px #ef4444;display:inline-block;"></span>
+          LIVE WEDSTRIJDEN
+        </div>
+        <button onclick="cleanupOldLiveMatches()" style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;padding:.25rem .55rem;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#ef4444;cursor:pointer;">🗑 Opruimen</button>
+      </div>
+      <div id="liveMatchList" class="match-list"></div>
+      <div id="liveEmpty" style="display:none;text-align:center;padding:2.5rem 1rem;">
+        <div style="font-size:2rem;margin-bottom:.5rem;">📡</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);">Geen live wedstrijden</div>
+      </div>
     </div>
 
     <!-- Combi builder -->
@@ -283,11 +352,11 @@ function renderMatches(matches) {
       <div style="text-align:center;padding:2.5rem 1.25rem;
         display:flex;flex-direction:column;align-items:center;gap:.7rem;">
         <div style="font-size:2.2rem;opacity:.3;margin-bottom:.1rem;">⚽</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;
+        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;
           color:var(--ink);letter-spacing:.04em;">
           Geen wedstrijden
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;
           color:var(--sub);line-height:1.75;max-width:240px;">
           Niets gevonden voor <b style="color:var(--ink);">${_cname}</b> vandaag.<br>
           Probeer een andere competitie of laad alles van vandaag.
@@ -297,14 +366,14 @@ function renderMatches(matches) {
             style="padding:.5rem 1rem;border-radius:10px;
             background:linear-gradient(135deg,rgba(0,190,196,.12),rgba(0,190,196,.08));
             border:1px solid rgba(0,190,196,.25);
-            font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;
+            font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:700;
             color:#2563eb;cursor:pointer;">
             📅 Alles vandaag laden
           </button>
           <button onclick="loadMatches('${_comp}')"
             style="padding:.5rem 1rem;border-radius:10px;
             background:rgba(15,23,42,.04);border:1px solid var(--stroke);
-            font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;
+            font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:700;
             color:var(--sub);cursor:pointer;">
             ↺ Opnieuw
           </button>
@@ -365,14 +434,14 @@ function renderOddsMovementBadge(matchId) {
   const isRising = top.pct > 5;
 
   if (isSharp) {
-    return `<div style="display:inline-flex;align-items:center;gap:.2rem;font-family:'IBM Plex Mono',monospace;
+    return `<div style="display:inline-flex;align-items:center;gap:.2rem;font-family:\'IBM Plex Mono\',monospace;
       font-size:.38rem;font-weight:700;color:#00BEC4;background:rgba(0,190,196,.1);
       border:1px solid rgba(0,190,196,.3);border-radius:999px;padding:2px 7px;margin-top:.25rem;">
       🦈 Sharp geld · ${top.label} ${top.pct.toFixed(1)}%
     </div>`;
   }
   if (isRising) {
-    return `<div style="display:inline-flex;align-items:center;gap:.2rem;font-family:'IBM Plex Mono',monospace;
+    return `<div style="display:inline-flex;align-items:center;gap:.2rem;font-family:\'IBM Plex Mono\',monospace;
       font-size:.38rem;font-weight:700;color:#dc2626;background:rgba(220,38,38,.08);
       border:1px solid rgba(220,38,38,.2);border-radius:999px;padding:2px 7px;margin-top:.25rem;">
       📈 Odds stijgt · ${top.label} +${top.pct.toFixed(1)}%
@@ -387,6 +456,178 @@ function renderOddsArrow(open, cur) {
   if (Math.abs(pct) < 2) return '';
   const down = pct < 0;
   return `<span style="font-size:.45rem;color:${down?'#00BEC4':'#dc2626'};margin-left:.2rem;">${down?'▼':'▲'}${Math.abs(pct).toFixed(0)}%</span>`;
+}
+
+
+// ── TAB SWITCH WEDSTRIJDEN ────────────────────────────────
+function setWedstrijdenTab(tab) {
+  const tabs = ['wedstrijden','vandaag','value','live'];
+  tabs.forEach(t => {
+    const btn     = document.getElementById('wtab-' + t);
+    const content = document.getElementById('wtab-content-' + t);
+    const isActive = t === tab;
+    if (content) content.style.display = isActive ? 'block' : 'none';
+    if (btn) {
+      btn.style.background = isActive ? 'rgba(0,190,196,.15)' : 'transparent';
+      btn.style.color      = isActive ? '#00BEC4' : 'rgba(255,255,255,.4)';
+      btn.style.boxShadow  = isActive ? '0 1px 4px rgba(0,0,0,.2)' : 'none';
+    }
+  });
+  if (tab === 'vandaag') loadVandaagTab();
+  if (tab === 'value')   renderWedValuePicks();
+  if (tab === 'live')    renderLiveTab();
+}
+
+// ── VANDAAG TAB — alle wedstrijden vandaag uit alle competities ──
+async function loadVandaagTab() {
+  const list    = document.getElementById('vandaagMatchList');
+  const loading = document.getElementById('allCompsLoadingVandaag');
+  const empty   = document.getElementById('vandaagEmpty');
+  if (!list) return;
+
+  if (loading) { loading.style.display = 'flex'; }
+  list.innerHTML = '';
+  if (empty) empty.style.display = 'none';
+
+  try {
+    // Laad vandaag van alle actieve competities parallel
+    const comps = getActiveCOMPLIST();
+    const today = new Date().toISOString().split('T')[0];
+    let allMatches = [];
+
+    await Promise.allSettled(comps.map(async comp => {
+      try {
+        const leagueId = COMP_IDS[comp.key];
+        if (!leagueId) return;
+        const matches = await fetchMatchesForLeague(leagueId, today);
+        if (matches?.length) allMatches.push(...matches);
+      } catch(e) {}
+    }));
+
+    if (loading) loading.style.display = 'none';
+
+    // Sorteer op tijd
+    allMatches.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+
+    if (!allMatches.length) {
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+
+    allMatches.forEach(m => {
+      const card = renderMatchCard(m);
+      if (card) list.appendChild(card);
+    });
+
+  } catch(e) {
+    if (loading) loading.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+    console.warn('[loadVandaagTab]', e.message);
+  }
+}
+
+// ── VALUE PICKS TAB — open value picks uit scan log ──
+function renderWedValuePicks() {
+  const el = document.getElementById('wedValuePicksList');
+  if (!el) return;
+
+  const scanLog = state.scanLog || [];
+  const picks = scanLog
+    .flatMap(s => (s.picks||[]).map(p => ({...p, scanDate: s.timestamp})))
+    .filter(p => (!p.status || p.status === 'pending') && (p.value||0) >= 5)
+    .sort((a,b) => (b.value||0) - (a.value||0));
+
+  if (!picks.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;">'
+      + '<div style="font-size:2rem;margin-bottom:.5rem;">⚡</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);">Geen open value picks</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.35);margin-top:.4rem;">Doe een value scan via Analyse tabblad</div>'
+      + '</div>';
+    return;
+  }
+
+  el.innerHTML = picks.map(p => {
+    const valueColor = p.value >= 20 ? '#00BEC4' : p.value >= 10 ? '#f59e0b' : 'rgba(255,255,255,.5)';
+    const confColor  = p.confidence >= 8 ? '#00BEC4' : p.confidence >= 6 ? '#f59e0b' : '#ef4444';
+    return '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;'
+      + 'padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.6rem;cursor:pointer;backdrop-filter:blur(8px);"'
+      + ' onclick="switchScreen(\'analyse\')">'
+      + '<div style="flex:1;min-width:0;">'
+      + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.match||'?') + '</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin-top:.1rem;">'
+      + (p.pickLabel||p.pick||'?') + ' · <span style="color:#fff;font-weight:700;">@ ' + (p.odds||'?') + '</span>'
+      + ' · ' + (p.comp||'') + '</div>'
+      + '</div>'
+      + '<div style="text-align:right;flex-shrink:0;">'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.15rem;color:' + valueColor + ';line-height:1;">+' + Math.round(p.value||0) + '%</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:' + confColor + ';">conf ' + (p.confidence||0) + '/10</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ── LIVE TAB — live wedstrijden tonen + cleanup ──
+async function renderLiveTab() {
+  const list  = document.getElementById('liveMatchList');
+  const empty = document.getElementById('liveEmpty');
+  if (!list) return;
+
+  // Cleanup: verwijder afgeronde wedstrijden die meer dan 24u oud zijn
+  cleanupOldLiveMatches();
+
+  const liveMatches = (state.matches||[]).filter(m => m.isLive);
+
+  if (!liveMatches.length) {
+    // Probeer live wedstrijden te laden
+    list.innerHTML = '<div style="display:flex;justify-content:center;padding:1.5rem;">'
+      + '<div style="width:22px;height:22px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div></div>';
+    try {
+      await loadTodayAllComps();
+      const live = (state.matches||[]).filter(m => m.isLive);
+      list.innerHTML = '';
+      if (!live.length) {
+        if (empty) empty.style.display = 'block';
+        return;
+      }
+      live.forEach(m => { const card = renderMatchCard(m); if(card) list.appendChild(card); });
+    } catch(e) {
+      if (empty) empty.style.display = 'block';
+      list.innerHTML = '';
+    }
+    return;
+  }
+
+  list.innerHTML = '';
+  if (empty) empty.style.display = 'none';
+  liveMatches.forEach(m => {
+    const card = renderMatchCard(m);
+    if (card) list.appendChild(card);
+  });
+}
+
+// ── CLEANUP: verwijder afgeronde wedstrijden ouder dan 24u ──
+function cleanupOldLiveMatches() {
+  if (!state.matches?.length) return;
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000; // 24 uur geleden
+  const before = state.matches.length;
+  state.matches = state.matches.filter(m => {
+    if (!m.isDone) return true; // Bewaar niet-afgeronde wedstrijden altijd
+    // Bewaar als datum/tijd onbekend (geen timestamp)
+    if (!m.timestamp && !m.date) return true;
+    // Bouw timestamp op uit m.date + m.time als m.timestamp ontbreekt
+    const ts = m.timestamp || (() => {
+      try {
+        const d = new Date(m.date + 'T' + (m.time||'23:59') + ':00');
+        return isNaN(d) ? 0 : d.getTime();
+      } catch(e) { return 0; }
+    })();
+    return ts === 0 || ts >= cutoff;
+  });
+  const removed = before - state.matches.length;
+  if (removed > 0) {
+    saveState();
+    showToast('🗑 ' + removed + ' afgeronde wedstrijd' + (removed>1?'en':' ') + ' verwijderd');
+  }
 }
 
 function renderMatchCard(m) {
@@ -406,7 +647,7 @@ function renderMatchCard(m) {
   const scanResult = (state.lastScanResults||[]).find(s => String(s.matchId) === String(m.id));
   const sharpBadge = renderOddsMovementBadge(m.id);
   const valueBadge = scanResult && scanResult.value >= 5 ? `
-    <div style="position:absolute;top:8px;right:8px;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:900;
+    <div style="position:absolute;top:8px;right:8px;font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:900;
       color:${scanResult.value >= 15 ? '#00BEC4' : '#f59e0b'};
       background:${scanResult.value >= 15 ? 'rgba(0,190,196,.12)' : 'rgba(245,158,11,.1)'};
       border:1px solid ${scanResult.value >= 15 ? 'rgba(0,190,196,.3)' : 'rgba(245,158,11,.3)'};
@@ -423,7 +664,7 @@ function renderMatchCard(m) {
       <div style="flex:${m.awayPct};background:#dc2626;border-radius:0 999px 999px 0;"></div>
     </div>
     <div style="display:flex;justify-content:space-between;padding:0 .9rem .6rem;
-      font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;">
+      font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;">
       <span style="color:#00BEC4;">${m.homePct}% 1</span>
       <span style="color:#d97706;">${m.drawPct}% X</span>
       <span style="color:#dc2626;">${m.awayPct}% 2</span>
@@ -434,28 +675,28 @@ function renderMatchCard(m) {
       <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','1','Thuis wint',${m.homeOdds})"
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;
           color:var(--sub);letter-spacing:.08em;margin-bottom:.3rem;">1 THUIS</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#00BEC4;line-height:1;">${m.homeOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.home, parseFloat(m.homeOdds))}</div>
+        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#00BEC4;line-height:1;">${m.homeOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.home, parseFloat(m.homeOdds))}</div>
       </button>
       <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','X','Gelijkspel',${m.drawOdds})"
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;
           color:var(--sub);letter-spacing:.08em;margin-bottom:.3rem;">X GELIJK</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#d97706;line-height:1;">${m.drawOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.draw, parseFloat(m.drawOdds))}</div>
+        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#d97706;line-height:1;">${m.drawOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.draw, parseFloat(m.drawOdds))}</div>
       </button>
       <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','2','Uit wint',${m.awayOdds})"
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;
           color:var(--sub);letter-spacing:.08em;margin-bottom:.3rem;">2 UIT</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#dc2626;line-height:1;">${m.awayOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.away, parseFloat(m.awayOdds))}</div>
+        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#dc2626;line-height:1;">${m.awayOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.away, parseFloat(m.awayOdds))}</div>
       </button>
     </div>
     <div style="padding:0 .9rem .1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.3rem;">
       <button onclick="event.stopPropagation();openJacks('${m.id}')"
-        style="background:none;border:none;font-family:'IBM Plex Mono',monospace;font-size:.48rem;
+        style="background:none;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;
         color:var(--sub);cursor:pointer;text-decoration:underline;">
         🎰 Andere quotes gebruiken
       </button>
@@ -463,7 +704,7 @@ function renderMatchCard(m) {
     </div>` : `
     <!-- v18.4: geen odds — vriendelijke melding ipv leeg -->
     <div style="padding:.4rem .9rem .5rem;">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);
         text-align:center;padding:.45rem .7rem;
         background:rgba(255,255,255,.03);border-radius:8px;border:1px dashed rgba(255,255,255,.1);">
         📊 Geen odds beschikbaar · quotes laden na refresh
@@ -478,15 +719,15 @@ function renderMatchCard(m) {
         padding:.55rem .9rem .4rem;border-bottom:1px solid var(--stroke);">
         <div style="display:flex;align-items:center;gap:.4rem;">
           ${m.compLogo ? `<img src="${m.compLogo}" style="width:14px;height:14px;object-fit:contain;" onerror="this.style.display='none'">` : ''}
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);font-weight:700;">
+          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:var(--sub);font-weight:700;">
             ${m.comp || ''}
           </span>
         </div>
         <div style="display:flex;align-items:center;gap:.5rem;">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#00BEC4;font-weight:700;">
+          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:#00BEC4;font-weight:700;">
             ${m.date ? m.date + ' ' : ''}${m.time}
           </span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;
+          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;
             padding:2px 8px;border-radius:999px;
             ${m.isLive ? 'background:rgba(220,38,38,.12);color:#dc2626;' :
               m.isDone ? 'background:rgba(100,116,139,.1);color:var(--sub);' :
@@ -502,18 +743,18 @@ function renderMatchCard(m) {
           ${m.homeLogo
             ? `<img src="${m.homeLogo}" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none'">`
             : `<div style="width:40px;height:40px;border-radius:50%;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">⚽</div>`}
-          <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:800;color:var(--ink);line-height:1.2;">${m.home}</div>
+          <div style="font-family:\'DM Sans\',sans-serif;font-size:.95rem;font-weight:800;color:var(--ink);line-height:1.2;">${m.home}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:44px;">
           ${m.score
-            ? `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--ink);letter-spacing:.05em;">${m.score}</div>`
-            : `<div style="font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:700;color:var(--sub);">VS</div>`}
+            ? `<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;color:var(--ink);letter-spacing:.05em;">${m.score}</div>`
+            : `<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.75rem;font-weight:700;color:var(--sub);">VS</div>`}
         </div>
         <div style="flex:1;display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;">
           ${m.awayLogo
             ? `<img src="${m.awayLogo}" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none'">`
             : `<div style="width:40px;height:40px;border-radius:50%;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.15);display:flex;align-items:center;justify-content:center;font-size:1.1rem;">⚽</div>`}
-          <div style="font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:800;color:var(--ink);line-height:1.2;text-align:right;">${m.away}</div>
+          <div style="font-family:\'DM Sans\',sans-serif;font-size:.95rem;font-weight:800;color:var(--ink);line-height:1.2;text-align:right;">${m.away}</div>
         </div>
       </div>
 
@@ -972,18 +1213,18 @@ function updateCombiBuilder() {
       border-radius:12px;padding:.65rem .8rem;margin-bottom:.4rem;
       display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
       <div style="flex:1;min-width:0;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.15rem;">
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.15rem;">
           LEG ${i+1} · ${l.date||''}
         </div>
         <div style="font-size:.82rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
           ${l.home} vs ${l.away}
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#00BEC4;font-weight:700;margin-top:.15rem;">
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;font-weight:700;margin-top:.15rem;">
           ${l.pickLabel || l.pick}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;flex-shrink:0;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#00BEC4;">${parseFloat(l.odds).toFixed(2)}</div>
+        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00BEC4;">${parseFloat(l.odds).toFixed(2)}</div>
         <button onclick="removeCombiLeg('${l.matchId}')"
           style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.75rem;line-height:1;">✕</button>
       </div>
@@ -996,17 +1237,17 @@ function updateCombiBuilder() {
     totaalEl.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .8rem;
         background:rgba(0,190,196,.06);border-radius:10px;margin-bottom:.5rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">
           ${legs.length} legs · €${defaultBet} inzet
         </div>
         <div style="display:flex;gap:.75rem;align-items:center;">
           <div style="text-align:center;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">QUOTE</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;">${totalOdds.toFixed(2)}</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">QUOTE</div>
+            <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;">${totalOdds.toFixed(2)}</div>
           </div>
           <div style="text-align:center;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">WINST</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#00BEC4;">€${payout}</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">WINST</div>
+            <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">€${payout}</div>
           </div>
         </div>
       </div>`;
@@ -1182,9 +1423,9 @@ async function loadTodayAllComps() {
     if (list) list.innerHTML = `
       <div style="text-align:center;padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:.6rem;">
         <div style="font-size:1.8rem;opacity:.4;">⚠️</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#dc2626;font-weight:700;">Laad fout</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:var(--sub);">${e.message}</div>
-        <button onclick="loadTodayAllComps()" style="padding:.45rem .9rem;border-radius:10px;background:rgba(15,23,42,.05);border:1px solid var(--stroke);font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:var(--sub);cursor:pointer;">↺ Opnieuw proberen</button>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:#dc2626;font-weight:700;">Laad fout</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:var(--sub);">${e.message}</div>
+        <button onclick="loadTodayAllComps()" style="padding:.45rem .9rem;border-radius:10px;background:rgba(15,23,42,.05);border:1px solid var(--stroke);font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--sub);cursor:pointer;">↺ Opnieuw proberen</button>
       </div>`;
     if (btn) { btn.style.opacity = '1'; btn.disabled = false; }
   }
@@ -1244,8 +1485,8 @@ function renderMultiScanResults(picks, numComps) {
   if (!banner) return;
   if (!picks.length) {
     banner.style.display = 'block';
-    banner.innerHTML = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#00BEC4;">⚡ MULTI-SCAN (${numComps} comp.)</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--sub);padding:.8rem 0;">
+    banner.innerHTML = `<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">⚡ MULTI-SCAN (${numComps} comp.)</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:var(--sub);padding:.8rem 0;">
         Geen value ≥5% gevonden. Bookmakers zitten goed in de markt vandaag.
       </div>
       <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.9rem;">✕</button>`;
@@ -1256,8 +1497,8 @@ function renderMultiScanResults(picks, numComps) {
   banner.style.display = 'block';
   banner.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#00BEC4;">⚡ MULTI-SCAN — ${numComps} competities</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">
+      <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">⚡ MULTI-SCAN — ${numComps} competities</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">
         <span style="color:#00BEC4;font-weight:700;">${highCount} sterk</span> · <span style="color:#b45309;font-weight:700;">${medCount} licht</span>
       </div>
     </div>
@@ -1267,13 +1508,13 @@ function renderMultiScanResults(picks, numComps) {
       const inCombi = (state.combiBuilder||[]).some(l => String(l.matchId) === String(s.match?.id));
       return `<div style="display:flex;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--stroke);">
         <div style="flex:1;cursor:pointer;" onclick="selectMatchAndAnalyse('${s.match?.id}')">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${s.match?.home||'?'} vs ${s.match?.away||'?'}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#00a8ad;">${s.compName}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${s.pickLabel} · ${s.kans}% · ${s.reason||''}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${s.match?.home||'?'} vs ${s.match?.away||'?'}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00a8ad;">${s.compName}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">${s.pickLabel} · ${s.kans}% · ${s.reason||''}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${cls};">${sign}${Math.round(s.value)}%</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:#00BEC4;">${(s.odds||0).toFixed(2)}</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${cls};">${sign}${Math.round(s.value)}%</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#00BEC4;">${(s.odds||0).toFixed(2)}</div>
           <button onclick="addValuePickToCombi('${s.match?.id}','${s.pick}','${(s.pickLabel||'').replace(/'/g,"\\'")}',${s.odds||0},'${(s.match?.home||'').replace(/'/g,"\\'")}','${(s.match?.away||'').replace(/'/g,"\\'")}')"
             style="font-family:monospace;font-size:.48rem;font-weight:800;padding:2px 7px;border-radius:999px;cursor:pointer;
             border:1px solid ${inCombi?'rgba(0,190,196,.4)':'rgba(0,190,196,.35)'};

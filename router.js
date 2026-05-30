@@ -12,8 +12,8 @@ function switchScreen(name) {
   const screen = document.getElementById('screen-' + name);
   if (screen) screen.classList.add('active');
 
-  // Update bottom nav
-  document.querySelectorAll('.bnav-btn').forEach(b => {
+  // Update bottom nav active state
+  document.querySelectorAll('#bottom-nav .bnav-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.screen === name);
   });
 
@@ -78,22 +78,15 @@ function initBottomNav() {
   const nav = document.getElementById('bottom-nav');
   if (!nav) return;
 
-  const navItems = [
-    { screen: 'dashboard',    icon: '🏠', label: 'Home' },
-    { screen: 'wedstrijden',  icon: '⚽', label: 'Wedstrijden' },
-    { screen: 'analyse',      icon: '⚡', label: 'Analyse' },
-    { screen: 'wallet',       icon: '💰', label: 'Wallet' },
-  ];
-
-  nav.innerHTML = navItems.map(item => `
-    <button class="bnav-btn${state.activeScreen === item.screen ? ' active' : ''}"
-      data-screen="${item.screen}"
-      onclick="switchScreen('${item.screen}');closeMoreMenu()">
-      <span class="bnav-icon">${item.icon}</span>
-      <span class="bnav-label">${item.label}</span>
-      <div class="bnav-dot-line"></div>
-    </button>
-  `).join('');
+  // Behoud bestaande HTML (Lucide SVG iconen uit index.html)
+  // Alleen active state instellen op juiste knop
+  nav.style.display = 'flex';
+  nav.querySelectorAll('.bnav-btn').forEach(btn => {
+    const screen = btn.dataset.screen;
+    if (screen) {
+      btn.classList.toggle('active', screen === (state.activeScreen || 'dashboard'));
+    }
+  });
 }
 
 // ── Back button ──────────────────────────────────────────

@@ -57,7 +57,7 @@ function detectLockLevel(fixtureId, pick) {
 }
 
 function lockBadge(level) {
-  if (level === 'triple') return '<span style="font-family:monospace;font-size:.48rem;font-weight:900;color:#15803d;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.3);padding:2px 7px;border-radius:999px;">🏆 TRIPLE LOCK</span>';
+  if (level === 'triple') return '<span style="font-family:monospace;font-size:.48rem;font-weight:900;color:#00BEC4;background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);padding:2px 7px;border-radius:999px;">🏆 TRIPLE LOCK</span>';
   if (level === 'double') return '<span style="font-family:monospace;font-size:.48rem;font-weight:900;color:#b45309;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.25);padding:2px 7px;border-radius:999px;">🔒 DOUBLE LOCK</span>';
   return '';
 }
@@ -70,38 +70,34 @@ function renderWalletScreen() {
   try {
   el.innerHTML = `
     <div class="app">
-      <div class="topbar">
-        <div>
-          <div class="topbar-logo">TOTO AI</div>
-          <div class="made-by">Wallet & Tracker</div>
-        </div>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:.5rem;">
-          <div id="firebaseStatus" style="display:none;font-family:monospace;font-size:.52rem;padding:.25rem .6rem;border-radius:8px;background:rgba(22,163,74,.08);"></div>
-        </div>
-      </div>
-
-      <!-- SUB-TAB KNOPPEN (Picks tab verwijderd — samengevoegd met Resultaten) -->
-      <div class="wallet-subtabs">
-        <button id="wsub-wallet"     class="wsub-btn" onclick="setWalletSubTab('wallet')">💰 Wallet</button>
-        <button id="wsub-tracker"    class="wsub-btn" onclick="setWalletSubTab('tracker')">📒 Tracker</button>
-        <button id="wsub-backtest"   class="wsub-btn" onclick="setWalletSubTab('backtest')">📊 Resultaten</button>
-        <button id="wsub-value"      class="wsub-btn" onclick="setWalletSubTab('value')">⚡ Value</button>
-      </div>
-
-      <!-- VALUE PICKS TAB -->
-      <div id="wsub-content-value" style="display:none;">
-        <div id="value-picks-content"></div>
+      <!-- SUB-TAB KNOPPEN — teal stijl, value picks verwijderd -->
+      <div style="display:flex;gap:.3rem;background:rgba(255,255,255,.04);border-radius:12px;padding:.25rem;margin-bottom:.75rem;border:1px solid rgba(255,255,255,.08);">
+        <button id="wsub-wallet" onclick="setWalletSubTab('wallet')"
+          style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.3rem;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
+          Wallet
+        </button>
+        <button id="wsub-tracker" onclick="setWalletSubTab('tracker')"
+          style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.3rem;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Tracker
+        </button>
+        <button id="wsub-backtest" onclick="setWalletSubTab('backtest')"
+          style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.3rem;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Resultaten
+        </button>
       </div>
 
       <!-- WALLET TAB -->
       <div id="wsub-content-wallet" style="display:none;">
-        <div class="wallet-big">
-          <div class="wallet-big-label">HUIDIG SALDO</div>
-          <div class="amount" id="bigBalance">€0,00</div>
+        <div style="background:linear-gradient(135deg,#061518,#04383F);border:1px solid rgba(0,190,196,.2);border-radius:18px;padding:1.1rem 1.2rem;margin-bottom:.75rem;box-shadow:0 4px 18px rgba(0,0,0,.35);">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.55);letter-spacing:.08em;margin-bottom:.3rem;">HUIDIG SALDO</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:2.4rem;color:#fff;letter-spacing:.03em;line-height:1;" id="bigBalance">€0,00</div>
           <div class="wallet-actions">
-            <button class="wallet-action-btn" onclick="openDepositModal()">+ Storten</button>
-            <button class="wallet-action-btn" onclick="openWithdrawModal()">- Opnemen</button>
-            <button class="wallet-action-btn danger" onclick="clearWallet()">Wissen</button>
+            <button style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);border-radius:10px;padding:.4rem .75rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;cursor:pointer;" onclick="openDepositModal()">+ Storten</button>
+            <button style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.4rem .75rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.7);cursor:pointer;" onclick="openWithdrawModal()">- Opnemen</button>
+            <button style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:.4rem .75rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:#ef4444;cursor:pointer;" onclick="clearWallet()">Wissen</button>
           </div>
         </div>
         <div class="wallet-strip">
@@ -109,7 +105,7 @@ function renderWalletScreen() {
           <div class="w-item"><div class="w-label">W/V</div><div class="val" id="miniPnl">+€0,00</div></div>
           <div class="w-item"><div class="w-label">Bets</div><div class="val" id="miniBets">0</div></div>
           <div class="w-item"><div class="w-label">Hitrate</div><div class="val" id="miniRate">—</div></div>
-          <div class="w-item"><div class="w-label">Avg EV</div><div class="val" id="miniEV" style="color:#7c3aed;">—</div></div>
+          <div class="w-item"><div class="w-label">Avg EV</div><div class="val" id="miniEV" style="color:#00a8ad;">—</div></div>
         </div>
         <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
           <div class="stat-mini-card"><div class="stat-mini-label">Ingezet</div><div class="stat-mini-val" id="totalStaked">€0,00</div></div>
@@ -201,16 +197,16 @@ function renderWalletScreen() {
         </div>
 
         <!-- Killer stats — ROI 7d, win streak, beste league, elite, CLV -->
-        <div id="btKillerStats" style="display:none;background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.8rem 1rem;margin-bottom:.75rem;"></div>
+        <div id="btKillerStats" style="display:none;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.8rem 1rem;margin-bottom:.75rem;"></div>
 
         <!-- Voortgangsbalk naar 100 picks -->
-        <div id="btProgressWrap" style="background:var(--card);border:1px solid var(--stroke);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;">
+        <div id="btProgressWrap" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
             <div style="font-family:monospace;font-size:.5rem;color:var(--sub);">VOORTGANG TRACKRECORD</div>
-            <div id="btProgressLabel" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;">0/100</div>
+            <div id="btProgressLabel" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#00BEC4;letter-spacing:.04em;">0/100</div>
           </div>
           <div style="background:rgba(0,0,0,.08);border-radius:999px;height:7px;overflow:hidden;">
-            <div id="btProgressBar" style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:0%;transition:width .4s;"></div>
+            <div id="btProgressBar" style="height:100%;border-radius:999px;background:linear-gradient(90deg,#00BEC4,#00a8ad);width:0%;transition:width .4s;"></div>
           </div>
         </div>
 
@@ -247,18 +243,18 @@ function renderWalletScreen() {
 // ── SET SUB-TAB ───────────────────────────────────────────
 
 function setWalletSubTab(tab) {
-  ['wallet','tracker','backtest','value'].forEach(t => {
+  ['wallet','tracker','backtest'].forEach(t => {
     const el  = document.getElementById('wsub-content-' + t);
     const btn = document.getElementById('wsub-' + t);
     if (el)  el.style.display = t === tab ? 'block' : 'none';
     if (btn) {
       if (t === tab) {
-        btn.style.background = 'linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8))';
-        btn.style.color      = '#fff';
-        btn.style.boxShadow  = '0 2px 8px rgba(219,39,119,.25)';
+        btn.style.background = 'rgba(0,190,196,.15)';
+        btn.style.color      = '#00BEC4';
+        btn.style.boxShadow  = '0 1px 4px rgba(0,0,0,.2)';
       } else {
         btn.style.background = 'transparent';
-        btn.style.color      = 'var(--sub)';
+        btn.style.color      = 'rgba(255,255,255,.4)';
         btn.style.boxShadow  = 'none';
       }
     }
@@ -272,7 +268,6 @@ function setWalletSubTab(tab) {
     renderTracker(); updateTrackerStats(); 
   }
   if (tab === 'backtest') { renderBacktest(); }
-  if (tab === 'value')    { renderValuePicks(); }
 }
 
 // ── UPDATE WALLET UI ──────────────────────────────────────
@@ -309,7 +304,7 @@ function updateWalletUI() {
       }, 0) / settledBets.length * 100)
     : null;
   _t('miniEV', avgEV !== null ? (avgEV >= 0 ? '+' : '') + avgEV.toFixed(1) + '%' : '—');
-  _c('miniEV', avgEV === null ? '#94a3b8' : avgEV >= 5 ? '#15803d' : avgEV >= 0 ? '#d97706' : '#dc2626');
+  _c('miniEV', avgEV === null ? '#94a3b8' : avgEV >= 5 ? '#00BEC4' : avgEV >= 0 ? '#d97706' : '#dc2626');
   renderBetHistory();
   renderWalletChart();
 }
@@ -323,13 +318,13 @@ function renderBetHistory() {
     const isCombi = b.type === 'combi';
     const pnlText = b.status==='win' ? `+€${(b.payout-(b.amount||b.stake)).toFixed(2)}`
                   : b.status==='lose' ? `-€${(b.amount||b.stake).toFixed(2)}` : '⏳';
-    const pnlColor = b.status==='win'?'#16a34a':b.status==='lose'?'#dc2626':'#475569';
+    const pnlColor = b.status==='win'?'#00BEC4':b.status==='lose'?'#dc2626':'#475569';
     const scoreTag = b.score ? ` [${b.score}]` : (b.liveScore ? ` ⚽${b.liveScore}${b.liveMinute?` ${b.liveMinute}'`:''}` : '');
-    const srcBadge = b.source === 'value' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(22,163,74,.1);color:#15803d;padding:1px 6px;border-radius:4px;font-weight:700;">⚡ Value</span> ' : b.source === 'analyse' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(124,58,237,.1);color:#7c3aed;padding:1px 6px;border-radius:4px;font-weight:700;">🤖 AI</span> ' : '';
+    const srcBadge = b.source === 'value' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(0,190,196,.1);color:#00BEC4;padding:1px 6px;border-radius:4px;font-weight:700;">⚡ Value</span> ' : b.source === 'analyse' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(0,190,196,.1);color:#00a8ad;padding:1px 6px;border-radius:4px;font-weight:700;">🤖 AI</span> ' : '';
     const legsHtml = isCombi && b.legs ? b.legs.map((l,i) => `
       <div style="display:flex;justify-content:space-between;padding:.25rem 0;border-top:1px solid var(--stroke);font-family:monospace;font-size:.5rem;">
         <span style="color:var(--ink);">${l.match||''} — ${l.pick} @ ${l.odds}</span>
-        <span style="color:${l.legStatus==='win'?'#16a34a':l.legStatus==='lose'?'#dc2626':'#94a3b8'};">${l.legStatus==='win'?'✓':l.legStatus==='lose'?'✗':'⏳'}</span>
+        <span style="color:${l.legStatus==='win'?'#00BEC4':l.legStatus==='lose'?'#dc2626':'#94a3b8'};">${l.legStatus==='win'?'✓':l.legStatus==='lose'?'✗':'⏳'}</span>
       </div>`).join('') : '';
     return `
     <div class="bet-row bet-${b.status||'pending'}" style="cursor:pointer;" data-bet="${JSON.stringify({id:b.id,match:b.matchName||b.match||'',pick:b.pick,pickLabel:b.pickLabel||b.pick,odds:b.odds,stake:b.amount||b.stake,status:b.status,date:b.date,markt:b.markt,note:b.note,payout:b.payout}).replace(/"/g,'&quot;')}">
@@ -510,7 +505,7 @@ function setChartView(v) {
   ['saldo','pnl'].forEach(x => {
     const b = document.getElementById('cv-'+x);
     if (!b) return;
-    if (x===v) { b.style.background='rgba(219,39,119,.1)'; b.style.borderColor='rgba(219,39,119,.4)'; b.style.color='#be185d'; }
+    if (x===v) { b.style.background='rgba(0,190,196,.1)'; b.style.borderColor='rgba(0,190,196,.4)'; b.style.color='#00BEC4'; }
     else { b.style.background='transparent'; b.style.borderColor='rgba(15,23,42,.12)'; b.style.color='#475569'; }
   });
   renderWalletChart();
@@ -556,7 +551,7 @@ function renderWalletChart() {
   ctx.setLineDash([]);
   const lastVal=points[points.length-1];
   const isPos = chartView==='pnl' ? lastVal>=0 : lastVal>=(sb||500);
-  const lineColor = isPos ? '#15803d' : '#dc2626';
+  const lineColor = isPos ? '#00BEC4' : '#dc2626';
   const grad = ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
   grad.addColorStop(0, isPos ? 'rgba(21,128,61,.2)' : 'rgba(220,38,38,.15)');
   grad.addColorStop(1, 'rgba(255,255,255,0)');
@@ -569,7 +564,7 @@ function renderWalletChart() {
   ctx.strokeStyle=lineColor; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
   settled.forEach((b,i) => {
     ctx.beginPath(); ctx.arc(xP(i+1), yP(points[i+1]), 3, 0, Math.PI*2);
-    ctx.fillStyle = b.status==='win' ? '#15803d' : '#dc2626';
+    ctx.fillStyle = b.status==='win' ? '#00BEC4' : '#dc2626';
     ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
   });
   ctx.fillStyle='#94a3b8'; ctx.font='9px IBM Plex Mono, monospace'; ctx.textAlign='right';
@@ -742,9 +737,9 @@ function setTrackerType(type) {
   const setStyle = (id, active) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.style.background  = active ? 'rgba(219,39,119,.1)' : 'transparent';
+    el.style.background  = active ? 'rgba(0,190,196,.1)' : 'transparent';
     el.style.borderWidth = active ? '2px' : '1.5px';
-    el.style.color       = active ? '#be185d' : '#475569';
+    el.style.color       = active ? '#00BEC4' : '#475569';
   };
   setStyle('trTypeSingle', type==='single');
   setStyle('trTypeCombi',  type==='combi');
@@ -875,7 +870,7 @@ function renderTracker() {
   if (!bets.length) { list.innerHTML='<div class="empty-state">Geen weddenschappen</div>'; return; }
   list.innerHTML = bets.map(b => {
     const pnlText  = b.status==='win' ? `+€${(b.payout-b.stake).toFixed(2)}` : b.status==='lose' ? `-€${b.stake.toFixed(2)}` : '⏳ Open';
-    const pnlColor = b.status==='win'?'#16a34a':b.status==='lose'?'#dc2626':'#475569';
+    const pnlColor = b.status==='win'?'#00BEC4':b.status==='lose'?'#dc2626':'#475569';
     const srcLbl   = sourceLabel[b.source||'eigen']||'✏️ Eigen';
     const srcCls   = sourceClass[b.source||'eigen']||'src-eigen';
     const isCombi  = b.type==='combi';
@@ -932,7 +927,7 @@ function updateTrackerStats() {
   set('trBets',   bets.length);
   set('trRoi',    roi!=='—'?roi+'%':'—');
   const el = document.getElementById('trPnl');
-  if (el) el.style.color = pnl>=0?'#16a34a':'#dc2626';
+  if (el) el.style.color = pnl>=0?'#00BEC4':'#dc2626';
   renderSmartStats();
   renderTrackerChart();
 }
@@ -952,7 +947,7 @@ function renderSmartStats() {
   }
   const srcRows = Object.entries(bySource).map(([src,d]) => {
     const pct = Math.round(d.wins/d.total*100);
-    const col = pct>=55?'#16a34a':pct>=40?'#d97706':'#dc2626';
+    const col = pct>=55?'#00BEC4':pct>=40?'#d97706':'#dc2626';
     return `<div class="smart-stat-row"><span>${sourceLabel[src]||src}</span><span style="color:${col};font-weight:700;">${pct}% (${d.wins}/${d.total})</span></div>`;
   }).join('');
   wrap.innerHTML = `<div class="smart-stats-card"><div class="smart-stats-title">📊 Hitrate per bron</div>${srcRows}</div>`;
@@ -1018,9 +1013,9 @@ function renderBacktest() {
     const badge     = lockBadge(lockLv);
     const statusTxt = p.status==='win'  ? `✓ WIN (+€${((p.odds-1)*1).toFixed(2)} per €1)`
                     : p.status==='lose' ? '✗ VERLIES' : '⏳ OPEN';
-    const confColor = p.confidence>=7?'#15803d':p.confidence>=5?'#b45309':'#dc2626';
-    const valColor  = p.value>=15?'#15803d':p.value>=5?'#b45309':'#64748b';
-    const borderLeft = lockLv==='triple'?'4px solid #15803d':lockLv==='double'?'4px solid #b45309':'4px solid transparent';
+    const confColor = p.confidence>=7?'#00BEC4':p.confidence>=5?'#b45309':'#dc2626';
+    const valColor  = p.value>=15?'#00BEC4':p.value>=5?'#b45309':'#64748b';
+    const borderLeft = lockLv==='triple'?'4px solid #00BEC4':lockLv==='double'?'4px solid #b45309':'4px solid transparent';
     return `
     <div class="bt-row bt-${p.status||'pending'}" style="border-left:${borderLeft};cursor:pointer;" data-btidx="${(state.valueBacktest?.picks||[]).indexOf(p)}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem;">
@@ -1033,7 +1028,7 @@ function renderBacktest() {
         <span>🎯 ${p.pickLabel} @ ${p.odds}</span>
         <span style="color:${confColor}">🎲 ${p.confidence}/10</span>
         <span style="color:var(--sub);">📊 ${p.bookmaker||'?'}</span>
-        ${p.poissonUsed ? '<span style="color:#7c3aed;">P+AI</span>' : ''}
+        ${p.poissonUsed ? '<span style="color:#00a8ad;">P+AI</span>' : ''}
       </div>
       <div style="font-family:monospace;font-size:.52rem;color:var(--sub);margin-bottom:.25rem;line-height:1.5;">
         AI ${p.aiKans}% kans · ½ Kelly ${p.kelly}% · ${p.reason||''}
@@ -1110,7 +1105,7 @@ function renderKillerStats(picks, settled) {
   let profit7  = 0;
   last7.forEach(p => { profit7 += p.status==='win' ? (p.odds-1) : -1; });
   const roi7   = last7.length ? ((profit7/last7.length)*100).toFixed(1) : null;
-  const roi7Color = !roi7 ? '#94a3b8' : parseFloat(roi7)>=0 ? '#15803d' : '#dc2626';
+  const roi7Color = !roi7 ? '#94a3b8' : parseFloat(roi7)>=0 ? '#00BEC4' : '#dc2626';
 
   // Win streak
   const sortedSettled = [...settled].sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
@@ -1165,7 +1160,7 @@ function renderKillerStats(picks, settled) {
 
       <!-- Win streak -->
       <div style="background:rgba(15,23,42,.04);border:1px solid var(--border);border-radius:10px;padding:.5rem .6rem;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${streak>=3?'#15803d':streak>=1?'#b45309':'#94a3b8'};">${streak}🔥</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:${streak>=3?'#00BEC4':streak>=1?'#b45309':'#94a3b8'};">${streak}🔥</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">HUIDIGE WIN STREAK</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">Max: ${maxStreak} op rij</div>
       </div>
@@ -1173,7 +1168,7 @@ function renderKillerStats(picks, settled) {
       <!-- Beste league -->
       <div style="background:rgba(15,23,42,.04);border:1px solid var(--border);border-radius:10px;padding:.5rem .6rem;">
         ${bestLeague ? `
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;color:#15803d;line-height:1.1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${bestLeague[0]}</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:.75rem;color:#00BEC4;line-height:1.1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${bestLeague[0]}</div>
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">BESTE LEAGUE</div>
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${Math.round(bestLeague[1].wins/bestLeague[1].total*100)}% hitrate · ${bestLeague[1].total}x</div>
         ` : `
@@ -1184,8 +1179,8 @@ function renderKillerStats(picks, settled) {
       </div>
 
       <!-- Elite picks -->
-      <div style="background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:10px;padding:.5rem .6rem;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#7c3aed;">${eliteHr !== null ? eliteHr+'%' : '—'}</div>
+      <div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.5rem .6rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#00a8ad;">${eliteHr !== null ? eliteHr+'%' : '—'}</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">⭐ ELITE HITRATE</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${eliteWins.length}/${elitePicks.length} gewonnen</div>
       </div>
@@ -1195,7 +1190,7 @@ function renderKillerStats(picks, settled) {
       <div style="background:rgba(15,23,42,.04);border:1px solid var(--border);border-radius:10px;padding:.5rem .6rem;grid-column:1/-1;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${parseFloat(clvAvg)>=0?'#15803d':'#dc2626'};">${parseFloat(clvAvg)>=0?'+':''}${clvAvg}% CLV</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${parseFloat(clvAvg)>=0?'#00BEC4':'#dc2626'};">${parseFloat(clvAvg)>=0?'+':''}${clvAvg}% CLV</div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);">CLOSING LINE VALUE</div>
           </div>
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);text-align:right;">Gebaseerd op ${clvPicks.length} picks<br>+ CLV = betere odds dan markt</div>
@@ -1227,7 +1222,7 @@ function renderTripleLockHitrate() {
   card.style.display='block';
 
   const trRow = triples.length ? `
-    <div style="font-family:monospace;font-size:.75rem;font-weight:900;color:${trHr===null?'#94a3b8':trHr>=55?'#15803d':trHr>=40?'#d97706':'#dc2626'};">
+    <div style="font-family:monospace;font-size:.75rem;font-weight:900;color:${trHr===null?'#94a3b8':trHr>=55?'#00BEC4':trHr>=40?'#d97706':'#dc2626'};">
       ${trHr !== null ? trHr+'%' : '—'}
     </div>
     <div style="font-family:monospace;font-size:.48rem;color:var(--sub);">Triple · ${triples.filter(p=>p.status==='win').length}W/${triples.filter(p=>p.status==='lose').length}V (${triples.length} picks)</div>
@@ -1277,7 +1272,7 @@ function renderBtScoreboard(picks) {
   const sorted=Object.values(compMap).sort((a,b)=>b.total-a.total);
   const rows=sorted.map(d => {
     const pct=d.total>0?Math.round((d.wins/d.total)*100):0;
-    const barColor=pct>=55?'#16a34a':pct<40&&d.total>2?'#dc2626':'#d97706';
+    const barColor=pct>=55?'#00BEC4':pct<40&&d.total>2?'#dc2626':'#d97706';
     const label=COMP_NAMES[d.name]||d.name;
     const pendingTxt=d.pending?` · ${d.pending} open`:'';
     return `<div class="bt-score-row">
@@ -1312,7 +1307,7 @@ function renderBacktestChart(settled) {
   const zeroY=yP(0); ctx.beginPath(); ctx.moveTo(pad.left,zeroY); ctx.lineTo(pad.left+cw,zeroY); ctx.stroke();
   ctx.setLineDash([]);
   const lastVal=points[points.length-1];
-  const isPos=lastVal>=0, lineColor=isPos?'#15803d':'#dc2626';
+  const isPos=lastVal>=0, lineColor=isPos?'#00BEC4':'#dc2626';
   const grad=ctx.createLinearGradient(0,pad.top,0,pad.top+ch);
   grad.addColorStop(0,isPos?'rgba(21,128,61,.2)':'rgba(220,38,38,.15)');
   grad.addColorStop(1,'rgba(255,255,255,0)');
@@ -1325,7 +1320,7 @@ function renderBacktestChart(settled) {
   ctx.strokeStyle=lineColor; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
   settled.forEach((p,i) => {
     ctx.beginPath(); ctx.arc(xP(i+1),yP(points[i+1]),3,0,Math.PI*2);
-    ctx.fillStyle=p.status==='win'?'#15803d':'#dc2626';
+    ctx.fillStyle=p.status==='win'?'#00BEC4':'#dc2626';
     ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
   });
   ctx.fillStyle='#94a3b8'; ctx.font='9px IBM Plex Mono, monospace'; ctx.textAlign='right';
@@ -1445,8 +1440,8 @@ function renderValuePicks() {
     return;
   }
 
-  const valueClass = v => v >= 20 ? '#15803d' : v >= 10 ? '#b45309' : '#64748b';
-  const valueBg    = v => v >= 20 ? 'rgba(22,163,74,.1)' : v >= 10 ? 'rgba(217,119,6,.08)' : 'rgba(100,116,139,.06)';
+  const valueClass = v => v >= 20 ? '#00BEC4' : v >= 10 ? '#b45309' : '#64748b';
+  const valueBg    = v => v >= 20 ? 'rgba(0,190,196,.1)' : v >= 10 ? 'rgba(217,119,6,.08)' : 'rgba(100,116,139,.06)';
   const valueLbl   = v => v >= 20 ? '🏆 HOGE VALUE' : v >= 10 ? '⚡ VALUE' : '📊 LAGE VALUE';
 
   let html = `
@@ -1471,7 +1466,7 @@ function renderValuePicks() {
     html += `
       <div style="background:var(--card);border:1px solid var(--stroke);border-radius:16px;
         padding:.9rem 1rem;margin-bottom:.6rem;
-        border-left:${lockLv==='triple'?'4px solid #15803d':lockLv==='double'?'4px solid #b45309':'1px solid var(--stroke)'};">
+        border-left:${lockLv==='triple'?'4px solid #00BEC4':lockLv==='double'?'4px solid #b45309':'1px solid var(--stroke)'};">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.45rem;color:var(--sub);">${comp}</div>
           <div style="display:flex;gap:.3rem;align-items:center;">
@@ -1486,7 +1481,7 @@ function renderValuePicks() {
         <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
           <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${pick}</span>
           <span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">${pickLabel}</span>
-          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;margin-left:auto;">${odds}</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#00BEC4;margin-left:auto;">${odds}</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.45rem;color:var(--sub);">
@@ -1497,15 +1492,15 @@ function renderValuePicks() {
         <div style="display:flex;gap:.4rem;">
           <button onclick="quickBetFromValue('${matchId}','${pick}','${pickLabel}',${odds})"
             style="flex:2;padding:.5rem;border-radius:10px;
-            background:linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8));
+            background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.8));
             border:none;font-family:'IBM Plex Mono',monospace;font-size:.55rem;
             font-weight:800;color:#fff;cursor:pointer;">
             💰 INZETTEN
           </button>
           <button onclick="addValueToCombiBuilder('${matchId}','${pick}','${pickLabel}',${odds})"
             style="flex:1;padding:.5rem;border-radius:10px;
-            background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);
-            font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;color:#7c3aed;cursor:pointer;">
+            background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);
+            font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;color:#00a8ad;cursor:pointer;">
             + COMBI
           </button>
         </div>
@@ -1618,11 +1613,11 @@ function showCombiSlipOverlay() {
 
   overlay.style.pointerEvents = 'all';
   overlay.innerHTML = `
-    <div style="background:var(--card);border:1px solid rgba(219,39,119,.25);border-radius:16px;
+    <div style="background:var(--card);border:1px solid rgba(0,190,196,.25);border-radius:16px;
       box-shadow:0 -4px 24px rgba(15,23,42,.15);padding:.75rem 1rem;
       animation:slideUp .2s ease;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#be185d;">⚡ COMBI SLIP · ${legs.length} legs</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#00BEC4;">⚡ COMBI SLIP · ${legs.length} legs</div>
         <button onclick="document.getElementById('combi-slip-overlay').innerHTML='';document.getElementById('combi-slip-overlay').style.pointerEvents='none';"
           style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:1rem;">✕</button>
       </div>
@@ -1632,27 +1627,27 @@ function showCombiSlipOverlay() {
           border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
           <div style="flex:1;min-width:0;">
             <div style="font-size:.75rem;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.home||'?'} vs ${l.away||'?'}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:#be185d;font-weight:700;">${l.pickLabel||l.pick}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:#00BEC4;font-weight:700;">${l.pickLabel||l.pick}</div>
           </div>
           <div style="display:flex;align-items:center;gap:.5rem;flex-shrink:0;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#16a34a;">${parseFloat(l.odds).toFixed(2)}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#00BEC4;">${parseFloat(l.odds).toFixed(2)}</div>
             <button onclick="state.combiBuilder=state.combiBuilder.filter(x=>x.matchId!=='${l.matchId}');saveState();showCombiSlipOverlay();"
               style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.7rem;">✕</button>
           </div>
         </div>`).join('')}
       <div style="display:flex;justify-content:space-between;align-items:center;
-        background:rgba(219,39,119,.06);border-radius:8px;padding:.4rem .7rem;margin-top:.3rem;margin-bottom:.5rem;">
+        background:rgba(0,190,196,.06);border-radius:8px;padding:.4rem .7rem;margin-top:.3rem;margin-bottom:.5rem;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);">€${defaultBet} × ${totalOdds.toFixed(2)}</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#16a34a;">€${payout}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#00BEC4;">€${payout}</div>
       </div>
       <div style="display:flex;gap:.4rem;">
         <button onclick="switchScreen('wedstrijden');setTimeout(()=>{document.getElementById('combiBuilder')?.scrollIntoView({behavior:'smooth'});if(typeof updateCombiBuilder==='function')updateCombiBuilder();},300);"
-          style="flex:1;padding:.5rem;border-radius:10px;background:rgba(124,58,237,.08);
-          border:1px solid rgba(124,58,237,.2);font-family:'IBM Plex Mono',monospace;
-          font-size:.55rem;font-weight:700;color:#7c3aed;cursor:pointer;">✏ Bewerken</button>
+          style="flex:1;padding:.5rem;border-radius:10px;background:rgba(0,190,196,.08);
+          border:1px solid rgba(0,190,196,.2);font-family:'IBM Plex Mono',monospace;
+          font-size:.55rem;font-weight:700;color:#00a8ad;cursor:pointer;">✏ Bewerken</button>
         <button onclick="placeCombiFromOverlay()"
           style="flex:2;padding:.5rem;border-radius:10px;
-          background:linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8));
+          background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.8));
           color:#fff;border:none;font-family:'IBM Plex Mono',monospace;
           font-size:.55rem;font-weight:800;cursor:pointer;">💶 PLAATSEN</button>
       </div>
@@ -1754,7 +1749,7 @@ function parseJacksImport() {
 
   if (preview) {
     preview.innerHTML = `
-      <div style="font-family:monospace;font-size:.55rem;color:#15803d;margin-bottom:.4rem;">
+      <div style="font-family:monospace;font-size:.55rem;color:#00BEC4;margin-bottom:.4rem;">
         ✅ ${bets.length} bet${bets.length > 1 ? 's' : ''} herkend:
       </div>
       ${bets.slice(0, 5).map(b => `
@@ -1837,7 +1832,7 @@ function openJacksPhotoImport() {
         <div id="jacksPhotoBets" style="margin-bottom:.6rem;"></div>
         <div style="display:flex;gap:.5rem;margin-top:.5rem;">
           <button onclick="closeJacksPhotoImport()" style="flex:1;padding:.5rem;border-radius:8px;background:rgba(0,0,0,.06);border:1px solid var(--stroke);cursor:pointer;font-family:monospace;font-size:.6rem;">Annuleer</button>
-          <button id="jacksPhotoImportBtn" style="flex:1;padding:.5rem;border-radius:8px;background:linear-gradient(135deg,rgba(219,39,119,.9),rgba(124,58,237,.8));color:#fff;border:none;cursor:pointer;font-family:monospace;font-size:.6rem;font-weight:700;display:none;" onclick="confirmJacksPhotoImport()">📥 Importeren</button>
+          <button id="jacksPhotoImportBtn" style="flex:1;padding:.5rem;border-radius:8px;background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.8));color:#fff;border:none;cursor:pointer;font-family:monospace;font-size:.6rem;font-weight:700;display:none;" onclick="confirmJacksPhotoImport()">📥 Importeren</button>
         </div>
       </div>`;
     document.body.appendChild(modal);
@@ -1941,12 +1936,12 @@ Datum formaat: dd-mm-yyyy`,
     }
 
     // Toon preview van gevonden bets
-    if (status) { status.textContent = `✅ ${_jacksParsedBets.length} bet${_jacksParsedBets.length>1?'s':''} herkend`; status.style.color = '#15803d'; }
+    if (status) { status.textContent = `✅ ${_jacksParsedBets.length} bet${_jacksParsedBets.length>1?'s':''} herkend`; status.style.color = '#00BEC4'; }
 
     if (betsEl) {
       betsEl.innerHTML = _jacksParsedBets.map((b, i) => {
         const statusIcon = b.status === 'gewonnen' ? '✅' : b.status === 'verloren' ? '❌' : '⏳';
-        const statusColor = b.status === 'gewonnen' ? '#15803d' : b.status === 'verloren' ? '#dc2626' : '#d97706';
+        const statusColor = b.status === 'gewonnen' ? '#00BEC4' : b.status === 'verloren' ? '#dc2626' : '#d97706';
         const isCombi = b.type === 'combi' && b.legs?.length;
         const title = isCombi
           ? `Combi (${b.legs.length} legs) @ ${b.totalOdds||'?'}`
@@ -2100,7 +2095,7 @@ function showWalletPopup(type, data) {
   const existing = document.getElementById('walletPopupOverlay');
   if (existing) existing.remove();
 
-  const hrColor = n => n >= 55 ? '#16a34a' : n >= 45 ? '#d97706' : '#dc2626';
+  const hrColor = n => n >= 55 ? '#00BEC4' : n >= 45 ? '#d97706' : '#dc2626';
   let headerHtml = '', bodyHtml = '';
 
   function makeRows(rows) {
@@ -2113,15 +2108,15 @@ function showWalletPopup(type, data) {
 
   if (type === 'backtest') {
     const p = data;
-    const statusColor = p.status==='win'?'#16a34a':p.status==='lose'?'#dc2626':'#d97706';
+    const statusColor = p.status==='win'?'#00BEC4':p.status==='lose'?'#dc2626':'#d97706';
     const icon = p.status==='win'?'✅':p.status==='lose'?'❌':'⏳';
     headerHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${p.matchName||'Pick'}</div>
       <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">📅 ${p.date||''}${p.matchTime||p.time ? ' ' + (p.matchTime||p.time) : ''} · ${p.comp||''}</div>`;
     bodyHtml = makeRows([
       ['Pick', p.pickLabel||p.pick||'—', null],
       ['Quote', p.odds||'—', null],
-      ['Value', p.value ? '+'+p.value+'%' : '—', p.value>=15?'#15803d':p.value>=5?'#b45309':null],
-      ['Confidence', p.confidence ? p.confidence+'/10' : '—', p.confidence>=7?'#15803d':p.confidence>=5?'#b45309':'#dc2626'],
+      ['Value', p.value ? '+'+p.value+'%' : '—', p.value>=15?'#00BEC4':p.value>=5?'#b45309':null],
+      ['Confidence', p.confidence ? p.confidence+'/10' : '—', p.confidence>=7?'#00BEC4':p.confidence>=5?'#b45309':'#dc2626'],
       ['AI kans', p.aiKans ? p.aiKans+'%' : '—', null],
       ['Kelly', p.kelly ? p.kelly+'%' : '—', null],
       ['Status', p.status==='win'?'WIN':p.status==='lose'?'VERLIES':'OPEN', statusColor],
@@ -2129,7 +2124,7 @@ function showWalletPopup(type, data) {
       ['Bookmaker', p.bookmaker||'—', null],
     ]);
     if (p.reason) {
-      bodyHtml += `<div style="background:rgba(37,99,235,.05);border-left:3px solid #2563eb;border-radius:0 8px 8px 0;padding:.5rem .7rem;margin-top:.6rem;">
+      bodyHtml += `<div style="background:rgba(0,190,196,.05);border-left:3px solid #2563eb;border-radius:0 8px 8px 0;padding:.5rem .7rem;margin-top:.6rem;">
         <div style="font-family:monospace;font-size:.44rem;color:#1d4ed8;font-weight:700;margin-bottom:.2rem;">REDEN</div>
         <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--ink,#0f172a);line-height:1.6;">${p.reason}</div>
       </div>`;
@@ -2158,7 +2153,7 @@ function showWalletPopup(type, data) {
     const b = data;
     const pnlVal = b.status==='win' ? b.payout - b.stake : b.status==='lose' ? -b.stake : null;
     const pnlText = pnlVal !== null ? (pnlVal>=0?'+':'')+'€'+pnlVal.toFixed(2) : '⏳ Open';
-    const pnlColor = b.status==='win'?'#16a34a':b.status==='lose'?'#dc2626':'#d97706';
+    const pnlColor = b.status==='win'?'#00BEC4':b.status==='lose'?'#dc2626':'#d97706';
     const icon = b.status==='win'?'✅':b.status==='lose'?'❌':'⏳';
     headerHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${b.match||'Weddenschap'}</div>
       <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${b.date||''} · ${b.bookmaker||''}</div>`;
@@ -2175,7 +2170,7 @@ function showWalletPopup(type, data) {
     if (b.legs && b.legs.length) {
       bodyHtml += `<div style="font-family:monospace;font-size:.48rem;font-weight:700;color:var(--sub);margin:.7rem 0 .3rem;">COMBI LEGS</div>`;
       b.legs.forEach((l,i) => {
-        const lc = l.status==='win'?'#16a34a':l.status==='lose'?'#dc2626':'#d97706';
+        const lc = l.status==='win'?'#00BEC4':l.status==='lose'?'#dc2626':'#d97706';
         bodyHtml += `<div style="background:rgba(15,23,42,.03);border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
           <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:600;">${l.match||'Leg '+(i+1)}</div>
           <div style="display:flex;justify-content:space-between;margin-top:.2rem;">
@@ -2221,7 +2216,7 @@ function showWalletPopup(type, data) {
       const xP=i=>pad.left+(i/Math.max(points.length-1,1))*cw;
       const yP=v=>pad.top+ch-((v-minV)/range)*ch;
       const lastVal=points[points.length-1], isPos=lastVal>=0;
-      const lineColor=isPos?'#15803d':'#dc2626';
+      const lineColor=isPos?'#00BEC4':'#dc2626';
       // Zero lijn
       ctx.setLineDash([2,2]); ctx.strokeStyle='rgba(148,163,184,.4)'; ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(pad.left,yP(0)); ctx.lineTo(pad.left+cw,yP(0)); ctx.stroke();
