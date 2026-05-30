@@ -145,17 +145,17 @@ function _analyticsHTML(local, worker) {
   // ── Header ──
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">';
   html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--ink);">📊 STATS & ANALYTICS</div>';
-  html += '<button onclick="renderAnalyticsScreen()" style="background:none;border:1px solid var(--stroke);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:var(--sub);cursor:pointer;">↻ Vernieuwen</button>';
+  html += '<button onclick="renderAnalyticsScreen()" style="background:none;border:1px solid rgba(21,32,56,0.15);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:var(--sub);cursor:pointer;">↻ Vernieuwen</button>';
   html += '</div>';
 
   // ── KPI row ──
   html += '<div class="analytics-block">';
   html += '<div class="analytics-block-title">OVERZICHT</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
-  html += _kpi('PICKS TOTAAL', local.total + '/100', '#be185d');
-  html += _kpi('SETTLED', local.settled, '#7c3aed');
-  html += _kpi('HITRATE', local.hitrate !== null ? local.hitrate + '%' : '—', local.hitrate !== null && local.hitrate >= 50 ? '#16a34a' : '#dc2626');
-  html += _kpi('ROI', local.roi !== null ? (local.roi >= 0 ? '+' : '') + local.roi + '%' : '—', local.roi !== null && local.roi >= 0 ? '#16a34a' : '#dc2626');
+  html += _kpi('PICKS TOTAAL', local.total + '/100', '#0a8a5f');
+  html += _kpi('SETTLED', local.settled, '#0d9e6e');
+  html += _kpi('HITRATE', local.hitrate !== null ? local.hitrate + '%' : '—', local.hitrate !== null && local.hitrate >= 50 ? '#0a8a5f' : '#dc2626');
+  html += _kpi('ROI', local.roi !== null ? (local.roi >= 0 ? '+' : '') + local.roi + '%' : '—', local.roi !== null && local.roi >= 0 ? '#0a8a5f' : '#dc2626');
   html += '</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;">';
   html += _kpiSmall('GEM. ODDS', local.avgOdds || '—');
@@ -170,7 +170,7 @@ function _analyticsHTML(local, worker) {
   html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">' + local.total + '/100</div>';
   html += '</div>';
   html += '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:6px;overflow:hidden;">';
-  html += '<div style="background:linear-gradient(90deg,#be185d,#7c3aed);height:100%;border-radius:999px;width:' + Math.min(100, local.total) + '%;transition:width .4s;"></div>';
+  html += '<div style="background:linear-gradient(90deg,#0a8a5f,#0d9e6e);height:100%;border-radius:999px;width:' + Math.min(100, local.total) + '%;transition:width .4s;"></div>';
   html += '</div></div></div>';
 
   // ── ROI Trend ──
@@ -191,7 +191,7 @@ function _analyticsHTML(local, worker) {
       const hr = d.t > 0 ? Math.round(d.w / d.t * 100) : null;
       html += '<div class="analytics-stat-card">';
       html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:var(--ink);">' + pick + '</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.7rem;font-weight:800;color:' + (hr!==null&&hr>=50?'#16a34a':'#dc2626') + ';">' + (hr !== null ? hr + '%' : '—') + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.7rem;font-weight:800;color:' + (hr!==null&&hr>=50?'#0a8a5f':'#dc2626') + ';">' + (hr !== null ? hr + '%' : '—') + '</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">' + d.w + '/' + d.t + ' wins</div>';
       html += '</div>';
     });
@@ -211,7 +211,7 @@ function _analyticsHTML(local, worker) {
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);">' + hr + '% (' + d.wins + '/' + d.total + ')</div>';
       html += '</div>';
       html += '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:5px;overflow:hidden;">';
-      html += '<div style="background:' + (hr >= 50 ? '#16a34a' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + barW + '%;transition:width .4s;"></div>';
+      html += '<div style="background:' + (hr >= 50 ? '#0a8a5f' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + barW + '%;transition:width .4s;"></div>';
       html += '</div></div>';
     });
     html += '</div>';
@@ -226,7 +226,7 @@ function _analyticsHTML(local, worker) {
       html += '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--sub);min-width:80px;">' + label + '</div>';
       html += '<div style="flex:1;background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">';
-      html += '<div style="background:' + (hr >= 50 ? '#16a34a' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + hr + '%;transition:width .4s;"></div>';
+      html += '<div style="background:' + (hr >= 50 ? '#0a8a5f' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + hr + '%;transition:width .4s;"></div>';
       html += '</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:var(--ink);min-width:36px;text-align:right;">' + hr + '%</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);min-width:32px;">' + d.w + '/' + d.t + '</div>';
@@ -242,14 +242,14 @@ function _analyticsHTML(local, worker) {
     local.byLeague.forEach(([lid, d]) => {
       const hr = d.total > 0 ? Math.round(d.wins / d.total * 100) : 0;
       const roi = parseFloat((d.roi / d.total).toFixed(1));
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--stroke);">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid rgba(21,32,56,0.15);">';
       html += '<div style="flex:1;">';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--ink);">' + d.name + '</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">' + d.total + ' picks · ' + d.wins + ' wins</div>';
       html += '</div>';
       html += '<div style="text-align:right;">';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:' + (hr>=50?'#16a34a':'#dc2626') + ';">' + hr + '%</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:' + (roi>=0?'#16a34a':'#dc2626') + ';">' + (roi>=0?'+':'') + roi + '% ROI</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:' + (hr>=50?'#0a8a5f':'#dc2626') + ';">' + hr + '%</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:' + (roi>=0?'#0a8a5f':'#dc2626') + ';">' + (roi>=0?'+':'') + roi + '% ROI</div>';
       html += '</div></div>';
     });
     html += '</div>';
@@ -282,7 +282,7 @@ function _analyticsHTML(local, worker) {
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#d97706;margin-bottom:.5rem;">🔥 ' + sm.steamMovements7d + ' steam movements</div>';
       if (sm.topSteam && sm.topSteam.length) {
         sm.topSteam.forEach(s => {
-          html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid var(--stroke);">';
+          html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(21,32,56,0.15);">';
           html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--ink);">Fixture ' + s.fixtureId + ' · Pick ' + s.pick + '</div>';
           html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:800;color:#d97706;">' + s.movement + '%</div>';
           html += '</div>';
@@ -322,7 +322,7 @@ function _roiTrendChart(trend) {
 
   let path = trend.map((t, i) => (i === 0 ? 'M' : 'L') + x(i).toFixed(1) + ',' + y(t.roi).toFixed(1)).join(' ');
   const lastROI = rois[rois.length - 1];
-  const lineColor = lastROI >= 0 ? '#16a34a' : '#dc2626';
+  const lineColor = lastROI >= 0 ? '#0a8a5f' : '#dc2626';
 
   let svg = '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="display:block;margin:.4rem 0;">';
   // Zero lijn
