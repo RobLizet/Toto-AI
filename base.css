@@ -4,21 +4,17 @@
 
 /* ── CSS VARIABELEN (v30 — navy/goud thema) ─────────── */
 :root {
-  /* v30: navy/goud thema — iets donkerdere achtergrond */
-  --bg1:#e4e8f2;--bg2:#dce2ee;--bg3:#d8dfec;
-  --ink:#0f172a;--muted:#4a5568;--sub:#5a6a82;
-  --card:#f0f3fa;--card2:#eaeff8;
-  --stroke:rgba(15,23,42,0.13);
-  --shadow:0 4px 18px rgba(15,23,42,.13);
-  --shadow2:0 2px 10px rgba(15,23,42,.10);
-  --green:#16a34a;--red:#dc2626;--yellow:#d97706;--orange:#ea580c;
-  --blue:#2563eb;--purple:#7c3aed;
-  --pink:#db2777;--rose:#fce7f3;--lavender:#ede9fe;--sky:#e0f2fe;
-  --accent:#db2777;
-  --text:var(--ink);--border:var(--stroke);
-  --gold:#b8922a;--gold-l:rgba(184,146,42,.12);
-  --navy:#1a1f3c;
-  --coffee:#db2777;--surface:#f0f3fa;
+  --bg1:#0B1519;--bg2:#091e24;--bg3:#04383F;
+  --ink:#e8f4f6;--muted:#7a9aa0;--sub:#5a7a82;
+  --card:rgba(255,255,255,0.05);--card2:rgba(255,255,255,0.08);
+  --stroke:rgba(255,255,255,0.08);
+  --shadow:0 4px 24px rgba(0,0,0,0.4);--shadow2:0 2px 12px rgba(0,0,0,0.3);
+  --green:#00BEC4;--red:#ef4444;--yellow:#f59e0b;--orange:#f97316;
+  --blue:#38bdf8;--purple:#a78bfa;
+  --pink:#f472b6;--rose:rgba(244,114,182,.1);--lavender:rgba(167,139,250,.1);--sky:rgba(56,189,248,.1);
+  --accent:#00BEC4;--text:var(--ink);--border:var(--stroke);
+  --gold:#00BEC4;--gold-l:rgba(0,190,196,.12);
+  --navy:#0B1519;--coffee:#00BEC4;--surface:rgba(11,21,25,0.97);
 }
 
 /* ── DARK MODE ────────────────────────────────────── */
@@ -115,11 +111,7 @@ body.cream .made-by {
 html, body { height:100%; }
 html { scroll-behavior:smooth; }
 body {
-  background:
-    radial-gradient(1200px 700px at 20% -10%,rgba(26,31,60,.05),transparent 55%),
-    radial-gradient(1000px 650px at 85% 5%,rgba(184,146,42,.04),transparent 60%),
-    radial-gradient(900px 700px at 40% 120%,rgba(26,31,60,.04),transparent 60%),
-    linear-gradient(180deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+  background: linear-gradient(180deg,#0B1519 0%,#091e24 50%,#04383F 100%);
   color:var(--ink);
   font-family:'DM Sans',sans-serif;
   font-size:16px;
@@ -144,7 +136,7 @@ body {
 .bottom-nav {
   position:fixed;bottom:0;left:0;right:0;z-index:200;
   display:flex;align-items:flex-end;justify-content:space-around;
-  background:rgba(240,243,250,.97);
+  background:rgba(11,21,25,0.97);
   backdrop-filter:blur(16px);
   -webkit-backdrop-filter:blur(16px);
   border-top:1px solid var(--stroke);
@@ -159,13 +151,13 @@ body.dark .bottom-nav { background:rgba(13,15,20,.95); }
   background:transparent;border:none;cursor:pointer;
   border-radius:12px;transition:all .15s;position:relative;
 }
-.bnav-btn.active { background:rgba(184,146,42,.12); }
+.bnav-btn.active { background:rgba(0,190,196,.12); }
 .bnav-icon { font-size:1.3rem;line-height:1; }
 .bnav-label {
   font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
   color:var(--sub);white-space:nowrap;letter-spacing:.02em;
 }
-.bnav-btn.active .bnav-label { color:var(--gold); }
+.bnav-btn.active .bnav-label { color:#00BEC4; }
 
 /* Notificatie dot op bnav */
 .bnav-dot {
@@ -182,6 +174,7 @@ body.dark .bottom-nav { background:rgba(13,15,20,.95); }
   -webkit-tap-highlight-color:transparent;
 }
 .more-menu-backdrop.open { display:block; }
+.more-menu { background:rgba(11,21,25,0.97) !important; }
 .more-menu {
   position:fixed;bottom:72px;right:1rem;z-index:300;
   background:var(--card);border:1px solid var(--stroke);border-radius:18px;
@@ -199,7 +192,7 @@ body.dark .bottom-nav { background:rgba(13,15,20,.95); }
   color:var(--ink);border-bottom:1px solid var(--stroke);transition:background .1s;
 }
 .more-menu-item:last-child { border:none; }
-.more-menu-item:active { background:var(--rose); }
+.more-menu-item:active { background:rgba(0,190,196,.08); }
 .more-menu-icon { font-size:1rem;width:1.2rem;text-align:center; }
 
 /* ── TOPBAR ───────────────────────────────────────── */
@@ -294,8 +287,8 @@ body.dark .bottom-nav { background:rgba(13,15,20,.95); }
 /* ── Topbar user ── */
 .topbar-user {
   font-family:'IBM Plex Mono',monospace;font-size:.48rem;
-  color:var(--accent);background:rgba(190,24,93,.1);
-  border:1px solid rgba(190,24,93,.25);border-radius:999px;
+  color:#00BEC4;background:rgba(0,190,196,.1);
+  border:1px solid rgba(0,190,196,.25);border-radius:999px;
   padding:2px 8px;max-width:80px;overflow:hidden;
   white-space:nowrap;text-overflow:ellipsis;
 }
