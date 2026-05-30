@@ -87,7 +87,7 @@ async function triggerWorkerSettle() {
 }
 
 
-// DASHBOARD.JS — v19.3 HMAC scan tokens, admin scan knop
+// DASHBOARD.JS — v30.3 HMAC scan tokens, admin scan knop
 // ═══════════════════════════════════════════════════════
 
 async function fetchDailyTip() {
@@ -241,31 +241,53 @@ function renderDashboard() {
       </div>
     </div>` : ''}
 
-    <!-- Nav kaarten -->
-    <div class="dash-nav-grid">
-      <div class="dash-nav-card" onclick="switchScreen('wedstrijden')">
-        <div class="dash-nav-icon">⚽</div>
-        <div class="dash-nav-title">WEDSTRIJDEN</div>
-        <div class="dash-nav-sub">Laad matches, bekijk quotes en value indicators</div>
-        <div class="dash-nav-badge">LIVE API</div>
+    <!-- TOTO AI INSIGHTS knop -->
+    <div style="display:flex;justify-content:flex-end;margin-bottom:.45rem;">
+      <button onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('tips'),120)"
+        style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
+        color:var(--navy);background:var(--card);border:1px solid var(--stroke);
+        border-radius:99px;padding:.28rem .75rem;cursor:pointer;
+        box-shadow:0 1px 4px rgba(15,23,42,.08);letter-spacing:.03em;">
+        🔮 TOTO AI INSIGHTS
+      </button>
+    </div>
+
+    <!-- Nav kaarten — 2 kaarten zoals dashboard foto -->
+    <div class="dash-nav-grid" style="grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.75rem;">
+
+      <!-- WEDSTRIJDEN & ANALYSIS — grote linker kaart -->
+      <div class="dash-nav-card" onclick="switchScreen('wedstrijden')"
+        style="background:rgba(15,23,42,.04);border-color:rgba(15,23,42,.12);position:relative;overflow:hidden;min-height:145px;">
+        <div style="position:absolute;bottom:-.5rem;right:-.5rem;font-size:3.5rem;opacity:.05;pointer-events:none;">⚽</div>
+        <!-- Voetbal icoon in cirkel zoals foto -->
+        <div style="width:42px;height:42px;border-radius:50%;background:rgba(15,23,42,.08);
+          border:1.5px solid rgba(15,23,42,.12);display:flex;align-items:center;
+          justify-content:center;font-size:1.3rem;margin-bottom:.25rem;">⚽</div>
+        <div class="dash-nav-title" style="color:var(--navy);font-size:1rem;line-height:1.1;">WEDSTRIJDEN<br>&amp; ANALYSIS</div>
+        <div class="dash-nav-sub" style="font-size:.44rem;color:var(--sub);line-height:1.5;flex:1;">
+          Laade matches, bekijk<br>Quotes<br>Bets, tracker, backtest en<br>Value Indicators.
+        </div>
+        <div class="dash-nav-badge" style="color:#2563eb;font-size:.46rem;">LIVE AI INSIGHTS</div>
       </div>
-      <div class="dash-nav-card" onclick="switchScreen('analyse')">
-        <div class="dash-nav-icon">⚡</div>
-        <div class="dash-nav-title">ANALYSE</div>
-        <div class="dash-nav-sub">AI analyse, value scan en combi tips</div>
-        <div class="dash-nav-badge">AI POWERED</div>
-      </div>
-      <div class="dash-nav-card" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('wallet'),100)">
-        <div class="dash-nav-icon">💰</div>
-        <div class="dash-nav-title">WALLET</div>
-        <div class="dash-nav-sub">Bets, tracker, backtest en pick analyse</div>
-        <div class="dash-nav-badge">€${wallet.balance.toFixed(0)}</div>
-      </div>
-      <div class="dash-nav-card" onclick="openCompKeuze()">
-        <div class="dash-nav-icon">🏆</div>
-        <div class="dash-nav-title">COMPETITIES</div>
-        <div class="dash-nav-sub">Stand, topscorers en wedstrijden per competitie</div>
-        <div class="dash-nav-badge">INFO</div>
+
+      <!-- WALLET & LEAGUES — rechter kaart -->
+      <div class="dash-nav-card" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('wallet'),100)"
+        style="background:rgba(184,146,42,.06);border-color:rgba(184,146,42,.2);position:relative;overflow:hidden;">
+        <div style="position:absolute;bottom:-.5rem;right:-.5rem;font-size:3.5rem;opacity:.05;pointer-events:none;">🏆</div>
+        <!-- Dubbel icoon wallet + trophy zoals foto -->
+        <div style="display:flex;gap:.35rem;margin-bottom:.25rem;">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(184,146,42,.1);
+            border:1.5px solid rgba(184,146,42,.2);display:flex;align-items:center;
+            justify-content:center;font-size:1rem;">👝</div>
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(184,146,42,.1);
+            border:1.5px solid rgba(184,146,42,.2);display:flex;align-items:center;
+            justify-content:center;font-size:1rem;">🏆</div>
+        </div>
+        <div class="dash-nav-title" style="color:var(--navy);font-size:1rem;">WALLET &amp; LEAGUES</div>
+        <div class="dash-nav-sub" style="font-size:.44rem;color:var(--sub);line-height:1.5;flex:1;">
+          Stand, topscorers en<br>wedstrijden per competitie
+        </div>
+        <div class="dash-nav-badge" style="color:var(--gold);font-size:.46rem;">INFO</div>
       </div>
     </div>
 
