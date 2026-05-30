@@ -227,7 +227,7 @@ function renderAnalyseScreen() {
   // Tab stijlen
   function tabStyle(t) {
     return 'flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;background:'
-      + (activeTab===t ? '#152038' : 'transparent')
+      + (activeTab===t ? '#0a8a5f' : 'transparent')
       + ';color:' + (activeTab===t ? '#fff' : '#607080') + ';';
   }
 
@@ -443,7 +443,7 @@ function setAnalyseSubTab(tab) {
     var btn     = document.getElementById('atab-' + t);
     var content = document.getElementById('at-' + t + '-content');
     if (btn) {
-      btn.style.background = t === tab ? '#152038' : 'transparent';
+      btn.style.background = t === tab ? '#0a8a5f' : 'transparent';
       btn.style.color      = t === tab ? '#fff' : '#607080';
     }
     if (content) content.style.display = t === tab ? 'block' : 'none';

@@ -16,7 +16,7 @@ function renderInstellingen() {
         <div id="authUserInfo" style="margin-left:auto;font-family:monospace;font-size:.52rem;color:var(--sub);text-align:right;max-width:200px;"></div>
       </div>
 
-      <div id="firebaseStatus" style="display:none;font-family:monospace;font-size:.52rem;padding:.35rem .75rem;border-radius:10px;margin-bottom:.75rem;background:rgba(22,163,74,.08);color:#16a34a;"></div>
+      <div id="firebaseStatus" style="display:none;font-family:monospace;font-size:.52rem;padding:.35rem .75rem;border-radius:10px;margin-bottom:.75rem;background:rgba(10,138,95,.08);color:#0a8a5f;"></div>
 
       <!-- API KEYS -->
       <div class="settings-section">
@@ -203,12 +203,12 @@ function renderInstellingen() {
       <!-- CLOUD BACKUP (Firebase) -->
       <div class="settings-section">
         <div class="settings-section-title">☁️ CLOUD BACKUP</div>
-        <div id="fbAutoSyncStatus" style="display:none;font-family:monospace;font-size:.5rem;color:#16a34a;margin-bottom:.5rem;">✅ Auto-sync actief</div>
+        <div id="fbAutoSyncStatus" style="display:none;font-family:monospace;font-size:.5rem;color:#0a8a5f;margin-bottom:.5rem;">✅ Auto-sync actief</div>
         <div id="fbBackupInfo" style="font-family:monospace;font-size:.52rem;color:var(--sub);margin-bottom:.75rem;line-height:1.5;">Laden...</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-          <button class="small-action-btn" onclick="saveToFirebase().then(()=>showFirebaseStatus('✅ Opgeslagen!','#16a34a')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#dc2626'))">☁️ Opslaan</button>
+          <button class="small-action-btn" onclick="saveToFirebase().then(()=>showFirebaseStatus('✅ Opgeslagen!','#0a8a5f')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#dc2626'))">☁️ Opslaan</button>
           <button class="small-action-btn" onclick="restoreFromFirebase()">🔄 Herstellen</button>
-          <button class="small-action-btn" style="background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.3);color:#7c3aed;font-weight:800;" onclick="importFromFirebaseBtn()">📥 Importeer alles</button>
+          <button class="small-action-btn" style="background:rgba(13,158,110,.1);border-color:rgba(13,158,110,.3);color:#0d9e6e;font-weight:800;" onclick="importFromFirebaseBtn()">📥 Importeer alles</button>
         </div>
         <div id="backupStatus" style="display:none;font-family:monospace;font-size:.55rem;padding:.5rem .75rem;border-radius:10px;margin-top:.5rem;"></div>
       </div>
@@ -330,15 +330,15 @@ function saveSettings() {
   if (state.settings.footballKey)  localStorage.setItem('totoai_key_football',  state.settings.footballKey);
 
   saveState(); updateNotifUI();
-  showFirebaseStatus('✅ Opgeslagen!','#16a34a');
+  showFirebaseStatus('✅ Opgeslagen!','#0a8a5f');
 
   const btn = document.querySelector('.save-settings-btn');
   if (btn) {
     const orig = btn.textContent;
-    btn.textContent='✅ OPGESLAGEN!'; btn.style.background='linear-gradient(135deg,#16a34a,#15803d)';
+    btn.textContent='✅ OPGESLAGEN!'; btn.style.background='linear-gradient(135deg,#0a8a5f,#085c3a)';
     setTimeout(()=>{ btn.textContent=orig; btn.style.background=''; },2000);
   }
-  saveToFirebase().then(()=>showFirebaseStatus('🔥 Gesynchroniseerd','#16a34a')).catch(()=>{});
+  saveToFirebase().then(()=>showFirebaseStatus('🔥 Gesynchroniseerd','#0a8a5f')).catch(()=>{});
 }
 
 function applySettings() {
@@ -375,7 +375,7 @@ function applySettings() {
     const hasA = !!state.settings.anthropicKey;
     if (hasA) {
       statusEl.innerHTML = '✅ Anthropic key aanwezig — volledige AI analyse beschikbaar';
-      statusEl.style.color = '#16a34a';
+      statusEl.style.color = '#0a8a5f';
     } else {
       statusEl.innerHTML = '⚠️ Geen Anthropic key — alleen Poisson analyse · Worker heeft API-Football key';
       statusEl.style.color = '#d97706';
@@ -469,7 +469,7 @@ async function saveToFirebase() {
 
 async function restoreFromFirebase() {
   if (!confirm('Wallet + Tracker herstellen vanuit de cloud?\nLokale data wordt overschreven als de cloud meer bets heeft.')) return;
-  showFirebaseStatus('🔄 Ophalen...','#2563eb');
+  showFirebaseStatus('🔄 Ophalen...','#0a8a5f');
   try {
     const token = await _fbAuthToken();
     const user = firebase.auth().currentUser;
@@ -485,7 +485,7 @@ async function restoreFromFirebase() {
     if (b.valueBacktest) state.valueBacktest = b.valueBacktest;
     saveState(); updateWalletUI();
     try { renderTracker(); updateTrackerStats(); } catch(e) {}
-    showFirebaseStatus(`✅ Hersteld: ${fbW} wallet bets, ${fbT} tracker bets`,'#16a34a');
+    showFirebaseStatus(`✅ Hersteld: ${fbW} wallet bets, ${fbT} tracker bets`,'#0a8a5f');
     loadFbBackupInfo();
   } catch(e) { showFirebaseStatus('⚠ '+e.message,'#e74c3c'); }
 }
@@ -525,7 +525,7 @@ async function loadFromFirebase() {
           const localC=state.wallet.bets.length, fbC=b.wallet.bets?.length||0;
           if (fbC>localC||(fbC>0&&localC===0)) {
             state.wallet=b.wallet;
-            showFirebaseStatus(`☁️ Wallet gesynchroniseerd (${fbC} bets)`,'#16a34a');
+            showFirebaseStatus(`☁️ Wallet gesynchroniseerd (${fbC} bets)`,'#0a8a5f');
           }
         }
         if (b?.tracker) {
@@ -544,7 +544,7 @@ async function loadFromFirebase() {
           const localSL=state.scanLog?.length||0, fbSL=b.scanLog.length||0;
           if (fbSL>localSL) {
             state.scanLog=b.scanLog;
-            showFirebaseStatus(`📊 Scan log hersteld (${fbSL} scans)`,'#7c3aed');
+            showFirebaseStatus(`📊 Scan log hersteld (${fbSL} scans)`,'#0d9e6e');
           }
         }
       }
@@ -560,14 +560,14 @@ async function importFromFirebaseBtn() {
     showFirebaseStatus('⚠ Log eerst in om te importeren', '#dc2626');
     return;
   }
-  showFirebaseStatus('⟳ Alles importeren van Firebase...', '#2563eb');
+  showFirebaseStatus('⟳ Alles importeren van Firebase...', '#0a8a5f');
   try {
     await loadFromFirebase();
     saveState();
     try { applySettings(); } catch(e) {}
     try { updateWalletUI(); } catch(e) {}
     try { renderTracker(); updateTrackerStats(); } catch(e) {}
-    showFirebaseStatus('✅ Alles geïmporteerd van Firebase', '#16a34a');
+    showFirebaseStatus('✅ Alles geïmporteerd van Firebase', '#0a8a5f');
     loadFbBackupInfo();
   } catch(e) {
     showFirebaseStatus('⚠ Import mislukt: ' + e.message, '#dc2626');
@@ -612,7 +612,7 @@ function exportBackup() {
   const datum=new Date().toLocaleDateString('nl-NL').replace(/\//g,'-');
   a.href=url; a.download=`totoai-backup-${datum}.json`; a.click();
   URL.revokeObjectURL(url);
-  showBackupStatus('✅ Gedownload!','#16a34a');
+  showBackupStatus('✅ Gedownload!','#0a8a5f');
 }
 
 function importBackup(event) {
@@ -629,7 +629,7 @@ function importBackup(event) {
       if (b.settings) Object.assign(state.settings,b.settings);
       saveState(); applySettings();
       try { updateWalletUI(); } catch(e) {}
-      showBackupStatus(`✅ Hersteld! ${b.wallet.bets?.length||0} weddenschappen`,'#16a34a');
+      showBackupStatus(`✅ Hersteld! ${b.wallet.bets?.length||0} weddenschappen`,'#0a8a5f');
     } catch(err) { showBackupStatus('⚠ Fout: '+err.message,'#dc2626'); }
     event.target.value='';
   };
@@ -640,7 +640,7 @@ function showBackupStatus(msg, color) {
   const el=document.getElementById('backupStatus');
   if (!el) return;
   el.style.display='block'; el.style.color=color;
-  el.style.background=color==='#16a34a'?'rgba(22,163,74,.08)':'rgba(220,38,38,.08)';
+  el.style.background=color==='#0a8a5f'?'rgba(10,138,95,.08)':'rgba(220,38,38,.08)';
   el.style.border=`1px solid ${color}33`; el.textContent=msg;
   setTimeout(()=>el.style.display='none',5000);
 }
@@ -758,13 +758,13 @@ function updateNotifUI() {
   const enabled=state.settings.notifEnabled&&Notification.permission==='granted';
   if (btn) {
     btn.textContent=enabled?'Uitschakelen':'Inschakelen';
-    btn.style.background=enabled?'rgba(220,38,38,.08)':'rgba(22,163,74,.08)';
-    btn.style.color=enabled?'#dc2626':'#16a34a';
-    btn.style.borderColor=enabled?'rgba(220,38,38,.3)':'rgba(22,163,74,.3)';
+    btn.style.background=enabled?'rgba(220,38,38,.08)':'rgba(10,138,95,.08)';
+    btn.style.color=enabled?'#dc2626':'#0a8a5f';
+    btn.style.borderColor=enabled?'rgba(220,38,38,.3)':'rgba(10,138,95,.3)';
   }
   if (badge) {
     if (Notification.permission==='granted') {
-      badge.textContent='✅ Toegestaan'; badge.style.background='rgba(22,163,74,.1)'; badge.style.color='#16a34a';
+      badge.textContent='✅ Toegestaan'; badge.style.background='rgba(10,138,95,.1)'; badge.style.color='#0a8a5f';
     } else if (Notification.permission==='denied') {
       badge.textContent='❌ Geweigerd'; badge.style.background='rgba(220,38,38,.1)'; badge.style.color='#dc2626';
     } else {

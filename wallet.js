@@ -254,7 +254,7 @@ function setWalletSubTab(tab) {
         btn.style.boxShadow  = '0 1px 4px rgba(0,0,0,.2)';
       } else {
         btn.style.background = 'transparent';
-        btn.style.color      = 'rgba(255,255,255,.4)';
+        btn.style.color      = '#607080';
         btn.style.boxShadow  = 'none';
       }
     }
