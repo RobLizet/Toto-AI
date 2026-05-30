@@ -8,7 +8,7 @@ function renderInstellingen() {
 
   el.innerHTML = `
     <div class="app">
-      <div class="topbar">
+      <div class="topbar" style="display:none">
         <div>
           <div class="topbar-logo">TOTO AI</div>
           <div class="made-by">Instellingen</div>

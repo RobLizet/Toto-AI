@@ -1623,7 +1623,7 @@ function showCombiSlipOverlay() {
       </div>
       ${legs.map((l, i) => `
         <div style="display:flex;align-items:center;justify-content:space-between;
-          background:rgba(255,255,255,.8);border:1px solid rgba(28,35,48,.07);
+          background:rgba(255,255,255,.05);border:1px solid rgba(28,35,48,.07);
           border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
           <div style="flex:1;min-width:0;">
             <div style="font-size:.75rem;font-weight:700;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.home||'?'} vs ${l.away||'?'}</div>
@@ -1826,7 +1826,7 @@ function openJacksPhotoImport() {
           <input type="file" accept="image/*" onchange="handleJacksPhotoUpload(event)" style="display:none;">
         </label>
         <div id="jacksPhotoPreview" style="display:none;margin-bottom:.6rem;">
-          <img id="jacksPhotoImg" style="width:100%;border-radius:10px;max-height:200px;object-fit:contain;background:#f8f8f8;">
+          <img id="jacksPhotoImg" style="width:100%;border-radius:10px;max-height:200px;object-fit:contain;background:rgba(255,255,255,.04);">
         </div>
         <div id="jacksPhotoStatus" style="font-family:monospace;font-size:.55rem;text-align:center;padding:.5rem;display:none;"></div>
         <div id="jacksPhotoBets" style="margin-bottom:.6rem;"></div>
