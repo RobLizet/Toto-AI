@@ -208,250 +208,166 @@ async function anthropicFetchWithRetry(apiKey, body, retries = 3) {
 function renderAnalyseScreen() {
   const screen = document.getElementById('screen-analyse');
   if (!screen) return;
-  try {
-  const hasMatches = (state.matches||[]).some(m => m.homeOdds !== '—')
-    || (state.valueScans||[]).length > 0
-    || (state.lastScanResults||[]).length > 0;
 
-  const scanLog = state.scanLog || [];
-  const allPicks = scanLog.flatMap(s => s.picks || []);
-  const DREMPEL = { minValue: 8, minConf: 6 };
-  const kwaliPicks = allPicks.filter(p =>
-    !p.isSparseData && (p.value||0) >= DREMPEL.minValue && (p.confidence||0) >= DREMPEL.minConf
-  );
-  const settledPicks = kwaliPicks.filter(p => p.status === 'win' || p.status === 'lose');
-  const winPicks = settledPicks.filter(p => p.status === 'win');
-  const scanHitrate = settledPicks.length ? Math.round(winPicks.length / settledPicks.length * 100) : null;
-  const scanROI = settledPicks.length
-    ? parseFloat((settledPicks.reduce((s,p) => s+(p.status==='win'?(p.odds-1):-1), 0)/settledPicks.length*100).toFixed(1))
-    : null;
-  const weekStart = new Date();
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-  weekStart.setHours(0,0,0,0);
-  const weekScans = scanLog.filter(s => new Date(s.timestamp||0) >= weekStart);
-  const weekPicks = weekScans.flatMap(s => s.picks||[]);
-  const weekSettled = weekPicks.filter(p => p.status==='win'||p.status==='lose');
-  const weekWins = weekSettled.filter(p => p.status==='win');
-  const weekHR = weekSettled.length ? Math.round(weekWins.length/weekSettled.length*100) : null;
-  const isCalibrated = settledPicks.length >= 10;
+  // Veilige data ophalen
+  const m = state.selectedMatch || null;
+  const scanLog   = state.scanLog || [];
+  const allPicks  = scanLog.flatMap(function(s){ return s.picks || []; });
+  const kwali     = allPicks.filter(function(p){ return !p.isSparseData && (p.value||0)>=8 && (p.confidence||0)>=6; });
+  const settled   = kwali.filter(function(p){ return p.status==='win'||p.status==='lose'; });
+  const wins      = settled.filter(function(p){ return p.status==='win'; });
+  const hr        = settled.length ? Math.round(wins.length/settled.length*100) : null;
+  const roi       = settled.length ? parseFloat((settled.reduce(function(s,p){ return s+(p.status==='win'?(p.odds-1):-1); },0)/settled.length*100).toFixed(1)) : null;
+  const openPicks = kwali.filter(function(p){ return !p.status||p.status==='pending'; });
 
-  let html = '';
+  // Auto scan check
+  const autoScanAan = state.settings && state.settings.autoScan;
+  const activeTab   = window._analyseActiveTab || 'scan';
 
-  // ── SUB-TABS (Value Scan / AI Analyse / Stats / Scan Log) ──
-  const activeAnalyseTab = window._analyseActiveTab || 'scan';
+  // Tab stijlen
+  function tabStyle(t) {
+    return 'flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;background:'
+      + (activeTab===t ? '#152038' : 'transparent')
+      + ';color:' + (activeTab===t ? '#fff' : '#607080') + ';';
+  }
+
+  var html = '';
+
+  // ── SUB TABS ──
   html += '<div style="display:flex;gap:5px;padding:3px;background:#d5dfe9;border-radius:30px;border:1px solid rgba(21,32,56,.15);margin-bottom:12px;">';
-  html += '<button id="atab-scan" onclick="setAnalyseSubTab(\'scan\')" style="flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;' + (activeAnalyseTab==='scan'?'background:#152038;color:#fff;':'background:transparent;color:#607080;') + '">Value Scan</button>';
-  html += '<button id="atab-ai" onclick="setAnalyseSubTab(\'ai\')" style="flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;' + (activeAnalyseTab==='ai'?'background:#152038;color:#fff;':'background:transparent;color:#607080;') + '">AI Analyse</button>';
-  html += '<button id="atab-stats" onclick="setAnalyseSubTab(\'stats\')" style="flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;' + (activeAnalyseTab==='stats'?'background:#152038;color:#fff;':'background:transparent;color:#607080;') + '">Stats</button>';
-  html += '<button id="atab-log" onclick="setAnalyseSubTab(\'log\')" style="flex:1;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:11.5px;font-weight:700;padding:7px 4px;border-radius:26px;border:none;cursor:pointer;transition:all .2s;' + (activeAnalyseTab==='log'?'background:#152038;color:#fff;':'background:transparent;color:#607080;') + '">Scan Log</button>';
+  html += '<button id="atab-scan"  onclick="setAnalyseSubTab(\'scan\')"  style="' + tabStyle('scan')  + '">Value Scan</button>';
+  html += '<button id="atab-ai"    onclick="setAnalyseSubTab(\'ai\')"    style="' + tabStyle('ai')    + '">AI Analyse</button>';
+  html += '<button id="atab-stats" onclick="setAnalyseSubTab(\'stats\')" style="' + tabStyle('stats') + '">Stats</button>';
+  html += '<button id="atab-log"   onclick="setAnalyseSubTab(\'log\')"   style="' + tabStyle('log')   + '">Scan Log</button>';
   html += '</div>';
 
-  // Wrap alle content in tab divs
-  const scanVisible  = activeAnalyseTab==='scan'  ? 'block' : 'none';
-  const aiVisible    = activeAnalyseTab==='ai'    ? 'block' : 'none';
-  const statsVisible = activeAnalyseTab==='stats' ? 'block' : 'none';
-  const logVisible   = activeAnalyseTab==='log'   ? 'block' : 'none';
+  var show = { scan: activeTab==='scan', ai: activeTab==='ai', stats: activeTab==='stats', log: activeTab==='log' };
 
-  html += '<div id="at-scan-content"  style="display:'+scanVisible+'">';
+  // ═══════════════════════════════════
+  // TAB: VALUE SCAN
+  // ═══════════════════════════════════
+  html += '<div id="at-scan-content" style="display:' + (show.scan?'block':'none') + '">';
 
-  // ── 1. VALUE SCAN ──
-  html += '<div class="analyse-block">';
-  html += '<div class="analyse-block-header">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span> VALUE SCAN</div>';
-  html += '<button onclick="toggleAutoScanPanel()" class="analyse-header-btn" title="Scan instellingen">⏱</button>';
+  // Voortgang ring
+  html += '<div style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:13px 14px;margin-bottom:10px;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;">';
+  html += '<div style="flex:1;padding-right:10px;">';
+  html += '<div style="font-size:12px;font-weight:700;color:#152038;margin-bottom:8px;">🎯 Voortgang naar 100 picks</div>';
+  html += '<div style="background:rgba(21,32,56,.1);border-radius:999px;height:5px;overflow:hidden;margin-bottom:6px;"><div style="height:100%;width:' + Math.min(100,kwali.length) + '%;background:linear-gradient(90deg,#152038,#0a8a5f);border-radius:999px;"></div></div>';
+  html += '<div style="font-size:10.5px;color:#607080;">' + openPicks.length + ' open · ' + settled.length + ' afgerond' + (roi!==null ? ' · <span style="color:#0a8a5f;font-weight:700;">ROI ' + (roi>=0?'+':'') + roi + '%</span>' : '') + '</div>';
   html += '</div>';
-
-  // Auto-scan paneel
-  html += '<div id="autoScanPanel" style="display:none;background:rgba(10,138,95,.04);border:1px solid rgba(10,138,95,.2);border-radius:12px;padding:.75rem .9rem;margin-bottom:.6rem;">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:#0a8a5f;">AUTOMATISCHE SCAN</div>';
-  html += '<button onclick="document.getElementById(\'autoScanPanel\').style.display=\'none\'" style="background:none;border:none;color:var(--sub);cursor:pointer;font-size:.85rem;">✕</button>';
-  html += '</div>';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(10,138,95,.15);margin-bottom:.5rem;">';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--sub);">Dagelijks scannen tussen ingestelde tijden</div>';
-  html += '<button id="autoScanToggleBtn" onclick="toggleAutoScan()" style="padding:.35rem .8rem;border-radius:8px;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;cursor:pointer;border:1.5px solid;background:rgba(10,138,95,.1);border-color:rgba(10,138,95,.35);color:#0a8a5f;white-space:nowrap;">Inschakelen</button>';
-  html += '</div>';
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
-  html += '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.25rem;">VAN (uur)</div>';
-  html += '<input id="scanWindowFrom" type="number" min="0" max="23" step="1" style="width:100%;font-family:\'IBM Plex Mono\',monospace;font-size:.75rem;font-weight:800;padding:.4rem .6rem;border-radius:8px;border:1.5px solid rgba(21,32,56,0.15);background:#dde5ee;color:var(--ink);text-align:center;" value="' + (state.settings.scanWindowFrom ?? 14) + '" onchange="state.settings.scanWindowFrom=parseInt(this.value);saveState();updateAutoScanPanelUI()"></div>';
-  html += '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.25rem;">TOT (uur)</div>';
-  html += '<input id="scanWindowTo" type="number" min="0" max="23" step="1" style="width:100%;font-family:\'IBM Plex Mono\',monospace;font-size:.75rem;font-weight:800;padding:.4rem .6rem;border-radius:8px;border:1.5px solid rgba(21,32,56,0.15);background:#dde5ee;color:var(--ink);text-align:center;" value="' + (state.settings.scanWindowTo ?? 18) + '" onchange="state.settings.scanWindowTo=parseInt(this.value);saveState();updateAutoScanPanelUI()"></div>';
-  html += '</div>';
-  html += '<div id="autoScanStatusBar" style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);padding:.3rem .5rem;background:rgba(15,23,42,.04);border-radius:6px;margin-bottom:.4rem;text-align:center;min-height:1rem;"></div>';
-  html += '<div style="display:flex;gap:.4rem;">';
-  html += '<button onclick="skipScanToday()" class="analyse-btn-ghost" style="flex:1;">⏭ Overslaan</button>';
-  html += '<button onclick="startAutoCheckScheduler();showToast(\'▶ Scheduler gestart\')" class="analyse-btn-ghost" style="flex:1;">▶ Start</button>';
+  html += '<div style="position:relative;width:52px;height:52px;flex-shrink:0;">';
+  html += '<svg width="52" height="52" viewBox="0 0 52 52"><circle fill="none" stroke="rgba(21,32,56,.1)" stroke-width="5" cx="26" cy="26" r="20"/><circle fill="none" stroke="#152038" stroke-width="5" cx="26" cy="26" r="20" stroke-dasharray="125" stroke-dashoffset="' + Math.round(125-(125*Math.min(100,kwali.length)/100)*0.55) + '" stroke-linecap="round" transform="rotate(-90 26 26)"/><circle fill="none" stroke="#0a8a5f" stroke-width="5" cx="26" cy="26" r="20" stroke-dasharray="125" stroke-dashoffset="' + Math.round(125-(125*Math.min(100,settled.length)/100)*0.3) + '" stroke-linecap="round" transform="rotate(-90 26 26)"/></svg>';
+  html += '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#152038;">' + kwali.length + '</div>';
+  html += '</div></div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(21,32,56,.1);padding-top:10px;margin-top:4px;">';
+  html += '<div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#152038;">' + openPicks.length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Open</div></div>';
+  html += '<div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#152038;">' + settled.length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Afgerond</div></div>';
+  html += '<div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#152038;">' + (hr!==null?hr+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Hitrate</div></div>';
+  html += '<div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (roi!==null&&roi>=0?'#0a8a5f':'#e8404a') + ';">' + (roi!==null?(roi>=0?'+':'')+roi+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">ROI</div></div>';
   html += '</div></div>';
 
-  if (hasMatches) {
-    html += '<button id="valueScanBtn2" onclick="scanValueAll()" class="analyse-btn-primary">⚡ SCAN VALUE — alle geladen wedstrijden</button>';
-  } else {
-    html += '<div class="analyse-empty">';
-    html += '<div style="font-size:1.8rem;opacity:.25;margin-bottom:.5rem;">⚡</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:var(--sub);line-height:1.7;margin-bottom:.8rem;">Laad wedstrijden via Wedstrijden tabblad, of gebruik automatisch scannen.</div>';
-    html += '<button onclick="autoScanAndSwitch()" class="analyse-btn-primary" style="width:auto;padding:.6rem 1.4rem;">⚡ AUTOMATISCH SCANNEN</button>';
-    html += '<button onclick="switchScreen(\'wedstrijden\')" class="analyse-btn-secondary" style="margin-top:.4rem;width:auto;padding:.5rem 1.1rem;">⚽ Handmatig laden</button>';
-    html += '</div>';
-  }
-
-  html += '<div id="analyseScanResults" style="margin-top:.5rem;"></div>';
-  html += '<div id="valueBanner2" style="display:none;margin-top:.4rem;"></div>';
+  // Scan knop
+  html += '<div style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+  html += '<div style="font-size:12.5px;font-weight:800;color:#152038;display:flex;align-items:center;gap:6px;border-left:3px solid #0a8a5f;padding-left:8px;"><svg width=\'14\' height=\'14\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'#0a8a5f\' stroke-width=\'2.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><polyline points=\'22 12 18 12 15 21 9 3 6 12 2 12\'/></svg> Value Scan</div>';
+  html += '<button onclick="toggleAutoScanPanel()" style="background:none;border:1px solid rgba(21,32,56,.15);border-radius:8px;color:#607080;cursor:pointer;padding:4px 9px;font-size:10px;">⏱</button>';
+  html += '</div>';
+  html += '<div id="autoScanPanel" style="display:none;background:rgba(10,138,95,.06);border:1px solid rgba(10,138,95,.2);border-radius:10px;padding:10px;margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:#0a8a5f;margin-bottom:6px;">AUTO-SCAN INSTELLINGEN</div><div id="autoScanPanelContent"></div></div>';
+  html += '<button id="scanBtn" onclick="startValueScan()" style="width:100%;background:#152038;border:none;color:#fff;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:13px;font-weight:700;border-radius:14px;padding:11px;cursor:pointer;margin-bottom:8px;">⚡ Scan alle geladen wedstrijden</button>';
+  html += '<button id="autoScanBtn" onclick="startAutoScan()" style="width:100%;background:linear-gradient(135deg,#152038,#1e2d4d);border:none;color:#fff;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:13px;font-weight:700;border-radius:14px;padding:11px;cursor:pointer;">🤖 Automatisch scannen</button>';
   html += '</div>';
 
-  // ── 4. COMBI TIPS ──
-  html += '<div class="analyse-block">';
-  html += '<div class="analyse-block-header"><div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v3c0 3.3 2.7 6 6 6h6c3.3 0 6-2.7 6-6V5a1 1 0 0 0-1-1h-3"/><path d="M7 4h10v8a5 5 0 0 1-10 0V4z"/></svg></span> COMBI TIPS</div></div>';
-  html += '<button id="combiGenBtn" onclick="generateCombiTip()" class="analyse-btn-primary" style="background:linear-gradient(135deg,rgba(10,138,95,.85),rgba(10,138,95,.8));color:#fff;border:none;">⚡ GENEREER TOP 3 TIPS + COMBI</button>';
-  html += '<div id="combiCard" style="display:none;margin-top:.6rem;"></div>';
-  html += '</div>';
-
-  // ── 5. SCAN LOG ──
-  html += '<div class="analyse-block" id="analyse-scanlog-block">';
-  html += '<div class="analyse-block-header" onclick="renderScanLog();" style="cursor:pointer;">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a8a5f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> SCAN LOG</div>';
-  html += '<span style="font-size:.7rem;color:var(--sub);font-family:\'IBM Plex Mono\',monospace;">tik om te laden ▼</span>';
-  html += '</div>';
+  // Scan resultaten
+  html += '<div id="scanResultsBlock" style="display:none;"></div>';
+  html += '<div id="analyseScanResults"></div>';
+  html += '<div id="scanResultsBlock"></div>';
   html += '<div id="scan-log-content"></div>';
-  html += '</div>';
-
-  // Sluit scan tab div
-  html += '<div id="scan-log-content" style="margin-top:.5rem;"></div>';
   html += '</div>'; // at-scan-content
 
-  // AI Analyse tab
-  html += '<div id="at-ai-content" style="display:'+aiVisible+'">';
-  if (!m) {
-    html += '<div class="analyse-block"><div class="analyse-block-header"><div class="analyse-block-title">AI Analyse</div></div>';
-    html += '<div style="text-align:center;padding:1.5rem 0;color:#607080;">';
-    html += '<div style="font-size:13px;font-weight:700;color:#152038;margin-bottom:6px;">Selecteer een wedstrijd</div>';
-    html += '<div style="font-size:11px;margin-bottom:12px;">Tik op een wedstrijd → Analyse voor diepte-analyse</div>';
-    html += '<button onclick="switchScreen(\'wedstrijden\')" class="analyse-btn-ai" style="width:auto;padding:9px 18px;">⚽ Naar Wedstrijden</button>';
+  // ═══════════════════════════════════
+  // TAB: AI ANALYSE
+  // ═══════════════════════════════════
+  html += '<div id="at-ai-content" style="display:' + (show.ai?'block':'none') + '">';
+  html += '<div style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
+  html += '<div style="font-size:12.5px;font-weight:800;color:#152038;display:flex;align-items:center;gap:6px;border-left:3px solid #0a8a5f;padding-left:8px;margin-bottom:12px;"><svg width=\'14\' height=\'14\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'#0a8a5f\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><rect x=\'3\' y=\'11\' width=\'18\' height=\'11\' rx=\'2\'/><circle cx=\'12\' cy=\'5\' r=\'2\'/><path d=\'M12 7v4\'/></svg> AI Analyse</div>';
+  if (m) {
+    html += '<div style="background:#d5dfe9;border-radius:10px;padding:10px 12px;margin-bottom:10px;">';
+    html += '<div style="font-size:10px;color:#607080;margin-bottom:4px;">' + (m.comp||'') + ' · ' + (m.date||'') + '</div>';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;">';
+    html += '<div style="font-size:14px;font-weight:800;color:#152038;">' + (m.home||'?') + '</div>';
+    html += '<div style="font-size:13px;font-weight:700;color:#607080;padding:0 8px;">' + (m.score||'VS') + '</div>';
+    html += '<div style="font-size:14px;font-weight:800;color:#152038;text-align:right;">' + (m.away||'?') + '</div>';
     html += '</div></div>';
+    html += '<button id="analyseBtn" onclick="runAnalyse()" style="width:100%;background:linear-gradient(135deg,#152038,#1e2d4d);border:none;color:#fff;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:13px;font-weight:700;border-radius:14px;padding:11px;cursor:pointer;margin-bottom:8px;">🤖 ANALYSEER — ' + (m.home||'') + ' vs ' + (m.away||'') + '</button>';
   } else {
-    html += '<div class="analyse-match-card">';
-    html += '<div style="font-size:10px;color:#607080;margin-bottom:4px;">' + (m.comp||'') + ' · ' + (m.date||'') + ' ' + (m.time||'') + '</div>';
-    html += '<div style="display:flex;align-items:center;margin-bottom:6px;">';
-    html += '<div style="font-size:14px;font-weight:800;color:#152038;flex:1;">' + m.home + '</div>';
-    html += '<div style="font-size:18px;font-weight:800;color:#152038;padding:0 12px;">' + (m.score||'VS') + '</div>';
-    html += '<div style="font-size:14px;font-weight:800;color:#152038;flex:1;text-align:right;">' + m.away + '</div>';
-    html += '</div></div>';
-    html += '<button id="analyseBtn" onclick="runAnalyse()" class="analyse-btn-ai">🤖 ANALYSEER — ' + m.home + ' vs ' + m.away + '</button>';
-    html += '<div id="analyseOutput" style="display:none;"><div id="entityChips" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.7rem;"></div>';
-    html += '<div id="rb-vorm"></div><div id="rb-stats"></div><div id="rb-tactiek"></div>';
-    html += '<div id="rb-kans"></div><div id="rb-risico"></div><div id="rb-advies"></div><div id="rb-tip"></div></div>';
+    html += '<div style="text-align:center;padding:1.5rem 0;color:#607080;">';
+    html += '<svg width=\'32\' height=\'32\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' style=\'margin-bottom:8px;opacity:.4;\'><circle cx=\'12\' cy=\'12\' r=\'10\'/><path d=\'M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z\'/><path d=\'M2 12h20\'/></svg>';
+    html += '<div style="font-size:13px;font-weight:700;color:#152038;margin-bottom:4px;">Selecteer eerst een wedstrijd</div>';
+    html += '<div style="font-size:11px;margin-bottom:12px;">Ga naar Matches → tik op een wedstrijd → Analyse</div>';
+    html += '<button onclick="switchScreen(\'wedstrijden\')" style="background:#152038;color:#fff;border:none;border-radius:10px;padding:9px 20px;font-family:\'Plus Jakarta Sans\',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">⚽ Naar Matches</button>';
+    html += '</div>';
   }
+  html += '<div id="analyseOutput"></div>';
+  html += '<div id="entityChips" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem;"></div>';
+  html += '</div>';
+  // Combi tips
+  html += '<div id="combiBlock" style="display:none;"></div>';
   html += '</div>'; // at-ai-content
 
-  // Stats tab — analytics data
-  html += '<div id="at-stats-content" style="display:'+statsVisible+'">';
-  try {
-    const _log = state.scanLog || [];
-    const _allP = _log.flatMap(s => s.picks || []);
-    const _kwali = _allP.filter(p => !p.isSparseData && (p.value||0) >= 8 && (p.confidence||0) >= 6);
-    const _settled = _kwali.filter(p => p.status === 'win' || p.status === 'lose');
-    const _wins = _settled.filter(p => p.status === 'win');
-    const _hr = _settled.length ? Math.round(_wins.length / _settled.length * 100) : null;
-    const _roi = _settled.length ? parseFloat((_settled.reduce((s,p) => s+(p.status==='win'?(p.odds-1):-1),0)/_settled.length*100).toFixed(1)) : null;
+  // ═══════════════════════════════════
+  // TAB: STATS (Analytics)
+  // ═══════════════════════════════════
+  html += '<div id="at-stats-content" style="display:' + (show.stats?'block':'none') + '">';
+  html += '<div style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
+  html += '<div style="font-size:11px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Trackrecord · ' + settled.length + '/100 picks</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">';
+  html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (hr!==null&&hr>=50?'#0a8a5f':'#e8404a') + ';">' + (hr!==null?hr+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Hitrate</div></div>';
+  html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (roi!==null&&roi>=0?'#0a8a5f':'#e8404a') + ';">' + (roi!==null?(roi>=0?'+':'')+roi+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">ROI</div></div>';
+  html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (settled.length>=10?'#0a8a5f':'#f5a623') + ';">' + (settled.length>=10?'✓':settled.length+'/10') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">' + (settled.length>=10?'Gecalib.':'AI Leert') + '</div></div>';
+  html += '</div>';
+  html += '<div style="background:rgba(21,32,56,.1);border-radius:999px;height:5px;overflow:hidden;"><div style="height:100%;width:' + Math.min(100,settled.length) + '%;background:linear-gradient(90deg,#152038,#0a8a5f);border-radius:999px;"></div></div>';
+  html += '</div>';
 
-    html += '<div style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
-    html += '<div style="font-size:11px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Trackrecord · ' + _settled.length + '/100 picks</div>';
-    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">';
-    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (_hr!==null&&_hr>=50?'#0a8a5f':'#e8404a') + ';">' + (_hr!==null?_hr+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Hitrate</div></div>';
-    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (_roi!==null&&_roi>=0?'#0a8a5f':'#e8404a') + ';">' + (_roi!==null?(_roi>=0?'+':'')+_roi.toFixed(1)+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">ROI</div></div>';
-    html += '<div style="background:#d5e0ec;border-radius:10px;padding:10px 8px;text-align:center;"><div style="font-size:18px;font-weight:800;color:' + (_settled.length>=10?'#0a8a5f':'#f5a623') + ';">' + (_settled.length>=10?'✓':_settled.length+'/10') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">' + (_settled.length>=10?'Gecalib.':'AI Leert') + '</div></div>';
-    html += '</div>';
-    html += '<div style="background:rgba(21,32,56,.1);border-radius:999px;height:5px;overflow:hidden;"><div style="height:100%;width:' + Math.min(100,_settled.length) + '%;background:linear-gradient(90deg,#152038,#0a8a5f);border-radius:999px;"></div></div>';
-    html += '</div>';
-
-    // Week stats
-    const _wkStart = new Date(); _wkStart.setDate(_wkStart.getDate()-_wkStart.getDay()); _wkStart.setHours(0,0,0,0);
-    const _wkScans = _log.filter(s => new Date(s.timestamp||0) >= _wkStart);
-    const _wkPicks = _wkScans.flatMap(s => s.picks||[]);
-    if (_wkScans.length > 0) {
-      html += '<div style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
-      html += '<div style="font-size:11px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Deze Week</div>';
-      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
-      html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#152038;">' + _wkScans.length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Scans</div></div>';
-      html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#152038;">' + _wkPicks.length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Picks</div></div>';
-      const _wkS = _wkPicks.filter(p=>p.status==='win'||p.status==='lose');
-      const _wkHR = _wkS.length ? Math.round(_wkPicks.filter(p=>p.status==='win').length/_wkS.length*100) : null;
-      html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:' + (_wkHR!==null&&_wkHR>=50?'#0a8a5f':'#607080') + ';">' + (_wkHR!==null?_wkHR+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Hitrate</div></div>';
-      html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#e8404a;">' + _wkPicks.filter(p=>!p.status||p.status==='pending').length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Open</div></div>';
-      html += '</div></div>';
-    }
-  } catch(_e) {
-    html += '<div style="padding:1rem;color:#607080;font-size:12px;text-align:center;">Scan eerst wedstrijden om statistieken te zien.</div>';
-  }
+  // Week stats
+  var wkStart = new Date(); wkStart.setDate(wkStart.getDate()-wkStart.getDay()); wkStart.setHours(0,0,0,0);
+  var wkScans = scanLog.filter(function(s){ return new Date(s.timestamp||0) >= wkStart; });
+  var wkPicks = wkScans.flatMap(function(s){ return s.picks||[]; });
+  html += '<div style="background:#dde5ee;border:1px solid rgba(21,32,56,.15);border-radius:14px;padding:14px;margin-bottom:10px;">';
+  html += '<div style="font-size:11px;font-weight:700;color:#607080;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;">Deze week</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+  html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#152038;">' + wkScans.length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Scans</div></div>';
+  html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#152038;">' + wkPicks.length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Picks</div></div>';
+  var wkS = wkPicks.filter(function(p){return p.status==='win'||p.status==='lose';}); var wkHR = wkS.length ? Math.round(wkPicks.filter(function(p){return p.status==='win';}).length/wkS.length*100) : null;
+  html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:' + (wkHR!==null&&wkHR>=50?'#0a8a5f':'#607080') + ';">' + (wkHR!==null?wkHR+'%':'—') + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Hitrate</div></div>';
+  html += '<div style="background:#d5e0ec;border-radius:10px;padding:9px 6px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#e8404a;">' + wkPicks.filter(function(p){return !p.status||p.status==='pending';}).length + '</div><div style="font-size:9px;font-weight:700;color:#607080;text-transform:uppercase;margin-top:2px;">Open</div></div>';
+  html += '</div></div>';
   html += '</div>'; // at-stats-content
 
-  html += '<div id="at-log-content" style="display:'+logVisible+'">';
-  // Scan log wordt hieronder door renderScanLog gevuld
-  html += '<div id="scan-log-content-inner"></div>';
+  // ═══════════════════════════════════
+  // TAB: SCAN LOG
+  // ═══════════════════════════════════
+  html += '<div id="at-log-content" style="display:' + (show.log?'block':'none') + '">';
+  html += '<div id="scan-log-inner"></div>';
   html += '</div>'; // at-log-content
 
   screen.innerHTML = html;
-  } catch(e) {
-    console.error('[renderAnalyseScreen] fout:', e.message, e.stack);
-    screen.innerHTML = '<div style="padding:2rem;text-align:center;color:#0a8a5f;">⚡ Analyse laden...</div>';
-    return;
-  }
-  // Veilig laden van scan log
-  setTimeout(() => {
-    try {
-      if (typeof renderScanLog === 'function') renderScanLog();
-    } catch(e) {
-      console.warn('[analyse] renderScanLog fout:', e.message);
+
+  // Veilig scan log laden
+  setTimeout(function() {
+    try { if (typeof renderScanLog === 'function') renderScanLog(); } catch(e) { console.warn('scanLog:', e.message); }
+    // Herstel scan resultaten als die er zijn
+    if (activeTab === 'scan' && state.lastScanResults && state.lastScanResults.length > 0) {
+      try {
+        if (typeof renderAnalyseScanResults === 'function') {
+          renderAnalyseScanResults(state.lastScanResults.filter(function(s){return (s.value||0)>=5;}));
+        }
+      } catch(e) { console.warn('scanResults:', e.message); }
     }
-  }, 150);
+  }, 100);
 }
 
 
-
-// ── ANALYSE SUB-TAB SWITCH ────────────────────────────
-function setAnalyseSubTab(tab) {
-  window._analyseActiveTab = tab;
-  ['scan','ai','stats','log'].forEach(t => {
-    const btn = document.getElementById('atab-' + t);
-    const content = document.getElementById('at-' + t + '-content');
-    if (btn) {
-      btn.style.background = t === tab ? '#152038' : 'transparent';
-      btn.style.color      = t === tab ? '#fff' : '#607080';
-    }
-    if (content) content.style.display = t === tab ? 'block' : 'none';
-  });
-  if (tab === 'log') {
-    setTimeout(() => { if (typeof renderScanLog === 'function') renderScanLog(); }, 50);
-  }
-  if (tab === 'stats') {
-    // Stats worden inline gerenderd bij renderAnalyseScreen
-  }
-}
-
-// Alias voor backward compat
-function showAnalyseSubTab(tab) { setAnalyseSubTab(tab); }
-
-// ── Auto-scan: laad wedstrijden (vandaag+morgen) + scan direct ──
-async function autoScanAndSwitch() {
-  const btn = document.getElementById('autoScanBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '⟳ WEDSTRIJDEN LADEN...'; }
-
-  try {
-    // Stap 1: wis state.matches zodat scanAllTodayValue altijd alle competities laadt
-    state.matches = [];
-    showToast('⚡ Wedstrijden ophalen...');
-
-    // Stap 2: toon scan sub-tab zonder te herrenderen (behoudt UI)
-    showAnalyseSubTab('scan');
-    await new Promise(r => setTimeout(r, 100));
-
-    // Stap 3: scanAllTodayValue laadt alle competities + odds + doet de value scan
-    await scanAllTodayValue('today');
-
-  } catch(e) {
-    showToast('❌ Auto-scan mislukt: ' + e.message);
-    if (btn) { btn.disabled = false; btn.textContent = '⚡ AUTOMATISCH SCANNEN →'; }
-  }
-}
 
 
 // ── Auto-scan panel toggle ─────────────────────────────
@@ -1027,7 +943,8 @@ function renderValueBannerInAnalyse(displayScans, total) {
 }
 
 function renderAnalyseScanResults(scans) {
-  const el = document.getElementById('analyseScanResults');
+  const el = document.getElementById('analyseScanResults') 
+          || document.getElementById('scanResultsBlock');
   if (!el) return;
   if (!scans || !scans.length) { el.innerHTML = ''; return; }
 
@@ -2299,7 +2216,9 @@ function syncScanLogToBacktest() {
 }
 
 function renderScanLog() {
-  const el = document.getElementById('scan-log-content');
+  // Zoek de actieve scan log container
+  const el = document.getElementById('scan-log-inner') 
+          || document.getElementById('scan-log-content');
   if (!el) return;
 
   autoVerifyPendingPicks().then(n => {
