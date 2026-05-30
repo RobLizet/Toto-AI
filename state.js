@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v30: Versienummer update — topbar toont v30
+// v31: Nieuw thema, analytics in analyse, instellingen eigen tab
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v30';
+const APP_VERSION = 'v31';
 
 const STATE_KEY = 'totoai_state';
 
