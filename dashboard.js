@@ -87,7 +87,7 @@ async function triggerWorkerSettle() {
 }
 
 
-// DASHBOARD.JS — v19.3 HMAC scan tokens, admin scan knop
+// DASHBOARD.JS — v30.3 HMAC scan tokens, admin scan knop
 // ═══════════════════════════════════════════════════════
 
 async function fetchDailyTip() {
@@ -173,98 +173,54 @@ function renderDashboard() {
     <!-- Dashboard tabs -->
     <div style="display:flex;gap:.4rem;margin-bottom:.75rem;background:rgba(15,23,42,.04);border-radius:12px;padding:.25rem;">
       <button id="dashTabOverview" onclick="switchDashTab('overview')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);">📊 OVERZICHT</button>
-      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:var(--sub);display:flex;align-items:center;justify-content:center;gap:.3rem;"><span style="width:8px;height:8px;background:#dc2626;border-radius:50%;flex-shrink:0;box-shadow:0 0 5px #dc2626;animation:pulse 1.5s infinite;"></span> LIVE</button>
+      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:var(--sub);">🔴 LIVE</button>
     </div>
 
     <div id="dashOverviewContent">
 
-    <!-- 100 picks voortgang — foto stijl met ring + stats rij -->
-    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;cursor:pointer;"
+    <!-- 100 picks voortgang -->
+    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;"
       onclick="showPicksModal()">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div style="flex:1;padding-right:.5rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);margin-bottom:.5rem;">🎯 VOORTGANG NAAR <span style="color:var(--gold);">100</span> PICKS</div>
-          <!-- Progressbar navy→groen -->
-          <div style="background:rgba(15,23,42,.1);border-radius:999px;height:7px;overflow:hidden;margin-bottom:.35rem;">
-            <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,var(--navy,#1a1f3c),#22c55e);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
-          </div>
-          <!-- Sub tekst: open · afgerond · ROI -->
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);display:flex;gap:.35rem;flex-wrap:wrap;">
-            ${(() => {
-              const openCount = kwaliPicks.filter(p => !p.status || p.status === 'pending').length;
-              const parts = [];
-              if (openCount > 0)           parts.push('<span>' + openCount + ' open</span>');
-              if (settledPicks.length > 0) parts.push('<span>' + settledPicks.length + ' afgerond</span>');
-              if (scanROI !== null)         parts.push('<span style="color:#22c55e;font-weight:700;">ROI ' + (scanROI >= 0 ? '+' : '') + scanROI.toFixed(1) + '%</span>');
-              return parts.length ? parts.join('<span style="color:var(--stroke);">·</span>') : '<span>Scan wedstrijden om picks te verzamelen →</span>';
-            })()}
-          </div>
-        </div>
-        <!-- Ring cirkel met getal -->
-        <div style="position:relative;width:58px;height:58px;flex-shrink:0;">
-          <svg width="58" height="58" viewBox="0 0 58 58" style="transform:rotate(-90deg);">
-            <circle fill="none" stroke="rgba(15,23,42,.1)" stroke-width="5" cx="29" cy="29" r="23"/>
-            <circle fill="none" stroke="#1a1f3c" stroke-width="5" cx="29" cy="29" r="23"
-              stroke-dasharray="145" stroke-dashoffset="${Math.round(145 - (145 * Math.min(100,kwaliPicks.length) / 100) * 0.55)}"
-              stroke-linecap="round"/>
-            <circle fill="none" stroke="#22c55e" stroke-width="5" cx="29" cy="29" r="23"
-              stroke-dasharray="145" stroke-dashoffset="${Math.round(145 - (145 * Math.min(100,settledPicks.length) / 100) * 0.3)}"
-              stroke-linecap="round"/>
-          </svg>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--navy,#1a1f3c);">${kwaliPicks.length}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--sub);">🎯 VOORTGANG NAAR 100 PICKS</div>
+        <div style="display:flex;align-items:center;gap:.4rem;">
+          ${settledPicks.length ? (() => {
+            if (scanROI >= 15 && scanHitrate >= 40)  return '<span style="font-size:1.3rem;">😄</span>';
+            if (scanROI >= 5  || scanHitrate >= 35)  return '<span style="font-size:1.3rem;">🙂</span>';
+            if (scanROI >= 0  && scanHitrate >= 28)  return '<span style="font-size:1.3rem;">😐</span>';
+            if (scanROI >= -10)                       return '<span style="font-size:1.3rem;">😕</span>';
+            return '<span style="font-size:1.3rem;">😞</span>';
+          })() : '<span style="font-size:1.3rem;opacity:.3;">😶</span>'}
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#be185d;">${kwaliPicks.length}<span style="font-size:.65rem;color:var(--sub);">/100</span></div>
         </div>
       </div>
-      <!-- Stats rij: 4 OPEN / 19 AFGEROND / 37% HITRATE / ROI -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--stroke);margin-top:.55rem;padding-top:.5rem;">
-        <div style="text-align:center;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--navy,#1a1f3c);line-height:1;">${kwaliPicks.filter(p=>!p.status||p.status==='pending').length}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">OPEN</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--navy,#1a1f3c);line-height:1;">${settledPicks.length}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">AFGEROND</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--navy,#1a1f3c);line-height:1;">${scanHitrate !== null ? scanHitrate + '%' : '—'}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">HITRATE</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${scanROI !== null && scanROI >= 0 ? '#16a34a' : '#dc2626'};line-height:1;">${scanROI !== null ? (scanROI >= 0 ? '+' : '') + scanROI.toFixed(1) + '%' : '—'}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">ROI</div>
-        </div>
+      <div style="background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">
+        <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#be185d,#7c3aed);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.35rem;">
+        ${kwaliPicks.length === 0 ? 'Scan wedstrijden om picks te verzamelen →' : (() => {
+          const openCount = kwaliPicks.filter(p => !p.status || p.status === 'pending').length;
+          const parts = [];
+          if (openCount > 0)           parts.push(openCount + ' open');
+          if (settledPicks.length > 0) parts.push(settledPicks.length + ' afgerond');
+          if (scanHitrate !== null)     parts.push(scanHitrate + '% hitrate');
+          if (scanROI !== null)         parts.push('ROI ' + (scanROI >= 0 ? '+' : '') + scanROI.toFixed(1) + '%');
+          return parts.join(' · ') || 'Tik voor details →';
+        })()}
       </div>
     </div>
 
-    <!-- Open bets — foto stijl met ACTIEVE WEDDENSCHAP + hourglass + match rij -->
+    <!-- Open bets -->
     ${openBets.length ? `
-    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:16px;
-      padding:.75rem 1rem;margin-bottom:.75rem;cursor:pointer;box-shadow:0 2px 8px rgba(15,23,42,.07);"
-      onclick="switchScreen('wallet')">
-      <!-- Header rij -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
+    <div style="background:rgba(37,99,235,.06);border:1px solid rgba(37,99,235,.18);border-radius:14px;
+      padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;" onclick="switchScreen('wallet')">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
         <div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:var(--navy,#1a1f3c);">⏳ ${openBets.length} OPEN BET${openBets.length>1?'S':''}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--muted);letter-spacing:.05em;margin-top:.08rem;">ACTIEVE WEDDENSCHAP</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:800;color:#2563eb;">⏳ ${openBets.length} OPEN BET${openBets.length>1?'S':''}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.15rem;">${openBets.slice(0,2).map(b=>b.matchName||b.match||'?').join(' · ')}</div>
         </div>
-        <svg width="28" height="32" viewBox="0 0 24 28" fill="none" style="color:var(--gold,#b8922a);flex-shrink:0;">
-          <path d="M5 2h14M5 26h14M6 2c0 6 6 10 6 14s-6 8-6 14M18 2c0 6-6 10-6 14s6 8 6 14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-          <path d="M8 24.5c1-1.5 2.5-2.5 4-2.5s3 1 4 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-          <path d="M9 4c.8 1.2 2 2.2 3 3s2.2 1.8 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        </svg>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#2563eb;">€${openBets.reduce((s,b)=>s+b.amount,0).toFixed(0)}</div>
       </div>
-      <!-- Match rij per open bet -->
-      ${openBets.slice(0,2).map(b => `
-        <div style="display:flex;align-items:center;gap:.6rem;">
-          <div style="flex-shrink:0;">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style="color:var(--gold,#b8922a);">
-              <path d="M5 2h14M5 22h14M6 2c0 5 6 8 6 12s-6 7-6 12M18 2c0 5-6 8-6 12s6 7 6 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <div style="font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:700;color:var(--navy,#1a1f3c);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.matchName||b.match||'?'}</div>
-          <div style="width:26px;height:26px;background:rgba(184,146,42,.08);border:1px solid rgba(184,146,42,.2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;">🏆</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:var(--gold,#b8922a);flex-shrink:0;">€${b.amount?.toFixed(0)||'?'}</div>
-        </div>
-      `).join('')}
     </div>` : ''}
 
     <!-- Top value pick als beschikbaar -->
@@ -285,54 +241,53 @@ function renderDashboard() {
       </div>
     </div>` : ''}
 
-    <!-- TOTO AI INSIGHTS knop boven rechterkaart -->
+    <!-- TOTO AI INSIGHTS knop -->
     <div style="display:flex;justify-content:flex-end;margin-bottom:.45rem;">
       <button onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('tips'),120)"
         style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
-        color:var(--navy,#1a1f3c);background:var(--card);border:1px solid var(--stroke);
+        color:var(--navy);background:var(--card);border:1px solid var(--stroke);
         border-radius:99px;padding:.28rem .75rem;cursor:pointer;
         box-shadow:0 1px 4px rgba(15,23,42,.08);letter-spacing:.03em;">
         🔮 TOTO AI INSIGHTS
       </button>
     </div>
 
-    <!-- Nav kaarten — 2 kaarten zoals foto -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.75rem;">
+    <!-- Nav kaarten — 2 kaarten zoals dashboard foto -->
+    <div class="dash-nav-grid" style="grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.75rem;">
 
-      <!-- WEDSTRIJDEN & ANALYSIS -->
+      <!-- WEDSTRIJDEN & ANALYSIS — grote linker kaart -->
       <div class="dash-nav-card" onclick="switchScreen('wedstrijden')"
-        style="background:rgba(15,23,42,.04);border-color:rgba(15,23,42,.12);position:relative;overflow:hidden;min-height:148px;">
+        style="background:rgba(15,23,42,.04);border-color:rgba(15,23,42,.12);position:relative;overflow:hidden;min-height:145px;">
         <div style="position:absolute;bottom:-.5rem;right:-.5rem;font-size:3.5rem;opacity:.05;pointer-events:none;">⚽</div>
-        <!-- Voetbal icoon zoals foto — groot, geen achtergrond -->
-        <div style="font-size:2.2rem;margin-bottom:.3rem;line-height:1;">⚽</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--navy,#1a1f3c);letter-spacing:.04em;line-height:1.15;">WEDSTRIJDEN<br>&amp; ANALYSIS</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);line-height:1.5;flex:1;margin:.2rem 0;">
+        <!-- Voetbal icoon in cirkel zoals foto -->
+        <div style="width:42px;height:42px;border-radius:50%;background:rgba(15,23,42,.08);
+          border:1.5px solid rgba(15,23,42,.12);display:flex;align-items:center;
+          justify-content:center;font-size:1.3rem;margin-bottom:.25rem;">⚽</div>
+        <div class="dash-nav-title" style="color:var(--navy);font-size:1rem;line-height:1.1;">WEDSTRIJDEN<br>&amp; ANALYSIS</div>
+        <div class="dash-nav-sub" style="font-size:.44rem;color:var(--sub);line-height:1.5;flex:1;">
           Laade matches, bekijk<br>Quotes<br>Bets, tracker, backtest en<br>Value Indicators.
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:800;color:#2563eb;">LIVE AI INSIGHTS</div>
+        <div class="dash-nav-badge" style="color:#2563eb;font-size:.46rem;">LIVE AI INSIGHTS</div>
       </div>
 
-      <!-- WALLET & LEAGUES -->
+      <!-- WALLET & LEAGUES — rechter kaart -->
       <div class="dash-nav-card" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('wallet'),100)"
         style="background:rgba(184,146,42,.06);border-color:rgba(184,146,42,.2);position:relative;overflow:hidden;">
         <div style="position:absolute;bottom:-.5rem;right:-.5rem;font-size:3.5rem;opacity:.05;pointer-events:none;">🏆</div>
-        <!-- Wallet + Trophy outline SVG iconen zoals foto -->
-        <div style="display:flex;gap:.5rem;margin-bottom:.3rem;align-items:center;">
-          <svg width="28" height="26" viewBox="0 0 24 22" fill="none" style="color:var(--gold,#b8922a);">
-            <rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
-            <path d="M16 12a2 2 0 1 1 0 .001" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M2 10h20M6 6V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.8"/>
-          </svg>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style="color:var(--gold,#b8922a);">
-            <path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v3c0 3.3 2.7 6 6 6h6c3.3 0 6-2.7 6-6V5a1 1 0 0 0-1-1h-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M7 4h10v8a5 5 0 0 1-10 0V4z" stroke="currentColor" stroke-width="1.8"/>
-          </svg>
+        <!-- Dubbel icoon wallet + trophy zoals foto -->
+        <div style="display:flex;gap:.35rem;margin-bottom:.25rem;">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(184,146,42,.1);
+            border:1.5px solid rgba(184,146,42,.2);display:flex;align-items:center;
+            justify-content:center;font-size:1rem;">👝</div>
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(184,146,42,.1);
+            border:1.5px solid rgba(184,146,42,.2);display:flex;align-items:center;
+            justify-content:center;font-size:1rem;">🏆</div>
         </div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--navy,#1a1f3c);letter-spacing:.04em;">WALLET &amp; LEAGUES</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);line-height:1.5;flex:1;margin:.2rem 0;">
+        <div class="dash-nav-title" style="color:var(--navy);font-size:1rem;">WALLET &amp; LEAGUES</div>
+        <div class="dash-nav-sub" style="font-size:.44rem;color:var(--sub);line-height:1.5;flex:1;">
           Stand, topscorers en<br>wedstrijden per competitie
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:800;color:var(--gold,#b8922a);">INFO</div>
+        <div class="dash-nav-badge" style="color:var(--gold);font-size:.46rem;">INFO</div>
       </div>
     </div>
 
