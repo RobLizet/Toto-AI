@@ -246,45 +246,77 @@ function renderDashboard() {
       </div>
     </div>` : ''}
 
-    <!-- TOTO AI INSIGHTS knop -->
-    <div style="display:flex;justify-content:flex-end;margin-bottom:.45rem;">
-      <button onclick="switchScreen('analyse');setTimeout(()=>showAnalyseSubTab('tips'),120)"
-        style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;
-        color:#00BEC4;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.25);
-        border-radius:99px;padding:.28rem .75rem;cursor:pointer;letter-spacing:.03em;">
-        🔮 TOTO AI INSIGHTS
-      </button>
-    </div>
+    <!-- 4 Nav kaarten — gouden SVG iconen -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
 
-    <!-- Nav kaarten — 2 teal kaarten -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:.75rem;">
-
-      <!-- WEDSTRIJDEN & ANALYSIS -->
-      <div class="dash-nav-card" onclick="switchScreen('wedstrijden')"
-        style="background:rgba(0,190,196,.04);border:1px solid rgba(0,190,196,.15);border-radius:16px;position:relative;overflow:hidden;min-height:148px;padding:.85rem .9rem;cursor:pointer;display:flex;flex-direction:column;gap:.28rem;">
-        <div style="position:absolute;bottom:-.5rem;right:-.5rem;font-size:3.5rem;opacity:.04;pointer-events:none;">⚽</div>
-        <div style="font-size:2.2rem;margin-bottom:.3rem;line-height:1;">⚽</div>
-        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#ffffff;letter-spacing:.04em;line-height:1.15;">WEDSTRIJDEN<br>&amp; ANALYSIS</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">
-          Laade matches, bekijk<br>Quotes<br>Bets, tracker, backtest en<br>Value Indicators.
+      <!-- WEDSTRIJDEN -->
+      <div onclick="switchScreen('wedstrijden')"
+        style="background:linear-gradient(135deg,rgba(0,60,70,.6),rgba(0,35,45,.5));border:1px solid rgba(0,190,196,.2);border-radius:16px;padding:16px;cursor:pointer;min-height:140px;display:flex;flex-direction:column;position:relative;overflow:hidden;"
+        ontouchstart="this.style.transform=\'scale(.97)\'" ontouchend="this.style.transform=\'scale(1)\'">
+        <div style="position:absolute;bottom:-8px;right:-8px;opacity:.07;pointer-events:none;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
         </div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:800;color:#00BEC4;">LIVE AI INSIGHTS</div>
+        <div style="margin-bottom:10px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+          </svg>
+        </div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">WEDSTRIJDEN</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">Laad matches, bekijk quotes en value indicators</div>
+        <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">LIVE API</span></div>
       </div>
 
-      <!-- WALLET & LEAGUES -->
-      <div class="dash-nav-card" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('wallet'),100)"
-        style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:16px;position:relative;overflow:hidden;padding:.85rem .9rem;cursor:pointer;display:flex;flex-direction:column;gap:.28rem;">
-        <div style="position:absolute;bottom:-.5rem;right:-.5rem;font-size:3rem;opacity:.04;pointer-events:none;">🏆</div>
-        <div style="display:flex;gap:.4rem;margin-bottom:.25rem;align-items:center;">
-          <svg width="22" height="20" viewBox="0 0 24 22" fill="none" style="color:#00BEC4;"><rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M16 12a2 2 0 1 1 0 .001" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 10h20M6 6V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="1.8"/></svg>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="color:#00BEC4;"><path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v3c0 3.3 2.7 6 6 6h6c3.3 0 6-2.7 6-6V5a1 1 0 0 0-1-1h-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 4h10v8a5 5 0 0 1-10 0V4z" stroke="currentColor" stroke-width="1.8"/></svg>
+      <!-- ANALYSE -->
+      <div onclick="switchScreen('analyse')"
+        style="background:linear-gradient(135deg,rgba(0,50,80,.6),rgba(0,30,60,.4));border:1px solid rgba(0,150,196,.2);border-radius:16px;padding:16px;cursor:pointer;min-height:140px;display:flex;flex-direction:column;position:relative;overflow:hidden;"
+        ontouchstart="this.style.transform=\'scale(.97)\'" ontouchend="this.style.transform=\'scale(1)\'">
+        <div style="position:absolute;bottom:-8px;right:-8px;opacity:.07;pointer-events:none;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1"><circle cx="12" cy="12" r="8"/><path d="M12 4v4M12 16v4M4 12h4M16 12h4"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
-        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.88rem;color:#ffffff;letter-spacing:.04em;line-height:1.1;">WALLET &amp; LEAGUES</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">
-          Stand, topscorers en<br>wedstrijden per competitie
+        <div style="margin-bottom:10px;">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="rgba(201,168,76,.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="3"/>
+            <line x1="16" y1="6" x2="16" y2="10"/><line x1="16" y1="22" x2="16" y2="26"/>
+            <line x1="6" y1="16" x2="10" y2="16"/><line x1="22" y1="16" x2="26" y2="16"/>
+          </svg>
         </div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:800;color:#00BEC4;">INFO</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">ANALYSE</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">AI analyse, value scan en combi tips</div>
+        <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">AI POWERED</span></div>
       </div>
+
+      <!-- WALLET -->
+      <div onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('wallet'),100)"
+        style="background:linear-gradient(135deg,rgba(0,60,50,.6),rgba(0,40,30,.4));border:1px solid rgba(201,168,76,.2);border-radius:16px;padding:16px;cursor:pointer;min-height:140px;display:flex;flex-direction:column;position:relative;overflow:hidden;"
+        ontouchstart="this.style.transform=\'scale(.97)\'" ontouchend="this.style.transform=\'scale(1)\'">
+        <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
+          </svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,.55)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="8" stroke-dasharray="3 2"/><path d="M12 8v4l3 3"/>
+          </svg>
+        </div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">WALLET</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">Bets, tracker, backtest en pick analyse</div>
+        <div style="margin-top:8px;"><span style="font-size:12px;font-weight:800;color:#C9A84C;">€${wallet.balance.toFixed(0)}</span></div>
+      </div>
+
+      <!-- COMPETITIES -->
+      <div onclick="typeof openCompKeuze==='function'?openCompKeuze():switchScreen('wedstrijden')"
+        style="background:linear-gradient(135deg,rgba(40,30,0,.6),rgba(30,20,0,.4));border:1px solid rgba(201,168,76,.2);border-radius:16px;padding:16px;cursor:pointer;min-height:140px;display:flex;flex-direction:column;position:relative;overflow:hidden;"
+        ontouchstart="this.style.transform=\'scale(.97)\'" ontouchend="this.style.transform=\'scale(1)\'">
+        <div style="margin-bottom:10px;display:flex;gap:6px;align-items:center;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v3c0 3.3 2.7 6 6 6h6c3.3 0 6-2.7 6-6V5a1 1 0 0 0-1-1h-3"/><path d="M7 4h10v8a5 5 0 0 1-10 0V4z"/>
+          </svg>
+          <div style="font-size:11px;line-height:1.3;">🇳🇱🏴󠁧󠁢󠁥󠁮󠁧󠁿<br>🇩🇪🇪🇸🇮🇹🇧🇪</div>
+        </div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">COMPETITIES</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">Stand, topscorers en wedstrijden per competitie</div>
+        <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#C9A84C;border:1px solid rgba(201,168,76,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">INFO</span></div>
+      </div>
+
     </div>
 
 
