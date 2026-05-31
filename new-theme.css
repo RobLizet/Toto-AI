@@ -995,3 +995,88 @@ body.dark .cd-standings-row { background: #1a2236 !important; }
   transition: transform .15s, box-shadow .15s;
 }
 .match-card:active, .worker-pick-row:active { transform: scale(.99) !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TOTO AI — SKY THEME (body.sky)
+   Licht blauw-wit palet — fris, modern, goed leesbaar overdag
+═══════════════════════════════════════════════════════════════ */
+
+body.sky {
+  background: linear-gradient(180deg, #e8f4fd 0%, #dbeef9 50%, #cce4f5 100%) !important;
+  color: #0d2d4a !important;
+}
+
+body.sky .topbar {
+  background: rgba(232,244,253,0.97) !important;
+  border-bottom: 1px solid rgba(14,90,150,0.12) !important;
+}
+body.sky .topbar-logo { color: #0d2d4a !important; -webkit-text-fill-color: #0d2d4a !important; }
+body.sky .topbar-ai { color: #0284c7 !important; -webkit-text-fill-color: #0284c7 !important; }
+body.sky .topbar-version {
+  color: #0284c7 !important;
+  background: rgba(2,132,199,.10) !important;
+  border-color: rgba(2,132,199,.25) !important;
+}
+body.sky .topbar-user-pill { color: #0d2d4a !important; border-color: rgba(14,90,150,.2) !important; }
+body.sky .topbar-icon-btn {
+  background: rgba(2,132,199,.08) !important;
+  border-color: rgba(2,132,199,.15) !important;
+  color: #0284c7 !important;
+}
+
+body.sky .bottom-nav {
+  background: rgba(232,244,253,0.97) !important;
+  border-top: 1px solid rgba(14,90,150,0.12) !important;
+}
+body.sky .bnav-btn { color: #3d7aad !important; }
+body.sky .bnav-btn.active { color: #0284c7 !important; }
+body.sky .bnav-label { color: inherit !important; }
+
+body.sky .match-card,
+body.sky .analyse-block,
+body.sky .analytics-block,
+body.sky .wallet-big,
+body.sky .w-item,
+body.sky .modal-box,
+body.sky .worker-pick-row,
+body.sky .stat-mini-card,
+body.sky .wallet-subtabs,
+body.sky .cd-tab,
+body.sky .open-bets-strip {
+  background: rgba(255,255,255,0.88) !important;
+  border-color: rgba(14,90,150,0.10) !important;
+  color: #0d2d4a !important;
+}
+
+body.sky .match-name,
+body.sky .analyse-block-title,
+body.sky .w-label { color: #0d2d4a !important; }
+
+body.sky .match-meta,
+body.sky .stat-mini-val,
+body.sky .w-val { color: #0d2d4a !important; }
+
+body.sky .stat-mini-label,
+body.sky .w-sub { color: #3d7aad !important; }
+
+body.sky .screen { background: transparent !important; }
+
+body.sky .more-menu-panel,
+body.sky .modal-overlay { background: #dbeef9 !important; }
+
+body.sky .odds-btn {
+  background: rgba(2,132,199,.08) !important;
+  color: #0d2d4a !important;
+  border-color: rgba(2,132,199,.15) !important;
+}
+
+body.sky .cd-standings-row { background: rgba(255,255,255,.8) !important; }
+
+body.sky ::-webkit-scrollbar-thumb { background: rgba(2,132,199,.2); }
+
+/* Actieve state thema knop */
+body.sky .theme-btn[onclick*="sky"] {
+  background: #0284c7 !important;
+  color: #fff !important;
+  border-color: #0284c7 !important;
+}
