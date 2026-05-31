@@ -130,12 +130,12 @@ body {
 .open-bets-strip,
 .worker-pick-row,
 .bt-card,
+/* dash-card achtergrond — base.css stijlt dit */
 .dash-card,
 .nav-card,
 .dash-nav-card,
 .backtest-card {
-  background: #fff !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid rgba(255,255,255,.06) !important;
   border-radius: var(--r) !important;
   box-shadow: none !important;
 }
@@ -185,7 +185,7 @@ body {
   font-family: var(--font-main) !important;
   font-size: 13.5px !important;
   font-weight: 800 !important;
-  color: var(--navy) !important;
+  color: rgba(255,255,255,.95) !important;
   padding: 7px 4px !important;
   transition: all .15s !important;
 }
@@ -617,10 +617,10 @@ body {
   border-radius: var(--r) !important;
 }
 
-.dash-nav-card:nth-child(1) { background: rgba(37,99,235,.05) !important; border-color: rgba(37,99,235,.15) !important; }
-.dash-nav-card:nth-child(2) { background: rgba(37,99,235,.05) !important; border-color: rgba(37,99,235,.15) !important; }
-.dash-nav-card:nth-child(3) { background: rgba(29,185,116,.05) !important; border-color: rgba(29,185,116,.15) !important; }
-.dash-nav-card:nth-child(4) { background: rgba(245,166,35,.05) !important; border-color: rgba(245,166,35,.15) !important; }
+.dash-nav-card:nth-child(1) { background: rgba(0,190,196,.08) !important; border-color: rgba(0,190,196,.2) !important; }
+.dash-nav-card:nth-child(2) { background: rgba(0,190,196,.08) !important; border-color: rgba(0,190,196,.2) !important; }
+.dash-nav-card:nth-child(3) { background: rgba(0,190,196,.06) !important; border-color: rgba(0,190,196,.15) !important; }
+.dash-nav-card:nth-child(4) { background: rgba(245,166,35,.08) !important; border-color: rgba(245,166,35,.2) !important; }
 
 .dash-nav-title,
 .nav-card-title {
@@ -963,6 +963,42 @@ body.sky {
   background: linear-gradient(180deg, #e8f4fd 0%, #dbeef9 50%, #cce4f5 100%) !important;
   color: #0d2d4a !important;
 }
+
+/* Sky — alle elementen licht maken */
+body.sky .app { background: transparent !important; }
+body.sky .screen { background: transparent !important; }
+
+body.sky .match-card,
+body.sky .analyse-block,
+body.sky .analytics-block,
+body.sky .wallet-big,
+body.sky .open-bets-strip,
+body.sky .worker-pick-row,
+body.sky .stat-mini-card,
+body.sky .w-item,
+body.sky .wallet-subtabs,
+body.sky .cd-tab,
+body.sky .modal-box,
+body.sky .dash-card,
+body.sky .nav-card,
+body.sky .dash-nav-card,
+body.sky #btProgressWrap {
+  background: rgba(255,255,255,.85) !important;
+  border-color: rgba(14,90,150,.1) !important;
+  color: #0d2d4a !important;
+}
+
+body.sky .match-name,
+body.sky .dash-nav-title,
+body.sky .nav-card-title,
+body.sky .analyse-block-title,
+body.sky .w-val,
+body.sky .stat-mini-val { color: #0d2d4a !important; }
+
+body.sky .match-meta,
+body.sky .stat-mini-label,
+body.sky .w-label,
+body.sky .sub { color: #3d7aad !important; }
 
 body.sky .topbar {
   background: rgba(232,244,253,0.97) !important;
