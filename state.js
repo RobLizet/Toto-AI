@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v30: Versienummer update — topbar toont v30
+// v32: Versie sync fix — commentaar klopt nu met APP_VERSION
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v31';
+const APP_VERSION = 'v32';
 
 const STATE_KEY = 'totoai_state';
 
@@ -125,3 +125,4 @@ function loadState() {
 
 // Stub — wordt overschreven door firebase.js
 function scheduleFirebaseSync() {}
+
