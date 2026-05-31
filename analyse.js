@@ -997,7 +997,7 @@ function renderValueBannerInAnalyse(displayScans, total) {
       const sign = s.value > 0 ? '+' : '';
       return `<div style="display:flex;align-items:center;padding:.55rem .9rem;border-bottom:1px solid rgba(255,255,255,0.09);cursor:pointer;" onclick="openValueAnalysis('${s.match.id}')">
         <div style="flex:1;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:#ffffff;">${s.match.home} vs ${s.match.away}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:#ffffff;">${s.match.home} vs ${s.match.away}${s.sharp ? '<span style="font-size:.36rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;margin-left:.3rem;font-weight:700;">🔥 SHARP</span>' : ''}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);">${s.pickLabel} · ${s.kans}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):s._hasXG?' (xG)':''} · ${s.reason}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">📊 ${s.bookmaker||''} · ½K ${(s.kelly||0).toFixed(1)}% · 🎲 ${s.confidence||'?'}/10</div>
         </div>
@@ -1062,6 +1062,7 @@ function renderAnalyseScanResults(scans) {
         </div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">
           🎲 ${s.confidence||'?'}/10 · ½K ${(s.kelly||0).toFixed(1)}%
+          ${s.sharp ? '<span style="font-size:.36rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;font-weight:700;margin-left:.2rem;">🔥 SHARP' + (s.sharpMove ? ' ' + Math.abs(s.sharpMove||0).toFixed(1) + '%' : '') + '</span>' : ''}
           ${!geldig ? `· <span style="color:#94a3b8;">${redenen.join(', ')}</span>` : ''}
         </div>
       </div>
