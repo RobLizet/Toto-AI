@@ -101,6 +101,7 @@ async function fetchDailyTip() {
 function renderDashboard() {
   const screen = document.getElementById('screen-dashboard');
   if (!screen) return;
+  checkAdminStatus(); // v32.2: zorg dat admin status altijd actueel is bij render
 
   const wallet = state.wallet || { balance: 500, bets: [] };
   const bets = wallet.bets || [];
@@ -390,6 +391,17 @@ function renderDashboard() {
       })()" style="flex:1;background:rgba(0,168,173,.1);border:1px solid rgba(0,168,173,.3);
         border-radius:10px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;
         font-weight:700;color:#00a8ad;cursor:pointer;">🔍 Worker Scan</button>
+      <button onclick="(async()=>{
+        this.disabled=true;this.textContent='⟳ Testen...';
+        const token=await generateScanToken();
+        const res=await fetch(WORKER_URL+'/scan-test?token='+token+'&league=88');
+        const d=await res.json();
+        const picks=(d.picks||[]).map(p=>p.matchName+' → '+p.pickLabel+' @'+p.odds+' (conf:'+p.confidence+')').join('\n');
+        this.disabled=false;this.textContent='🧪 Scan Test';
+        alert('v'+d.version+' | '+d.matchesFound+' wedstrijden | '+(d.picks||[]).length+' picks\n\n'+(picks||'Geen picks'));
+      })()" style="flex:1;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);
+        border-radius:10px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;
+        font-weight:700;color:#a78bfa;cursor:pointer;">🧪 Scan Test</button>
       <button onclick="(async()=>{
         this.disabled=true;this.textContent='⟳ Settlen...';
         const r=await triggerWorkerSettle();
