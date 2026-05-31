@@ -87,7 +87,7 @@ async function triggerWorkerSettle() {
 }
 
 
-// DASHBOARD.JS — v30.3 HMAC scan tokens, admin scan knop
+// DASHBOARD.JS — v32.0 race condition fix daily tip, live scores error handling
 // ═══════════════════════════════════════════════════════
 
 async function fetchDailyTip() {
@@ -456,14 +456,19 @@ function renderDashboard() {
   // Laad WK widget na render
   if (typeof renderWKDashboardWidget === 'function') setTimeout(renderWKDashboardWidget, 50);
 
-  // Laad dagelijkse tip na render
+  // Laad dagelijkse tip na render — v32: race condition fix (geen dubbele render)
   const cachedTip = state._dailyTipCache;
-  if (cachedTip) setTimeout(() => renderDailyTipCard(cachedTip), 0);
   const lastFetch = state._dailyTipFetchTime || 0;
-  if (Date.now() - lastFetch > 600000 || !cachedTip) {
+  const tipIsStale = Date.now() - lastFetch > 600000;
+  if (cachedTip && !tipIsStale) {
+    // Cache is vers — direct renderen, geen fetch nodig
+    setTimeout(() => renderDailyTipCard(cachedTip), 0);
+  } else {
+    // Cache leeg of verlopen — eerst cache tonen (als beschikbaar), dan fetch
+    if (cachedTip) setTimeout(() => renderDailyTipCard(cachedTip), 0);
     fetchDailyTip().then(function(tip) {
-      if (tip) { state._dailyTipCache = tip; state._dailyTipFetchTime = Date.now(); }
-      renderDailyTipCard(tip);
+      if (tip) { state._dailyTipCache = tip; state._dailyTipFetchTime = Date.now(); renderDailyTipCard(tip); }
+      else if (!cachedTip) renderDailyTipCard(null);
     });
   }
 }
@@ -761,7 +766,12 @@ async function loadLiveScores() {
     const now = new Date();
     list.innerHTML += `<div style="text-align:center;padding:.5rem;color:rgba(255,255,255,.5);font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;">Laatst bijgewerkt: ${now.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ververst elke 60s</div>`;
   } catch(e) {
-    list.innerHTML = '<div style="text-align:center;padding:2rem;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">Fout bij laden live data. Probeer opnieuw.</div>';
+    console.error('[LiveScores] Fout:', e.message);
+    list.innerHTML = `<div style="text-align:center;padding:2rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;line-height:1.8;">
+      <div style="color:#dc2626;margin-bottom:.5rem;">⚠️ Fout bij laden live data</div>
+      <div style="color:rgba(255,255,255,.4);margin-bottom:.75rem;">${e.message || 'Netwerkfout'}</div>
+      <button onclick="loadLiveScores()" style="background:#00BEC4;color:#000;border:none;padding:.3rem .8rem;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;">↺ Opnieuw</button>
+    </div>`;
   }
 }
 
