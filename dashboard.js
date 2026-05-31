@@ -235,10 +235,7 @@ function renderDashboard() {
       onclick="(function(){var mid=(topValuePick&&(topValuePick.match?.id||topValuePick.matchId||''));switchScreen('analyse');setTimeout(()=>{showAnalyseSubTab('scan');if(mid&&typeof openValueAnalysis==='function')openValueAnalysis(mid);},150);})()">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;">
-          <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem;">
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#00BEC4;">⚡ BESTE VALUE PICK</div>
-            ${topValuePick.sharp ? \'<span style="font-family:\\'IBM Plex Mono\\',monospace;font-size:.38rem;font-weight:700;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#ef4444;border-radius:4px;padding:1px 5px;">🔥 SHARP\' + (topValuePick.sharpMove ? \'  \' + Math.abs(topValuePick.sharpMove).toFixed(1) + \'%\' : \'\') + \'</span>\' : \'\'}
-          </div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#00BEC4;margin-bottom:.2rem;">⚡ BESTE VALUE PICK</div>
           <div style="font-family:\'DM Sans\',sans-serif;font-size:.8rem;font-weight:700;color:#ffffff;">${topValuePick.match?.home||topValuePick.home||'?'} vs ${topValuePick.match?.away||topValuePick.away||'?'}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.15rem;">${topValuePick.pickLabel||topValuePick.pick} · conf ${topValuePick.confidence||'?'}/10</div>
         </div>
