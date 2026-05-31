@@ -1152,21 +1152,21 @@ function renderKillerStats(picks, settled) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
 
       <!-- ROI laatste 7 dagen -->
-      <div style="background:rgba(15,23,42,.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;">
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;">
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${roi7Color};">${roi7 !== null ? (parseFloat(roi7)>=0?'+':'')+roi7+'%' : '—'}</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);">ROI LAATSTE 7 DAGEN</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:rgba(255,255,255,.5);">${last7.length} picks gesetteld</div>
       </div>
 
       <!-- Win streak -->
-      <div style="background:rgba(15,23,42,.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;">
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;">
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${streak>=3?'#00BEC4':streak>=1?'#b45309':'#94a3b8'};">${streak}🔥</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);">HUIDIGE WIN STREAK</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:rgba(255,255,255,.5);">Max: ${maxStreak} op rij</div>
       </div>
 
       <!-- Beste league -->
-      <div style="background:rgba(15,23,42,.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;">
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;">
         ${bestLeague ? `
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.75rem;color:#00BEC4;line-height:1.1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${bestLeague[0]}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);">BESTE LEAGUE</div>
@@ -1187,7 +1187,7 @@ function renderKillerStats(picks, settled) {
 
       ${clvAvg !== null ? `
       <!-- CLV score -->
-      <div style="background:rgba(15,23,42,.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;grid-column:1/-1;">
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;grid-column:1/-1;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div>
             <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${parseFloat(clvAvg)>=0?'#00BEC4':'#dc2626'};">${parseFloat(clvAvg)>=0?'+':''}${clvAvg}% CLV</div>
@@ -2171,7 +2171,7 @@ function showWalletPopup(type, data) {
       bodyHtml += `<div style="font-family:monospace;font-size:.48rem;font-weight:700;color:rgba(255,255,255,.5);margin:.7rem 0 .3rem;">COMBI LEGS</div>`;
       b.legs.forEach((l,i) => {
         const lc = l.status==='win'?'#00BEC4':l.status==='lose'?'#dc2626':'#d97706';
-        bodyHtml += `<div style="background:rgba(15,23,42,.03);border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
+        bodyHtml += `<div style="background:rgba(255,255,255,.03);border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
           <div style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;font-weight:600;">${l.match||'Leg '+(i+1)}</div>
           <div style="display:flex;justify-content:space-between;margin-top:.2rem;">
             <div style="font-family:monospace;font-size:.46rem;color:rgba(255,255,255,.5);">${l.pick} @ ${l.odds}</div>

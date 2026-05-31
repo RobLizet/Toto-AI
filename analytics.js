@@ -134,7 +134,7 @@ function _calcLocalStats() {
 // ── Loading HTML ──────────────────────────────────────
 function _analyticsLoadingHTML() {
   return '<div style="padding:2rem;text-align:center;">' +
-    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:var(--sub);">📊 Analytics laden...</div>' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.5);">📊 Analytics laden...</div>' +
     '</div>';
 }
 
@@ -144,18 +144,18 @@ function _analyticsHTML(local, worker) {
 
   // ── Header ──
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">';
-  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--ink);">📊 STATS & ANALYTICS</div>';
-  html += '<button onclick="renderAnalyticsScreen()" style="background:none;border:1px solid rgba(21,32,56,0.15);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:var(--sub);cursor:pointer;">↻ Vernieuwen</button>';
+  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;">📊 STATS & ANALYTICS</div>';
+  html += '<button onclick="renderAnalyticsScreen()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:rgba(255,255,255,.5);cursor:pointer;">↻ Vernieuwen</button>';
   html += '</div>';
 
   // ── KPI row ──
   html += '<div class="analytics-block">';
   html += '<div class="analytics-block-title">OVERZICHT</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
-  html += _kpi('PICKS TOTAAL', local.total + '/100', '#0a8a5f');
-  html += _kpi('SETTLED', local.settled, '#0d9e6e');
-  html += _kpi('HITRATE', local.hitrate !== null ? local.hitrate + '%' : '—', local.hitrate !== null && local.hitrate >= 50 ? '#0a8a5f' : '#dc2626');
-  html += _kpi('ROI', local.roi !== null ? (local.roi >= 0 ? '+' : '') + local.roi + '%' : '—', local.roi !== null && local.roi >= 0 ? '#0a8a5f' : '#dc2626');
+  html += _kpi('PICKS TOTAAL', local.total + '/100', '#00BEC4');
+  html += _kpi('SETTLED', local.settled, '#00a8ad');
+  html += _kpi('HITRATE', local.hitrate !== null ? local.hitrate + '%' : '—', local.hitrate !== null && local.hitrate >= 50 ? '#00BEC4' : '#dc2626');
+  html += _kpi('ROI', local.roi !== null ? (local.roi >= 0 ? '+' : '') + local.roi + '%' : '—', local.roi !== null && local.roi >= 0 ? '#00BEC4' : '#dc2626');
   html += '</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;">';
   html += _kpiSmall('GEM. ODDS', local.avgOdds || '—');
@@ -166,11 +166,11 @@ function _analyticsHTML(local, worker) {
   // Voortgangsbalk
   html += '<div style="margin-top:.65rem;">';
   html += '<div style="display:flex;justify-content:space-between;margin-bottom:.25rem;">';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">VOORTGANG NAAR 100 PICKS</div>';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">' + local.total + '/100</div>';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">VOORTGANG NAAR 100 PICKS</div>';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">' + local.total + '/100</div>';
   html += '</div>';
   html += '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:6px;overflow:hidden;">';
-  html += '<div style="background:linear-gradient(90deg,#0a8a5f,#0d9e6e);height:100%;border-radius:999px;width:' + Math.min(100, local.total) + '%;transition:width .4s;"></div>';
+  html += '<div style="background:linear-gradient(90deg,#00BEC4,#00a8ad);height:100%;border-radius:999px;width:' + Math.min(100, local.total) + '%;transition:width .4s;"></div>';
   html += '</div></div></div>';
 
   // ── ROI Trend ──
@@ -190,9 +190,9 @@ function _analyticsHTML(local, worker) {
       const d = local.byPick[pick];
       const hr = d.t > 0 ? Math.round(d.w / d.t * 100) : null;
       html += '<div class="analytics-stat-card">';
-      html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:var(--ink);">' + pick + '</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.7rem;font-weight:800;color:' + (hr!==null&&hr>=50?'#0a8a5f':'#dc2626') + ';">' + (hr !== null ? hr + '%' : '—') + '</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">' + d.w + '/' + d.t + ' wins</div>';
+      html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#ffffff;">' + pick + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.7rem;font-weight:800;color:' + (hr!==null&&hr>=50?'#00BEC4':'#dc2626') + ';">' + (hr !== null ? hr + '%' : '—') + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">' + d.w + '/' + d.t + ' wins</div>';
       html += '</div>';
     });
     html += '</div></div>';
@@ -207,11 +207,11 @@ function _analyticsHTML(local, worker) {
       const barW = Math.min(100, hr);
       html += '<div style="margin-bottom:.5rem;">';
       html += '<div style="display:flex;justify-content:space-between;margin-bottom:.2rem;">';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--ink);">' + bucket + '</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);">' + hr + '% (' + d.wins + '/' + d.total + ')</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:#ffffff;">' + bucket + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.5);">' + hr + '% (' + d.wins + '/' + d.total + ')</div>';
       html += '</div>';
       html += '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:5px;overflow:hidden;">';
-      html += '<div style="background:' + (hr >= 50 ? '#0a8a5f' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + barW + '%;transition:width .4s;"></div>';
+      html += '<div style="background:' + (hr >= 50 ? '#00BEC4' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + barW + '%;transition:width .4s;"></div>';
       html += '</div></div>';
     });
     html += '</div>';
@@ -224,12 +224,12 @@ function _analyticsHTML(local, worker) {
     local.confBuckets.forEach(([label, d]) => {
       const hr = d.t > 0 ? Math.round(d.w / d.t * 100) : 0;
       html += '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--sub);min-width:80px;">' + label + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);min-width:80px;">' + label + '</div>';
       html += '<div style="flex:1;background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">';
-      html += '<div style="background:' + (hr >= 50 ? '#0a8a5f' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + hr + '%;transition:width .4s;"></div>';
+      html += '<div style="background:' + (hr >= 50 ? '#00BEC4' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + hr + '%;transition:width .4s;"></div>';
       html += '</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:var(--ink);min-width:36px;text-align:right;">' + hr + '%</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);min-width:32px;">' + d.w + '/' + d.t + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#ffffff;min-width:36px;text-align:right;">' + hr + '%</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);min-width:32px;">' + d.w + '/' + d.t + '</div>';
       html += '</div>';
     });
     html += '</div>';
@@ -242,14 +242,14 @@ function _analyticsHTML(local, worker) {
     local.byLeague.forEach(([lid, d]) => {
       const hr = d.total > 0 ? Math.round(d.wins / d.total * 100) : 0;
       const roi = parseFloat((d.roi / d.total).toFixed(1));
-      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid rgba(21,32,56,0.15);">';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,0.09);">';
       html += '<div style="flex:1;">';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--ink);">' + d.name + '</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub);">' + d.total + ' picks · ' + d.wins + ' wins</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#ffffff;">' + d.name + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">' + d.total + ' picks · ' + d.wins + ' wins</div>';
       html += '</div>';
       html += '<div style="text-align:right;">';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:' + (hr>=50?'#0a8a5f':'#dc2626') + ';">' + hr + '%</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:' + (roi>=0?'#0a8a5f':'#dc2626') + ';">' + (roi>=0?'+':'') + roi + '% ROI</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:' + (hr>=50?'#00BEC4':'#dc2626') + ';">' + hr + '%</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:' + (roi>=0?'#00BEC4':'#dc2626') + ';">' + (roi>=0?'+':'') + roi + '% ROI</div>';
       html += '</div></div>';
     });
     html += '</div>';
@@ -259,14 +259,14 @@ function _analyticsHTML(local, worker) {
   if (worker && worker.clv) {
     const clv = worker.clv;
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.42rem;font-weight:400;color:var(--sub);">via Supabase</span></div>';
+    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.42rem;font-weight:400;color:rgba(255,255,255,.5);">via Supabase</span></div>';
     html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">';
     html += _kpiSmall('TOTAAL', clv.total || 0);
     html += _kpiSmall('GEM. CLV', clv.avgCLV !== null ? (clv.avgCLV >= 0 ? '+' : '') + clv.avgCLV + '%' : '—');
     html += _kpiSmall('POSITIEF', clv.positiveCLVPct !== null ? clv.positiveCLVPct + '%' : '—');
     html += '</div>';
     if (clv.total === 0) {
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);margin-top:.5rem;text-align:center;">CLV data verschijnt na settlements via Worker v98+</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.5);margin-top:.5rem;text-align:center;">CLV data verschijnt na settlements via Worker v98+</div>';
     }
     html += '</div>';
   }
@@ -275,15 +275,15 @@ function _analyticsHTML(local, worker) {
   if (worker && worker.sharpMoney) {
     const sm = worker.sharpMoney;
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">SHARP MONEY <span style="font-size:.42rem;font-weight:400;color:var(--sub);">laatste 7 dagen</span></div>';
+    html += '<div class="analytics-block-title">SHARP MONEY <span style="font-size:.42rem;font-weight:400;color:rgba(255,255,255,.5);">laatste 7 dagen</span></div>';
     if (sm.steamMovements7d === 0) {
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub);text-align:center;padding:.5rem 0;">Geen steam movements gedetecteerd</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.5);text-align:center;padding:.5rem 0;">Geen steam movements gedetecteerd</div>';
     } else {
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#d97706;margin-bottom:.5rem;">🔥 ' + sm.steamMovements7d + ' steam movements</div>';
       if (sm.topSteam && sm.topSteam.length) {
         sm.topSteam.forEach(s => {
-          html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(21,32,56,0.15);">';
-          html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--ink);">Fixture ' + s.fixtureId + ' · Pick ' + s.pick + '</div>';
+          html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,0.09);">';
+          html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#ffffff;">Fixture ' + s.fixtureId + ' · Pick ' + s.pick + '</div>';
           html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:800;color:#d97706;">' + s.movement + '%</div>';
           html += '</div>';
         });
@@ -296,12 +296,12 @@ function _analyticsHTML(local, worker) {
   if (local.settled === 0 && !worker) {
     html += '<div style="text-align:center;padding:2rem;opacity:.5;">';
     html += '<div style="font-size:2rem;margin-bottom:.5rem;">📊</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:var(--sub);">Nog geen settled picks — scan wedstrijden om data op te bouwen.</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.5);">Nog geen settled picks — scan wedstrijden om data op te bouwen.</div>';
     html += '</div>';
   }
 
   // ── Footer ──
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--sub);text-align:center;padding:.75rem;margin-top:.25rem;">';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);text-align:center;padding:.75rem;margin-top:.25rem;">';
   html += 'Lokale data · ' + local.scansTotal + ' scans · Worker v98 Supabase';
   html += '</div>';
 
@@ -322,7 +322,7 @@ function _roiTrendChart(trend) {
 
   let path = trend.map((t, i) => (i === 0 ? 'M' : 'L') + x(i).toFixed(1) + ',' + y(t.roi).toFixed(1)).join(' ');
   const lastROI = rois[rois.length - 1];
-  const lineColor = lastROI >= 0 ? '#0a8a5f' : '#dc2626';
+  const lineColor = lastROI >= 0 ? '#00BEC4' : '#dc2626';
 
   let svg = '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="display:block;margin:.4rem 0;">';
   // Zero lijn
@@ -341,13 +341,13 @@ function _roiTrendChart(trend) {
 function _kpi(label, value, color) {
   return '<div style="background:rgba(15,23,42,.04);border-radius:10px;padding:.5rem .6rem;">' +
     '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:' + color + ';line-height:1.1;">' + value + '</div>' +
-    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:var(--sub);margin-top:1px;">' + label + '</div>' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.5);margin-top:1px;">' + label + '</div>' +
     '</div>';
 }
 
 function _kpiSmall(label, value) {
   return '<div style="background:rgba(15,23,42,.04);border-radius:8px;padding:.4rem .5rem;text-align:center;">' +
-    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:var(--ink);">' + value + '</div>' +
-    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);margin-top:1px;">' + label + '</div>' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#ffffff;">' + value + '</div>' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);margin-top:1px;">' + label + '</div>' +
     '</div>';
 }
