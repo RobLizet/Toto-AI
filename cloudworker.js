@@ -1,12 +1,12 @@
-// TOTO AI WORKER v102
-// v102: Push naar Total Subscriptions segment — werkt ongeacht device herregistratie
+// TOTO AI WORKER v103
+// v103: Gelijkspel bias correctie (calculateValue X -20%), CLV fix opening+closing odds
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
 //       Kosten tracking per call in Supabase user_costs (input/output tokens)
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v102'; // v102: push naar Total Subscriptions segment (stabiel, geen ID nodig)
+const VERSION = 'v103'; // v102: push naar Total Subscriptions segment (stabiel, geen ID nodig)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -297,19 +297,34 @@ async function detectSharpMoney(oddsMap, matches, env) {
 }
 
 // ── Supabase: CLV opslaan na settlement ──────────────────
-async function saveCLV(pick, clv, won, env) {
+async function saveCLV(pick, clv, won, closingOdds, env) {
   if (clv === null || clv === undefined) return;
+  // v103: haal opening odds op uit snapshots voor echte CLV berekening
+  let openingOdds = null;
+  try {
+    const snap = await sb(env, 'odds_snapshots', 'GET', null,
+      `?fixture_id=eq.${pick.fixtureId}&order=captured_at.asc&limit=1`
+    );
+    if (snap?.length > 0) {
+      const s = snap[0];
+      openingOdds = pick.pick === '1' ? s.home_odds :
+                    pick.pick === 'X' ? s.draw_odds : s.away_odds;
+      if (openingOdds) openingOdds = parseFloat(openingOdds);
+    }
+  } catch(e) { console.warn('[CLV] Snapshot ophalen mislukt:', e.message); }
+
   await sb(env, 'clv_results', 'POST', [{
     fixture_id: pick.fixtureId,
     pick: pick.pick,
     our_odds: pick.odds,
-    closing_odds: pick.odds,
+    opening_odds: openingOdds || null,
+    closing_odds: closingOdds || pick.odds,
     clv_pct: clv,
     status: won ? 'win' : 'lose',
     match_date: pick.matchDate || null,
     league_id: pick.leagueId || null,
     settled_at: new Date().toISOString(),
-  }]);
+  }], '?on_conflict=fixture_id,pick');
 }
 
 // ── Supabase: analytics endpoint ─────────────────────────
@@ -733,7 +748,10 @@ function calculateValue(aiKans, bookOdds, pick) {
   if (!bookOdds || bookOdds <= 1) return 0;
   const aiProb = aiKans / 100;
   const implProb = impliedProb(bookOdds);
-  const value = ((aiProb / implProb) - 1) * 100;
+  let value = ((aiProb / implProb) - 1) * 100;
+  // v103: gelijkspel bias correctie — X picks zijn statistisch moeilijker
+  // te voorspellen; verhoog de drempel met 20% om false positives te verminderen
+  if (pick === 'X') value = value * 0.80;
   return parseFloat(value.toFixed(1));
 }
 
@@ -834,13 +852,14 @@ async function verifyYesterdayPicks(env) {
     else if (p === 'BTTS-J') won = hg > 0 && ag > 0;
 
     let clv = null;
+    let closingOdd = null; // v103: buiten try voor scope bij saveCLV
     try {
       const closingOdds = clvOdds[i];
       if (closingOdds?.length > 0) {
         const bm = closingOdds[0]?.bookmakers?.[0];
         const bet = bm?.bets?.find(b => b.id === 1);
         if (bet) {
-          const closingOdd = parseFloat(
+          closingOdd = parseFloat(
             bet.values?.find(v =>
               (p === '1' && v.value === 'Home') ||
               (p === 'X' && v.value === 'Draw') ||
@@ -863,7 +882,7 @@ async function verifyYesterdayPicks(env) {
       clv,
     };
 
-    try { await saveCLV(pick, clv, won, env); } catch(e) { console.error('[SB] CLV fout:', e.message); }
+    try { await saveCLV(pick, clv, won, closingOdd || null, env); } catch(e) { console.error('[SB] CLV fout:', e.message); }
     updated++;
     updatedIds.push(id);
   }
@@ -2071,3 +2090,4 @@ export default {
     })());
   }
 };
+
