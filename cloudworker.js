@@ -1329,7 +1329,9 @@ Geen uitleg, alleen de JSON array.`;
           score: null,
           processed: false,
           verifiedAt: null,
-          source: 'scheduled'
+          source: 'scheduled',
+          sharp: !!sharpBoost,
+          sharpMove: sharpBoost?.movement || null,
         };
       }
     });
