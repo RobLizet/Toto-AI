@@ -1472,7 +1472,7 @@ async function runScanTest(env, leagueIds = [113, 103]) {
 
   if (!allMatches.length) {
     return {
-      ok: true, leagues: leagueIds, today, tomorrow: tomorrowStr,
+      ok: true, version: VERSION, leagues: leagueIds, today, tomorrow: tomorrowStr,
       matchesFound: 0, withOdds: 0, aiResultsCount: 0,
       picks: [], allMatches: [], log,
       verdict: '⚠️ Geen wedstrijden gevonden — controleer seizoen en leagueId',
@@ -1606,6 +1606,7 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
 
   return {
     ok:              true,
+    version:         VERSION,
     leagues:         leagueIds,
     today,
     tomorrow:        tomorrowStr,
