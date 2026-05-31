@@ -285,6 +285,37 @@ function renderInstellingen() {
         </button>
       </div>
 
+      <!-- ADMIN TOOLS -->
+      ${window._isAdmin ? `
+      <div class="settings-section" style="border:1px solid rgba(220,38,38,.25);background:rgba(220,38,38,.04);">
+        <div class="settings-section-title" style="color:#dc2626;">🔧 ADMIN TOOLS</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button onclick="(async()=>{
+            this.disabled=true;this.textContent='⟳ Scannen...';
+            const r=await triggerWorkerScan();
+            this.disabled=false;this.textContent='🔍 Worker Scan';
+            alert(r.status||r.error||JSON.stringify(r));
+          })()" style="flex:1;background:rgba(0,168,173,.1);border:1px solid rgba(0,168,173,.3);
+            border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;
+            font-weight:700;color:#00a8ad;cursor:pointer;">🔍 Worker Scan</button>
+          <button id="adminScanTestBtn" onclick="triggerScanTest()" style="flex:1;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;font-weight:700;color:#a78bfa;cursor:pointer;">🧪 Scan Test</button>
+          <button onclick="(async()=>{
+            this.disabled=true;this.textContent='⟳ Settlen...';
+            const r=await triggerWorkerSettle();
+            this.disabled=false;this.textContent='✅ Settle';
+            alert(r.status||r.error||JSON.stringify(r));
+          })()" style="flex:1;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.3);
+            border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;
+            font-weight:700;color:#00BEC4;cursor:pointer;">✅ Settle</button>
+        </div>
+        <div style="margin-top:.5rem;">
+          <button onclick="logoutUser()" style="width:100%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;font-weight:700;color:#dc2626;cursor:pointer;">🚪 Uitloggen</button>
+        </div>
+      </div>` : `
+      <div class="settings-section">
+        <button onclick="logoutUser()" style="width:100%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:10px;padding:.55rem;font-family:var(--font);font-size:.5rem;font-weight:700;color:#dc2626;cursor:pointer;">🚪 Uitloggen</button>
+      </div>`}
+
       <!-- APP INFO -->
       <div class="settings-section">
         <div class="settings-section-title">ℹ️ APP INFO</div>
