@@ -102,7 +102,9 @@ async function triggerScanTest() {
     const picks = (d.picks || []).slice(0, 5)
       .map(p => (p.matchName || p.match || '?') + ' → ' + (p.pickLabel || p.pick) + ' @' + (p.odds || '?') + ' conf:' + (p.confidence || '?'))
       .join('\n');
-    alert('✅ Haiku scan OK\nv' + (d.version || '?') + ' | ' + (d.matchesFound || 0) + ' wedstrijden | ' + (d.picks || []).length + ' picks\n\n' + (picks || 'Geen picks'));
+    const logTail = (d.log||[]).slice(-3).join('\n');
+    const msg = '✅ Haiku scan OK\nv' + (d.version||'?') + ' | ' + (d.matchesFound||0) + ' wedstrijden | ' + (d.picks||[]).length + ' picks';
+    alert(msg + (picks ? '\n\n' + picks : '') + (logTail ? '\n\nLog:\n' + logTail : ''));
   } catch(e) {
     alert('Fetch fout: ' + e.message);
   } finally {
