@@ -358,7 +358,10 @@ function renderAnalyseScreen() {
     html += '<div class="analyse-block">';
     html += '<div class="analyse-block-header">';
     html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> STATISTIEKEN</div>';
+    html += '<div style="display:flex;align-items:center;gap:.4rem;">';
     html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">' + settledPicks.length + '/100 picks</div>';
+    html += '<button onclick="switchScreen(\'analytics\')" style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);color:#00BEC4;border-radius:6px;padding:.15rem .4rem;cursor:pointer;">📊 Volledig</button>';
+    html += '</div>';
     html += '</div>';
 
     if (scanROI !== null) {
