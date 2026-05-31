@@ -1,5 +1,5 @@
-// TOTO AI Service Worker v21.0 — Standaard push zonder Firebase
-const SW_VERSION = '21.0';
+// TOTO AI Service Worker v32.0 — Cache bust bij elke deploy
+const SW_VERSION = '32.0';
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
@@ -18,6 +18,15 @@ self.addEventListener('fetch', e => {
       e.request.url.includes('firebase') ||
       e.request.url.includes('workers.dev') ||
       e.request.url.includes('googleapis')) return;
+  // JS/CSS bestanden altijd network-first — nooit stale cache
+  if (e.request.url.match(/\.(js|css)(\?|$)/)) {
+    e.respondWith(
+      fetch(e.request)
+        .then(r => { const c = r.clone(); caches.open(CACHE).then(cache => cache.put(e.request, c)); return r; })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
   e.respondWith(caches.match(e.request).then(c => c || fetch(e.request)));
 });
 
@@ -50,7 +59,7 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(wins => {
       for (const w of wins) {
-        if (w.url.includes('Toto-AI') && 'focus' in w) { w.focus(); return; }
+        if (w.url.includes('toto-ai') && 'focus' in w) { w.focus(); return; }
       }
       if (clients.openWindow) return clients.openWindow('https://toto-ai.app/');
     })
