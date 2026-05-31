@@ -400,12 +400,6 @@ function renderDashboard() {
       </div>
     </div>` : ''}
 
-    <!-- WK 2026 AI Voorspelling widget -->
-    <div id="wk-dashboard-widget" style="background:linear-gradient(135deg,rgba(220,38,38,.06),rgba(190,24,93,.04));
-      border:1px solid rgba(220,38,38,.15);border-radius:14px;padding:.7rem .85rem;margin-bottom:.75rem;">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">⟳ Laden...</div>
-    </div>
-
     <!-- Admin: Worker scan & settle knoppen -->
     ${window._isAdmin ? `
     <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;">
@@ -427,38 +421,6 @@ function renderDashboard() {
       })()" style="flex:1;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.3);
         border-radius:10px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;
         font-weight:700;color:#00BEC4;cursor:pointer;">✅ Settle</button>
-    </div>` : ''}
-
-    <!-- WK 2026 countdown / live banner -->
-    ${wkDiff > 0 ? `
-    <div style="background:linear-gradient(135deg,rgba(0,190,196,.08),rgba(0,168,173,.06));
-      border:1px solid rgba(0,190,196,.2);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;cursor:pointer;"
-      onclick="switchScreen('wedstrijden');setTimeout(()=>selectComp('wk2026'),300)">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">🏆 WK 2026</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-top:.15rem;">United States · Mexico · Canada</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00BEC4;">${wkDays}d ${wkHours}u ${wkMins}m</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">Start 11 juni</div>
-        </div>
-      </div>
-    </div>` : wkEndDiff > 0 ? `
-    <div style="background:linear-gradient(135deg,rgba(220,38,38,.12),rgba(234,179,8,.08));
-      border:1px solid rgba(220,38,38,.3);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;cursor:pointer;animation:pulse-red 2s infinite;"
-      onclick="switchScreen('wedstrijden');setTimeout(()=>selectComp('wk2026'),300)">
-      <style>@keyframes pulse-red{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.3)}50%{box-shadow:0 0 0 6px rgba(220,38,38,0)}}</style>
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#dc2626;">🔴 WK 2026 LIVE</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-top:.15rem;">United States · Mexico · Canada</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#dc2626;">BEZIG</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">Finale: 19 juli</div>
-        </div>
-      </div>
     </div>` : ''}
 
     <!-- Disclaimer -->
