@@ -19,17 +19,8 @@
   --red-pale:   #fdecea;
   --blue-pale:  #eff6ff;
 
-  /* Override bestaande tokens */
-  --bg:     #eef2f9;
-  --bg1:    #eef2f9;
-  --card:   #ffffff;
-  --border: rgba(27,38,70,0.08);
-  --stroke: rgba(27,38,70,0.08);
-  --ink:    #1b2646;
-  --text:   #1b2646;
-  --sub:    #7c8aaa;
-  --muted:  #7c8aaa;
-  --accent: #1db974;
+  /* Neutrale tokens — niet overschrijven, dark theme blijft intact */
+  --accent: #00BEC4;
 
   --font-main: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
   --r:  14px;
@@ -42,26 +33,16 @@
 /* ── BASE ───────────────────────────────────────────────────── */
 body {
   font-family: var(--font-main) !important;
-  background: var(--bg) !important;
   -webkit-font-smoothing: antialiased;
 }
 
 .app {
-  background: var(--bg) !important;
   max-width: 600px;
   margin: 0 auto;
 }
 
 /* ── TOPBAR ─────────────────────────────────────────────────── */
-.topbar {
-  background: #fff !important;
-  border-bottom: 1px solid var(--border) !important;
-  box-shadow: none !important;
-  padding: 13px 16px 11px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-}
+/* topbar stijl in base.css */
 
 .topbar-logo {
   font-family: var(--font-main) !important;
@@ -111,13 +92,7 @@ body {
 .topbar-icon-btn:hover { background: rgba(27,38,70,.06) !important; }
 
 /* ── BOTTOM NAV ─────────────────────────────────────────────── */
-.bottom-nav {
-  background: #fff !important;
-  border-top: 1px solid var(--border) !important;
-  box-shadow: none !important;
-  height: 68px !important;
-  padding: 0 4px !important;
-}
+/* bottom-nav stijl in base.css */
 
 .bnav-btn {
   font-family: var(--font-main) !important;
