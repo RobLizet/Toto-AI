@@ -739,7 +739,7 @@ function switchDashTab(tab) {
     loadLiveScores();
     // Auto-refresh elke 60s zolang tab open is
     if (_liveScoresInterval) clearInterval(_liveScoresInterval);
-    _liveScoresInterval = setInterval(loadLiveScores, 60000);
+    _liveScoresInterval = setInterval(() => loadLiveScores().catch(e => console.warn('[Live]', e.message)), 60000);
   } else {
     overviewContent.style.display = 'block';
     liveContent.style.display = 'none';
