@@ -172,11 +172,8 @@ function renderInstellingen() {
         <div class="settings-section-title">🎨 THEMA</div>
 
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem;">
-          <button class="theme-btn" onclick="setTheme('')">🌸 Default</button>
-          <button class="theme-btn" onclick="setTheme('dark')">🌑 Dark</button>
+          <button class="theme-btn" onclick="setTheme('')">🌑 Default</button>
           <button class="theme-btn" onclick="setTheme('sky')">🩵 Sky</button>
-          <button class="theme-btn" onclick="setTheme('mint')">🌿 Mint</button>
-          <button class="theme-btn" onclick="setTheme('cream')">🍦 Crème</button>
         </div>
 
         <div class="settings-row">
