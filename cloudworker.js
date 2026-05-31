@@ -1417,7 +1417,7 @@ async function runScanTest(env, leagueIds = [113, 103]) {
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
   // Seizoen-aware: Scandinavische + WK competities = 2026
-  const SEASON_2026 = new Set([1, 2, 3, 113, 103, 71, 253, 128, 848]);
+  const SEASON_2026 = new Set([1, 2, 3, 4, 71, 98, 103, 113, 119, 129, 239, 253, 292, 848]); // alle actieve leagues
   const getSeason = (lid) => SEASON_2026.has(lid) ? 2026 : 2025;
 
   const log = [`[ScanTest] Start — leagues: ${leagueIds.join(', ')}, datum: ${today} + ${tomorrowStr}`];
@@ -1474,7 +1474,7 @@ async function runScanTest(env, leagueIds = [113, 103]) {
     return {
       ok: true, version: VERSION, leagues: leagueIds, today, tomorrow: tomorrowStr,
       matchesFound: 0, withOdds: 0, aiResultsCount: 0,
-      picks: [], allMatches: [], log,
+      picks: [], allMatches: [], log: log.slice(-10),
       verdict: '⚠️ Geen wedstrijden gevonden — controleer seizoen en leagueId',
       note: '⚠️ TEST — geen Firebase write'
     };
