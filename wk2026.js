@@ -54,6 +54,41 @@ function renderWK2026Screen() {
         </div>
       </div>
 
+      <!-- Tabs -->
+      <div style="display:flex;gap:.4rem;margin-bottom:.75rem;">
+        <button onclick="switchWKTab('picks')" id="wk-tab-picks"
+          style="flex:1;padding:.4rem;border-radius:10px;border:1px solid rgba(220,38,38,.3);
+          background:rgba(220,38,38,.12);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
+          font-weight:700;color:#dc2626;cursor:pointer;">⚡ PICKS</button>
+        <button onclick="switchWKTab('schema')" id="wk-tab-schema"
+          style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
+          background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
+          font-weight:700;color:var(--sub);cursor:pointer;">📅 SCHEMA</button>
+        <button onclick="switchWKTab('voorspelling')" id="wk-tab-voorspelling"
+          style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
+          background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
+          font-weight:700;color:var(--sub);cursor:pointer;">🏆 AI</button>
+      </div>
+
+      <!-- Picks tab -->
+      <div id="wk-tab-content-picks">
+        <div id="wk-picks-list" style="margin-bottom:.75rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);
+            text-align:center;padding:1.5rem;">⟳ WK picks laden...</div>
+        </div>
+      </div>
+
+      <!-- Schema tab -->
+      <div id="wk-tab-content-schema" style="display:none;">
+        <div id="wk-schema-list">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);
+            text-align:center;padding:1.5rem;">⟳ Schema laden...</div>
+        </div>
+      </div>
+
+      <!-- Voorspelling tab -->
+      <div id="wk-tab-content-voorspelling" style="display:none;">
+
       <!-- Genereer knop -->
       <button id="wk-generate-btn" onclick="generateWKPrediction()"
         style="width:100%;background:linear-gradient(135deg,#dc2626,#be185d);
@@ -122,11 +157,15 @@ function renderWK2026Screen() {
             color:#dc2626;cursor:pointer;font-weight:700;">↻ NIEUWE VOORSPELLING</button>
         </div>
       </div>
+      </div> <!-- einde wk-tab-content-voorspelling -->
     </div>
   `;
 
   // Laad gecachte voorspelling of toon lege staat
   loadCachedWKPrediction();
+  // Laad WK picks
+  loadWKPicks();
+  loadWKSchema();
 }
 
 // ── Cache laden ──────────────────────────────────────────
@@ -396,4 +435,197 @@ async function quickGenerateWKWidget() {
       showWKWidget(el, data);
     }
   } catch(e) {}
+}
+
+// ── WK Tab switcher ──────────────────────────────────────
+function switchWKTab(tab) {
+  ['picks','schema','voorspelling'].forEach(t => {
+    const content = document.getElementById('wk-tab-content-' + t);
+    const btn = document.getElementById('wk-tab-' + t);
+    if (content) content.style.display = t === tab ? 'block' : 'none';
+    if (btn) {
+      btn.style.background = t === tab ? 'rgba(220,38,38,.12)' : 'var(--card)';
+      btn.style.borderColor = t === tab ? 'rgba(220,38,38,.3)' : 'var(--stroke)';
+      btn.style.color = t === tab ? '#dc2626' : 'var(--sub)';
+    }
+  });
+}
+
+// ── WK Picks laden (uit Supabase via worker) ─────────────
+async function loadWKPicks() {
+  const el = document.getElementById('wk-picks-list');
+  if (!el) return;
+
+  try {
+    const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/picks');
+    const data = await res.json();
+    const allPicks = Object.values(data || {});
+
+    // Filter WK picks (league id 1)
+    const wkPicks = allPicks.filter(p =>
+      p.leagueId === 1 || p.leagueId === '1' ||
+      (p.comp || '').toLowerCase().includes('world cup') ||
+      (p.comp || '').toLowerCase().includes('wk') ||
+      (p.comp || '').toLowerCase().includes('fifa')
+    );
+
+    if (!wkPicks.length) {
+      el.innerHTML = `
+        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;
+          padding:1.2rem;text-align:center;">
+          <div style="font-size:1.5rem;margin-bottom:.5rem;">⏳</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;
+            color:var(--ink);margin-bottom:.25rem;">WK PICKS KOMEN ERAAN</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">
+            Start 11 juni · De scanner analyseert elke WK wedstrijd automatisch
+          </div>
+        </div>`;
+      return;
+    }
+
+    const byStatus = {
+      pending: wkPicks.filter(p => p.status === 'pending'),
+      win:     wkPicks.filter(p => p.status === 'win'),
+      lose:    wkPicks.filter(p => p.status === 'lose'),
+    };
+
+    let html = '';
+
+    // Stats bar
+    const total = wkPicks.filter(p => p.status !== 'pending').length;
+    const wins  = byStatus.win.length;
+    const roi   = total ? ((byStatus.win.reduce((s,p) => s + (p.odds - 1), 0) - byStatus.lose.length) / total * 100) : 0;
+    html += `
+      <div style="display:flex;gap:.4rem;margin-bottom:.6rem;">
+        <div style="flex:1;background:var(--card);border:1px solid var(--stroke);border-radius:10px;
+          padding:.5rem;text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#dc2626;">${wkPicks.length}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">PICKS</div>
+        </div>
+        <div style="flex:1;background:var(--card);border:1px solid var(--stroke);border-radius:10px;
+          padding:.5rem;text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${wins/total>=.4?'#00BEC4':'#dc2626'};">
+            ${total ? Math.round(wins/total*100) : '—'}%</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">HITRATE</div>
+        </div>
+        <div style="flex:1;background:var(--card);border:1px solid var(--stroke);border-radius:10px;
+          padding:.5rem;text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${roi>=0?'#00BEC4':'#dc2626'};">
+            ${roi>=0?'+':''}${roi.toFixed(1)}%</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">ROI</div>
+        </div>
+      </div>`;
+
+    // Pending picks
+    if (byStatus.pending.length) {
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
+        color:var(--sub);margin-bottom:.4rem;">⏳ OPEN PICKS</div>`;
+      byStatus.pending.forEach(p => { html += renderWKPickCard(p); });
+    }
+
+    // Settled picks
+    const settled = [...byStatus.win, ...byStatus.lose].sort((a,b) =>
+      new Date(b.matchDate||0) - new Date(a.matchDate||0));
+    if (settled.length) {
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
+        color:var(--sub);margin:.6rem 0 .4rem;">✅ AFGEROND</div>`;
+      settled.forEach(p => { html += renderWKPickCard(p); });
+    }
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;
+      color:#dc2626;text-align:center;padding:1rem;">Fout bij laden: ${e.message}</div>`;
+  }
+}
+
+function renderWKPickCard(p) {
+  const icon = p.status === 'win' ? '✅' : p.status === 'lose' ? '❌' : '⏳';
+  const valColor = (p.value||0) >= 15 ? '#dc2626' : (p.value||0) >= 8 ? '#d97706' : '#64748b';
+  const flag1 = WK_TEAM_FLAG(p.home || '');
+  const flag2 = WK_TEAM_FLAG(p.away || '');
+  return `
+    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:12px;
+      padding:.6rem .75rem;margin-bottom:.4rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.2rem;">
+        <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:700;color:var(--ink);">
+          ${icon} ${flag1}${p.home||'?'} vs ${flag2}${p.away||'?'}
+        </div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:${valColor};">
+          +${Math.round(p.value||0)}%
+        </div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">
+        ${p.pickLabel||p.pick} @ ${p.odds} · conf ${p.confidence}/10
+        ${p.sharp ? '<span style="color:#ef4444;margin-left:.3rem;">🔥 SHARP</span>' : ''}
+      </div>
+    </div>`;
+}
+
+function WK_TEAM_FLAG(team) {
+  return TEAM_FLAGS[team] ? TEAM_FLAGS[team] + ' ' : '';
+}
+
+// ── WK Schema laden ───────────────────────────────────────
+async function loadWKSchema() {
+  const el = document.getElementById('wk-schema-list');
+  if (!el) return;
+
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const res = await fetch(
+      `https://toto-proxy.zweetzakken.workers.dev/apif/fixtures?league=1&season=2026&from=${today}&to=2026-07-20&timezone=Europe/Amsterdam`
+    );
+    const fixtures = await res.json();
+
+    if (!fixtures?.length) {
+      el.innerHTML = `
+        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;
+          padding:1.2rem;text-align:center;">
+          <div style="font-size:1.5rem;margin-bottom:.5rem;">🗓️</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--ink);">
+            Schema beschikbaar vanaf 11 juni</div>
+        </div>`;
+      return;
+    }
+
+    // Groepeer per dag
+    const byDay = {};
+    fixtures.forEach(f => {
+      const day = f.fixture?.date?.split('T')[0] || 'onbekend';
+      if (!byDay[day]) byDay[day] = [];
+      byDay[day].push(f);
+    });
+
+    let html = '';
+    Object.entries(byDay).sort().slice(0, 14).forEach(([day, matches]) => {
+      const d = new Date(day);
+      const label = d.toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short' });
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
+        color:var(--sub);margin:.6rem 0 .3rem;">${label.toUpperCase()}</div>`;
+      matches.forEach(f => {
+        const time = f.fixture?.date ? new Date(f.fixture.date).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '?';
+        const home = f.teams?.home?.name || '?';
+        const away = f.teams?.away?.name || '?';
+        const status = f.fixture?.status?.short;
+        const isLive = ['1H','2H','HT'].includes(status);
+        const score = isLive ? `<span style="color:#dc2626;font-weight:700;">${f.goals?.home??''}–${f.goals?.away??''} LIVE</span>` : time;
+        html += `
+          <div style="background:var(--card);border:1px solid var(--stroke);border-radius:10px;
+            padding:.5rem .65rem;margin-bottom:.3rem;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-family:'DM Sans',sans-serif;font-size:.6rem;font-weight:600;color:var(--ink);">
+              ${WK_TEAM_FLAG(home)}${home} vs ${WK_TEAM_FLAG(away)}${away}
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">
+              ${score}
+            </div>
+          </div>`;
+      });
+    });
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;
+      color:var(--sub);text-align:center;padding:1rem;">Schema laadt na 11 juni</div>`;
+  }
 }
