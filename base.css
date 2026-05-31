@@ -597,3 +597,71 @@ input:focus, select:focus, textarea:focus {
 }
 /* Canvas achtergrond transparant */
 canvas { background: transparent !important; }
+
+/* ══ ANALYSE / SCAN LOG DONKER OVERRIDE ═════════════════ */
+.scan-log-card, .analyse-stat-card, .analyse-chart-wrap,
+.analyse-block, .analyse-match-card, .scan-result-card,
+.pick-card, .combi-card, .value-pick-card {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 16px !important;
+  color: #fff !important;
+}
+/* Stat cellen in scan log */
+.analyse-stat-cell, .stat-cell, .kpi-cell {
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 10px !important;
+}
+/* Stat getallen */
+.analyse-stat-val, .stat-cell-val, .kpi-val {
+  color: #fff !important;
+}
+.analyse-stat-label, .stat-cell-lbl, .kpi-lbl {
+  color: rgba(255,255,255,.45) !important;
+}
+/* Scan log header border */
+.scan-log-card .card-head, .scan-result-header {
+  background: rgba(255,255,255,.04) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+}
+/* Alle witte divs in analyse screen */
+#screen-analyse div[style*="background:#fff"],
+#screen-analyse div[style*="background: #fff"],
+#screen-analyse div[style*="background:white"],
+#screen-analyse div[style*="background: white"] {
+  background: rgba(255,255,255,.05) !important;
+}
+#screen-analyse div[style*="background:rgba(255,255,255,.9"],
+#screen-analyse div[style*="background:rgba(255,255,255,.8"],
+#screen-analyse div[style*="background:rgba(255,255,255,.7"] {
+  background: rgba(255,255,255,.05) !important;
+}
+/* Chart containers in analyse */
+#screen-analyse canvas {
+  background: transparent !important;
+}
+/* Pick rijen */
+.pick-row-inner, .scan-pick-row {
+  background: rgba(255,255,255,.04) !important;
+  border-bottom: 1px solid rgba(255,255,255,.07) !important;
+}
+/* Odds display */
+.analyse-odds-cell {
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+}
+.analyse-odds-val, .analyse-odds-label {
+  color: rgba(255,255,255,.5) !important;
+}
+/* Verify/Stats/CSV knoppen in scan log */
+.scan-action-btn, .verify-btn, .stats-btn {
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: rgba(255,255,255,.8) !important;
+  border-radius: 10px !important;
+}
+/* Scan log lege state */
+.scan-log-empty {
+  color: rgba(255,255,255,.4) !important;
+}
