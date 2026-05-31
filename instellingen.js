@@ -174,6 +174,7 @@ function renderInstellingen() {
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem;">
           <button class="theme-btn" onclick="setTheme('')">🌸 Default</button>
           <button class="theme-btn" onclick="setTheme('dark')">🌑 Dark</button>
+          <button class="theme-btn" onclick="setTheme('sky')">🩵 Sky</button>
           <button class="theme-btn" onclick="setTheme('mint')">🌿 Mint</button>
           <button class="theme-btn" onclick="setTheme('cream')">🍦 Crème</button>
         </div>
@@ -392,6 +393,11 @@ function setTheme(theme) {
   document.body.className = theme || '';
   state.settings.theme = theme;
   localStorage.setItem('totoai_theme', theme);
+  // Actieve knop highlighten
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    const t = (b.getAttribute('onclick')||'').match(/setTheme\('(.*?)'\)/)?.[1] ?? '';
+    b.classList.toggle('active', t === (theme || ''));
+  });
   saveState();
 }
 
