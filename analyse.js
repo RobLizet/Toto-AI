@@ -1,4 +1,73 @@
 
+// ── Claude Insight ────────────────────────────────────
+let _insightLoaded = false;
+
+function toggleClaudeInsight() {
+  const el = document.getElementById('claude-insight-content');
+  const toggle = document.getElementById('claudeInsightToggle');
+  if (!el) return;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    if (toggle) toggle.textContent = '\u25b2';
+    if (!_insightLoaded) loadClaudeInsight();
+  } else {
+    el.style.display = 'none';
+    if (toggle) toggle.textContent = 'tik om te laden \u25bc';
+  }
+}
+
+async function loadClaudeInsight(force) {
+  const el = document.getElementById('claude-insight-content');
+  if (!el) return;
+  if (!force) {
+    try {
+      const c = localStorage.getItem('totoai_insight');
+      if (c) { const o = JSON.parse(c); if (Date.now() - o.ts < 21600000) { el.innerHTML = o.html; _insightLoaded = true; return; } }
+    } catch(e) {}
+  }
+  el.innerHTML = '<div style="padding:1rem;text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.4);">\u29d7 Claude analyseert je data...</div>';
+  const sl = state.scanLog || [];
+  const ap = sl.flatMap(s => s.picks || []);
+  const st = ap.filter(p => p.status==='win'||p.status==='lose');
+  const w  = st.filter(p => p.status==='win');
+  const hr = st.length ? Math.round(w.length/st.length*100) : 0;
+  const roi= st.length ? parseFloat((st.reduce((s,p)=>s+(p.status==='win'?(p.odds-1):-1),0)/st.length*100).toFixed(1)) : 0;
+  const l10= st.slice(-10);
+  const l10hr = l10.length ? Math.round(l10.filter(p=>p.status==='win').length/l10.length*100) : null;
+  const l10roi= l10.length ? parseFloat((l10.reduce((s,p)=>s+(p.status==='win'?(p.odds-1):-1),0)/l10.length*100).toFixed(1)) : null;
+  const byP = {};
+  st.forEach(p=>{ if(!byP[p.pick]) byP[p.pick]={w:0,t:0}; byP[p.pick].t++; if(p.status==='win')byP[p.pick].w++; });
+  const ps = Object.entries(byP).map(([k,v])=>(k==='1'?'Thuis':k==='X'?'Gelijkspel':'Uit')+': '+v.w+'/'+v.t+' ('+Math.round(v.w/v.t*100)+'%)').join(', ')||'geen data';
+  const prompt = 'Je bent een eerlijke betting analyst. Analyseer deze statistieken van een Nederlandse AI-betting app en geef feedback in 4-5 zinnen, informele toon, geen bullet points:\n\nGesettled: '+st.length+' picks ('+w.length+' win)\nHitrate: '+hr+'%\nROI: '+(roi>=0?'+':'')+roi+'%\nOpen: '+ap.filter(p=>p.status==='pending').length+'\nPer type: '+ps+'\nLaatste 10: '+(l10hr!==null?l10hr+'% hitrate, ROI '+l10roi+'%':'te weinig data')+'\n\nBespreek: eerlijk oordeel, 1 sterkte, 1 verbeterpunt, verwachting richting 100 picks.';
+  try {
+    const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/anthropic', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:400, messages:[{role:'user',content:prompt}] })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    const txt = d?.content?.[0]?.text || d?.error || 'Geen analyse.';
+    const ihtml = '<div style="padding:.75rem .85rem .6rem;">'
+      +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">'
+      +'<div style="width:26px;height:26px;border-radius:50%;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      +'</div><div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:#00BEC4;">CLAUDE ANALYSEERT</div>'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.4);">Op basis van '+st.length+' gesettled picks</div></div></div>'
+      +'<div style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;line-height:1.65;color:var(--ink);background:rgba(0,190,196,.04);border-left:2px solid rgba(0,190,196,.3);border-radius:0 8px 8px 0;padding:.6rem .75rem;margin-bottom:.5rem;">'
+      +txt.replace(/\n/g,'<br>')+'</div>'
+      +'<div style="display:flex;justify-content:space-between;">'
+      +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.3);">6 uur geldig</div>'
+      +'<button onclick="loadClaudeInsight(true)" style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);color:#00BEC4;border-radius:6px;padding:.15rem .5rem;cursor:pointer;">↻ Vernieuwen</button>'
+      +'</div></div>';
+    el.innerHTML = ihtml;
+    _insightLoaded = true;
+    try { localStorage.setItem('totoai_insight', JSON.stringify({html:ihtml,ts:Date.now()})); } catch(e) {}
+  } catch(e) {
+    el.innerHTML = '<div style="padding:.75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#dc2626;">Fout: '+e.message+' <button onclick="loadClaudeInsight(true)" style="margin-left:.4rem;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:6px;padding:.15rem .4rem;cursor:pointer;font-size:.38rem;">↻ Opnieuw</button></div>';
+  }
+}
+
+
 // ── ANALYSE SUB-TAB SWITCH ──────────────────────────
 function setAnalyseSubTab(tab) {
   window._analyseActiveTab = tab;
