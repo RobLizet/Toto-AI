@@ -995,3 +995,120 @@ body.dark .cd-standings-row { background: #1a2236 !important; }
   transition: transform .15s, box-shadow .15s;
 }
 .match-card:active, .worker-pick-row:active { transform: scale(.99) !important; }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   TOTO AI — SKY THEME (body.sky)
+   Licht blauw-wit palet — fris, modern, goed leesbaar overdag
+   v32.1: nieuw thema toegevoegd als alternatief voor default light
+═══════════════════════════════════════════════════════════════ */
+
+body.sky {
+  background: linear-gradient(180deg, #e8f4fd 0%, #dbeef9 50%, #cce4f5 100%) !important;
+}
+
+body.sky :root,
+body.sky {
+  --bg1:    #e8f4fd;
+  --bg2:    #dbeef9;
+  --bg3:    #cce4f5;
+  --card:   rgba(255,255,255,0.85);
+  --card2:  rgba(255,255,255,0.7);
+  --stroke: rgba(14,90,150,0.10);
+  --border: rgba(14,90,150,0.10);
+  --ink:    #0d2d4a;
+  --text:   #0d2d4a;
+  --sub:    #3d7aad;
+  --muted:  #5a8fb8;
+  --teal:   #0284c7;
+  --accent: #0284c7;
+  --green:  #059669;
+  --red:    #dc2626;
+  --amber:  #d97706;
+  --gold:   #b45309;
+}
+
+/* Topbar */
+body.sky .topbar {
+  background: rgba(232,244,253,0.95) !important;
+  border-bottom: 1px solid rgba(14,90,150,0.12) !important;
+  backdrop-filter: blur(12px) !important;
+}
+body.sky .topbar-logo { color: #0d2d4a !important; -webkit-text-fill-color: #0d2d4a !important; }
+body.sky .topbar-ai { color: #0284c7 !important; -webkit-text-fill-color: #0284c7 !important; }
+body.sky .topbar-version {
+  color: #0284c7 !important;
+  background: rgba(2,132,199,.10) !important;
+  border-color: rgba(2,132,199,.25) !important;
+}
+body.sky .topbar-icon-btn {
+  background: rgba(2,132,199,.08) !important;
+  border-color: rgba(2,132,199,.15) !important;
+  color: #0284c7 !important;
+}
+
+/* Bottom nav */
+body.sky .bottom-nav {
+  background: rgba(232,244,253,0.97) !important;
+  border-top: 1px solid rgba(14,90,150,0.12) !important;
+}
+body.sky .nav-btn { color: #3d7aad !important; }
+body.sky .nav-btn.active { color: #0284c7 !important; }
+body.sky .nav-indicator { background: #0284c7 !important; }
+
+/* Cards */
+body.sky .match-card,
+body.sky .analyse-block,
+body.sky .analytics-block,
+body.sky .wallet-big,
+body.sky .w-item,
+body.sky .modal-box,
+body.sky .worker-pick-row,
+body.sky .stat-mini-card {
+  background: rgba(255,255,255,0.85) !important;
+  border-color: rgba(14,90,150,0.10) !important;
+  color: #0d2d4a !important;
+  box-shadow: 0 2px 12px rgba(2,100,180,.08) !important;
+}
+
+/* Tekst */
+body.sky .match-name,
+body.sky .w-label,
+body.sky .dash-stat-label { color: #3d7aad !important; }
+
+body.sky .match-meta,
+body.sky .dash-stat-val,
+body.sky .stat-mini-val { color: #0d2d4a !important; }
+
+/* Accenten */
+body.sky .teal-label,
+body.sky .value-badge,
+body.sky .topbar-ai { color: #0284c7 !important; }
+
+/* Odds knoppen */
+body.sky .odds-btn {
+  background: rgba(2,132,199,.08) !important;
+  color: #0d2d4a !important;
+  border-color: rgba(2,132,199,.15) !important;
+}
+body.sky .odds-btn.value-highlight {
+  background: rgba(5,150,105,.12) !important;
+  border-color: rgba(5,150,105,.3) !important;
+}
+
+/* Settings / more menu */
+body.sky .more-menu-panel,
+body.sky .settings-screen {
+  background: #dbeef9 !important;
+  border-color: rgba(14,90,150,0.12) !important;
+}
+
+/* Screens achtergrond */
+body.sky .screen { background: transparent !important; }
+body.sky .app { background: transparent !important; }
+
+/* Scrollbar */
+body.sky ::-webkit-scrollbar-thumb { background: rgba(2,132,199,.2); }
+
+/* Theme knop actief */
+body.sky .theme-btn[onclick*="sky"] { background: #0284c7 !important; color: #fff !important; border-color: #0284c7 !important; }
