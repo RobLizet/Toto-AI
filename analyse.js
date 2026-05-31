@@ -1159,7 +1159,7 @@ function openCardPopup(type, data) {
           odds: s.odds, oddsMovement: s.oddsMovement
         }) : ''}
       </div>
-      ${s.reason ? `<div style="background:rgba(255,255,255,.8);border-left:3px solid ${valColor};border-radius:0 12px 12px 0;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.8rem;color:#1e293b;line-height:1.7;">${s.reason}</div>` : ''}
+      ${s.reason ? `<div style="background:rgba(255,255,255,.05);border-left:3px solid ${valColor};border-radius:0 12px 12px 0;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.8rem;color:#1e293b;line-height:1.7;">${s.reason}</div>` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
         <button onclick="document.getElementById('cardPopupOverlay').remove();openBetModal(null,'${s.match?.id||s.id||''}','${s.pick||''}','${(s.pickLabel||'').replace(/'/g,"\\'")}',${s.odds||2})"
           style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">💶 SINGLE BET</button>
@@ -1811,7 +1811,7 @@ function renderTop3EnCombi(result) {
     <div style="height:1px;background:rgba(28,35,48,.08);margin:1rem 0;"></div>
     <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;color:#00BEC4;margin-bottom:.6rem;">⚡ AI COMBI</div>
     ${legsHtml}
-    <div style="background:rgba(255,255,255,.85);border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:.85rem;margin:.7rem 0;">
+    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:.85rem;margin:.7rem 0;">
       <div style="font-size:.84rem;line-height:1.75;color:#ffffff;margin-bottom:.5rem;">${combi.redenering||''}</div>
       ${combi.synergie ? `<div style="background:rgba(0,190,196,.06);border-left:3px solid #2563eb;padding:.5rem .7rem;border-radius:0 8px 8px 0;margin-bottom:.4rem;">
         <div style="font-family:monospace;font-size:.52rem;color:#2563eb;font-weight:700;">🔗 SYNERGIE</div>
@@ -1916,7 +1916,7 @@ function openTipPopup(index) {
       </div>
 
       <!-- Analyse -->
-      ${t.reden ? `<div style="background:rgba(255,255,255,.8);border-left:3px solid ${tvColor};
+      ${t.reden ? `<div style="background:rgba(255,255,255,.05);border-left:3px solid ${tvColor};
         border-radius:0 12px 12px 0;padding:.75rem .9rem;margin-bottom:.75rem;
         font-size:.82rem;color:#1e293b;line-height:1.75;">${t.reden}</div>` : ''}
 
@@ -2382,7 +2382,7 @@ function renderScanLog() {
   });
 
   function statCard(val, lbl, color) {
-    return '<div style="background:#fff;border:1px solid rgba(26,31,60,.1);border-radius:14px;padding:.7rem .4rem;text-align:center;box-shadow:0 1px 6px rgba(26,31,60,.06);">'
+    return '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:14px;padding:.7rem .4rem;text-align:center;box-shadow:0 1px 6px rgba(26,31,60,.06);">'
       + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:' + color + ';">' + val + '</div>'
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#64748b;margin-top:.15rem;letter-spacing:.03em;">' + lbl + '</div>'
       + '</div>';
@@ -2411,7 +2411,7 @@ function renderScanLog() {
 
   // ── Zoek & Filter bar ─────────────────────────────
   const activeFilters = F.q || F.conf || F.pick || F.comp || F.status || F.odds || F.sharp || F.sort !== 'newest';
-  html += '<div style="background:#fff;border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.7rem .8rem;margin-bottom:.8rem;box-shadow:0 1px 4px rgba(26,31,60,.05);">'
+  html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.7rem .8rem;margin-bottom:.8rem;box-shadow:0 1px 4px rgba(26,31,60,.05);">'
     + '<div style="display:flex;gap:.4rem;margin-bottom:.5rem;">'
     + '<input id="scanSearchQ" type="text" placeholder="🔍 Zoek wedstrijd, competitie..." value="' + (F.q||'') + '" '
     + 'oninput="window._scanFilter.q=this.value;renderScanLog()" '
@@ -2473,14 +2473,14 @@ function renderScanLog() {
 
   // ROI curve grafiek
   if (settled.length >= 2) {
-    html += '<div style="background:#fff;border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
+    html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.4rem;">📈 ROI CURVE</div>'
       + '<canvas id="scanLogChart" height="80" style="width:100%;"></canvas>'
       + '</div>';
   }
 
   if (settled.length >= 5) {
-    html += '<div style="background:#fff;border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
+    html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">📐 VALUE KALIBRATIE</div>'
       + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;">';
     Object.entries(vb).forEach(function(entry) {
@@ -2497,7 +2497,7 @@ function renderScanLog() {
   }
 
   if (Object.keys(byType).length) {
-    html += '<div style="background:#fff;border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
+    html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">🎯 PER PICK TYPE</div>';
     Object.entries(byType).sort((a,b)=>b[1].total-a[1].total).forEach(function(entry) {
       var type = entry[0], s = entry[1];
@@ -2512,7 +2512,7 @@ function renderScanLog() {
   }
 
   if (Object.keys(byComp).length > 1) {
-    html += '<div style="background:#fff;border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
+    html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">🏆 PER COMPETITIE</div>';
     Object.entries(byComp).sort((a,b)=>b[1].total-a[1].total).slice(0,8).forEach(function(entry) {
       var comp = entry[0], s = entry[1];
@@ -2647,7 +2647,7 @@ function renderScanLog() {
       + '</div>';
 
   if (!log.length) {
-    html += '<div style="text-align:center;padding:2.5rem 1rem;background:#fff;border-radius:16px;border:1px dashed rgba(201,168,76,.4);">'
+    html += '<div style="text-align:center;padding:2.5rem 1rem;background:rgba(255,255,255,.05);border-radius:16px;border:1px dashed rgba(201,168,76,.4);">'
       + '<div style="font-size:2rem;margin-bottom:.5rem;">🎯</div>'
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:#1a1f3c;font-weight:700;">Nog geen scans</div>'
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#64748b;margin-top:.3rem;">Voer een value scan uit via de Scan &amp; Analyse tab</div>'
@@ -2666,7 +2666,7 @@ function renderScanLog() {
         if (hr >= 20) return '😕';
         return '😞';
       })();
-      html += '<div onclick="(function(e){if(!e.target.closest(\'button\')) showScanPopup('+si+');}).call(null,event)" style="background:#fff;border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.6rem;cursor:pointer;box-shadow:0 2px 8px rgba(26,31,60,.07);transition:box-shadow .15s,transform .12s;" onmouseenter="this.style.boxShadow=\'0 6px 20px rgba(26,31,60,.13)\';this.style.transform=\'translateY(-1px)\'" onmouseleave="this.style.boxShadow=\'0 2px 8px rgba(26,31,60,.07)\';this.style.transform=\'none\'">'
+      html += '<div onclick="(function(e){if(!e.target.closest(\'button\')) showScanPopup('+si+');}).call(null,event)" style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.6rem;cursor:pointer;box-shadow:0 2px 8px rgba(26,31,60,.07);transition:box-shadow .15s,transform .12s;" onmouseenter="this.style.boxShadow=\'0 6px 20px rgba(26,31,60,.13)\';this.style.transform=\'translateY(-1px)\'" onmouseleave="this.style.boxShadow=\'0 2px 8px rgba(26,31,60,.07)\';this.style.transform=\'none\'">'
         + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;padding-bottom:.4rem;border-bottom:1px solid rgba(201,168,76,.2);">'
         + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#1a1f3c;">'
         + '<span style="color:#c9a84c;">#' + (log.length-si) + '</span> &middot; '
