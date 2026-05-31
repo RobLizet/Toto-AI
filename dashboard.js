@@ -94,7 +94,7 @@ async function triggerScanTest() {
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Testen...'; }
   try {
     const token = await generateScanToken();
-    const res = await fetch(WORKER_URL + '/scan-test?token=' + token + '&league=88');
+    const res = await fetch(WORKER_URL + '/scan-test?token=' + token + '&league=253,103,71');
     const txt = await res.text();
     let d;
     try { d = JSON.parse(txt); } catch(e) { alert('Parse fout: ' + txt.slice(0, 300)); return; }
