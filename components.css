@@ -252,7 +252,7 @@
 .wallet-action-btn {
   font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;
   padding:.5rem 1rem;border-radius:12px;cursor:pointer;border:1.5px solid var(--stroke);
-  background:rgba(255,255,255,.7);color:var(--ink);transition:all .15s;
+  background:rgba(255,255,255,.08);color:var(--ink);transition:all .15s;
 }
 .wallet-action-btn.danger { color:#dc2626;border-color:rgba(220,38,38,.3);background:rgba(220,38,38,.06); }
 .wallet-action-btn:active { transform:scale(.97); }
@@ -409,7 +409,7 @@
 
 /* ── INSTELLINGEN ─────────────────────────────────── */
 .settings-section {
-  background:rgba(255,255,255,.82);border:1px solid var(--stroke);border-radius:16px;
+  background:var(--card);border:1px solid var(--stroke);border-radius:16px;
   padding:.9rem 1rem;margin-bottom:.8rem;box-shadow:var(--shadow2);
 }
 .settings-section-title {
@@ -419,7 +419,7 @@
 .settings-field { margin-bottom:.6rem; }
 .settings-label { display:block;font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;color:var(--sub);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px; }
 .settings-input {
-  width:100%;background:rgba(255,255,255,.8);border:1px solid var(--stroke);border-radius:10px;
+  width:100%;background:var(--bg1);border:1px solid var(--stroke);border-radius:10px;
   color:var(--ink);font-family:'DM Sans',sans-serif;font-size:.9rem;
   padding:.55rem .8rem;outline:none;
 }
@@ -441,7 +441,7 @@
 .theme-btn {
   font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
   padding:.4rem .8rem;border-radius:10px;cursor:pointer;border:1.5px solid var(--stroke);
-  background:rgba(255,255,255,.7);color:var(--ink);transition:all .15s;
+  background:rgba(255,255,255,.08);color:var(--ink);transition:all .15s;
 }
 .theme-btn:active { transform:scale(.97); }
 .save-settings-btn {
@@ -477,7 +477,7 @@
 .small-action-btn {
   font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
   padding:.45rem .9rem;border-radius:10px;cursor:pointer;border:1.5px solid var(--stroke);
-  background:rgba(255,255,255,.7);color:var(--ink);transition:all .15s;
+  background:rgba(255,255,255,.08);color:var(--ink);transition:all .15s;
 }
 .small-action-btn:active { transform:scale(.97); }
 .small-action-btn.danger { color:#dc2626;border-color:rgba(220,38,38,.3);background:rgba(220,38,38,.06); }
