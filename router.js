@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════
 // ROUTER.JS — switchScreen, bottom nav, back button
-// v30: menu close fix voor mobiel (touchend + backdrop)
+// v31: meer-menu verwijderd — WK2026 + Instellingen naar bottom nav
 // ═══════════════════════════════════════════════════════
 
 // switchScreen is de nieuwe naam, switchTab is de alias (legacy)
@@ -94,30 +94,6 @@ function goBack() {
   switchScreen('wedstrijden');
 }
 
-// ── More menu (Instellingen + extra) ────────────────────
-function toggleMoreMenu() {
-  const menu = document.getElementById('more-menu');
-  const bd   = document.getElementById('more-menu-backdrop');
-  if (!menu) return;
-  const isOpen = menu.classList.toggle('open');
-  if (bd) bd.classList.toggle('open', isOpen);
-}
-
-function closeMoreMenu() {
-  const menu = document.getElementById('more-menu');
-  const bd   = document.getElementById('more-menu-backdrop');
-  if (menu) menu.classList.remove('open');
-  if (bd)   bd.classList.remove('open');
-}
-
-// ── Sluit menu bij klik/tap buiten — fix voor Android ────
-function _handleMenuClose(e) {
-  const menu = document.getElementById('more-menu');
-  if (!menu || !menu.classList.contains('open')) return;
-  if (!menu.contains(e.target) && !e.target.closest('[onclick*="toggleMoreMenu"]')) {
-    closeMoreMenu();
-  }
-}
-
-document.addEventListener('click',    _handleMenuClose);
-document.addEventListener('touchend', _handleMenuClose, { passive: true });
+// ── More menu — verwijderd, opties in bottom nav ────────
+function toggleMoreMenu() {}
+function closeMoreMenu() {}
