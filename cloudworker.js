@@ -1,12 +1,12 @@
-// TOTO AI WORKER v103
-// v103: Gelijkspel bias correctie (calculateValue X -20%), CLV fix opening+closing odds
+// TOTO AI WORKER v104
+// v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
 //       Kosten tracking per call in Supabase user_costs (input/output tokens)
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v103'; // v102: push naar Total Subscriptions segment (stabiel, geen ID nodig)
+const VERSION = 'v104'; // v102: push naar Total Subscriptions segment (stabiel, geen ID nodig)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -462,14 +462,17 @@ function calcMarketSignal(movement, pick) {
 
 // ── Fetch met retry ──────────────────────────────────────
 async function fetchWithRetry(url, options, retries = 2) {
-  for (let i = 0; i <= retries; i++) {
+  // v103: geen retry op Anthropic API — elke retry kost geld
+  const isAnthropic = url.includes('anthropic.com');
+  const maxRetries = isAnthropic ? 0 : retries;
+  for (let i = 0; i <= maxRetries; i++) {
     try {
       const res = await fetch(url, options);
       if (res.ok) return res;
-      if (i === retries) return res;
+      if (i === maxRetries) return res;
       await new Promise(r => setTimeout(r, 1000 * (i + 1)));
     } catch(e) {
-      if (i === retries) throw e;
+      if (i === maxRetries) throw e;
       await new Promise(r => setTimeout(r, 1000 * (i + 1)));
     }
   }
@@ -1151,6 +1154,12 @@ async function runScan(env, force = false) {
   if (!allMatches.length) {
     console.log('[Scan] Geen wedstrijden gevonden voor vandaag/morgen, stop');
     const scansToday0 = ((await fb(env, 'scan_status/scansToday')) || 0) + 1;
+    // v103: hard limit — max 5 scans per dag om API kosten te beheersen
+    const MAX_SCANS_PER_DAY = 5;
+    if (scansToday0 > MAX_SCANS_PER_DAY) {
+      console.warn(`[Scan] Daglimiet bereikt: ${scansToday0-1}/${MAX_SCANS_PER_DAY} scans — stop`);
+      return { ok: false, reason: 'daglimiet', scansToday: scansToday0 - 1 };
+    }
     const scanData0 = { lastRun: new Date().toISOString(), lastMatchCount: 0,
       lastPickCount: 0, lastWithOdds: 0, lastWithoutOdds: 0,
       scanDate: today, version: VERSION, scansToday: scansToday0 };
@@ -1225,8 +1234,8 @@ Geen uitleg, alleen de JSON array.`;
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2048,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -1514,8 +1523,8 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
         messages: [{ role: 'user', content: prompt }]
       })
     });
