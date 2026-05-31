@@ -1,4 +1,4 @@
-// TOTO AI WORKER v104
+// TOTO AI WORKER v105
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v104'; // v102: push naar Total Subscriptions segment (stabiel, geen ID nodig)
+const VERSION = 'v105'; // v102: push naar Total Subscriptions segment (stabiel, geen ID nodig)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -170,6 +170,13 @@ async function sbSavePicks(picksObj, env) {
     source: p.source || 'scheduled', updated_at: new Date().toISOString(),
   }));
   if (!rows.length) return;
+  // v105: fixture_id extraheren uit id als het NULL is (legacy picks)
+  rows.forEach(r => {
+    if (!r.fixture_id && r.id) {
+      const m = String(r.id).match(/^(\d+)_/);
+      if (m) r.fixture_id = parseInt(m[1]);
+    }
+  });
   await sb(env, 'picks', 'POST', rows, '?on_conflict=id');
   console.log('[SB] ' + rows.length + ' picks upserted');
 }
