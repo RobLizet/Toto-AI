@@ -40,7 +40,7 @@ function renderPickReasons(p) {
 // Token = HMAC-SHA256(SCAN_SECRET + timestamp_minute)
 const SCAN_SECRET = 'totoai2026'; // Zelfde als SCAN_SECRET in Cloudflare env
 // Admin UIDs — voeg jouw Firebase UID toe
-const ADMIN_UIDS = ['JOUW_FIREBASE_UID_HIER'];
+const ADMIN_UIDS = ['NpbaXO16xwha4Dm4Jgn9RqTM9Fq1'];
 
 function checkAdminStatus() {
   const uid = window.firebase?.auth?.()?.currentUser?.uid
