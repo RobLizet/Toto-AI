@@ -490,3 +490,110 @@ input:focus, select:focus, textarea:focus {
   border-color: #00BEC4 !important;
   outline: none !important;
 }
+
+/* ══ WALLET KAARTEN DONKER OVERRIDE ═════════════════════ */
+.w-item {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 10px !important;
+}
+.w-item .w-label, .w-label {
+  color: rgba(255,255,255,.45) !important;
+}
+.w-item .val {
+  color: #fff !important;
+  font-weight: 800 !important;
+}
+.stat-mini-card {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 10px !important;
+}
+.stat-mini-label {
+  color: rgba(255,255,255,.45) !important;
+}
+.stat-mini-val {
+  color: #fff !important;
+}
+.wallet-chart-wrap {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 16px !important;
+}
+.chart-view-btn, .chart-src-btn {
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: rgba(255,255,255,.6) !important;
+  border-radius: 6px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  padding: 4px 9px !important;
+  cursor: pointer !important;
+}
+.chart-view-btn.active, .chart-src-btn.active {
+  background: #00BEC4 !important;
+  color: #fff !important;
+  border-color: #00BEC4 !important;
+}
+.export-btn {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: rgba(255,255,255,.7) !important;
+  border-radius: 10px !important;
+}
+.section-header {
+  color: rgba(255,255,255,.4) !important;
+}
+.section-header::after {
+  background: rgba(255,255,255,.09) !important;
+}
+.wallet-subtabs {
+  background: rgba(255,255,255,.04) !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+}
+.wsub-btn {
+  color: rgba(255,255,255,.4) !important;
+}
+.bt-subtabs { 
+  display: flex !important; gap: 5px !important; margin-bottom: 9px !important;
+}
+.bt-subtab {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: rgba(255,255,255,.5) !important;
+  border-radius: 10px !important;
+  padding: 7px 16px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+}
+.bt-subtab.active {
+  background: #00BEC4 !important;
+  color: #fff !important;
+  border-color: #00BEC4 !important;
+}
+.tracker-filter {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: rgba(255,255,255,.5) !important;
+  border-radius: 20px !important;
+}
+.tracker-filter.active {
+  background: #00BEC4 !important;
+  color: #fff !important;
+  border-color: #00BEC4 !important;
+}
+.small-action-btn {
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: rgba(255,255,255,.7) !important;
+  border-radius: 8px !important;
+}
+.add-tracker-btn {
+  background: #00BEC4 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 9px !important;
+}
+/* Canvas achtergrond transparant */
+canvas { background: transparent !important; }
