@@ -200,7 +200,7 @@ function renderDashboard() {
     <!-- Dashboard tabs -->
     <div style="display:flex;gap:.4rem;margin-bottom:.75rem;background:rgba(15,23,42,.04);border-radius:12px;padding:.25rem;">
       <button id="dashTabOverview" onclick="switchDashTab('overview')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,0.05);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);">📊 OVERZICHT</button>
-      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);">🔴 LIVE</button>
+      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);"><span id="liveDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc2626;margin-right:.3rem;vertical-align:middle;"></span>LIVE</button>
     </div>
 
     <div id="dashOverviewContent">
@@ -708,6 +708,13 @@ function showPicksModal() {
 
 // ═══════════════════════════════════════════════════════
 // LIVE SCORES TAB — dashboard v15
+// Voeg knipperende dot animatie toe
+if (!document.getElementById('livePulseStyle')) {
+  const s = document.createElement('style');
+  s.id = 'livePulseStyle';
+  s.textContent = '@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}';
+  document.head.appendChild(s);
+}
 // Toont pending picks met live stand + win/verlies indicatie, ververst elke 60s
 // ═══════════════════════════════════════════════════════
 
@@ -778,7 +785,32 @@ async function loadLiveScores() {
     const fixtures = {};
     (d.response || []).forEach(f => { fixtures[f.fixture.id] = f; });
 
-    list.innerHTML = uniquePicks.map(p => {
+    // Sorteer: live bovenaan, dan NS, dan FT
+    const sortedPicks = [...uniquePicks].sort((a, b) => {
+      const fa = fixtures[a.fixtureId];
+      const fb = fixtures[b.fixtureId];
+      const statusOrder = s => {
+        if (!s) return 2;
+        const st = s.fixture?.status?.short;
+        if (['1H','2H','HT','ET','BT','P'].includes(st)) return 0;
+        if (st === 'NS') return 1;
+        return 3;
+      };
+      return statusOrder(fa) - statusOrder(fb);
+    });
+
+    // Knipperende dot updaten — groen als er live wedstrijden zijn
+    const hasLive = uniquePicks.some(p => {
+      const fx = fixtures[p.fixtureId];
+      return fx && ['1H','2H','HT','ET','BT','P'].includes(fx.fixture?.status?.short);
+    });
+    const dot = document.getElementById('liveDot');
+    if (dot) {
+      dot.style.background = hasLive ? '#22c55e' : '#dc2626';
+      dot.style.animation = hasLive ? 'livePulse 1.2s ease-in-out infinite' : 'none';
+    }
+
+    list.innerHTML = sortedPicks.map(p => {
       const fx = fixtures[p.fixtureId];
       if (!fx) {
         return liveCardHtml(p, null);
@@ -836,7 +868,7 @@ function liveCardHtml(pick, fx) {
     statusColor = '#64748b';
     borderColor = 'rgba(255,255,255,0.09)';
   } else if (isLive) {
-    statusBadge = status === 'HT' ? '⏸ RUST' : `🔴 LIVE ${elapsed}'`;
+    statusBadge = status === 'HT' ? '⏸ RUST' : `<span style="animation:livePulse 1.2s ease-in-out infinite;display:inline-block;">🟢</span> LIVE ${elapsed}'`;
     statusColor = pickWinning ? '#00BEC4' : '#dc2626';
     borderColor = pickWinning ? 'rgba(22,163,74,.4)' : 'rgba(220,38,38,.4)';
   } else if (isDone) {
