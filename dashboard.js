@@ -89,6 +89,27 @@ async function triggerWorkerSettle() {
   }
 }
 
+async function triggerScanTest() {
+  const btn = document.getElementById('adminScanTestBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Testen...'; }
+  try {
+    const token = await generateScanToken();
+    const res = await fetch(WORKER_URL + '/scan-test?token=' + token + '&league=88');
+    const txt = await res.text();
+    let d;
+    try { d = JSON.parse(txt); } catch(e) { alert('Parse fout: ' + txt.slice(0, 300)); return; }
+    if (d.error) { alert('Worker fout: ' + d.error); return; }
+    const picks = (d.picks || []).slice(0, 5)
+      .map(p => (p.matchName || p.match || '?') + ' → ' + (p.pickLabel || p.pick) + ' @' + (p.odds || '?') + ' conf:' + (p.confidence || '?'))
+      .join('\n');
+    alert('✅ Haiku scan OK\nv' + (d.version || '?') + ' | ' + (d.matchesFound || 0) + ' wedstrijden | ' + (d.picks || []).length + ' picks\n\n' + (picks || 'Geen picks'));
+  } catch(e) {
+    alert('Fetch fout: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🧪 Scan Test'; }
+  }
+}
+
 
 // DASHBOARD.JS — v30.3 HMAC scan tokens, admin scan knop
 // ═══════════════════════════════════════════════════════
@@ -395,25 +416,7 @@ function renderDashboard() {
       })()" style="flex:1;background:rgba(0,168,173,.1);border:1px solid rgba(0,168,173,.3);
         border-radius:10px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;
         font-weight:700;color:#00a8ad;cursor:pointer;">🔍 Worker Scan</button>
-      <button onclick="(async(btn)=>{
-        btn.disabled=true;btn.textContent='⟳ Testen...';
-        try {
-          const token=await generateScanToken();
-          const url=WORKER_URL+'/scan-test?token='+token+'&league=88';
-          const res=await fetch(url);
-          const txt=await res.text();
-          let d;
-          try { d=JSON.parse(txt); } catch(e) { alert('Parse fout: '+txt.slice(0,300)); btn.disabled=false;btn.textContent='🧪 Scan Test';return; }
-          if(d.error){alert('Worker fout: '+d.error);btn.disabled=false;btn.textContent='🧪 Scan Test';return;}
-          const picks=(d.picks||[]).slice(0,5).map(p=>(p.matchName||p.match||'?')+' → '+(p.pickLabel||p.pick)+' @'+(p.odds||'?')+' conf:'+(p.confidence||'?')).join('\n');
-          alert('✅ Haiku scan OK\nv'+(d.version||'?')+' | '+(d.matchesFound||0)+' wedstrijden | '+(d.picks||[]).length+' picks\n\n'+(picks||'Geen picks'));
-        } catch(e) {
-          alert('Fetch fout: '+e.message);
-        }
-        btn.disabled=false;btn.textContent='🧪 Scan Test';
-      })(this)" style="flex:1;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);
-        border-radius:10px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;
-        font-weight:700;color:#a78bfa;cursor:pointer;">🧪 Scan Test</button>
+      <button id="adminScanTestBtn" onclick="triggerScanTest()" style="flex:1;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:10px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#a78bfa;cursor:pointer;">🧪 Scan Test</button>
       <button onclick="(async()=>{
         this.disabled=true;this.textContent='⟳ Settlen...';
         const r=await triggerWorkerSettle();
