@@ -376,3 +376,117 @@ body{
 .bet-row .bet-meta, .tracker-bet-row .bet-meta {
   color: rgba(255,255,255,.5) !important;
 }
+
+/* ══ SETTINGS + WALLET DONKER OVERRIDE ══════════════════ */
+.settings-section {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 16px !important;
+  margin-bottom: 12px !important;
+  overflow: hidden !important;
+}
+.settings-section-title {
+  background: rgba(0,190,196,.07) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+  color: #00BEC4 !important;
+  padding: 11px 14px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .5px !important;
+  text-transform: uppercase !important;
+}
+.settings-field {
+  padding: 10px 14px !important;
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
+}
+.settings-field:last-child { border: none !important; }
+.settings-label {
+  color: rgba(255,255,255,.5) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .4px !important;
+  display: block !important;
+  margin-bottom: 6px !important;
+}
+.settings-input, .settings-select {
+  background: rgba(255,255,255,.08) !important;
+  border: 1.5px solid rgba(255,255,255,.12) !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  padding: 9px 12px !important;
+  font-size: 13px !important;
+  width: 100% !important;
+}
+.settings-input:focus, .settings-select:focus {
+  border-color: #00BEC4 !important;
+  outline: none !important;
+}
+.settings-input::placeholder { color: rgba(255,255,255,.3) !important; }
+.key-vis-btn {
+  background: rgba(255,255,255,.08) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 8px !important;
+  padding: 8px 10px !important;
+  color: rgba(255,255,255,.6) !important;
+  cursor: pointer !important;
+}
+.settings-save-btn {
+  background: #00BEC4 !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  padding: 10px !important;
+  font-weight: 700 !important;
+  width: 100% !important;
+  cursor: pointer !important;
+  margin-top: 8px !important;
+}
+.theme-btn {
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 10px !important;
+  color: rgba(255,255,255,.7) !important;
+  padding: 7px 14px !important;
+  cursor: pointer !important;
+}
+.theme-btn.active { background: #00BEC4 !important; color: #fff !important; }
+.danger-btn {
+  background: rgba(232,64,74,.12) !important;
+  border: 1px solid rgba(232,64,74,.25) !important;
+  color: #e8404a !important;
+  border-radius: 10px !important;
+  padding: 7px 14px !important;
+  cursor: pointer !important;
+}
+
+/* ── WALLET BET RIJEN DONKER ──────────────────────── */
+.bet-row {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+}
+.tracker-row {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 12px !important;
+}
+.result-card {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+}
+/* Input velden globaal donker */
+input, select, textarea {
+  background: rgba(255,255,255,.08) !important;
+  border: 1.5px solid rgba(255,255,255,.12) !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+}
+input::placeholder, textarea::placeholder {
+  color: rgba(255,255,255,.3) !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #00BEC4 !important;
+  outline: none !important;
+}

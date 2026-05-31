@@ -2186,7 +2186,7 @@ function showWalletPopup(type, data) {
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);';
   overlay.innerHTML = `
     <div style="background:var(--bg,#f8fafc);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(255,255,255,.08);">
         <div>${headerHtml}</div>
         <button onclick="document.getElementById('walletPopupOverlay').remove()"
           style="background:rgba(15,23,42,.07);border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;flex-shrink:0;margin-left:.5rem;">✕</button>

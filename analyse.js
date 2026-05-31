@@ -230,6 +230,7 @@ function renderAnalyseScreen() {
   const screen = document.getElementById('screen-analyse');
   if (!screen) return;
   try {
+  var m = state.selectedMatch || null;
   const hasMatches = (state.matches||[]).some(m => m.homeOdds !== '—')
     || (state.valueScans||[]).length > 0
     || (state.lastScanResults||[]).length > 0;
