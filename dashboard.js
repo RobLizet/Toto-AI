@@ -43,10 +43,13 @@ const SCAN_SECRET = 'totoai2026'; // Zelfde als SCAN_SECRET in Cloudflare env
 const ADMIN_UIDS = ['NpbaXO16xwha4Dm4Jgn9RqTM9Fq1'];
 
 function checkAdminStatus() {
-  const uid = window.firebase?.auth?.()?.currentUser?.uid
-    || (typeof auth !== 'undefined' && auth?.currentUser?.uid)
+  // v32.3: gebruik _currentUser uit auth.js (Firebase v8 compat)
+  const uid = (typeof _currentUser !== 'undefined' && _currentUser?.uid)
+    || (typeof _firebaseAuth !== 'undefined' && _firebaseAuth?.currentUser?.uid)
+    || window.firebase?.auth?.()?.currentUser?.uid
     || null;
   window._isAdmin = uid ? ADMIN_UIDS.includes(uid) : false;
+  console.log('[Admin] UID:', uid, '| isAdmin:', window._isAdmin);
 }
 const WORKER_URL  = 'https://toto-proxy.zweetzakken.workers.dev';
 
@@ -382,7 +385,8 @@ function renderDashboard() {
 
     <!-- Admin: Worker scan & settle knoppen -->
     ${window._isAdmin ? `
-    <div style="display:flex;gap:.5rem;margin-bottom:.75rem;">
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;">
+
       <button onclick="(async()=>{
         this.disabled=true;this.textContent='⟳ Scannen...';
         const r=await triggerWorkerScan();
