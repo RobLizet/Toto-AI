@@ -827,28 +827,7 @@ body {
 .st-pts { font-family: var(--font-main) !important; font-size: 14px !important; font-weight: 800 !important; color: var(--navy) !important; }
 
 /* ── MORE MENU ──────────────────────────────────────────────── */
-.more-menu-panel {
-  background: #0f1e2b !important;
-  border-radius: 16px !important;
-  border: 1px solid rgba(0,190,196,.15) !important;
-  box-shadow: 0 8px 40px rgba(0,0,0,.5) !important;
-  overflow: hidden !important;
-}
-
-.more-menu-item {
-  font-family: var(--font-main) !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: rgba(255,255,255,.9) !important;
-  padding: 13px 16px !important;
-  border-bottom: 1px solid rgba(255,255,255,.06) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-}
-.more-menu-item svg { opacity: .7; flex-shrink: 0; }
-.more-menu-item:last-child { border-bottom: none !important; }
-.more-menu-item:active { background: rgba(0,190,196,.08) !important; }
+/* more-menu stijl zit in base.css — niet overschrijven */
 
 /* ── TOAST ──────────────────────────────────────────────────── */
 #toastMsg {
