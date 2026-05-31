@@ -400,29 +400,6 @@ function renderDashboard() {
       </div>
     </div>` : ''}
 
-    <!-- Admin: Worker scan & settle knoppen -->
-    ${window._isAdmin ? `
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;">
-
-      <button onclick="(async()=>{
-        this.disabled=true;this.textContent='⟳ Scannen...';
-        const r=await triggerWorkerScan();
-        this.disabled=false;this.textContent='🔍 Worker Scan';
-        alert(r.status||r.error||JSON.stringify(r));
-      })()" style="flex:1;background:rgba(0,168,173,.1);border:1px solid rgba(0,168,173,.3);
-        border-radius:10px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;
-        font-weight:700;color:#00a8ad;cursor:pointer;">🔍 Worker Scan</button>
-      <button id="adminScanTestBtn" onclick="triggerScanTest()" style="flex:1;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:10px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#a78bfa;cursor:pointer;">🧪 Scan Test</button>
-      <button onclick="(async()=>{
-        this.disabled=true;this.textContent='⟳ Settlen...';
-        const r=await triggerWorkerSettle();
-        this.disabled=false;this.textContent='✅ Settle';
-        alert(r.status||r.error||JSON.stringify(r));
-      })()" style="flex:1;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.3);
-        border-radius:10px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;
-        font-weight:700;color:#00BEC4;cursor:pointer;">✅ Settle</button>
-    </div>` : ''}
-
     <!-- Disclaimer -->
     <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid rgba(255,255,255,0.09);margin-top:.5rem;">
       ⚠️ Uitsluitend voor <b>entertainment & educatie</b> · Geen echt gokadvies<br>
