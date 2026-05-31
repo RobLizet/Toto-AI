@@ -87,7 +87,7 @@ async function triggerWorkerSettle() {
 }
 
 
-// DASHBOARD.JS — v32.0 race condition fix daily tip, live scores error handling
+// DASHBOARD.JS — v30.3 HMAC scan tokens, admin scan knop
 // ═══════════════════════════════════════════════════════
 
 async function fetchDailyTip() {
@@ -235,7 +235,10 @@ function renderDashboard() {
       onclick="(function(){var mid=(topValuePick&&(topValuePick.match?.id||topValuePick.matchId||''));switchScreen('analyse');setTimeout(()=>{showAnalyseSubTab('scan');if(mid&&typeof openValueAnalysis==='function')openValueAnalysis(mid);},150);})()">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#00BEC4;margin-bottom:.2rem;">⚡ BESTE VALUE PICK</div>
+          <div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem;">
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#00BEC4;">⚡ BESTE VALUE PICK</div>
+            ${topValuePick.sharp ? \'<span style="font-family:\\'IBM Plex Mono\\',monospace;font-size:.38rem;font-weight:700;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.35);color:#ef4444;border-radius:4px;padding:1px 5px;">🔥 SHARP\' + (topValuePick.sharpMove ? \'  \' + Math.abs(topValuePick.sharpMove).toFixed(1) + \'%\' : \'\') + \'</span>\' : \'\'}
+          </div>
           <div style="font-family:\'DM Sans\',sans-serif;font-size:.8rem;font-weight:700;color:#ffffff;">${topValuePick.match?.home||topValuePick.home||'?'} vs ${topValuePick.match?.away||topValuePick.away||'?'}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.15rem;">${topValuePick.pickLabel||topValuePick.pick} · conf ${topValuePick.confidence||'?'}/10</div>
         </div>
@@ -456,19 +459,14 @@ function renderDashboard() {
   // Laad WK widget na render
   if (typeof renderWKDashboardWidget === 'function') setTimeout(renderWKDashboardWidget, 50);
 
-  // Laad dagelijkse tip na render — v32: race condition fix (geen dubbele render)
+  // Laad dagelijkse tip na render
   const cachedTip = state._dailyTipCache;
+  if (cachedTip) setTimeout(() => renderDailyTipCard(cachedTip), 0);
   const lastFetch = state._dailyTipFetchTime || 0;
-  const tipIsStale = Date.now() - lastFetch > 600000;
-  if (cachedTip && !tipIsStale) {
-    // Cache is vers — direct renderen, geen fetch nodig
-    setTimeout(() => renderDailyTipCard(cachedTip), 0);
-  } else {
-    // Cache leeg of verlopen — eerst cache tonen (als beschikbaar), dan fetch
-    if (cachedTip) setTimeout(() => renderDailyTipCard(cachedTip), 0);
+  if (Date.now() - lastFetch > 600000 || !cachedTip) {
     fetchDailyTip().then(function(tip) {
-      if (tip) { state._dailyTipCache = tip; state._dailyTipFetchTime = Date.now(); renderDailyTipCard(tip); }
-      else if (!cachedTip) renderDailyTipCard(null);
+      if (tip) { state._dailyTipCache = tip; state._dailyTipFetchTime = Date.now(); }
+      renderDailyTipCard(tip);
     });
   }
 }
@@ -766,12 +764,7 @@ async function loadLiveScores() {
     const now = new Date();
     list.innerHTML += `<div style="text-align:center;padding:.5rem;color:rgba(255,255,255,.5);font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;">Laatst bijgewerkt: ${now.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ververst elke 60s</div>`;
   } catch(e) {
-    console.error('[LiveScores] Fout:', e.message);
-    list.innerHTML = `<div style="text-align:center;padding:2rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;line-height:1.8;">
-      <div style="color:#dc2626;margin-bottom:.5rem;">⚠️ Fout bij laden live data</div>
-      <div style="color:rgba(255,255,255,.4);margin-bottom:.75rem;">${e.message || 'Netwerkfout'}</div>
-      <button onclick="loadLiveScores()" style="background:#00BEC4;color:#000;border:none;padding:.3rem .8rem;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;">↺ Opnieuw</button>
-    </div>`;
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">Fout bij laden live data. Probeer opnieuw.</div>';
   }
 }
 
