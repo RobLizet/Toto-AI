@@ -3,7 +3,7 @@
 // v32: Versie sync fix — commentaar klopt nu met APP_VERSION
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v23.8';
+const APP_VERSION = 'v23.9';
 
 const STATE_KEY = 'totoai_state';
 
