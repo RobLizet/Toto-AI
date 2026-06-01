@@ -341,18 +341,23 @@ body.dark .analyse-stat-cell { background:var(--card); }
 /* ── ANALYTICS ───────────────────────────────────────── */
 .screen-analytics { padding: .75rem .9rem 2rem; }
 .analytics-block {
-  background:var(--card);border:1px solid var(--stroke);border-radius:16px;
+  background:#0d1e24;border:1px solid rgba(255,255,255,.09);border-radius:16px;
   padding:.85rem 1rem;margin-bottom:.7rem;
 }
 .analytics-block-title {
   font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;
-  color:var(--sub);letter-spacing:.08em;margin-bottom:.65rem;
+  color:#fff;letter-spacing:.08em;margin-bottom:.65rem;
+  border-left:3px solid #00BEC4;padding-left:8px;
 }
 .analytics-stat-card {
-  background:rgba(15,23,42,.04);border-radius:10px;padding:.5rem;text-align:center;
+  background:#0f2230;border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:.5rem;text-align:center;
 }
-body.dark .analytics-block { background:var(--card2); }
-body.dark .analytics-stat-card { background:var(--card); }
+/* Analytics tekst altijd wit */
+.analytics-block * { color:inherit; }
+.screen-analytics { color:#fff; }
+body.dark .analytics-block { background:#0a1a20; }
+body.dark .analytics-stat-card { background:#0d1e24; }
 /* ── v30 klassen ─────────────────────────────────── */
 
 /* ── Dashboard nav kaarten (v30 navy/goud stijl) ─── */
