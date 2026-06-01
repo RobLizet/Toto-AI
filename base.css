@@ -3,7 +3,7 @@
 
 :root {
   --bg1:#0B1519;--bg2:#091e24;--bg3:#04383F;
-  --card:rgba(0,0,0,0.35);--card2:rgba(0,0,0,0.28);
+  --card:#0d1e24;--card2:#0a1a20;
   --stroke:rgba(255,255,255,0.09);--border:rgba(255,255,255,0.09);
   --ink:#ffffff;--sub:rgba(255,255,255,0.5);--muted:rgba(255,255,255,0.4);
   --text:#ffffff;
@@ -91,7 +91,7 @@ body{
 /* KAARTEN */
 .match-card,.analyse-block,.analytics-block,.wallet-big,.dash-card,
 .dash-nav-card,.bt-card,.backtest-card,.worker-pick-row{
-  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);
+  background:#0d1e24;border:1px solid rgba(255,255,255,0.09);
   border-radius:var(--r);transition:transform .15s;backdrop-filter:blur(8px);}
 .match-card{padding:13px 14px;margin-bottom:9px;cursor:pointer;}
 .match-card:active{transform:scale(.99);}
