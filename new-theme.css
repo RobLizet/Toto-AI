@@ -1000,6 +1000,50 @@ body.sky .stat-mini-label,
 body.sky .w-label,
 body.sky .sub { color: #3d7aad !important; }
 
+/* Sky — settings scherm */
+body.sky .settings-section {
+  background: rgba(255,255,255,.85) !important;
+  border-color: rgba(14,90,150,.1) !important;
+}
+body.sky .settings-section-title,
+body.sky .settings-label,
+body.sky .settings-input,
+body.sky .settings-row,
+body.sky .small-action-btn {
+  color: #0d2d4a !important;
+}
+body.sky .settings-input {
+  background: rgba(255,255,255,.9) !important;
+  border-color: rgba(14,90,150,.15) !important;
+}
+body.sky .small-action-btn {
+  background: rgba(255,255,255,.7) !important;
+  border-color: rgba(14,90,150,.2) !important;
+}
+body.sky .settings-section select,
+body.sky .settings-section option {
+  background: #fff !important;
+  color: #0d2d4a !important;
+}
+/* Sky — alle tekst binnen screens donker */
+body.sky .screen,
+body.sky .screen * {
+  color: #0d2d4a;
+}
+/* Uitzonderingen: teal accenten behouden */
+body.sky .section-header-title,
+body.sky .bnav-btn.active,
+body.sky .teal { color: #0077a8 !important; }
+body.sky .bnav-btn { color: #3d7aad !important; }
+body.sky .bnav-btn.active { color: #0077a8 !important; }
+/* Topbar in sky */
+body.sky .topbar { background: rgba(255,255,255,.85) !important; backdrop-filter: blur(12px); }
+body.sky .topbar-logo { color: #0d2d4a !important; }
+body.sky .topbar-logo span { color: #0077a8 !important; }
+body.sky .topbar-icon-btn { background: rgba(14,90,150,.08) !important; border-color: rgba(14,90,150,.15) !important; color: #0d2d4a !important; }
+/* Bottom nav sky */
+body.sky .bottom-nav { background: rgba(255,255,255,.92) !important; border-color: rgba(14,90,150,.1) !important; }
+
 body.sky .topbar {
   background: rgba(232,244,253,0.97) !important;
   border-bottom: 1px solid rgba(14,90,150,0.12) !important;
