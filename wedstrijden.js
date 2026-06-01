@@ -19,32 +19,13 @@ function getActiveCOMPLIST() {
     { key:'norway',   flag:'🇳🇴', name:'Eliteserien' },
     { key:'sweden',   flag:'🇸🇪', name:'Allsvenskan' },
   ];
+  // Klaar voor seizoen (verborgen tot augustus 2026)
+  // Premier, Bundesliga, LaLiga, SerieA, Ligue1, Champions, Europa, Conference, Eredivisie, Jupiler
   const EUROPEES = [
-    { key:'champions',  flag:'⭐',  name:'Champions' },
-    { key:'europa',     flag:'🟠',  name:'Europa League' },
-    { key:'conference', flag:'🟢',  name:'Conference' },
-    { key:'premier',    flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',  name:'Premier' },
-    { key:'laliga',     flag:'🇪🇸', name:'La Liga' },
-    { key:'bundesliga', flag:'🇩🇪', name:'Bundesliga' },
-    { key:'seriea',     flag:'🇮🇹', name:'Serie A' },
-    { key:'ligue1',     flag:'🇫🇷', name:'Ligue 1' },
-    { key:'eredivisie', flag:'🇳🇱', name:'Eredivisie' },
-    { key:'jupiler',    flag:'🇧🇪', name:'Jupiler' },
-    { key:'superlig',   flag:'🇹🇷', name:'Süper Lig' },
+    { key:'superlig',   flag:'🇹🇷', name:'Süper Lig' },  // loopt door tot juni
   ];
   const OVERIG = [
-    { key:'beker',        flag:'🏆', name:'KNVB Beker' },
-  ];
-  const EXTRA = [
-    { key:'portugal',    flag:'🇵🇹', name:'Primeira Liga' },
-    { key:'scotland',    flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', name:'Scotland' },
-    { key:'denmark',     flag:'🇩🇰', name:'Superliga DK' },
-    { key:'poland',      flag:'🇵🇱', name:'Ekstraklasa' },
-    { key:'austria',     flag:'🇦🇹', name:'Bundesliga AT' },
-    { key:'switzerland', flag:'🇨🇭', name:'Super League CH' },
-    { key:'greece',      flag:'🇬🇷', name:'Super League GR' },
-    { key:'czech',       flag:'🇨🇿', name:'Czech Liga' },
-    { key:'championship',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' },
+    // KNVB Beker klaar — verbergen tot nieuw seizoen
   ];
   const INTERNATIONAAL = [
     { key:'nations',      flag:'🌍', name:'Nations League' },
@@ -58,9 +39,9 @@ function getActiveCOMPLIST() {
     { key:'asiancup',       flag:'🌏', name:'Asian Cup' },
   ];
 
-  if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EXTRA, ...OVERIG];
-  if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...EXTRA, ...OVERIG];
-  return              [...EUROPEES, ...SCANDI, ...EXTRA, ...WK, ...INTERNATIONAAL, ...OVERIG];
+  if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...OVERIG];
+  if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...OVERIG];
+  return              [...EUROPEES, ...SCANDI, ...WK, ...INTERNATIONAAL, ...OVERIG];
 }
 
 const COMP_LIST = getActiveCOMPLIST();
