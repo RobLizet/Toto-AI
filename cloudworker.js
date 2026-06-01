@@ -1483,12 +1483,14 @@ async function runScanTest(env, leagueIds = [113, 103]) {
   log.push(`[ScanTest] ${allMatches.length} wedstrijden na NS/live filter`);
 
   if (!allMatches.length) {
+    const _nowStr = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' });
+    await sendPushNotification(env, `🧪 ${_nowStr} — Test OK`, `Worker actief · geen wedstrijden voor leagues ${leagueIds.join(', ')}`, { type: 'scan_test' });
     return {
       ok: true, version: VERSION, leagues: leagueIds, today, tomorrow: tomorrowStr,
       matchesFound: 0, withOdds: 0, aiResultsCount: 0,
       picks: [], allMatches: [], log: log.slice(-10),
-      verdict: '⚠️ Geen wedstrijden gevonden — controleer seizoen en leagueId',
-      note: '⚠️ TEST — geen Firebase write'
+      verdict: '⚠️ Geen wedstrijden gevonden — push verstuurd naar owner',
+      note: '✅ TEST — push verstuurd'
     };
   }
 
