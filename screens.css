@@ -198,10 +198,10 @@
 }
 
 /* Dark mode overrides */
-body.dark .analyse-block { background:#0a1a20; }
-body.dark .analyse-match-card { background:#0a1a20; }
-body.dark .analyse-odds-cell { background:#0d1e24; }
-body.dark .analyse-stat-cell { background:#0d1e24; }
+body.dark .analyse-block { background:var(--card2); }
+body.dark .analyse-match-card { background:var(--card2); }
+body.dark .analyse-odds-cell { background:var(--card); }
+body.dark .analyse-stat-cell { background:var(--card); }
 
 /* Analyse sectie cards */
 .analyse-section-card {
@@ -351,8 +351,8 @@ body.dark .analyse-stat-cell { background:#0d1e24; }
 .analytics-stat-card {
   background:rgba(15,23,42,.04);border-radius:10px;padding:.5rem;text-align:center;
 }
-body.dark .analytics-block { background:#0a1a20; }
-body.dark .analytics-stat-card { background:#0d1e24; }
+body.dark .analytics-block { background:var(--card2); }
+body.dark .analytics-stat-card { background:var(--card); }
 /* ── v30 klassen ─────────────────────────────────── */
 
 /* ── Dashboard nav kaarten (v30 navy/goud stijl) ─── */
@@ -461,7 +461,7 @@ body.dark .analytics-stat-card { background:#0d1e24; }
   border-radius: 18px; padding: 1.1rem 1.2rem; margin-bottom: .65rem;
   box-shadow: 0 4px 18px rgba(26,31,60,.25); position: relative; overflow: hidden;
 }
-.wallet-bal-card::before { content:''; position:absolute; top:-20px; right:-20px; width:100px; height:100px; background:#0a1a20; border-radius:50%; }
+.wallet-bal-card::before { content:''; position:absolute; top:-20px; right:-20px; width:100px; height:100px; background:var(--card2); border-radius:50%; }
 .wallet-bal-card .label  { font-family:'IBM Plex Mono',monospace; font-size:.46rem; color:rgba(255,255,255,.55); letter-spacing:.08em; margin-bottom:.3rem; }
 .wallet-bal-card .amount { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; color:#fff; letter-spacing:.03em; line-height:1; }
 .wallet-bal-card .sub    { font-family:'IBM Plex Mono',monospace; font-size:.44rem; color:rgba(255,255,255,.5); margin-top:.25rem; }
