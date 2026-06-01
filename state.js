@@ -3,7 +3,7 @@
 // v32: Versie sync fix — commentaar klopt nu met APP_VERSION
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v23.7';
+const APP_VERSION = 'v23.8';
 
 const STATE_KEY = 'totoai_state';
 
@@ -65,7 +65,7 @@ const state = {
     scanSkipDate: null,
     scanWindowFrom: 14,
     scanWindowTo: 18,
-    tripleMinOdds: 1.5,
+    tripleMinOdds: 1.6,
     _preAutoDarkTheme: null
   }
 };
