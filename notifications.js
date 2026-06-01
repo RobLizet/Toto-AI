@@ -1,3 +1,5 @@
+SHA: 42f42863811b5a5a1a1caad98f9c0e306a8ff013
+---
 // ═══════════════════════════════════════════════════════
 // NOTIFICATIONS.JS — Push, reminders, auto-check scheduler
 // ═══════════════════════════════════════════════════════
@@ -30,6 +32,7 @@ async function initOneSignalPlayerId() {
       if (!state.settings) state.settings = {};
       state.settings.notifPlayerId = pid;
       saveState();
+      saveOwnerPlayerIdToFirebase(pid);
       console.log('[OneSignal] Player ID opgeslagen:', pid.substring(0, 8) + '...');
     } else {
       console.warn('[OneSignal] Geen Player ID gevonden');
@@ -43,6 +46,7 @@ async function initOneSignalPlayerId() {
           state.oneSignalPlayerId = newId;
           state.settings.notifPlayerId = newId;
           saveState();
+          saveOwnerPlayerIdToFirebase(newId);
           console.log('[OneSignal] Player ID bijgewerkt:', newId.substring(0, 8) + '...');
         }
       });
@@ -409,4 +413,15 @@ async function debugPush() {
   lines.push('Worker URL: ' + (typeof WORKER !== 'undefined' ? WORKER.substring(0,30) + '...' : '❌'));
 
   alert(lines.join('\n'));
+}
+
+// ── Sla Owner Player ID op in Firebase zodat Worker hem kent ──
+async function saveOwnerPlayerIdToFirebase(pid) {
+  try {
+    if (!pid) return;
+    await firebase.database().ref('owner_player_id').set(pid);
+    console.log('[OneSignal] Player ID → Firebase OK:', pid.substring(0, 8) + '...');
+  } catch(e) {
+    console.warn('[OneSignal] Firebase player ID opslaan mislukt:', e.message);
+  }
 }
