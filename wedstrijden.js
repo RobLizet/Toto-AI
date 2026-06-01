@@ -27,6 +27,13 @@ function getActiveCOMPLIST() {
   const OVERIG = [
     // KNVB Beker klaar — verbergen tot nieuw seizoen
   ];
+  const EXTRA = [
+    { key:'portugal',    flag:'🇵🇹', name:'Primeira Liga' },
+    { key:'denmark',     flag:'🇩🇰', name:'Superliga DK' },
+    { key:'poland',      flag:'🇵🇱', name:'Ekstraklasa' },
+    { key:'austria',     flag:'🇦🇹', name:'Bundesliga AT' },
+    { key:'greece',      flag:'🇬🇷', name:'Super League GR' },
+  ];
   const INTERNATIONAAL = [
     { key:'nations',      flag:'🌍', name:'Nations League' },
     { key:'intvriendsch', flag:'🌍', name:'Int. Vriendsch.' },
@@ -39,9 +46,9 @@ function getActiveCOMPLIST() {
     { key:'asiancup',       flag:'🌏', name:'Asian Cup' },
   ];
 
-  if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...OVERIG];
-  if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...OVERIG];
-  return              [...EUROPEES, ...SCANDI, ...WK, ...INTERNATIONAAL, ...OVERIG];
+  if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EXTRA, ...OVERIG];
+  if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...EXTRA, ...OVERIG];
+  return              [...EUROPEES, ...SCANDI, ...EXTRA, ...WK, ...INTERNATIONAAL, ...OVERIG];
 }
 
 const COMP_LIST = getActiveCOMPLIST();
