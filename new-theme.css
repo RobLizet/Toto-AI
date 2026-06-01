@@ -1128,3 +1128,153 @@ body.sky .theme-btn[onclick*="sky"] {
   color: #fff !important;
   border-color: #0284c7 !important;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   TOTO AI — CRÈME THEMA (body.creme)
+   Warm koffie/crème palet — zacht, rustgevend, goed leesbaar
+═══════════════════════════════════════════════════════════════ */
+
+body.creme {
+  background: linear-gradient(180deg, #f5efe6 0%, #ede3d4 50%, #e5d5c0 100%) !important;
+  color: #2c1a0e !important;
+}
+
+body.creme .app { background: transparent !important; }
+body.creme .screen { background: transparent !important; }
+
+body.creme .match-card,
+body.creme .analyse-block,
+body.creme .analytics-block,
+body.creme .wallet-big,
+body.creme .open-bets-strip,
+body.creme .worker-pick-row,
+body.creme .stat-mini-card,
+body.creme .w-item,
+body.creme .wallet-subtabs,
+body.creme .cd-tab,
+body.creme .modal-box,
+body.creme .dash-card,
+body.creme .nav-card,
+body.creme .dash-nav-card,
+body.creme #btProgressWrap {
+  background: rgba(255,250,242,.90) !important;
+  border-color: rgba(139,90,43,.12) !important;
+  color: #2c1a0e !important;
+}
+
+body.creme .match-name,
+body.creme .dash-nav-title,
+body.creme .nav-card-title,
+body.creme .analyse-block-title,
+body.creme .w-val,
+body.creme .stat-mini-val { color: #2c1a0e !important; }
+
+body.creme .match-meta,
+body.creme .stat-mini-label,
+body.creme .w-label,
+body.creme .sub { color: #7a5230 !important; }
+
+/* Crème — settings scherm */
+body.creme .settings-section {
+  background: rgba(255,250,242,.90) !important;
+  border-color: rgba(139,90,43,.12) !important;
+}
+body.creme .settings-section-title,
+body.creme .settings-label,
+body.creme .settings-input,
+body.creme .settings-row,
+body.creme .small-action-btn {
+  color: #2c1a0e !important;
+}
+body.creme .settings-input {
+  background: rgba(255,250,242,.95) !important;
+  border-color: rgba(139,90,43,.18) !important;
+}
+body.creme .small-action-btn {
+  background: rgba(255,250,242,.75) !important;
+  border-color: rgba(139,90,43,.2) !important;
+}
+body.creme .settings-section select,
+body.creme .settings-section option {
+  background: #fdf6ee !important;
+  color: #2c1a0e !important;
+}
+
+/* Crème — topbar */
+body.creme .topbar {
+  background: rgba(245,239,230,0.97) !important;
+  border-bottom: 1px solid rgba(139,90,43,0.14) !important;
+}
+body.creme .topbar-logo { color: #2c1a0e !important; -webkit-text-fill-color: #2c1a0e !important; }
+body.creme .topbar-ai { color: #8b5a1a !important; -webkit-text-fill-color: #8b5a1a !important; }
+body.creme .topbar-version {
+  color: #8b5a1a !important;
+  background: rgba(139,90,26,.10) !important;
+  border-color: rgba(139,90,26,.25) !important;
+}
+body.creme .topbar-user-pill { color: #2c1a0e !important; border-color: rgba(139,90,43,.2) !important; }
+body.creme .topbar-icon-btn {
+  background: rgba(139,90,26,.08) !important;
+  border-color: rgba(139,90,26,.15) !important;
+  color: #8b5a1a !important;
+}
+
+/* Crème — bottom nav */
+body.creme .bottom-nav {
+  background: rgba(245,239,230,0.97) !important;
+  border-top: 1px solid rgba(139,90,43,0.14) !important;
+}
+body.creme .bnav-btn { color: #7a5230 !important; }
+body.creme .bnav-btn.active { color: #8b5a1a !important; }
+body.creme .bnav-label { color: inherit !important; }
+
+/* Crème — accenten */
+body.creme .section-header-title,
+body.creme .bnav-btn.active,
+body.creme .teal { color: #8b5a1a !important; }
+
+/* Crème — alle tekst */
+body.creme .screen,
+body.creme .screen * { color: #2c1a0e; }
+
+/* Crème — uitzonderingen teal/accent */
+body.creme .section-header-title { color: #8b5a1a !important; }
+
+/* Crème — cards */
+body.creme .match-card,
+body.creme .analyse-block,
+body.creme .analytics-block,
+body.creme .wallet-big,
+body.creme .w-item,
+body.creme .modal-box,
+body.creme .worker-pick-row,
+body.creme .stat-mini-card,
+body.creme .wallet-subtabs,
+body.creme .cd-tab,
+body.creme .open-bets-strip {
+  background: rgba(255,250,242,0.90) !important;
+  border-color: rgba(139,90,43,0.12) !important;
+  color: #2c1a0e !important;
+}
+
+body.creme .odds-btn {
+  background: rgba(139,90,26,.08) !important;
+  color: #2c1a0e !important;
+  border-color: rgba(139,90,26,.15) !important;
+}
+
+body.creme .more-menu-panel {
+  background: #3d2010 !important;
+  border-color: rgba(139,90,43,.2) !important;
+}
+
+body.creme .cd-standings-row { background: rgba(255,250,242,.85) !important; }
+body.creme ::-webkit-scrollbar-thumb { background: rgba(139,90,43,.2); }
+
+/* Actieve state thema knop */
+body.creme .theme-btn[onclick*="creme"] {
+  background: #8b5a1a !important;
+  color: #fff !important;
+  border-color: #8b5a1a !important;
+}
