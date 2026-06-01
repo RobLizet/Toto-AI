@@ -133,6 +133,9 @@ function renderInstellingen() {
           </div>
         </div>
 
+        <div style="margin-top:.4rem;">
+          <button class="small-action-btn" onclick="debugPush()" style="font-size:.48rem;">🐛 Push debug</button>
+        </div>
         <div id="notifEnabledSection">
           <div class="settings-field" style="margin-top:.5rem;">
             <label class="settings-label">Value drempel (%)</label>
@@ -147,7 +150,6 @@ function renderInstellingen() {
 
           <div style="display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap;">
             <button class="small-action-btn" onclick="testNotification()">🔔 Test</button>
-            <button class="small-action-btn" onclick="debugPush()">🐛 Debug</button>
             <button class="small-action-btn" onclick="toggleAutoValueAlerts()">⚡ Auto alerts</button>
           </div>
         </div>
