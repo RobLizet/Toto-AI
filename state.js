@@ -94,6 +94,18 @@ function loadState() {
     if (saved.tracker)       Object.assign(state.tracker, saved.tracker);
     if (saved.valueBacktest) Object.assign(state.valueBacktest, saved.valueBacktest);
     if (saved.settings)      Object.assign(state.settings, saved.settings);
+
+    // ── Migreer oude Triple Lock standaardwaarden naar nieuwe defaults ──
+    if (!state.settings.tripleMinValue || state.settings.tripleMinValue < 10) {
+      state.settings.tripleMinValue = 12;
+    }
+    if (!state.settings.tripleMinConf || state.settings.tripleMinConf < 8) {
+      state.settings.tripleMinConf = 8;
+    }
+    if (!state.settings.tripleMinOdds || state.settings.tripleMinOdds < 1.55) {
+      state.settings.tripleMinOdds = 1.6;
+    }
+
     // Kosten tracker laden
     if (saved.costs) Object.assign(state.costs, saved.costs);
 
