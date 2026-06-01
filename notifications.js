@@ -388,20 +388,26 @@ async function debugPush() {
     try {
       // Probeer Player ID via alle beschikbare methodes
       let id = state.oneSignalPlayerId || state.settings?.notifPlayerId || null;
+      let onesignalId = null;
       if (!id) {
+        // Probeer eerst OneSignal User ID (voor include_player_ids targeting)
+        try {
+          if (typeof OneSignal.User?.onesignalId !== 'undefined') {
+            onesignalId = OneSignal.User.onesignalId;
+          }
+          if (!onesignalId && typeof OneSignal.getUserId === 'function') {
+            onesignalId = await OneSignal.getUserId();
+          }
+        } catch(_) {}
+        // Subscription ID als fallback
         if (typeof OneSignal.User?.PushSubscription?.id !== 'undefined') {
           id = OneSignal.User.PushSubscription.id;
-        }
-        if (!id && typeof OneSignal.getUserId === 'function') {
-          id = await OneSignal.getUserId();
         }
         if (!id && typeof OneSignal.getSubscriptionId === 'function') {
           id = await OneSignal.getSubscriptionId();
         }
-        // v16 SDK fallback
-        if (!id) {
-          try { id = await OneSignal.User?.PushSubscription?.optIn?.(); } catch(_) {}
-        }
+        // Gebruik OneSignal ID als primary voor push targeting
+        if (onesignalId) id = onesignalId;
       }
       lines.push('OS Player ID: ' + (id ? '✅ ' + id : '❌'));
       if (id) {
