@@ -35,6 +35,17 @@ function getActiveCOMPLIST() {
   const OVERIG = [
     { key:'beker',        flag:'🏆', name:'KNVB Beker' },
   ];
+  const EXTRA = [
+    { key:'portugal',    flag:'🇵🇹', name:'Primeira Liga' },
+    { key:'scotland',    flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', name:'Scotland' },
+    { key:'denmark',     flag:'🇩🇰', name:'Superliga DK' },
+    { key:'poland',      flag:'🇵🇱', name:'Ekstraklasa' },
+    { key:'austria',     flag:'🇦🇹', name:'Bundesliga AT' },
+    { key:'switzerland', flag:'🇨🇭', name:'Super League CH' },
+    { key:'greece',      flag:'🇬🇷', name:'Super League GR' },
+    { key:'czech',       flag:'🇨🇿', name:'Czech Liga' },
+    { key:'championship',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' },
+  ];
   const INTERNATIONAAL = [
     { key:'nations',      flag:'🌍', name:'Nations League' },
     { key:'intvriendsch', flag:'🌍', name:'Int. Vriendsch.' },
@@ -47,9 +58,9 @@ function getActiveCOMPLIST() {
     { key:'asiancup',       flag:'🌏', name:'Asian Cup' },
   ];
 
-  if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...OVERIG];
-  if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...OVERIG];
-  return              [...EUROPEES, ...SCANDI, ...WK, ...INTERNATIONAAL, ...OVERIG];
+  if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EXTRA, ...OVERIG];
+  if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...EXTRA, ...OVERIG];
+  return              [...EUROPEES, ...SCANDI, ...EXTRA, ...WK, ...INTERNATIONAAL, ...OVERIG];
 }
 
 const COMP_LIST = getActiveCOMPLIST();
@@ -947,14 +958,6 @@ async function loadFromAPIFootball(comp, _apiKey) {
     }
     r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&next=10`, null, 10000);
     d = await r.json();
-    // Filter: alleen wedstrijden binnen 48 uur
-    if (d.response?.length > 0) {
-      const cutoff = Date.now() + 48 * 60 * 60 * 1000;
-      d.response = d.response.filter(f => {
-        const ko = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
-        return ko < cutoff;
-      });
-    }
     if (d.response?.length > 0) {
       state.matches = d.response.map(f => parseAPIMatch(f)).filter(Boolean);
       renderMatches(state.matches);
@@ -1382,10 +1385,10 @@ async function loadTodayAllComps() {
       const isLive = ['1H','2H','HT','ET','BT','P','INT','LIVE'].includes(status);
       if (isLive) return true;
       if (isFinished) return false;
-      // NS/TBD/PST: alleen tonen als kickoff binnen 48 uur valt (of binnen 30 min gestart)
+      // NS/TBD/PST: alleen tonen als kickoff in de toekomst ligt (of binnen 30 min gestart)
       const kickoff = f.fixture.date ? new Date(f.fixture.date).getTime() : 0;
       const now = Date.now();
-      return kickoff > now - 30 * 60 * 1000 && kickoff < now + 48 * 60 * 60 * 1000;
+      return kickoff > now - 30 * 60 * 1000; // max 30 min geleden gestart
     });
     const knownLeagueIdsSet = new Set(Object.values(COMP_IDS));
     const leagueMap = {};
