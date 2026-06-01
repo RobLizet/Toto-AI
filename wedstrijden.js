@@ -118,7 +118,7 @@ function renderWedstrijdenScreen() {
             onclick="handleCompTap('${c.key}')">
             <div style="font-size:1.1rem;line-height:1.2;">${c.flag}</div>
             <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;
-              color:${isActive?'#00BEC4':'var(--sub)'};overflow:hidden;white-space:nowrap;
+              color:${isActive?'#00BEC4':'rgba(255,255,255,.85)'};overflow:hidden;white-space:nowrap;
               text-overflow:ellipsis;max-width:100%;padding:0 2px;">${shortName}</div>
           </div>`;
         }).join('')}
