@@ -367,8 +367,8 @@ function saveSettings() {
   state.settings.defaultBookmaker= document.getElementById('settDefaultBookmaker')?.value||'Jacks';
   state.settings.notifThreshold  = parseInt(document.getElementById('notifThreshold')?.value)||20;
   state.settings.tripleMinOdds   = parseFloat(document.getElementById('tripleMinOdds')?.value)||1.6;
-  state.settings.tripleMinValue  = parseFloat(document.getElementById('tripleMinValue')?.value)||8;
-  state.settings.tripleMinConf   = parseInt(document.getElementById('tripleMinConf')?.value)||7;
+  state.settings.tripleMinValue  = parseFloat(document.getElementById('tripleMinValue')?.value)||12;
+  state.settings.tripleMinConf   = parseInt(document.getElementById('tripleMinConf')?.value)||8;
   state.settings.vapidPublicKey  = document.getElementById('vapidPublicKey')?.value.trim()||'';
 
   if (state.settings.anthropicKey) localStorage.setItem('totoai_key_anthropic', state.settings.anthropicKey);
@@ -411,9 +411,9 @@ function applySettings() {
   const tmo = document.getElementById('tripleMinOdds');
   if (tmo) tmo.value = state.settings.tripleMinOdds||1.6;
   const tmv = document.getElementById('tripleMinValue');
-  if (tmv) tmv.value = state.settings.tripleMinValue||8;
+  if (tmv) tmv.value = state.settings.tripleMinValue||12;
   const tmc = document.getElementById('tripleMinConf');
-  if (tmc) tmc.value = state.settings.tripleMinConf||7;
+  if (tmc) tmc.value = state.settings.tripleMinConf||8;
 
   const statusEl = document.getElementById('apiKeysStatus');
   if (statusEl) {
