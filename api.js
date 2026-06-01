@@ -28,6 +28,14 @@ const COMP_IDS = {
   wk_kwal_europa: 32,  // WK 2026 Kwalificatie Europa
   wk_kwal_azie: 36,    // WK 2026 Kwalificatie Azië
   wk_kwal_latam: 34,   // WK 2026 Kwalificatie CONMEBOL
+  // Internationale landenteams
+  intvriendsch: 10,    // Internationale vriendschappelijke wedstrijden
+  euro2024: 4,         // UEFA Euro (archief)
+  copaamerica: 9,      // Copa América
+  goldcup: 30,         // CONCACAF Gold Cup
+  africup: 6,          // Africa Cup of Nations
+  asiancup: 7,         // AFC Asian Cup
+  olympics_m: 480,     // Olympische Spelen mannen
 };
 
 const COMP_NAMES = {
@@ -38,6 +46,11 @@ const COMP_NAMES = {
   bundesliga2: '🇩🇪 2. Bundesliga', superlig: '🇹🇷 Süper Lig', wk2026: '🏆 WK 2026',
   norway: '🇳🇴 Eliteserien', sweden: '🇸🇪 Allsvenskan',
   europa: '🟠 Europa League', conference: '🟢 Conference League',
+  // Internationaal
+  intvriendsch: '🌍 Int. Vriendschappelijk', copaamerica: '🌎 Copa América',
+  goldcup: '🌎 Gold Cup', africup: '🌍 Africa Cup', asiancup: '🌏 Asian Cup',
+  wk_kwal_europa: '🌍 WK Kwal. Europa', wk_kwal_azie: '🌏 WK Kwal. Azië',
+  wk_kwal_latam: '🌎 WK Kwal. CONMEBOL',
 };
 
 const FD_CODES = {
