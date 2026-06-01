@@ -797,15 +797,20 @@ async function verifyYesterdayPicks(env) {
   const picks = await sbGetPicks(env);
 
   const cutoff = new Date(today);
-  cutoff.setDate(cutoff.getDate() - 7);
+  cutoff.setDate(cutoff.getDate() - 30); // uitgebreid naar 30 dagen
   const cutoffStr = cutoff.toISOString().split('T')[0];
-  const todayStr  = today.toISOString().split('T')[0];
+  // todayStr + 1 dag zodat wedstrijden van vandaag ook gesettled worden
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
   const toVerify = Object.entries(picks).filter(([id, p]) => {
-    if (p.processed !== false || p.status !== 'pending') return false;
+    // processed !== false EN processed !== undefined (pakt ook picks zonder processed veld)
+    if (p.processed === true) return false;
+    if (p.status !== 'pending') return false;
     const normalized = normalizeDate(p.matchDate);
     if (!normalized) return false;
-    return normalized >= cutoffStr && normalized < todayStr;
+    return normalized >= cutoffStr && normalized < tomorrowStr;
   });
 
   if (!toVerify.length) {
