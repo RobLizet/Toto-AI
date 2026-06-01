@@ -1823,9 +1823,10 @@ async function sendPushNotification(env, title, body, data = {}) {
       }
     }
 
-    const targeting = ownerPlayerId
-      ? { include_player_ids: [ownerPlayerId] }
-      : { included_segments: ['Total Subscriptions'] };
+    // Stuur altijd naar alle subscribers (jij bent de enige)
+    // Player ID targeting werkt niet betrouwbaar bij web push PWA
+    const targeting = { included_segments: ['Total Subscriptions'] };
+    if (ownerPlayerId) console.log('[Push] Owner ID beschikbaar maar segment targeting gebruikt:', ownerPlayerId.substring(0,8));
 
     const payload = {
       app_id: appId,
