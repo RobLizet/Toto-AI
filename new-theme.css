@@ -163,7 +163,7 @@ body {
   font-weight: 600 !important;
   padding: 5px 13px !important;
   border-radius: 20px !important;
-  background: #fff !important;
+  background: #0f2230 !important;
   color: var(--sub) !important;
   border: 1px solid rgba(27,38,70,.12) !important;
   transition: all .15s !important;
@@ -289,7 +289,7 @@ body {
 }
 
 .analyse-match-card {
-  background: #fff !important;
+  background: #0d1e24 !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--r) !important;
   box-shadow: none !important;
@@ -301,7 +301,7 @@ body {
   font-size: 12px !important;
   font-weight: 700 !important;
   border-radius: var(--r) !important;
-  background: #fff !important;
+  background: #0f2230 !important;
   color: #e8edf5 !important;
   border: 1.5px solid var(--border) !important;
   padding: 9px 10px !important;
@@ -450,7 +450,7 @@ body {
 
 /* Chart wrap */
 .wallet-chart-wrap {
-  background: #fff !important;
+  background: #0d1e24 !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--r) !important;
   padding: 12px 14px !important;
@@ -494,7 +494,7 @@ body {
 /* Bet history rows */
 .bet-row,
 .bet-item {
-  background: #fff !important;
+  background: #0d1e24 !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--rs) !important;
   margin-bottom: 6px !important;
@@ -516,7 +516,7 @@ body {
   padding: 5px 11px !important;
   border-radius: 20px !important;
   border: 1px solid rgba(27,38,70,.12) !important;
-  background: #fff !important;
+  background: #0f2230 !important;
   color: var(--sub) !important;
   cursor: pointer !important;
   transition: all .15s !important;
@@ -541,7 +541,7 @@ body {
   padding: 7px 16px !important;
   border-radius: var(--rs) !important;
   border: 1px solid var(--border) !important;
-  background: #fff !important;
+  background: #0f2230 !important;
   color: var(--sub) !important;
   cursor: pointer !important;
 }
@@ -553,7 +553,7 @@ body {
 
 /* Voortgangsbalk */
 #btProgressWrap {
-  background: #fff !important;
+  background: #0d1e24 !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--r) !important;
 }
@@ -591,7 +591,7 @@ body {
 .dash-stats { gap: 7px !important; }
 
 .dash-stat {
-  background: #fff !important;
+  background: #0d1e24 !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--rs) !important;
   box-shadow: none !important;
@@ -706,7 +706,7 @@ body {
 /* ── MODALS ─────────────────────────────────────────────────── */
 .modal-box {
   border-radius: 20px !important;
-  background: #fff !important;
+  background: rgba(11,21,25,.97) !important;
   box-shadow: 0 20px 60px rgba(27,38,70,.18) !important;
 }
 
@@ -792,7 +792,7 @@ body {
   font-weight: 700 !important;
   padding: 5px 13px !important;
   border-radius: 20px !important;
-  background: #fff !important;
+  background: #0d1e24 !important;
   color: var(--sub) !important;
   border: 1px solid var(--border) !important;
 }
@@ -841,8 +841,8 @@ button[onclick*="showHelp"] {
 
 /* ── ANALYTICS SCREEN ───────────────────────────────────────── */
 .analytics-block {
-  background: #fff !important;
-  border: 1px solid var(--border) !important;
+  background: #0d1e24 !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
   border-radius: var(--r) !important;
   box-shadow: none !important;
 }
@@ -851,13 +851,16 @@ button[onclick*="showHelp"] {
   font-family: var(--font-main) !important;
   font-size: 11px !important;
   font-weight: 700 !important;
-  color: var(--sub) !important;
+  color: #fff !important;
   letter-spacing: 0.4px !important;
   text-transform: uppercase !important;
+  border-left: 3px solid #00BEC4 !important;
+  padding-left: 8px !important;
 }
 
 .analytics-stat-card {
-  background: var(--blue-pale) !important;
+  background: #0f2230 !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
   border-radius: var(--rs) !important;
 }
 
@@ -940,7 +943,7 @@ body.dark .odds-btn.value-highlight { background: rgba(29,185,116,.15) !importan
 
 /* ── TABEL STIJLEN IN MODALS ────────────────────────────────── */
 .cd-standings-row {
-  background: #fff !important;
+  background: #0a1a20 !important;
   border: 1px solid var(--border) !important;
   border-radius: 9px !important;
 }
