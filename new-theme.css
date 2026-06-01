@@ -62,9 +62,9 @@ body {
   font-family: var(--font-main) !important;
   font-size: 10px !important;
   font-weight: 600 !important;
-  color: #0d2d4a !important;
-  background: rgba(0,190,196,.18) !important;
-  border: 1px solid rgba(59,130,246,.15) !important;
+  color: #00BEC4 !important;
+  background: rgba(0,190,196,.15) !important;
+  border: 1px solid rgba(0,190,196,.3) !important;
   padding: 2px 7px !important;
   border-radius: 5px !important;
   margin-left: 6px !important;
@@ -72,8 +72,12 @@ body {
 
 .topbar-user {
   font-size: 11px !important;
-  color: #e8edf5 !important;
+  color: rgba(255,255,255,.85) !important;
   font-family: var(--font-main) !important;
+  background: rgba(255,255,255,.1) !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  padding: 4px 12px !important;
+  border-radius: 20px !important;
 }
 
 .topbar-icon-btn {
@@ -89,7 +93,7 @@ body {
   cursor: pointer !important;
   transition: background .15s !important;
 }
-.topbar-icon-btn:hover { background: rgba(27,38,70,.06) !important; }
+.topbar-icon-btn:hover { background: rgba(255,255,255,.15) !important; }
 
 /* ── BOTTOM NAV ─────────────────────────────────────────────── */
 /* bottom-nav stijl in base.css */
