@@ -1381,12 +1381,16 @@ Geen uitleg, alleen de JSON array.`;
     console.log(`[Scan] ${elitePicks.length} elite picks gevonden!`);
   }
 
+  const nowStr = new Date().toLocaleTimeString('nl-NL', {
+    hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam'
+  });
+
   if (pushPicks.length > 0) {
     const top = pushPicks.sort((a, b) => (b.value || 0) - (a.value || 0))[0];
     const icon = top.lockLevel === 'triple' ? '🔒🔒🔒' : top.elite ? '⭐' : '🔒🔒';
     const title = top.elite
       ? `${icon} Elite pick gevonden!`
-      : `${icon} ${top.lockLevel === 'triple' ? 'Triple' : 'Double'} Lock gevonden!`;
+      : `${icon} ${top.lockLevel === 'triple' ? 'Triple' : 'Double'} Lock — ${nowStr}`;
     const body = `${top.matchName} · ${top.pickLabel} @ ${top.odds} · +${Math.round(top.value)}% value`;
     await sendPushNotification(env, title, body, {
       type: 'value_alert', matchId: String(top.fixtureId),
@@ -1396,20 +1400,21 @@ Geen uitleg, alleen de JSON array.`;
     const valuePicks = Object.values(newPicks).filter(p => (p.value || 0) >= 15 && (p.confidence || 0) >= 7);
     if (valuePicks.length >= 1) {
       const top = valuePicks[0];
-      const title = `⚡ ${valuePicks.length} sterke value pick${valuePicks.length > 1 ? 's' : ''} gevonden`;
+      const title = `⚡ ${valuePicks.length} sterke pick${valuePicks.length > 1 ? 's' : ''} — ${nowStr}`;
       const body = `${top.matchName} · ${top.pickLabel} @ ${top.odds} · +${Math.round(top.value)}% value`;
       await sendPushNotification(env, title, body, {
         type: 'value_alert', matchId: String(top.fixtureId),
         pick: top.pick, value: top.value,
       });
     } else {
-      const title = `🔍 Scan voltooid — ${newCount} pick${newCount > 1 ? 's' : ''} toegevoegd`;
-      const body = `${allMatches.length} wedstrijden gescand · ${Object.keys(oddsMap || {}).length} met odds`;
+      const title = `🔍 ${nowStr} — ${newCount} pick${newCount > 1 ? 's' : ''} toegevoegd`;
+      const body = `${allMatches.length} wedstr gescand · ${Object.keys(oddsMap || {}).length} met odds`;
       await sendPushNotification(env, title, body, { type: 'scan_done' });
     }
   } else {
-    const title = `🔍 Scan voltooid — geen nieuwe picks`;
-    const body = `${allMatches.length} wedstrijden gescand · geen value gevonden`;
+    // Altijd een melding — ook bij 0 picks
+    const title = `⏱ ${nowStr} — scan klaar`;
+    const body = `${allMatches.length} wedstr gescand · geen nieuwe picks`;
     await sendPushNotification(env, title, body, { type: 'scan_done' });
   }
 }
@@ -1807,9 +1812,17 @@ async function sendPushNotification(env, title, body, data = {}) {
     return;
   }
   try {
-    // Stuur standaard naar alle subscribers via segment (stabiel, geen ID nodig).
-    // Als OWNER_PLAYER_ID expliciet gezet is, gebruik die (voor gerichte tests).
-    const ownerPlayerId = env.OWNER_PLAYER_ID;
+    // OWNER_PLAYER_ID: eerst env secret, dan Firebase fallback
+    let ownerPlayerId = env.OWNER_PLAYER_ID || null;
+    if (!ownerPlayerId) {
+      try {
+        ownerPlayerId = await fb(env, 'owner_player_id');
+        if (ownerPlayerId) console.log('[Push] Player ID uit Firebase:', ownerPlayerId.substring(0, 8) + '...');
+      } catch(e) {
+        console.warn('[Push] Firebase Player ID ophalen mislukt:', e.message);
+      }
+    }
+
     const targeting = ownerPlayerId
       ? { include_subscription_ids: [ownerPlayerId] }
       : { included_segments: ['Total Subscriptions'] };
@@ -1836,7 +1849,7 @@ async function sendPushNotification(env, title, body, data = {}) {
       body: JSON.stringify(payload),
     });
     const result = await res.json();
-    console.log('[Push] Verstuurd:', result.id || JSON.stringify(result.errors) || JSON.stringify(result));
+    console.log('[Push] Verstuurd naar', ownerPlayerId ? 'owner' : 'all subscribers', '—', result.id || JSON.stringify(result.errors));
   } catch(e) {
     console.error('[Push] Fout:', e.message);
   }
