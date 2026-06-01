@@ -328,49 +328,6 @@ function renderAnalyseScreen() {
 
   let html = '';
 
-  // ── 1. VALUE SCAN ──
-  html += '<div class="analyse-block">';
-  html += '<div class="analyse-block-header">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span> VALUE SCAN</div>';
-  html += '<button onclick="toggleAutoScanPanel()" class="analyse-header-btn" title="Scan instellingen">⏱</button>';
-  html += '</div>';
-
-  // Auto-scan paneel
-  html += '<div id="autoScanPanel" style="display:none;background:rgba(0,190,196,.04);border:1px solid rgba(0,190,196,.2);border-radius:12px;padding:.75rem .9rem;margin-bottom:.6rem;">';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:#00BEC4;">AUTOMATISCHE SCAN</div>';
-  html += '<button onclick="document.getElementById(\'autoScanPanel\').style.display=\'none\'" style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:.85rem;">✕</button>';
-  html += '</div>';
-  html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid rgba(0,190,196,.15);margin-bottom:.5rem;">';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);">Dagelijks scannen tussen ingestelde tijden</div>';
-  html += '<button id="autoScanToggleBtn" onclick="toggleAutoScan()" style="padding:.35rem .8rem;border-radius:8px;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;cursor:pointer;border:1.5px solid;background:rgba(0,190,196,.1);border-color:rgba(0,190,196,.35);color:#00BEC4;white-space:nowrap;">Inschakelen</button>';
-  html += '</div>';
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
-  html += '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin-bottom:.25rem;">VAN (uur)</div>';
-  html += '<input id="scanWindowFrom" type="number" min="0" max="23" step="1" style="width:100%;font-family:\'IBM Plex Mono\',monospace;font-size:.75rem;font-weight:800;padding:.4rem .6rem;border-radius:8px;border:1.5px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;text-align:center;" value="' + (state.settings.scanWindowFrom ?? 14) + '" onchange="state.settings.scanWindowFrom=parseInt(this.value);saveState();updateAutoScanPanelUI()"></div>';
-  html += '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin-bottom:.25rem;">TOT (uur)</div>';
-  html += '<input id="scanWindowTo" type="number" min="0" max="23" step="1" style="width:100%;font-family:\'IBM Plex Mono\',monospace;font-size:.75rem;font-weight:800;padding:.4rem .6rem;border-radius:8px;border:1.5px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;text-align:center;" value="' + (state.settings.scanWindowTo ?? 18) + '" onchange="state.settings.scanWindowTo=parseInt(this.value);saveState();updateAutoScanPanelUI()"></div>';
-  html += '</div>';
-  html += '<div id="autoScanStatusBar" style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);padding:.3rem .5rem;background:rgba(15,23,42,.04);border-radius:6px;margin-bottom:.4rem;text-align:center;min-height:1rem;"></div>';
-  html += '<div style="display:flex;gap:.4rem;">';
-  html += '<button onclick="skipScanToday()" class="analyse-btn-ghost" style="flex:1;">⏭ Overslaan</button>';
-  html += '<button onclick="startAutoCheckScheduler();showToast(\'▶ Scheduler gestart\')" class="analyse-btn-ghost" style="flex:1;">▶ Start</button>';
-  html += '</div></div>';
-
-  if (hasMatches) {
-    html += '<button id="valueScanBtn2" onclick="scanValueAll()" class="analyse-btn-primary">⚡ SCAN VALUE — alle geladen wedstrijden</button>';
-  } else {
-    html += '<div class="analyse-empty">';
-    html += '<div style="font-size:1.8rem;opacity:.25;margin-bottom:.5rem;">⚡</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:.8rem;">Laad wedstrijden via Wedstrijden tabblad, of gebruik automatisch scannen.</div>';
-    html += '<button onclick="autoScanAndSwitch()" class="analyse-btn-primary" style="width:auto;padding:.6rem 1.4rem;">⚡ AUTOMATISCH SCANNEN</button>';
-    html += '<button onclick="switchScreen(\'wedstrijden\')" class="analyse-btn-secondary" style="margin-top:.4rem;width:auto;padding:.5rem 1.1rem;">⚽ Handmatig laden</button>';
-    html += '</div>';
-  }
-
-  html += '<div id="analyseScanResults" style="margin-top:.5rem;"></div>';
-  html += '<div id="valueBanner2" style="display:none;margin-top:.4rem;"></div>';
-  html += '</div>';
 
   // ── 3. STATISTIEKEN ──
   if (scanROI !== null || weekScans.length > 0) {
@@ -412,17 +369,18 @@ function renderAnalyseScreen() {
   html += '<div id="combiCard" style="display:none;margin-top:.6rem;"></div>';
   html += '</div>';
 
-  // ── 5. CLAUDE INSIGHT — tekstballon ──
-  html += '<div id="claude-insight-block" style="margin-bottom:10px;">';
-  html += '<div onclick="toggleClaudeInsight()" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,190,196,.18),rgba(0,168,173,.12));border:1.5px solid rgba(0,190,196,.4);border-radius:16px 16px 16px 4px;padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,190,196,.15);">';
-  html += '<div style="display:flex;align-items:center;gap:.5rem;">';
-  html += '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00BEC4,#0077a8);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg></div>';
-  html += '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#00BEC4;letter-spacing:.05em;">🤖 CLAUDE LEGT UIT</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);margin-top:1px;">AI analyse · tik om te laden</div></div>';
+  // ── 5. CLAUDE INSIGHT — prominent ──
+  html += '<div id="claude-insight-block" style="margin-bottom:14px;">';
+  html += '<div onclick="toggleClaudeInsight()" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,190,196,.22),rgba(0,140,160,.15));border:2px solid rgba(0,190,196,.5);border-radius:18px 18px 18px 6px;padding:1rem 1.2rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 4px 20px rgba(0,190,196,.2),0 1px 0 rgba(0,190,196,.1) inset;">';
+  html += '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#00BEC4,#0077a8);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 10px rgba(0,190,196,.4);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg></div>';
+  html += '<div style="flex:1;">';
+  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.15rem;color:#00BEC4;letter-spacing:.08em;line-height:1;">CLAUDE LEGT UIT</div>';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.6);margin-top:.2rem;">🤖 AI-analyse van jouw picks & data</div>';
   html += '</div>';
-  html += '<span id="claudeInsightToggle" style="font-size:.65rem;color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">▼</span>';
+  html += '<span id="claudeInsightToggle" style="font-size:1.1rem;color:#00BEC4;font-weight:700;flex-shrink:0;">▼</span>';
   html += '</div>';
-  html += '<div style="width:0;height:0;margin-left:20px;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid rgba(0,190,196,.35);"></div>';
-  html += '<div id="claude-insight-content" style="display:none;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:4px 16px 16px 16px;padding:.75rem 1rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;line-height:1.7;color:rgba(255,255,255,.85);"></div>';
+  html += '<div style="width:0;height:0;margin-left:26px;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid rgba(0,190,196,.45);"></div>';
+  html += '<div id="claude-insight-content" style="display:none;background:rgba(0,190,196,.07);border:1.5px solid rgba(0,190,196,.25);border-radius:6px 18px 18px 18px;padding:1rem 1.1rem;margin-top:-1px;font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;line-height:1.8;color:rgba(255,255,255,.9);"></div>';
   html += '</div>';
 
 
