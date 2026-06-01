@@ -169,7 +169,7 @@ function _analyticsHTML(local, worker) {
   html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">VOORTGANG NAAR 100 PICKS</div>';
   html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">' + local.total + '/100</div>';
   html += '</div>';
-  html += '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:6px;overflow:hidden;">';
+  html += '<div style="background:#0f2230;border-radius:999px;height:6px;overflow:hidden;">';
   html += '<div style="background:linear-gradient(90deg,#00BEC4,#00a8ad);height:100%;border-radius:999px;width:' + Math.min(100, local.total) + '%;transition:width .4s;"></div>';
   html += '</div></div></div>';
 
@@ -210,7 +210,7 @@ function _analyticsHTML(local, worker) {
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:#ffffff;">' + bucket + '</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.5);">' + hr + '% (' + d.wins + '/' + d.total + ')</div>';
       html += '</div>';
-      html += '<div style="background:rgba(15,23,42,.08);border-radius:999px;height:5px;overflow:hidden;">';
+      html += '<div style="background:#0f2230;border-radius:999px;height:5px;overflow:hidden;">';
       html += '<div style="background:' + (hr >= 50 ? '#00BEC4' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + barW + '%;transition:width .4s;"></div>';
       html += '</div></div>';
     });
@@ -225,7 +225,7 @@ function _analyticsHTML(local, worker) {
       const hr = d.t > 0 ? Math.round(d.w / d.t * 100) : 0;
       html += '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);min-width:80px;">' + label + '</div>';
-      html += '<div style="flex:1;background:rgba(15,23,42,.08);border-radius:999px;height:8px;overflow:hidden;">';
+      html += '<div style="flex:1;background:#0f2230;border-radius:999px;height:8px;overflow:hidden;">';
       html += '<div style="background:' + (hr >= 50 ? '#00BEC4' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + hr + '%;transition:width .4s;"></div>';
       html += '</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#ffffff;min-width:36px;text-align:right;">' + hr + '%</div>';
@@ -326,12 +326,12 @@ function _roiTrendChart(trend) {
 
   let svg = '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="display:block;margin:.4rem 0;">';
   // Zero lijn
-  svg += '<line x1="' + PAD + '" y1="' + zeroY.toFixed(1) + '" x2="' + (W-PAD) + '" y2="' + zeroY.toFixed(1) + '" stroke="rgba(15,23,42,.15)" stroke-width="1" stroke-dasharray="3,3"/>';
+  svg += '<line x1="' + PAD + '" y1="' + zeroY.toFixed(1) + '" x2="' + (W-PAD) + '" y2="' + zeroY.toFixed(1) + '" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="3,3"/>';
   // ROI lijn
   svg += '<path d="' + path + '" fill="none" stroke="' + lineColor + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
   // Labels
-  svg += '<text x="' + PAD + '" y="' + (H - 1) + '" font-family="IBM Plex Mono" font-size="8" fill="rgba(15,23,42,.4)">n=1</text>';
-  svg += '<text x="' + (W - PAD) + '" y="' + (H - 1) + '" font-family="IBM Plex Mono" font-size="8" fill="rgba(15,23,42,.4)" text-anchor="end">n=' + trend[trend.length-1].n + '</text>';
+  svg += '<text x="' + PAD + '" y="' + (H - 1) + '" font-family="IBM Plex Mono" font-size="8" fill="rgba(255,255,255,.4)">n=1</text>';
+  svg += '<text x="' + (W - PAD) + '" y="' + (H - 1) + '" font-family="IBM Plex Mono" font-size="8" fill="rgba(255,255,255,.4)" text-anchor="end">n=' + trend[trend.length-1].n + '</text>';
   svg += '<text x="' + x(trend.length-1) + '" y="' + Math.max(10, y(lastROI) - 4) + '" font-family="IBM Plex Mono" font-size="9" font-weight="bold" fill="' + lineColor + '" text-anchor="middle">' + (lastROI>=0?'+':'') + lastROI + '%</text>';
   svg += '</svg>';
   return svg;
@@ -339,14 +339,14 @@ function _roiTrendChart(trend) {
 
 // ── Helpers ───────────────────────────────────────────
 function _kpi(label, value, color) {
-  return '<div style="background:rgba(15,23,42,.04);border-radius:10px;padding:.5rem .6rem;">' +
+  return '<div style="background:#0f2230;border-radius:10px;padding:.5rem .6rem;">' +
     '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:' + color + ';line-height:1.1;">' + value + '</div>' +
     '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.5);margin-top:1px;">' + label + '</div>' +
     '</div>';
 }
 
 function _kpiSmall(label, value) {
-  return '<div style="background:rgba(15,23,42,.04);border-radius:8px;padding:.4rem .5rem;text-align:center;">' +
+  return '<div style="background:#0f2230;border-radius:8px;padding:.4rem .5rem;text-align:center;">' +
     '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#ffffff;">' + value + '</div>' +
     '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);margin-top:1px;">' + label + '</div>' +
     '</div>';
