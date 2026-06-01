@@ -21,9 +21,19 @@
 html,body{height:100%;}
 body{
   font-family:var(--font);
-  background:linear-gradient(180deg,#0B1519 0%,#091e24 50%,#04383F 100%);
+  background:#0B1519;
   color:#fff;font-size:16px;line-height:1.6;min-height:100vh;
   -webkit-font-smoothing:antialiased;
+}
+
+/* Gradient als fixed achtergrond — scrollt niet mee, kleur consistent */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  z-index:0;
+  background:linear-gradient(180deg,#0B1519 0%,#091e24 50%,#04383F 100%);
+  pointer-events:none;
 }
 
 .screen{display:none;}
