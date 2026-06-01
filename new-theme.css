@@ -177,6 +177,7 @@ body {
 
 /* ── MATCH CARD ─────────────────────────────────────────────── */
 .match-card {
+  background: #0d1e24 !important;
   padding: 13px 14px !important;
   margin-bottom: 9px !important;
 }
