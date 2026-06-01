@@ -388,7 +388,7 @@ body.dark .analytics-stat-card { background:#0d1e24; }
 }
 .dash-nav-card:active { transform: scale(.97); }
 .dash-nav-icon  { font-size: 1.45rem; }
-.dash-nav-title { font-family: 'Bebas Neue', sans-serif; font-size: .95rem; color: var(--navy); letter-spacing: .03em; line-height: 1.2; }
+.dash-nav-title { font-family: 'Bebas Neue', sans-serif; font-size: .95rem; color: #e8edf5; letter-spacing: .03em; line-height: 1.2; }
 .dash-nav-sub   { font-family: 'IBM Plex Mono', monospace; font-size: .46rem; color: var(--sub); line-height: 1.5; flex: 1; }
 .dash-nav-badge { font-family: 'IBM Plex Mono', monospace; font-size: .5rem; font-weight: 800; }
 
@@ -424,29 +424,29 @@ body.dark .analytics-stat-card { background:#0d1e24; }
 }
 .scan-log-num {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: .52rem; font-weight: 800; color: var(--navy);
+  font-size: .52rem; font-weight: 800; color: #e8edf5;
 }
 .scan-log-num em { font-style: normal; color: var(--gold); }
 
 /* Status badges */
-.scan-badge-win  { font-family:'IBM Plex Mono',monospace; font-size:.4rem; font-weight:700; border-radius:99px; padding:.1rem .42rem; background:#dcfce7; color:#00a8ad; }
-.scan-badge-lose { font-family:'IBM Plex Mono',monospace; font-size:.4rem; font-weight:700; border-radius:99px; padding:.1rem .42rem; background:#fee2e2; color:#dc2626; }
-.scan-badge-open { font-family:'IBM Plex Mono',monospace; font-size:.4rem; font-weight:700; border-radius:99px; padding:.1rem .42rem; background:rgba(201,168,76,.15); color:#92710a; }
+.scan-badge-win  { font-family:'IBM Plex Mono',monospace; font-size:.4rem; font-weight:700; border-radius:99px; padding:.1rem .42rem; background:rgba(0,190,196,.15); color:#00BEC4; }
+.scan-badge-lose { font-family:'IBM Plex Mono',monospace; font-size:.4rem; font-weight:700; border-radius:99px; padding:.1rem .42rem; background:rgba(220,38,38,.12); color:#dc2626; }
+.scan-badge-open { font-family:'IBM Plex Mono',monospace; font-size:.4rem; font-weight:700; border-radius:99px; padding:.1rem .42rem; background:rgba(201,168,76,.15); color:#C9A84C; }
 
 /* Pick rij */
 .scan-pick-row {
   display: flex; align-items: center; gap: .5rem;
   padding: .38rem 0;
-  border-top: 1px solid rgba(26,31,60,.07);
+  border-top: 1px solid rgba(255,255,255,.06);
 }
 .scan-pick-icon  { width: 1.4rem; text-align: center; font-size: .82rem; flex-shrink: 0; }
-.scan-pick-name  { font-family: 'DM Sans', sans-serif; font-size: .6rem; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scan-pick-name  { font-family: 'DM Sans', sans-serif; font-size: .6rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .scan-pick-meta  { font-family: 'IBM Plex Mono', monospace; font-size: .42rem; color: var(--muted); margin-top: .08rem; }
-.scan-pick-odds  { color: var(--navy); font-weight: 700; }
+.scan-pick-odds  { color: #fff; font-weight: 700; }
 .scan-pick-value-hi { color: #00a8ad; font-weight: 700; }
 .scan-pick-value-md { color: #b45309; font-weight: 700; }
-.scan-score-pill { font-family:'IBM Plex Mono',monospace; font-size:.5rem; font-weight:700; color:var(--navy); background:rgba(26,31,60,.07); border-radius:6px; padding:.1rem .4rem; flex-shrink:0; }
-.scan-score-btn  { font-family:'IBM Plex Mono',monospace; font-size:.42rem; font-weight:600; padding:3px 8px; border-radius:8px; background:rgba(26,31,60,.06); border:1px solid rgba(26,31,60,.14); color:var(--navy); cursor:pointer; white-space:nowrap; flex-shrink:0; }
+.scan-score-pill { font-family:'IBM Plex Mono',monospace; font-size:.5rem; font-weight:700; color:#fff; background:rgba(255,255,255,.1); border-radius:6px; padding:.1rem .4rem; flex-shrink:0; }
+.scan-score-btn  { font-family:'IBM Plex Mono',monospace; font-size:.42rem; font-weight:600; padding:3px 8px; border-radius:8px; background:rgba(0,190,196,.1); border:1px solid rgba(0,190,196,.25); color:#00BEC4; cursor:pointer; white-space:nowrap; flex-shrink:0; }
 
 /* ── Stat cards (4-grid) v30 ─────────────────────── */
 .stat-card-v30 {
@@ -482,9 +482,9 @@ body.dark .analytics-stat-card { background:#0d1e24; }
 }
 .match-row-v30:active { transform: scale(.98); }
 .match-row-v30 .time  { font-family:'IBM Plex Mono',monospace; font-size:.46rem; color:var(--muted); width:2.2rem; flex-shrink:0; }
-.match-row-v30 .name  { font-family:'DM Sans',sans-serif; font-size:.62rem; font-weight:700; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.match-row-v30 .name  { font-family:'DM Sans',sans-serif; font-size:.62rem; font-weight:700; color:#e8edf5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .match-row-v30 .comp  { font-family:'IBM Plex Mono',monospace; font-size:.4rem; color:var(--muted); margin-top:.08rem; }
-.odds-pill-v30        { font-family:'IBM Plex Mono',monospace; font-size:.44rem; font-weight:700; padding:.22rem .45rem; border-radius:7px; background:rgba(26,31,60,.06); border:1px solid rgba(26,31,60,.1); color:var(--navy); }
+.odds-pill-v30        { font-family:'IBM Plex Mono',monospace; font-size:.44rem; font-weight:700; padding:.22rem .45rem; border-radius:7px; background:rgba(26,31,60,.06); border:1px solid rgba(26,31,60,.1); color:#e8edf5; }
 .odds-pill-v30.val    { background:rgba(22,163,74,.1); border-color:rgba(22,163,74,.25); color:#00a8ad; }
 
 body.dark .scan-log-card { background: #0a1a20; border-color: rgba(255,255,255,.06); }
