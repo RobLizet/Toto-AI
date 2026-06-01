@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Bebas+Neue&display=swap');
 
 :root {
-  --bg1:#0f1520;--bg2:#141d2e;--bg3:#1a2236;
+  --bg1:#0B1519;--bg2:#091e24;--bg3:#04383F;
   --card:rgba(0,0,0,0.35);--card2:rgba(0,0,0,0.28);
   --stroke:rgba(255,255,255,0.09);--border:rgba(255,255,255,0.09);
   --ink:#ffffff;--sub:rgba(255,255,255,0.5);--muted:rgba(255,255,255,0.4);
@@ -21,7 +21,7 @@
 html,body{height:100%;}
 body{
   font-family:var(--font);
-  background:#0f1520;
+  background:linear-gradient(180deg,#0B1519 0%,#091e24 50%,#04383F 100%);
   color:#fff;font-size:16px;line-height:1.6;min-height:100vh;
   -webkit-font-smoothing:antialiased;
 }
