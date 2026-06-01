@@ -2648,85 +2648,91 @@ function renderScanLog() {
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#64748b;margin-top:.3rem;">Voer een value scan uit via de Scan &amp; Analyse tab</div>'
       + '</div>';
   } else {
-    filteredLog.forEach(function(scan, si) {
+  filteredLog.forEach(function(scan, si) {
       var sw = scan.picks.filter(p=>p.status==='win').length;
       var sl = scan.picks.filter(p=>p.status==='lose').length;
       var sp = scan.picks.filter(p=>p.status==='pending').length;
+      var scanId = String(scan.id||si);
+      var collapseId = 'scan-collapse-' + scanId;
+      var hrPct = (sw+sl) ? Math.round(sw/(sw+sl)*100) : null;
+      var hrColor = hrPct===null?'#94a3b8':hrPct>=60?'#00BEC4':hrPct>=40?'#d97706':'#dc2626';
       var scanFace = (function() {
         if (!sw && !sl) return '😶';
-        var hr = sw / (sw + sl) * 100;
-        if (hr >= 70) return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 3 4 3 4-3 4-3"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
-        if (hr >= 50) return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
-        if (hr >= 35) return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
-        if (hr >= 20) return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 15s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
-        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-3-4-3-4 3-4 3"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
+        if (hrPct >= 70) return '😄';
+        if (hrPct >= 50) return '🙂';
+        if (hrPct >= 35) return '😐';
+        if (hrPct >= 20) return '😕';
+        return '😢';
       })();
-      html += '<div onclick="(function(e){if(!e.target.closest(\'button\')) showScanPopup('+si+');}).call(null,event)" style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.6rem;cursor:pointer;box-shadow:0 2px 8px rgba(26,31,60,.07);transition:box-shadow .15s,transform .12s;" onmouseenter="this.style.boxShadow=\'0 6px 20px rgba(26,31,60,.13)\';this.style.transform=\'translateY(-1px)\'" onmouseleave="this.style.boxShadow=\'0 2px 8px rgba(26,31,60,.07)\';this.style.transform=\'none\'">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;padding-bottom:.4rem;border-bottom:1px solid rgba(201,168,76,.2);">'
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#1a1f3c;">'
-        + '<span style="color:#c9a84c;">#' + (log.length-si) + '</span> &middot; '
-        + (function() {
-            // Toon speeldatum/-tijd van picks indien beschikbaar
-            var times = scan.picks
-              .filter(function(p){ return !!p.matchTime; })
-              .map(function(p){ return new Date(p.matchTime).getTime(); })
-              .filter(function(t){ return !isNaN(t); });
-            if (!times.length) return scan.date;
-            times.sort(function(a,b){return a-b;});
-            var earliest = new Date(times[0]);
-            var latest   = new Date(times[times.length-1]);
-            var fmt = function(d) {
-              return d.getDate()+'-'+(d.getMonth()+1)+'-'+d.getFullYear()
-                +' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-            };
-            if (times.length === 1 || earliest.toDateString() === latest.toDateString())
-              return fmt(earliest);
-            // Meerdere dagen: toon datumrange
-            return earliest.getDate()+'-'+(earliest.getMonth()+1)+' t/m '
-              +latest.getDate()+'-'+(latest.getMonth()+1)+'-'+latest.getFullYear();
-          })()
-        + '</div>'
-        + '<div style="display:flex;gap:.4rem;align-items:center;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
-        + (sw ? '<span style="background:#dcfce7;color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;font-weight:700;border-radius:99px;padding:.1rem .4rem;">' + sw + 'W</span>' : '')
-        + (sl ? '<span style="background:#fee2e2;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;font-weight:700;border-radius:99px;padding:.1rem .4rem;">' + sl + 'V</span>' : '')
-        + (sp ? '<span style="background:rgba(201,168,76,.15);color:#C9A84C;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;font-weight:700;border-radius:99px;padding:.1rem .4rem;">' + sp + '⏳</span>' : '')
-              + '<span style="font-size:1rem;">' + scanFace + '</span>'
-        + '<button class="delete-scan-btn" data-scan="' + String(scan.id||'') + '" '
-          + 'style="font-family:monospace;font-size:.44rem;padding:2px 6px;border-radius:6px;'
-          + 'background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);'
-          + 'color:#dc2626;cursor:pointer;margin-left:.2rem;">🗑</button>'
-        + '</div></div>';
+
+      // Scan card header — zelfde stijl als match-card
+      html += '<div class="match-card" style="margin-bottom:.6rem;padding:0;">';
+      
+      // Header — klikbaar voor inklapbaar
+      html += '<div onclick="(function(el){var c=document.getElementById(\'' + collapseId + '\');if(!c)return;var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'block\';el.querySelector(\'.scan-chevron\').style.transform=open?\'rotate(0deg)\':\'rotate(180deg)\';}).call(null,this.closest(\'.match-card\'))" '
+        + 'style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06);">';
+      
+      // Links: nummer + datum
+      html += '<div style="display:flex;align-items:center;gap:.5rem;">';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#C9A84C;">#' + (log.length-si) + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">';
+      html += (function() {
+          var times = scan.picks.filter(function(p){return !!p.matchTime;}).map(function(p){return new Date(p.matchTime).getTime();}).filter(function(t){return !isNaN(t);});
+          if (!times.length) return scan.date||'';
+          times.sort(function(a,b){return a-b;});
+          var earliest = new Date(times[0]);
+          var latest = new Date(times[times.length-1]);
+          var fmt = function(d){return d.getDate()+'-'+(d.getMonth()+1)+'-'+d.getFullYear();};
+          if (times.length===1||earliest.toDateString()===latest.toDateString()) return fmt(earliest);
+          return fmt(earliest)+' t/m '+fmt(latest);
+        })();
+      html += '</div></div>';
+      
+      // Rechts: badges + smiley + chevron
+      html += '<div style="display:flex;align-items:center;gap:.35rem;">';
+      if (sw) html += '<span style="background:rgba(0,190,196,.15);color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sw + 'W</span>';
+      if (sl) html += '<span style="background:rgba(220,38,38,.12);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sl + 'V</span>';
+      if (sp) html += '<span style="background:rgba(201,168,76,.12);color:#C9A84C;font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sp + '⏳</span>';
+      html += '<span style="font-size:.9rem;">' + scanFace + '</span>';
+      html += '<button class="delete-scan-btn" data-scan="' + scanId + '" style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:8px;padding:.15rem .35rem;font-size:.5rem;cursor:pointer;">🗑</button>';
+      html += '<svg class="scan-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>';
+      html += '</div>';
+      html += '</div>'; // einde header
+      
+      // Picks — standaard ingeklapt
+      html += '<div id="' + collapseId + '" style="display:none;">';
+      
       scan.picks.forEach(function(p) {
         var icon = p.status==='win' ? '✅' : p.status==='lose' ? '❌' : p.status==='void' ? '⬜' : '⏳';
-        // v18.6: handmatige verificatie knop voor pending picks
         var pickId = String(p.fixtureId || p.id || '');
-        var scanId = String(scan.id || '');
         var pickType = String(p.pick || '');
-        // v18.6: gebruik data-attributen voor veilige onclick zonder quote-escaping
         var manualBtn = p.status === 'pending'
-          ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" data-match="' + (p.match||'').replace(/"/g,'') + '" '
-            + 'style="font-family:monospace;font-size:.44rem;padding:2px 7px;border-radius:6px;'
-            + 'background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);'
-            + 'color:#2563eb;cursor:pointer;white-space:nowrap;flex-shrink:0;">✏ Score</button>'
+          ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" data-match="' + (p.match||'').replace(/"/g,'') + '" style="font-family:monospace;font-size:.42rem;padding:2px 6px;border-radius:6px;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);color:#00BEC4;cursor:pointer;flex-shrink:0;">✏ Score</button>'
           : '';
-        var deletePickBtn = '<button class="delete-pick-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" '
-          + 'style="font-family:monospace;font-size:.44rem;padding:2px 6px;border-radius:6px;'
-          + 'background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);'
-          + 'color:#dc2626;cursor:pointer;white-space:nowrap;flex-shrink:0;">🗑</button>';
-        const sharpBadge = p.sharp ? '<span style="font-size:.38rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;margin-left:.3rem;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">🔥 SHARP ' + (p.sharpMove ? p.sharpMove.toFixed(1)+'%' : '') + '</span>' : '';
-        const vColor = (p.value||0) >= 20 ? '#00BEC4' : (p.value||0) >= 10 ? '#b45309' : '#64748b';
-        html += '<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-top:1px solid rgba(26,31,60,.07);">'
-          + '<div style="width:1.5rem;text-align:center;font-size:.85rem;flex-shrink:0;">' + icon + '</div>'
-          + '<div style="flex:1;min-width:0;">'
-          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.6rem;font-weight:700;color:#1a1f3c;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + sharpBadge + '</div>'
-          + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:#64748b;margin-top:.1rem;">' + (p.pickLabel||p.pick) + ' <span style=\'color:#1a1f3c;font-weight:700;\'>@ ' + p.odds + '</span> &middot; <span style=\'color:' + vColor + ';font-weight:700;\'>' + (p.value||0).toFixed(1) + '% value</span> &middot; conf ' + p.confidence + '/10</div>'
-          + '</div>'
-          + (p.score ? '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:#1a1f3c;background:rgba(26,31,60,.06);border-radius:6px;padding:.1rem .4rem;">' + p.score + '</div>' : '')
-          + manualBtn
-          + deletePickBtn
+        var deletePickBtn = '<button class="delete-pick-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" style="font-family:monospace;font-size:.42rem;padding:2px 5px;border-radius:6px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);color:#dc2626;cursor:pointer;flex-shrink:0;">🗑</button>';
+        var vColor = (p.value||0) >= 20 ? '#00BEC4' : (p.value||0) >= 10 ? '#d97706' : 'rgba(255,255,255,.4)';
+        var sharpBadge = p.sharp ? '<span style="font-size:.36rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">🔥 SHARP</span>' : '';
+        
+        html += '<div style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .9rem;border-top:1px solid rgba(255,255,255,.05);">';
+        html += '<div style="font-size:.85rem;flex-shrink:0;margin-top:.05rem;">' + icon + '</div>';
+        html += '<div style="flex:1;min-width:0;">';
+        html += '<div style="font-family:\'DM Sans\',sans-serif;font-size:.58rem;font-weight:700;color:#ffffff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + (sharpBadge?' '+sharpBadge:'') + '</div>';
+        html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);margin-top:.1rem;">'
+          + '<span style="color:rgba(255,255,255,.8);">' + (p.pickLabel||p.pick) + '</span>'
+          + ' <span style="color:rgba(255,255,255,.4);">@</span> <span style="color:#fff;font-weight:700;">' + p.odds + '</span>'
+          + ' · <span style="color:' + vColor + ';font-weight:700;">' + (p.value||0).toFixed(1) + '% value</span>'
+          + ' · conf ' + p.confidence + '/10'
           + '</div>';
+        html += '</div>';
+        if (p.score) html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:#fff;background:rgba(255,255,255,.08);border-radius:8px;padding:.15rem .4rem;flex-shrink:0;">' + p.score + '</div>';
+        html += manualBtn + deletePickBtn;
+        html += '</div>';
       });
-      html += '</div>';
+      
+      html += '</div>'; // einde collapse
+      html += '</div>'; // einde match-card
+    });
+
     });
   }
 
