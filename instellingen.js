@@ -173,7 +173,6 @@ function renderInstellingen() {
 
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem;">
           <button class="theme-btn" onclick="setTheme('')">🌑 Default</button>
-          <button class="theme-btn" onclick="setTheme('sky')">🩵 Sky</button>
         </div>
 
         <div class="settings-row">
@@ -437,8 +436,14 @@ function setTheme(theme) {
 }
 
 function applyStoredTheme() {
+  // Sky theme uitgeschakeld — altijd default gebruiken
   const t = localStorage.getItem('totoai_theme') || state.settings.theme || '';
-  document.body.className = t;
+  const safeTheme = t === 'sky' ? '' : t;
+  if (t === 'sky') {
+    localStorage.setItem('totoai_theme', '');
+    if (state.settings) state.settings.theme = '';
+  }
+  document.body.className = safeTheme;
 }
 
 function confirmResetWallet() {
