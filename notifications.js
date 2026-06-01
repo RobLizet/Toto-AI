@@ -395,14 +395,26 @@ async function debugPush() {
         if (!id && typeof OneSignal.getUserId === 'function') {
           id = await OneSignal.getUserId();
         }
+        if (!id && typeof OneSignal.getSubscriptionId === 'function') {
+          id = await OneSignal.getSubscriptionId();
+        }
+        // v16 SDK fallback
+        if (!id) {
+          try { id = await OneSignal.User?.PushSubscription?.optIn?.(); } catch(_) {}
+        }
       }
       lines.push('OS Player ID: ' + (id ? '✅ ' + id.substring(0,8) + '...' : '❌'));
-      if (id && !state.oneSignalPlayerId) {
-        // Alsnog opslaan als gevonden via debug
+      if (id) {
         state.oneSignalPlayerId = id;
         state.settings.notifPlayerId = id;
         saveState();
-        lines.push('→ Player ID alsnog opgeslagen!');
+        // Ook naar Firebase schrijven voor worker
+        try {
+          await firebase.database().ref('owner_player_id').set(id);
+          lines.push('→ Player ID opgeslagen in state + Firebase ✅');
+        } catch(fe) {
+          lines.push('→ Player ID in state ✅, Firebase mislukt: ' + fe.message);
+        }
       }
     } catch(e) {
       lines.push('OS fout: ' + e.message);
