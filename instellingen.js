@@ -252,7 +252,15 @@ function renderInstellingen() {
             <div class="val" id="costCalls">0</div>
           </div>
         </div>
-        <button class="small-action-btn danger" onclick="resetCostCounter()">Reset teller</button>
+        <div style="display:flex;gap:.4rem;margin-top:.4rem;flex-wrap:wrap;align-items:center;">
+          <button class="small-action-btn danger" onclick="resetCostCounter()">Reset teller</button>
+          <a href="https://console.anthropic.com/settings/billing" target="_blank"
+             style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;
+                    padding:.35rem .7rem;border-radius:8px;border:1.5px solid rgba(99,102,241,.35);
+                    background:rgba(99,102,241,.08);color:#6366f1;text-decoration:none;white-space:nowrap;">
+            💳 Saldo bekijken →
+          </a>
+        </div>
       </div>
 
       <!-- ACCOUNT / AUTH -->
