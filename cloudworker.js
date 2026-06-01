@@ -1824,10 +1824,7 @@ async function sendPushNotification(env, title, body, data = {}) {
     }
 
     const targeting = ownerPlayerId
-      ? { 
-          include_subscription_ids: [ownerPlayerId],
-          include_player_ids: [ownerPlayerId]
-        }
+      ? { include_player_ids: [ownerPlayerId] }
       : { included_segments: ['Total Subscriptions'] };
 
     const payload = {
