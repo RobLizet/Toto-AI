@@ -62,6 +62,9 @@ function renderWedstrijdenScreen() {
   const screen = document.getElementById('screen-wedstrijden');
   if (!screen) return;
 
+  // Verwijder favoriteComps die niet meer in de actieve lijst staan
+  const activeKeys = new Set(getActiveCOMPLIST().map(c => c.key));
+  state.favoriteComps = (state.favoriteComps || []).filter(k => activeKeys.has(k));
   const favs = state.favoriteComps || [];
 
   screen.innerHTML = `
@@ -1373,10 +1376,10 @@ async function loadTodayAllComps() {
       const isLive = ['1H','2H','HT','ET','BT','P','INT','LIVE'].includes(status);
       if (isLive) return true;
       if (isFinished) return false;
-      // NS/TBD/PST: alleen tonen als kickoff in de toekomst ligt (of binnen 30 min gestart)
+      // NS/TBD/PST: alleen tonen als kickoff binnen 48 uur valt (of binnen 30 min gestart)
       const kickoff = f.fixture.date ? new Date(f.fixture.date).getTime() : 0;
       const now = Date.now();
-      return kickoff > now - 30 * 60 * 1000; // max 30 min geleden gestart
+      return kickoff > now - 30 * 60 * 1000 && kickoff < now + 48 * 60 * 60 * 1000;
     });
     const knownLeagueIdsSet = new Set(Object.values(COMP_IDS));
     const leagueMap = {};
