@@ -45,6 +45,9 @@ const COMP_NAMES = {
   jupiler: '🇧🇪 Jupiler Pro League', laliga: '🇪🇸 La Liga', championship: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship',
   bundesliga2: '🇩🇪 2. Bundesliga', superlig: '🇹🇷 Süper Lig', wk2026: '🏆 WK 2026',
   norway: '🇳🇴 Eliteserien', sweden: '🇸🇪 Allsvenskan',
+  portugal: '🇵🇹 Primeira Liga', scotland: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scottish Prem', denmark: '🇩🇰 Superliga DK',
+  poland: '🇵🇱 Ekstraklasa', austria: '🇦🇹 Bundesliga AT', switzerland: '🇨🇭 Super League CH',
+  greece: '🇬🇷 Super League GR', czech: '🇨🇿 Czech Liga', championship: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship',
   europa: '🟠 Europa League', conference: '🟢 Conference League',
   // Internationaal
   intvriendsch: '🌍 Int. Vriendschappelijk', copaamerica: '🌎 Copa América',
