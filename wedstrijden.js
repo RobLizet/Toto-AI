@@ -33,14 +33,23 @@ function getActiveCOMPLIST() {
     { key:'superlig',   flag:'🇹🇷', name:'Süper Lig' },
   ];
   const OVERIG = [
-    { key:'nations',      flag:'🌍', name:'Nations League' },
-    { key:'intvriendsch', flag:'🌍', name:'Int. Vriendsch.' },
     { key:'beker',        flag:'🏆', name:'KNVB Beker' },
   ];
+  const INTERNATIONAAL = [
+    { key:'nations',      flag:'🌍', name:'Nations League' },
+    { key:'intvriendsch', flag:'🌍', name:'Int. Vriendsch.' },
+    { key:'wk_kwal_europa', flag:'🇪🇺', name:'WK Kwal. Europa' },
+    { key:'wk_kwal_latam',  flag:'🌎', name:'WK Kwal. CONMEBOL' },
+    { key:'wk_kwal_azie',   flag:'🌏', name:'WK Kwal. Azië' },
+    { key:'copaamerica',    flag:'🌎', name:'Copa América' },
+    { key:'goldcup',        flag:'🌎', name:'Gold Cup' },
+    { key:'africup',        flag:'🌍', name:'Africa Cup' },
+    { key:'asiancup',       flag:'🌏', name:'Asian Cup' },
+  ];
 
-  if (isWK)          return [...WK, ...SCANDI, ...OVERIG];
-  if (!isPreEuroEnd) return [...WK, ...SCANDI, ...EUROPEES, ...OVERIG];
-  return              [...EUROPEES, ...SCANDI, ...WK, ...OVERIG];
+  if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...OVERIG];
+  if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...OVERIG];
+  return              [...EUROPEES, ...SCANDI, ...WK, ...INTERNATIONAAL, ...OVERIG];
 }
 
 const COMP_LIST = getActiveCOMPLIST();
@@ -987,7 +996,7 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
 
   if (!oddsData) {
     const bookmakers = [8, 6, 1, 16, 36, 5, 11, 3, 4, 7, 2]; // 16=Betfair, 36=Betsson voor Scandinavisch
-    const SEASON_2026_LEAGUES = [1, 2, 3, 848, 103, 113]; // WK, CL, EL, ECL, Eliteserien, Allsvenskan
+    const SEASON_2026_LEAGUES = [1, 2, 3, 848, 103, 113, 10, 5, 32, 34, 36, 9, 30, 6, 7, 480]; // WK, CL, EL, ECL, Scandi, Int.vriendsch, Nations, WK Kwal, Copa, Gold Cup, Africa, Asian, Olympics
     const season = SEASON_2026_LEAGUES.includes(Number(leagueId)) ? 2026 : 2025;
     const leagueMatch = (state.matches || []).find(m => String(m.leagueId) === String(leagueId));
     const matchDate = leagueMatch?.dateISO || new Date().toISOString().split('T')[0];
