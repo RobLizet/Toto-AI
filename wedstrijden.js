@@ -947,6 +947,14 @@ async function loadFromAPIFootball(comp, _apiKey) {
     }
     r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&next=10`, null, 10000);
     d = await r.json();
+    // Filter: alleen wedstrijden binnen 48 uur
+    if (d.response?.length > 0) {
+      const cutoff = Date.now() + 48 * 60 * 60 * 1000;
+      d.response = d.response.filter(f => {
+        const ko = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
+        return ko < cutoff;
+      });
+    }
     if (d.response?.length > 0) {
       state.matches = d.response.map(f => parseAPIMatch(f)).filter(Boolean);
       renderMatches(state.matches);
@@ -1374,10 +1382,10 @@ async function loadTodayAllComps() {
       const isLive = ['1H','2H','HT','ET','BT','P','INT','LIVE'].includes(status);
       if (isLive) return true;
       if (isFinished) return false;
-      // NS/TBD/PST: alleen tonen als kickoff in de toekomst ligt (of binnen 30 min gestart)
+      // NS/TBD/PST: alleen tonen als kickoff binnen 48 uur valt (of binnen 30 min gestart)
       const kickoff = f.fixture.date ? new Date(f.fixture.date).getTime() : 0;
       const now = Date.now();
-      return kickoff > now - 30 * 60 * 1000; // max 30 min geleden gestart
+      return kickoff > now - 30 * 60 * 1000 && kickoff < now + 48 * 60 * 60 * 1000;
     });
     const knownLeagueIdsSet = new Set(Object.values(COMP_IDS));
     const leagueMap = {};
