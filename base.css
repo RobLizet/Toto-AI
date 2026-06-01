@@ -363,7 +363,7 @@ body::before{
 
 /* ── WALLET BET RIJEN ──────────────────────────────── */
 .bet-row, .tracker-bet-row, .backtest-pick-row {
-  background: rgba(255,255,255,.05) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.09) !important;
   border-radius: 12px !important;
   margin-bottom: 7px !important;
@@ -377,7 +377,7 @@ body::before{
 
 /* ══ SETTINGS + WALLET DONKER OVERRIDE ══════════════════ */
 .settings-section {
-  background: rgba(255,255,255,.05) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.09) !important;
   border-radius: 16px !important;
   margin-bottom: 12px !important;
@@ -408,7 +408,7 @@ body::before{
   margin-bottom: 6px !important;
 }
 .settings-input, .settings-select {
-  background: rgba(255,255,255,.08) !important;
+  background: #0f2230 !important;
   border: 1.5px solid rgba(255,255,255,.12) !important;
   border-radius: 10px !important;
   color: #fff !important;
@@ -422,7 +422,7 @@ body::before{
 }
 .settings-input::placeholder { color: rgba(255,255,255,.3) !important; }
 .key-vis-btn {
-  background: rgba(255,255,255,.08) !important;
+  background: #0f2230 !important;
   border: 1px solid rgba(255,255,255,.12) !important;
   border-radius: 8px !important;
   padding: 8px 10px !important;
@@ -441,7 +441,7 @@ body::before{
   margin-top: 8px !important;
 }
 .theme-btn {
-  background: rgba(255,255,255,.07) !important;
+  background: #0f2230 !important;
   border: 1px solid rgba(255,255,255,.12) !important;
   border-radius: 10px !important;
   color: rgba(255,255,255,.7) !important;
@@ -460,23 +460,23 @@ body::before{
 
 /* ── WALLET BET RIJEN DONKER ──────────────────────── */
 .bet-row {
-  background: rgba(255,255,255,.05) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.09) !important;
   border-radius: 12px !important;
   color: #fff !important;
 }
 .tracker-row {
-  background: rgba(255,255,255,.05) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.09) !important;
   border-radius: 12px !important;
 }
 .result-card {
-  background: rgba(255,255,255,.05) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.09) !important;
 }
 /* Input velden globaal donker */
 input, select, textarea {
-  background: rgba(255,255,255,.08) !important;
+  background: #0f2230 !important;
   border: 1.5px solid rgba(255,255,255,.12) !important;
   color: #fff !important;
   border-radius: 10px !important;
@@ -491,7 +491,7 @@ input:focus, select:focus, textarea:focus {
 
 /* ══ WALLET KAARTEN DONKER OVERRIDE ═════════════════════ */
 .w-item {
-  background: rgba(255,255,255,.06) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.09) !important;
   border-radius: 10px !important;
 }
@@ -503,7 +503,7 @@ input:focus, select:focus, textarea:focus {
   font-weight: 800 !important;
 }
 .stat-mini-card {
-  background: rgba(255,255,255,.06) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.09) !important;
   border-radius: 10px !important;
 }
@@ -514,12 +514,12 @@ input:focus, select:focus, textarea:focus {
   color: #fff !important;
 }
 .wallet-chart-wrap {
-  background: rgba(255,255,255,.05) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.09) !important;
   border-radius: 16px !important;
 }
 .chart-view-btn, .chart-src-btn {
-  background: rgba(255,255,255,.07) !important;
+  background: #0f2230 !important;
   border: 1px solid rgba(255,255,255,.1) !important;
   color: rgba(255,255,255,.6) !important;
   border-radius: 6px !important;
@@ -534,7 +534,7 @@ input:focus, select:focus, textarea:focus {
   border-color: #00BEC4 !important;
 }
 .export-btn {
-  background: rgba(255,255,255,.06) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.1) !important;
   color: rgba(255,255,255,.7) !important;
   border-radius: 10px !important;
@@ -543,10 +543,10 @@ input:focus, select:focus, textarea:focus {
   color: rgba(255,255,255,.4) !important;
 }
 .section-header::after {
-  background: rgba(255,255,255,.09) !important;
+  background: #112530 !important;
 }
 .wallet-subtabs {
-  background: rgba(255,255,255,.04) !important;
+  background: #0a1a20 !important;
   border: 1px solid rgba(255,255,255,.08) !important;
 }
 .wsub-btn {
@@ -556,7 +556,7 @@ input:focus, select:focus, textarea:focus {
   display: flex !important; gap: 5px !important; margin-bottom: 9px !important;
 }
 .bt-subtab {
-  background: rgba(255,255,255,.06) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.1) !important;
   color: rgba(255,255,255,.5) !important;
   border-radius: 10px !important;
@@ -571,7 +571,7 @@ input:focus, select:focus, textarea:focus {
   border-color: #00BEC4 !important;
 }
 .tracker-filter {
-  background: rgba(255,255,255,.06) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.1) !important;
   color: rgba(255,255,255,.5) !important;
   border-radius: 20px !important;
@@ -582,7 +582,7 @@ input:focus, select:focus, textarea:focus {
   border-color: #00BEC4 !important;
 }
 .small-action-btn {
-  background: rgba(255,255,255,.06) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.1) !important;
   color: rgba(255,255,255,.7) !important;
   border-radius: 8px !important;
@@ -600,14 +600,14 @@ canvas { background: transparent !important; }
 .scan-log-card, .analyse-stat-card, .analyse-chart-wrap,
 .analyse-block, .analyse-match-card, .scan-result-card,
 .pick-card, .combi-card, .value-pick-card {
-  background: rgba(255,255,255,.05) !important;
+  background: #0d1e24 !important;
   border: 1px solid rgba(255,255,255,.09) !important;
   border-radius: 16px !important;
   color: #fff !important;
 }
 /* Stat cellen in scan log */
 .analyse-stat-cell, .stat-cell, .kpi-cell {
-  background: rgba(255,255,255,.07) !important;
+  background: #0f2230 !important;
   border: 1px solid rgba(255,255,255,.1) !important;
   border-radius: 10px !important;
 }
@@ -620,7 +620,7 @@ canvas { background: transparent !important; }
 }
 /* Scan log header border */
 .scan-log-card .card-head, .scan-result-header {
-  background: rgba(255,255,255,.04) !important;
+  background: #0a1a20 !important;
   border-bottom: 1px solid rgba(255,255,255,.08) !important;
 }
 /* Alle witte divs in analyse screen */
@@ -628,12 +628,12 @@ canvas { background: transparent !important; }
 #screen-analyse div[style*="background: #fff"],
 #screen-analyse div[style*="background:white"],
 #screen-analyse div[style*="background: white"] {
-  background: rgba(255,255,255,.05) !important;
+  background: #0d1e24 !important;
 }
 #screen-analyse div[style*="background:rgba(255,255,255,.9"],
 #screen-analyse div[style*="background:rgba(255,255,255,.8"],
 #screen-analyse div[style*="background:rgba(255,255,255,.7"] {
-  background: rgba(255,255,255,.05) !important;
+  background: #0d1e24 !important;
 }
 /* Chart containers in analyse */
 #screen-analyse canvas {
@@ -641,12 +641,12 @@ canvas { background: transparent !important; }
 }
 /* Pick rijen */
 .pick-row-inner, .scan-pick-row {
-  background: rgba(255,255,255,.04) !important;
+  background: #0a1a20 !important;
   border-bottom: 1px solid rgba(255,255,255,.07) !important;
 }
 /* Odds display */
 .analyse-odds-cell {
-  background: rgba(255,255,255,.07) !important;
+  background: #0f2230 !important;
   border: 1px solid rgba(255,255,255,.1) !important;
 }
 .analyse-odds-val, .analyse-odds-label {
@@ -654,7 +654,7 @@ canvas { background: transparent !important; }
 }
 /* Verify/Stats/CSV knoppen in scan log */
 .scan-action-btn, .verify-btn, .stats-btn {
-  background: rgba(255,255,255,.07) !important;
+  background: #0f2230 !important;
   border: 1px solid rgba(255,255,255,.1) !important;
   color: rgba(255,255,255,.8) !important;
   border-radius: 10px !important;
