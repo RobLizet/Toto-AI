@@ -2648,7 +2648,12 @@ function renderScanLog() {
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-top:.3rem;">Voer een value scan uit via de Scan &amp; Analyse tab</div>'
       + '</div>';
   } else {
-  filteredLog.forEach(function(scan, si) {
+  // Compacte weergave: max 20 zichtbaar
+  window._scanLogPage = window._scanLogPage || 1;
+  var PAGE_SIZE = 20;
+  var visibleLog = filteredLog.slice(0, window._scanLogPage * PAGE_SIZE);
+  
+  visibleLog.forEach(function(scan, si) {
       var sw = scan.picks.filter(p=>p.status==='win').length;
       var sl = scan.picks.filter(p=>p.status==='lose').length;
       var sp = scan.picks.filter(p=>p.status==='pending').length;
@@ -2732,6 +2737,15 @@ function renderScanLog() {
       html += '</div>'; // einde collapse
       html += '</div>'; // einde match-card
     });
+
+  // Toon meer knop als er meer dan 20 zijn
+  if (filteredLog.length > visibleLog.length) {
+    var remaining = filteredLog.length - visibleLog.length;
+    html += '<button onclick="window._scanLogPage=(window._scanLogPage||1)+1;renderScanLog()" style="width:100%;margin-top:.4rem;padding:.6rem;border-radius:12px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);font-family:monospace;font-size:.5rem;font-weight:700;color:#C9A84C;cursor:pointer;">▼ Toon ' + remaining + ' oudere scans</button>';
+  }
+  
+  // Reset pagina bij nieuwe filter
+  if (!window._scanLogPage) window._scanLogPage = 1;
   }
 
   el.innerHTML = html;
