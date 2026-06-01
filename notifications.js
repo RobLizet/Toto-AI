@@ -403,7 +403,7 @@ async function debugPush() {
           try { id = await OneSignal.User?.PushSubscription?.optIn?.(); } catch(_) {}
         }
       }
-      lines.push('OS Player ID: ' + (id ? '✅ ' + id.substring(0,8) + '...' : '❌'));
+      lines.push('OS Player ID: ' + (id ? '✅ ' + id : '❌'));
       if (id) {
         state.oneSignalPlayerId = id;
         state.settings.notifPlayerId = id;
@@ -411,9 +411,11 @@ async function debugPush() {
         // Ook naar Firebase schrijven voor worker
         try {
           await firebase.database().ref('owner_player_id').set(id);
-          lines.push('→ Player ID opgeslagen in state + Firebase ✅');
+          lines.push('→ Player ID in Firebase ✅');
         } catch(fe) {
-          lines.push('→ Player ID in state ✅, Firebase mislukt: ' + fe.message);
+          lines.push('→ Firebase mislukt: ' + fe.message);
+          lines.push('→ Kopieer ID voor Cloudflare secret:');
+          lines.push(id);
         }
       }
     } catch(e) {
