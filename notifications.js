@@ -425,6 +425,12 @@ async function debugPush() {
   lines.push('Worker URL: ' + (typeof WORKER !== 'undefined' ? WORKER.substring(0,30) + '...' : '❌'));
 
   alert(lines.join('\n'));
+
+  // Toon Player ID apart in prompt zodat het kopieerbaar is
+  const pid = state.oneSignalPlayerId || state.settings?.notifPlayerId || null;
+  if (pid) {
+    setTimeout(() => prompt('📋 Kopieer Player ID voor Cloudflare:', pid), 300);
+  }
 }
 
 // ── Sla Owner Player ID op in Firebase zodat Worker hem kent ──
