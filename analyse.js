@@ -462,14 +462,19 @@ function renderAnalyseScreen() {
   html += '<div id="combiCard" style="display:none;margin-top:.6rem;"></div>';
   html += '</div>';
 
-  // ── 5. CLAUDE INSIGHT ──
-  html += '<div class="analyse-block" id="claude-insight-block">';
-  html += '<div class="analyse-block-header" style="cursor:pointer;" onclick="toggleClaudeInsight()">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span> CLAUDE LEGT UIT</div>';
-  html += '<span id="claudeInsightToggle" style="font-size:.7rem;color:rgba(255,255,255,.5);font-family:\'IBM Plex Mono\',monospace;">tik om te laden ▼</span>';
+  // ── 5. CLAUDE INSIGHT — tekstballon ──
+  html += '<div id="claude-insight-block" style="margin-bottom:10px;">';
+  html += '<div onclick="toggleClaudeInsight()" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,190,196,.18),rgba(0,168,173,.12));border:1.5px solid rgba(0,190,196,.4);border-radius:16px 16px 16px 4px;padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,190,196,.15);">';
+  html += '<div style="display:flex;align-items:center;gap:.5rem;">';
+  html += '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00BEC4,#0077a8);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg></div>';
+  html += '<div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#00BEC4;letter-spacing:.05em;">🤖 CLAUDE LEGT UIT</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);margin-top:1px;">AI analyse · tik om te laden</div></div>';
   html += '</div>';
-  html += '<div id="claude-insight-content" style="display:none;"></div>';
+  html += '<span id="claudeInsightToggle" style="font-size:.65rem;color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">▼</span>';
   html += '</div>';
+  html += '<div style="width:0;height:0;margin-left:20px;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid rgba(0,190,196,.35);"></div>';
+  html += '<div id="claude-insight-content" style="display:none;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:4px 16px 16px 16px;padding:.75rem 1rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;line-height:1.7;color:rgba(255,255,255,.85);"></div>';
+  html += '</div>';
+
 
   // ── 6. SCAN LOG ──
   html += '<div class="analyse-block" id="analyse-scanlog-block">';
