@@ -195,6 +195,13 @@ function renderInstellingen() {
         </div>
       </div>
 
+      <!-- ANALYTICS -->
+      <div class="settings-section">
+        <div class="settings-section-title">📊 ANALYTICS</div>
+        <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.5);margin-bottom:.6rem;">Pick statistieken, ROI curve en scan log analyse.</div>
+        <button class="small-action-btn" onclick="switchScreen('analytics')" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;font-size:.52rem;padding:.55rem;">📊 Open Analytics</button>
+      </div>
+
       <!-- OPSLAAN KNOP -->
       <button class="save-settings-btn" onclick="saveSettings()">💾 OPSLAAN</button>
 
