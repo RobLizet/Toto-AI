@@ -372,56 +372,6 @@ function renderAnalyseScreen() {
   html += '<div id="valueBanner2" style="display:none;margin-top:.4rem;"></div>';
   html += '</div>';
 
-  // ── 2. AI ANALYSE ──
-  html += '<div class="analyse-block">';
-  html += '<div class="analyse-block-header">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg></span> AI ANALYSE</div>';
-  html += '</div>';
-
-  if (!m) {
-    html += '<div class="analyse-empty" style="padding:1.25rem 0;">';
-    html += '<div style="font-size:1.8rem;opacity:.25;margin-bottom:.5rem;">🤖</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:.8rem;">Tik op een wedstrijd en kies ANALYSE voor een diepte-analyse.</div>';
-    html += '<button onclick="switchScreen(\'wedstrijden\')" class="analyse-btn-secondary" style="width:auto;padding:.5rem 1.1rem;">⚽ Naar Wedstrijden</button>';
-    html += '</div>';
-  } else {
-    html += '<div class="analyse-match-card">';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-bottom:.3rem;">' + (m.comp||'') + ' · ' + (m.date||'') + ' ' + (m.time||'') + '</div>';
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem;">';
-    html += '<div style="font-size:.9rem;font-weight:800;color:#ffffff;flex:1;">' + m.home + '</div>';
-    html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;padding:0 .75rem;">' + (m.score||'VS') + '</div>';
-    html += '<div style="font-size:.9rem;font-weight:800;color:#ffffff;text-align:right;flex:1;">' + m.away + '</div>';
-    html += '</div>';
-    if (m.homeOdds !== '—') {
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.3rem;">';
-      html += '<div class="analyse-odds-cell"><div class="analyse-odds-label">1</div><div class="analyse-odds-val">' + m.homeOdds + '</div></div>';
-      html += '<div class="analyse-odds-cell"><div class="analyse-odds-label">X</div><div class="analyse-odds-val">' + m.drawOdds + '</div></div>';
-      html += '<div class="analyse-odds-cell"><div class="analyse-odds-label">2</div><div class="analyse-odds-val">' + m.awayOdds + '</div></div>';
-      html += '</div>';
-    }
-    html += '</div>';
-    html += '<button id="analyseBtn" onclick="runAnalyse()" class="analyse-btn-ai">🤖 ANALYSEER — ' + m.home + ' vs ' + m.away + '</button>';
-    html += '<div id="analyseOutput" style="display:none;">';
-    html += '<div id="entityChips" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.7rem;"></div>';
-    html += '<div id="rb-vorm"></div><div id="rb-stats"></div><div id="rb-tactiek"></div>';
-    html += '<div id="rb-kans"></div><div id="rb-risico"></div><div id="rb-advies"></div><div id="rb-tip"></div>';
-    html += '<div id="matchChatSection" style="display:none;margin-top:.75rem;">';
-    html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:#00a8ad;">💬 VRAAG AAN AI</div>';
-    html += '<button onclick="document.getElementById(\'matchChatSection\').style.display=\'none\'" style="background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:.8rem;margin-left:auto;">✕</button>';
-    html += '</div>';
-    html += '<div id="chatMessages" style="max-height:260px;overflow-y:auto;margin-bottom:.5rem;"></div>';
-    html += '<div style="display:flex;gap:.4rem;">';
-    html += '<input id="chatInput" type="text" placeholder="Stel een vraag..." style="flex:1;font-family:monospace;font-size:.58rem;padding:.45rem .65rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;" onkeydown="if(event.key===\'Enter\')sendMatchChat()">';
-    html += '<button onclick="sendMatchChat()" style="padding:.45rem .7rem;border-radius:8px;background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.25);color:#00a8ad;cursor:pointer;">➤</button>';
-    html += '</div>';
-    html += '<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.4rem;" id="chatSuggestions"></div>';
-    html += '</div>';
-    html += '<button id="openChatBtn" onclick="openMatchChat()" style="width:100%;margin-top:.5rem;padding:.45rem;border-radius:8px;background:rgba(0,190,196,.07);border:1px solid rgba(0,190,196,.18);font-family:monospace;font-size:.55rem;font-weight:700;color:#00a8ad;cursor:pointer;display:none;">💬 Vraag stellen aan AI</button>';
-    html += '</div>';
-  }
-  html += '</div>';
-
   // ── 3. STATISTIEKEN ──
   if (scanROI !== null || weekScans.length > 0) {
     html += '<div class="analyse-block">';
