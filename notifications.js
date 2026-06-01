@@ -437,6 +437,15 @@ async function debugPush() {
 async function saveOwnerPlayerIdToFirebase(pid) {
   try {
     if (!pid) return;
+    // Wacht op Firebase auth — max 5 seconden
+    await new Promise((resolve, reject) => {
+      const unsubscribe = firebase.auth().onAuthStateChanged(user => {
+        unsubscribe();
+        if (user) resolve(user);
+        else reject(new Error('Niet ingelogd'));
+      });
+      setTimeout(() => reject(new Error('Auth timeout')), 5000);
+    });
     await firebase.database().ref('owner_player_id').set(pid);
     console.log('[OneSignal] Player ID → Firebase OK:', pid.substring(0, 8) + '...');
   } catch(e) {
