@@ -62,8 +62,8 @@ body {
   font-family: var(--font-main) !important;
   font-size: 10px !important;
   font-weight: 600 !important;
-  color: var(--sub) !important;
-  background: var(--blue-pale) !important;
+  color: #0d2d4a !important;
+  background: rgba(0,190,196,.18) !important;
   border: 1px solid rgba(59,130,246,.15) !important;
   padding: 2px 7px !important;
   border-radius: 5px !important;
@@ -72,14 +72,14 @@ body {
 
 .topbar-user {
   font-size: 11px !important;
-  color: var(--sub) !important;
+  color: #e8edf5 !important;
   font-family: var(--font-main) !important;
 }
 
 .topbar-icon-btn {
-  background: none !important;
-  border: none !important;
-  color: var(--sub) !important;
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  color: #e8edf5 !important;
   width: 32px !important;
   height: 32px !important;
   border-radius: 8px !important;
