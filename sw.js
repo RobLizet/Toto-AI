@@ -1,5 +1,5 @@
 // TOTO AI Service Worker v32.0 — Cache bust bij elke deploy
-const SW_VERSION = '32.7';
+const SW_VERSION = '32.8';
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
