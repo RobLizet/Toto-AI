@@ -1484,13 +1484,14 @@ async function runScanTest(env, leagueIds = [113, 103]) {
 
   if (!allMatches.length) {
     const _nowStr = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' });
-    await sendPushNotification(env, `🧪 ${_nowStr} — Test OK`, `Worker actief · geen wedstrijden voor leagues ${leagueIds.join(', ')}`, { type: 'scan_test' });
+    const _pushResult = await sendPushNotification(env, `🧪 ${_nowStr} — Test OK`, `Worker actief · geen wedstrijden voor leagues ${leagueIds.join(', ')}`, { type: 'scan_test' });
     return {
       ok: true, version: VERSION, leagues: leagueIds, today, tomorrow: tomorrowStr,
       matchesFound: 0, withOdds: 0, aiResultsCount: 0,
       picks: [], allMatches: [], log: log.slice(-10),
       verdict: '⚠️ Geen wedstrijden gevonden — push verstuurd naar owner',
-      note: '✅ TEST — push verstuurd'
+      note: '✅ TEST — push verstuurd',
+      pushResult: _pushResult
     };
   }
 
@@ -1853,8 +1854,10 @@ async function sendPushNotification(env, title, body, data = {}) {
     });
     const result = await res.json();
     console.log('[Push] Verstuurd naar', ownerPlayerId ? 'owner' : 'all subscribers', '—', result.id || JSON.stringify(result.errors));
+    return result;
   } catch(e) {
     console.error('[Push] Fout:', e.message);
+    return { error: e.message };
   }
 }
 
