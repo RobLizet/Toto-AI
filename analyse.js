@@ -2666,11 +2666,11 @@ function renderScanLog() {
       })();
 
       // Scan card header — zelfde stijl als match-card
-      html += '<div class="match-card" style="margin-bottom:.6rem;padding:0;">';
+      html += '<div class="match-card" style="margin-bottom:.6rem;padding:0;background:#0d1e24 !important;">';
       
       // Header — klikbaar voor inklapbaar
       html += '<div onclick="(function(el){var c=document.getElementById(\'' + collapseId + '\');if(!c)return;var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'block\';el.querySelector(\'.scan-chevron\').style.transform=open?\'rotate(0deg)\':\'rotate(180deg)\';}).call(null,this.closest(\'.match-card\'))" '
-        + 'style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06);">';
+        + 'style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06);background:#0d1e24;">';
       
       // Links: nummer + datum
       html += '<div style="display:flex;align-items:center;gap:.5rem;">';
