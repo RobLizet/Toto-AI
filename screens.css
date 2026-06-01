@@ -22,7 +22,7 @@
   display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem;
 }
 .dash-card {
-  background:rgba(255,255,255,.82);border:1px solid var(--stroke);border-radius:16px;
+  background:rgba(255,255,255,.07);border:1px solid var(--stroke);border-radius:16px;
   padding:.85rem .9rem;cursor:pointer;transition:all .15s;box-shadow:var(--shadow2);
 }
 .dash-card:active { transform:scale(.98); }
@@ -41,7 +41,7 @@
 
 /* Dashboard open bets strip */
 .open-bets-strip {
-  background:rgba(255,255,255,.82);border:1px solid var(--stroke);border-radius:14px;
+  background:rgba(255,255,255,.07);border:1px solid var(--stroke);border-radius:14px;
   padding:.75rem .9rem;margin-bottom:.75rem;
 }
 .open-bet-item {
@@ -54,7 +54,7 @@
 /* Dashboard quick picks van worker */
 .worker-pick-row {
   display:flex;align-items:center;justify-content:space-between;
-  padding:.5rem .75rem;background:rgba(255,255,255,.7);border:1px solid var(--stroke);
+  padding:.5rem .75rem;background:rgba(255,255,255,.07);border:1px solid var(--stroke);
   border-radius:12px;margin-bottom:.35rem;cursor:pointer;transition:all .15s;
 }
 .worker-pick-row:active { transform:scale(.98); }
@@ -84,7 +84,7 @@
 .multi-scan-btn {
   flex:1;min-width:0;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;
   padding:.55rem .5rem;border-radius:12px;cursor:pointer;text-align:center;
-  border:1.5px solid var(--stroke);background:rgba(255,255,255,.7);color:var(--ink);
+  border:1.5px solid var(--stroke);background:rgba(255,255,255,.07);color:var(--ink);
   transition:all .15s;
 }
 .multi-scan-btn:active { transform:scale(.97); }
@@ -112,7 +112,7 @@
 
 /* Handmatig wedstrijd toevoegen */
 .manual-match-form {
-  background:rgba(255,255,255,.82);border:1px solid var(--stroke);border-radius:16px;
+  background:rgba(255,255,255,.07);border:1px solid var(--stroke);border-radius:16px;
   padding:.9rem;margin-bottom:.75rem;box-shadow:var(--shadow2);
 }
 
@@ -120,7 +120,7 @@
 .scan-comp-chip {
   font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
   padding:.28rem .65rem;border-radius:999px;cursor:pointer;white-space:nowrap;flex-shrink:0;
-  background:rgba(255,255,255,.7);color:var(--sub);border:1px solid var(--stroke);
+  background:rgba(255,255,255,.07);color:var(--sub);border:1px solid var(--stroke);
   transition:all .15s;
 }
 .scan-comp-chip.on { background:rgba(22,163,74,.12);border-color:rgba(22,163,74,.35);color:#00a8ad; }
@@ -183,7 +183,7 @@
   padding:.65rem .8rem;margin-bottom:.65rem;
 }
 .analyse-odds-cell {
-  text-align:center;background:rgba(255,255,255,.7);border:1px solid var(--stroke);
+  text-align:center;background:rgba(255,255,255,.07);border:1px solid var(--stroke);
   border-radius:8px;padding:.3rem;
 }
 .analyse-odds-label { font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub); }
@@ -205,7 +205,7 @@ body.dark .analyse-stat-cell { background:var(--card); }
 
 /* Analyse sectie cards */
 .analyse-section-card {
-  background:rgba(255,255,255,.82);border:1px solid var(--stroke);border-radius:14px;
+  background:rgba(255,255,255,.07);border:1px solid var(--stroke);border-radius:14px;
   padding:.8rem .9rem;margin-bottom:.6rem;
   box-shadow:0 2px 8px rgba(15,23,42,.04);
 }
@@ -279,7 +279,7 @@ body.dark .analyse-stat-cell { background:var(--card); }
 .cd-standings-row {
   display:grid;grid-template-columns:28px 1fr 28px 28px 28px 28px 32px;gap:.2rem;
   align-items:center;padding:.35rem .5rem;border-radius:10px;cursor:pointer;
-  background:rgba(255,255,255,.7);border:1px solid var(--stroke);
+  background:rgba(255,255,255,.07);border:1px solid var(--stroke);
   transition:background .1s;
 }
 .cd-standings-row:active { background:var(--rose); }
