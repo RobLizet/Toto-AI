@@ -2732,8 +2732,6 @@ function renderScanLog() {
       html += '</div>'; // einde collapse
       html += '</div>'; // einde match-card
     });
-
-    });
   }
 
   el.innerHTML = html;
