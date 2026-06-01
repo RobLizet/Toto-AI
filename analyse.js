@@ -1138,7 +1138,7 @@ function openCardPopup(type, data) {
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.35rem;color:${valColor};line-height:1;">${tvSign}${Math.round(s.value||0)}%</div>
         </div>
       </div>
-      <div style="background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:.65rem .85rem;margin-bottom:.75rem;">
+      <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:.65rem .85rem;margin-bottom:.75rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
           <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:rgba(255,255,255,.5);">🎯 CONFIDENCE</span>
           <span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${confColor};">${s.confidence||'?'}/10</span>
@@ -1154,7 +1154,7 @@ function openCardPopup(type, data) {
           odds: s.odds, oddsMovement: s.oddsMovement
         }) : ''}
       </div>
-      ${s.reason ? `<div style="background:rgba(255,255,255,.05);border-left:3px solid ${valColor};border-radius:0 12px 12px 0;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.8rem;color:#1e293b;line-height:1.7;">${s.reason}</div>` : ''}
+      ${s.reason ? `<div style="background:rgba(255,255,255,.05);border-left:3px solid ${valColor};border-radius:0 12px 12px 0;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.8rem;color:rgba(255,255,255,.85);line-height:1.7;">${s.reason}</div>` : ''}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
         <button onclick="document.getElementById('cardPopupOverlay').remove();openBetModal(null,'${s.match?.id||s.id||''}','${s.pick||''}','${(s.pickLabel||'').replace(/'/g,"\\'")}',${s.odds||2})"
           style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">💶 SINGLE BET</button>
@@ -1186,7 +1186,7 @@ function openCardPopup(type, data) {
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:${pnlColor};margin-top:.2rem;">${statusLabel}</div>
         </div>
       </div>
-      ${b.note ? `<div style="background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.6rem .8rem;margin-bottom:.75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:#ffffff;">📝 ${b.note}</div>` : ''}
+      ${b.note ? `<div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.6rem .8rem;margin-bottom:.75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:#ffffff;">📝 ${b.note}</div>` : ''}
       ${!isOpen ? `<div style="background:rgba(${isWin?'22,163,74':'220,38,38'},.08);border:1px solid rgba(${isWin?'22,163,74':'220,38,38'},.2);border-radius:12px;padding:.7rem;text-align:center;margin-bottom:.75rem;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);">RESULTAAT</div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;color:${pnlColor};">${isWin?'+':''}€${Math.abs(pnl).toFixed(2)}</div>
@@ -1228,7 +1228,7 @@ function openCardPopup(type, data) {
 
   overlay.innerHTML = `
     <div style="width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
-      background:linear-gradient(160deg,#fdf4ff,#f0f4ff);
+      background:linear-gradient(160deg,#0d1e24,#0f2230);
       border-radius:24px 24px 0 0;padding:1.2rem 1.1rem 2rem;
       box-shadow:0 -8px 40px rgba(15,23,42,.2);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;">
@@ -1445,9 +1445,9 @@ KWALITEITSREGELS:
               <div style="background:${kleur};width:${Math.min(100,tip.kans)}%;height:100%;border-radius:999px;"></div>
             </div>
           </div>
-          <div style="font-size:.8rem;line-height:1.7;color:#1e293b;margin-bottom:.6rem;padding:.6rem .7rem;
-            background:rgba(255,255,255,.7);border-radius:8px;">${tip.redenering||'—'}</div>
-          <div style="background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,0.09);border-radius:9px;padding:.6rem .7rem;margin-bottom:.6rem;">
+          <div style="font-size:.8rem;line-height:1.7;color:rgba(255,255,255,.85);margin-bottom:.6rem;padding:.6rem .7rem;
+            background:rgba(255,255,255,.07);border-radius:8px;">${tip.redenering||'—'}</div>
+          <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,0.09);border-radius:9px;padding:.6rem .7rem;margin-bottom:.6rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem;">
               <span style="font-family:monospace;font-size:.52rem;font-weight:700;color:#475569;">🎯 CONFIDENCE</span>
               <span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${confKleur};">${conf}/10</span>
@@ -1748,7 +1748,7 @@ function renderTop3EnCombi(result) {
     const cc = confColor(t.vertrouwen);
     const cbar = Math.round((t.vertrouwen/10)*100);
     const factoren = Array.isArray(t.factoren) ? t.factoren : [];
-    return `<div onclick="openTipPopup(${i})" style="background:rgba(255,255,255,.82);border:1px solid rgba(28,35,48,.08);border-radius:12px;padding:.75rem .9rem;margin-bottom:.5rem;cursor:pointer;active:opacity:.85;">
+    return `<div onclick="openTipPopup(${i})" style="background:#0d1e24;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.75rem .9rem;margin-bottom:.5rem;cursor:pointer;active:opacity:.85;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
         <div style="flex:1;"><div style="font-size:.88rem;font-weight:700;color:#ffffff;">${i+1}. ${t.match}</div>
           <div style="font-family:monospace;font-size:.52rem;color:#00a8ad;margin-top:2px;">📅 ${t.datum||''}</div>
@@ -1771,7 +1771,7 @@ function renderTop3EnCombi(result) {
           <div style="background:${cc};width:${cbar}%;height:100%;border-radius:999px;"></div>
         </div>
       </div>
-      ${t.reden ? `<div style="font-size:.76rem;color:#1e293b;line-height:1.65;margin-bottom:.4rem;padding:.45rem .6rem;background:rgba(255,255,255,.6);border-radius:7px;border-left:2.5px solid ${tvColor};">${t.reden}</div>` : ''}
+      ${t.reden ? `<div style="font-size:.76rem;color:rgba(255,255,255,.85);line-height:1.65;margin-bottom:.4rem;padding:.45rem .6rem;background:rgba(255,255,255,.06);border-radius:7px;border-left:2.5px solid ${tvColor};">${t.reden}</div>` : ''}
       ${factoren.length ? `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-bottom:.3rem;">${factoren.map(f=>`<span style="font-family:monospace;font-size:.46rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.18);color:#00a8ad;">${f}</span>`).join('')}</div>` : ''}
       ${t.risico ? `<div style="font-family:monospace;font-size:.47rem;padding:3px 9px;border-radius:999px;display:inline-block;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.18);color:#dc2626;">⚠ ${t.risico}</div>` : ''}
       <div style="font-family:monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin-top:.35rem;text-align:right;">Tik voor details →</div>
@@ -1786,7 +1786,7 @@ function renderTop3EnCombi(result) {
 
   const legsHtml = legs.map((l,i) => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .75rem;
-      background:rgba(255,255,255,.7);border-radius:10px;margin-bottom:.4rem;border:1px solid rgba(28,35,48,.08);">
+      background:rgba(255,255,255,.07);border-radius:10px;margin-bottom:.4rem;border:1px solid rgba(255,255,255,.08);">
       <div style="flex:1;">
         <div style="font-size:.82rem;font-weight:700;color:#ffffff;">${i+1}. ${l.match}</div>
         <div style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📅 ${l.datum||''}</div>
@@ -1806,7 +1806,7 @@ function renderTop3EnCombi(result) {
     <div style="height:1px;background:rgba(28,35,48,.08);margin:1rem 0;"></div>
     <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.05rem;color:#00BEC4;margin-bottom:.6rem;">⚡ AI COMBI</div>
     ${legsHtml}
-    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:.85rem;margin:.7rem 0;">
+    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:.85rem;margin:.7rem 0;">
       <div style="font-size:.84rem;line-height:1.75;color:#ffffff;margin-bottom:.5rem;">${combi.redenering||''}</div>
       ${combi.synergie ? `<div style="background:rgba(0,190,196,.06);border-left:3px solid #2563eb;padding:.5rem .7rem;border-radius:0 8px 8px 0;margin-bottom:.4rem;">
         <div style="font-family:monospace;font-size:.52rem;color:#2563eb;font-weight:700;">🔗 SYNERGIE</div>
@@ -1852,7 +1852,7 @@ function openTipPopup(index) {
 
   overlay.innerHTML = `
     <div style="width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
-      background:linear-gradient(160deg,#fdf4ff,#f0f4ff);
+      background:linear-gradient(160deg,#0d1e24,#0f2230);
       border-radius:24px 24px 0 0;padding:1.2rem 1.1rem 2rem;
       box-shadow:0 -8px 40px rgba(15,23,42,.2);">
 
@@ -1894,7 +1894,7 @@ function openTipPopup(index) {
       </div>
 
       <!-- Confidence -->
-      <div style="background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,0.09);
+      <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,0.09);
         border-radius:12px;padding:.7rem .9rem;margin-bottom:.75rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);">
@@ -1913,7 +1913,7 @@ function openTipPopup(index) {
       <!-- Analyse -->
       ${t.reden ? `<div style="background:rgba(255,255,255,.05);border-left:3px solid ${tvColor};
         border-radius:0 12px 12px 0;padding:.75rem .9rem;margin-bottom:.75rem;
-        font-size:.82rem;color:#1e293b;line-height:1.75;">${t.reden}</div>` : ''}
+        font-size:.82rem;color:rgba(255,255,255,.85);line-height:1.75;">${t.reden}</div>` : ''}
 
       <!-- Factoren -->
       ${factoren.length ? `<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.75rem;">
@@ -2879,7 +2879,7 @@ function showScanPopup(scanIdx) {
   overlay.id = 'scanPopupOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;padding:0;backdrop-filter:blur(2px);';
   overlay.innerHTML = `
-    <div style="background:var(--bg,#f8fafc);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
+    <div style="background:#0d1e24;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
       <!-- Header -->
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
         <div>
@@ -3046,7 +3046,7 @@ function showScanLogStatsPopup() {
   overlay.id = 'scanStatsPopupOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);';
   overlay.innerHTML = `
-    <div style="background:var(--bg,#f8fafc);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
+    <div style="background:#0d1e24;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
         <div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">📊 SCAN LOG STATISTIEKEN</div>
