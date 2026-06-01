@@ -49,7 +49,7 @@ body {
   font-size: 18px !important;
   font-weight: 800 !important;
   letter-spacing: -0.5px !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
   background: none !important;
   -webkit-text-fill-color: unset !important;
 }
@@ -110,10 +110,10 @@ body {
 .bnav-btn svg { color: #a8b4cc !important; transition: color .15s !important; }
 
 .bnav-btn.active {
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
   background: rgba(27,38,70,.05) !important;
 }
-.bnav-btn.active svg { color: var(--navy) !important; }
+.bnav-btn.active svg { color: #e8edf5 !important; }
 
 .bnav-dot-line { display: none !important; }
 
@@ -146,7 +146,7 @@ body {
   font-family: var(--font-main) !important;
   font-size: 12px !important;
   font-weight: 700 !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
   letter-spacing: 0.3px !important;
   background: none !important;
 }
@@ -168,7 +168,7 @@ body {
 .scan-comp-chip.on {
   background: var(--navy) !important;
   color: #fff !important;
-  border-color: var(--navy) !important;
+  border-color: #e8edf5 !important;
 }
 
 /* ── MATCH CARD ─────────────────────────────────────────────── */
@@ -249,7 +249,7 @@ body {
   font-family: var(--font-main) !important;
   font-size: 12.5px !important;
   font-weight: 800 !important;
-  color: var(--navy) !important;
+  color: #fff !important;
   letter-spacing: 0.2px !important;
 }
 
@@ -298,7 +298,7 @@ body {
   font-weight: 700 !important;
   border-radius: var(--r) !important;
   background: #fff !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
   border: 1.5px solid var(--border) !important;
   padding: 9px 10px !important;
 }
@@ -469,7 +469,7 @@ body {
 .chart-src-btn.active {
   background: var(--navy) !important;
   color: #fff !important;
-  border-color: var(--navy) !important;
+  border-color: #e8edf5 !important;
 }
 
 /* Export knop */
@@ -479,7 +479,7 @@ body {
   font-weight: 700 !important;
   background: rgba(27,38,70,.06) !important;
   border: 1px solid var(--border) !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
   border-radius: var(--rs) !important;
   padding: 8px 14px !important;
   margin-bottom: 10px !important;
@@ -521,7 +521,7 @@ body {
 .bt-filter-btn.active {
   background: var(--navy) !important;
   color: #fff !important;
-  border-color: var(--navy) !important;
+  border-color: #e8edf5 !important;
 }
 
 /* Backtest subtabs */
@@ -544,7 +544,7 @@ body {
 .bt-subtab.active {
   background: var(--navy) !important;
   color: #fff !important;
-  border-color: var(--navy) !important;
+  border-color: #e8edf5 !important;
 }
 
 /* Voortgangsbalk */
@@ -580,7 +580,7 @@ body {
   cursor: pointer !important;
   background: rgba(27,38,70,.06) !important;
   border: 1px solid var(--border) !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
 }
 
 /* ── DASHBOARD ──────────────────────────────────────────────── */
@@ -597,7 +597,7 @@ body {
   font-family: var(--font-main) !important;
   font-size: 18px !important;
   font-weight: 800 !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
 }
 
 .dash-stat-lbl {
@@ -627,7 +627,7 @@ body {
   font-family: var(--font-main) !important;
   font-size: 13px !important;
   font-weight: 800 !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
   letter-spacing: 0 !important;
   background: none !important;
   -webkit-text-fill-color: unset !important;
@@ -654,7 +654,7 @@ body {
   font-family: var(--font-main) !important;
   font-size: 12.5px !important;
   font-weight: 700 !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
 }
 
 .wpr-pick {
@@ -710,7 +710,7 @@ body {
   font-family: var(--font-main) !important;
   font-size: 16px !important;
   font-weight: 800 !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
 }
 
 .modal-label {
@@ -730,7 +730,7 @@ body {
   border: 1.5px solid var(--border) !important;
   border-radius: 10px !important;
   padding: 10px 12px !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
   background: #fff !important;
 }
 .modal-input:focus, .modal-select:focus {
@@ -763,7 +763,7 @@ body {
 .quick-stake-preset {
   background: var(--blue-pale) !important;
   border: 1px solid rgba(59,130,246,.15) !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
   font-family: var(--font-main) !important;
   font-size: 12px !important;
   font-weight: 700 !important;
@@ -776,7 +776,7 @@ body {
   font-family: var(--font-main) !important;
   font-size: 18px !important;
   font-weight: 800 !important;
-  color: var(--navy) !important;
+  color: #e8edf5 !important;
   letter-spacing: 0 !important;
 }
 
@@ -795,11 +795,11 @@ body {
 .cd-tab.active {
   background: var(--navy) !important;
   color: #fff !important;
-  border-color: var(--navy) !important;
+  border-color: #e8edf5 !important;
 }
 
-.st-team-name { font-size: 12px !important; font-weight: 700 !important; color: var(--navy) !important; }
-.st-pts { font-family: var(--font-main) !important; font-size: 14px !important; font-weight: 800 !important; color: var(--navy) !important; }
+.st-team-name { font-size: 12px !important; font-weight: 700 !important; color: #e8edf5 !important; }
+.st-pts { font-family: var(--font-main) !important; font-size: 14px !important; font-weight: 800 !important; color: #e8edf5 !important; }
 
 /* ── MORE MENU ──────────────────────────────────────────────── */
 /* more-menu stijl zit in base.css — niet overschrijven */
@@ -832,7 +832,7 @@ button[onclick*="showHelp"] {
 .sort-btn.active {
   background: var(--navy) !important;
   color: #fff !important;
-  border-color: var(--navy) !important;
+  border-color: #e8edf5 !important;
 }
 
 /* ── ANALYTICS SCREEN ───────────────────────────────────────── */
