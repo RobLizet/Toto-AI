@@ -653,3 +653,6 @@ canvas { background: transparent !important; }
 .scan-log-empty {
   color: rgba(255,255,255,.4) !important;
 }
+
+/* Sky theme card override */
+body.sky { --card: rgba(255,255,255,.85) !important; --card2: rgba(255,255,255,.7) !important; }
