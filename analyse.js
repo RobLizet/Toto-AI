@@ -2637,15 +2637,15 @@ function renderScanLog() {
 
     html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem;">'
       + '<div style="width:3px;height:1.1rem;background:#c9a84c;border-radius:2px;flex-shrink:0;"></div>'
-      + '<div style="font-family:\'Bebas Neue\',\'DM Sans\',sans-serif;font-size:1.1rem;letter-spacing:.04em;color:#1a1f3c;">SCANS</div>'
+      + '<div style="font-family:\'Bebas Neue\',\'DM Sans\',sans-serif;font-size:1.1rem;letter-spacing:.04em;color:#ffffff;">SCANS</div>'
       + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;color:#c9a84c;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:99px;padding:.1rem .5rem;">' + log.length + '</div>'
       + '</div>';
 
   if (!log.length) {
     html += '<div style="text-align:center;padding:2.5rem 1rem;background:rgba(255,255,255,.05);border-radius:16px;border:1px dashed rgba(201,168,76,.4);">'
       + '<div style="font-size:2rem;margin-bottom:.5rem;">🎯</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:#1a1f3c;font-weight:700;">Nog geen scans</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#64748b;margin-top:.3rem;">Voer een value scan uit via de Scan &amp; Analyse tab</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:#ffffff;font-weight:700;">Nog geen scans</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-top:.3rem;">Voer een value scan uit via de Scan &amp; Analyse tab</div>'
       + '</div>';
   } else {
   filteredLog.forEach(function(scan, si) {
@@ -2867,11 +2867,11 @@ function showScanPopup(scanIdx) {
         <span style="background:rgba(0,190,196,.1);color:#6d28d9;border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;padding:2px 7px;border-radius:4px;">${p.pickLabel||p.pick}</span>
         <span style="background:rgba(15,23,42,.06);color:var(--ink,#0f172a);border:1px solid rgba(15,23,42,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">@ ${p.odds}</span>
         <span style="background:rgba(0,190,196,.08);color:#1d4ed8;border:1px solid rgba(0,190,196,.18);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">${(p.value||0).toFixed(1)}% value</span>
-        <span style="background:rgba(15,23,42,.04);color:var(--sub,#64748b);border:1px solid rgba(15,23,42,.08);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">conf ${p.confidence}/10</span>
+        <span style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">conf ${p.confidence}/10</span>
         ${p.confidenceFinal ? `<span style="background:rgba(0,190,196,.08);color:#00BEC4;border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">CI ${p.confidenceFinal}</span>` : ''}
         ${elite}${lockBadge}
       </div>
-      ${p.comp ? `<div style="font-family:monospace;font-size:.42rem;color:var(--sub,#64748b);">${p.comp}${p.score ? ' &middot; Score: <b>' + p.score + '</b>' : ''}</div>` : ''}
+      ${p.comp ? `<div style="font-family:monospace;font-size:.42rem;color:rgba(255,255,255,.5);">${p.comp}${p.score ? ' &middot; Score: <b>' + p.score + '</b>' : ''}</div>` : ''}
     </div>`;
   });
 
@@ -2887,7 +2887,7 @@ function showScanPopup(scanIdx) {
             SCAN #${log.length - scanIdx}
             <span style="font-size:1.6rem;margin-left:.3rem;">${scanFace}</span>
           </div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${scan.date} · ${scan.time||''}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.5);margin-top:.1rem;">${scan.date} · ${scan.time||''}</div>
         </div>
         <div style="display:flex;gap:.5rem;align-items:center;">
           ${scanHr !== null ? `<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;color:${hrColor(scanHr)};">${scanHr}% HR</div>` : ''}
@@ -2900,7 +2900,7 @@ function showScanPopup(scanIdx) {
       </div>
       <!-- Picks lijst -->
       <div style="overflow-y:auto;padding:.8rem 1rem 1.5rem;flex:1;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:var(--sub,#64748b);margin-bottom:.6rem;">${scan.picks.length} PICKS</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.6rem;">${scan.picks.length} PICKS</div>
         ${picksHtml}
       </div>
     </div>`;
@@ -2975,7 +2975,7 @@ function showScanLogStatsPopup() {
       ['GEM. VALUE', avgValue.toFixed(1)+'%', '#00BEC4'],
     ].map(([lbl,val,col]) => `<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;text-align:center;">
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${col};">${val}</div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--sub,#64748b);">${lbl}</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">${lbl}</div>
     </div>`).join('')}
   </div>`;
 
@@ -3050,7 +3050,7 @@ function showScanLogStatsPopup() {
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
         <div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">📊 SCAN LOG STATISTIEKEN</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--sub,#64748b);margin-top:.1rem;">${allPicks.length} picks · ${settled.length} afgerond</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-top:.1rem;">${allPicks.length} picks · ${settled.length} afgerond</div>
         </div>
         <button onclick="document.getElementById('scanStatsPopupOverlay').remove()"
           style="background:rgba(15,23,42,.07);border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;">✕</button>
