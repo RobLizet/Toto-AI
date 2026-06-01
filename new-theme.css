@@ -164,15 +164,15 @@ body {
   padding: 5px 13px !important;
   border-radius: 20px !important;
   background: #0f2230 !important;
-  color: var(--sub) !important;
-  border: 1px solid rgba(27,38,70,.12) !important;
+  color: rgba(255,255,255,.85) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
   transition: all .15s !important;
 }
 .comp-chip.active,
 .scan-comp-chip.on {
-  background: var(--navy) !important;
+  background: #00BEC4 !important;
   color: #fff !important;
-  border-color: #e8edf5 !important;
+  border-color: #00BEC4 !important;
 }
 
 /* ── MATCH CARD ─────────────────────────────────────────────── */
@@ -183,8 +183,8 @@ body {
 
 /* Odds pills */
 .odds-btn {
-  background: var(--blue-pale) !important;
-  border: 1px solid transparent !important;
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
   border-radius: var(--rs) !important;
   font-family: var(--font-main) !important;
   font-size: 13.5px !important;
@@ -195,9 +195,9 @@ body {
 }
 .odds-btn.value-highlight,
 .odds-btn[data-value="true"] {
-  background: var(--green-pale) !important;
-  border-color: rgba(29,185,116,.2) !important;
-  color: var(--green2) !important;
+  background: rgba(0,190,196,.15) !important;
+  border-color: rgba(0,190,196,.4) !important;
+  color: #00BEC4 !important;
 }
 
 /* Analyse knop op match card */
@@ -735,7 +735,7 @@ body {
   border-radius: 10px !important;
   padding: 10px 12px !important;
   color: #e8edf5 !important;
-  background: #fff !important;
+  background: #0f2230 !important;
 }
 .modal-input:focus, .modal-select:focus {
   border-color: var(--navy2) !important;
