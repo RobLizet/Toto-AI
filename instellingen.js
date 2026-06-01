@@ -175,6 +175,8 @@ function renderInstellingen() {
 
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem;">
           <button class="theme-btn" onclick="setTheme('')">🌑 Default</button>
+          <button class="theme-btn" onclick="setTheme('sky')">☀️ Sky</button>
+          <button class="theme-btn" onclick="setTheme('creme')">☕ Crème</button>
         </div>
 
         <div class="settings-row">
@@ -446,7 +448,6 @@ function setTheme(theme) {
 }
 
 function applyStoredTheme() {
-  // Sky theme uitgeschakeld — altijd default gebruiken
   const t = localStorage.getItem('totoai_theme') || state.settings.theme || '';
   const safeTheme = t === 'sky' ? '' : t;
   if (t === 'sky') {
