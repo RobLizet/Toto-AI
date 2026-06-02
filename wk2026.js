@@ -68,6 +68,10 @@ function renderWK2026Screen() {
           style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
           background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
           font-weight:700;color:var(--sub);cursor:pointer;">🏆 AI</button>
+        <button onclick="switchWKTab('oranje')" id="wk-tab-oranje"
+          style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
+          background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
+          font-weight:700;color:var(--sub);cursor:pointer;">🇳🇱 ORANJE</button>
       </div>
 
       <!-- Picks tab -->
@@ -158,6 +162,15 @@ function renderWK2026Screen() {
         </div>
       </div>
       </div> <!-- einde wk-tab-content-voorspelling -->
+
+      <!-- Oranje tab -->
+      <div id="wk-tab-content-oranje" style="display:none;">
+        <div id="oranje-content">
+          <div style="text-align:center;padding:2rem;font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--sub);">
+            ⟳ Laden...
+          </div>
+        </div>
+      </div>
     </div>
   `;
 
@@ -438,6 +451,122 @@ async function quickGenerateWKWidget() {
 }
 
 // ── WK Tab switcher ──────────────────────────────────────
+function loadOranjeTab() {
+  const el = document.getElementById('oranje-content');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="padding:.5rem;">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;gap:.8rem;background:linear-gradient(135deg,rgba(255,102,0,.15),rgba(255,140,0,.08));border:1.5px solid rgba(255,102,0,.3);border-radius:16px;padding:1rem;margin-bottom:.8rem;">
+        <div style="font-size:2.5rem;">🇳🇱</div>
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#ff6600;letter-spacing:.05em;line-height:1;">NEDERLAND</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.6);">WK 2026 · Groep G</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.8rem;">
+        <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#ff6600;">3e</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.5);">WK 2022</div>
+        </div>
+        <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#00BEC4;">G</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.5);">GROEP</div>
+        </div>
+        <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#fff;">26</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.5);">SPELERS</div>
+        </div>
+      </div>
+
+      <!-- Groepswedstrijden -->
+      <div style="background:rgba(255,255,255,.05);border-radius:14px;padding:.9rem;margin-bottom:.8rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#ff6600;margin-bottom:.6rem;">📅 WK PROGRAMMA</div>
+        ${[
+          {date:'12 jun', opp:'🇺🇸 USA', loc:'Dallas', time:'21:00'},
+          {date:'17 jun', opp:'🇸🇳 Senegal', loc:'New York', time:'18:00'},
+          {date:'21 jun', opp:'🇦🇹 Oostenrijk', loc:'Boston', time:'21:00'},
+        ].map(g => `
+          <div style="display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid rgba(255,255,255,.06);">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.4);width:3rem;">${g.date}</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:700;color:#fff;flex:1;">NL vs ${g.opp}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.5);">${g.time}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Selectie -->
+      <div style="background:rgba(255,255,255,.05);border-radius:14px;padding:.9rem;margin-bottom:.8rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:#ff6600;margin-bottom:.6rem;">👥 SELECTIE</div>
+        ${[
+          {pos:'GK', name:'Bart Verbruggen', club:'Brighton'},
+          {pos:'GK', name:'Mark Flekken', club:'Brentford'},
+          {pos:'DEF', name:'Virgil van Dijk', club:'Liverpool'},
+          {pos:'DEF', name:'Matthijs de Ligt', club:'Man United'},
+          {pos:'DEF', name:'Denzel Dumfries', club:'Inter'},
+          {pos:'DEF', name:'Nathan Aké', club:'Man City'},
+          {pos:'DEF', name:'Jurriën Timber', club:'Arsenal'},
+          {pos:'MID', name:'Frenkie de Jong', club:'Barcelona'},
+          {pos:'MID', name:'Tijjani Reijnders', club:'AC Milan'},
+          {pos:'MID', name:'Teun Koopmeiners', club:'Juventus'},
+          {pos:'MID', name:'Jerdy Schouten', club:'PSV'},
+          {pos:'FWD', name:'Cody Gakpo', club:'Liverpool'},
+          {pos:'FWD', name:'Memphis Depay', club:'Corinthians'},
+          {pos:'FWD', name:'Donyell Malen', club:'Dortmund'},
+          {pos:'FWD', name:'Brian Brobbey', club:'Ajax'},
+          {pos:'FWD', name:'Xavi Simons', club:'PSG'},
+        ].map(p => `
+          <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.04);">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
+              color:${p.pos==='FWD'?'#ff6600':p.pos==='MID'?'#00BEC4':p.pos==='DEF'?'#3b82f6':'#a855f7'};
+              width:2.2rem;">${p.pos}</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:.6rem;font-weight:700;color:#fff;flex:1;">${p.name}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.4);">${p.club}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Nieuws knop -->
+      <button onclick="loadOranjeNieuws()" id="oranje-nieuws-btn"
+        style="width:100%;padding:.8rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;
+        letter-spacing:.05em;background:linear-gradient(135deg,rgba(255,102,0,.8),rgba(255,140,0,.7));
+        color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:.6rem;">
+        📰 LAAD LAATSTE NIEUWS
+      </button>
+      <div id="oranje-nieuws-content"></div>
+    </div>
+  `;
+}
+
+async function loadOranjeNieuws() {
+  const btn = document.getElementById('oranje-nieuws-btn');
+  const el = document.getElementById('oranje-nieuws-content');
+  if (!el) return;
+  btn.textContent = '⟳ Nieuws laden...';
+  btn.disabled = true;
+  try {
+    const resp = await fetch('https://toto-proxy.zweetzakken.workers.dev/oranje-nieuws');
+    const data = await resp.json();
+    if (data.nieuws && data.nieuws.length) {
+      el.innerHTML = data.nieuws.map(n => `
+        <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.8rem;margin-bottom:.5rem;border-left:3px solid #ff6600;">
+          <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:700;color:#fff;margin-bottom:.25rem;">${n.titel}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.6);line-height:1.6;">${n.samenvatting}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.3);margin-top:.3rem;">${n.bron} · ${n.datum}</div>
+        </div>
+      `).join('');
+    } else {
+      el.innerHTML = '<div style="text-align:center;padding:1rem;font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.4);">Geen nieuws gevonden</div>';
+    }
+  } catch(e) {
+    el.innerHTML = '<div style="color:#dc2626;font-family:monospace;font-size:.5rem;padding:.5rem;">Fout: ' + e.message + '</div>';
+  }
+  btn.textContent = '🔄 Vernieuwen';
+  btn.disabled = false;
+}
+
 function switchWKTab(tab) {
   ['picks','schema','voorspelling'].forEach(t => {
     const content = document.getElementById('wk-tab-content-' + t);
