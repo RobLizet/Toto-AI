@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v107'; // v107: scansToday dag-reset fix, MAX_SCANS 8, league IDs 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v108'; // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1030,7 +1030,10 @@ async function runWeeklyCalibration(env) {
 async function runScan(env, force = false) {
   const today = new Date().toISOString().split('T')[0];
   const now = new Date();
-  const hour = now.getUTCHours() + 1;
+  // Zomertijd correctie: Nederland is UTC+2 (maart-oktober), UTC+1 (oktober-maart)
+  const month = now.getUTCMonth() + 1; // 1-12
+  const isDST = month >= 3 && month <= 10; // Zomertijd maart t/m oktober
+  const hour = now.getUTCHours() + (isDST ? 2 : 1);
 
   let scanFrom = 6, scanTo = 18, autoScanEnabled = true, maxPerDay = 5;
   try {
