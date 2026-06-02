@@ -1086,6 +1086,11 @@ async function runScan(env, force = false) {
       // ── Internationaal ──
       { id: 1,   s: 2026 }, // WK 2026
       { id: 4,   s: 2026 }, // WK kwalificatie Europa
+      { id: 10,  s: 2026 }, // International Friendlies (oefenwedstrijden)
+      { id: 5,   s: 2026 }, // Nations League
+      { id: 6,   s: 2026 }, // WK kwalificatie CONMEBOL
+      { id: 29,  s: 2026 }, // WK kwalificatie Afrika (CAF)
+      { id: 36,  s: 2026 }, // WK kwalificatie Azië (AFC)
       // ── Scandinavië (zomercompetities, volop actief) ──
       { id: 113, s: 2026 }, // Eliteserien Noorwegen
       { id: 103, s: 2026 }, // Allsvenskan Zweden
@@ -1105,7 +1110,7 @@ async function runScan(env, force = false) {
       { id: 848, s: 2026 }, // Conference League
       { id: 94,  s: 2024 }, // Primeira Liga Portugal
     ];
-    console.log('[Scan] Actieve leagues: WK + Scandinavië + Zuid-Amerika + MLS + Azië');
+    console.log('[Scan] Actieve leagues: WK + Friendlies + Nations League + Scandinavië + Zuid-Amerika + MLS + Azië');
   }
 
   // Leagues die UTC timezone gebruiken — date= werkt niet, gebruik next=15
@@ -1446,7 +1451,7 @@ async function runScanTest(env, leagueIds = [113, 103]) {
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
   // Seizoen-aware: Scandinavische + WK competities = 2026
-  const SEASON_2026 = new Set([1, 2, 3, 4, 71, 98, 103, 113, 119, 129, 239, 253, 292, 848]); // alle actieve leagues
+  const SEASON_2026 = new Set([1, 2, 3, 4, 5, 6, 10, 29, 36, 71, 98, 103, 113, 119, 129, 239, 253, 292, 848]); // alle actieve leagues
   const getSeason = (lid) => SEASON_2026.has(lid) ? 2026 : 2025;
 
   const log = [`[ScanTest] Start — leagues: ${leagueIds.join(', ')}, datum: ${today} + ${tomorrowStr}`];
