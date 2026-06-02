@@ -1747,6 +1747,9 @@ function parseJacksImport() {
     return;
   }
 
+  // Sla bets tijdelijk op voor gebruik door analyse/import
+  window._jacksPendingBets = bets;
+
   if (preview) {
     preview.innerHTML = `
       <div style="font-family:monospace;font-size:.55rem;color:#00BEC4;margin-bottom:.4rem;">
@@ -1757,11 +1760,25 @@ function parseJacksImport() {
           ${b.date} · ${b.match} · ${b.pick} @ ${b.odds} · €${b.stake} · ${b.status}
         </div>`).join('')}
       ${bets.length > 5 ? `<div style="font-family:monospace;font-size:.48rem;color:rgba(255,255,255,.5);">...en ${bets.length - 5} meer</div>` : ''}
+      <div style="display:flex;gap:.5rem;margin-top:.65rem;">
+        <button onclick="analyseJacksBets()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
+          background:linear-gradient(135deg,rgba(0,190,196,.15),rgba(0,190,196,.08));
+          border:1px solid rgba(0,190,196,.35);color:#00BEC4;font-family:monospace;
+          font-size:.56rem;font-weight:800;cursor:pointer;">
+          🤖 Laat Claude analyseren
+        </button>
+        <button onclick="confirmJacksTextImport()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
+          background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+          color:rgba(255,255,255,.7);font-family:monospace;font-size:.56rem;cursor:pointer;">
+          📥 Direct importeren
+        </button>
+      </div>
+      <div id="jacksAIAnalyse" style="margin-top:.65rem;"></div>
     `;
   }
 
-  // Sla op als bevestigd
-  if (!confirm(`${bets.length} bets importeren naar tracker?`)) return;
+  return; // Importeren gebeurt via knoppen hierboven
+  // (onderstaande code wordt alleen nog aangeroepen via confirmJacksTextImport)
 
   let imported = 0;
   bets.forEach(b => {
@@ -1792,6 +1809,132 @@ function parseJacksImport() {
   renderTracker();
   updateTrackerStats();
   showToast(`✅ ${imported} bets geïmporteerd van Jacks`);
+}
+
+// Directe import zonder analyse (via knop)
+function confirmJacksTextImport() {
+  const bets = window._jacksPendingBets || [];
+  if (!bets.length) return;
+  let imported = 0;
+  bets.forEach(b => {
+    const exists = state.tracker.bets.some(t =>
+      t.match === b.match && t.date === b.date && String(t.odds) === String(b.odds)
+    );
+    if (exists) return;
+    state.tracker.bets.unshift({
+      id: Date.now() + Math.random(),
+      match: b.match, date: b.date, pick: b.pick, odds: b.odds,
+      stake: b.stake, payout: b.payout, status: b.status,
+      source: 'jacks', bookmaker: 'Jacks',
+      note: 'Geïmporteerd van Jacks', markt: '1X2', score: null
+    });
+    imported++;
+  });
+  window._jacksPendingBets = [];
+  saveState();
+  closeJacksImport();
+  renderTracker();
+  updateTrackerStats();
+  showToast(`✅ ${imported} bets geïmporteerd van Jacks`);
+}
+
+// ── AI ANALYSE VAN GEÏMPORTEERDE JACKS BETS ──────────────
+async function analyseJacksBets() {
+  const bets = window._jacksPendingBets || [];
+  if (!bets.length) return;
+
+  const el = document.getElementById('jacksAIAnalyse');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div style="text-align:center;padding:.75rem 0;">
+      <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.4);">⏳ Claude analyseert je bets...</div>
+    </div>`;
+
+  // Bouw context op per bet
+  const betsCtx = bets.map((b, i) =>
+    `${i+1}. ${b.match} — Pick: ${b.pick === '1' ? 'Thuis wint' : b.pick === 'X' ? 'Gelijkspel' : 'Uit wint'} @ ${b.odds} | Inzet: €${b.stake} | Status: ${b.status === 'win' ? 'Gewonnen' : b.status === 'lose' ? 'Verloren' : 'Open'}`
+  ).join('\n');
+
+  // Stats berekenen
+  const settled = bets.filter(b => b.status === 'win' || b.status === 'lose');
+  const wins = bets.filter(b => b.status === 'win');
+  const hitrate = settled.length ? Math.round(wins.length / settled.length * 100) : null;
+  const roi = settled.length
+    ? parseFloat((settled.reduce((s,b) => s + (b.status==='win' ? (b.odds-1)*b.stake : -b.stake), 0) / settled.reduce((s,b) => s + b.stake, 0) * 100).toFixed(1))
+    : null;
+  const avgOdds = bets.length
+    ? parseFloat((bets.reduce((s,b) => s + b.odds, 0) / bets.length).toFixed(2))
+    : null;
+
+  try {
+    const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/anthropic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        system: `Je bent een vriendelijke betting coach die een gebruiker helpt zijn wedstrijd­keuzes te begrijpen.
+Analyseer de geïmporteerde bets en geef eerlijk, concreet advies in gewone taal.
+
+TOON: Direct, persoonlijk ("jij/je"), geen jargon. Maximaal 3 alinea's.
+STRUCTUUR — gebruik altijd deze 3 koppen met emoji:
+🎯 WAT OPVALT — 1-2 opvallende patronen (bijv. voorkeur voor odds-range, pick type, bepaalde competitie)
+💡 WAT DIT BETEKENT — Leg uit wat deze bets zeggen over de strategie. Gebruik de cijfers (hitrate, odds, ROI).
+✅ AANBEVELING — 1 concrete tip voor de volgende bet op basis van wat je ziet
+
+REGELS:
+- Wees eerlijk over risico's maar niet ontmoedigend
+- Gebruik de werkelijke cijfers uit de bets — geen vaagheden
+- Bij open bets: analyseer de keuze inhoudelijk (odds hoog/laag? logische pick?)
+- Max 200 woorden totaal`,
+        messages: [{
+          role: 'user',
+          content: `Mijn geïmporteerde bets van Jacks:\n\n${betsCtx}\n\n${hitrate !== null ? `Statistieken: ${hitrate}% hitrate, ROI ${roi >= 0 ? '+' : ''}${roi}%, gem. odds ${avgOdds}` : `${bets.filter(b=>b.status==='pending').length} open bet(s), nog geen resultaten`}\n\nGeef een korte analyse in het Nederlands.`
+        }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'Geen analyse beschikbaar.';
+
+    // Render analyse
+    const sectionColors = { '🎯': '#00BEC4', '💡': '#7c3aed', '✅': '#16a34a' };
+    const lines = text.split('\n');
+    let html = '';
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) { html += '<div style="height:.35rem;"></div>'; return; }
+      const secMatch = Object.keys(sectionColors).find(e => trimmed.startsWith(e));
+      if (secMatch) {
+        const color = sectionColors[secMatch];
+        html += `<div style="font-family:monospace;font-size:.52rem;font-weight:800;
+          color:\${color};margin:.6rem 0 .25rem;padding:.35rem .5rem;
+          background:\${color}15;border-left:3px solid \${color};border-radius:0 6px 6px 0;">
+          \${trimmed}</div>`;
+      } else {
+        html += `<div style="font-family:monospace;font-size:.48rem;color:rgba(255,255,255,.8);line-height:1.75;margin:.08rem 0;">\${trimmed}</div>`;
+      }
+    });
+
+    el.innerHTML = `
+      <div style="background:rgba(0,190,196,.04);border:1px solid rgba(0,190,196,.15);
+        border-radius:12px;padding:.7rem .8rem;margin-top:.2rem;">
+        <div style="font-family:monospace;font-size:.44rem;color:rgba(255,255,255,.35);
+          margin-bottom:.5rem;letter-spacing:.05em;">🤖 CLAUDE ANALYSE</div>
+        \${html}
+      </div>
+      <button onclick="confirmJacksTextImport()" style="width:100%;margin-top:.6rem;padding:.55rem;
+        border-radius:10px;background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.7));
+        color:#fff;border:none;font-family:monospace;font-size:.58rem;font-weight:800;cursor:pointer;">
+        📥 Importeren naar tracker
+      </button>`;
+
+  } catch(e) {
+    el.innerHTML = `<div style="font-family:monospace;font-size:.5rem;color:#ef4444;padding:.5rem;">
+      Fout bij analyse: \${e.message}</div>`;
+  }
 }
 
 
