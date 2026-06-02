@@ -569,7 +569,7 @@ async function loadOranjeNieuws() {
 }
 
 function switchWKTab(tab) {
-  ['picks','schema','voorspelling'].forEach(t => {
+  ['picks','schema','voorspelling','oranje'].forEach(t => {
     const content = document.getElementById('wk-tab-content-' + t);
     const btn = document.getElementById('wk-tab-' + t);
     if (content) content.style.display = t === tab ? 'block' : 'none';
@@ -579,6 +579,8 @@ function switchWKTab(tab) {
       btn.style.color = t === tab ? '#dc2626' : 'var(--sub)';
     }
   });
+  if (tab === 'oranje') loadOranjeTab();
+  if (tab === 'schema') loadWKSchema();
 }
 
 // ── WK Picks laden (uit Supabase via worker) ─────────────
