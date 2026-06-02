@@ -2387,8 +2387,8 @@ function renderScanLog() {
 
   function statCard(val, lbl, color) {
     return '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:14px;padding:.7rem .4rem;text-align:center;box-shadow:0 1px 6px rgba(26,31,60,.06);">'
-      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:' + color + ';">' + val + '</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:#64748b;margin-top:.15rem;letter-spacing:.03em;">' + lbl + '</div>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:' + color + ';">' + val + '</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:#64748b;margin-top:.15rem;letter-spacing:.03em;">' + lbl + '</div>'
       + '</div>';
   }
 
@@ -2405,7 +2405,7 @@ function renderScanLog() {
   let html = '';
 
     html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">'
-    + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--text);">SCAN LOG</div>'
+    + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:var(--text);">SCAN LOG</div>'
     + '<div style="display:flex;gap:.4rem;">'
     + '<button class="small-action-btn" onclick="verifyScanLog().then(n=>{showToast(n>0?n+\' picks geverifieerd\':\'Geen nieuwe resultaten\');renderScanLog();}).catch(e=>showToast(\'⚠ \'+e.message))">🔄 Verificeer</button>'
     + '<button class="small-action-btn" onclick="showScanLogStatsPopup()">📊 Stats</button>'
@@ -2419,21 +2419,21 @@ function renderScanLog() {
     + '<div style="display:flex;gap:.4rem;margin-bottom:.5rem;">'
     + '<input id="scanSearchQ" type="text" placeholder="🔍 Zoek wedstrijd, competitie..." value="' + (F.q||'') + '" '
     + 'oninput="window._scanFilter.q=this.value;renderScanLog()" '
-    + 'style="flex:1;padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:#0B1519;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:var(--text);outline:none;" />'
-    + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\',odds:\'\',sort:\'newest\',sharp:false};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
+    + 'style="flex:1;padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:#0B1519;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:var(--text);outline:none;" />'
+    + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\',odds:\'\',sort:\'newest\',sharp:false};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
     + '</div>'
     + '<div style="display:flex;gap:.3rem;flex-wrap:wrap;">'
-    + '<select onchange="window._scanFilter.conf=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.conf?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.conf=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.conf?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Conf</option>'
     + [6,7,8,9,10].map(c => '<option value="'+c+'"'+(F.conf===String(c)?' selected':'')+'>conf '+c+'</option>').join('')
     + '</select>'
-    + '<select onchange="window._scanFilter.pick=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.pick?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.pick=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.pick?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Pick type</option>'
     + '<option value="1"'+(F.pick==="1"?' selected':'')+'>🏠 Thuis</option>'
     + '<option value="X"'+(F.pick==="X"?' selected':'')+'>🤝 Gelijk</option>'
     + '<option value="2"'+(F.pick==="2"?' selected':'')+'>✈️ Uit</option>'
     + '</select>'
-    + '<select onchange="window._scanFilter.status=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.status?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.status=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.status?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Status</option>'
     + '<option value="win"'+(F.status==="win"?' selected':'')+'>✅ Win</option>'
     + '<option value="lose"'+(F.status==="lose"?' selected':'')+'>❌ Verlies</option>'
@@ -2441,7 +2441,7 @@ function renderScanLog() {
     + '</select>'
 
     // Odds range filter
-    + '<select onchange="window._scanFilter.odds=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.odds?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.odds=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.odds?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Odds</option>'
     + '<option value="1.0-1.5"'+(F.odds==="1.0-1.5"?' selected':'')+'>1.0–1.5</option>'
     + '<option value="1.5-2.0"'+(F.odds==="1.5-2.0"?' selected':'')+'>1.5–2.0</option>'
@@ -2451,7 +2451,7 @@ function renderScanLog() {
     + '</select>'
 
     // Sorteer optie
-    + '<select onchange="window._scanFilter.sort=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.sort!=="newest"?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.sort=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.sort!=="newest"?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="newest"'+(F.sort==="newest"?' selected':'')+'>🕐 Nieuwst</option>'
     + '<option value="value"'+(F.sort==="value"?' selected':'')+'>📈 Value%</option>'
     + '<option value="odds"'+(F.sort==="odds"?' selected':'')+'>🎯 Odds</option>'
@@ -2460,11 +2460,11 @@ function renderScanLog() {
 
     // Sharp money toggle
     + '<button onclick="window._scanFilter.sharp=!window._scanFilter.sharp;renderScanLog()" '
-    + 'style="padding:.28rem .6rem;border-radius:8px;border:1px solid ' + (F.sharp?'rgba(239,68,68,.4)':'rgba(255,255,255,0.09)') + ';background:' + (F.sharp?'rgba(239,68,68,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:' + (F.sharp?'#ef4444':'var(--text)') + ';cursor:pointer;white-space:nowrap;">'
+    + 'style="padding:.28rem .6rem;border-radius:8px;border:1px solid ' + (F.sharp?'rgba(239,68,68,.4)':'rgba(255,255,255,0.09)') + ';background:' + (F.sharp?'rgba(239,68,68,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:' + (F.sharp?'#ef4444':'var(--text)') + ';cursor:pointer;white-space:nowrap;">'
     + '🔥 Sharp' + (F.sharp?' ON':'') + '</button>'
 
     + '</div>'
-    + (activeFilters ? '<div style="margin-top:.4rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">' + allPicks.length + ' picks gevonden in ' + filteredLog.length + ' scans</div>' : '')
+    + (activeFilters ? '<div style="margin-top:.4rem;font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--muted);">' + allPicks.length + ' picks gevonden in ' + filteredLog.length + ' scans</div>' : '')
     + '</div>';
 
 
@@ -2478,23 +2478,23 @@ function renderScanLog() {
   // ROI curve grafiek
   if (settled.length >= 2) {
     html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.4rem;">📈 ROI CURVE</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:700;color:var(--text);margin-bottom:.4rem;">📈 ROI CURVE</div>'
       + '<canvas id="scanLogChart" height="80" style="width:100%;"></canvas>'
       + '</div>';
   }
 
   if (settled.length >= 5) {
     html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">📐 VALUE KALIBRATIE</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">📐 VALUE KALIBRATIE</div>'
       + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;">';
     Object.entries(vb).forEach(function(entry) {
       var range = entry[0], results = entry[1];
       var tot = results.length;
       var wr  = tot ? Math.round(results.filter(Boolean).length/tot*100) : null;
       html += '<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.5rem .3rem;">'
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:var(--muted);">' + range + '</div>'
-        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:' + (wr===null?'var(--muted)':hrColor(wr)) + ';">' + (wr===null?'—':wr+'%') + '</div>'
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:var(--muted);">' + tot + ' picks</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:var(--muted);">' + range + '</div>'
+        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:' + (wr===null?'var(--muted)':hrColor(wr)) + ';">' + (wr===null?'—':wr+'%') + '</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;color:var(--muted);">' + tot + ' picks</div>'
         + '</div>';
     });
     html += '</div></div>';
@@ -2502,14 +2502,14 @@ function renderScanLog() {
 
   if (Object.keys(byType).length) {
     html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">🎯 PER PICK TYPE</div>';
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">🎯 PER PICK TYPE</div>';
     Object.entries(byType).sort((a,b)=>b[1].total-a[1].total).forEach(function(entry) {
       var type = entry[0], s = entry[1];
       var hr = Math.round(s.wins/s.total*100);
       html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;width:2.5rem;">' + type + '</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:700;width:2.5rem;">' + type + '</div>'
         + bar(hr, hrColor(hr))
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:var(--muted);width:3.5rem;text-align:right;">' + hr + '% (' + s.total + ')</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;color:var(--muted);width:3.5rem;text-align:right;">' + hr + '% (' + s.total + ')</div>'
         + '</div>';
     });
     html += '</div>';
@@ -2517,14 +2517,14 @@ function renderScanLog() {
 
   if (Object.keys(byComp).length > 1) {
     html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(26,31,60,.1);border-radius:16px;padding:.8rem 1rem;margin-bottom:.8rem;box-shadow:0 2px 8px rgba(26,31,60,.05);">'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">🏆 PER COMPETITIE</div>';
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">🏆 PER COMPETITIE</div>';
     Object.entries(byComp).sort((a,b)=>b[1].total-a[1].total).slice(0,8).forEach(function(entry) {
       var comp = entry[0], s = entry[1];
       var hr = Math.round(s.wins/s.total*100);
       html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;">'
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + comp + '</div>'
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:' + hrColor(hr) + ';font-weight:700;">' + hr + '%</div>'
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:var(--muted);">' + s.total + 'x</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + comp + '</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;color:' + hrColor(hr) + ';font-weight:700;">' + hr + '%</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;color:var(--muted);">' + s.total + 'x</div>'
         + '</div>';
     });
     html += '</div>';
@@ -2572,12 +2572,12 @@ function renderScanLog() {
 
     html += '<div style="background:linear-gradient(135deg,rgba(0,190,196,.08),rgba(0,190,196,.06));border:1.5px solid rgba(0,190,196,.2);border-radius:16px;padding:.9rem 1rem;margin-bottom:.8rem;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;">'
-      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;background:linear-gradient(135deg,#00a8ad,#00BEC4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 ' + _milestone + ' PICKS ANALYSE</div>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;background:linear-gradient(135deg,#00a8ad,#00BEC4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">🏆 ' + _milestone + ' PICKS ANALYSE</div>'
       + '<span style="font-size:1.5rem;">' + face + '</span>'
       + '</div>'
 
       // Samenvatting
-      + '<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;margin-bottom:.65rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;line-height:1.8;color:rgba(255,255,255,.5);">'
+      + '<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;margin-bottom:.65rem;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;line-height:1.8;color:rgba(255,255,255,.5);">'
       + '<b style="color:#ffffff;">' + allPicks.length + ' picks</b> geanalyseerd &middot; '
       + '<b style="color:' + (hitrate>=40?'#00BEC4':hitrate>=30?'#d97706':'#dc2626') + ';">' + hitrate + '% hitrate</b> &middot; '
       + '<b style="color:' + (roi>=0?'#00BEC4':'#dc2626') + ';">' + (roi>=0?'+':'') + roi.toFixed(1) + '% ROI</b>'
@@ -2585,7 +2585,7 @@ function renderScanLog() {
 
       // Odds range analyse
       + '<div style="margin-bottom:.6rem;">'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.4rem;">📊 ODDS RANGE</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.4rem;">📊 ODDS RANGE</div>'
       + '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem;">'
       + Object.entries(byOdds).map(([range, results]) => {
           const tot = results.length;
@@ -2602,7 +2602,7 @@ function renderScanLog() {
 
       // Confidence analyse
       + '<div style="margin-bottom:.6rem;">'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.4rem;">🎯 CONFIDENCE</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.4rem;">🎯 CONFIDENCE</div>'
       + '<div style="display:flex;gap:.3rem;align-items:flex-end;height:2.5rem;">'
       + Object.entries(byConf).map(([conf, results]) => {
           const tot = results.length;
@@ -2619,14 +2619,14 @@ function renderScanLog() {
 
       // Top competities
       + (topComps.length ? '<div style="margin-bottom:.6rem;">'
-        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.4rem;">🏆 TOP COMPETITIES (min 3 picks)</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.4rem;">🏆 TOP COMPETITIES (min 3 picks)</div>'
         + topComps.map(([comp, s]) => {
             const hr = Math.round(s.wins/s.total*100);
             const avgRoi = (s.roi/s.total).toFixed(1);
             const col = hr>=50?'#00BEC4':hr>=35?'#d97706':'#dc2626';
             return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,0.09);">'
-              + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + comp + '</div>'
-              + '<div style="display:flex;gap:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">'
+              + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + comp + '</div>'
+              + '<div style="display:flex;gap:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;">'
               + '<span style="color:' + col + ';font-weight:700;">' + hr + '%</span>'
               + '<span style="color:' + (parseFloat(avgRoi)>=0?'#00BEC4':'#dc2626') + ';">' + (parseFloat(avgRoi)>=0?'+':'') + avgRoi + '% ROI</span>'
               + '<span style="color:rgba(255,255,255,.5);">' + s.total + 'x</span>'
@@ -2635,7 +2635,7 @@ function renderScanLog() {
         + '</div>' : '')
 
       // Beste pick type conclusie
-      + (bestType ? '<div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.5rem .7rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.5);">'
+      + (bestType ? '<div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.5rem .7rem;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:rgba(255,255,255,.5);">'
         + '💡 <b style="color:#ffffff;">Beste pick type:</b> <span style="color:#00BEC4;font-weight:700;">'
         + (bestType[0]==='1'?'Thuisploeg wint':bestType[0]==='2'?'Uitploeg wint':bestType[0]==='X'?'Gelijkspel':bestType[0])
         + '</span> · ' + Math.round(bestType[1].wins/bestType[1].total*100) + '% hitrate (' + bestType[1].total + 'x)'
@@ -2646,15 +2646,15 @@ function renderScanLog() {
 
     html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem;">'
       + '<div style="width:3px;height:1.1rem;background:#c9a84c;border-radius:2px;flex-shrink:0;"></div>'
-      + '<div style="font-family:\'Bebas Neue\',\'DM Sans\',sans-serif;font-size:1.1rem;letter-spacing:.04em;color:#ffffff;">SCANS</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;color:#c9a84c;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:99px;padding:.1rem .5rem;">' + log.length + '</div>'
+      + '<div style="font-family:\'Bebas Neue\',\'DM Sans\',sans-serif;font-size:1.4rem;letter-spacing:.04em;color:#ffffff;">SCANS</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;font-weight:700;color:#c9a84c;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:99px;padding:.1rem .5rem;">' + log.length + '</div>'
       + '</div>';
 
   if (!log.length) {
     html += '<div style="text-align:center;padding:2.5rem 1rem;background:rgba(255,255,255,.05);border-radius:16px;border:1px dashed rgba(201,168,76,.4);">'
       + '<div style="font-size:2rem;margin-bottom:.5rem;">🎯</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:#ffffff;font-weight:700;">Nog geen scans</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-top:.3rem;">Voer een value scan uit via de Scan &amp; Analyse tab</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;color:#ffffff;font-weight:700;">Nog geen scans</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;color:rgba(255,255,255,.5);margin-top:.3rem;">Voer een value scan uit via de Scan &amp; Analyse tab</div>'
       + '</div>';
   } else {
   // Compacte weergave: max 20 zichtbaar
@@ -2688,8 +2688,8 @@ function renderScanLog() {
       
       // Links: nummer + datum
       html += '<div style="display:flex;align-items:center;gap:.5rem;">';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#C9A84C;">#' + (log.length-si) + '</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;color:#C9A84C;">#' + (log.length-si) + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:rgba(255,255,255,.5);">';
       html += (function() {
           var times = scan.picks.filter(function(p){return !!p.matchTime;}).map(function(p){return new Date(p.matchTime).getTime();}).filter(function(t){return !isNaN(t);});
           if (!times.length) return scan.date||'';
@@ -2704,11 +2704,11 @@ function renderScanLog() {
       
       // Rechts: badges + smiley + chevron
       html += '<div style="display:flex;align-items:center;gap:.35rem;">';
-      if (sw) html += '<span style="background:rgba(0,190,196,.15);color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sw + 'W</span>';
-      if (sl) html += '<span style="background:rgba(220,38,38,.12);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sl + 'V</span>';
-      if (sp) html += '<span style="background:rgba(201,168,76,.12);color:#C9A84C;font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sp + '⏳</span>';
+      if (sw) html += '<span style="background:rgba(0,190,196,.15);color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sw + 'W</span>';
+      if (sl) html += '<span style="background:rgba(220,38,38,.12);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sl + 'V</span>';
+      if (sp) html += '<span style="background:rgba(201,168,76,.12);color:#C9A84C;font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sp + '⏳</span>';
       html += '<span style="font-size:.9rem;">' + scanFace + '</span>';
-      html += '<button class="delete-scan-btn" data-scan="' + scanId + '" style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:8px;padding:.15rem .35rem;font-size:.5rem;cursor:pointer;">🗑</button>';
+      html += '<button class="delete-scan-btn" data-scan="' + scanId + '" style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:8px;padding:.15rem .35rem;font-size:.62rem;cursor:pointer;">🗑</button>';
       html += '<svg class="scan-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>';
       html += '</div>';
       html += '</div>'; // einde header
@@ -2721,24 +2721,24 @@ function renderScanLog() {
         var pickId = String(p.fixtureId || p.id || '');
         var pickType = String(p.pick || '');
         var manualBtn = p.status === 'pending'
-          ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" data-match="' + (p.match||'').replace(/"/g,'') + '" style="font-family:monospace;font-size:.42rem;padding:2px 6px;border-radius:6px;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);color:#00BEC4;cursor:pointer;flex-shrink:0;">✏ Score</button>'
+          ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" data-match="' + (p.match||'').replace(/"/g,'') + '" style="font-family:monospace;font-size:.54rem;padding:2px 6px;border-radius:6px;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);color:#00BEC4;cursor:pointer;flex-shrink:0;">✏ Score</button>'
           : '';
-        var deletePickBtn = '<button class="delete-pick-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" style="font-family:monospace;font-size:.42rem;padding:2px 5px;border-radius:6px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);color:#dc2626;cursor:pointer;flex-shrink:0;">🗑</button>';
+        var deletePickBtn = '<button class="delete-pick-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" style="font-family:monospace;font-size:.54rem;padding:2px 5px;border-radius:6px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);color:#dc2626;cursor:pointer;flex-shrink:0;">🗑</button>';
         var vColor = (p.value||0) >= 20 ? '#00BEC4' : (p.value||0) >= 10 ? '#d97706' : 'rgba(255,255,255,.4)';
         var sharpBadge = p.sharp ? '<span style="font-size:.36rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">🔥 SHARP</span>' : '';
         
         html += '<div style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .9rem;border-top:1px solid rgba(255,255,255,.05);">';
         html += '<div style="font-size:.85rem;flex-shrink:0;margin-top:.05rem;">' + icon + '</div>';
         html += '<div style="flex:1;min-width:0;">';
-        html += '<div style="font-family:\'DM Sans\',sans-serif;font-size:.58rem;font-weight:700;color:#ffffff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + (sharpBadge?' '+sharpBadge:'') + '</div>';
-        html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);margin-top:.1rem;">'
+        html += '<div style="font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:700;color:#ffffff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + (sharpBadge?' '+sharpBadge:'') + '</div>';
+        html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.5);margin-top:.1rem;">'
           + '<span style="color:rgba(255,255,255,.8);">' + (p.pickLabel||p.pick) + '</span>'
           + ' <span style="color:rgba(255,255,255,.4);">@</span> <span style="color:#fff;font-weight:700;">' + p.odds + '</span>'
           + ' · <span style="color:' + vColor + ';font-weight:700;">' + (p.value||0).toFixed(1) + '% value</span>'
           + ' · conf ' + p.confidence + '/10'
           + '</div>';
         html += '</div>';
-        if (p.score) html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:#fff;background:rgba(255,255,255,.08);border-radius:8px;padding:.15rem .4rem;flex-shrink:0;">' + p.score + '</div>';
+        if (p.score) html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#fff;background:rgba(255,255,255,.08);border-radius:8px;padding:.15rem .4rem;flex-shrink:0;">' + p.score + '</div>';
         html += manualBtn + deletePickBtn;
         html += '</div>';
       });
@@ -2750,7 +2750,7 @@ function renderScanLog() {
   // Toon meer knop als er meer dan 20 zijn
   if (filteredLog.length > visibleLog.length) {
     var remaining = filteredLog.length - visibleLog.length;
-    html += '<button onclick="window._scanLogPage=(window._scanLogPage||1)+1;renderScanLog()" style="width:100%;margin-top:.4rem;padding:.6rem;border-radius:12px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);font-family:monospace;font-size:.5rem;font-weight:700;color:#C9A84C;cursor:pointer;">▼ Toon ' + remaining + ' oudere scans</button>';
+    html += '<button onclick="window._scanLogPage=(window._scanLogPage||1)+1;renderScanLog()" style="width:100%;margin-top:.4rem;padding:.6rem;border-radius:12px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);font-family:monospace;font-size:.62rem;font-weight:700;color:#C9A84C;cursor:pointer;">▼ Toon ' + remaining + ' oudere scans</button>';
   }
   
   // Reset pagina bij nieuwe filter
