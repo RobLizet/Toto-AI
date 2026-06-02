@@ -74,7 +74,7 @@ async function sb(env, table, method = 'GET', body = null, query = '') {
         'apikey': env.SUPABASE_KEY,
         'Authorization': `Bearer ${env.SUPABASE_KEY}`,
         'Prefer': query.includes('on_conflict')
-          ? 'resolution=merge-duplicates'
+          ? 'return=minimal,resolution=merge-duplicates'
           : method === 'POST' ? 'return=minimal' : 'return=representation',
       },
       body: body ? JSON.stringify(body) : null,
