@@ -705,7 +705,7 @@ WEGING:
 
 ANALYSE REGELS:
 - kans1+kansX+kans2 MOET exact 100 zijn
-- Thuisvoordeel: +3-5pp voor thuisploeg tenzij vorm/API anders aangeeft
+- Thuisvoordeel: +5-8pp voor thuisploeg tenzij vorm/API anders aangeeft
 - Vorm weegt zwaarder dan seizoensgemiddelden (laatste 5 wedstrijden)
 - GEWOGEN H2H: recente duels wegen zwaarder
 - BLESSURES: 🏥 sterspelers missen → pas kansen aan (-3 tot -8pp aanvalskans betrokken team)
@@ -714,16 +714,17 @@ ANALYSE REGELS:
 - CONVERGENTIE BONUS: als Poisson + API pred + vorm hetzelfde aangeven → confidence +1
 - DIVERGENTIE: als Poisson en API pred sterk afwijken (>15pp) → confidence -1, noteer in reason
 
+GELIJKSPEL WAARSCHUWING — KRITISCH:
+- Gelijkspel komt voor in ~25-28% van wedstrijden. NOOIT kansX boven 33% tenzij BEIDE teams gelijkspeelhistorie >30%
+- Kies NOOIT gelijkspel (X) als beste pick tenzij: kansX ≥ 33% EN Poisson kansX ≥ 30% EN H2H ≥ 30% gelijke spelen
+- Bij twijfel: kies ALTIJD 1 of 2, NOOIT X
+- Gelijkspel is statistisch de slechtst voorspelbare uitkomst
+
 VALUE DETECTIE:
 - reason = sterkste argument voor de pick (max 12 woorden, concreet met cijfers)
 - confidence 8-10: meerdere ankers bevestigen + consistente signalen
 - confidence 6-7: 1-2 ankers bevestigen, 1 conflicterend signaal
 - confidence 1-5: schaarse data of sterke divergentie tussen ankers
-
-GELIJKSPEL VERBOD:
-- Kies NOOIT gelijkspel (X) tenzij: kansX ≥ 35% EN H2H ≥ 35% gelijke spelen EN beide teams gelijke kracht
-- Bij twijfel: kies ALTIJD 1 of 2, nooit X
-- Gelijkspel is statistisch de slechtst voorspelbare uitkomst — vermijd het
 
 SCHAARSE DATA:
 - "DATA SCHAARS" label: confidence MAX 5, wijk max 5pp af van Poisson/API pred
@@ -1700,12 +1701,14 @@ CROSS-COMPETITIE SELECTIE:
 - Vermijd picks uit dezelfde competitie op dezelfde speelronde in de combi (hoge correlatie)
 - Odds tussen 1.40 en 4.00 — NOOIT onder 1.40
 - Geef voorkeur aan: thuisfavorieten met motivatieverschil, ploegen in goede vorm, duidelijke kwaliteitsverschillen
-- GELIJKSPEL VERBOD: kies NOOIT pick "X" (gelijkspel) — altijd "1" (thuis wint) of "2" (uit wint)
+- GELIJKSPEL VERBOD: kies NOOIT pick "X" (gelijkspel) in top3 of combi — altijd "1" (thuis wint) of "2" (uit wint)
+- Combi totale odds maximaal 12.00 — kies veiligere picks als het hoger uitkomt
+- Geef bij elke top3 pick een zwakPunt (1 zin over het grootste risico)
 
 {"top3":[
-  {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":8,"reden":"30-40 woorden met concrete redenen","factoren":["",""],"risico":""},
-  {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0,"reden":"","factoren":[],"risico":""},
-  {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0,"reden":"","factoren":[],"risico":""}
+  {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":8,"reden":"30-40 woorden met concrete redenen","factoren":["",""],"risico":"","zwakPunt":"1 zin over het risico"},
+  {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0,"reden":"","factoren":[],"risico":"","zwakPunt":""},
+  {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0,"reden":"","factoren":[],"risico":"","zwakPunt":""}
 ],
 "combi":{"legs":[
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":0},
@@ -1790,6 +1793,7 @@ function renderTop3EnCombi(result) {
       ${t.reden ? `<div style="font-size:.76rem;color:rgba(255,255,255,.85);line-height:1.65;margin-bottom:.4rem;padding:.45rem .6rem;background:rgba(255,255,255,.06);border-radius:7px;border-left:2.5px solid ${tvColor};">${t.reden}</div>` : ''}
       ${factoren.length ? `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-bottom:.3rem;">${factoren.map(f=>`<span style="font-family:monospace;font-size:.46rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.18);color:#00a8ad;">${f}</span>`).join('')}</div>` : ''}
       ${t.risico ? `<div style="font-family:monospace;font-size:.47rem;padding:3px 9px;border-radius:999px;display:inline-block;background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.18);color:#dc2626;">⚠ ${t.risico}</div>` : ''}
+      ${t.zwakPunt ? `<div style="font-family:monospace;font-size:.44rem;padding:3px 9px;border-radius:999px;display:inline-block;background:rgba(255,165,0,.07);border:1px solid rgba(255,165,0,.2);color:#d97706;margin-top:.2rem;">⚡ ${t.zwakPunt}</div>` : ''}
       <div style="font-family:monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin-top:.35rem;text-align:right;">Tik voor details →</div>
     </div>`;
   }).join('');
