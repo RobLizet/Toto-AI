@@ -1812,6 +1812,33 @@ async function handleDailyTip(env) {
 }
 
 // ── OneSignal push notificatie ────────────────────────────
+async function generateOranjeNieuws(env) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': env.ANTHROPIC_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{
+        role: 'user',
+        content: `Geef de 5 meest recente nieuwsberichten over het Nederlands Elftal en WK 2026 voorbereiding. 
+Vandaag is ${new Date().toLocaleDateString('nl-NL')}.
+Geef ALLEEN JSON terug, geen tekst erbuiten:
+[{"titel":"...","samenvatting":"2-3 zinnen","bron":"bijv. NOS Sport","datum":"bijv. 2 jun 2026"},...]
+Focus op: selectie, blessures, tactiek, wedstrijduitslagen, coach uitspraken.`
+      }]
+    })
+  });
+  const data = await response.json();
+  const text = data.content?.[0]?.text || '[]';
+  const clean = text.replace(/\`\`\`json|\`\`\`/g, '').trim();
+  return JSON.parse(clean);
+}
+
 async function sendPushNotification(env, title, body, data = {}) {
   const appId  = env.ONESIGNAL_APP_ID;
   const apiKey = env.ONESIGNAL_API_KEY;
@@ -2094,7 +2121,16 @@ export default {
       return handlePush(request, env);
     }
 
-    if (path === '/scan-test') {
+    if (path === '/oranje-nieuws') {
+    try {
+      const nieuws = await generateOranjeNieuws(env);
+      return json({ nieuws });
+    } catch(e) {
+      return json({ nieuws: [], error: e.message });
+    }
+  }
+
+  if (path === '/scan-test') {
       // Accepteer zowel HMAC token als simpel secret wachtwoord
       const token  = url.searchParams.get('token');
       const secret = url.searchParams.get('secret');
