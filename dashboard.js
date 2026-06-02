@@ -711,8 +711,7 @@ async function openPicksInsight() {
     streak > 0 ? `Huidige win streak: ${streak}` : '',
     `Per pick type — 1 (thuis): ${byType['1'].t > 0 ? Math.round(byType['1'].w/byType['1'].t*100)+'% hitrate, '+byType['1'].t+' picks' : 'geen data'}, X (gelijkspel): ${byType['X'].t > 0 ? Math.round(byType['X'].w/byType['X'].t*100)+'% hitrate, '+byType['X'].t+' picks' : 'geen data'}, 2 (uit): ${byType['2'].t > 0 ? Math.round(byType['2'].w/byType['2'].t*100)+'% hitrate, '+byType['2'].t+' picks' : 'geen data'}`,
     leagueList ? `Per competitie: ${leagueList}` : '',
-  ].filter(Boolean).join('
-');
+  ].filter(Boolean).join('\n');
 
   // AI aanroep via worker
   try {
@@ -749,8 +748,7 @@ Geef een heldere analyse in het Nederlands.` }]
     if (!el) return;
 
     // Parse secties op emoji koppen
-    const lines = text.split('
-');
+    const lines = text.split('\n');
     let html = '';
     const sectionColors = { '📈': '#00BEC4', '⚠️': '#d97706', '🔍': '#7c3aed', '💡': '#16a34a' };
 
