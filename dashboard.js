@@ -267,7 +267,10 @@ function renderDashboard() {
       onclick="showPicksModal()">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;padding-right:.5rem;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.5);margin-bottom:.5rem;">🎯 VOORTGANG NAAR <span style="color:#00BEC4;">100</span> PICKS</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.5);">🎯 VOORTGANG NAAR <span style="color:#00BEC4;">100</span> PICKS</div>
+            <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
+          </div>
           <div style="background:rgba(255,255,255,.08);border-radius:999px;height:7px;overflow:hidden;margin-bottom:.35rem;">
             <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#00BEC4,#00e5c8);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
           </div>
@@ -624,6 +627,177 @@ function openCompKeuze() {
 
   overlay.appendChild(sheet);
   document.body.appendChild(overlay);
+}
+
+// ── Picks Insight Modal — AI analyse van je statistieken ──
+async function openPicksInsight() {
+  // Verzamel alle statistieken
+  const scanLog = state.scanLog || [];
+  const allPicks = scanLog.flatMap(s => s.picks || []);
+  const DREMPEL = { minValue: 8, minConf: 6 };
+  const kwali = allPicks.filter(p => !p.isSparseData && (p.value||0) >= DREMPEL.minValue && (p.confidence||0) >= DREMPEL.minConf);
+  const settled = kwali.filter(p => p.status === 'win' || p.status === 'lose');
+  const wins = settled.filter(p => p.status === 'win');
+  const open = kwali.filter(p => !p.status || p.status === 'pending');
+  const hitrate = settled.length ? Math.round(wins.length / settled.length * 100) : null;
+  const roi = settled.length
+    ? parseFloat((settled.reduce((s,p) => s + (p.status==='win'?(p.odds-1):-1), 0) / settled.length * 100).toFixed(1))
+    : null;
+  const avgOdds = settled.length
+    ? parseFloat((settled.reduce((s,p) => s + (p.odds||0), 0) / settled.length).toFixed(2))
+    : null;
+  const avgValue = kwali.length
+    ? parseFloat((kwali.reduce((s,p) => s + (p.value||0), 0) / kwali.length).toFixed(1))
+    : null;
+
+  // Per pick type (1/X/2)
+  const byType = { '1': {w:0,t:0}, 'X': {w:0,t:0}, '2': {w:0,t:0} };
+  settled.forEach(p => {
+    const k = p.pick || '1';
+    if (byType[k]) { byType[k].t++; if (p.status==='win') byType[k].w++; }
+  });
+
+  // Per league
+  const byLeague = {};
+  settled.forEach(p => {
+    const k = p.leagueName || p.comp || 'Overig';
+    if (!byLeague[k]) byLeague[k] = {w:0,t:0,roi:0};
+    byLeague[k].t++;
+    if (p.status==='win') { byLeague[k].w++; byLeague[k].roi += (p.odds-1); }
+    else byLeague[k].roi -= 1;
+  });
+  const leagueList = Object.entries(byLeague)
+    .filter(([,d]) => d.t >= 2)
+    .map(([n,d]) => `${n}: ${Math.round(d.w/d.t*100)}% hitrate, ROI ${(d.roi/d.t*100).toFixed(1)}%, ${d.t} picks`)
+    .join(' | ');
+
+  // Win streak
+  let streak = 0;
+  for (const p of [...settled].reverse()) { if (p.status==='win') streak++; else break; }
+
+  // Bouw het modal op
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:flex;align-items:flex-end;';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'width:100%;max-height:88vh;overflow-y:auto;background:#0B1519;border-radius:20px 20px 0 0;padding:1rem 1rem 2rem;';
+
+  // Header
+  sheet.innerHTML = `
+    <div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:999px;margin:0 auto .75rem;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#ef4444;">📊 INZICHT IN JOUW CIJFERS</div>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <div id="insightContent">
+      <div style="text-align:center;padding:2rem 0;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.4);">⏳ AI analyseert jouw statistieken...</div>
+      </div>
+    </div>`;
+
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
+
+  // Bouw context string voor AI
+  const ctx = [
+    `Picks totaal: ${kwali.length}/100`,
+    `Afgerond: ${settled.length} (${wins.length} gewonnen, ${settled.length - wins.length} verloren)`,
+    `Open: ${open.length}`,
+    hitrate !== null ? `Hitrate: ${hitrate}%` : 'Hitrate: nog geen data',
+    roi !== null ? `ROI: ${roi >= 0 ? '+' : ''}${roi}%` : 'ROI: nog geen data',
+    avgOdds ? `Gemiddelde odds: ${avgOdds}` : '',
+    avgValue ? `Gemiddelde value: +${avgValue}%` : '',
+    streak > 0 ? `Huidige win streak: ${streak}` : '',
+    `Per pick type — 1 (thuis): ${byType['1'].t > 0 ? Math.round(byType['1'].w/byType['1'].t*100)+'% hitrate, '+byType['1'].t+' picks' : 'geen data'}, X (gelijkspel): ${byType['X'].t > 0 ? Math.round(byType['X'].w/byType['X'].t*100)+'% hitrate, '+byType['X'].t+' picks' : 'geen data'}, 2 (uit): ${byType['2'].t > 0 ? Math.round(byType['2'].w/byType['2'].t*100)+'% hitrate, '+byType['2'].t+' picks' : 'geen data'}`,
+    leagueList ? `Per competitie: ${leagueList}` : '',
+  ].filter(Boolean).join('
+');
+
+  // AI aanroep via worker
+  try {
+    const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/anthropic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 900,
+        system: `Je bent een vriendelijke maar eerlijke statistiek-analist voor sportweddenschappen. 
+Analyseer de statistieken van een gebruiker en leg duidelijk uit wat de cijfers betekenen.
+
+TOON: Toegankelijk, concreet, eerlijk. Geen jargon. Spreek de gebruiker direct aan met "jij/je".
+STRUCTUUR — gebruik altijd deze 4 secties met emoji koppen:
+1. 📈 WAT GAAT GOED — maximaal 2 positieve punten met uitleg waarom dit goed is
+2. ⚠️ WAT KAN BETER — maximaal 2 verbeterpunten, eerlijk maar constructief
+3. 🔍 OPVALLEND — 1-2 interessante patronen in de data (bijv. pick type, league, odds range)
+4. 💡 AANBEVELING — 1 concrete actie die de gebruiker morgen kan doen
+
+Wees CONCREET: gebruik de cijfers uit de context. Zeg niet "je ROI is goed" maar "je ROI van +X% betekent dat je per €10 inzet gemiddeld €Y winst maakt."
+Bij weinig data (< 10 picks): geef aan dat conclusies nog niet statistisch betrouwbaar zijn, maar geef wel eerste inzichten.`,
+        messages: [{ role: 'user', content: `Mijn statistieken:
+${ctx}
+
+Geef een heldere analyse in het Nederlands.` }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'Geen analyse beschikbaar.';
+
+    // Render de analyse mooi
+    const el = document.getElementById('insightContent');
+    if (!el) return;
+
+    // Parse secties op emoji koppen
+    const lines = text.split('
+');
+    let html = '';
+    const sectionColors = { '📈': '#00BEC4', '⚠️': '#d97706', '🔍': '#7c3aed', '💡': '#16a34a' };
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) { html += '<div style="height:.4rem;"></div>'; return; }
+
+      // Kijk of het een sectie kop is
+      const secMatch = Object.keys(sectionColors).find(e => trimmed.startsWith(e));
+      if (secMatch) {
+        const color = sectionColors[secMatch];
+        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:800;
+          color:${color};letter-spacing:.05em;margin:.75rem 0 .35rem;padding:.4rem .6rem;
+          background:${color}18;border-left:3px solid ${color};border-radius:0 8px 8px 0;">
+          ${trimmed}
+        </div>`;
+      } else if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
+        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.8);
+          line-height:1.7;padding:.15rem 0 .15rem .8rem;border-left:2px solid rgba(255,255,255,.1);">
+          ${trimmed.substring(1).trim()}
+        </div>`;
+      } else {
+        html += `<div style="font-size:.82rem;color:rgba(255,255,255,.85);line-height:1.75;margin:.1rem 0;">${trimmed}</div>`;
+      }
+    });
+
+    // Voeg stats samenvatting toe bovenaan
+    const statsBalk = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.85rem;">
+        ${[
+          ['PICKS', kwali.length + '/100', '#ffffff'],
+          ['HITRATE', hitrate !== null ? hitrate+'%' : '—', hitrate !== null && hitrate >= 50 ? '#00BEC4' : '#ef4444'],
+          ['ROI', roi !== null ? (roi>=0?'+':'')+roi+'%' : '—', roi !== null && roi >= 0 ? '#00BEC4' : '#ef4444'],
+          ['STREAK', streak > 0 ? '🔥'+streak : wins.length+'/'+settled.length, streak >= 3 ? '#00BEC4' : '#ffffff'],
+        ].map(([label, val, color]) => `
+          <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:.45rem .3rem;text-align:center;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:${color};line-height:1;">${val}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:rgba(255,255,255,.4);margin-top:2px;">${label}</div>
+          </div>`).join('')}
+      </div>`;
+
+    el.innerHTML = statsBalk + '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.75rem .85rem;">' + html + '</div>';
+
+  } catch(e) {
+    const el = document.getElementById('insightContent');
+    if (el) el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#ef4444;padding:1rem;text-align:center;">Fout: ${e.message}</div>`;
+  }
 }
 
 // ── Picks Modal ──────────────────────────────────────────
