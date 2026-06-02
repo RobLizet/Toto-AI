@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v110'; // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v111'; // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1235,7 +1235,13 @@ async function runScan(env, force = false) {
   const withOdds = batch.filter(m => oddsMap[m.fixtureId]);
   const withoutOdds = batch.filter(m => !oddsMap[m.fixtureId]);
 
-  const analyseBatch = withOdds.length > 0 ? withOdds : batch;
+  // Internationale oefenwedstrijden (league 10/5/6) ook analyseren zonder odds
+  // Ze worden gemarkeerd als isSparseData zodat confidence-drempel omhoog gaat
+  const INTL_LEAGUES = new Set([5, 6, 10, 29, 36]);
+  const withoutOddsIntl = withoutOdds.filter(m => INTL_LEAGUES.has(m.leagueId));
+  const analyseBatch = withOdds.length > 0
+    ? [...withOdds, ...withoutOddsIntl]  // altijd interlands toevoegen
+    : batch;
   const prompt = `Je bent een kwantitatief voetbal data-analist. Analyseer ELKE wedstrijd op basis van statistische verwachtingen.
 
 KRITISCHE REGELS:
@@ -1293,9 +1299,10 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     const confidence = parseInt(ai.c) || 5;
 
     const candidates = [
-      { pick: '1', label: `${m.home} wint`, aiKans: ai.h, bookOdds: odds.home },
-      { pick: 'X', label: 'Gelijkspel',     aiKans: ai.x, bookOdds: odds.draw },
-      { pick: '2', label: `${m.away} wint`, aiKans: ai.a, bookOdds: odds.away },
+      // Als geen odds beschikbaar: bereken fair odds uit AI-kansen (geen edge, maar wel analyse)
+      { pick: '1', label: `${m.home} wint`, aiKans: ai.h, bookOdds: odds?.home || parseFloat((100/(ai.h*0.9)).toFixed(2)) },
+      { pick: 'X', label: 'Gelijkspel',     aiKans: ai.x, bookOdds: odds?.draw || parseFloat((100/(ai.x*0.9)).toFixed(2)) },
+      { pick: '2', label: `${m.away} wint`, aiKans: ai.a, bookOdds: odds?.away || parseFloat((100/(ai.a*0.9)).toFixed(2)) },
     ];
 
     const fixtureHistory = todayHistory[m.fixtureId] || {};
@@ -1303,6 +1310,8 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
 
     candidates.forEach(c => {
       if (!c.bookOdds || c.bookOdds <= 1) return;
+      // Markeer als sparse als er geen echte bookmaker odds waren
+      const hasRealOdds = !!(odds?.home);
       const value = calculateValue(c.aiKans, c.bookOdds, c.pick);
       if (value < 3) return;
 
@@ -1377,6 +1386,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
           source: 'scheduled',
           sharp: !!sharpBoost,
           sharpMove: sharpBoost?.movement || null,
+          isSparseData: !hasRealOdds,  // true = geen bookmaker odds, fair-odds fallback gebruikt
         };
       }
     });
