@@ -666,3 +666,16 @@ canvas { background: transparent !important; }
 
 /* Sky theme card override */
 body.sky { --card: rgba(255,255,255,.85) !important; --card2: rgba(255,255,255,.7) !important; }
+
+/* ── Analyse pagina — betere leesbaarheid op mobiel ── */
+.screen-analyse .analyse-block,
+.screen-analyse .match-card {
+  font-size: 1rem !important;
+}
+.screen-analyse [style*="font-size:.4"],
+.screen-analyse [style*="font-size:.5"] {
+  font-size: .65rem !important;
+}
+.screen-analyse [style*="IBM Plex Mono"] {
+  letter-spacing: 0 !important;
+}
