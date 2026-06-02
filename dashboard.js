@@ -1,9 +1,61 @@
 // ═══════════════════════════════════════════════════════
-// dashboard.js v16
+// dashboard.js v31
+// v31: Reliability Score, CLV display, League stats kaart, Pick categorie,
+//      Verbeterde voortgangskaart met win streak, zwakPunt in daily tip
 // v16: Speeldatum + tijd in live kaarten + dedup 100-picks teller
 // v15: Live scores tab — pending picks met live stand + win/verlies, ververst 60s
 // v14: Killer stats resultatenpagina (wallet)
 // v13: "Waarom deze pick?" signalen, bullshitfilter waarschuwing
+
+// ── RELIABILITY SCORE ENGINE ──────────────────────────────
+// Combineert model confidence, league kwaliteit en value tot één score 0-100
+const LEAGUE_QUALITY_SCORES = {
+  2: 95, 3: 92, 848: 88,
+  39: 90, 140: 88, 78: 88, 135: 87, 61: 85,
+  88: 82, 94: 80, 40: 79, 113: 70, 103: 70,
+};
+
+function calcReliabilityScore(p) {
+  const modelScore = p.confidenceFinal
+    ? Math.min(100, p.confidenceFinal)
+    : Math.min(100, (p.confidence || 5) * 10);
+  const leagueScore = p.leagueId ? (LEAGUE_QUALITY_SCORES[p.leagueId] || 65) : 65;
+  const value = p.value || 0;
+  const odds = p.odds || 2.0;
+  let marktScore = value >= 20 ? 95 : value >= 15 ? 85 : value >= 10 ? 75 : value >= 8 ? 68 : 60;
+  if (odds >= 1.60 && odds <= 3.50) marktScore = Math.min(100, marktScore + 8);
+  if (odds < 1.40 || odds > 5.50)   marktScore = Math.max(0, marktScore - 15);
+  const score = Math.round(modelScore * 0.50 + leagueScore * 0.25 + marktScore * 0.25);
+  let label, color, barColor;
+  if      (score >= 80) { label = 'UITSTEKEND'; color = '#00BEC4';  barColor = 'linear-gradient(90deg,#00BEC4,#00e5c8)'; }
+  else if (score >= 70) { label = 'STERK';      color = '#16a34a';  barColor = 'linear-gradient(90deg,#16a34a,#22c55e)'; }
+  else if (score >= 60) { label = 'GOED';       color = '#b45309';  barColor = 'linear-gradient(90deg,#d97706,#fbbf24)'; }
+  else if (score >= 50) { label = 'MATIG';      color = '#d97706';  barColor = 'linear-gradient(90deg,#d97706,#fb923c)'; }
+  else                   { label = 'ZWAK';       color = '#dc2626';  barColor = 'linear-gradient(90deg,#dc2626,#f87171)'; }
+  return { score, label, color, barColor };
+}
+
+function getPickCategory(p) {
+  if (p.elite) return { label: '⭐ ELITE', color: '#00BEC4', bg: 'rgba(0,190,196,.15)' };
+  const r = calcReliabilityScore(p);
+  if (r.score >= 80) return { label: 'A+', color: '#00BEC4',  bg: 'rgba(0,190,196,.12)' };
+  if (r.score >= 70) return { label: 'A',  color: '#16a34a',  bg: 'rgba(22,163,74,.12)' };
+  if (r.score >= 55) return { label: 'B',  color: '#b45309',  bg: 'rgba(217,119,6,.12)' };
+  return                      { label: 'C',  color: '#94a3b8', bg: 'rgba(148,163,184,.1)' };
+}
+
+function renderCLVBadge(p) {
+  if (p.clv === undefined || p.clv === null) return '';
+  const clv = parseFloat(p.clv);
+  const pos = clv > 0;
+  const color = pos ? '#00BEC4' : '#dc2626';
+  const slotOdds = p.odds ? (parseFloat(p.odds) / (1 + clv / 100)).toFixed(2) : null;
+  return `<span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;
+    color:${color};background:${color}18;border:1px solid ${color}33;
+    border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">
+    ${pos ? '✓' : '✗'} CLV ${pos ? '+' : ''}${clv.toFixed(1)}%${slotOdds ? ` → sloot ${slotOdds}` : ''}
+  </span>`;
+}
 
 // ── Pick signalen — snelle uitleg per pick ────────────────
 function buildPickReasons(p) {
@@ -165,6 +217,11 @@ function renderDashboard() {
     ? (settledPicks.reduce((s,p) => s + (p.status==='win' ? (p.odds-1) : -1), 0) / settledPicks.length * 100)
     : null;
 
+  // Win streak berekenen (meest recente picks eerst)
+  let winStreak = 0;
+  const sortedSettled = [...settledPicks].reverse();
+  for (const sp of sortedSettled) { if (sp.status === 'win') winStreak++; else break; }
+
   // Value picks beschikbaar
   const valuePicks = (state.valueScans||[]).filter(s => s.value >= 5);
   const topValuePick = valuePicks.sort((a,b) => (b.value||0)-(a.value||0))[0];
@@ -236,9 +293,9 @@ function renderDashboard() {
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,0.09);margin-top:.55rem;padding-top:.5rem;">
         <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;line-height:1;">${kwaliPicks.filter(p=>!p.status||p.status==='pending').length}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">OPEN</div></div>
-        <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;line-height:1;">${settledPicks.length}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">AFGEROND</div></div>
-        <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;line-height:1;">${scanHitrate !== null ? scanHitrate+'%' : '—'}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
+        <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${scanHitrate !== null && scanHitrate >= 50 ? '#00BEC4' : scanHitrate !== null ? '#ef4444' : '#ffffff'};line-height:1;">${scanHitrate !== null ? scanHitrate+'%' : '—'}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
         <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${scanROI !== null && scanROI >= 0 ? '#00BEC4' : '#ef4444'};line-height:1;">${scanROI !== null ? (scanROI>=0?'+':'')+scanROI.toFixed(1)+'%' : '—'}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
+        <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${winStreak >= 3 ? '#00BEC4' : winStreak >= 1 ? '#d97706' : '#ffffff'};line-height:1;">${winStreak > 0 ? '🔥'+winStreak : winPicks.length+'/'+settledPicks.length}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">${winStreak > 0 ? 'STREAK' : 'W/L'}</div></div>
       </div>
     </div>
 
@@ -476,6 +533,7 @@ function renderDailyTipCard(tip) {
         <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:#f59e0b;margin-left:auto;">${stars}</span>
       </div>
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);line-height:1.65;">${tip.analyse||tip.tip||''}</div>
+      ${tip.zwakPunt ? `<div style="margin-top:.35rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:.25rem .5rem;border-radius:6px;background:rgba(255,165,0,.07);border:1px solid rgba(255,165,0,.2);color:#d97706;">⚡ Risico: ${tip.zwakPunt}</div>` : ''}
       <div style="margin-top:.45rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);opacity:.7;">
         🎲 ${conf}/10 confidence · ${tip.markt||'Uitslag'} · Uitsluitend entertainment & educatie
       </div>
@@ -619,20 +677,33 @@ function showPicksModal() {
 
     <!-- Picks lijst -->
     ${sorted.length === 0 ? '<div style="text-align:center;color:rgba(255,255,255,.5);font-size:.8rem;padding:1rem;">Nog geen picks — scan wedstrijden!</div>' :
-      sorted.map(p => `
-        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .7rem;margin-bottom:.4rem;display:flex;flex-direction:column;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
+      sorted.map(p => {
+        const rel = calcReliabilityScore(p);
+        const cat = getPickCategory(p);
+        const isSettled = p.status === 'win' || p.status === 'lose';
+        const clvHtml = (isSettled && p.clv !== undefined && p.clv !== null) ? ('<div style=\"margin-top:.3rem;\">' + renderCLVBadge(p) + '</div>') : '';
+        const scoreHtml = p.score ? ('<div style=\"margin-top:.25rem;font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:' + statusColor(p.status) + ';\">' + p.score + '</div>') : '';
+        return `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .7rem;margin-bottom:.4rem;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div style="flex:1;min-width:0;">
               <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
-              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">${p.pickLabel||p.pick||'?'} · @${p.odds||'?'} · +${p.value||0}% value</div>
+              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">${p.pickLabel||p.pick||'?'} · @${parseFloat(p.odds||2).toFixed(2)} · +${Math.round(p.value||0)}% value</div>
             </div>
-            <div style="text-align:right;margin-left:.5rem;">
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
               <div style="font-size:1rem;">${statusIcon(p.status)}</div>
-              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:${statusColor(p.status)};">${p.status==='win'?'GEWONNEN':p.status==='lose'?'VERLOREN':'OPEN'}</div>
+              <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:${rel.color};background:${rel.color}18;border-radius:4px;padding:.1rem .3rem;font-weight:700;">${cat.label}</span>
             </div>
           </div>
-          ${renderPickReasons(p)}
-        </div>`).join('')}
+          <div style="display:flex;align-items:center;gap:.4rem;margin:.3rem 0;">
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.34rem;color:rgba(255,255,255,.35);">RELIABILITY</div>
+            <div style="flex:1;background:rgba(255,255,255,.1);border-radius:999px;height:3px;overflow:hidden;">
+              <div style="background:${rel.barColor};height:100%;border-radius:999px;width:${rel.score}%;"></div>
+            </div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:${rel.color};font-weight:700;">${rel.score}/100</div>
+          </div>
+          ${renderPickReasons(p)}${clvHtml}${scoreHtml}
+        </div>`;
+      }).join('')}
     </div>
   `;
 
