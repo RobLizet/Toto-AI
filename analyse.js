@@ -328,69 +328,76 @@ function renderAnalyseScreen() {
 
   let html = '';
 
+  // ── STATISTIEKEN ─────────────────────────────────────
+  html += '<div class="analyse-block" style="padding:1.1rem;">';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;">';
+  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.05em;">📊 STATISTIEKEN</div>';
+  html += '<button onclick="switchScreen(\'analytics\')" style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:700;background:rgba(0,190,196,.12);border:1.5px solid rgba(0,190,196,.3);color:#00BEC4;border-radius:8px;padding:.3rem .6rem;cursor:pointer;">Volledig →</button>';
+  html += '</div>';
 
-  // ── 3. STATISTIEKEN ──
-  if (scanROI !== null || weekScans.length > 0) {
-    html += '<div class="analyse-block">';
-    html += '<div class="analyse-block-header">';
-    html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> STATISTIEKEN</div>';
-    html += '<div style="display:flex;align-items:center;gap:.4rem;">';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">' + settledPicks.length + '/100 picks</div>';
-    html += '<button onclick="switchScreen(\'analytics\')" style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);color:#00BEC4;border-radius:6px;padding:.15rem .4rem;cursor:pointer;">📊 Volledig</button>';
+  if (scanROI !== null) {
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-bottom:.9rem;">';
+    html += '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:.9rem .5rem;text-align:center;">';
+    html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.8rem;color:' + (scanHitrate>=50?'#00BEC4':'#dc2626') + ';line-height:1;">' + scanHitrate + '%</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);margin-top:.25rem;">HITRATE</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:.9rem .5rem;text-align:center;">';
+    html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.8rem;color:' + (scanROI>=0?'#00BEC4':'#dc2626') + ';line-height:1;">' + (scanROI>=0?'+':'') + scanROI + '%</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);margin-top:.25rem;">ROI</div>';
+    html += '</div>';
+    html += '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:.9rem .5rem;text-align:center;">';
+    html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.8rem;color:' + (isCalibrated?'#00BEC4':'#d97706') + ';line-height:1;">' + settledPicks.length + '</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);margin-top:.25rem;">PICKS</div>';
     html += '</div>';
     html += '</div>';
-
-    if (scanROI !== null) {
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin-bottom:.4rem;letter-spacing:.06em;">TRACKRECORD</div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.7rem;">';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (scanHitrate>=50?'#00BEC4':'#dc2626') + ';">' + scanHitrate + '%</div><div class="analyse-stat-label">HITRATE</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (scanROI>=0?'#00BEC4':'#dc2626') + ';">' + (scanROI>=0?'+':'') + scanROI + '%</div><div class="analyse-stat-label">ROI</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (isCalibrated?'#00BEC4':'#d97706') + ';">' + (isCalibrated?'✓':(settledPicks.length+'/10')) + '</div><div class="analyse-stat-label">' + (isCalibrated?'GECALIB.':'AI LEERT') + '</div></div>';
-      html += '</div>';
-      html += '<div class="analyse-progress-bar"><div style="background:linear-gradient(90deg,#00BEC4,#00a8ad);height:100%;border-radius:999px;width:' + Math.min(100,settledPicks.length) + '%;transition:width .4s;"></div></div>';
-    }
-
-    if (weekScans.length > 0) {
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin:' + (scanROI!==null?'.7rem':'0') + ' 0 .4rem;letter-spacing:.06em;">DEZE WEEK</div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.35rem;">';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#2563eb;">' + weekScans.length + '</div><div class="analyse-stat-label">SCANS</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#00a8ad;">' + weekPicks.length + '</div><div class="analyse-stat-label">PICKS</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:' + (weekHR!==null&&weekHR>=50?'#00BEC4':'#dc2626') + ';">' + (weekHR!==null?weekHR+'%':'—') + '</div><div class="analyse-stat-label">HITRATE</div></div>';
-      html += '<div class="analyse-stat-cell"><div class="analyse-stat-val" style="color:#00BEC4;">' + weekPicks.filter(p=>p.status==='pending').length + '</div><div class="analyse-stat-label">OPEN</div></div>';
-      html += '</div>';
-    }
+    html += '<div style="background:rgba(255,255,255,.06);border-radius:999px;height:8px;margin-bottom:.5rem;overflow:hidden;">';
+    html += '<div style="background:linear-gradient(90deg,#00BEC4,#00a8ad);height:100%;border-radius:999px;width:' + Math.min(100,settledPicks.length) + '%;transition:width .4s;"></div>';
     html += '</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.4);text-align:right;">' + settledPicks.length + ' / 100 picks gesettled</div>';
   }
 
-  // ── 4. COMBI TIPS ──
-  html += '<div class="analyse-block">';
-  html += '<div class="analyse-block-header"><div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4H4a1 1 0 0 0-1 1v3c0 3.3 2.7 6 6 6h6c3.3 0 6-2.7 6-6V5a1 1 0 0 0-1-1h-3"/><path d="M7 4h10v8a5 5 0 0 1-10 0V4z"/></svg></span> COMBI TIPS</div></div>';
-  html += '<button id="combiGenBtn" onclick="generateCombiTip()" class="analyse-btn-primary" style="background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.8));color:#fff;border:none;">⚡ GENEREER TOP 3 TIPS + COMBI</button>';
-  html += '<div id="combiCard" style="display:none;margin-top:.6rem;"></div>';
+  if (weekScans.length > 0) {
+    html += '<div style="margin-top:.9rem;padding-top:.9rem;border-top:1px solid rgba(255,255,255,.08);">';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.6rem;letter-spacing:.06em;">DEZE WEEK</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.5rem;">';
+    html += '<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:.7rem .3rem;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#2563eb;line-height:1;">' + weekScans.length + '</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.2rem;">SCANS</div></div>';
+    html += '<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:.7rem .3rem;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#00a8ad;line-height:1;">' + weekPicks.length + '</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.2rem;">PICKS</div></div>';
+    html += '<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:.7rem .3rem;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:' + (weekHR!==null&&weekHR>=50?'#00BEC4':'#dc2626') + ';line-height:1;">' + (weekHR!==null?weekHR+'%':'—') + '</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.2rem;">HITRATE</div></div>';
+    html += '<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:.7rem .3rem;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#00BEC4;line-height:1;">' + weekPicks.filter(p=>p.status==='pending').length + '</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.2rem;">OPEN</div></div>';
+    html += '</div></div>';
+  }
   html += '</div>';
 
-  // ── 5. CLAUDE INSIGHT — prominent ──
-  html += '<div id="claude-insight-block" style="margin-bottom:14px;">';
-  html += '<div onclick="toggleClaudeInsight()" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,190,196,.22),rgba(0,140,160,.15));border:2px solid rgba(0,190,196,.5);border-radius:18px 18px 18px 6px;padding:1rem 1.2rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 4px 20px rgba(0,190,196,.2),0 1px 0 rgba(0,190,196,.1) inset;">';
-  html += '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#00BEC4,#0077a8);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 10px rgba(0,190,196,.4);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8.01" y2="16"/><line x1="16" y1="16" x2="16.01" y2="16"/></svg></div>';
-  html += '<div style="flex:1;">';
-  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.15rem;color:#00BEC4;letter-spacing:.08em;line-height:1;">CLAUDE LEGT UIT</div>';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.6);margin-top:.2rem;">🤖 AI-analyse van jouw picks & data</div>';
+  // ── COMBI TIPS ────────────────────────────────────────
+  html += '<div class="analyse-block" style="padding:1.1rem;">';
+  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.05em;margin-bottom:.8rem;">🏆 COMBI TIPS</div>';
+  html += '<button id="combiGenBtn" onclick="generateCombiTip()" style="width:100%;padding:.8rem;font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;letter-spacing:.05em;background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;border-radius:12px;cursor:pointer;">⚡ GENEREER TOP 3 TIPS + COMBI</button>';
+  html += '<div id="combiCard" style="display:none;margin-top:.8rem;"></div>';
   html += '</div>';
-  html += '<span id="claudeInsightToggle" style="font-size:1.1rem;color:#00BEC4;font-weight:700;flex-shrink:0;">▼</span>';
+
+  // ── CLAUDE INSIGHT ────────────────────────────────────
+  html += '<div id="claude-insight-block" style="margin-bottom:14px;">';
+  html += '<div onclick="toggleClaudeInsight()" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,190,196,.22),rgba(0,140,160,.15));border:2px solid rgba(0,190,196,.5);border-radius:16px;padding:1.1rem 1.2rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 4px 20px rgba(0,190,196,.2);">';
+  html += '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#00BEC4,#0077a8);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg></div>';
+  html += '<div style="flex:1;">';
+  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#00BEC4;letter-spacing:.08em;line-height:1;">CLAUDE ANALYSEERT</div>';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.6);margin-top:.25rem;">AI-analyse van jouw picks & prestaties</div>';
+  html += '</div>';
+  html += '<span id="claudeInsightToggle" style="font-size:1.2rem;color:#00BEC4;font-weight:700;">▼</span>';
   html += '</div>';
   html += '<div style="width:0;height:0;margin-left:26px;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid rgba(0,190,196,.45);"></div>';
-  html += '<div id="claude-insight-content" style="display:none;background:rgba(0,190,196,.07);border:1.5px solid rgba(0,190,196,.25);border-radius:6px 18px 18px 18px;padding:1rem 1.1rem;margin-top:-1px;font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;line-height:1.8;color:rgba(255,255,255,.9);"></div>';
+  html += '<div id="claude-insight-content" style="display:none;background:rgba(0,190,196,.07);border:1.5px solid rgba(0,190,196,.25);border-radius:6px 16px 16px 16px;padding:1.1rem;margin-top:-1px;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;line-height:1.9;color:rgba(255,255,255,.9);"></div>';
   html += '</div>';
 
-
-  // ── 6. SCAN LOG ──
-  html += '<div class="analyse-block" id="analyse-scanlog-block">';
-  html += '<div class="analyse-block-header" onclick="renderScanLog();" style="cursor:pointer;">';
-  html += '<div class="analyse-block-title"><span class="analyse-block-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> SCAN LOG</div>';
-  html += '<span style="font-size:.7rem;color:rgba(255,255,255,.5);font-family:\'IBM Plex Mono\',monospace;">tik om te laden ▼</span>';
-  html += '</div>';
-  html += '<div id="scan-log-content"></div>';
+  // ── SCAN LOG — standaard ingeklapt ───────────────────
+  html += '<div class="analyse-block" id="analyse-scanlog-block" style="padding:0;overflow:hidden;">';
+  html += '<div class="analyse-block-header" onclick="(function(el){var c=document.getElementById(\'scan-log-content\');var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'block\';el.querySelector(\'.sl-chevron\').style.transform=open?\'rotate(0deg)\':\'rotate(180deg)\';if(!open&&typeof renderScanLog===\'function\')renderScanLog();}).call(null,this.closest(\'.analyse-block\'))" style="cursor:pointer;padding:1rem 1.1rem;">';
+  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">📋 SCAN HISTORY</div>';
+  html += '<div style="display:flex;align-items:center;gap:.5rem;">';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.4);">' + (state.scanLog||[]).length + ' scans</div>';
+  html += '<svg class="sl-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>';
+  html += '</div></div>';
+  html += '<div id="scan-log-content" style="display:none;"></div>';
   html += '</div>';
 
   screen.innerHTML = html;
