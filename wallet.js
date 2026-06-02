@@ -2108,7 +2108,39 @@ Datum formaat: dd-mm-yyyy`,
       }).join('');
     }
 
-    if (btn) btn.style.display = 'block';
+    // Vervang de enkele import knop door analyse + import knoppen
+    if (btn) btn.style.display = 'none'; // originele knop verbergen
+
+    // Voeg analyse + import knoppen toe als die nog niet bestaan
+    let actionBtns = document.getElementById('jacksPhotoActionBtns');
+    if (!actionBtns) {
+      actionBtns = document.createElement('div');
+      actionBtns.id = 'jacksPhotoActionBtns';
+      actionBtns.style.cssText = 'display:flex;gap:.5rem;margin-top:.5rem;';
+      btn?.parentNode?.insertBefore(actionBtns, btn);
+    }
+    actionBtns.style.display = 'flex';
+    actionBtns.innerHTML = `
+      <button onclick="analyseJacksPhotoBets()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
+        background:linear-gradient(135deg,rgba(0,190,196,.15),rgba(0,190,196,.08));
+        border:1px solid rgba(0,190,196,.35);color:#00BEC4;font-family:monospace;
+        font-size:.56rem;font-weight:800;cursor:pointer;">
+        🤖 Laat Claude analyseren
+      </button>
+      <button onclick="confirmJacksPhotoImport()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
+        background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+        color:rgba(255,255,255,.7);font-family:monospace;font-size:.56rem;cursor:pointer;">
+        📥 Direct importeren
+      </button>`;
+
+    // Container voor AI analyse output
+    let analyseEl = document.getElementById('jacksPhotoAIAnalyse');
+    if (!analyseEl) {
+      analyseEl = document.createElement('div');
+      analyseEl.id = 'jacksPhotoAIAnalyse';
+      actionBtns.parentNode?.insertBefore(analyseEl, actionBtns.nextSibling);
+    }
+    analyseEl.innerHTML = '';
 
   } catch(e) {
     if (status) { status.textContent = '⚠ Fout: ' + e.message; status.style.color = '#dc2626'; }
@@ -2204,6 +2236,98 @@ function confirmJacksPhotoImport() {
   updateTrackerStats();
   showToast(`✅ ${imported} bet${imported>1?'s':''} geïmporteerd van Jacks`);
   _jacksParsedBets = [];
+}
+
+// ── AI analyse van foto-geïmporteerde bets ────────────────
+async function analyseJacksPhotoBets() {
+  const bets = _jacksParsedBets || [];
+  if (!bets.length) return;
+
+  const el = document.getElementById('jacksPhotoAIAnalyse');
+  if (!el) return;
+
+  el.innerHTML = `<div style="text-align:center;padding:.75rem 0;">
+    <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.4);">⏳ Claude analyseert je bets...</div>
+  </div>`;
+
+  // Bouw context op — ondersteun zowel combis als enkelvoudige bets
+  const betsCtx = bets.map((b, i) => {
+    if (b.type === 'combi' && b.legs?.length) {
+      const legs = b.legs.map(l => `${l.match} (${l.pick || '?'} @ ${l.odds || '?'})`).join(', ');
+      return `${i+1}. COMBI @ ${b.totalOdds} — ${legs} | Inzet: €${b.stake||'?'} | Status: ${b.status||'open'}`;
+    }
+    const pickLabel = b.pick === '1' ? 'Thuis wint' : b.pick === 'X' ? 'Gelijkspel' : b.pick === '2' ? 'Uit wint' : (b.pick || '?');
+    return `${i+1}. ${b.match||'?'} — ${pickLabel} @ ${b.odds||'?'} | Inzet: €${b.stake||'?'} | Status: ${b.status||'open'}`;
+  }).join('\n');
+
+  // Basis stats
+  const settled = bets.filter(b => b.status === 'gewonnen' || b.status === 'verloren');
+  const wins = bets.filter(b => b.status === 'gewonnen');
+  const hitrate = settled.length ? Math.round(wins.length / settled.length * 100) : null;
+  const openBets = bets.filter(b => !b.status || b.status === 'open' || b.status === 'actief');
+
+  try {
+    const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/anthropic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        system: `Je bent een vriendelijke betting coach die een gebruiker helpt zijn wedstrijdkeuzes te begrijpen.
+Analyseer de bets en geef eerlijk, concreet advies in gewone taal. Max 200 woorden.
+
+TOON: Direct, persoonlijk ("jij/je"), geen jargon.
+STRUCTUUR — gebruik altijd deze 3 koppen met emoji:
+🎯 WAT OPVALT — patronen in de keuzes (odds-range, combi vs enkel, pick type)
+💡 WAT DIT BETEKENT — leg uit wat de keuze zegt over strategie, gebruik de cijfers
+✅ AANBEVELING — 1 concrete tip voor de volgende keer
+
+Bij open bets: analyseer ook de keuze inhoudelijk — zijn de odds logisch, risico van de combi?
+Bij combis: benoem altijd dat één verliezende leg de hele combi vernietigt.`,
+        messages: [{
+          role: 'user',
+          content: `Mijn bets van Jacks:\n\n${betsCtx}\n\n${hitrate !== null ? `Resultaat: ${hitrate}% hitrate over ${settled.length} gesettelde bets` : `${openBets.length} open bet(s) — nog geen resultaten`}\n\nGeef een korte analyse in het Nederlands.`
+        }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'Geen analyse beschikbaar.';
+
+    const sectionColors = { '🎯': '#00BEC4', '💡': '#7c3aed', '✅': '#16a34a' };
+    const lines = text.split('\n');
+    let html = '';
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) { html += '<div style="height:.3rem;"></div>'; return; }
+      const secMatch = Object.keys(sectionColors).find(e => trimmed.startsWith(e));
+      if (secMatch) {
+        const color = sectionColors[secMatch];
+        html += `<div style="font-family:monospace;font-size:.52rem;font-weight:800;color:${color};
+          margin:.6rem 0 .25rem;padding:.35rem .5rem;background:${color}15;
+          border-left:3px solid ${color};border-radius:0 6px 6px 0;">${trimmed}</div>`;
+      } else {
+        html += `<div style="font-family:monospace;font-size:.48rem;color:rgba(255,255,255,.8);line-height:1.75;">${trimmed}</div>`;
+      }
+    });
+
+    el.innerHTML = `
+      <div style="background:rgba(0,190,196,.04);border:1px solid rgba(0,190,196,.15);
+        border-radius:12px;padding:.7rem .8rem;margin-top:.5rem;">
+        <div style="font-family:monospace;font-size:.44rem;color:rgba(255,255,255,.35);
+          margin-bottom:.5rem;letter-spacing:.05em;">🤖 CLAUDE ANALYSE</div>
+        ${html}
+      </div>
+      <button onclick="confirmJacksPhotoImport()" style="width:100%;margin-top:.6rem;padding:.55rem;
+        border-radius:10px;background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.7));
+        color:#fff;border:none;font-family:monospace;font-size:.58rem;font-weight:800;cursor:pointer;">
+        📥 Importeren naar tracker
+      </button>`;
+
+  } catch(e) {
+    el.innerHTML = `<div style="font-family:monospace;font-size:.5rem;color:#ef4444;padding:.5rem;">
+      Fout bij analyse: ${e.message}</div>`;
+  }
 }
 
 function ptSaveFromScan(home, away, pick, pickLabel, odds, value, confidence, poissonUsed, reason, poissonK1, poissonKX, poissonK2, aiKans) {
