@@ -1874,23 +1874,23 @@ async function analyseJacksBets() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 800,
-        system: `Je bent een vriendelijke betting coach die een gebruiker helpt zijn wedstrijd­keuzes te begrijpen.
-Analyseer de geïmporteerde bets en geef eerlijk, concreet advies in gewone taal.
+        system: `Je bent een scherpe voetbalanalist die concrete wedstrijd-analyses geeft.
+Analyseer de specifieke wedstrijden en picks — geen generieke adviezen.
 
-TOON: Direct, persoonlijk ("jij/je"), geen jargon. Maximaal 3 alinea's.
+TOON: Direct, persoonlijk, concreet. Maximaal 3 alinea's.
 STRUCTUUR — gebruik altijd deze 3 koppen met emoji:
-🎯 WAT OPVALT — 1-2 opvallende patronen (bijv. voorkeur voor odds-range, pick type, bepaalde competitie)
-💡 WAT DIT BETEKENT — Leg uit wat deze bets zeggen over de strategie. Gebruik de cijfers (hitrate, odds, ROI).
-✅ AANBEVELING — 1 concrete tip voor de volgende bet op basis van wat je ziet
+🎯 DE WEDSTRIJDEN — Analyseer elke wedstrijd kort: wie is favoriet, waarom, hoe sterk is die keuze? Benoem specifieke sterktes/zwaktes van de teams.
+💡 DE KANSEN — Hoe realistisch is elke pick? Waar zit het risico in deze specifieke wedstrijden? Welke pick is het sterkst onderbouwd?
+✅ ADVIES — Concreet advies over deze specifieke bets. Zou jij dezelfde picks maken? Wat zou je aanpassen?
 
 REGELS:
-- Wees eerlijk over risico's maar niet ontmoedigend
-- Gebruik de werkelijke cijfers uit de bets — geen vaagheden
-- Bij open bets: analyseer de keuze inhoudelijk (odds hoog/laag? logische pick?)
-- Max 200 woorden totaal`,
+- Praat over de WEDSTRIJDEN zelf — niet over "strategie" of "risico in het algemeen"
+- Noem teamnamen expliciet
+- Geef een eerlijk oordeel per wedstrijd (sterk/zwak/onzeker)
+- Max 220 woorden totaal`,
         messages: [{
           role: 'user',
-          content: `Mijn geïmporteerde bets van Jacks:\n\n${betsCtx}\n\n${hitrate !== null ? `Statistieken: ${hitrate}% hitrate, ROI ${roi >= 0 ? '+' : ''}${roi}%, gem. odds ${avgOdds}` : `${bets.filter(b=>b.status==='pending').length} open bet(s), nog geen resultaten`}\n\nGeef een korte analyse in het Nederlands.`
+          content: `Mijn bets van Jacks:\n\n${betsCtx}\n\n${hitrate !== null ? `Eerdere resultaten: ${hitrate}% hitrate, ROI ${roi >= 0 ? '+' : ''}${roi}%, gem. odds ${avgOdds}` : `${bets.filter(b=>b.status==='pending').length} open bet(s)`}\n\nGeef een concrete wedstrijd-analyse in het Nederlands. Focus op de teams en picks zelf.`
         }]
       })
     });
