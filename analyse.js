@@ -328,6 +328,12 @@ function renderAnalyseScreen() {
 
   let html = '';
 
+  // ── SCAN KNOP ─────────────────────────────────────────
+  html += '<div style="padding:.2rem .1rem .6rem;display:flex;gap:.5rem;">';
+  html += '<button id="scanAllTodayBtn" onclick="scanAllTodayValue(\'today\')" style="flex:1;padding:.75rem .5rem;font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;letter-spacing:.06em;background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 16px rgba(0,190,196,.3);">⚡ SCAN VANDAAG</button>';
+  html += '<button id="scanTomorrowBtn" onclick="scanAllTodayValue(\'tomorrow\')" style="flex:1;padding:.75rem .5rem;font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;letter-spacing:.06em;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.8);border-radius:14px;cursor:pointer;">📅 SCAN MORGEN</button>';
+  html += '</div>';
+
   // ── STATISTIEKEN ─────────────────────────────────────
   html += '<div class="analyse-block" style="padding:1.1rem;">';
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;">';
