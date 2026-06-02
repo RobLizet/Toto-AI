@@ -179,6 +179,7 @@ function renderWK2026Screen() {
   // Laad WK picks
   loadWKPicks();
   loadWKSchema();
+  if (tab === 'oranje') loadOranjeTab();
 }
 
 // ── Cache laden ──────────────────────────────────────────
