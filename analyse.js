@@ -1533,13 +1533,15 @@ async function scanAllTodayValue(mode = 'today') {
       // Extra comps voor bredere coverage
       94, 179, 218, 207, 119, 103, 113, 197, 106, 283, 345,
       32, 34, 36, 1,
+      10, 6, 29,      // International Friendlies, WK kwal CONMEBOL, WK kwal Afrika
     ];
     const allMatches = [];
     const seen = new Set();
 
     await Promise.all(SCAN_LEAGUE_IDS.map(async leagueId => {
       try {
-        const season = leagueId === 1 ? 2026 : 2025;
+        const S2026 = new Set([1,2,3,4,5,6,10,29,36,71,103,113,119,129,239,253,292,848]);
+        const season = S2026.has(leagueId) ? 2026 : 2025;
         const dateParam = mode === 'tomorrow' ? tomorrowStr : todayStr;
         const r = await apiFetch(
           `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&date=${dateParam}&status=NS-1H-HT-2H`,
