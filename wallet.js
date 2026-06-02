@@ -1973,9 +1973,19 @@ function openJacksPhotoImport() {
         </div>
         <div id="jacksPhotoStatus" style="font-family:monospace;font-size:.55rem;text-align:center;padding:.5rem;display:none;"></div>
         <div id="jacksPhotoBets" style="margin-bottom:.6rem;"></div>
-        <div style="display:flex;gap:.5rem;margin-top:.5rem;">
-          <button onclick="closeJacksPhotoImport()" style="flex:1;padding:.5rem;border-radius:8px;background:rgba(0,0,0,.06);border:1px solid rgba(255,255,255,0.09);cursor:pointer;font-family:monospace;font-size:.6rem;">Annuleer</button>
-          <button id="jacksPhotoImportBtn" style="flex:1;padding:.5rem;border-radius:8px;background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.8));color:#fff;border:none;cursor:pointer;font-family:monospace;font-size:.6rem;font-weight:700;display:none;" onclick="confirmJacksPhotoImport()">📥 Importeren</button>
+        <div id="jacksPhotoActionBtns" style="display:none;gap:.5rem;margin-top:.5rem;">
+          <button onclick="analyseJacksPhotoBets()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
+            background:linear-gradient(135deg,rgba(0,190,196,.15),rgba(0,190,196,.08));
+            border:1px solid rgba(0,190,196,.35);color:#00BEC4;font-family:monospace;
+            font-size:.56rem;font-weight:800;cursor:pointer;">🤖 Laat Claude analyseren</button>
+          <button onclick="confirmJacksPhotoImport()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
+            background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+            color:rgba(255,255,255,.7);font-family:monospace;font-size:.56rem;cursor:pointer;">📥 Direct importeren</button>
+        </div>
+        <div id="jacksPhotoAIAnalyse" style="width:100%;"></div>
+        <div style="margin-top:.5rem;">
+          <button onclick="closeJacksPhotoImport()" style="width:100%;padding:.5rem;border-radius:8px;background:rgba(0,0,0,.06);border:1px solid rgba(255,255,255,0.09);cursor:pointer;font-family:monospace;font-size:.6rem;">Annuleer</button>
+          <button id="jacksPhotoImportBtn" style="display:none;"></button>
         </div>
       </div>`;
     document.body.appendChild(modal);
@@ -1990,6 +2000,10 @@ function openJacksPhotoImport() {
   if (status)  { status.style.display = 'none'; status.textContent = ''; }
   if (bets)    bets.innerHTML = '';
   if (btn)     btn.style.display = 'none';
+  const actionBtnsReset = document.getElementById('jacksPhotoActionBtns');
+  if (actionBtnsReset) actionBtnsReset.style.display = 'none';
+  const analyseReset = document.getElementById('jacksPhotoAIAnalyse');
+  if (analyseReset) analyseReset.innerHTML = '';
 }
 
 function closeJacksPhotoImport() {
@@ -2108,39 +2122,12 @@ Datum formaat: dd-mm-yyyy`,
       }).join('');
     }
 
-    // Vervang de enkele import knop door analyse + import knoppen
-    if (btn) btn.style.display = 'none'; // originele knop verbergen
-
-    // Voeg analyse + import knoppen toe als die nog niet bestaan
-    let actionBtns = document.getElementById('jacksPhotoActionBtns');
-    if (!actionBtns) {
-      actionBtns = document.createElement('div');
-      actionBtns.id = 'jacksPhotoActionBtns';
-      actionBtns.style.cssText = 'display:flex;gap:.5rem;margin-top:.5rem;';
-      btn?.parentNode?.insertBefore(actionBtns, btn);
-    }
-    actionBtns.style.display = 'flex';
-    actionBtns.innerHTML = `
-      <button onclick="analyseJacksPhotoBets()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
-        background:linear-gradient(135deg,rgba(0,190,196,.15),rgba(0,190,196,.08));
-        border:1px solid rgba(0,190,196,.35);color:#00BEC4;font-family:monospace;
-        font-size:.56rem;font-weight:800;cursor:pointer;">
-        🤖 Laat Claude analyseren
-      </button>
-      <button onclick="confirmJacksPhotoImport()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
-        background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
-        color:rgba(255,255,255,.7);font-family:monospace;font-size:.56rem;cursor:pointer;">
-        📥 Direct importeren
-      </button>`;
-
-    // Container voor AI analyse output
-    let analyseEl = document.getElementById('jacksPhotoAIAnalyse');
-    if (!analyseEl) {
-      analyseEl = document.createElement('div');
-      analyseEl.id = 'jacksPhotoAIAnalyse';
-      actionBtns.parentNode?.insertBefore(analyseEl, actionBtns.nextSibling);
-    }
-    analyseEl.innerHTML = '';
+    // Toon de analyse + import knoppen (staan al in de HTML)
+    if (btn) btn.style.display = 'none';
+    const actionBtns = document.getElementById('jacksPhotoActionBtns');
+    if (actionBtns) actionBtns.style.display = 'flex';
+    const analyseEl = document.getElementById('jacksPhotoAIAnalyse');
+    if (analyseEl) analyseEl.innerHTML = '';
 
   } catch(e) {
     if (status) { status.textContent = '⚠ Fout: ' + e.message; status.style.color = '#dc2626'; }
