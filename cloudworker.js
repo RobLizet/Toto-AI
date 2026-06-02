@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v105'; // v102: push naar Total Subscriptions segment (stabiel, geen ID nodig)
+const VERSION = 'v106'; // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
