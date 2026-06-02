@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v106'; // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v107'; // v107: scansToday dag-reset fix, MAX_SCANS 8, league IDs 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1176,9 +1176,13 @@ async function runScan(env, force = false) {
 
   if (!allMatches.length) {
     console.log('[Scan] Geen wedstrijden gevonden voor vandaag/morgen, stop');
-    const scansToday0 = ((await fb(env, 'scan_status/scansToday')) || 0) + 1;
-    // v103: hard limit — max 5 scans per dag om API kosten te beheersen
-    const MAX_SCANS_PER_DAY = 5;
+    // v107: reset teller als het een nieuwe dag is
+    const lastScanDate = await fb(env, 'scan_status/scanDate');
+    const rawScansToday = (await fb(env, 'scan_status/scansToday')) || 0;
+    const scansToday0 = (lastScanDate !== today) ? 1 : rawScansToday + 1;
+    if (lastScanDate !== today) console.log(`[Scan] Nieuwe dag — teller gereset (${lastScanDate} → ${today})`);
+    // v103: hard limit — max scans per dag
+    const MAX_SCANS_PER_DAY = 8; // v107: verhoogd van 5→8
     if (scansToday0 > MAX_SCANS_PER_DAY) {
       console.warn(`[Scan] Daglimiet bereikt: ${scansToday0-1}/${MAX_SCANS_PER_DAY} scans — stop`);
       return { ok: false, reason: 'daglimiet', scansToday: scansToday0 - 1 };
