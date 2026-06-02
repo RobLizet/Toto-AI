@@ -417,10 +417,14 @@ function getOddsBucket(odds) {
 }
 
 // Confidence Engine v1
-function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, leagueId, odds, calibFactor }) {
+function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, leagueId, odds, calibFactor, pick }) {
   const staticFactor = LEAGUE_FACTORS[leagueId] || 0.92;
-  const leagueFactor = calibFactor ? (staticFactor * 0.5 + calibFactor * 0.5) : staticFactor;
+  // Blend: 70% historisch calibratie, 30% statisch (meer stabiliteit)
+  const leagueFactor = calibFactor ? (staticFactor * 0.30 + calibFactor * 0.70) : staticFactor;
   const bucketFactor = ODDS_BUCKET_FACTORS[getOddsBucket(odds)] || 0.90;
+
+  // Draw penalty: gelijkspel is historisch moeilijker te voorspellen (~15% penalty)
+  const drawPenalty = pick === 'X' ? 0.85 : 1.0;
 
   const raw =
     (Math.min(modelProb, 100) * 0.40) +
@@ -428,7 +432,7 @@ function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, l
     (Math.min(dataQuality, 100) * 0.20) +
     (Math.min(marketSignal, 100) * 0.10);
 
-  const final = Math.max(0, Math.min(100, raw * leagueFactor * bucketFactor));
+  const final = Math.max(0, Math.min(100, raw * leagueFactor * bucketFactor * drawPenalty));
 
   return {
     raw: parseFloat(raw.toFixed(1)),
@@ -439,13 +443,15 @@ function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, l
   };
 }
 
-// Elite pick detectie
-function isElitePick({ confidenceFinal, value, odds }) {
+// Elite pick detectie — v31: gelijkspel nooit auto-elite, strengere criteria
+function isElitePick({ confidenceFinal, value, odds, pick, poissonUsed }) {
   return (
-    confidenceFinal >= 65 &&  // verlaagd van 72 → 65 (meer elite picks in 7-8 tier)
-    value >= 6 &&             // verlaagd van 8 → 6
-    odds >= 1.50 &&           // verlaagd van 1.60 → 1.50
-    odds <= 5.00              // verhoogd van 4.50 → 5.00
+    confidenceFinal >= 68 &&
+    value >= 8 &&
+    odds >= 1.55 &&
+    odds <= 4.80 &&
+    pick !== 'X' &&                          // gelijkspel nooit auto-elite
+    (poissonUsed || value >= 15)             // Poisson of hoge value vereist
   );
 }
 
@@ -1218,23 +1224,25 @@ async function runScan(env, force = false) {
   const withoutOdds = batch.filter(m => !oddsMap[m.fixtureId]);
 
   const analyseBatch = withOdds.length > 0 ? withOdds : batch;
-  const prompt = `Je bent een voetbalanalyst. Analyseer deze ${analyseBatch.length} wedstrijden en geef voor ELKE wedstrijd:
-1. Kans thuisploeg wint (0-100)
-2. Kans gelijkspel (0-100)  
-3. Kans uitploeg wint (0-100)
-4. Confidence in analyse (1-10)
+  const prompt = `Je bent een kwantitatief voetbal data-analist. Analyseer ELKE wedstrijd op basis van statistische verwachtingen.
 
-Houd rekening met: recente vorm, historische H2H, thuisvoordeel, competitieniveau.
+KRITISCHE REGELS:
+- Baseer kansen op historische doelpuntenpatronen en competitieniveau, NIET op teamnamen of reputatie
+- GELIJKSPEL WAARSCHUWING: Gelijkspel komt voor in slechts ~25-28% van alle wedstrijden. Overschat gelijkspelkansen NIET. Wees terughoudend met kansX boven 30% tenzij teams historisch veel gelijkspeelden
+- Thuisvoordeel is reëel: gemiddeld +5-8% kansverhoging voor thuisteam in Europese competities
+- Kleine competities (Noorwegen/Zweden/lagere divisies): data is onbetrouwbaarder, geef lagere confidence
+- Som van h+x+a moet exact 100 zijn
 
-Wedstrijden:
+WEDSTRIJDEN:
 ${analyseBatch.map((m, i) => {
   const odds = oddsMap[m.fixtureId];
   const oddsStr = odds ? ` | Odds: ${odds.home}/${odds.draw}/${odds.away}` : '';
-  return `${i+1}. ${m.home} vs ${m.away} (${m.leagueName})${oddsStr}`;
+  return `${i+1}. ${m.home} vs ${m.away} (${m.leagueName}, ${m.matchDate || 'datum?'})${oddsStr}`;
 }).join('\n')}
 
-Antwoord ALLEEN met een JSON array, elk object: {"h":50,"x":25,"a":25,"c":7}
-Geen uitleg, alleen de JSON array.`;
+Antwoord ALLEEN met een JSON array — geen tekst, geen uitleg, geen markdown:
+[{"h":52,"x":26,"a":22,"c":7},...]
+Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
 
   let aiResults = [];
   try {
@@ -1304,11 +1312,15 @@ Geen uitleg, alleen de JSON array.`;
         leagueId: m.leagueId,
         odds: c.bookOdds,
         calibFactor: leagueCalibration[String(m.leagueId)]?.factor || null,
+        pick: c.pick,
       });
 
-      if (conf.score < 5 || value < 3) return;
+      // Strengere drempel voor gelijkspel picks
+      const minConf = c.pick === 'X' ? 6 : 5;
+      const minValue = c.pick === 'X' ? 10 : 3;
+      if (conf.score < minConf || value < minValue) return;
 
-      const elite = isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds });
+      const elite = isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds, pick: c.pick, poissonUsed: false });
 
       const pickKey = `${m.fixtureId}_${c.pick}`;
       const existing = existingPicks[pickKey];
@@ -1514,22 +1526,23 @@ async function runScanTest(env, leagueIds = [113, 103]) {
   const analyseBatch = batch.filter(m => oddsMap[m.fixtureId]);
   const analyseBatchFull = analyseBatch.length > 0 ? analyseBatch : batch;
 
-  const prompt = `Je bent een voetbalanalyst. Analyseer deze ${analyseBatchFull.length} wedstrijden en geef voor ELKE wedstrijd:
-1. Kans thuisploeg wint (0-100)
-2. Kans gelijkspel (0-100)
-3. Kans uitploeg wint (0-100)
-4. Confidence in analyse (1-10)
+  const prompt = `Je bent een kwantitatief voetbal data-analist. Analyseer ELKE wedstrijd op basis van statistische verwachtingen.
 
-Houd rekening met: recente vorm, historische H2H, thuisvoordeel, competitieniveau.
+KRITISCHE REGELS:
+- Baseer kansen op historische doelpuntenpatronen en competitieniveau, NIET op teamnamen of reputatie
+- GELIJKSPEL WAARSCHUWING: Gelijkspel komt voor in slechts ~25-28% van alle wedstrijden. Overschat gelijkspelkansen NIET. Wees terughoudend met kansX boven 30%
+- Thuisvoordeel is reëel: gemiddeld +5-8% kansverhoging voor thuisteam in Europese competities
+- Som van h+x+a moet exact 100 zijn
 
-Wedstrijden:
+WEDSTRIJDEN:
 ${analyseBatchFull.map((m, i) => {
   const odds = oddsMap[m.fixtureId];
   const oddsStr = odds ? ` | Odds: ${odds.home}/${odds.draw}/${odds.away}` : ' | geen odds';
   return `${i+1}. ${m.home} vs ${m.away} (${m.leagueName}, ${m.matchDate})${oddsStr}`;
 }).join('\n')}
 
-Antwoord ALLEEN met een JSON array: [{"h":50,"x":25,"a":25,"c":7},...]
+Antwoord ALLEEN met een JSON array — geen tekst, geen uitleg:
+[{"h":52,"x":26,"a":22,"c":7},...]
 Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
 
   let aiResults = [];
@@ -1588,9 +1601,12 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
         leagueId: m.leagueId,
         odds: c.bookOdds,
         calibFactor: leagueCalibration[String(m.leagueId)]?.factor || null,
+        pick: c.pick,
       });
 
-      if (conf.score < 5) return;
+      const minConf = c.pick === 'X' ? 6 : 5;
+      const minValue = c.pick === 'X' ? 10 : 3;
+      if (conf.score < minConf || value < minValue) return;
 
       picks.push({
         match:      `${m.home} vs ${m.away}`,
@@ -1717,9 +1733,15 @@ async function generateDailyTip(env) {
     .map(p => `- ${p.matchName || '?'}: ${p.pickLabel} @ ${p.odds} (value: +${Math.round(p.value||0)}%, conf: ${p.confidence}/10, Poisson: ${p.poissonUsed ? 'ja' : 'nee'})`)
     .join('\n');
 
-  const prompt = `Je bent een voetbal betting analist. Kies uit onderstaande gekwalificeerde value picks de BESTE pick van de dag.
+  const prompt = `Je bent een voetbal betting analist. Kies de BESTE pick van de dag.
 
-Gekwalificeerde picks (value ≥8%, conf ≥6/10, Poisson geldig):
+Selectiecriteria (in volgorde van belang):
+1. Hoogste combinatie van value% EN confidence — niet alleen de hoogste value
+2. Poisson-onderbouwde picks krijgen voorkeur boven AI-only picks
+3. Vermijd gelijkspel (X) tenzij conf ≥8 en value ≥15%
+4. Odds tussen 1.60–3.50 zijn betrouwbaarder dan extremen
+
+Gekwalificeerde picks (value ≥8%, conf ≥6/10):
 ${picksText}
 
 Respond ONLY with valid JSON, no text outside JSON:
@@ -1731,8 +1753,9 @@ Respond ONLY with valid JSON, no text outside JSON:
   "value": 15,
   "confidence": 7,
   "markt": "Uitslag",
-  "analyse": "2-3 zinnen concrete onderbouwing met cijfers",
-  "tip": "1 zin samenvatting voor de gebruiker"
+  "analyse": "2-3 zinnen CONCRETE onderbouwing met specifieke cijfers",
+  "tip": "1 zin samenvatting voor de gebruiker",
+  "zwakPunt": "1 zin over het grootste risico bij deze pick"
 }`;
 
   let tipData = null;
@@ -1766,6 +1789,7 @@ Respond ONLY with valid JSON, no text outside JSON:
       markt:      parsed.markt || 'Uitslag',
       analyse:    parsed.analyse,
       tip:        parsed.tip,
+      zwakPunt:   parsed.zwakPunt || null,
       allPicks:   picks.slice(0, 3).map(p => ({
         match: p.matchName, label: p.pickLabel,
         odds: p.odds, value: p.value, confidence: p.confidence
