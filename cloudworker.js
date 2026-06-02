@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v109'; // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v110'; // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1452,7 +1452,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
 // Default: Eliteserien NO (113) + Allsvenskan SE (103), beide seizoen 2026
 // Gebruik: /scan-test?token=HMAC&league=113,103
 // Geeft volledige verbose output: fixtures, odds, AI, value picks, verdict
-async function runScanTest(env, leagueIds = [113, 103]) {
+async function runScanTest(env, leagueIds = [10, 5, 113, 103]) { // 10=Friendlies, 5=Nations League
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
@@ -1467,9 +1467,22 @@ async function runScanTest(env, leagueIds = [113, 103]) {
   const allFixtures = [];
   const seen = new Set();
 
+  // Internationale leagues: gebruik next=15 ipv date= (geeft betere resultaten)
+  const NEXT_LEAGUES_TEST = new Set([10, 5, 6, 29, 36, 113, 103, 119, 129, 253, 71, 239, 292, 98]);
+
   await Promise.all(leagueIds.flatMap(lid => {
     const season = getSeason(lid);
     log.push(`[ScanTest] League ${lid} → seizoen ${season}`);
+    if (NEXT_LEAGUES_TEST.has(lid)) {
+      return [apif(`/fixtures?league=${lid}&season=${season}&next=20`, env)
+        .then(fixtures => {
+          (fixtures || []).forEach(f => {
+            const id = f.fixture?.id;
+            if (id && !seen.has(id)) { seen.add(id); allFixtures.push(f); }
+          });
+        })
+        .catch(e => log.push(`[ScanTest] Fixtures fout league ${lid}: ${e.message}`))];
+    }
     return [today, tomorrowStr].map(date =>
       apif(`/fixtures?league=${lid}&season=${season}&date=${date}&timezone=Europe/Amsterdam`, env)
         .then(fixtures => {
