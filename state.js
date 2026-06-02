@@ -1,9 +1,10 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v32: Versie sync fix — commentaar klopt nu met APP_VERSION
+// v33: App versie naar v25 — Reliability Score, CLV, draw bias fix,
+//      win streak, pick categorieën, verbeterde AI prompts
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v24.1';
+const APP_VERSION = 'v25.0';
 
 const STATE_KEY = 'totoai_state';
 
