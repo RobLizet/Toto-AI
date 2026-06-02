@@ -1,10 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v33: App versie naar v25 — Reliability Score, CLV, draw bias fix,
-//      win streak, pick categorieën, verbeterde AI prompts
+// v34: v25.1 — Jacks import Claude analyse knop
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v25.0';
+const APP_VERSION = 'v25.1';
 
 const STATE_KEY = 'totoai_state';
 
