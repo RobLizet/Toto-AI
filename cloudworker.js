@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v108'; // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v109'; // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1117,7 +1117,7 @@ async function runScan(env, force = false) {
   }
 
   // Leagues die UTC timezone gebruiken — date= werkt niet, gebruik next=15
-  const NEXT_LEAGUES = new Set([113, 103, 119, 129, 253, 71, 239, 292, 98]);
+  const NEXT_LEAGUES = new Set([10, 5, 6, 29, 36, 113, 103, 119, 129, 253, 71, 239, 292, 98]); // 10=Friendlies, 5=NL, 6/29/36=WK kwal
 
   const SCAN_LEAGUES = leagueConfig.map(l => l.id);
 
