@@ -35,15 +35,15 @@ function getActiveCOMPLIST() {
     { key:'greece',      flag:'🇬🇷', name:'Super League GR' },
   ];
   const INTERNATIONAAL = [
-    { key:'nations',      flag:'🌍', name:'Nations League' },
-    { key:'intvriendsch', flag:'🌍', name:'Int. Vriendsch.' },
+    { key:'nations',        flag:'🏴',  name:'Nations League' },
+    { key:'intvriendsch',   flag:'🤝',  name:'Int. Vriendsch.' },
     { key:'wk_kwal_europa', flag:'🇪🇺', name:'WK Kwal. Europa' },
-    { key:'wk_kwal_latam',  flag:'🌎', name:'WK Kwal. CONMEBOL' },
-    { key:'wk_kwal_azie',   flag:'🌏', name:'WK Kwal. Azië' },
-    { key:'copaamerica',    flag:'🌎', name:'Copa América' },
-    { key:'goldcup',        flag:'🌎', name:'Gold Cup' },
-    { key:'africup',        flag:'🌍', name:'Africa Cup' },
-    { key:'asiancup',       flag:'🌏', name:'Asian Cup' },
+    { key:'wk_kwal_latam',  flag:'🌎',  name:'WK Kwal. CONMEBOL' },
+    { key:'wk_kwal_azie',   flag:'🌏',  name:'WK Kwal. Azië' },
+    { key:'copaamerica',    flag:'🏆',  name:'Copa América' },
+    { key:'goldcup',        flag:'🥇',  name:'Gold Cup' },
+    { key:'africup',        flag:'🌍',  name:'Africa Cup' },
+    { key:'asiancup',       flag:'🌏',  name:'Asian Cup' },
   ];
 
   if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EXTRA, ...OVERIG];
@@ -106,22 +106,24 @@ function renderWedstrijdenScreen() {
 
     <!-- Competitie tiles - compact grid -->
     <div style="margin-bottom:.6rem;">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem;" id="compGrid">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;" id="compGrid">
         ${COMP_LIST.map(c => {
           const isActive = state.activeComp === c.key;
           const isFav = favs.includes(c.key);
-          const shortName = c.name.length > 8 ? c.name.split(' ')[0] : c.name;
+          const shortName = c.name.length > 10 ? c.name.split(' ').slice(0,2).join(' ') : c.name;
           return `<div class="comp-chip${isActive?' active':''}${isFav?' fav':''}" id="comp-${c.key}"
-            style="flex-direction:column;padding:.4rem .2rem;text-align:center;border-radius:12px;
-            cursor:pointer;background:${isActive?'rgba(0,190,196,.12)':'rgba(255,255,255,.04)'};
-            border:1.5px solid ${isActive?'rgba(0,190,196,.5)':'rgba(255,255,255,.1)'};"
+            style="flex-direction:column;padding:.6rem .3rem;text-align:center;border-radius:14px;
+            cursor:pointer;background:${isActive?'rgba(0,190,196,.15)':'rgba(255,255,255,.05)'};
+            border:1.5px solid ${isActive?'rgba(0,190,196,.6)':'rgba(255,255,255,.1)'};
+            position:relative;"
             ontouchstart="handleCompTouchStart('${c.key}',event)"
             ontouchend="handleCompTouchEnd('${c.key}')"
             onclick="handleCompTap('${c.key}')">
-            <div style="font-size:1.1rem;line-height:1.2;">${c.flag}</div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;
-              color:${isActive?'#00BEC4':'rgba(255,255,255,.85)'};overflow:hidden;white-space:nowrap;
-              text-overflow:ellipsis;max-width:100%;padding:0 2px;">${shortName}</div>
+            <div style="font-size:1.5rem;line-height:1.3;margin-bottom:.15rem;">${c.flag}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+              color:${isActive?'#00BEC4':'rgba(255,255,255,.9)'};overflow:hidden;white-space:nowrap;
+              text-overflow:ellipsis;max-width:100%;padding:0 3px;line-height:1.3;">${shortName}</div>
+            ${isFav ? '<div style="position:absolute;top:4px;right:5px;font-size:.6rem;">✓</div>' : ''}
           </div>`;
         }).join('')}
       </div>
