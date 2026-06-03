@@ -3,7 +3,7 @@
 // v36: v25.7 — Widget 48u filter voor oude open picks
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v25.8';
+const APP_VERSION = 'v25.9';
 
 const STATE_KEY = 'totoai_state';
 
