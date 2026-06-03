@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v34: v25.1 — Jacks import Claude analyse knop
+// v35: v25.6 — Widget preview pagina toegevoegd
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v25.5';
+const APP_VERSION = 'v25.6';
 
 const STATE_KEY = 'totoai_state';
 
