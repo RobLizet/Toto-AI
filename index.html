@@ -34,6 +34,22 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script>
+  // Voorkom Google Wachtwoordmanager popup bij tab wissel
+  document.addEventListener('DOMContentLoaded', () => {
+    const disableAutocomplete = () => {
+      document.querySelectorAll('input').forEach(el => {
+        el.setAttribute('autocomplete', 'new-password');
+        el.setAttribute('data-lpignore', 'true');
+        el.setAttribute('data-form-type', 'other');
+      });
+    };
+    disableAutocomplete();
+    // Ook na dynamisch renderen (MutationObserver)
+    const obs = new MutationObserver(disableAutocomplete);
+    obs.observe(document.body, { childList: true, subtree: true });
+  });
+  </script>
 </head>
 <body>
 
