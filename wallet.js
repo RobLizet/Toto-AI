@@ -2267,21 +2267,20 @@ async function analyseJacksPhotoBets() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 800,
-        system: `Je bent een professionele voetbalanalist. Geef een technische voetbalanalyse per wedstrijd.
+        system: `Je bent een vriendelijke betting coach die een gebruiker helpt zijn wedstrijdkeuzes te begrijpen.
+Analyseer de bets en geef eerlijk, concreet advies in gewone taal. Max 200 woorden.
 
-STRUCTUUR — gebruik altijd precies deze 3 koppen:
-⚽ PER WEDSTRIJD — Analyseer elke wedstrijd technisch apart. Benoem beide teams, wie favoriet is, recente vorm, sterktes/zwaktes, sleutelspelers. Geef per wedstrijd een kans-inschatting (bijv: "~70% winkans Nederland").
-🔍 KWALITEIT PICKS — Welke pick heeft de meeste voetbal-logica? Welke is het meest onzeker en waarom?
-✅ CONCLUSIE — Goede combinatie puur op basis van voetbalkwaliteiten? Zijn er betere alternatieven?
+TOON: Direct, persoonlijk ("jij/je"), geen jargon.
+STRUCTUUR — gebruik altijd deze 3 koppen met emoji:
+🎯 WAT OPVALT — patronen in de keuzes (odds-range, combi vs enkel, pick type)
+💡 WAT DIT BETEKENT — leg uit wat de keuze zegt over strategie, gebruik de cijfers
+✅ AANBEVELING — 1 concrete tip voor de volgende keer
 
-REGELS:
-- Schrijf als voetbalanalist — NOOIT over geld, inzetten of "combi-strategie"
-- Noem altijd beide teamnamen met concrete voetbalfeitjes
-- Gebruik voetbalkennis: vorm, competitiepositie, H2H, sleutelspelers
-- Max 280 woorden`,
+Bij open bets: analyseer ook de keuze inhoudelijk — zijn de odds logisch, risico van de combi?
+Bij combis: benoem altijd dat één verliezende leg de hele combi vernietigt.`,
         messages: [{
           role: 'user',
-          content: `Voetbalanalyse voor deze picks:\n\n${betsCtx}\n\nGeef een technische voetbalanalyse in het Nederlands.`
+          content: `Mijn bets van Jacks:\n\n${betsCtx}\n\n${hitrate !== null ? `Resultaat: ${hitrate}% hitrate over ${settled.length} gesettelde bets` : `${openBets.length} open bet(s) — nog geen resultaten`}\n\nGeef een korte analyse in het Nederlands.`
         }]
       })
     });
