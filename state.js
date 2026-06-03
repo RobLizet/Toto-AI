@@ -3,7 +3,7 @@
 // v34: v25.1 — Jacks import Claude analyse knop
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v25.1';
+const APP_VERSION = 'v25.2';
 
 const STATE_KEY = 'totoai_state';
 
