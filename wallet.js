@@ -2306,20 +2306,21 @@ async function analyseJacksPhotoBets() {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 800,
-        system: `Je bent een vriendelijke betting coach die een gebruiker helpt zijn wedstrijdkeuzes te begrijpen.
-Analyseer de bets en geef eerlijk, concreet advies in gewone taal. Max 200 woorden.
+        system: `Je bent een professionele voetbalanalist. Geef een technische voetbalanalyse per wedstrijd.
 
-TOON: Direct, persoonlijk ("jij/je"), geen jargon.
-STRUCTUUR — gebruik altijd deze 3 koppen met emoji:
-🎯 WAT OPVALT — patronen in de keuzes (odds-range, combi vs enkel, pick type)
-💡 WAT DIT BETEKENT — leg uit wat de keuze zegt over strategie, gebruik de cijfers
-✅ AANBEVELING — 1 concrete tip voor de volgende keer
+STRUCTUUR — gebruik altijd precies deze 4 koppen:
+⚽ PER WEDSTRIJD — Analyseer elke wedstrijd technisch. Benoem beide teams, wie favoriet is, recente vorm, aanvalskracht vs defensie, sleutelspelers. Geef een kans-inschatting (bijv: "~70% kans Nederland wint").
+🔍 KWALITEIT PICKS — Welke pick heeft de meeste voetbal-logica? Welke is het meest onzeker en waarom?
+🏹 ALTERNATIEVEN — Betere opties per wedstrijd: Over/Under doelpunten (verwacht je veel of weinig goals op basis van de teams?), Asian Handicap (welk team verdient een voorsprong?). Specifiek: "Over 2.5 goals want beide ploegen scoren gemiddeld 2+ per duel" of "AH -1 voor sterkere ploeg".
+✅ CONCLUSIE — Goede combinatie? Kort ja/nee + reden.
 
-Bij open bets: analyseer ook de keuze inhoudelijk — zijn de odds logisch, risico van de combi?
-Bij combis: benoem altijd dat één verliezende leg de hele combi vernietigt.`,
+REGELS:
+- Schrijf als voetbalanalist — NOOIT over geld of inzetten
+- Altijd beide teamnamen met concrete voetbalfeitjes
+- Max 300 woorden`,
         messages: [{
           role: 'user',
-          content: `Mijn bets van Jacks:\n\n${betsCtx}\n\n${hitrate !== null ? `Resultaat: ${hitrate}% hitrate over ${settled.length} gesettelde bets` : `${openBets.length} open bet(s) — nog geen resultaten`}\n\nGeef een korte analyse in het Nederlands.`
+          content: `Voetbalanalyse voor deze picks:\n\n${betsCtx}\n\nGeef een technische voetbalanalyse in het Nederlands.`
         }]
       })
     });
