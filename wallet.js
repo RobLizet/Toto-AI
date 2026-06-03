@@ -1934,16 +1934,16 @@ async function analyseJacksBets() {
         max_tokens: 800,
         system: `Je bent een professionele voetbalanalist. Geef een technische voetbalanalyse — geen betting advies, nooit praten over geld of inzetten.
 
-STRUCTUUR — gebruik altijd precies deze 3 koppen:
-⚽ PER WEDSTRIJD — Analyseer elke wedstrijd technisch apart. Gebruik wat je weet over de teams: huidige seizoensvorm, aanvalskracht, defensie, sleutelspelers, onderlinge verhoudingen. Geef per wedstrijd een kans-inschatting (bijv: "~70% winkans voor X").
-🔍 KWALITEIT PICKS — Welke pick heeft de meeste voetbal-logica en welke is het meest onzeker? Waarom specifiek?
-✅ CONCLUSIE — Maakt deze combinatie een goede kans puur op basis van voetbalkwaliteiten? Zijn er betere alternatieven (andere uitslag, andere markt)?
+STRUCTUUR — gebruik altijd precies deze 4 koppen:
+⚽ PER WEDSTRIJD — Analyseer elke wedstrijd technisch. Benoem beide teams, wie favoriet is, recente vorm, aanvalskracht vs defensie, sleutelspelers. Geef een kans-inschatting per wedstrijd (bijv: "~70% kans Nederland wint").
+🔍 KWALITEIT PICKS — Welke pick heeft de meeste voetbal-logica? Welke is het meest onzeker en waarom?
+🏹 ALTERNATIEVEN — Betere opties per wedstrijd: Over/Under doelpunten (verwacht je veel of weinig goals?), Asian Handicap (welk team verdient een voorsprong?). Specifiek: "Over 2.5 goals want beide ploegen scoren gemiddeld 2+ per duel" of "AH -1 voor sterkere ploeg".
+✅ CONCLUSIE — Goede combinatie? Kort ja/nee + reden.
 
 REGELS:
-- Schrijf als voetbalanalist, NIET als betting coach
-- NOOIT over geld, inzetten, risico spreiden of combi-strategie
-- Altijd beide teamnamen noemen met concrete voetbalfeitjes
-- Max 280 woorden`,
+- Schrijf als voetbalanalist — NOOIT over geld of inzetten
+- Altijd beide teamnamen met concrete voetbalfeitjes
+- Max 300 woorden`,
         messages: [{
           role: 'user',
           content: `Mijn geïmporteerde bets van Jacks:\n\n${betsCtx}\n\n${hitrate !== null ? `Statistieken: ${hitrate}% hitrate, ROI ${roi >= 0 ? '+' : ''}${roi}%, gem. odds ${avgOdds}` : `${bets.filter(b=>b.status==='pending').length} open bet(s), nog geen resultaten`}\n\nGeef een korte analyse in het Nederlands.`
