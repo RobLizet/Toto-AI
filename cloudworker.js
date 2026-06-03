@@ -1898,6 +1898,16 @@ Focus op: selectie, blessures, tactiek, wedstrijduitslagen, coach uitspraken.`
   return JSON.parse(clean);
 }
 
+async function keepSupabaseAlive(env) {
+  try {
+    // Ping Supabase met een simpele query om het project actief te houden
+    await sb(env, 'scan_status', 'GET', null, '?select=id&limit=1');
+    console.log('[Keepalive] Supabase ping OK');
+  } catch(e) {
+    console.warn('[Keepalive] Supabase ping mislukt:', e.message);
+  }
+}
+
 async function sendPushNotification(env, title, body, data = {}) {
   const appId  = env.ONESIGNAL_APP_ID;
   const apiKey = env.ONESIGNAL_API_KEY;
@@ -2221,6 +2231,7 @@ export default {
       await runScan(env);
       await verifyYesterdayPicks(env);
       if (hour === 6) await generateDailyTip(env);
+      if (hour === 6) await keepSupabaseAlive(env);
       if (isSunday && hour === 6) await runWeeklyCalibration(env);
     })());
   }
