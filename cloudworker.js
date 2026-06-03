@@ -710,42 +710,45 @@ async function fetchOddsForFixtures(fixtureIds, env) {
   }
   try {
     // Stap 1: Bet365 (8)
-    const r1 = await Promise.all(fixtureIds.map(id => apif(`/odds?fixture=${id}&bookmaker=8&bet=1`, env)));
-    r1.forEach((data, i) => parseOdds(data, fixtureIds[i]));
+    async function batchOdds(ids, urlFn) {
+      const B=5;
+      for(let i=0;i<ids.length;i+=B){
+        const sl=ids.slice(i,i+B);
+        const rs=await Promise.allSettled(sl.map(id=>apif(urlFn(id),env)));
+        rs.forEach((r,j)=>{if(r.status==="fulfilled")parseOdds(r.value,sl[j]);});
+        if(i+B<ids.length)await new Promise(r=>setTimeout(r,500));
+      }
+    }
+    await batchOdds(fixtureIds, id => `/odds?fixture=${id}&bookmaker=8&bet=1`);
 
     // Stap 2: William Hill (6) voor missende
     const missing2 = fixtureIds.filter(id => !oddsMap[id]);
     if (missing2.length) {
-      const r2 = await Promise.all(missing2.map(id => apif(`/odds?fixture=${id}&bookmaker=6&bet=1`, env)));
-      r2.forEach((data, i) => parseOdds(data, missing2[i]));
+      await batchOdds(missing2, id => `/odds?fixture=${id}&bookmaker=6&bet=1`);
     }
 
     // Stap 3: Unibet/Jacks (16) — goed voor Scandinavische leagues
     const missing3 = fixtureIds.filter(id => !oddsMap[id]);
     if (missing3.length) {
-      const r3 = await Promise.all(missing3.map(id => apif(`/odds?fixture=${id}&bookmaker=16&bet=1`, env)));
-      r3.forEach((data, i) => parseOdds(data, missing3[i]));
+      await batchOdds(missing3, id => `/odds?fixture=${id}&bookmaker=16&bet=1`);
     }
 
     // Stap 4: Bwin (4)
     const missing4 = fixtureIds.filter(id => !oddsMap[id]);
     if (missing4.length) {
-      const r4 = await Promise.all(missing4.map(id => apif(`/odds?fixture=${id}&bookmaker=4&bet=1`, env)));
-      r4.forEach((data, i) => parseOdds(data, missing4[i]));
+      await batchOdds(missing4, id => `/odds?fixture=${id}&bookmaker=4&bet=1`);
     }
 
     // Stap 5: Marathonbet (1) — goede Scandinavische coverage
     const missing5 = fixtureIds.filter(id => !oddsMap[id]);
     if (missing5.length) {
-      const r5 = await Promise.all(missing5.map(id => apif(`/odds?fixture=${id}&bookmaker=1&bet=1`, env)));
-      r5.forEach((data, i) => parseOdds(data, missing5[i]));
+      await batchOdds(missing5, id => `/odds?fixture=${id}&bookmaker=1&bet=1`);
     }
 
     // Stap 6: Betsson (36) — Scandinavische markt
     const missing6 = fixtureIds.filter(id => !oddsMap[id]);
     if (missing6.length) {
-      const r6 = await Promise.all(missing6.map(id => apif(`/odds?fixture=${id}&bookmaker=36&bet=1`, env)));
-      r6.forEach((data, i) => parseOdds(data, missing6[i]));
+      await batchOdds(missing6, id => `/odds?fixture=${id}&bookmaker=36&bet=1`);
     }
   } catch(e) {
     console.error('[Odds] Fout bij ophalen:', e);
