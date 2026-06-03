@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v113'; // v113: interlands via date= + next=20, tijdvenster 36u // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v112'; // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1035,14 +1035,15 @@ async function runScan(env, force = false) {
   const isDST = month >= 3 && month <= 10; // Zomertijd maart t/m oktober
   const hour = now.getUTCHours() + (isDST ? 2 : 1);
 
-  let scanFrom = 6, scanTo = 18, autoScanEnabled = true, maxPerDay = 5;
+  let scanFrom = 6, scanTo = 18, autoScanEnabled = true, maxPerDay = 8;
   try {
     const schedule = await fb(env, 'scan_schedule');
     if (schedule) {
-      scanFrom        = schedule.startHour   ?? 6;
-      scanTo          = schedule.endHour     ?? 18;
-      autoScanEnabled = schedule.enabled     !== false;
-      maxPerDay       = schedule.maxPerDay   ?? 5;
+      // Alleen enabled/maxPerDay uit Firebase — scanFrom/scanTo altijd via code defaults
+      autoScanEnabled = schedule.enabled !== false;
+      maxPerDay       = schedule.maxPerDay ?? 8;
+      // startHour/endHour bewust NIET uit Firebase — voorkomt verkeerde configuratie
+      console.log('[Scan] scan_schedule geladen, scanvenster vast 06:00-18:00 NL');
     }
   } catch(e) {
     console.log('[Scan] scan_schedule niet geladen, gebruik defaults');
@@ -1125,12 +1126,7 @@ async function runScan(env, force = false) {
     // Haal vandaag + morgen op — UTC leagues via next= (timezone fix)
     const fixturePromises = leagueConfig.flatMap(({ id, s }) => {
       if (NEXT_LEAGUES.has(id)) {
-        // Gebruik zowel date= als next= voor maximale coverage
-        return [
-          apif(`/fixtures?league=${id}&season=${s}&date=${today}`, env),
-          apif(`/fixtures?league=${id}&season=${s}&date=${tomorrowStr}`, env),
-          apif(`/fixtures?league=${id}&season=${s}&next=20`, env),
-        ];
+        return [apif(`/fixtures?league=${id}&season=${s}&next=15`, env)];
       }
       return [
         apif(`/fixtures?league=${id}&season=${s}&date=${today}&timezone=Europe/Amsterdam`, env),
@@ -1156,7 +1152,7 @@ async function runScan(env, force = false) {
     const endOfDay = new Date(today + 'T23:59:59').getTime() + 60 * 60 * 1000;
     // Automatische scan: wedstrijden binnen 24u (vandaag + vanavond + morgenochtend)
     // Handmatige scan (force): alle wedstrijden van vandaag t/m midnight
-    const timeWindow = force ? endOfDay : nowMs + 36 * 60 * 60 * 1000; // 36u venster voor avondwedstrijden
+    const timeWindow = force ? endOfDay : nowMs + 24 * 60 * 60 * 1000;
 
     allMatches = unique
       .filter(f => {
