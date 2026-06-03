@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v35: v25.6 — Widget preview pagina toegevoegd
+// v36: v25.7 — Widget 48u filter voor oude open picks
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v25.6';
+const APP_VERSION = 'v25.7';
 
 const STATE_KEY = 'totoai_state';
 
