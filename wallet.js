@@ -1925,18 +1925,8 @@ REGELS:
       }
     });
 
-    el.innerHTML = `
-      <div style="background:rgba(0,190,196,.04);border:1px solid rgba(0,190,196,.15);
-        border-radius:12px;padding:.7rem .8rem;margin-top:.2rem;">
-        <div style="font-family:monospace;font-size:.44rem;color:rgba(255,255,255,.35);
-          margin-bottom:.5rem;letter-spacing:.05em;">🤖 CLAUDE ANALYSE</div>
-        \${html}
-      </div>
-      <button onclick="confirmJacksTextImport()" style="width:100%;margin-top:.6rem;padding:.55rem;
-        border-radius:10px;background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.7));
-        color:#fff;border:none;font-family:monospace;font-size:.58rem;font-weight:800;cursor:pointer;">
-        📥 Importeren naar tracker
-      </button>`;
+    el.innerHTML = '<div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.5);text-align:center;padding:.5rem;">✅ Analyse gereed</div>';
+    renderAnalysePopup(text, 'confirmJacksTextImport()');
 
   } catch(e) {
     el.innerHTML = `<div style="font-family:monospace;font-size:.5rem;color:#ef4444;padding:.5rem;">
@@ -2305,18 +2295,8 @@ Bij combis: benoem altijd dat één verliezende leg de hele combi vernietigt.`,
       }
     });
 
-    el.innerHTML = `
-      <div style="background:rgba(0,190,196,.04);border:1px solid rgba(0,190,196,.15);
-        border-radius:12px;padding:.7rem .8rem;margin-top:.5rem;">
-        <div style="font-family:monospace;font-size:.44rem;color:rgba(255,255,255,.35);
-          margin-bottom:.5rem;letter-spacing:.05em;">🤖 CLAUDE ANALYSE</div>
-        ${html}
-      </div>
-      <button onclick="confirmJacksPhotoImport()" style="width:100%;margin-top:.6rem;padding:.55rem;
-        border-radius:10px;background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.7));
-        color:#fff;border:none;font-family:monospace;font-size:.58rem;font-weight:800;cursor:pointer;">
-        📥 Importeren naar tracker
-      </button>`;
+    el.innerHTML = '<div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.5);text-align:center;padding:.5rem;">✅ Analyse gereed</div>';
+    renderAnalysePopup(text, 'confirmJacksPhotoImport()');
 
   } catch(e) {
     el.innerHTML = `<div style="font-family:monospace;font-size:.5rem;color:#ef4444;padding:.5rem;">
