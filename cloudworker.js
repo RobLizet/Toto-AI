@@ -1133,17 +1133,8 @@ async function runScan(env, force = false) {
         apif(`/fixtures?league=${id}&season=${s}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
       ];
     });
-    // Requests in batches van 5 met 600ms vertraging — voorkomt rate limiting
-    const BATCH_SIZE = 5;
-    const allFixtureResults = [];
-    for (let i = 0; i < fixturePromises.length; i += BATCH_SIZE) {
-      const batch = fixturePromises.slice(i, i + BATCH_SIZE);
-      const batchResults = await Promise.allSettled(batch);
-      batchResults.forEach(r => { if (r.status === 'fulfilled') allFixtureResults.push(r.value); });
-      if (i + BATCH_SIZE < fixturePromises.length) await new Promise(r => setTimeout(r, 600));
-    }
-    console.log(`[Scan] ${allFixtureResults.length}/${fixturePromises.length} fixture requests OK`);
-    const fixtures = allFixtureResults.flat().filter(Boolean);
+    const fixtureResults = await Promise.all(fixturePromises);
+    const fixtures = fixtureResults.flat().filter(Boolean);
 
     const seen = new Set();
     const unique = fixtures.filter(f => {
