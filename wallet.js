@@ -1,6 +1,55 @@
 // ═══════════════════════════════════════════════════════
 // WALLET SCREEN v15
 // v15: Speeldatum + tijd toegevoegd aan pick kaarten en popup
+
+// ── Claude analyse popup renderer ────────────────────────
+function renderAnalysePopup(text, onImport) {
+  const sectionColors = { '⚽': '#00BEC4', '🔍': '#7c3aed', '✅': '#16a34a', '🎯': '#00BEC4', '💡': '#7c3aed', '🏹': '#f59e0b' };
+  const lines = text.split('\n');
+  let html = '';
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) { html += '<div style="height:.4rem;"></div>'; return; }
+    const secMatch = Object.keys(sectionColors).find(e => trimmed.startsWith(e));
+    if (secMatch) {
+      const color = sectionColors[secMatch];
+      html += `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.05em;
+        color:${color};margin:1rem 0 .4rem;padding:.4rem .7rem;
+        background:${color}18;border-left:3px solid ${color};border-radius:0 8px 8px 0;">
+        ${trimmed}</div>`;
+    } else {
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.88);line-height:1.85;margin:.1rem 0;">${trimmed}</div>`;
+    }
+  });
+
+  // Verwijder bestaande popup
+  const existing = document.getElementById('analyse-popup-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'analyse-popup-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:flex-end;justify-content:center;animation:fadeIn .2s;';
+  overlay.innerHTML = `
+    <div style="background:#0f1923;border-radius:20px 20px 0 0;width:100%;max-height:88vh;
+      overflow-y:auto;padding:1.2rem 1.1rem 2rem;border-top:2px solid rgba(0,190,196,.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#00BEC4;letter-spacing:.05em;">🤖 CLAUDE ANALYSE</div>
+        <button onclick="document.getElementById('analyse-popup-overlay').remove()"
+          style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);
+          font-size:1.1rem;width:32px;height:32px;border-radius:50%;cursor:pointer;">✕</button>
+      </div>
+      <div>${html}</div>
+      ${onImport ? `<button onclick="${onImport};document.getElementById('analyse-popup-overlay').remove()"
+        style="width:100%;margin-top:1.2rem;padding:.85rem;border-radius:12px;
+        background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;
+        font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.05em;cursor:pointer;">
+        📥 IMPORTEREN NAAR TRACKER</button>` : ''}
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+
 // v14: Killer resultatenpagina — ROI 7 dagen, win streak, beste league, elite hitrate, CLV
 // v13: "Waarom deze pick?" signalen in backtest cards
 
