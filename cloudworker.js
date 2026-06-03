@@ -1060,6 +1060,9 @@ async function runScan(env, force = false) {
   }
   if (force) console.log(`[Scan] Handmatige trigger — autoScan en scanvenster overgeslagen`);
   console.log(`[Scan] Start scan (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC)`);
+  // Stuur direct een push zodat we weten dat de scan gestart is
+  const _nowStr = new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' });
+  await sendPushNotification(env, `🔄 ${_nowStr} — Scan gestart`, `Worker actief, fixtures ophalen...`, { type: 'scan_start' });
 
   let allMatches = [];
 
