@@ -528,9 +528,28 @@ function processData(scanLog) {
     (p.confidence || 0) >= DREMPEL.minConf
   );
 
+  // ── 48-uurs filter voor open picks ──
+  // Open picks ouder dan 48u worden genegeerd (wedstrijd al gespeeld)
+  const now48 = Date.now();
+  const MAX_AGE_MS = 48 * 60 * 60 * 1000; // 48 uur
+
   // Categoriseren
   const settled = kwali.filter(p => p.status === 'win' || p.status === 'lose');
-  const open    = kwali.filter(p => !p.status || p.status === 'pending');
+  const open    = kwali.filter(p => {
+    if (p.status && p.status !== 'pending') return false;
+    // Als timestamp aanwezig: alleen picks jonger dan 48u
+    if (p.timestamp) {
+      const ts = p.timestamp > 1e12 ? p.timestamp : p.timestamp * 1000;
+      return (now48 - ts) < MAX_AGE_MS;
+    }
+    // Als matchDate aanwezig: wedstrijddatum + 3u buffer
+    if (p.matchDate || p.date) {
+      const d = new Date(p.matchDate || p.date);
+      if (!isNaN(d)) return (now48 - d.getTime()) < MAX_AGE_MS + 3 * 60 * 60 * 1000;
+    }
+    // Geen datum info: toon wel (kan niet beoordelen)
+    return true;
+  });
   const wins    = settled.filter(p => p.status === 'win');
   const loses   = settled.filter(p => p.status === 'lose');
 
