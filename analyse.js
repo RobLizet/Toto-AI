@@ -1576,9 +1576,14 @@ async function scanAllTodayValue(mode = 'today') {
     }
   }
 
+  // Ruimere scan leagues — ook internationale/vriendschappelijke wedstrijden
+  const WIDE_SCAN_LEAGUES = new Set([
+    1,2,3,4,5,6,10,29,32,34,36,39,40,61,71,78,79,88,89,94,98,103,106,
+    113,119,129,135,140,144,179,197,203,207,218,239,253,283,292,345,848
+  ]);
   const allWithOdds = (state.matches||[]).filter(m => {
     if (m.homeOdds === '—' || m.isDone || !(parseFloat(m.homeOdds) > 1)) return false;
-    if (m.leagueId && !new Set(Object.values(COMP_IDS)).has(m.leagueId)) return false;
+    // Accepteer alle bekende leagues — niet beperken tot alleen COMP_IDS
     return true;
   });
 
