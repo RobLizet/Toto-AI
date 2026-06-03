@@ -747,6 +747,24 @@ async function fetchOddsForFixtures(fixtureIds, env) {
       const r6 = await Promise.all(missing6.map(id => apif(`/odds?fixture=${id}&bookmaker=36&bet=1`, env)));
       r6.forEach((data, i) => parseOdds(data, missing6[i]));
     }
+
+    // Stap 7: Geen bookmaker filter — pakt eerste beschikbare (interlands, Pro abonnement)
+    const missing7 = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing7.length) {
+      const r7 = await Promise.allSettled(missing7.map(id => apif(`/odds?fixture=${id}&bet=1`, env)));
+      r7.forEach((result, i) => {
+        if (result.status === 'fulfilled') parseOdds(result.value, missing7[i]);
+      });
+    }
+
+    // Stap 8: Alle bet types zonder filter (laatste redmiddel)
+    const missing8 = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing8.length) {
+      const r8 = await Promise.allSettled(missing8.map(id => apif(`/odds?fixture=${id}`, env)));
+      r8.forEach((result, i) => {
+        if (result.status === 'fulfilled') parseOdds(result.value, missing8[i]);
+      });
+    }
   } catch(e) {
     console.error('[Odds] Fout bij ophalen:', e);
   }
@@ -1133,13 +1151,7 @@ async function runScan(env, force = false) {
         apif(`/fixtures?league=${id}&season=${s}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
       ];
     });
-    // Promise.allSettled voorkomt crash als één API call faalt
-    const settledResults = await Promise.allSettled(fixturePromises);
-    const fixtureResults = settledResults
-      .filter(r => r.status === 'fulfilled')
-      .map(r => r.value);
-    const failedCount = settledResults.filter(r => r.status === 'rejected').length;
-    if (failedCount > 0) console.log(`[Scan] ${failedCount} fixture requests gefaald (genegeerd)`);
+    const fixtureResults = await Promise.all(fixturePromises);
     const fixtures = fixtureResults.flat().filter(Boolean);
 
     const seen = new Set();
