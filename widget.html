@@ -547,8 +547,9 @@ function processData(scanLog) {
       const d = new Date(p.matchDate || p.date);
       if (!isNaN(d)) return (now48 - d.getTime()) < MAX_AGE_MS + 3 * 60 * 60 * 1000;
     }
-    // Geen datum info: toon wel (kan niet beoordelen)
-    return true;
+    // Geen datum info: check op scanDate van de scan zelf (via scanLog timestamp)
+    // Als er echt geen tijdinfo is → uitsluiten (veiliger dan oude pick tonen)
+    return false;
   });
   const wins    = settled.filter(p => p.status === 'win');
   const loses   = settled.filter(p => p.status === 'lose');
