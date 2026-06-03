@@ -1035,7 +1035,7 @@ async function runScan(env, force = false) {
   const isDST = month >= 3 && month <= 10; // Zomertijd maart t/m oktober
   const hour = now.getUTCHours() + (isDST ? 2 : 1);
 
-  let scanFrom = 6, scanTo = 19, autoScanEnabled = true, maxPerDay = 8; // 19 zodat 18:00 NL cron ook binnen venster valt
+  let scanFrom = 6, scanTo = 18, autoScanEnabled = true, maxPerDay = 8;
   try {
     const schedule = await fb(env, 'scan_schedule');
     if (schedule) {
