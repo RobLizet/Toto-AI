@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>TOTO AI — Widget Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600;700&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:    #0a0e18;
+  --card:   #111827;
+  --slate:  #1e293b;
+  --border: rgba(255,255,255,.08);
+  --pink:   #db2777;
+  --teal:   #00BEC4;
+  --muted:  #64748b;
+  --text:   #e2e8f0;
+}
+
+html, body {
+  background: var(--ink);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── PAGE ── */
+.page {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: env(safe-area-inset-top, 12px) 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0 4px;
+}
+.topbar-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: .06em;
+  color: #fff;
+}
+.topbar-logo span { color: var(--pink); }
+.topbar-back {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: color .15s, border-color .15s;
+}
+.topbar-back:hover { color: var(--pink); border-color: var(--pink); }
+
+/* ── SECTIE LABEL ── */
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .58rem;
+  font-weight: 700;
+  color: var(--pink);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: -6px;
+}
+
+/* ══════════════════════════════════════════
+   WIDGET KAART — de eigenlijke widget look
+══════════════════════════════════════════ */
+.widget-card {
+  background: linear-gradient(145deg, #111827 0%, #0d1520 100%);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  padding: 14px 16px 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* Subtiele roze gloed linksboven */
+.widget-card::before {
+  content: '';
+  position: absolute;
+  top: -30px; left: -30px;
+  width: 120px; height: 120px;
+  background: radial-gradient(circle, rgba(219,39,119,.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Widget header ── */
+.w-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.w-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  letter-spacing: .08em;
+  color: #fff;
+}
+.w-logo span { color: var(--pink); }
+.w-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.w-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 6px;
+}
+.w-badge.roi-pos { color: var(--teal);  background: rgba(0,190,196,.12); border: 1px solid rgba(0,190,196,.25); }
+.w-badge.roi-neg { color: #ef4444;      background: rgba(239,68,68,.12);  border: 1px solid rgba(239,68,68,.25); }
+.w-badge.hitrate { color: var(--pink);  background: rgba(219,39,119,.12); border: 1px solid rgba(219,39,119,.25); }
+
+/* ── Divider ── */
+.w-divider { height: 1px; background: var(--border); margin: 0 0 10px; }
+
+/* ── Pick card binnen widget ── */
+.w-pick {
+  background: rgba(219,39,119,.06);
+  border: 1px solid rgba(219,39,119,.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.w-pick:hover { background: rgba(219,39,119,.1); }
+.w-pick-left { flex: 1; min-width: 0; }
+.w-pick-match {
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: .85rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.w-pick-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.w-pick-type {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  font-weight: 700;
+  color: var(--pink);
+  background: rgba(219,39,119,.15);
+  border: 1px solid rgba(219,39,119,.3);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.w-pick-odds {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  color: var(--muted);
+}
+.w-pick-right { text-align: right; flex-shrink: 0; }
+.w-pick-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  color: #f59e0b;
+  line-height: 1;
+}
+.w-pick-conf {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .55rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Geen pick ── */
+.w-no-pick {
+  background: rgba(255,255,255,.03);
+  border: 1px dashed rgba(255,255,255,.1);
+  border-radius: 10px;
+  padding: 14px 12px;
+  text-align: center;
+  margin-bottom: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  color: var(--muted);
+}
+
+/* ── Stats rij ── */
+.w-stats {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr 1px 1fr;
+  align-items: center;
+}
+.w-stat {
+  text-align: center;
+  padding: 4px 0;
+}
+.w-stat-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.15rem;
+  color: #fff;
+  line-height: 1;
+}
+.w-stat-lbl {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .45rem;
+  color: var(--muted);
+  margin-top: 2px;
+  letter-spacing: .05em;
+}
+.w-stat-divider { background: var(--border); height: 28px; }
+
+/* ── Refresh + tijdstip ── */
+.w-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+.w-timestamp {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .55rem;
+  color: var(--muted);
+}
+.w-refresh {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  font-weight: 700;
+  color: var(--pink);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(219,39,119,.25);
+  transition: background .15s;
+}
+.w-refresh:hover { background: rgba(219,39,119,.12); }
+
+/* ── Loading skeleton ── */
+.skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #263347 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+.skel-line { height: 12px; margin-bottom: 6px; }
+.skel-short { width: 45%; }
+.skel-long  { width: 80%; }
+
+/* ── INFO KAART ── */
+.info-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.info-row:last-child { border-bottom: none; padding-bottom: 0; }
+.info-key {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .62rem;
+  color: var(--muted);
+}
+.info-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .68rem;
+  font-weight: 700;
+  color: #fff;
+}
+.info-val.green { color: var(--teal); }
+.info-val.pink  { color: var(--pink); }
+.info-val.amber { color: #f59e0b; }
+
+/* ── PICKS LIJST ── */
+.picks-list { display: flex; flex-direction: column; gap: 8px; }
+.pick-item {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pick-item.elite { border-color: rgba(0,190,196,.3); background: rgba(0,190,196,.04); }
+.pick-item-main { flex: 1; min-width: 0; }
+.pick-item-match {
+  font-size: .8rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pick-item-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .55rem;
+  color: var(--muted);
+  margin-top: 3px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.pill {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .55rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.pill-pick { color: var(--pink); background: rgba(219,39,119,.12); border: 1px solid rgba(219,39,119,.2); }
+.pill-win  { color: var(--teal); background: rgba(0,190,196,.1);   border: 1px solid rgba(0,190,196,.2); }
+.pill-lose { color: #ef4444;     background: rgba(239,68,68,.1);    border: 1px solid rgba(239,68,68,.2); }
+.pill-open { color: #f59e0b;     background: rgba(245,158,11,.1);   border: 1px solid rgba(245,158,11,.2); }
+.pick-item-right { text-align: right; flex-shrink: 0; }
+.pick-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .7rem;
+  font-weight: 700;
+  color: #f59e0b;
+}
+.pick-odds {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .6rem;
+  color: var(--muted);
+}
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align: center;
+  padding: 32px 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: .65rem;
+  color: var(--muted);
+}
+
+/* ── RELOAD PULSE ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinning { display: inline-block; animation: spin .7s linear infinite; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">TOTO <span>AI</span></div>
+    <a class="topbar-back" href="index.html">← Terug</a>
+  </div>
+
+  <!-- SECTIE LABEL -->
+  <div class="section-label">⬡ Widget Preview</div>
+
+  <!-- ════════════════════════════════════════
+       DE WIDGET ZELF
+  ════════════════════════════════════════ -->
+  <div class="widget-card" id="widgetCard">
+
+    <!-- Header -->
+    <div class="w-header">
+      <div class="w-logo">TOTO <span>AI</span></div>
+      <div class="w-badges">
+        <span class="w-badge roi-pos" id="wRoi">+0.0%</span>
+        <span class="w-badge hitrate" id="wHitrate">0%</span>
+      </div>
+    </div>
+
+    <div class="w-divider"></div>
+
+    <!-- Beste pick -->
+    <div id="wPickArea">
+      <!-- Skeleton tijdens laden -->
+      <div id="wSkeleton">
+        <div class="skel-line skeleton skel-long"></div>
+        <div class="skel-line skeleton skel-short" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="w-stats">
+      <div class="w-stat">
+        <div class="w-stat-val" id="wOpen">—</div>
+        <div class="w-stat-lbl">OPEN</div>
+      </div>
+      <div class="w-stat-divider"></div>
+      <div class="w-stat">
+        <div class="w-stat-val" id="wSettled">—</div>
+        <div class="w-stat-lbl">AFGEROND</div>
+      </div>
+      <div class="w-stat-divider"></div>
+      <div class="w-stat">
+        <div class="w-stat-val" id="wTotal">—</div>
+        <div class="w-stat-lbl">TOTAAL</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="w-footer">
+      <div class="w-timestamp" id="wTs">—</div>
+      <button class="w-refresh" id="wRefreshBtn" onclick="loadWidgetData()">↻ UPDATE</button>
+    </div>
+
+  </div>
+
+  <!-- INFO KAART -->
+  <div class="section-label">📊 Statistieken</div>
+  <div class="info-card" id="statsCard">
+    <div class="info-row">
+      <span class="info-key">ROI</span>
+      <span class="info-val green" id="sRoi">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Hitrate</span>
+      <span class="info-val pink" id="sHitrate">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Open picks</span>
+      <span class="info-val amber" id="sOpen">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Afgerond</span>
+      <span class="info-val" id="sSettled">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Win / Lose</span>
+      <span class="info-val" id="sWinLose">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-key">Win streak</span>
+      <span class="info-val green" id="sStreak">—</span>
+    </div>
+  </div>
+
+  <!-- ACTIEVE PICKS -->
+  <div class="section-label">⚡ Actieve picks</div>
+  <div class="picks-list" id="openPicksList">
+    <div class="empty">Laden...</div>
+  </div>
+
+  <!-- RECENTE RESULTATEN -->
+  <div class="section-label">🏁 Recente resultaten</div>
+  <div class="picks-list" id="settledPicksList">
+    <div class="empty">Laden...</div>
+  </div>
+
+</div>
+
+<script>
+// ── Drempels (zelfde als dashboard.js) ──
+const DREMPEL = { minValue: 12, minConf: 8, minOdds: 1.6 };
+
+// ── Data laden uit localStorage (zelfde scanLog als de app) ──
+function loadWidgetData() {
+  const btn = document.getElementById('wRefreshBtn');
+  btn.innerHTML = '<span class="spinning">↻</span> LADEN';
+  btn.disabled = true;
+
+  // Korte delay voor UX feedback
+  setTimeout(() => {
+    try {
+      const raw = localStorage.getItem('totoai_state');
+      if (!raw) { showNoData(); return; }
+      const st = JSON.parse(raw);
+      const scanLog = st.scanLog || [];
+      processData(scanLog);
+    } catch(e) {
+      showNoData('Fout bij laden');
+    } finally {
+      btn.innerHTML = '↻ UPDATE';
+      btn.disabled = false;
+      document.getElementById('wTs').textContent = new Date().toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'});
+    }
+  }, 400);
+}
+
+function processData(scanLog) {
+  // Alle picks uit scanLog halen + dedup
+  const allRaw = scanLog.flatMap(s => s.picks || []);
+
+  // Dedup op fixtureId+pick (zelfde logica als dashboard)
+  const seen = new Map();
+  for (const p of allRaw) {
+    if (p.isSparseData) continue;
+    const key = (p.fixtureId || p.match || '') + '_' + (p.pick || '');
+    if (!seen.has(key)) {
+      seen.set(key, p);
+    } else {
+      // Settled altijd prefereren boven pending
+      const existing = seen.get(key);
+      if ((p.status === 'win' || p.status === 'lose') &&
+          (existing.status !== 'win' && existing.status !== 'lose')) {
+        seen.set(key, p);
+      }
+    }
+  }
+  const allPicks = Array.from(seen.values());
+
+  // Kwali filter (zelfde als dashboard)
+  const kwali = allPicks.filter(p =>
+    (p.value || 0) >= DREMPEL.minValue &&
+    (p.confidence || 0) >= DREMPEL.minConf
+  );
+
+  // Categoriseren
+  const settled = kwali.filter(p => p.status === 'win' || p.status === 'lose');
+  const open    = kwali.filter(p => !p.status || p.status === 'pending');
+  const wins    = settled.filter(p => p.status === 'win');
+  const loses   = settled.filter(p => p.status === 'lose');
+
+  // ROI berekening
+  const roi = settled.length
+    ? (settled.reduce((s, p) => s + (p.status === 'win' ? (p.odds - 1) : -1), 0) / settled.length * 100)
+    : 0;
+
+  // Hitrate
+  const hitrate = settled.length ? Math.round(wins.length / settled.length * 100) : 0;
+
+  // Win streak
+  let streak = 0;
+  const recent = [...settled].sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  for (const p of recent) {
+    if (p.status === 'win') streak++;
+    else break;
+  }
+
+  // Beste open pick (hoogste value)
+  const bestPick = open.sort((a,b) => (b.value||0) - (a.value||0))[0] || null;
+
+  // ── UI updaten ──
+  updateWidget({ roi, hitrate, open, settled, wins, loses, streak, bestPick, kwali });
+  renderOpenPicks(open);
+  renderSettledPicks(settled.slice(0, 8));
+}
+
+function updateWidget({ roi, hitrate, open, settled, wins, loses, streak, bestPick, kwali }) {
+  // ROI badge
+  const roiEl = document.getElementById('wRoi');
+  roiEl.textContent = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
+  roiEl.className = 'w-badge ' + (roi >= 0 ? 'roi-pos' : 'roi-neg');
+
+  // Hitrate
+  document.getElementById('wHitrate').textContent = hitrate + '%';
+
+  // Stats
+  document.getElementById('wOpen').textContent    = open.length;
+  document.getElementById('wSettled').textContent  = settled.length;
+  document.getElementById('wTotal').textContent    = kwali.length;
+
+  // Info kaart
+  document.getElementById('sRoi').textContent      = (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%';
+  document.getElementById('sRoi').className        = 'info-val ' + (roi >= 0 ? 'green' : '');
+  document.getElementById('sHitrate').textContent  = hitrate + '%';
+  document.getElementById('sOpen').textContent     = open.length + ' pick' + (open.length !== 1 ? 's' : '');
+  document.getElementById('sSettled').textContent  = settled.length + ' picks';
+  document.getElementById('sWinLose').textContent  = wins.length + 'W / ' + loses.length + 'L';
+  document.getElementById('sStreak').textContent   = streak > 0 ? '🔥 ' + streak + ' op rij' : '—';
+
+  // Pick area
+  const area = document.getElementById('wPickArea');
+  if (bestPick) {
+    const matchStr = bestPick.match || bestPick.homeTeam
+      ? (bestPick.homeTeam || '?') + ' vs ' + (bestPick.awayTeam || '?')
+      : (bestPick.match || 'Onbekend');
+    const displayMatch = bestPick.match || matchStr;
+    area.innerHTML = `
+      <div class="w-pick" onclick="window.location.href='index.html'">
+        <div class="w-pick-left">
+          <div class="w-pick-match">${displayMatch}</div>
+          <div class="w-pick-meta">
+            <span class="w-pick-type">${bestPick.pick || '—'}</span>
+            <span class="w-pick-odds">${bestPick.odds ? '@' + parseFloat(bestPick.odds).toFixed(2) : ''}</span>
+          </div>
+        </div>
+        <div class="w-pick-right">
+          <div class="w-pick-value">+${Math.round(bestPick.value || 0)}%</div>
+          <div class="w-pick-conf">conf ${bestPick.confidence || '?'}/10</div>
+        </div>
+      </div>`;
+  } else {
+    area.innerHTML = `<div class="w-no-pick">Geen actieve pick</div>`;
+  }
+}
+
+function renderOpenPicks(open) {
+  const el = document.getElementById('openPicksList');
+  if (!open.length) { el.innerHTML = '<div class="empty">Geen actieve picks</div>'; return; }
+
+  const sorted = [...open].sort((a,b) => (b.value||0) - (a.value||0));
+  el.innerHTML = sorted.slice(0, 5).map(p => {
+    const match = p.match || ((p.homeTeam||'?') + ' vs ' + (p.awayTeam||'?'));
+    const elite = p.elite ? 'elite' : '';
+    const league = p.league || p.competitie || '';
+    return `<div class="pick-item ${elite}">
+      <div class="pick-item-main">
+        <div class="pick-item-match">${match}</div>
+        <div class="pick-item-sub">
+          <span class="pill pill-pick">${p.pick || '—'}</span>
+          <span>${league}</span>
+        </div>
+      </div>
+      <div class="pick-item-right">
+        <div class="pick-val">+${Math.round(p.value || 0)}%</div>
+        <div class="pick-odds">${p.odds ? '@' + parseFloat(p.odds).toFixed(2) : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSettledPicks(settled) {
+  const el = document.getElementById('settledPicksList');
+  if (!settled.length) { el.innerHTML = '<div class="empty">Nog geen afgeronde picks</div>'; return; }
+
+  const sorted = [...settled].sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+  el.innerHTML = sorted.map(p => {
+    const match = p.match || ((p.homeTeam||'?') + ' vs ' + (p.awayTeam||'?'));
+    const statusClass = p.status === 'win' ? 'pill-win' : 'pill-lose';
+    const statusLabel = p.status === 'win' ? '✓ WIN' : '✗ LOSE';
+    return `<div class="pick-item">
+      <div class="pick-item-main">
+        <div class="pick-item-match">${match}</div>
+        <div class="pick-item-sub">
+          <span class="pill pill-pick">${p.pick || '—'}</span>
+          <span class="pill ${statusClass}">${statusLabel}</span>
+        </div>
+      </div>
+      <div class="pick-item-right">
+        <div class="pick-val" style="${p.status==='win'?'color:var(--teal)':'color:#ef4444'}">${p.status==='win'?'+':'-'}${Math.round(Math.abs((p.status==='win'?(p.odds-1):1)*100))}%</div>
+        <div class="pick-odds">${p.odds ? '@' + parseFloat(p.odds).toFixed(2) : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showNoData(msg) {
+  const area = document.getElementById('wPickArea');
+  area.innerHTML = `<div class="w-no-pick">${msg || 'Open de app eerst om data te laden'}</div>`;
+  document.getElementById('openPicksList').innerHTML = '<div class="empty">Geen data</div>';
+  document.getElementById('settledPicksList').innerHTML = '<div class="empty">Geen data</div>';
+}
+
+// ── Start ──
+loadWidgetData();
+</script>
+</body>
+</html>
