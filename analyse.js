@@ -1546,8 +1546,7 @@ async function scanAllTodayValue(mode = 'today') {
 
     await Promise.all(SCAN_LEAGUE_IDS.map(async leagueId => {
       try {
-        const S2026 = new Set([1,2,3,4,5,6,10,29,36,71,103,113,119,129,239,253,292,848]);
-        const season = S2026.has(leagueId) ? 2026 : 2025;
+        const season = seasonForLeague(leagueId);
         const dateParam = mode === 'tomorrow' ? tomorrowStr : todayStr;
         const r = await apiFetch(
           `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&date=${dateParam}&status=NS-1H-HT-2H`,
@@ -1609,9 +1608,14 @@ async function scanAllTodayValue(mode = 'today') {
   // Bewaar gescande matches zodat teamnamen zichtbaar blijven
   state.matches = candidates;
   // v21.0: silent=true — geen blocking alerts tijdens multiscan
-  await scanValueAll(true);
-
-  if (btn) { btn.disabled = false; btn.textContent = origText; }
+  try {
+    await scanValueAll(true);
+  } catch(e) {
+    console.error('[ScanVandaag] onderbroken:', e);
+    showToast('⚠ Scan onderbroken — ' + (e && e.message ? e.message : 'onbekende fout'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = origText; }
+  }
 }
 
 // ── Combi Tips ────────────────────────────────────────────
@@ -1648,7 +1652,7 @@ async function generateCombiTip() {
     const extra = [];
     await Promise.all(SCAN_IDS.map(async lid => {
       try {
-        const season = lid === 1 ? 2026 : 2025;
+        const season = seasonForLeague(lid);
         const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${lid}&season=${season}&date=${today}&status=NS-1H-HT-2H`, null, 6000);
         const d = await r.json();
         (d.response||[]).forEach(f => {
