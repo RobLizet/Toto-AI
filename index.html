@@ -263,32 +263,6 @@
   </div>
 
   <!-- Quick Bet Modal (voor match cards) -->
-  <div id="quick-bet-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeQuickBetModal()">
-    <div class="modal-box modal-box-sm">
-      <div class="modal-header">
-        <h3 id="quick-bet-title" class="modal-title">Snel inzetten</h3>
-        <button class="modal-close-btn" onclick="closeQuickBetModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div id="quick-bet-info" class="quick-bet-info"></div>
-        <div class="modal-field">
-          <label class="modal-label">Inzet (€)</label>
-          <div class="quick-stake-row">
-            <button class="quick-stake-preset" onclick="setQuickStake(5)">€5</button>
-            <button class="quick-stake-preset" onclick="setQuickStake(10)">€10</button>
-            <button class="quick-stake-preset" onclick="setQuickStake(25)">€25</button>
-            <button class="quick-stake-preset" onclick="setQuickStake(50)">€50</button>
-          </div>
-          <input id="quick-bet-stake" type="number" class="modal-input" placeholder="0.00" min="0" step="0.01" />
-        </div>
-        <div id="quick-bet-return" class="quick-bet-return"></div>
-        <div class="modal-actions">
-          <button class="modal-cancel-btn" onclick="closeQuickBetModal()">Annuleren</button>
-          <button class="modal-confirm-btn" onclick="confirmQuickBet()">Inzetten</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Tracker Modal -->
   <div id="tracker-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeTrackerModal()">
@@ -363,61 +337,10 @@
   </div>
 
   <!-- Withdraw Modal -->
-  <div id="withdraw-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeWithdrawModal()">
-    <div class="modal-box modal-box-sm">
-      <div class="modal-header">
-        <h3 class="modal-title">Opnemen</h3>
-        <button class="modal-close-btn" onclick="closeWithdrawModal()">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-field">
-          <label class="modal-label">Bedrag (€)</label>
-          <input id="withdraw-amount" type="number" class="modal-input" placeholder="0.00" min="0" step="0.01" />
-        </div>
-        <div class="modal-field">
-          <label class="modal-label">Notitie (optioneel)</label>
-          <input id="withdraw-note" type="text" class="modal-input" placeholder="bijv. Winst opnemen" />
-        </div>
-        <div class="modal-actions">
-          <button class="modal-cancel-btn" onclick="closeWithdrawModal()">Annuleren</button>
-          <button class="modal-confirm-btn" onclick="confirmWithdraw()">Opnemen</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Competitie Detail Modal -->
-  <div id="comp-detail-modal" class="modal-overlay comp-detail-overlay" style="display:none" onclick="if(event.target===this)closeCompDetail()">
-    <div class="modal-box comp-detail-modal">
-      <div class="modal-header">
-        <h3 id="comp-detail-title" class="modal-title">Competitie</h3>
-        <button class="modal-close-btn" onclick="closeCompDetail()">✕</button>
-      </div>
-      <div class="cd-tabs">
-        <button class="cd-tab active" data-tab="stand" onclick="switchCDTab('stand')">Stand</button>
-        <button class="cd-tab" data-tab="wedstrijden" onclick="switchCDTab('wedstrijden')">Wedstrijden</button>
-        <button class="cd-tab" data-tab="value" onclick="switchCDTab('value')">Value Scan</button>
-        <button class="cd-tab" data-tab="scorers" onclick="switchCDTab('scorers')">Topscorers</button>
-        <button class="cd-tab" data-tab="nieuws" onclick="switchCDTab('nieuws')">Nieuws</button>
-      </div>
-      <div id="comp-detail-body" class="comp-detail-body">
-        <!-- Gevuld door openCompDetail() -->
-      </div>
-    </div>
-  </div>
 
   <!-- Analyse Result Modal -->
-  <div id="analyse-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeAnalyseModal()">
-    <div class="modal-box modal-box-lg">
-      <div class="modal-header">
-        <h3 id="analyse-modal-title" class="modal-title">Analyse</h3>
-        <button class="modal-close-btn" onclick="closeAnalyseModal()">✕</button>
-      </div>
-      <div id="analyse-modal-body" class="modal-body analyse-modal-body">
-        <!-- Gevuld door runAnalyse() -->
-      </div>
-    </div>
-  </div>
 
   <!-- Toast Container -->
   <div id="toast-container" class="toast-container"></div>
@@ -429,14 +352,14 @@
 ══════════════════════════════════════════ -->
 
 <!-- 1. State -->
-<script src="state.js?v=1780563860"></script>
+<script src="state.js?v=1780564510"></script>
 
 <!-- 2. API -->
-<script src="api.js?v=1780546170"></script>
+<script src="api.js?v=1780564510"></script>
 
 <!-- 3. Utils -->
 <script src="football.js?v=1780546170"></script>
-<script src="ui.js?v=1780546170"></script>
+<script src="ui.js?v=1780564510"></script>
 <script src="notifications.js?v=1780546170"></script>
 
 <!-- 4. Router -->
