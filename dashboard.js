@@ -276,11 +276,12 @@ function renderDashboard() {
           </div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);display:flex;gap:.35rem;flex-wrap:wrap;">
             ${(() => {
-              const openCount = kwaliPicks.filter(p => !p.status || p.status === 'pending').length;
+              // U2: geen dubbele cijfers — inline = voortgang, statrij hieronder = prestatie
               const parts = [];
-              if (openCount > 0)           parts.push('<span>' + openCount + ' open</span>');
-              if (settledPicks.length > 0) parts.push('<span>' + settledPicks.length + ' afgerond</span>');
-              if (scanROI !== null)         parts.push('<span style="color:#00BEC4;font-weight:700;">ROI ' + (scanROI >= 0 ? '+' : '') + scanROI.toFixed(1) + '%</span>');
+              if (kwaliPicks.length > 0) {
+                parts.push('<span>' + kwaliPicks.length + '/100 picks</span>');
+                if (settledPicks.length > 0) parts.push('<span>' + settledPicks.length + ' afgerond</span>');
+              }
               return parts.length ? parts.join(' · ') : '<span>Scan wedstrijden →</span>';
             })()}
           </div>
@@ -291,7 +292,7 @@ function renderDashboard() {
             <circle fill="none" stroke="#00BEC4" stroke-width="5" cx="29" cy="29" r="23" stroke-dasharray="145" stroke-dashoffset="${Math.round(145-(145*Math.min(100,kwaliPicks.length)/100)*0.55)}" stroke-linecap="round"/>
             <circle fill="none" stroke="#00e5c8" stroke-width="5" cx="29" cy="29" r="23" stroke-dasharray="145" stroke-dashoffset="${Math.round(145-(145*Math.min(100,settledPicks.length)/100)*0.3)}" stroke-linecap="round"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:\'Bebas Neue\',sans-serif;font-size:1.25rem;color:#00BEC4;">${kwaliPicks.length}</div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;"><div style=\'font-family:Bebas Neue,sans-serif;font-size:1.25rem;color:#00BEC4;\'>${kwaliPicks.length}</div><div style=\'font-family:IBM Plex Mono,monospace;font-size:.4rem;color:rgba(255,255,255,.45);margin-top:1px;\'>/100</div></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,0.09);margin-top:.55rem;padding-top:.5rem;">
