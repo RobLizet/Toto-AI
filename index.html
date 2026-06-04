@@ -8,8 +8,8 @@
   <meta name="theme-color" content="#0f1117" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="TOTO AI" />
-  <title>TOTO AI</title>
+  <meta name="apple-mobile-web-app-title" content="EdgeXI" />
+  <title>EdgeXI</title>
 
   <!-- Manifest & Icons -->
   <link rel="manifest" href="manifest.json" />
@@ -22,10 +22,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="base.css?v=1780458033" />
-  <link rel="stylesheet" href="components.css?v=1780458033" />
-  <link rel="stylesheet" href="screens.css?v=1780458033" />
-  <link rel="stylesheet" href="new-theme.css?v=1780458033" />
+  <link rel="stylesheet" href="base.css?v=1780600564" />
+  <link rel="stylesheet" href="components.css?v=1780600564" />
+  <link rel="stylesheet" href="screens.css?v=1780600564" />
+  <link rel="stylesheet" href="new-theme.css?v=1780600564" />
 
   <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -62,7 +62,7 @@
   <div id="topbar" class="topbar" style="display:none">
     <!-- Links: logo + versie -->
     <div class="topbar-left" style="display:flex;align-items:center;gap:.4rem;">
-      <span class="topbar-logo" style="font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:.06em;color:#ffffff;line-height:1;">TOTO <span class="topbar-ai" style="color:#00BEC4;">AI</span></span>
+      <span class="topbar-logo" style="font-family:'Bebas Neue',sans-serif;font-size:1.55rem;letter-spacing:.06em;color:#ffffff;line-height:1;">Edge <span class="topbar-ai" style="color:#00BEC4;">XI</span></span>
       <span id="topbar-version" class="topbar-version" style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;font-weight:800;color:#fff;background:#00BEC4;border-radius:6px;padding:.1rem .45rem;letter-spacing:.02em;"></span>
     </div>
     <!-- Rechts: user chip + iconen -->
@@ -100,7 +100,7 @@
 
   <!-- ── Install Banner ── -->
   <div id="install-banner" class="install-banner" style="display:none">
-    <span>Installeer TOTO AI als app</span>
+    <span>Installeer EdgeXI als app</span>
     <button id="install-btn" class="install-btn">Installeren</button>
     <button onclick="document.getElementById('install-banner').style.display='none'" class="install-close">✕</button>
   </div>
@@ -113,8 +113,8 @@
   <div id="screen-login" class="screen screen-login">
     <div class="login-container">
       <div class="login-logo">
-        <span class="login-logo-toto">TOTO</span>
-        <span class="login-logo-ai">AI</span>
+        <span class="login-logo-toto">Edge</span>
+        <span class="login-logo-ai">XI</span>
       </div>
       <p class="login-tagline">Slimme voetbalanalyse</p>
 
@@ -352,30 +352,30 @@
 ══════════════════════════════════════════ -->
 
 <!-- 1. State -->
-<script src="state.js?v=1780584996"></script>
+<script src="state.js?v=1780600564"></script>
 
 <!-- 2. API -->
-<script src="api.js?v=1780564510"></script>
+<script src="api.js?v=1780600564"></script>
 
 <!-- 3. Utils -->
-<script src="football.js?v=1780546170"></script>
-<script src="ui.js?v=1780564510"></script>
-<script src="notifications.js?v=1780546170"></script>
+<script src="football.js?v=1780600564"></script>
+<script src="ui.js?v=1780600564"></script>
+<script src="notifications.js?v=1780600564"></script>
 
 <!-- 4. Router -->
-<script src="router.js?v=1780546170"></script>
+<script src="router.js?v=1780600564"></script>
 
 <!-- 5. Auth -->
-<script src="auth.js?v=1780546170"></script>
+<script src="auth.js?v=1780600564"></script>
 
 <!-- 6. Screens -->
-<script src="dashboard.js?v=1780584996"></script>
-<script src="wedstrijden.js?v=1780549691"></script>
-<script src="analyse.js?v=1780546170"></script>
-<script src="wallet.js?v=1780563860"></script>
-<script src="instellingen.js?v=1780546170"></script>
-<script src="analytics.js?v=1780546170"></script>
-<script src="wk2026.js?v=1780546170"></script>
+<script src="dashboard.js?v=1780600564"></script>
+<script src="wedstrijden.js?v=1780600564"></script>
+<script src="analyse.js?v=1780600564"></script>
+<script src="wallet.js?v=1780600564"></script>
+<script src="instellingen.js?v=1780600564"></script>
+<script src="analytics.js?v=1780600564"></script>
+<script src="wk2026.js?v=1780600564"></script>
 
 <!-- 7. App Init -->
 <script>
@@ -470,7 +470,7 @@
       padding:.65rem .9rem .55rem;
       background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(219,39,119,.06));
       border-bottom:1px solid rgba(15,23,42,.08);">
-      <div style="font-family:monospace;font-size:.58rem;font-weight:800;color:#0f172a;">🤖 TOTO AI ASSISTENT</div>
+      <div style="font-family:monospace;font-size:.58rem;font-weight:800;color:#0f172a;">🤖 EdgeXI ASSISTENT</div>
       <div style="display:flex;gap:.4rem;">
         <button onclick="clearFloatingChat()" style="background:none;border:none;font-size:.75rem;cursor:pointer;color:#64748b;" title="Wis chat">🗑</button>
         <button onclick="toggleFloatingChat()" style="background:none;border:none;font-size:.9rem;cursor:pointer;color:#64748b;">✕</button>
@@ -549,7 +549,7 @@
         if (u) authToken = await u.getIdToken();
       } catch(e) {}
 
-      var systemParts = ['Je bent TOTO AI assistent. Help de gebruiker met voetbal betting analyse, picks en statistieken. Antwoord in het Nederlands, beknopt en to the point.'];
+      var systemParts = ['Je bent EdgeXI assistent. Help de gebruiker met voetbal betting analyse, picks en statistieken. Antwoord in het Nederlands, beknopt en to the point.'];
       if (typeof state !== 'undefined') {
         if (state.selectedMatch) systemParts.push('Geselecteerde wedstrijd: ' + (state.selectedMatch.home||'') + ' vs ' + (state.selectedMatch.away||''));
         if (state.valueScans && state.valueScans.length) systemParts.push('Laatste scan: ' + state.valueScans.length + ' picks');
