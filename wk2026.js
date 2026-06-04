@@ -253,7 +253,7 @@ Geef een complete voorspelling in JSON:
 Respond ALLEEN met valid JSON, geen tekst buiten de JSON.`;
 
   try {
-    const WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
+    const WORKER = 'https://api.edgexi.app';
     const res = await fetch(`${WORKER}/anthropic`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -548,7 +548,7 @@ async function loadOranjeNieuws() {
   btn.textContent = '⟳ Nieuws laden...';
   btn.disabled = true;
   try {
-    const resp = await fetch('https://toto-proxy.zweetzakken.workers.dev/oranje-nieuws');
+    const resp = await fetch('https://api.edgexi.app/oranje-nieuws');
     const data = await resp.json();
     if (data.nieuws && data.nieuws.length) {
       el.innerHTML = data.nieuws.map(n => `
@@ -589,7 +589,7 @@ async function loadWKPicks() {
   if (!el) return;
 
   try {
-    const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/picks');
+    const res = await fetch('https://api.edgexi.app/picks');
     const data = await res.json();
     const allPicks = Object.values(data || {});
 
@@ -706,7 +706,7 @@ async function loadWKSchema() {
   try {
     const today = new Date().toISOString().split('T')[0];
     const res = await fetch(
-      `https://toto-proxy.zweetzakken.workers.dev/apif/fixtures?league=1&season=2026&from=${today}&to=2026-07-20&timezone=Europe/Amsterdam`
+      `https://api.edgexi.app/apif/fixtures?league=1&season=2026&from=${today}&to=2026-07-20&timezone=Europe/Amsterdam`
     );
     const fixtures = await res.json();
 
