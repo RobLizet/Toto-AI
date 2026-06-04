@@ -1000,8 +1000,7 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
 
   if (!oddsData) {
     const bookmakers = [8, 6, 1, 16, 36, 5, 11, 3, 4, 7, 2]; // 16=Betfair, 36=Betsson voor Scandinavisch
-    const SEASON_2026_LEAGUES = [1, 2, 3, 848, 103, 113, 10, 5, 32, 34, 36, 9, 30, 6, 7, 480]; // WK, CL, EL, ECL, Scandi, Int.vriendsch, Nations, WK Kwal, Copa, Gold Cup, Africa, Asian, Olympics
-    const season = SEASON_2026_LEAGUES.includes(Number(leagueId)) ? 2026 : 2025;
+    const season = seasonForLeague(leagueId);
     const leagueMatch = (state.matches || []).find(m => String(m.leagueId) === String(leagueId));
     const matchDate = leagueMatch?.dateISO || new Date().toISOString().split('T')[0];
 
@@ -1096,8 +1095,7 @@ async function fetchOddsForAllMatches(matches, _apiKey) {
       for (const bm of bookmakers) {
         try {
           const matchDate = byLeague[leagueId]?.[0]?.dateISO || new Date().toISOString().split('T')[0];
-          const SEASON_2026_LEAGUES2 = [1, 2, 3, 848, 103, 113];
-          const season = SEASON_2026_LEAGUES2.includes(parseInt(leagueId)) ? 2026 : 2025;
+          const season = seasonForLeague(leagueId);
           // Eerst op datum proberen
           const r = await apiFetch(
             `https://v3.football.api-sports.io/odds?league=${leagueId}&season=${season}&date=${matchDate}&bookmaker=${bm}`,
@@ -1452,8 +1450,10 @@ async function runMultiScan() {
   const btn = document.getElementById('multiScanBtn');
   if (btn) btn.disabled = true;
   const allValuePicks = [];
+  try {
   for (let i = 0; i < favs.length; i++) {
     const comp = favs[i];
+    try {
     if (btn) btn.textContent = `⟳ ${i+1}/${favs.length} ${COMP_NAMES[comp]?.split(' ').slice(1).join(' ') || comp}`;
     state.activeComp = comp;
     state.matches = []; state.valueScans = [];
@@ -1476,6 +1476,7 @@ async function runMultiScan() {
         .filter(s => s.value >= 5)
         .map(s => ({ ...s, compName: COMP_NAMES[comp] || comp })));
     }
+    } catch(e) { console.warn('[MultiScan] competitie overslaan:', comp, e); continue; }
   }
   allValuePicks.sort((a, b) => (b.value||0) - (a.value||0));
   renderMultiScanResults(allValuePicks, favs.length);
@@ -1490,7 +1491,12 @@ async function runMultiScan() {
     saveState();
     showToast(`⚡ ${allValuePicks.length} value picks gevonden — check Analyse tab`);
   }
-  if (btn) { btn.disabled = false; btn.textContent = '⚡ SCAN ALLES'; }
+  } catch(e) {
+    console.error('[MultiScan] onderbroken:', e);
+    showToast('⚠ Multiscan onderbroken — ' + (e && e.message ? e.message : 'onbekende fout'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ SCAN ALLES'; }
+  }
 }
 
 function renderMultiScanResults(picks, numComps) {
