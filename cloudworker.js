@@ -1,4 +1,4 @@
-// TOTO AI WORKER v114
+// TOTO AI WORKER v115
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v114'; // v114: scan fixtures via 2 globale date-calls i.p.v. ~28 per-league (fixt API-Football burst-ratelimit + Cloudflare 50-subrequest-limiet); apif() detecteert rateLimit met backoff-retry; odds-fallback 6→3 bookmakers // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v115'; // v115: jeugd-teams (U15-U23) uitgefilterd vóór analyse-slots (geen odds-markten, verdrongen bettable matches); odds-budget teller (max 36 calls) tegen Cloudflare 50-subrequest-limiet // v114: scan fixtures via 2 globale date-calls i.p.v. ~28 per-league (fixt API-Football burst-ratelimit + Cloudflare 50-subrequest-limiet); apif() detecteert rateLimit met backoff-retry; odds-fallback 6→3 bookmakers // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -14,6 +14,11 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version, Authorization',
 };
+
+// v115: jeugd-/onder-teams (U15–U23) hebben vrijwel nooit weddenschapsmarkten en
+// verdringen bettable wedstrijden uit de analyse-slots → uitsluiten in scans.
+const YOUTH_RE = /\bU-?(1[5-9]|2[0-3])\b/i;
+const isYouthMatch = (home, away) => YOUTH_RE.test(home || '') || YOUTH_RE.test(away || '');
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -700,8 +705,9 @@ async function handleProxy(urlParam, request, env) {
 }
 
 // ── Odds ophalen voor wedstrijden ────────────────────────
-async function fetchOddsForFixtures(fixtureIds, env) {
+async function fetchOddsForFixtures(fixtureIds, env, maxCalls = 36) {
   const oddsMap = {};
+  let oddsCallsUsed = 0; // v115: bewaak Cloudflare 50-subrequest-budget
   function parseOdds(data, fid) {
     if (!data || !data.length) return false;
     const bm = data[0]?.bookmakers?.[0];
@@ -719,7 +725,9 @@ async function fetchOddsForFixtures(fixtureIds, env) {
     async function batchOdds(ids, urlFn) {
       const B=5;
       for(let i=0;i<ids.length;i+=B){
+        if(oddsCallsUsed>=maxCalls)break; // v115: budget op → stop, rest via fair-odds fallback
         const sl=ids.slice(i,i+B);
+        oddsCallsUsed+=sl.length;
         const rs=await Promise.allSettled(sl.map(id=>apif(urlFn(id),env)));
         rs.forEach((r,j)=>{if(r.status==="fulfilled")parseOdds(r.value,sl[j]);});
         if(i+B<ids.length)await new Promise(r=>setTimeout(r,500));
@@ -1199,6 +1207,10 @@ async function runScan(env, force = false) {
     return ta - tb;
   });
 
+  const youthBefore = allMatches.length;
+  allMatches = allMatches.filter(m => !isYouthMatch(m.home, m.away));
+  if (allMatches.length !== youthBefore) console.log(`[Scan] ${youthBefore - allMatches.length} jeugdwedstrijden (U15-U23) uitgefilterd`);
+
   const batch = allMatches.slice(0, 8);
   console.log(`[Scan] ${batch.length} wedstrijden gevonden, odds ophalen...`);
 
@@ -1530,7 +1542,9 @@ async function runScanTest(env, leagueIds = [10, 5, 113, 103]) { // 10=Friendlie
   }
 
   // ── Stap 3: Odds ophalen (zelfde functie als productie, incl. Scandinavische bookmaker fallbacks) ──
-  const batch = allMatches.slice(0, 10);
+  const bettable = allMatches.filter(m => !isYouthMatch(m.home, m.away));
+  if (bettable.length !== allMatches.length) log.push(`[ScanTest] ${allMatches.length - bettable.length} jeugdwedstrijden (U15-U23) uitgefilterd`);
+  const batch = bettable.slice(0, 10);
   const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
   const oddsMap = await fetchOddsForFixtures(fixtureIds, env);
   log.push(`[ScanTest] Odds: ${Object.keys(oddsMap).length}/${batch.length} fixtures gedekt`);
