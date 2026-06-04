@@ -1,4 +1,4 @@
-// TOTO AI WORKER v117
+// TOTO AI WORKER v118
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v117'; // v117: watchdog — stille AI-mislukking (parse/API-fout → 0 picks) krijgt aparte ⚠️ owner-alert i.p.v. gewone 'scan klaar' // v116: productie-batch 8→12; odds-budget 24 vóór analyse-slots (geen odds-markten, verdrongen bettable matches); odds-budget teller (max 36 calls) tegen Cloudflare 50-subrequest-limiet // v114: scan fixtures via 2 globale date-calls i.p.v. ~28 per-league (fixt API-Football burst-ratelimit + Cloudflare 50-subrequest-limiet); apif() detecteert rateLimit met backoff-retry; odds-fallback 6→3 bookmakers // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v118'; // v118: consensus-odds (mediaan over alle ~13 bookmakers, 1 call/match) i.p.v. 1 bookmaker; de-vig fair kansen opgeslagen; minder valse value-picks // v117: watchdog stille AI-mislukking
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -707,54 +707,63 @@ async function handleProxy(urlParam, request, env) {
 // ── Odds ophalen voor wedstrijden ────────────────────────
 async function fetchOddsForFixtures(fixtureIds, env, maxCalls = 36) {
   const oddsMap = {};
-  let oddsCallsUsed = 0; // v115: bewaak Cloudflare 50-subrequest-budget
-  function parseOdds(data, fid) {
+  let oddsCallsUsed = 0; // bewaak Cloudflare 50-subrequest-budget
+
+  const median = arr => {
+    const s = arr.filter(x => x > 1).sort((a, b) => a - b);
+    if (!s.length) return 0;
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+
+  // v118: consensus over ALLE bookmakers in 1 call per match (i.p.v. 1 bookmaker + fallbackketen).
+  // Mediaan per uitkomst = robuust tegen uitschieters/stale prijzen -> minder valse value-picks.
+  function parseConsensus(data, fid) {
     if (!data || !data.length) return false;
-    const bm = data[0]?.bookmakers?.[0];
-    if (!bm) return false;
-    const bet = bm.bets?.find(b => b.id === 1);
-    if (!bet) return false;
-    const home = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
-    const draw = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
-    const away = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
-    if (home > 1) { oddsMap[fid] = { home, draw, away }; return true; }
-    return false;
-  }
-  try {
-    // Stap 1: Bet365 (8)
-    async function batchOdds(ids, urlFn) {
-      const B=5;
-      for(let i=0;i<ids.length;i+=B){
-        if(oddsCallsUsed>=maxCalls)break; // v115: budget op → stop, rest via fair-odds fallback
-        const sl=ids.slice(i,i+B);
-        oddsCallsUsed+=sl.length;
-        const rs=await Promise.allSettled(sl.map(id=>apif(urlFn(id),env)));
-        rs.forEach((r,j)=>{if(r.status==="fulfilled")parseOdds(r.value,sl[j]);});
-        if(i+B<ids.length)await new Promise(r=>setTimeout(r,500));
+    const books = data[0]?.bookmakers || [];
+    const H = [], D = [], A = [];
+    for (const bm of books) {
+      const bet = bm.bets?.find(b => b.id === 1);
+      if (!bet) continue;
+      const h = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
+      const d = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
+      const a = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
+      if (h > 1 && d > 1 && a > 1) { H.push(h); D.push(d); A.push(a); }
+    }
+    if (!H.length) return false;
+    const home = parseFloat(median(H).toFixed(2));
+    const draw = parseFloat(median(D).toFixed(2));
+    const away = parseFloat(median(A).toFixed(2));
+    // de-vig fair kansen uit consensus (voor CLV/transparantie; value-calc gebruikt de mediaan-odds)
+    const ih = 1 / home, idr = 1 / draw, ia = 1 / away, sum = ih + idr + ia;
+    oddsMap[fid] = {
+      home, draw, away,
+      books: H.length,
+      fair: {
+        home: parseFloat((ih / sum * 100).toFixed(1)),
+        draw: parseFloat((idr / sum * 100).toFixed(1)),
+        away: parseFloat((ia / sum * 100).toFixed(1))
       }
-    }
-    await batchOdds(fixtureIds, id => `/odds?fixture=${id}&bookmaker=8&bet=1`);
+    };
+    return true;
+  }
 
-    // Stap 2: William Hill (6) voor missende
-    const missing2 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing2.length) {
-      await batchOdds(missing2, id => `/odds?fixture=${id}&bookmaker=6&bet=1`);
+  try {
+    const B = 5;
+    for (let i = 0; i < fixtureIds.length; i += B) {
+      if (oddsCallsUsed >= maxCalls) break; // budget op -> rest via fair-odds fallback (v111)
+      const sl = fixtureIds.slice(i, i + B);
+      oddsCallsUsed += sl.length;
+      const rs = await Promise.allSettled(sl.map(id => apif(`/odds?fixture=${id}&bet=1`, env)));
+      rs.forEach((r, j) => { if (r.status === "fulfilled") parseConsensus(r.value, sl[j]); });
+      if (i + B < fixtureIds.length) await new Promise(r => setTimeout(r, 500));
     }
-
-    // Stap 3: Unibet/Jacks (16) — goed voor Scandinavische leagues
-    const missing3 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing3.length) {
-      await batchOdds(missing3, id => `/odds?fixture=${id}&bookmaker=16&bet=1`);
-    }
-
-    // v114: bookmaker-fallback gestopt na 3 (8 Bet365 / 6 William Hill / 16 Unibet)
-    // i.p.v. 6, om Cloudflare's 50-subrequest-limiet niet te overschrijden op
-    // wedstrijd-rijke dagen. Matches zonder odds worden alsnog geanalyseerd via
-    // de fair-odds fallback (v111).
-  } catch(e) {
+  } catch (e) {
     console.error('[Odds] Fout bij ophalen:', e);
   }
-  console.log(`[Odds] ${Object.keys(oddsMap).length}/${fixtureIds.length} fixtures met odds`);
+  const n = Object.keys(oddsMap).length;
+  const avgBooks = n ? (Object.values(oddsMap).reduce((s, o) => s + (o.books || 0), 0) / n).toFixed(1) : 0;
+  console.log(`[Odds] ${n}/${fixtureIds.length} fixtures met consensus-odds (gem. ${avgBooks} bookmakers)`);
   return oddsMap;
 }
 
