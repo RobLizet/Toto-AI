@@ -503,30 +503,43 @@ async function loadVandaagTab() {
   if (empty) empty.style.display = 'none';
 
   try {
-    // Laad vandaag van alle actieve competities parallel
-    const comps = getActiveCOMPLIST();
-    const today = new Date().toISOString().split('T')[0];
-    let allMatches = [];
+    // v26.8: één /fixtures?date= call (geen season-param → geen season-mismatch).
+    // Vervangt de oude, niet-bestaande fetchMatchesForLeague() die elke keer
+    // stil faalde waardoor de Vandaag-tab altijd leeg bleef.
+    const todayStr = new Date().toISOString().split('T')[0];
+    const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${todayStr}`, null, 12000);
+    const d = await r.json();
+    const knownLeagueIds = new Set(Object.values(COMP_IDS));
+    const now = Date.now();
 
-    await Promise.allSettled(comps.map(async comp => {
-      try {
-        const leagueId = COMP_IDS[comp.key];
-        if (!leagueId) return;
-        const matches = await fetchMatchesForLeague(leagueId, today);
-        if (matches?.length) allMatches.push(...matches);
-      } catch(e) {}
-    }));
+    const fixtures = (d.response || []).filter(f => {
+      if (!f.league || !knownLeagueIds.has(f.league.id)) return false;
+      const status = f.fixture?.status?.short;
+      const isFinished = ['FT','AET','PEN','CANC','ABD','AWD','WO'].includes(status);
+      const isLive = ['1H','2H','HT','ET','BT','P','INT','LIVE'].includes(status);
+      if (isFinished) return false;
+      if (isLive) return true;
+      // NS/TBD/PST: kickoff vandaag (vanaf 30 min geleden t/m einde dag)
+      const kickoff = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
+      return kickoff > now - 30 * 60 * 1000;
+    });
 
-    if (loading) loading.style.display = 'none';
-
-    // Sorteer op tijd
-    allMatches.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+    let allMatches = fixtures.map(f => parseAPIMatch(f)).filter(Boolean);
 
     if (!allMatches.length) {
+      if (loading) loading.style.display = 'none';
       if (empty) empty.style.display = 'block';
       return;
     }
 
+    // In state zetten zodat odds eraan gekoppeld worden, dan quotes ophalen
+    state.matches = allMatches;
+    try { await fetchOddsForAllMatches(state.matches, null); } catch(e) {}
+
+    if (loading) loading.style.display = 'none';
+    allMatches.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+
+    list.innerHTML = '';
     allMatches.forEach(m => {
       const card = renderMatchCard(m);
       if (card) list.appendChild(card);
@@ -545,9 +558,17 @@ function renderWedValuePicks() {
   if (!el) return;
 
   const scanLog = state.scanLog || [];
+  const nowMs = Date.now();
+  const STALE_MS = 48 * 60 * 60 * 1000; // v26.8: open picks ouder dan 48u = wedstrijd voorbij → niet meer "open"
   const picks = scanLog
     .flatMap(s => (s.picks||[]).map(p => ({...p, scanDate: s.timestamp})))
-    .filter(p => (!p.status || p.status === 'pending') && (p.value||0) >= 5)
+    .filter(p => {
+      if (!(!p.status || p.status === 'pending')) return false;
+      if ((p.value||0) < 5) return false;
+      const ts = typeof p.scanDate === 'number' ? p.scanDate : (p.scanDate ? new Date(p.scanDate).getTime() : 0);
+      if (ts && nowMs - ts > STALE_MS) return false; // verouderd → verbergen
+      return true;
+    })
     .sort((a,b) => (b.value||0) - (a.value||0));
 
   if (!picks.length) {
