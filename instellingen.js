@@ -339,7 +339,7 @@ function renderInstellingen() {
         <div class="settings-section-title">ℹ️ APP INFO</div>
         <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);line-height:1.8;">
           <div>EdgeXI <span id='appVersionLabel'></span> · AppsMadeByRobB</div>
-          <div>🌐 toto-ai.app</div>
+          <div>🌐 edgexi.app</div>
           <div>📧 zweetzakken@gmail.com</div>
           <div style="margin-top:.4rem;font-size:.47rem;color:rgba(255,255,255,.5);">
             ⚠️ Uitsluitend voor entertainment en educatie. Geen echt gokadvies.
