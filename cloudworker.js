@@ -1,4 +1,4 @@
-// TOTO AI WORKER v113
+// TOTO AI WORKER v114
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v113'; // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v114'; // v114: scan fixtures via 2 globale date-calls i.p.v. ~28 per-league (fixt API-Football burst-ratelimit + Cloudflare 50-subrequest-limiet); apif() detecteert rateLimit met backoff-retry; odds-fallback 6→3 bookmakers // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -505,15 +505,21 @@ async function apif(path, env) {
     }
   ];
   for (const host of hosts) {
-    try {
-      const res = await fetchWithRetry(host.url, {
-        headers: host.headers,
-        cf: { cacheTtl: 0, cacheEverything: false }
-      });
-      const data = await res.json();
-      if (data.errors?.token || data.errors?.key) continue;
-      return data.response || [];
-    } catch(e) { continue; }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const res = await fetchWithRetry(host.url, {
+          headers: host.headers,
+          cf: { cacheTtl: 0, cacheEverything: false }
+        });
+        const data = await res.json();
+        if (data.errors?.token || data.errors?.key) break; // auth-fout → volgende host
+        if (data.errors?.rateLimit) {                       // v114: niet stilletjes als [] teruggeven
+          if (attempt === 0) { await new Promise(r => setTimeout(r, 1500)); continue; } // backoff + retry
+          break; // na retry nog steeds limited → probeer volgende host
+        }
+        return data.response || [];
+      } catch(e) { break; }
+    }
   }
   return [];
 }
@@ -733,23 +739,10 @@ async function fetchOddsForFixtures(fixtureIds, env) {
       await batchOdds(missing3, id => `/odds?fixture=${id}&bookmaker=16&bet=1`);
     }
 
-    // Stap 4: Bwin (4)
-    const missing4 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing4.length) {
-      await batchOdds(missing4, id => `/odds?fixture=${id}&bookmaker=4&bet=1`);
-    }
-
-    // Stap 5: Marathonbet (1) — goede Scandinavische coverage
-    const missing5 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing5.length) {
-      await batchOdds(missing5, id => `/odds?fixture=${id}&bookmaker=1&bet=1`);
-    }
-
-    // Stap 6: Betsson (36) — Scandinavische markt
-    const missing6 = fixtureIds.filter(id => !oddsMap[id]);
-    if (missing6.length) {
-      await batchOdds(missing6, id => `/odds?fixture=${id}&bookmaker=36&bet=1`);
-    }
+    // v114: bookmaker-fallback gestopt na 3 (8 Bet365 / 6 William Hill / 16 Unibet)
+    // i.p.v. 6, om Cloudflare's 50-subrequest-limiet niet te overschrijden op
+    // wedstrijd-rijke dagen. Matches zonder odds worden alsnog geanalyseerd via
+    // de fair-odds fallback (v111).
   } catch(e) {
     console.error('[Odds] Fout bij ophalen:', e);
   }
@@ -1124,20 +1117,17 @@ async function runScan(env, force = false) {
   const NEXT_LEAGUES = new Set([10, 5, 6, 29, 36, 113, 103, 119, 129, 253, 71, 239, 292, 98]); // 10=Friendlies, 5=NL, 6/29/36=WK kwal
 
   const SCAN_LEAGUES = leagueConfig.map(l => l.id);
+  const SCAN_LEAGUE_SET = new Set(SCAN_LEAGUES);
 
   try {
-    // Haal vandaag + morgen op — UTC leagues via next= (timezone fix)
-    const fixturePromises = leagueConfig.flatMap(({ id, s }) => {
-      if (NEXT_LEAGUES.has(id)) {
-        return [apif(`/fixtures?league=${id}&season=${s}&next=15`, env)];
-      }
-      return [
-        apif(`/fixtures?league=${id}&season=${s}&date=${today}&timezone=Europe/Amsterdam`, env),
-        apif(`/fixtures?league=${id}&season=${s}&date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
-      ];
-    });
-    const fixtureResults = await Promise.all(fixturePromises);
-    const fixtures = fixtureResults.flat().filter(Boolean);
+    // v114: 2 globale date-calls i.p.v. ~28 per-league calls.
+    // Fixt API-Football per-seconde burst-limiet (28 parallelle calls > ~5/sec op Pro)
+    // én Cloudflare 50-subrequest-limiet (budget komt vrij voor odds + AI).
+    const [fxToday, fxTomorrow] = await Promise.all([
+      apif(`/fixtures?date=${today}&timezone=Europe/Amsterdam`, env),
+      apif(`/fixtures?date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
+    ]);
+    const fixtures = [...fxToday, ...fxTomorrow].filter(f => SCAN_LEAGUE_SET.has(f.league?.id));
 
     const seen = new Set();
     const unique = fixtures.filter(f => {
@@ -1484,30 +1474,18 @@ async function runScanTest(env, leagueIds = [10, 5, 113, 103]) { // 10=Friendlie
   // Internationale leagues: gebruik next=15 ipv date= (geeft betere resultaten)
   const NEXT_LEAGUES_TEST = new Set([10, 5, 6, 29, 36, 113, 103, 119, 129, 253, 71, 239, 292, 98]);
 
-  await Promise.all(leagueIds.flatMap(lid => {
-    const season = getSeason(lid);
-    log.push(`[ScanTest] League ${lid} → seizoen ${season}`);
-    if (NEXT_LEAGUES_TEST.has(lid)) {
-      return [apif(`/fixtures?league=${lid}&season=${season}&next=20`, env)
-        .then(fixtures => {
-          (fixtures || []).forEach(f => {
-            const id = f.fixture?.id;
-            if (id && !seen.has(id)) { seen.add(id); allFixtures.push(f); }
-          });
-        })
-        .catch(e => log.push(`[ScanTest] Fixtures fout league ${lid}: ${e.message}`))];
-    }
-    return [today, tomorrowStr].map(date =>
-      apif(`/fixtures?league=${lid}&season=${season}&date=${date}&timezone=Europe/Amsterdam`, env)
-        .then(fixtures => {
-          (fixtures || []).forEach(f => {
-            const id = f.fixture?.id;
-            if (id && !seen.has(id)) { seen.add(id); allFixtures.push(f); }
-          });
-        })
-        .catch(e => log.push(`[ScanTest] Fixtures fout league ${lid} ${date}: ${e.message}`))
-    );
-  }));
+  // v114: 2 globale date-calls + in-code league-filter (zelfde aanpak als productiescan,
+  // geen burst meer richting API-Football).
+  const leagueSet = new Set(leagueIds);
+  leagueIds.forEach(lid => log.push(`[ScanTest] League ${lid} → seizoen ${getSeason(lid)}`));
+  const [fxT, fxM] = await Promise.all([
+    apif(`/fixtures?date=${today}&timezone=Europe/Amsterdam`, env),
+    apif(`/fixtures?date=${tomorrowStr}&timezone=Europe/Amsterdam`, env),
+  ]);
+  [...fxT, ...fxM].forEach(f => {
+    const id = f.fixture?.id;
+    if (id && leagueSet.has(f.league?.id) && !seen.has(id)) { seen.add(id); allFixtures.push(f); }
+  });
 
   log.push(`[ScanTest] ${allFixtures.length} unieke fixtures gevonden`);
 
