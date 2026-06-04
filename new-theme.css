@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   NEW-THEME.CSS — TOTO AI v20.3+
+   NEW-THEME.CSS — EdgeXI v20.3+
    Drop deze file ín index.html NA screens.css:
      <link rel="stylesheet" href="new-theme.css" />
    Geen JS-wijzigingen nodig. Alle bestaande classes blijven werken.
@@ -963,7 +963,7 @@ body.dark .cd-standings-row { background: #1a2236 !important; }
 .match-card:active, .worker-pick-row:active { transform: scale(.99) !important; }
 
 /* ═══════════════════════════════════════════════════════════════
-   TOTO AI — SKY THEME (body.sky)
+   EdgeXI — SKY THEME (body.sky)
    Licht blauw-wit palet — fris, modern, goed leesbaar overdag
 ═══════════════════════════════════════════════════════════════ */
 
@@ -1131,7 +1131,7 @@ body.sky .theme-btn[onclick*="sky"] {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   TOTO AI — CRÈME THEMA (body.creme)
+   EdgeXI — CRÈME THEMA (body.creme)
    Warm koffie/crème palet — zacht, rustgevend, goed leesbaar
 ═══════════════════════════════════════════════════════════════ */
 
