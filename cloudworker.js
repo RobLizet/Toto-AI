@@ -1,4 +1,4 @@
-// TOTO AI WORKER v115
+// TOTO AI WORKER v116
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v115'; // v115: jeugd-teams (U15-U23) uitgefilterd vóór analyse-slots (geen odds-markten, verdrongen bettable matches); odds-budget teller (max 36 calls) tegen Cloudflare 50-subrequest-limiet // v114: scan fixtures via 2 globale date-calls i.p.v. ~28 per-league (fixt API-Football burst-ratelimit + Cloudflare 50-subrequest-limiet); apif() detecteert rateLimit met backoff-retry; odds-fallback 6→3 bookmakers // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v116'; // v116: productie-batch 8→12 wedstrijden voor meer pick-volume; odds-budget in productie op 24 (totaal blijft < Cloudflare 50-subrequest) // v115: jeugd-teams (U15-U23) uitgefilterd vóór analyse-slots (geen odds-markten, verdrongen bettable matches); odds-budget teller (max 36 calls) tegen Cloudflare 50-subrequest-limiet // v114: scan fixtures via 2 globale date-calls i.p.v. ~28 per-league (fixt API-Football burst-ratelimit + Cloudflare 50-subrequest-limiet); apif() detecteert rateLimit met backoff-retry; odds-fallback 6→3 bookmakers // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1211,11 +1211,11 @@ async function runScan(env, force = false) {
   allMatches = allMatches.filter(m => !isYouthMatch(m.home, m.away));
   if (allMatches.length !== youthBefore) console.log(`[Scan] ${youthBefore - allMatches.length} jeugdwedstrijden (U15-U23) uitgefilterd`);
 
-  const batch = allMatches.slice(0, 8);
+  const batch = allMatches.slice(0, 12);
   console.log(`[Scan] ${batch.length} wedstrijden gevonden, odds ophalen...`);
 
   const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
-  const oddsMap = await fetchOddsForFixtures(fixtureIds, env);
+  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, 24); // v116: budget 24 — batch 12 + ~12 misc subrequests blijft < 50
   console.log(`[Scan] Odds gevonden voor ${Object.keys(oddsMap).length} wedstrijden`);
 
   const oddsHistoryPath = `odds_history/${today}`;
