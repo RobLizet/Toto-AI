@@ -1,4 +1,4 @@
-// TOTO AI WORKER v119
+// TOTO AI WORKER v120
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v119'; // v119: R1 - overbodige Firebase 'picks'-fallback writes verwijderd (Supabase is bron, niemand las de FB-node); scan_status blijft dual (worker leest dag-teller uit FB) // v118: consensus-odds
+const VERSION = 'v120'; // v120: R1-fase2 - scan_status dag-teller leest nu uit Supabase, alle Firebase scan_status-writes verwijderd (Supabase = enige bron) // v119: FB picks-fallback weg // v118: consensus-odds
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -236,6 +236,13 @@ async function sbUpdateScanStatus(data, env) {
     version: data.version || VERSION,
     updated_at: new Date().toISOString(),
   }], '?on_conflict=id');
+}
+
+// ── Supabase: scan_status lezen (R1-fase2: bron = Supabase i.p.v. Firebase) ──
+async function sbGetScanStatus(env) {
+  const rows = await sb(env, 'scan_status', 'GET', null, '?id=eq.current&select=scan_date,scans_today&limit=1');
+  const r = rows && rows[0];
+  return { scanDate: r?.scan_date || null, scansToday: r?.scans_today || 0 };
 }
 
 // ── Supabase: daily tip opslaan ──────────────────────────
@@ -1191,8 +1198,9 @@ async function runScan(env, force = false) {
   if (!allMatches.length) {
     console.log('[Scan] Geen wedstrijden gevonden voor vandaag/morgen, stop');
     // v107: reset teller als het een nieuwe dag is
-    const lastScanDate = await fb(env, 'scan_status/scanDate');
-    const rawScansToday = (await fb(env, 'scan_status/scansToday')) || 0;
+    const st0 = await sbGetScanStatus(env); // R1-fase2: teller uit Supabase
+    const lastScanDate = st0.scanDate;
+    const rawScansToday = st0.scansToday;
     const scansToday0 = (lastScanDate !== today) ? 1 : rawScansToday + 1;
     if (lastScanDate !== today) console.log(`[Scan] Nieuwe dag — teller gereset (${lastScanDate} → ${today})`);
     // v103: hard limit — max scans per dag
@@ -1205,7 +1213,6 @@ async function runScan(env, force = false) {
       lastPickCount: 0, lastWithOdds: 0, lastWithoutOdds: 0,
       scanDate: today, version: VERSION, scansToday: scansToday0 };
     await sbUpdateScanStatus(scanData0, env);
-    await fb(env, 'scan_status', 'PUT', scanData0);
     await sendPushNotification(env, '🔍 Scan voltooid', `Geen wedstrijden gevonden voor ${today}`, { type: 'scan_empty' });
     return;
   }
@@ -1423,13 +1430,12 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
   const lockCount = Object.values(newPicks).filter(p => p.lockLevel !== 'single').length;
   console.log(`[Scan] Klaar: ${newCount} picks opgeslagen, ${lockCount} locks, ${withoutOdds.length} wedstrijden zonder odds`);
 
-  const scansToday1 = ((await fb(env, 'scan_status/scansToday')) || 0) + 1;
+  const scansToday1 = ((await sbGetScanStatus(env)).scansToday || 0) + 1; // R1-fase2: teller uit Supabase
   const scanData1 = { lastRun: new Date().toISOString(), scanDate: today,
     lastPickCount: newCount, lastMatchCount: analyseBatch.length,
     lastWithOdds: withOdds.length, lastWithoutOdds: withoutOdds.length,
     scansToday: scansToday1, version: VERSION };
   await sbUpdateScanStatus(scanData1, env);
-  await fb(env, 'scan_status', 'PUT', scanData1); // FB fallback
 
   const elitePicks = Object.values(newPicks).filter(p => p.elite);
   const lockPicks = Object.values(newPicks).filter(p => p.lockLevel === 'triple' || p.lockLevel === 'double');
