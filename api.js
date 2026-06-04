@@ -2,7 +2,7 @@
 // API.JS — Worker proxy + Football API + Anthropic
 // ═══════════════════════════════════════════════════════
 
-const WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
+const WORKER = 'https://api.edgexi.app';
 
 const COMP_IDS = {
   eredivisie: 88, kkd: 89, bundesliga: 78, premier: 39,
