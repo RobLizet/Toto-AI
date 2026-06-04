@@ -1,5 +1,5 @@
-// TOTO AI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '33.7';
+// EdgeXI Service Worker v25.2 — Cache bust bij elke deploy
+const SW_VERSION = '33.8';
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
@@ -36,9 +36,9 @@ self.addEventListener('push', e => {
   if (!e.data) return;
   let payload;
   try { payload = e.data.json(); }
-  catch(err) { payload = { title: '⚡ TOTO AI', body: e.data.text() }; }
+  catch(err) { payload = { title: '⚡ EdgeXI', body: e.data.text() }; }
 
-  const title = payload.notification?.title || payload.title || '⚡ TOTO AI';
+  const title = payload.notification?.title || payload.title || '⚡ EdgeXI';
   const body  = payload.notification?.body  || payload.body  || '';
   const data  = payload.data || {};
 
