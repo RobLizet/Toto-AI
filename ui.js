@@ -8,7 +8,7 @@ const HELP_TEXTS = {
   // Wedstrijden
   'competitie-tabs':    { title: 'Competities', text: 'Kies een competitie om wedstrijden te laden. De app haalt live odds en statistieken op via API-Football.' },
   'match-card':         { title: 'Wedstrijd kaart', text: 'Tik op een wedstrijd om die te selecteren voor analyse. De balkjes tonen de kans op thuiswinst, gelijkspel of uitwinst op basis van de odds.' },
-  'odds-display':       { title: 'Odds (quote)', text: 'De odds geven de uitbetaling per €1 inzet. Lagere odds = grotere kans volgens de bookmaker. TOTO AI vergelijkt dit met eigen berekeningen om value te vinden.' },
+  'odds-display':       { title: 'Odds (quote)', text: 'De odds geven de uitbetaling per €1 inzet. Lagere odds = grotere kans volgens de bookmaker. EdgeXI vergelijkt dit met eigen berekeningen om value te vinden.' },
   'value-badge':        { title: 'Value %', text: 'Value = het verschil tussen de AI-kans en de implied kans van de bookmaker. +10% betekent dat AI 10% hogere kans ziet dan de bookmaker inprijst. Positieve value = potentieel winstgevende bet.' },
 
   // Analyse
