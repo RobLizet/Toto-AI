@@ -245,6 +245,19 @@ function getCurrentSeason(comp) {
   return 2025;
 }
 
+// ── v26.7: ÉÉN centrale season-bepaling per league-id ──────────────
+// Voorkomt season-mismatch tussen fixtures-fetch en odds-fetch.
+// API-Football vereist dat de odds-season exact gelijk is aan de fixture-season,
+// anders komt er een lege odds-response terug ("geen wedstrijden met quotes").
+// Alle kalenderjaar- en internationale competities draaien in seizoen 2026.
+const SEASON_2026_LEAGUES_MASTER = new Set([
+  1, 2, 3, 4, 5, 6, 7, 9, 10, 29, 30, 32, 34, 36,
+  71, 98, 103, 113, 119, 128, 129, 239, 253, 292, 480, 848
+]);
+function seasonForLeague(leagueId) {
+  return SEASON_2026_LEAGUES_MASTER.has(Number(leagueId)) ? 2026 : 2025;
+}
+
 // ── Team & fixture data ophalen ───────────────────────────
 async function fetchH2H(homeId, awayId) {
   if (!homeId || !awayId) return [];
@@ -267,7 +280,7 @@ async function fetchTeamForm(teamId) {
 async function fetchTeamStats(teamId, leagueId) {
   if (!teamId) return null;
   try {
-    const season = leagueId === 1 ? 2026 : 2025;
+    const season = seasonForLeague(leagueId);
     const r = await apiFetch(`https://v3.football.api-sports.io/teams/statistics?team=${teamId}&league=${leagueId}&season=${season}`, null);
     const d = await r.json();
     return d.response || null;
@@ -286,7 +299,7 @@ async function fetchLineups(fixtureId) {
 async function fetchTopScorers(leagueId) {
   if (!leagueId) return null;
   try {
-    const season = leagueId === 1 ? 2026 : 2025;
+    const season = seasonForLeague(leagueId);
     const r = await apiFetch(`https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=${season}`, null, 5000);
     const d = await r.json();
     return d.response?.slice(0, 10) || null;
@@ -297,7 +310,7 @@ async function fetchTopScorers(leagueId) {
 async function fetchStandings(leagueId, _unused) {
   if (!leagueId) return null;
   try {
-    const season = leagueId === 1 ? 2026 : 2025;
+    const season = seasonForLeague(leagueId);
     const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`, null, 6000);
     const d = await r.json();
     return d.response?.[0]?.league?.standings?.[0] || null;
