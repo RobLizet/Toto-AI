@@ -87,62 +87,7 @@ async function proxyFetchWithFallback(url, options = {}) {
   throw new Error('Worker onbereikbaar');
 }
 
-// ── Anthropic via Worker /anthropic ─────────────────────
-async function anthropicFetchWithRetry(_apiKey, body, maxRetries = 3) {
-  if (_apiKey && typeof _apiKey === 'object' && !body) { body = _apiKey; _apiKey = null; }
-  for (let i = 0; i <= maxRetries; i++) {
-    try {
-      const data = await anthropicFetch(null, body);
-      if (data.error?.type === 'overloaded_error' && i < maxRetries) {
-        const wait = 15000 + i * 15000;
-        await new Promise(r => setTimeout(r, wait));
-        continue;
-      }
-      return data;
-    } catch(e) {
-      if (i === maxRetries) throw e;
-      await new Promise(r => setTimeout(r, 3000));
-    }
-  }
-}
-
-async function anthropicFetch(_apiKey, body) {
-  if (_apiKey && typeof _apiKey === 'object' && !body) { body = _apiKey; }
-  if (!body || typeof body !== 'object') throw new Error('Geen geldig body object');
-  const timeoutMs = (body.max_tokens || 1000) >= 1500 ? 90000 : 45000;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const r = await fetch(`${WORKER}/anthropic`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    const txt = await r.text();
-    try {
-      const parsed = JSON.parse(txt);
-      if (parsed.usage) trackTokenUsage(parsed.usage, body.model || 'claude-haiku-4-5-20251001');
-      return parsed;
-    } catch(e) {
-      throw new Error('Worker response: ' + txt.substring(0, 100));
-    }
-  } catch(e) {
-    clearTimeout(timer);
-    const key = state.settings?.anthropicKey || '';
-    const r2 = await fetch(`${WORKER}?url=${encodeURIComponent('https://api.anthropic.com/v1/messages')}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(key ? {'x-api-key': key, 'anthropic-version': '2023-06-01',
-                   'anthropic-dangerous-direct-browser-access': 'true'} : {})
-      },
-      body: JSON.stringify(body)
-    });
-    return await r2.json();
-  }
-}
+// ── Anthropic: zie anthropicFetch / anthropicFetchWithRetry in analyse.js (actieve versie met Firebase-auth) ──
 
 // ── Match parse helpers ──────────────────────────────────
 function parseAPIMatch(f) {
