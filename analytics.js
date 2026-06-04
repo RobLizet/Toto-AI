@@ -4,7 +4,7 @@
 // Data: /analytics endpoint (Supabase) + lokale scanLog
 // ═══════════════════════════════════════════════════════
 
-const ANALYTICS_WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
+const ANALYTICS_WORKER = 'https://api.edgexi.app';
 
 // ── Hoofd render functie ─────────────────────────────
 async function renderAnalyticsScreen() {
