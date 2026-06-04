@@ -1,4 +1,4 @@
-// TOTO AI WORKER v118
+// TOTO AI WORKER v119
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v118'; // v118: consensus-odds (mediaan over alle ~13 bookmakers, 1 call/match) i.p.v. 1 bookmaker; de-vig fair kansen opgeslagen; minder valse value-picks // v117: watchdog stille AI-mislukking
+const VERSION = 'v119'; // v119: R1 - overbodige Firebase 'picks'-fallback writes verwijderd (Supabase is bron, niemand las de FB-node); scan_status blijft dual (worker leest dag-teller uit FB) // v118: consensus-odds
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -923,7 +923,7 @@ async function verifyYesterdayPicks(env) {
 
   if (updated > 0) {
     await sbSavePicks(picks, env);
-    await fb(env, 'picks', 'PUT', picks); // FB fallback
+    // v119 (R1): Firebase 'picks'-fallback verwijderd — niet gelezen (worker leest Supabase, client leest per-user backup). Bespaart subrequest + voorkomt drift.
     console.log(`[Verify] ${updated} picks gesetteld`);
     await updateLeagueCalibration(env, picks, updatedIds);
   }
@@ -1417,7 +1417,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     .slice(0, 200);
 
   await sbSavePicks(Object.fromEntries(entries), env);
-  await fb(env, 'picks', 'PUT', Object.fromEntries(entries)); // FB tijdelijk als fallback
+  // v119 (R1): Firebase 'picks'-fallback verwijderd (vestigiaal — niet gelezen). Supabase is bron.
 
   const newCount = Object.keys(newPicks).length;
   const lockCount = Object.values(newPicks).filter(p => p.lockLevel !== 'single').length;
