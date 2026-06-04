@@ -529,6 +529,10 @@ function confirmDeposit() {
   const m = document.getElementById('deposit-modal'); if(m) m.style.display='none';
 }
 function closeModal(id) { const el=document.getElementById(id); if(el) { el.classList.remove('show'); el.style.display='none'; } }
+// v26.9: ontbrekende sluit-functies — knoppen (✕/Annuleren/backdrop) riepen niet-bestaande functies aan
+function closeDepositModal()  { closeModal('deposit-modal'); }
+function closeWithdrawModal() { closeModal('withdraw-modal'); }
+function closeTrackerModal()  { closeModal('tracker-modal'); }
 function clearWallet() {
   if (!confirm('Weet je het zeker? Dit wist ALLE inzetten.')) return;
   const nb = parseInt(document.getElementById('settStartBalance')?.value)||state.settings.startBalance||500;
@@ -883,7 +887,7 @@ function confirmTracker() {
     };
   }
   state.tracker.bets.unshift(bet);
-  saveState(); closeModal('trackerModal'); renderTracker(); updateTrackerStats();
+  saveState(); closeModal('tracker-modal'); renderTracker(); updateTrackerStats();
 }
 
 function setTrackerFilter(f) {
