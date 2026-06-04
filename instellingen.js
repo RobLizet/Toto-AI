@@ -10,7 +10,7 @@ function renderInstellingen() {
     <div class="app">
       <div class="topbar" style="display:none">
         <div>
-          <div class="topbar-logo">TOTO AI</div>
+          <div class="topbar-logo">EdgeXI</div>
           <div class="made-by">Instellingen</div>
         </div>
         <div id="authUserInfo" style="margin-left:auto;font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);text-align:right;max-width:200px;"></div>
@@ -338,7 +338,7 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">ℹ️ APP INFO</div>
         <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);line-height:1.8;">
-          <div>TOTO AI <span id='appVersionLabel'></span> · AppsMadeByRobB</div>
+          <div>EdgeXI <span id='appVersionLabel'></span> · AppsMadeByRobB</div>
           <div>🌐 toto-ai.app</div>
           <div>📧 zweetzakken@gmail.com</div>
           <div style="margin-top:.4rem;font-size:.47rem;color:rgba(255,255,255,.5);">
