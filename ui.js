@@ -150,37 +150,7 @@ function showSkeletonCards(n) {
 // ── Inzet modal ─────────────────────────────────────────
 let pendingBet = null;
 
-function openBetModal(e, matchId, pick, pickLabel, odds) {
-  if (e) e.stopPropagation();
-  const match = state.matches.find(m => String(m.id) === String(matchId));
-  if (!match) return;
-  pendingBet = { match, pick, pickLabel, odds: parseFloat(odds), markt: '1X2',
-    _origPick: pick, _origPickLabel: pickLabel, _origOdds: parseFloat(odds) };
-
-  // Vul modal in
-  const title = document.getElementById('bet-modal-title');
-  if (title) title.textContent = match.home + ' vs ' + match.away + ' — ' + pickLabel + ' @ ' + odds;
-
-  const matchInput = document.getElementById('bet-match');
-  if (matchInput) matchInput.value = match.home + ' vs ' + match.away;
-
-  const stakeInput = document.getElementById('bet-stake');
-  if (stakeInput) stakeInput.value = state.settings.defaultBet || 10;
-
-  const oddsInput = document.getElementById('bet-odds');
-  if (oddsInput) oddsInput.value = odds;
-
-  const noteInput = document.getElementById('bet-note');
-  if (noteInput) noteInput.value = pickLabel;
-
-  const typeSelect = document.getElementById('bet-type');
-  if (typeSelect) typeSelect.value = '1X2';
-
-  // Toon modal
-  const modal = document.getElementById('bet-modal');
-  if (modal) { modal.style.display = 'flex'; }
-}
-
+// (dubbele functie verwijderd v26.10 — actieve versie in wallet.js)
 function selectMarket(markt) {
   if (!pendingBet) return;
   pendingBet.markt = markt;
@@ -225,45 +195,7 @@ function updatePayoutPreview() {
   preview.textContent = 'Mogelijke uitbetaling: €' + payout + ' (winst: €' + (payout - amt).toFixed(2) + ')';
 }
 
-function closeBetModal() {
-  const modal = document.getElementById('bet-modal');
-  if (modal) modal.style.display = 'none';
-  pendingBet = null;
-}
-
-function confirmBet() {
-  if (!pendingBet) return;
-  const amt = parseFloat(document.getElementById('bet-stake')?.value);
-  if (!amt || amt <= 0) return;
-  if (amt > state.wallet.balance) { alert('Onvoldoende saldo!'); return; }
-  let finalOdds = pendingBet.odds;
-  let finalPick = pendingBet.pick;
-  let finalPickLabel = pendingBet.pickLabel;
-  if (pendingBet.markt !== '1X2') {
-    finalOdds = parseFloat(document.getElementById('bet-odds')?.value);
-    finalPickLabel = document.getElementById('bet-note')?.value.trim() || pendingBet.pickLabel;
-    if (!finalOdds || finalOdds < 1.01) { alert('Vul een geldige quote in!'); return; }
-  }
-  const marktLabels = {'1X2':'Uitslag','O25':'Over 2.5','U25':'Under 2.5','O15':'Over 1.5','O35':'Over 3.5','BTTSJ':'BTTS-J','BTTSN':'BTTS-N','1X':'1X','X2':'X2'};
-  const bet = {
-    id: Date.now(),
-    matchName: pendingBet.match.home + ' vs ' + pendingBet.match.away,
-    fixtureId: pendingBet.match.id,
-    pick: finalPick, pickLabel: finalPickLabel,
-    markt: marktLabels[pendingBet.markt] || pendingBet.markt,
-    odds: finalOdds, amount: amt,
-    payout: parseFloat((amt * finalOdds).toFixed(2)),
-    status: 'pending',
-    date: new Date().toLocaleDateString('nl-NL')
-  };
-  state.wallet.balance -= amt;
-  state.wallet.totalStaked += amt;
-  state.wallet.bets.unshift(bet);
-  saveState();
-  updateWalletUI();
-  closeBetModal();
-}
-
+// (dubbele functie verwijderd v26.10 — actieve versie in wallet.js)
 function openQuickBet(matchId, pick, pickLabel, odds, type) {
   if (type === 'combi') {
     addValuePickToCombi(matchId, pick, pickLabel, odds,
@@ -335,39 +267,4 @@ function updateWKCountdown() {
 }
 
 // ── CSV Export ───────────────────────────────────────────
-function exportWalletCSV() {
-  const bets = state.wallet?.bets || [];
-  if (!bets.length) { alert('Geen bets om te exporteren'); return; }
-  const headers = ['Datum','Wedstrijd','Pick','Quote','Inzet','Uitbetaling','W/V','Status','Score','Bron'];
-  const rows = bets.map(b => {
-    const pnl = b.status === 'win' ? (b.payout - (b.amount||b.stake)).toFixed(2)
-              : b.status === 'lose' ? (-(b.amount||b.stake)).toFixed(2) : '0';
-    return [b.date||'',(b.matchName||'').replace(/,/g,' '),(b.pickLabel||'').replace(/,/g,' '),
-      b.odds||'',b.amount||b.stake||'',b.payout?.toFixed(2)||'',pnl,
-      b.status==='win'?'Gewonnen':b.status==='lose'?'Verloren':'Open',b.score||'',b.source||'eigen'].join(',');
-  });
-  const csv = [headers.join(','), ...rows].join('\n');
-  downloadFile(csv, `TOTO-AI-wallet-${new Date().toISOString().split('T')[0]}.csv`, 'text/csv;charset=utf-8;');
-  showAutoCheckBar('📥 CSV gedownload!', 2000);
-}
-
-function exportTrackerCSV() {
-  const bets = state.tracker?.bets || [];
-  if (!bets.length) { alert('Geen tracker bets om te exporteren'); return; }
-  const headers = ['Datum','Wedstrijd','Pick','Markt','Quote','Inzet','Uitbetaling','Status','Score','Bookmaker','Bron'];
-  const rows = bets.map(b => [b.date||'',(b.match||'').replace(/,/g,' '),(b.pick||'').replace(/,/g,' '),
-    b.markt||'',b.odds||'',b.stake||'',b.payout?.toFixed(2)||'',
-    b.status==='win'?'Gewonnen':b.status==='lose'?'Verloren':'Open',
-    b.score||'',b.bookmaker||'',b.source||'eigen'].join(',')).join('\n');
-  const csv = [headers.join(','), rows].join('\n');
-  downloadFile(csv, `TOTO-AI-tracker-${new Date().toISOString().split('T')[0]}.csv`, 'text/csv;charset=utf-8;');
-  showAutoCheckBar('📥 Tracker CSV gedownload!', 2000);
-}
-
-function downloadFile(content, filename, type) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  URL.revokeObjectURL(url);
-}
+// (dubbele functie verwijderd v26.10 — actieve versie in wallet.js)
