@@ -1,5 +1,5 @@
 // EdgeXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '33.8';
+const SW_VERSION = '33.9';
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
@@ -59,9 +59,9 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(wins => {
       for (const w of wins) {
-        if (w.url.includes('toto-ai') && 'focus' in w) { w.focus(); return; }
+        if (w.url.includes(self.location.origin) && 'focus' in w) { w.focus(); return; }
       }
-      if (clients.openWindow) return clients.openWindow('https://toto-ai.app/');
+      if (clients.openWindow) return clients.openWindow('/');
     })
   );
 });
