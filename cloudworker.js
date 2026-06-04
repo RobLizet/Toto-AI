@@ -1,4 +1,4 @@
-// TOTO AI WORKER v116
+// TOTO AI WORKER v117
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v116'; // v116: productie-batch 8→12 wedstrijden voor meer pick-volume; odds-budget in productie op 24 (totaal blijft < Cloudflare 50-subrequest) // v115: jeugd-teams (U15-U23) uitgefilterd vóór analyse-slots (geen odds-markten, verdrongen bettable matches); odds-budget teller (max 36 calls) tegen Cloudflare 50-subrequest-limiet // v114: scan fixtures via 2 globale date-calls i.p.v. ~28 per-league (fixt API-Football burst-ratelimit + Cloudflare 50-subrequest-limiet); apif() detecteert rateLimit met backoff-retry; odds-fallback 6→3 bookmakers // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v117'; // v117: watchdog — stille AI-mislukking (parse/API-fout → 0 picks) krijgt aparte ⚠️ owner-alert i.p.v. gewone 'scan klaar' // v116: productie-batch 8→12; odds-budget 24 vóór analyse-slots (geen odds-markten, verdrongen bettable matches); odds-budget teller (max 36 calls) tegen Cloudflare 50-subrequest-limiet // v114: scan fixtures via 2 globale date-calls i.p.v. ~28 per-league (fixt API-Football burst-ratelimit + Cloudflare 50-subrequest-limiet); apif() detecteert rateLimit met backoff-retry; odds-fallback 6→3 bookmakers // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1293,6 +1293,10 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     console.error('[Scan] AI fout:', e);
   }
 
+  // v117: watchdog — onderscheid stille AI-mislukking (parse/API-fout) van 'geen value'
+  const aiFailed = analyseBatch.length > 0 && aiResults.length === 0;
+  if (aiFailed) console.error(`[Scan] ⚠️ AI gaf 0 resultaten voor ${analyseBatch.length} wedstrijden — mogelijk parse/API-fout`);
+
   const newPicks = {};
   const existingPicks = await sbGetPicks(env);
   const todayHistory = await fb(env, `odds_history/${today}`) || {};
@@ -1457,10 +1461,12 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       await sendPushNotification(env, title, body, { type: 'scan_done' });
     }
   } else {
-    // Altijd een melding — ook bij 0 picks
-    const title = `⏱ ${nowStr} — scan klaar`;
-    const body = `${allMatches.length} wedstr gescand · geen nieuwe picks`;
-    await sendPushNotification(env, title, body, { type: 'scan_done' });
+    // Altijd een melding — ook bij 0 picks. v117: aparte alert bij stille AI-mislukking.
+    const title = aiFailed ? `⚠️ ${nowStr} — scan zonder AI-analyse` : `⏱ ${nowStr} — scan klaar`;
+    const body = aiFailed
+      ? `${analyseBatch.length} wedstr mét odds, maar AI gaf geen analyse — check ANTHROPIC_KEY / limiet`
+      : `${allMatches.length} wedstr gescand · geen nieuwe picks`;
+    await sendPushNotification(env, title, body, { type: aiFailed ? 'ai_error' : 'scan_done' });
   }
 }
 
