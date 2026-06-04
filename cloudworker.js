@@ -1,4 +1,4 @@
-// TOTO AI WORKER v105
+// TOTO AI WORKER v113
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v112'; // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
+const VERSION = 'v113'; // v113: SEASON_2026-set + leagueConfig (J-League 2026, Primeira 2025) gelijkgetrokken met client seasonForLeague() // v112: Supabase keepalive ping dagelijks om pauzeren te voorkomen // v111: interlands zonder odds toch analyseren met fair-odds fallback // v110: scan-test next=20 voor interlands, default leagues 10+5 // v109: league 10+5+6 naar NEXT_LEAGUES (next=15), date= werkte niet // v108: zomertijd fix UTC+2, scansToday dag-reset, leagues 10+5+6 // v106: draw bias fix, verbeterde scan prompts, elite pick strikter, daily tip zwakPunt
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1110,12 +1110,12 @@ async function runScan(env, force = false) {
       { id: 253, s: 2026 }, // MLS
       // ── Azië/Oceanie ──
       { id: 292, s: 2026 }, // K League Zuid-Korea
-      { id: 98,  s: 2025 }, // J-League Japan
+      { id: 98,  s: 2026 }, // J-League Japan (kalenderjaar — actief seizoen 2026)
       // ── Europa eindcompetities (playoffs/finales) ──
       { id: 2,   s: 2026 }, // Champions League
       { id: 3,   s: 2026 }, // Europa League
       { id: 848, s: 2026 }, // Conference League
-      { id: 94,  s: 2024 }, // Primeira Liga Portugal
+      { id: 94,  s: 2025 }, // Primeira Liga Portugal (2025-26)
     ];
     console.log('[Scan] Actieve leagues: WK + Friendlies + Nations League + Scandinavië + Zuid-Amerika + MLS + Azië');
   }
@@ -1472,7 +1472,7 @@ async function runScanTest(env, leagueIds = [10, 5, 113, 103]) { // 10=Friendlie
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
   // Seizoen-aware: Scandinavische + WK competities = 2026
-  const SEASON_2026 = new Set([1, 2, 3, 4, 5, 6, 10, 29, 36, 71, 98, 103, 113, 119, 129, 239, 253, 292, 848]); // alle actieve leagues
+  const SEASON_2026 = new Set([1, 2, 3, 4, 5, 6, 7, 9, 10, 29, 30, 32, 34, 36, 71, 98, 103, 113, 119, 128, 129, 239, 253, 292, 480, 848]); // v113: identiek aan client seasonForLeague() master-set
   const getSeason = (lid) => SEASON_2026.has(lid) ? 2026 : 2025;
 
   const log = [`[ScanTest] Start — leagues: ${leagueIds.join(', ')}, datum: ${today} + ${tomorrowStr}`];
