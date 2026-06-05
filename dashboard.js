@@ -105,6 +105,54 @@ function renderPickReasons(p) {
 }
 
 
+// ── Gewogen pick-uitleg — model-componenten op de kaart ──
+function pickWeightFactors(p) {
+  const f = [];
+  const clamp = (v) => Math.max(0, Math.min(100, Math.round(v)));
+  // Value (0–50% → 0–100 schaal)
+  if (p.value != null) {
+    f.push({ label: 'Value', pct: clamp((p.value || 0) * 2), sub: '+' + Math.round(p.value || 0) + '%' });
+  }
+  // Poisson-voordeel: modelkans voor de gekozen uitslag
+  let pk = null;
+  if (p.pick === '2') pk = p.poissonK2;
+  else if (p.pick === 'X') pk = (p.poissonKX != null ? p.poissonKX : p.poissonKx);
+  else pk = p.poissonK1;
+  if (pk != null) {
+    const v = pk <= 1 ? pk * 100 : pk; // accepteer 0–1 of 0–100
+    f.push({ label: 'Poisson', pct: clamp(v), sub: Math.round(v) + '%' });
+  }
+  // AI-overeenstemming: AI-kans vs. impliciete odds-kans
+  if (p.aiKans != null) {
+    const implied = p.odds ? 100 / p.odds : null;
+    const edge = implied != null ? (p.aiKans - implied) : 0;
+    f.push({ label: 'AI', pct: clamp(p.aiKans), sub: implied != null ? (edge >= 0 ? '+' : '') + Math.round(edge) + '% vs markt' : Math.round(p.aiKans) + '%' });
+  }
+  // Marktafwijking (alleen indien aanwezig; 50 = neutraal)
+  const ms = p.marketSignal != null ? p.marketSignal : p.market_signal;
+  if (ms != null) {
+    f.push({ label: 'Markt', pct: clamp(ms), sub: ms >= 50 ? 'steun' : 'tegen' });
+  }
+  return f;
+}
+
+function renderPickWeighting(p) {
+  const f = pickWeightFactors(p);
+  if (f.length < 2) return '';
+  let html = '<div style="margin-top:.4rem;padding:.4rem .5rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;">';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.45);margin-bottom:.3rem;">GEWOGEN UITLEG</div>';
+  f.forEach(x => {
+    const c = x.pct >= 60 ? '#00BEC4' : x.pct >= 40 ? '#d97706' : '#64748b';
+    html += '<div style="display:flex;align-items:center;gap:.45rem;margin-bottom:.22rem;">';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.6);min-width:46px;">' + x.label + '</div>';
+    html += '<div style="flex:1;background:#0f2230;border-radius:999px;height:5px;overflow:hidden;"><div style="background:' + c + ';height:100%;width:' + x.pct + '%;border-radius:999px;"></div></div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.55);min-width:64px;text-align:right;">' + x.sub + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
 // Token = HMAC-SHA256(SCAN_SECRET + timestamp_minute)
 const SCAN_SECRET = 'totoai2026'; // Zelfde als SCAN_SECRET in Cloudflare env
 // Admin UIDs — voeg jouw Firebase UID toe
@@ -914,7 +962,7 @@ function showPicksModal() {
             </div>
             <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:${rel.color};font-weight:700;">${rel.score}/100</div>
           </div>
-          ${renderPickReasons(p)}${clvHtml}${scoreHtml}
+          ${renderPickReasons(p)}${renderPickWeighting(p)}${clvHtml}${scoreHtml}
         </div>`;
       }).join('')}
     </div>
