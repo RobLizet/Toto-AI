@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '34.4';
+const SW_VERSION = '34.5';
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
