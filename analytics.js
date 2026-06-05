@@ -4,7 +4,7 @@
 // Data: /analytics endpoint (Supabase) + lokale scanLog
 // ═══════════════════════════════════════════════════════
 
-const ANALYTICS_WORKER = 'https://api.edgexi.app';
+const ANALYTICS_WORKER = 'https://api.promatchxi.app';
 
 // ── Hoofd render functie ─────────────────────────────
 async function renderAnalyticsScreen() {
