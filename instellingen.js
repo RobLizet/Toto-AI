@@ -126,7 +126,7 @@ function renderInstellingen() {
             <div class="settings-label">Toon alleen Elite / A+</div>
             <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);">Verbergt B/C-picks in het overzicht — focus op de sterkste signalen</div>
           </div>
-          <button id="eliteOnlyBtn" class="toggle-btn ${localStorage.getItem('totoai_eliteOnly')==='1'?'active':''}" onclick="toggleEliteOnly()">${localStorage.getItem('totoai_eliteOnly')==='1'?'Aan ✓':'Uit'}</button>
+          <button id="eliteOnlyBtn" class="toggle-btn ${localStorage.getItem('totoai_eliteOnly')!=='0'?'active':''}" onclick="toggleEliteOnly()">${localStorage.getItem('totoai_eliteOnly')!=='0'?'Aan ✓':'Uit'}</button>
         </div>
       </div>
 
@@ -448,7 +448,7 @@ function applySettings() {
 // ── THEMA ────────────────────────────────────────────
 
 function toggleEliteOnly() {
-  const next = localStorage.getItem('totoai_eliteOnly') === '1' ? '0' : '1';
+  const next = (localStorage.getItem('totoai_eliteOnly') !== '0') ? '0' : '1';
   localStorage.setItem('totoai_eliteOnly', next);
   const btn = document.getElementById('eliteOnlyBtn');
   if (btn) { btn.textContent = next === '1' ? 'Aan ✓' : 'Uit'; btn.classList.toggle('active', next === '1'); }
