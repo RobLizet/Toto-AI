@@ -255,19 +255,38 @@ function _analyticsHTML(local, worker) {
     html += '</div>';
   }
 
-  // ── Supabase CLV data ──
-  if (worker && worker.clv) {
-    const clv = worker.clv;
+  // ── Supabase CLV data (v123: v_clv_summary) ──
+  const cs = worker && worker.clvSummary;
+  const csPicks = cs ? Number(cs.picks) : 0;
+  if (cs && csPicks > 0) {
+    const avgN = (cs.avgCLV === null || cs.avgCLV === '') ? null : Number(cs.avgCLV);
+    const avgTxt = avgN === null ? '—' : (avgN >= 0 ? '+' : '') + cs.avgCLV + '%';
+    const avgCol = avgN === null ? '#ffffff' : (avgN >= 0 ? '#00BEC4' : '#ef4444');
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.42rem;font-weight:400;color:rgba(255,255,255,.5);">via Supabase</span></div>';
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">';
-    html += _kpiSmall('TOTAAL', clv.total || 0);
-    html += _kpiSmall('GEM. CLV', clv.avgCLV !== null ? (clv.avgCLV >= 0 ? '+' : '') + clv.avgCLV + '%' : '—');
-    html += _kpiSmall('POSITIEF', clv.positiveCLVPct !== null ? clv.positiveCLVPct + '%' : '—');
+    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.5);">via Supabase</span></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
+    html += '<div style="background:rgba(0,190,196,.07);border:1px solid rgba(0,190,196,.22);border-radius:10px;padding:.6rem;text-align:center;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">GEM. CLV</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:1.05rem;font-weight:800;color:' + avgCol + ';">' + avgTxt + '</div></div>';
+    html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:.6rem;text-align:center;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">VERSLAAT CLOSE</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:1.05rem;font-weight:800;color:#ffffff;">' + (cs.pctBeatClose == null ? '—' : cs.pctBeatClose + '%') + '</div></div>';
     html += '</div>';
-    if (clv.total === 0) {
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.5);margin-top:.5rem;text-align:center;">CLV data verschijnt na settlements via Worker v98+</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">';
+    html += _kpiSmall('PICKS', cs.picks);
+    html += _kpiSmall('WIN-RATE', cs.winRate == null ? '—' : cs.winRate + '%');
+    html += _kpiSmall('BESTE', cs.bestCLV == null ? '—' : '+' + cs.bestCLV + '%');
+    html += '</div>';
+    if (worker.clvByLeague && worker.clvByLeague.length) {
+      html += '<div style="margin-top:.6rem;">';
+      worker.clvByLeague.slice(0,4).forEach(l => {
+        const lc = Number(l.avgCLV) >= 0 ? '#00BEC4' : '#ef4444';
+        html += '<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,0.07);"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.7);">Competitie ' + l.leagueId + ' · ' + l.picks + ' picks</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:' + lc + ';">' + (Number(l.avgCLV)>=0?'+':'') + l.avgCLV + '%</div></div>';
+      });
+      html += '</div>';
     }
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.45);margin-top:.5rem;line-height:1.45;">CLV = je odds vs. de slotkoers. Structureel boven 0% = je verslaat de markt — de sterkste voorspeller van lange-termijn edge.</div>';
+    html += '</div>';
+  } else {
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.5);">via Supabase</span></div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);text-align:center;padding:.6rem 0;line-height:1.45;">CLV verschijnt zodra picks settelen.<br>De engine bouwt nu oddshistorie op (worker v122+).</div>';
     html += '</div>';
   }
 
