@@ -856,7 +856,7 @@ function showPicksModal() {
   sheet.innerHTML = `
     <div style="width:40px;height:4px;background:rgba(0,0,0,.15);border-radius:2px;margin:0 auto .75rem;"></div>
     <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;margin-bottom:.5rem;">🎯 Picks Overzicht</div>
-    <details style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:10px;padding:.5rem .7rem;margin-bottom:.75rem;">
+    <details open style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:10px;padding:.5rem .7rem;margin-bottom:.75rem;">
       <summary style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:#00BEC4;cursor:pointer;">📋 Pick-kwaliteit checklist</summary>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.72);line-height:1.7;margin-top:.5rem;">
         ⭐ <b>Tier eerst</b> — Elite / A+ (Reliability 75+)<br>
