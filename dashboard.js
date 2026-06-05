@@ -44,6 +44,14 @@ function getPickCategory(p) {
   return                      { label: 'C',  color: '#94a3b8', bg: 'rgba(148,163,184,.1)' };
 }
 
+function eliteOnlyActive(){ return localStorage.getItem('totoai_eliteOnly') !== '0'; } // default AAN
+function passesEliteFilter(p){
+  if (!eliteOnlyActive()) return true;
+  if (p && p.elite) return true;
+  try { if (typeof calcReliabilityScore === 'function' && calcReliabilityScore(p).score >= 80) return true; } catch(e){}
+  return (((p&&p.confidence)||0) >= 8) && (((p&&p.value)||0) >= 15);
+}
+
 function renderCLVBadge(p) {
   if (p.clv === undefined || p.clv === null) return '';
   const clv = parseFloat(p.clv);
@@ -826,7 +834,7 @@ function showPicksModal() {
 
   // Sorteer: afgerond bovenaan, dan open
   let sorted = [...settled.reverse(), ...open];
-  if (localStorage.getItem('totoai_eliteOnly') === '1') sorted = sorted.filter(p => p.elite || calcReliabilityScore(p).score >= 80);
+  sorted = sorted.filter(passesEliteFilter);
 
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-end;';
@@ -964,7 +972,7 @@ async function loadLiveScores() {
   // Verzamel pending picks uit scanLog
   const scanLog = state.scanLog || [];
   const allPicks = scanLog.flatMap(s => s.picks || []);
-  const pendingPicks = allPicks.filter(p => p.status === 'pending' && p.fixtureId);
+  const pendingPicks = allPicks.filter(p => p.status === 'pending' && p.fixtureId).filter(passesEliteFilter);
 
   // Dedup op fixtureId + pick
   const seen = new Set();
