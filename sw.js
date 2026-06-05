@@ -1,5 +1,5 @@
-// EdgeXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '34.3';
+// ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
+const SW_VERSION = '34.4';
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
@@ -36,9 +36,9 @@ self.addEventListener('push', e => {
   if (!e.data) return;
   let payload;
   try { payload = e.data.json(); }
-  catch(err) { payload = { title: '⚡ EdgeXI', body: e.data.text() }; }
+  catch(err) { payload = { title: '⚡ ProMatchXI', body: e.data.text() }; }
 
-  const title = payload.notification?.title || payload.title || '⚡ EdgeXI';
+  const title = payload.notification?.title || payload.title || '⚡ ProMatchXI';
   const body  = payload.notification?.body  || payload.body  || '';
   const data  = payload.data || {};
 
