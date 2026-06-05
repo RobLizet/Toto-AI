@@ -1550,11 +1550,14 @@ function renderMultiScanResults(picks, numComps) {
         <div style="flex:1;cursor:pointer;" onclick="selectMatchAndAnalyse('${s.match?.id}')">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:#ffffff;">${s.match?.home||'?'} vs ${s.match?.away||'?'}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00a8ad;">${s.compName}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);">${s.pickLabel} · ${s.kans}% · ${s.reason||''}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.7);">${s.pickLabel} · Kans ${s.kans}%</div>
+          ${s.reason?`<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.45);margin-top:1px;">${s.reason}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${cls};">${sign}${Math.round(s.value)}%</div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#00BEC4;">${(s.odds||0).toFixed(2)}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.4);letter-spacing:.04em;">EDGE</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${cls};line-height:.9;">${sign}${Math.round(s.value)}%</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#00BEC4;">@${(s.odds||0).toFixed(2)}</div>
+          ${s.ev!=null?`<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">EV ${s.ev>=0?'+':''}${Math.round(s.ev)}%</div>`:''}
           <button onclick="addValuePickToCombi('${s.match?.id}','${s.pick}','${(s.pickLabel||'').replace(/'/g,"\\'")}',${s.odds||0},'${(s.match?.home||'').replace(/'/g,"\\'")}','${(s.match?.away||'').replace(/'/g,"\\'")}')"
             style="font-family:monospace;font-size:.48rem;font-weight:800;padding:2px 7px;border-radius:999px;cursor:pointer;
             border:1px solid ${inCombi?'rgba(0,190,196,.4)':'rgba(0,190,196,.35)'};
