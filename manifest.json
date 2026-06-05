@@ -1,6 +1,6 @@
 {
-  "name": "EdgeXI — Voetbal Analyse",
-  "short_name": "EdgeXI",
+  "name": "ProMatchXI — Voetbal Analyse",
+  "short_name": "ProMatchXI",
   "description": "AI-gestuurde voetbal analyse app met value betting",
   "start_url": "/",
   "scope": "/",
