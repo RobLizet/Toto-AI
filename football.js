@@ -333,6 +333,13 @@ function calcKelly(kans, odds) {
   return Math.max(0, parseFloat((kelly * 50).toFixed(2))); // half Kelly in %
 }
 
+// v26.22: EV% o.b.v. werkelijk verkrijgbare odds (mét vig) — voor staking/weergave, niet voor selectie.
+// Selectie draait op de de-vigde edge (calcValueFair); dit is je verwachte rendement.
+function calcEV(kans, odds) {
+  if (!kans || !odds || odds <= 1) return null;
+  return parseFloat((((kans / 100) * odds - 1) * 100).toFixed(1));
+}
+
 function valueClass(value) {
   if (value === null || value === undefined) return 'neu';
   if (value >= 15) return 'high';
