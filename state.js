@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v37: v26.21 — CLV-dashboard wiring (trend, ROI, competitie-rating, gewogen uitleg)
+// v38: v26.22 — Value-engine geünificeerd: de-vigde edge vs consensus + aparte EV/Kelly
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.21';
+const APP_VERSION = 'v26.22';
 
 const STATE_KEY = 'totoai_state';
 
