@@ -1019,8 +1019,8 @@ function liveCardHtml(pick, fx) {
   if (!fx) {
     const dt = [pick.matchDate||pick.date, pick.matchTime||pick.time].filter(Boolean).join(' ');
     return `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;">${matchName}</div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);margin-top:.2rem;">${pick.pickLabel||pick.pick} @ ${pick.odds}${dt ? ' · 📅 ' + dt : ''} · ⏳ Nog niet begonnen</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;font-weight:700;">${matchName}</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.5);margin-top:.2rem;">${pick.pickLabel||pick.pick} @ ${pick.odds}${dt ? ' · 📅 ' + dt : ''} · ⏳ Nog niet begonnen</div>
     </div>`;
   }
 
@@ -1075,15 +1075,15 @@ function liveCardHtml(pick, fx) {
 
   return `<div style="background:rgba(255,255,255,0.05);border:1.5px solid ${borderColor};border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
-      <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;font-weight:700;color:${statusColor};">${statusBadge}</span>
-      ${winIndicator ? `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;">${winIndicator}</span>` : ''}
+      <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;font-weight:700;color:${statusColor};">${statusBadge}</span>
+      ${winIndicator ? `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;">${winIndicator}</span>` : ''}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
-      <div style="flex:1;text-align:right;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:${pick.pick==='1'?'700':'400'};">${homeTeam}</div>
+      <div style="flex:1;text-align:right;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:${pick.pick==='1'?'700':'400'};">${homeTeam}</div>
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--text);min-width:50px;text-align:center;">${homeGoals} - ${awayGoals}</div>
-      <div style="flex:1;text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:${pick.pick==='2'?'700':'400'};">${awayTeam}</div>
+      <div style="flex:1;text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:${pick.pick==='2'?'700':'400'};">${awayTeam}</div>
     </div>
-    <div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.09);">
+    <div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.5);margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.09);">
       🎯 ${pick.pickLabel||pick.pick} @ ${pick.odds} · +${pick.value||0}% value
       ${kickoffStr ? `<br>📅 ${kickoffStr}` : ''}
     </div>
