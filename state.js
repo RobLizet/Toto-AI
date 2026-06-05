@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v38: v26.22 — Value-engine geünificeerd: de-vigde edge vs consensus + aparte EV/Kelly
+// v39: v26.23 — Markt+Poisson-factor in gewogen uitleg ook voor client-scan-picks
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.22';
+const APP_VERSION = 'v26.23';
 
 const STATE_KEY = 'totoai_state';
 
