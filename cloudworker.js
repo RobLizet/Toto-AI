@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v121
+// ProMatchXI WORKER v122
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v121'; // v121: push-icon URL naar promatchxi.app (rebrand-domein) // v120: R1-fase2 scan_status uit Supabase
+const VERSION = 'v122'; // v122: CLV-fundering - odds_snapshots append (historie) + sharp money vroegste-opening // v121: push-icon promatchxi.app
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -116,7 +116,7 @@ async function saveOddsSnapshots(oddsMap, matches, env) {
     });
   });
   if (!rows.length) return;
-  await sb(env, 'odds_snapshots', 'POST', rows, '?on_conflict=fixture_id,match_date');
+  await sb(env, 'odds_snapshots', 'POST', rows); // v122: append -> oddshistorie (opening->closing)
   console.log(`[SB] ${rows.length} odds snapshots opgeslagen`);
 }
 
@@ -266,12 +266,13 @@ async function sbSaveDailyTip(tipData, env) {
 async function detectSharpMoney(oddsMap, matches, env) {
   const today = new Date().toISOString().split('T')[0];
   const existing = await sb(env, 'odds_snapshots', 'GET', null,
-    `?match_date=eq.${today}&select=fixture_id,home_odds,draw_odds,away_odds`
+    `?match_date=eq.${today}&select=fixture_id,home_odds,draw_odds,away_odds,captured_at&order=captured_at.asc`
   );
   if (!existing || !existing.length) return {};
 
   const openMap = {};
   existing.forEach(r => {
+    if (openMap[r.fixture_id]) return; // v122: vroegste snapshot = opening
     openMap[r.fixture_id] = {
       home: parseFloat(r.home_odds),
       draw: parseFloat(r.draw_odds),
