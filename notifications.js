@@ -130,7 +130,7 @@ async function toggleNotifications() {
     state.settings.notifEnabled = true;
     saveState(); updateNotifUI();
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(r => r.showNotification('⚡ EdgeXI', {
+      navigator.serviceWorker.ready.then(r => r.showNotification('⚡ ProMatchXI', {
         body: 'Notificaties aan! Je krijgt melding bij sterke value.',
         icon: '/icon-192.png'
       })).catch(()=>{});
@@ -257,9 +257,9 @@ async function testNotification() {
   }
   setResult('⏳ Versturen...', '#2563eb');
   try {
-    await sendRealPush('🔔 EdgeXI Test', 'Notificaties werken! 🏆 Triple Lock · 🔑 Double Lock · ✅ Bet resultaten', { tag: 'test-notif' });
+    await sendRealPush('🔔 ProMatchXI Test', 'Notificaties werken! 🏆 Triple Lock · 🔑 Double Lock · ✅ Bet resultaten', { tag: 'test-notif' });
     const reg = await navigator.serviceWorker.ready;
-    await reg.showNotification('🔔 EdgeXI Test', {
+    await reg.showNotification('🔔 ProMatchXI Test', {
       body: 'Notificaties werken! 🏆 Triple Lock · 🔑 Double Lock · ✅ Bet resultaten',
       icon: '/icon-192.png', badge: '/icon-192.png',
       vibrate: [200, 100, 200, 100, 200], tag: 'test-notif', renotify: true
