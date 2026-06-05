@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v124
+// ProMatchXI WORKER v125
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v124'; // v124: /analytics + leagueRating, clvTrend, clvPerMarket, clvRecent // v123: /analytics leest v_clv_summary + v_clv_per_league // v122: CLV-fundering odds-historie
+const VERSION = 'v125'; // v125: value = de-vigde edge vs consensus (modelkans - faire implied) + EV/Kelly voor staking // v124: /analytics uitgebreid
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -474,7 +474,7 @@ function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, l
 
   const raw =
     (Math.min(modelProb, 100) * 0.40) +
-    (Math.min(Math.max(value, 0), 50) * 2 * 0.30) +
+    (Math.min(Math.max(value, 0), 15) / 15 * 100 * 0.30) + // v125: value = pp-edge; 15pp = vol
     (Math.min(dataQuality, 100) * 0.20) +
     (Math.min(marketSignal, 100) * 0.10);
 
@@ -814,15 +814,30 @@ function impliedProb(odds) {
   return 1 / odds;
 }
 
-function calculateValue(aiKans, bookOdds, pick) {
-  if (!bookOdds || bookOdds <= 1) return 0;
-  const aiProb = aiKans / 100;
-  const implProb = impliedProb(bookOdds);
-  let value = ((aiProb / implProb) - 1) * 100;
-  // v103: gelijkspel bias correctie — X picks zijn statistisch moeilijker
-  // te voorspellen; verhoog de drempel met 20% om false positives te verminderen
-  if (pick === 'X') value = value * 0.80;
+// v125: value = de-vigde procentpunt-edge (modelkans% − faire consensus-implied%).
+// Intern consistent met CLV — we meten tegen de faire (vig-vrije) marktkans, niet tegen de ruwe odds.
+function calculateValue(aiKans, fairImpliedPct, pick) {
+  if (fairImpliedPct == null || fairImpliedPct <= 0) return 0;
+  let value = aiKans - fairImpliedPct;
+  if (pick === 'X') value = value * 0.80; // gelijkspel-bias correctie (behouden)
   return parseFloat(value.toFixed(1));
+}
+
+// v125: EV% en half-Kelly o.b.v. werkelijk verkrijgbare odds (mét vig) — voor staking, niet voor selectie.
+function calcEV(aiKans, odds) {
+  if (!odds || odds <= 1) return 0;
+  return parseFloat((((aiKans / 100) * odds - 1) * 100).toFixed(1));
+}
+function calcKellyW(aiKans, odds) {
+  if (!aiKans || !odds || odds <= 1) return 0;
+  const p = aiKans / 100, b = odds - 1;
+  const k = (b * p - (1 - p)) / b;
+  return Math.max(0, parseFloat((k * 50).toFixed(2))); // half-Kelly in %
+}
+// v125: faire consensus-implied kans (%) voor de gekozen uitslag
+function fairImpliedFor(odds, pick) {
+  if (!odds || !odds.fair) return null;
+  return pick === '1' ? odds.fair.home : pick === 'X' ? odds.fair.draw : odds.fair.away;
 }
 
 // ── Datum normalisatie helper ─────────────────────────────
@@ -1372,8 +1387,12 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       if (!c.bookOdds || c.bookOdds <= 1) return;
       // Markeer als sparse als er geen echte bookmaker odds waren
       const hasRealOdds = !!(odds?.home);
-      const value = calculateValue(c.aiKans, c.bookOdds, c.pick);
+      // v125: edge tegen faire consensus; bij sparse (geen consensus) terugval op ruwe implied
+      const fairImplied = fairImpliedFor(odds, c.pick) ?? (impliedProb(c.bookOdds) * 100);
+      const value = calculateValue(c.aiKans, fairImplied, c.pick);
       if (value < 3) return;
+      const ev = calcEV(c.aiKans, c.bookOdds);
+      const kelly = calcKellyW(c.aiKans, c.bookOdds);
 
       const openOdds = openingOdds ? openingOdds[c.pick === '1' ? 'home' : c.pick === 'X' ? 'draw' : 'away'] : null;
       const movement = calcOddsMovement(openOdds, c.bookOdds);
@@ -1422,6 +1441,9 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
           pickLabel: c.label,
           odds: c.bookOdds,
           value: parseFloat(value.toFixed(1)),
+          ev,
+          kelly,
+          fairImplied: parseFloat(fairImplied.toFixed(1)),
           aiKans: Math.round(c.aiKans),
           confidence: conf.score,
           confidenceRaw: conf.raw,
@@ -1676,8 +1698,11 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
       { pick: '2', label: `${m.away} wint`,  aiKans: ai.a, bookOdds: odds.away },
     ].forEach(c => {
       if (!c.bookOdds || c.bookOdds <= 1) return;
-      const value = calculateValue(c.aiKans, c.bookOdds, c.pick);
+      const fairImplied = fairImpliedFor(odds, c.pick) ?? (impliedProb(c.bookOdds) * 100);
+      const value = calculateValue(c.aiKans, fairImplied, c.pick);
       if (value < 3) return;
+      const ev = calcEV(c.aiKans, c.bookOdds);
+      const kelly = calcKellyW(c.aiKans, c.bookOdds);
 
       const spread      = Math.max(ai.h, ai.x, ai.a) - Math.min(ai.h, ai.x, ai.a);
       const dataQuality = Math.min(100, 50 + spread);
@@ -1702,6 +1727,9 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
         pickLabel:  c.label,
         odds:       c.bookOdds,
         value:      parseFloat(value.toFixed(1)),
+        ev,
+        kelly,
+        fairImplied: parseFloat(fairImplied.toFixed(1)),
         aiKans:     Math.round(c.aiKans),
         confidence: conf.score,
         confidenceFinal: conf.final,
