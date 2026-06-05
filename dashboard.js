@@ -84,7 +84,7 @@ function renderPickReasons(p) {
   const signals = buildPickReasons(p);
   if (!signals.length) return '';
   return `<div style="display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.35rem;">
-    ${signals.map(s => `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
+    ${signals.map(s => `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
   </div>`;
 }
 
@@ -196,8 +196,11 @@ function renderDashboard() {
   const allPicksRaw = scanLog.flatMap(s => s.picks || []);
   // Dedup op fixtureId+pick — settled altijd behouden, pending alleen meest recente
   const _seenDash = new Set();
+  const _staleMs = Date.now() - 2*24*60*60*1000; // open picks van 2+ dagen geleden settelen nooit meer
   const allPicks = allPicksRaw.filter(p => {
     if (p.status === 'win' || p.status === 'lose') return true;
+    const _d = p.date ? new Date(p.date).getTime() : NaN;
+    if (!isNaN(_d) && _d < _staleMs) return false; // stale open pick verbergen
     const key = (p.fixtureId || p.match || '') + '_' + (p.pick || '');
     if (_seenDash.has(key)) return false;
     _seenDash.add(key);
@@ -859,20 +862,20 @@ function showPicksModal() {
         return `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .7rem;margin-bottom:.4rem;display:flex;flex-direction:column;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div style="flex:1;min-width:0;">
-              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
-              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">${p.pickLabel||p.pick||'?'} · @${parseFloat(p.odds||2).toFixed(2)} · +${Math.round(p.value||0)}% value</div>
+              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.7rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
+              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.5);">${p.pickLabel||p.pick||'?'} · @${parseFloat(p.odds||2).toFixed(2)} · +${Math.round(p.value||0)}% value</div>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
               <div style="font-size:1rem;">${statusIcon(p.status)}</div>
-              <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:${rel.color};background:${rel.color}18;border-radius:4px;padding:.1rem .3rem;font-weight:700;">${cat.label}</span>
+              <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:${rel.color};background:${rel.color}18;border-radius:4px;padding:.12rem .4rem;font-weight:700;">${cat.label}</span>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:.4rem;margin:.3rem 0;">
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.34rem;color:rgba(255,255,255,.35);">RELIABILITY</div>
-            <div style="flex:1;background:rgba(255,255,255,.1);border-radius:999px;height:3px;overflow:hidden;">
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.4);">RELIABILITY</div>
+            <div style="flex:1;background:rgba(255,255,255,.1);border-radius:999px;height:5px;overflow:hidden;">
               <div style="background:${rel.barColor};height:100%;border-radius:999px;width:${rel.score}%;"></div>
             </div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:${rel.color};font-weight:700;">${rel.score}/100</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:${rel.color};font-weight:700;">${rel.score}/100</div>
           </div>
           ${renderPickReasons(p)}${clvHtml}${scoreHtml}
         </div>`;
