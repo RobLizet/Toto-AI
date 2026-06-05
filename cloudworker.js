@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v122
+// ProMatchXI WORKER v123
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v122'; // v122: CLV-fundering - odds_snapshots append (historie) + sharp money vroegste-opening // v121: push-icon promatchxi.app
+const VERSION = 'v123'; // v123: /analytics leest v_clv_summary + v_clv_per_league // v122: CLV-fundering odds-historie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -363,7 +363,18 @@ async function handleAnalytics(env) {
       ? parseFloat((withCLV.reduce((s,r) => s + parseFloat(r.clv_pct), 0) / withCLV.length).toFixed(1))
       : null;
 
+    const _sumRow = await sb(env, 'v_clv_summary', 'GET', null, '?limit=1') || [];
+    const _sum = _sumRow[0] || null;
+    const _byLeague = await sb(env, 'v_clv_per_league', 'GET', null, '?order=picks.desc&limit=8') || [];
+
     return json({
+      clvSummary: _sum ? {
+        picks: _sum.picks, avgCLV: _sum.avg_clv_pct, pctBeatClose: _sum.pct_beat_close,
+        winRate: _sum.win_rate, wins: _sum.wins, losses: _sum.losses,
+        avgPosCLV: _sum.avg_pos_clv, bestCLV: _sum.best_clv, worstCLV: _sum.worst_clv,
+      } : null,
+      clvByLeague: _byLeague.map(r => ({ leagueId: r.league_id, picks: r.picks,
+        avgCLV: r.avg_clv_pct, pctBeatClose: r.pct_beat_close, wins: r.wins, losses: r.losses })),
       clv: {
         total: clvData.length,
         avgCLV,
