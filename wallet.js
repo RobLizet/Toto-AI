@@ -380,7 +380,7 @@ function renderBetHistory() {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
         <div style="flex:1;">
           <div style="font-size:.85rem;font-weight:700;color:#ffffff;">${srcBadge}${b.matchName||b.match||''}${scoreTag}</div>
-          <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.15rem;">
+          <div style="font-family:monospace;font-size:.6rem;color:rgba(255,255,255,.5);margin-top:.15rem;">
             ${isCombi ? `Combi ${b.legs?.length||0} legs` : b.pick} @ ${b.odds} · €${b.amount||b.stake||0} → €${b.payout||0} · ${b.date||''}
           </div>
           ${isCombi ? `<div style="margin-top:.3rem;">${legsHtml}</div>` : ''}
