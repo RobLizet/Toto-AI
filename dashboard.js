@@ -52,6 +52,14 @@ function passesEliteFilter(p){
   return (((p&&p.confidence)||0) >= 8) && (((p&&p.value)||0) >= 15);
 }
 
+function togglePicksFilter() {
+  const next = (localStorage.getItem('totoai_eliteOnly') !== '0') ? '0' : '1';
+  localStorage.setItem('totoai_eliteOnly', next);
+  const o = document.getElementById('picksOverlay'); if (o) o.remove();
+  const b = document.getElementById('eliteOnlyBtn'); if (b) { b.textContent = next === '1' ? 'Aan ✓' : 'Uit'; b.classList.toggle('active', next === '1'); }
+  if (typeof showPicksModal === 'function') showPicksModal();
+}
+
 function renderCLVBadge(p) {
   if (p.clv === undefined || p.clv === null) return '';
   const clv = parseFloat(p.clv);
@@ -833,11 +841,14 @@ function showPicksModal() {
   const statusColor = s => s === 'win' ? '#00BEC4' : s === 'lose' ? '#dc2626' : 'var(--sub)';
 
   // Sorteer: afgerond bovenaan, dan open
-  let sorted = [...settled.reverse(), ...open];
-  sorted = sorted.filter(passesEliteFilter);
+  const sortedAll = [...settled.reverse(), ...open];
+  let sorted = sortedAll.filter(passesEliteFilter);
+  const hiddenCount = sortedAll.length - sorted.length;
+  const eliteOn = eliteOnlyActive();
 
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-end;';
+  overlay.id = 'picksOverlay';
 
   const sheet = document.createElement('div');
   sheet.style.cssText = 'background:#0B1519;border-radius:20px 20px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:1rem;';
@@ -877,6 +888,7 @@ function showPicksModal() {
     </div>
 
     <!-- Picks lijst -->
+    ${eliteOn ? (hiddenCount > 0 ? `<div onclick="togglePicksFilter()" style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:.45rem .65rem;margin-bottom:.5rem;cursor:pointer;"><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.55);">🔒 ${hiddenCount} pick${hiddenCount===1?'':'s'} verborgen (B/C)</span><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:700;color:#00BEC4;">toon alles →</span></div>` : '') : `<div onclick="togglePicksFilter()" style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:8px;padding:.45rem .65rem;margin-bottom:.5rem;cursor:pointer;"><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.55);">👁 Alle tiers zichtbaar</span><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:700;color:#00BEC4;">alleen Elite/A+ →</span></div>`}
     ${sorted.length === 0 ? '<div style="text-align:center;color:rgba(255,255,255,.5);font-size:.8rem;padding:1rem;">Nog geen picks — scan wedstrijden!</div>' :
       sorted.map(p => {
         const rel = calcReliabilityScore(p);
