@@ -340,6 +340,17 @@ function calcEV(kans, odds) {
   return parseFloat((((kans / 100) * odds - 1) * 100).toFixed(1));
 }
 
+// v26.23: marktsignaal 0-100 (50 = neutraal) uit odds-beweging, voor de gewogen pick-uitleg.
+// market.direction = uitslag waarvan de odds het sterkst korter werden (geld erin); isSteam = scherpe daling.
+function marketSignalFromMarket(market, pick) {
+  if (!market || !market.direction || market.direction === 'none') return 50;
+  const mag = Math.min(20, Math.abs(market.pct || 0));
+  if (market.direction === pick) {
+    return Math.round(Math.min(95, 50 + mag * 1.6 + (market.isSteam ? 10 : 0))); // markt steunt onze pick
+  }
+  return Math.round(Math.max(10, 50 - mag * 1.3)); // geld ging naar andere uitslag = tegen onze pick
+}
+
 function valueClass(value) {
   if (value === null || value === undefined) return 'neu';
   if (value >= 15) return 'high';
