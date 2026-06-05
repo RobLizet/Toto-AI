@@ -103,7 +103,7 @@ function checkAdminStatus() {
   window._isAdmin = uid ? ADMIN_UIDS.includes(uid) : false;
   console.log('[Admin] UID:', uid, '| isAdmin:', window._isAdmin);
 }
-const WORKER_URL  = 'https://api.edgexi.app';
+const WORKER_URL  = 'https://api.promatchxi.app';
 
 async function generateScanToken() {
   const encoder = new TextEncoder();
@@ -170,7 +170,7 @@ async function triggerScanTest() {
 
 async function fetchDailyTip() {
   try {
-    const r = await fetch('https://api.edgexi.app/daily-tip');
+    const r = await fetch('https://api.promatchxi.app/daily-tip');
     if (!r.ok) return null;
     return await r.json();
   } catch(e) { return null; }
@@ -719,7 +719,7 @@ async function openPicksInsight() {
 
   // AI aanroep via worker
   try {
-    const res = await fetch('https://api.edgexi.app/anthropic', {
+    const res = await fetch('https://api.promatchxi.app/anthropic', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
