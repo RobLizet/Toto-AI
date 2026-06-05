@@ -1930,7 +1930,7 @@ async function analyseJacksBets() {
     : null;
 
   try {
-    const res = await fetch('https://api.edgexi.app/anthropic', {
+    const res = await fetch('https://api.promatchxi.app/anthropic', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2096,7 +2096,7 @@ async function handleJacksPhotoUpload(event) {
     });
 
     // Stuur naar Anthropic API met vision
-    const response = await fetch('https://api.edgexi.app/anthropic', {
+    const response = await fetch('https://api.promatchxi.app/anthropic', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2304,7 +2304,7 @@ async function analyseJacksPhotoBets() {
   const openBets = bets.filter(b => !b.status || b.status === 'open' || b.status === 'actief');
 
   try {
-    const res = await fetch('https://api.edgexi.app/anthropic', {
+    const res = await fetch('https://api.promatchxi.app/anthropic', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
