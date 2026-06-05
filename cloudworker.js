@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v123
+// ProMatchXI WORKER v124
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v123'; // v123: /analytics leest v_clv_summary + v_clv_per_league // v122: CLV-fundering odds-historie
+const VERSION = 'v124'; // v124: /analytics + leagueRating, clvTrend, clvPerMarket, clvRecent // v123: /analytics leest v_clv_summary + v_clv_per_league // v122: CLV-fundering odds-historie
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -367,7 +367,29 @@ async function handleAnalytics(env) {
     const _sum = _sumRow[0] || null;
     const _byLeague = await sb(env, 'v_clv_per_league', 'GET', null, '?order=picks.desc&limit=8') || [];
 
+    // v124: extra views voor dashboard-wiring
+    const _rating = await sb(env, 'v_league_rating', 'GET', null, '?order=reliability.desc&limit=12') || [];
+    const _trend  = await sb(env, 'v_clv_trend', 'GET', null, '?order=settled_at.asc&limit=120') || [];
+    const _market = await sb(env, 'v_clv_per_market', 'GET', null, '?order=picks.desc&limit=8') || [];
+    const _recent = await sb(env, 'v_clv_recent', 'GET', null, '?limit=4') || [];
+
     return json({
+      leagueRating: _rating.map(r => ({
+        leagueId: r.league_id, picks: r.picks, wins: r.wins, losses: r.losses,
+        hitrate: r.hitrate, avgCLV: r.avg_clv, roiPct: r.roi_pct,
+        reliability: r.reliability, label: r.betrouwbaarheid_label,
+      })),
+      clvTrend: _trend.map(r => ({
+        dag: r.dag, n: r.n, clvPct: r.clv_pct, cumAvgCLV: r.cum_avg_clv,
+      })),
+      clvPerMarket: _market.map(r => ({
+        markt: r.markt, picks: r.picks, hitrate: r.hitrate,
+        avgCLV: r.avg_clv, roiPct: r.roi_pct,
+      })),
+      clvRecent: _recent.map(r => ({
+        periode: r.periode, picks: r.picks, avgCLV: r.avg_clv,
+        roiPct: r.roi_pct, pctBeatClose: r.pct_beat_close,
+      })),
       clvSummary: _sum ? {
         picks: _sum.picks, avgCLV: _sum.avg_clv_pct, pctBeatClose: _sum.pct_beat_close,
         winRate: _sum.win_rate, wins: _sum.wins, losses: _sum.losses,
