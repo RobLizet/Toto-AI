@@ -290,6 +290,24 @@ function _analyticsHTML(local, worker) {
     html += '</div>';
   }
 
+  // ── CLV Trend (v124: v_clv_trend) ──
+  if (worker && worker.clvTrend && worker.clvTrend.length >= 2) {
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">CLV TREND <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.5);">cumulatief gemiddelde</span></div>';
+    html += _clvTrendChart(worker.clvTrend);
+    html += '</div>';
+  }
+
+  // ── ROI per periode + markt (v124: v_clv_recent + v_clv_per_market) ──
+  if (worker && ((worker.clvRecent && worker.clvRecent.length) || (worker.clvPerMarket && worker.clvPerMarket.length))) {
+    html += _roiBlocks(worker.clvRecent || [], worker.clvPerMarket || []);
+  }
+
+  // ── Competitie-rating (v124: v_league_rating) ──
+  if (worker && worker.leagueRating && worker.leagueRating.length) {
+    html += _leagueRatingBlock(worker.leagueRating);
+  }
+
   // ── Sharp Money ──
   if (worker && worker.sharpMoney) {
     const sm = worker.sharpMoney;
@@ -321,7 +339,7 @@ function _analyticsHTML(local, worker) {
 
   // ── Footer ──
   html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);text-align:center;padding:.75rem;margin-top:.25rem;">';
-  html += 'Lokale data · ' + local.scansTotal + ' scans · Worker v98 Supabase';
+  html += 'Lokale data · ' + local.scansTotal + ' scans · CLV-engine via Supabase';
   html += '</div>';
 
   return html;
@@ -369,4 +387,95 @@ function _kpiSmall(label, value) {
     '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#ffffff;">' + value + '</div>' +
     '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);margin-top:1px;">' + label + '</div>' +
     '</div>';
+}
+
+// ── League namen (lokale map, fallback "Competitie {id}") ──
+const _LEAGUE_NAMES = {
+  39:'Premier League',140:'La Liga',78:'Bundesliga',135:'Serie A',61:'Ligue 1',
+  88:'Eredivisie',94:'Jupiler Pro',2:'Champions League',3:'Europa League',
+  848:'Conference League',40:'Championship',119:'Eredivisie playoffs',
+  113:'Eliteserien',103:'Allsvenskan',
+};
+function _leagueLabel(id){ return _LEAGUE_NAMES[id] || ('Competitie ' + id); }
+
+// ── CLV trend chart (SVG, cumulatief gemiddelde) ──────
+function _clvTrendChart(trend) {
+  const pts = trend.filter(t => t.cumAvgCLV !== null && t.cumAvgCLV !== undefined)
+                   .map(t => Number(t.cumAvgCLV));
+  if (pts.length < 2) return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);text-align:center;padding:.5rem 0;">Trend verschijnt vanaf 2 settled picks.</div>';
+  const W = 300, H = 80, PAD = 10;
+  const min = Math.min(...pts, -2);
+  const max = Math.max(...pts, 2);
+  const range = (max - min) || 1;
+  const x = (i) => PAD + (i / (pts.length - 1)) * (W - PAD * 2);
+  const y = (v) => H - PAD - ((v - min) / range) * (H - PAD * 2);
+  const zeroY = y(0);
+  const last = pts[pts.length - 1];
+  const col = last >= 0 ? '#00BEC4' : '#ef4444';
+  const path = pts.map((v,i) => (i===0?'M':'L') + x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ');
+  let svg = '<svg width="100%" viewBox="0 0 ' + W + ' ' + H + '" style="display:block;margin:.4rem 0;">';
+  svg += '<line x1="' + PAD + '" y1="' + zeroY.toFixed(1) + '" x2="' + (W-PAD) + '" y2="' + zeroY.toFixed(1) + '" stroke="rgba(255,255,255,.15)" stroke-width="1" stroke-dasharray="3,3"/>';
+  svg += '<path d="' + path + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>';
+  svg += '<circle cx="' + x(pts.length-1).toFixed(1) + '" cy="' + y(last).toFixed(1) + '" r="2.5" fill="' + col + '"/>';
+  svg += '<text x="' + x(pts.length-1) + '" y="' + Math.max(10, y(last) - 5) + '" font-family="IBM Plex Mono" font-size="9" font-weight="bold" fill="' + col + '" text-anchor="end">' + (last>=0?'+':'') + last.toFixed(1) + '%</text>';
+  svg += '<text x="' + PAD + '" y="' + (H - 2) + '" font-family="IBM Plex Mono" font-size="8" fill="rgba(255,255,255,.4)">n=1</text>';
+  svg += '<text x="' + (W - PAD) + '" y="' + (H - 2) + '" font-family="IBM Plex Mono" font-size="8" fill="rgba(255,255,255,.4)" text-anchor="end">n=' + (trend[trend.length-1].n || pts.length) + '</text>';
+  svg += '</svg>';
+  return svg;
+}
+
+// ── ROI blokken (30d / 100 / per markt) ───────────────
+function _roiBlocks(recent, market) {
+  const fmtPct = (v) => (v === null || v === undefined || v === '') ? '—' : (Number(v)>=0?'+':'') + Number(v).toFixed(1) + '%';
+  const col = (v) => (v === null || v === undefined || v === '') ? '#ffffff' : (Number(v)>=0?'#00BEC4':'#ef4444');
+  let html = '<div class="analytics-block">';
+  html += '<div class="analytics-block-title">ROI & RENDEMENT <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.5);">via Supabase</span></div>';
+  if (recent.length) {
+    html += '<div style="display:grid;grid-template-columns:repeat(' + Math.min(recent.length,2) + ',1fr);gap:.5rem;margin-bottom:.55rem;">';
+    recent.forEach(r => {
+      html += '<div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.55rem;text-align:center;">';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);text-transform:uppercase;">' + r.periode + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:1.05rem;font-weight:800;color:' + col(r.roiPct) + ';">' + fmtPct(r.roiPct) + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">' + (r.picks||0) + ' picks · CLV ' + fmtPct(r.avgCLV) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  if (market.length) {
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin:.2rem 0 .3rem;">PER MARKT</div>';
+    market.forEach(m => {
+      const hr = (m.hitrate==null)?null:Math.round(Number(m.hitrate));
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,0.07);">';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#ffffff;">' + m.markt + '</div>';
+      html += '<div style="display:flex;gap:.7rem;align-items:center;">';
+      html += '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">' + (m.picks||0) + 'p · ' + (hr==null?'—':hr+'%') + '</span>';
+      html += '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:' + col(m.roiPct) + ';min-width:48px;text-align:right;">' + fmtPct(m.roiPct) + '</span>';
+      html += '</div></div>';
+    });
+  }
+  html += '</div>';
+  return html;
+}
+
+// ── Competitie-rating (betrouwbaarheid 0-100) ─────────
+function _leagueRatingBlock(ratings) {
+  let html = '<div class="analytics-block">';
+  html += '<div class="analytics-block-title">COMPETITIE-RATING <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.5);">betrouwbaarheid</span></div>';
+  ratings.forEach(r => {
+    const rel = (r.reliability==null)?0:Number(r.reliability);
+    const relCol = rel >= 70 ? '#00BEC4' : rel >= 45 ? '#d97706' : '#ef4444';
+    const roi = (r.roiPct==null||r.roiPct==='')?null:Number(r.roiPct);
+    html += '<div style="margin-bottom:.55rem;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.2rem;">';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#ffffff;">' + _leagueLabel(r.leagueId) + '</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:' + relCol + ';font-weight:800;">' + (r.label || (rel + '/100')) + '</div>';
+    html += '</div>';
+    html += '<div style="background:#0f2230;border-radius:999px;height:6px;overflow:hidden;margin-bottom:.2rem;">';
+    html += '<div style="background:' + relCol + ';height:100%;border-radius:999px;width:' + Math.min(100,rel) + '%;transition:width .4s;"></div>';
+    html += '</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">' + (r.picks||0) + ' picks · ' + (r.wins||0) + 'W-' + (r.losses||0) + 'L · ROI ' + (roi==null?'—':(roi>=0?'+':'')+roi.toFixed(1)+'%') + '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
 }
