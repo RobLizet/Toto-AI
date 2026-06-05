@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v36: v25.7 — Widget 48u filter voor oude open picks
+// v37: v26.21 — CLV-dashboard wiring (trend, ROI, competitie-rating, gewogen uitleg)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.20';
+const APP_VERSION = 'v26.21';
 
 const STATE_KEY = 'totoai_state';
 
