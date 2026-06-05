@@ -434,7 +434,7 @@ function _roiBlocks(recent, market) {
     html += '<div style="display:grid;grid-template-columns:repeat(' + Math.min(recent.length,2) + ',1fr);gap:.5rem;margin-bottom:.55rem;">';
     recent.forEach(r => {
       html += '<div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.55rem;text-align:center;">';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);text-transform:uppercase;">' + r.periode + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);text-transform:uppercase;">' + String(r.periode||'').replace(/_/g,' ') + '</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:1.05rem;font-weight:800;color:' + col(r.roiPct) + ';">' + fmtPct(r.roiPct) + '</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">' + (r.picks||0) + ' picks · CLV ' + fmtPct(r.avgCLV) + '</div>';
       html += '</div>';
