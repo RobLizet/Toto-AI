@@ -825,7 +825,8 @@ function showPicksModal() {
   const statusColor = s => s === 'win' ? '#00BEC4' : s === 'lose' ? '#dc2626' : 'var(--sub)';
 
   // Sorteer: afgerond bovenaan, dan open
-  const sorted = [...settled.reverse(), ...open];
+  let sorted = [...settled.reverse(), ...open];
+  if (localStorage.getItem('totoai_eliteOnly') === '1') sorted = sorted.filter(p => p.elite || calcReliabilityScore(p).score >= 80);
 
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-end;';
@@ -836,6 +837,22 @@ function showPicksModal() {
   sheet.innerHTML = `
     <div style="width:40px;height:4px;background:rgba(0,0,0,.15);border-radius:2px;margin:0 auto .75rem;"></div>
     <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;margin-bottom:.5rem;">🎯 Picks Overzicht</div>
+    <details style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:10px;padding:.5rem .7rem;margin-bottom:.75rem;">
+      <summary style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:#00BEC4;cursor:pointer;">📋 Pick-kwaliteit checklist</summary>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.72);line-height:1.7;margin-top:.5rem;">
+        ⭐ <b>Tier eerst</b> — Elite / A+ (Reliability 75+)<br>
+        💎 <b>Value 8–25%</b> — boven ~40% is meestal een stale lijn<br>
+        🎯 <b>Odds 1.5–3.5</b> — geen longshots (5.0+)<br>
+        🔒 <b>Triple/Double Lock</b> &gt; pick die maar 1× opdook<br>
+        🤖 <b>Poisson + AI eens</b> = sterker signaal<br>
+        ⚠️ <b>Gelijkspel (X) wantrouwen</b> — moeilijkst te voorspellen<br>
+        📈 <b>Sharp money</b> mee = bevestiging, tegen = rode vlag<br>
+        💰 <b>Inzet 1–2%</b> bankroll · singles &gt; combi's · niet terugjagen
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.45);margin-top:.5rem;border-top:1px solid rgba(255,255,255,.08);padding-top:.4rem;line-height:1.5;">
+        CLV is je echte scorebord: verslaat je structureel de slotkoers → edge. Entertainment · 18+ · speel met geld dat je kunt missen.
+      </div>
+    </details>
 
     <!-- Samenvatting stats -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-bottom:.75rem;">
