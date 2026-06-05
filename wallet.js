@@ -920,6 +920,7 @@ function renderTracker() {
   else if (trackerFilter==='lose') bets = bets.filter(b => b.status==='lose');
   else if (['analyse','combi','value','eigen'].includes(trackerFilter))
     bets = bets.filter(b => (b.source||'eigen')===trackerFilter);
+  if (typeof passesEliteFilter === 'function') bets = bets.filter(b => (b.source!=='value' && b.source!=='analyse') || passesEliteFilter(b)); // Elite/A+ alleen op scan-picks; eigen bets blijven
   if (!bets.length) { list.innerHTML='<div class="empty-state">Geen weddenschappen</div>'; return; }
   list.innerHTML = bets.map(b => {
     const pnlText  = b.status==='win' ? `+€${(b.payout-b.stake).toFixed(2)}` : b.status==='lose' ? `-€${b.stake.toFixed(2)}` : '⏳ Open';
