@@ -1,4 +1,4 @@
-// EdgeXI WORKER v121
+// ProMatchXI WORKER v121
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v121'; // v121: push-icon URL naar edgexi.app (rebrand-domein) // v120: R1-fase2 scan_status uit Supabase
+const VERSION = 'v121'; // v121: push-icon URL naar promatchxi.app (rebrand-domein) // v120: R1-fase2 scan_status uit Supabase
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1955,7 +1955,7 @@ async function sendPushNotification(env, title, body, data = {}) {
       headings:  { en: title, nl: title },
       contents:  { en: body,  nl: body  },
       data,
-      chrome_web_icon: 'https://edgexi.app/icon-192.png',
+      chrome_web_icon: 'https://promatchxi.app/icon-192.png',
       ttl:      3600,
       priority: 10,
     };
