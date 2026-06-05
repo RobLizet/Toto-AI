@@ -727,7 +727,7 @@ GELIJKSPEL WAARSCHUWING — KRITISCH:
 - Gelijkspel is statistisch de slechtst voorspelbare uitkomst
 
 VALUE DETECTIE:
-- reason = sterkste argument voor de pick (max 12 woorden, concreet met cijfers)
+- reason = sterkste VOETBAL-argument voor de pick (vorm, H2H, blessures, motivatie), max 12 woorden. NOEM GEEN odds of marktgetallen — die staan al apart in de UI.
 - confidence 8-10: meerdere ankers bevestigen + consistente signalen
 - confidence 6-7: 1-2 ankers bevestigen, 1 conflicterend signaal
 - confidence 1-5: schaarse data of sterke divergentie tussen ankers
@@ -800,7 +800,8 @@ SCHAARSE DATA:
           ? calcValueFair(kans, odds, match.homeOdds, match.drawOdds, match.awayOdds)
           : calcValue(kans, odds);
         const kelly = calcKelly(kans, odds);
-        return { pick, pickLabel, kans, odds, value: val, kelly, bookmaker: match.oddsSource || 'quote' };
+        const ev = (typeof calcEV === 'function') ? calcEV(kans, odds) : null;
+        return { pick, pickLabel, kans, odds, value: val, ev, kelly, bookmaker: match.oddsSource || 'quote' };
       };
       const picks = [
         makePick('1', `${match.home} wint`, k1, match.homeOdds),
