@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v127
+// ProMatchXI WORKER v128
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v127'; // v127: toernooi/landenduel-hardening (sparse + confidence-cap + hogere edge-lat, geen elite) // v126: scan-melding + deep-link
+const VERSION = 'v128'; // v128: Shin de-vig (favorite-longshot bias correctie) // v127: WK/landenduel-hardening
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -780,15 +780,15 @@ async function fetchOddsForFixtures(fixtureIds, env, maxCalls = 36) {
     const home = parseFloat(median(H).toFixed(2));
     const draw = parseFloat(median(D).toFixed(2));
     const away = parseFloat(median(A).toFixed(2));
-    // de-vig fair kansen uit consensus (voor CLV/transparantie; value-calc gebruikt de mediaan-odds)
-    const ih = 1 / home, idr = 1 / draw, ia = 1 / away, sum = ih + idr + ia;
+    // v128: Shin de-vig i.p.v. proportioneel — corrigeert favorite-longshot bias
+    const [fh, fd, fa] = shinDevig([home, draw, away]);
     oddsMap[fid] = {
       home, draw, away,
       books: H.length,
       fair: {
-        home: parseFloat((ih / sum * 100).toFixed(1)),
-        draw: parseFloat((idr / sum * 100).toFixed(1)),
-        away: parseFloat((ia / sum * 100).toFixed(1))
+        home: parseFloat((fh * 100).toFixed(1)),
+        draw: parseFloat((fd * 100).toFixed(1)),
+        away: parseFloat((fa * 100).toFixed(1))
       }
     };
     return true;
@@ -839,10 +839,26 @@ function calcKellyW(aiKans, odds) {
   const k = (b * p - (1 - p)) / b;
   return Math.max(0, parseFloat((k * 50).toFixed(2))); // half-Kelly in %
 }
-// v125: faire consensus-implied kans (%) voor de gekozen uitslag
+// v128: faire consensus-implied kans (%) voor de gekozen uitslag
 function fairImpliedFor(odds, pick) {
   if (!odds || !odds.fair) return null;
   return pick === '1' ? odds.fair.home : pick === 'X' ? odds.fair.draw : odds.fair.away;
+}
+
+// v128: Shin de-vig — corrigeert favorite-longshot bias (underdog-prijs draagt relatief meer marge).
+// Geeft ware kansen (0-1) terug; valt terug op proportioneel als er nauwelijks marge is.
+function shinDevig(oddsArr) {
+  const b = oddsArr.map(o => (o > 1 ? 1 / o : 0));
+  const B = b.reduce((s, x) => s + x, 0);
+  if (B <= 1.0001) return b.map(x => x / (B || 1)); // geen marge -> proportioneel
+  const probs = (z) => b.map(bi => (Math.sqrt(z * z + 4 * (1 - z) * bi * bi / B) - z) / (2 * (1 - z)));
+  let lo = 0, hi = 0.5; // Σp is monotoon dalend in z; zoek z zodat Σp = 1
+  for (let it = 0; it < 60; it++) {
+    const z = (lo + hi) / 2;
+    const sum = probs(z).reduce((s, x) => s + x, 0);
+    if (sum > 1) lo = z; else hi = z;
+  }
+  return probs((lo + hi) / 2);
 }
 
 // ── Datum normalisatie helper ─────────────────────────────
