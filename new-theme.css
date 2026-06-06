@@ -1323,3 +1323,16 @@ body.creme .small-action-btn {
   border-color:rgba(139,90,43,.22) !important;
   color:#3d2614 !important;
 }
+
+/* v26.26: Crème = volwaardig LICHT thema — achtergrond & dashboard-kaarten */
+/* De vaste donkere achtergrondlaag crème maken (anders schijnt #0B1519 door) */
+body.creme::before {
+  background: linear-gradient(180deg,#f5efe6 0%,#ede3d4 50%,#e5d5c0 100%) !important;
+}
+/* Dashboard nav-kaarten (inline donkere gradients) → warm licht */
+body.creme [style*="rgba(0,60,70,.6)"],
+body.creme [style*="rgba(0,50,80,.6)"],
+body.creme [style*="rgba(0,60,50,.6)"],
+body.creme [style*="rgba(40,30,0,.6)"] {
+  background: linear-gradient(135deg,#fffaf2,#f1e4d0) !important;
+}
