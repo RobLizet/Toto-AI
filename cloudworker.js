@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v128
+// ProMatchXI WORKER v129
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v128'; // v128: Shin de-vig (favorite-longshot bias correctie) // v127: WK/landenduel-hardening
+const VERSION = 'v129'; // v129: paginering /fixtures?date= (busy-day fix — friendlies/internationals werden gemist) // v128: Shin de-vig
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -545,6 +545,8 @@ async function fetchWithRetry(url, options, retries = 2) {
 // ── API-Football helper ──────────────────────────────────
 async function apif(path, env) {
   const key = env.FOOTBALL_KEY || '';
+  const PAGE_CAP = 5; // v129: max pagina's voor drukke date-queries (subrequest-budget)
+  const isDateFixtures = /^\/fixtures\?date=/.test(path); // alleen hier pagineren
   const hosts = [
     {
       url: 'https://v3.football.api-sports.io' + path,
@@ -568,7 +570,23 @@ async function apif(path, env) {
           if (attempt === 0) { await new Promise(r => setTimeout(r, 1500)); continue; } // backoff + retry
           break; // na retry nog steeds limited → probeer volgende host
         }
-        return data.response || [];
+        let out = data.response || [];
+        // v129: API-Football pagineert /fixtures?date= op drukke dagen (bv. WK-warm-up).
+        // Zonder dit vielen friendlies/Scandinavische leagues buiten pagina 1 → "geen wedstrijden".
+        const totalPages = data.paging?.total || 1;
+        if (isDateFixtures && totalPages > 1) {
+          for (let p = 2; p <= Math.min(totalPages, PAGE_CAP); p++) {
+            try {
+              const r2 = await fetchWithRetry(host.url + '&page=' + p, {
+                headers: host.headers, cf: { cacheTtl: 0, cacheEverything: false }
+              });
+              const d2 = await r2.json();
+              if (Array.isArray(d2.response) && d2.response.length) out = out.concat(d2.response);
+              else break;
+            } catch (e) { break; }
+          }
+        }
+        return out;
       } catch(e) { break; }
     }
   }
