@@ -599,7 +599,7 @@ function renderWalletChart() {
   const yP=v=>pad.top+ch-((v-minV)/range)*ch;
   const zeroVal = chartView==='pnl' ? 0 : sb;
   const zeroY = yP(zeroVal);
-  ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(148,163,184,.5)'; ctx.lineWidth=1;
+  ctx.setLineDash([3,3]); ctx.strokeStyle=document.body.classList.contains('creme')?'rgba(139,90,43,.30)':'rgba(148,163,184,.5)'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(pad.left,zeroY); ctx.lineTo(pad.left+cw,zeroY); ctx.stroke();
   ctx.setLineDash([]);
   const lastVal=points[points.length-1];
@@ -618,9 +618,9 @@ function renderWalletChart() {
   settled.forEach((b,i) => {
     ctx.beginPath(); ctx.arc(xP(i+1), yP(points[i+1]), 3, 0, Math.PI*2);
     ctx.fillStyle = b.status==='win' ? '#00BEC4' : '#dc2626';
-    ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fill(); ctx.strokeStyle=document.body.classList.contains('creme')?'#fffaf2':'#fff'; ctx.lineWidth=1.5; ctx.stroke();
   });
-  ctx.fillStyle='#94a3b8'; ctx.font='9px IBM Plex Mono, monospace'; ctx.textAlign='right';
+  ctx.fillStyle=document.body.classList.contains('creme')?'#6a4a2c':'#94a3b8'; ctx.font='9px IBM Plex Mono, monospace'; ctx.textAlign='right';
   const labelVal = chartView==='pnl' ? (lastVal>=0?'+':'')+lastVal.toFixed(0)+' €' : '€'+lastVal.toFixed(0);
   ctx.fillText(labelVal, pad.left-3, yP(lastVal)+3);
   ctx.fillText(chartView==='pnl' ? '0' : '€'+sb.toFixed(0), pad.left-3, zeroY+3);
@@ -1357,7 +1357,7 @@ function renderBacktestChart(settled) {
   const cw=W-pad.left-pad.right, ch=H-pad.top-pad.bottom;
   const xP=i=>pad.left+(i/Math.max(points.length-1,1))*cw;
   const yP=v=>pad.top+ch-((v-minV)/range)*ch;
-  ctx.setLineDash([3,3]); ctx.strokeStyle='rgba(148,163,184,.5)'; ctx.lineWidth=1;
+  ctx.setLineDash([3,3]); ctx.strokeStyle=document.body.classList.contains('creme')?'rgba(139,90,43,.30)':'rgba(148,163,184,.5)'; ctx.lineWidth=1;
   const zeroY=yP(0); ctx.beginPath(); ctx.moveTo(pad.left,zeroY); ctx.lineTo(pad.left+cw,zeroY); ctx.stroke();
   ctx.setLineDash([]);
   const lastVal=points[points.length-1];
@@ -1375,9 +1375,9 @@ function renderBacktestChart(settled) {
   settled.forEach((p,i) => {
     ctx.beginPath(); ctx.arc(xP(i+1),yP(points[i+1]),3,0,Math.PI*2);
     ctx.fillStyle=p.status==='win'?'#00BEC4':'#dc2626';
-    ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fill(); ctx.strokeStyle=document.body.classList.contains('creme')?'#fffaf2':'#fff'; ctx.lineWidth=1.5; ctx.stroke();
   });
-  ctx.fillStyle='#94a3b8'; ctx.font='9px IBM Plex Mono, monospace'; ctx.textAlign='right';
+  ctx.fillStyle=document.body.classList.contains('creme')?'#6a4a2c':'#94a3b8'; ctx.font='9px IBM Plex Mono, monospace'; ctx.textAlign='right';
   ctx.fillText((lastVal>=0?'+':'')+lastVal.toFixed(2)+' €/pick', pad.left-3, yP(lastVal)+3);
 }
 
