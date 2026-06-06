@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v43: v26.27 — Crème: wallet-scherm volledig licht (saldo-kaart, stats, grafiek)
+// v44: v26.28 — Crème: bet history / tracker / backtest rijen licht
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.27';
+const APP_VERSION = 'v26.28';
 
 const STATE_KEY = 'totoai_state';
 
