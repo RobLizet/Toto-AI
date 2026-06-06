@@ -2321,6 +2321,32 @@ function syncScanLogToBacktest() {
   saveState();
 }
 
+// v26.24: open de scan-log (vanaf dashboard-kaart of melding) en filter optioneel op een match.
+function openScanLog(arg) {
+  let query = '';
+  if (arg && typeof arg === 'object') {
+    if (arg.matchId) {
+      const all = (state.scanLog || []).flatMap(s => s.picks || []);
+      const hit = all.find(p => String(p.fixtureId || p.matchId || '') === String(arg.matchId));
+      query = hit ? (hit.match || '') : '';
+    } else if (arg.q) { query = arg.q; }
+  } else if (typeof arg === 'string') { query = arg; }
+  try { if (typeof switchScreen === 'function') switchScreen('analyse'); } catch (e) {}
+  setTimeout(() => {
+    const c = document.getElementById('scan-log-content');
+    const blk = document.getElementById('analyse-scanlog-block');
+    if (c && c.style.display === 'none') {
+      c.style.display = 'block';
+      const chev = blk && blk.querySelector('.sl-chevron');
+      if (chev) chev.style.transform = 'rotate(180deg)';
+    }
+    if (!window._scanFilter) window._scanFilter = { q:'', conf:'', pick:'', comp:'', status:'', odds:'', sort:'newest', sharp:false };
+    window._scanFilter.q = query || '';
+    if (typeof renderScanLog === 'function') renderScanLog();
+    if (blk) blk.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 250);
+}
+
 function renderScanLog() {
   const el = document.getElementById('scan-log-content');
   if (!el) return;
