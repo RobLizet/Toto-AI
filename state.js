@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v44: v26.28 — Crème: bet history / tracker / backtest rijen licht
+// v45: v26.29 — Grafiek as-labels thema-bewust (donker in Crème)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.28';
+const APP_VERSION = 'v26.29';
 
 const STATE_KEY = 'totoai_state';
 
