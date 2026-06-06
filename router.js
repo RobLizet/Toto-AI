@@ -97,3 +97,14 @@ function goBack() {
 // ── More menu — verwijderd, opties in bottom nav ────────
 function toggleMoreMenu() {}
 function closeMoreMenu() {}
+
+// ── Deep-link vanuit melding: #pick=<matchId> opent de scan-log op die match ──
+function handlePickDeepLink() {
+  const m = (location.hash || '').match(/#pick=([^&]+)/);
+  if (m && typeof openScanLog === 'function') {
+    openScanLog({ matchId: decodeURIComponent(m[1]) });
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  }
+}
+window.addEventListener('hashchange', handlePickDeepLink);
+window.addEventListener('load', () => setTimeout(handlePickDeepLink, 800));
