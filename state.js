@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v41: v26.25 — Crème-thema geoptimaliseerd (leesbaarheid + samenhang)
+// v42: v26.26 — Crème nu volwaardig licht thema (achtergrond + nav-kaarten)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.25';
+const APP_VERSION = 'v26.26';
 
 const STATE_KEY = 'totoai_state';
 
