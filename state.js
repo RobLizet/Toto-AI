@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v46: v26.30 — WK/landenduel-hardening (sparse + confidence-cap + hogere edge-lat)
+// v47: v26.31 — Shin de-vig (favorite-longshot bias) in worker + client fair-kansen
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.30';
+const APP_VERSION = 'v26.31';
 
 const STATE_KEY = 'totoai_state';
 
