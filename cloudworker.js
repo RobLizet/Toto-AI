@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v129
+// ProMatchXI WORKER v130
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v129'; // v129: paginering /fixtures?date= (busy-day fix — friendlies/internationals werden gemist) // v128: Shin de-vig
+const VERSION = 'v130'; // v130: next= vangnet voor intl/Scand. leagues die date= mist // v129: paginering /fixtures?date=
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1251,6 +1251,24 @@ async function runScan(env, force = false) {
 
     console.log(`[Scan] ${unique.length} unieke fixtures gevonden over ${SCAN_LEAGUES.length} leagues`);
 
+    // v130: vangnet — internationale/Scandinavische leagues die date= soms mist (UTC-opslag).
+    // Alleen leagues die in de date=-uitkomst ontbraken aanvullen met next= (gezonde dag = 0 extra calls).
+    const seasonOf = (id) => { const l = leagueConfig.find(x => x.id === id); return l ? l.s : 2026; };
+    const coveredLeagues = new Set(unique.map(f => f.league?.id));
+    const missingNext = SCAN_LEAGUES.filter(id => NEXT_LEAGUES.has(id) && !coveredLeagues.has(id));
+    const recovered = [];
+    if (missingNext.length) {
+      console.log(`[Scan] ${missingNext.length} intl/Scand. leagues niet in date=, next= ophalen: ${missingNext.join(',')}`);
+      for (const lid of missingNext.slice(0, 8)) { // cap i.v.m. Cloudflare subrequest-budget
+        try {
+          const nx = await apif(`/fixtures?league=${lid}&season=${seasonOf(lid)}&next=10&timezone=Europe/Amsterdam`, env);
+          nx.forEach(f => { const id = f.fixture?.id; if (id && !seen.has(id)) { seen.add(id); recovered.push(f); } });
+        } catch(e) { console.warn(`[Scan] next= faalde voor league ${lid}`, e); }
+      }
+      console.log(`[Scan] ${recovered.length} extra fixtures via next=`);
+    }
+    const combined = [...unique, ...recovered];
+
     const nowMs = Date.now();
     // Bij handmatige scan: alle wedstrijden van vandaag (tot midnight +1u)
     // Bij automatische scan: alleen wedstrijden die binnen 4u beginnen
@@ -1259,7 +1277,7 @@ async function runScan(env, force = false) {
     // Handmatige scan (force): alle wedstrijden van vandaag t/m midnight
     const timeWindow = force ? endOfDay : nowMs + 24 * 60 * 60 * 1000;
 
-    allMatches = unique
+    allMatches = combined
       .filter(f => {
         const status = f.fixture?.status?.short;
         const kickoff = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
