@@ -1336,3 +1336,39 @@ body.creme [style*="rgba(0,60,50,.6)"],
 body.creme [style*="rgba(40,30,0,.6)"] {
   background: linear-gradient(135deg,#fffaf2,#f1e4d0) !important;
 }
+
+/* v26.27: Crème — WALLET volledig licht */
+/* Saldo-kaart (inline donkere gradient) → warm crème met teal-accent rand */
+body.creme [style*="linear-gradient(135deg,#061518,#04383F)"] {
+  background: linear-gradient(135deg,#fffaf2,#f1e4d0) !important;
+  border-color: rgba(0,150,150,.28) !important;
+  box-shadow: 0 2px 12px rgba(120,80,30,.10) !important;
+}
+/* Stats-omhulsel transparant; cellen krijgen definitie */
+body.creme .wallet-strip { background: transparent !important; }
+body.creme .w-item {
+  background: #fffaf2 !important;
+  border: 1px solid rgba(139,90,43,.16) !important;
+}
+body.creme .w-item .val { color: #2c1a0e !important; }
+body.creme .w-item .w-label, body.creme .w-label { color: #6a4a2c !important; }
+/* Stat-mini cellen */
+body.creme .stat-mini-card { background: #fffaf2 !important; border: 1px solid rgba(139,90,43,.14) !important; }
+body.creme .stat-mini-val { color: #2c1a0e !important; }
+body.creme .stat-mini-label { color: #6a4a2c !important; }
+/* Grafiek-kaart licht */
+body.creme .wallet-chart-wrap {
+  background: rgba(255,250,242,.92) !important;
+  border-color: rgba(139,90,43,.14) !important;
+}
+/* Chart-toggle knoppen */
+body.creme .chart-view-btn,
+body.creme .chart-src-btn {
+  background: rgba(139,90,26,.06) !important;
+  color: #6a4a2c !important;
+  border-color: rgba(139,90,43,.18) !important;
+}
+body.creme .chart-view-btn.active,
+body.creme .chart-src-btn.active {
+  background: #8b5a1a !important; color: #fff !important; border-color: #8b5a1a !important;
+}
