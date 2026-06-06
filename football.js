@@ -312,15 +312,36 @@ function calcFairOdds(homeOdds, drawOdds, awayOdds) {
   };
 }
 
+// v26.31: Shin de-vig — corrigeert favorite-longshot bias (underdog-prijs draagt relatief meer marge).
+// Geeft ware kansen (0-1) terug; valt terug op proportioneel als er nauwelijks marge is.
+function shinDevig(oddsArr) {
+  const b = oddsArr.map(o => (o > 1 ? 1 / o : 0));
+  const B = b.reduce((s, x) => s + x, 0);
+  if (B <= 1.0001) return b.map(x => x / (B || 1));
+  const probs = (z) => b.map(bi => (Math.sqrt(z * z + 4 * (1 - z) * bi * bi / B) - z) / (2 * (1 - z)));
+  let lo = 0, hi = 0.5;
+  for (let i = 0; i < 60; i++) {
+    const z = (lo + hi) / 2;
+    const sum = probs(z).reduce((s, x) => s + x, 0);
+    if (sum > 1) lo = z; else hi = z;
+  }
+  return probs((lo + hi) / 2);
+}
+
 // Value berekening met overround correctie
 // Vergelijkt AI kans met faire implied kans (niet raw bookmaker kans)
 function calcValueFair(aiKans, odds, homeOdds, drawOdds, awayOdds) {
   if (!aiKans || !odds || odds <= 1) return null;
-  const fair = calcFairOdds(homeOdds, drawOdds, awayOdds);
-  if (!fair) return calcValue(aiKans, odds); // fallback naar normale berekening
-  // Faire odds = bookmaker odds * overround factor
-  const fairOdds = odds * fair.margin;
-  const fairImplied = 100 / fairOdds;
+  const h = parseFloat(homeOdds), d = parseFloat(drawOdds), a = parseFloat(awayOdds);
+  if (!h || !d || !a || h <= 1 || d <= 1 || a <= 1) return calcValue(aiKans, odds);
+  // v26.31: Shin de-vig (corrigeert favorite-longshot bias) i.p.v. proportioneel
+  const fair = shinDevig([h, d, a]); // [pH, pD, pA] in 0-1
+  let p = null, best = Infinity;
+  [[h, fair[0]], [d, fair[1]], [a, fair[2]]].forEach(([o, pr]) => {
+    const diff = Math.abs(o - odds); if (diff < best) { best = diff; p = pr; }
+  });
+  if (p == null) return calcValue(aiKans, odds);
+  const fairImplied = p * 100;
   return parseFloat((aiKans - fairImplied).toFixed(2));
 }
 
