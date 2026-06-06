@@ -299,7 +299,7 @@ function renderDashboard() {
   const laatsteScanCard = (_latestScan && (_latestScan.picks||[]).length) ? (() => {
     const t = _latestScan.timestamp ? new Date(_latestScan.timestamp).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '';
     const lp = (_latestScan.picks||[]).slice().sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,5);
-    let h = '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,190,196,.25);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;">';
+    let h = '<div class="dash-soft" style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,190,196,.25);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.55);">🔍 LAATSTE SCAN'+(t?' · '+t:'')+'</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.4);">'+(_latestScan.picks||[]).length+' picks</div></div>';
     lp.forEach(p => {
       const v = Math.round(p.value||0); const sign = v>=0?'+':'';
@@ -355,7 +355,7 @@ function renderDashboard() {
     ${laatsteScanCard}
 
     <!-- Voortgang kaart — ring + stats rij -->
-    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;cursor:pointer;backdrop-filter:blur(8px);"
+    <div class="dash-soft" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;cursor:pointer;backdrop-filter:blur(8px);"
       onclick="showPicksModal()">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;padding-right:.5rem;">
