@@ -1278,3 +1278,48 @@ body.creme .theme-btn[onclick*="creme"] {
   color: #fff !important;
   border-color: #8b5a1a !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ProMatchXI — CRÈME v26.25: leesbaarheid & samenhang
+   ═══════════════════════════════════════════════════════════════ */
+/* Variabelen overschrijven zodat ALLE var(--muted)/--sub tekst leesbaar wordt */
+body.creme {
+  --ink:#2c1a0e; --text:#2c1a0e;
+  --sub:#6a4a2c; --muted:#8a6a48;
+  --stroke:rgba(139,90,43,.16); --border:rgba(139,90,43,.16);
+  --card:#fffaf2; --card2:#f7eede;
+  --shadow:0 4px 20px rgba(90,60,20,.10); --shadow2:0 2px 10px rgba(90,60,20,.08);
+}
+/* Inline-wit (color:#fff / rgba(255,255,255,...)) leesbaar maken op crème */
+body.creme [style*="color:#fff"],
+body.creme [style*="color: #fff"],
+body.creme [style*="color:rgba(255,255,255"],
+body.creme [style*="color: rgba(255,255,255"] {
+  color:#5e4326 !important;
+  -webkit-text-fill-color:#5e4326 !important;
+}
+/* Sectiekop-band warm bruin i.p.v. vaag cyaan */
+body.creme .settings-section-title {
+  background:rgba(139,90,26,.07) !important;
+  border-bottom-color:rgba(139,90,43,.14) !important;
+  color:#8b5a1a !important;
+  -webkit-text-fill-color:#8b5a1a !important;
+}
+/* Zachte warme schaduw voor diepte op de cards */
+body.creme .settings-section,
+body.creme .match-card,
+body.creme .analyse-block,
+body.creme .analytics-block,
+body.creme .dash-card,
+body.creme .nav-card,
+body.creme .dash-nav-card,
+body.creme .modal-box,
+body.creme .wallet-big {
+  box-shadow:0 2px 12px rgba(120,80,30,.08) !important;
+}
+/* Knoppen iets meer definitie */
+body.creme .small-action-btn {
+  background:#fffaf2 !important;
+  border-color:rgba(139,90,43,.22) !important;
+  color:#3d2614 !important;
+}
