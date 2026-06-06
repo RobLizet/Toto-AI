@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v125
+// ProMatchXI WORKER v126
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v125'; // v125: value = de-vigde edge vs consensus (modelkans - faire implied) + EV/Kelly voor staking // v124: /analytics uitgebreid
+const VERSION = 'v126'; // v126: scan-melding noemt de pick + deep-link naar scan-log // v125: value = de-vigde edge vs consensus
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1527,9 +1527,14 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
         pick: top.pick, value: top.value,
       });
     } else {
+      const top2 = Object.values(newPicks).sort((a, b) => (b.value || 0) - (a.value || 0))[0];
       const title = `🔍 ${nowStr} — ${newCount} pick${newCount > 1 ? 's' : ''} toegevoegd`;
-      const body = `${allMatches.length} wedstr gescand · ${Object.keys(oddsMap || {}).length} met odds`;
-      await sendPushNotification(env, title, body, { type: 'scan_done' });
+      const body = top2
+        ? `${top2.matchName} · ${top2.pickLabel} @ ${top2.odds} · +${Math.round(top2.value)}% edge`
+        : `${allMatches.length} wedstr gescand · ${Object.keys(oddsMap || {}).length} met odds`;
+      await sendPushNotification(env, title, body, top2
+        ? { type: 'scan_done', matchId: String(top2.fixtureId), pick: top2.pick }
+        : { type: 'scan_done' });
     }
   } else {
     // Altijd een melding — ook bij 0 picks. v117: aparte alert bij stille AI-mislukking.
@@ -2021,6 +2026,8 @@ async function sendPushNotification(env, title, body, data = {}) {
       ttl:      3600,
       priority: 10,
     };
+    // v126: deep-link naar de juiste pick in de scan-log bij klik op de melding
+    if (data && data.matchId) payload.url = `https://promatchxi.app/#pick=${data.matchId}`;
     const res = await fetch('https://onesignal.com/api/v1/notifications', {
       method: 'POST',
       headers: {
