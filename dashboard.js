@@ -293,6 +293,30 @@ function renderDashboard() {
   const valuePicks = (state.valueScans||[]).filter(s => s.value >= 5);
   const topValuePick = valuePicks.sort((a,b) => (b.value||0)-(a.value||0))[0];
 
+  // v26.24: Laatste scan — toont álle picks (ook lichte) van de meest recente scan, tikbaar naar de scan-log
+  const _sortedScans = [...scanLog].sort((a,b) => new Date(b.timestamp||0) - new Date(a.timestamp||0));
+  const _latestScan = _sortedScans[0] || null;
+  const laatsteScanCard = (_latestScan && (_latestScan.picks||[]).length) ? (() => {
+    const t = _latestScan.timestamp ? new Date(_latestScan.timestamp).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '';
+    const lp = (_latestScan.picks||[]).slice().sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,5);
+    let h = '<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,190,196,.25);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.55);">🔍 LAATSTE SCAN'+(t?' · '+t:'')+'</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.4);">'+(_latestScan.picks||[]).length+' picks</div></div>';
+    lp.forEach(p => {
+      const v = Math.round(p.value||0); const sign = v>=0?'+':'';
+      const light = (p.isSparseData || (p.confidence||0) < 6 || (p.value||0) < 8);
+      const badge = light ? '<span style="font-size:.4rem;color:#d97706;border:1px solid rgba(217,119,6,.4);border-radius:4px;padding:0 .25rem;margin-left:.3rem;vertical-align:middle;">licht</span>' : '';
+      const q = (p.match||'').replace(/'/g,'');
+      const vcol = v>=8?'#00BEC4':(v>=0?'#94a3b8':'#ef4444');
+      h += '<div onclick="openScanLog(\''+q+'\')" style="display:flex;align-items:center;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;">';
+      h += '<div style="flex:1;min-width:0;padding-right:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(p.match||'?')+badge+'</div>';
+      h += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">'+(p.pickLabel||p.pick||'')+' · @'+(Number(p.odds)||0).toFixed(2)+'</div></div>';
+      h += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:.95rem;color:'+vcol+';">'+sign+v+'%</div></div>';
+    });
+    h += '<div onclick="openScanLog(\'\')" style="text-align:center;margin-top:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#00BEC4;cursor:pointer;">Volledige scan-log →</div>';
+    h += '</div>';
+    return h;
+  })() : '';
+
   // WK countdown
   // Weekoverzicht berekenen
   const weekNow = new Date();
@@ -328,6 +352,7 @@ function renderDashboard() {
     </div>
 
     <div id="dashOverviewContent">
+    ${laatsteScanCard}
 
     <!-- Voortgang kaart — ring + stats rij -->
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;cursor:pointer;backdrop-filter:blur(8px);"
