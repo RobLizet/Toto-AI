@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v45: v26.29 — Grafiek as-labels thema-bewust (donker in Crème)
+// v46: v26.30 — WK/landenduel-hardening (sparse + confidence-cap + hogere edge-lat)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.29';
+const APP_VERSION = 'v26.30';
 
 const STATE_KEY = 'totoai_state';
 
