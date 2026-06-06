@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v39: v26.23 — Markt+Poisson-factor in gewogen uitleg ook voor client-scan-picks
+// v40: v26.24 — Laatste-scan-kaart op dashboard + melding noemt pick + deep-link naar scan-log
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.23';
+const APP_VERSION = 'v26.24';
 
 const STATE_KEY = 'totoai_state';
 
