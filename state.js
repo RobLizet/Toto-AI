@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v42: v26.26 — Crème nu volwaardig licht thema (achtergrond + nav-kaarten)
+// v43: v26.27 — Crème: wallet-scherm volledig licht (saldo-kaart, stats, grafiek)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.26';
+const APP_VERSION = 'v26.27';
 
 const STATE_KEY = 'totoai_state';
 
