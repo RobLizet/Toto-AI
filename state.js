@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v49: v26.33 — scan-fix: paginering fixtures (busy-day, friendlies werden gemist)
+// v50: v26.34 — scan vangnet: next= aanvulling voor intl/Scand. leagues (busy-day robustness)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.33';
+const APP_VERSION = 'v26.34';
 
 const STATE_KEY = 'totoai_state';
 
