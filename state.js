@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v47: v26.31 — Shin de-vig (favorite-longshot bias) in worker + client fair-kansen
+// v48: v26.32 — Crème: top-dashboardcards zichtbaarder + competitie-tegels licht
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.31';
+const APP_VERSION = 'v26.32';
 
 const STATE_KEY = 'totoai_state';
 
