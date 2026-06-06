@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v40: v26.24 — Laatste-scan-kaart op dashboard + melding noemt pick + deep-link naar scan-log
+// v41: v26.25 — Crème-thema geoptimaliseerd (leesbaarheid + samenhang)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.24';
+const APP_VERSION = 'v26.25';
 
 const STATE_KEY = 'totoai_state';
 
