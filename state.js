@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v48: v26.32 — Crème: top-dashboardcards zichtbaarder + competitie-tegels licht
+// v49: v26.33 — scan-fix: paginering fixtures (busy-day, friendlies werden gemist)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.32';
+const APP_VERSION = 'v26.33';
 
 const STATE_KEY = 'totoai_state';
 
