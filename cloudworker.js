@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v126
+// ProMatchXI WORKER v127
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v126'; // v126: scan-melding noemt de pick + deep-link naar scan-log // v125: value = de-vigde edge vs consensus
+const VERSION = 'v127'; // v127: toernooi/landenduel-hardening (sparse + confidence-cap + hogere edge-lat, geen elite) // v126: scan-melding + deep-link
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -463,6 +463,11 @@ function getOddsBucket(odds) {
 }
 
 // Confidence Engine v1
+// v127: landenteam-/toernooi-competities — dunne statistische data, ook al is de markt scherp.
+// WK (1), WK-kwal (4 UEFA, 6 CONMEBOL, 29 CAF, 36 AFC), Nations League (5), Vriendschappelijk (10).
+const TOURNAMENT_LEAGUES = new Set([1, 4, 5, 6, 10, 29, 36]);
+function isTournamentLeague(leagueId) { return TOURNAMENT_LEAGUES.has(Number(leagueId)); }
+
 function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, leagueId, odds, calibFactor, pick }) {
   const staticFactor = LEAGUE_FACTORS[leagueId] || 0.92;
   // Blend: 70% historisch calibratie, 30% statisch (meer stabiliteit)
@@ -1319,7 +1324,7 @@ KRITISCHE REGELS:
 - Baseer kansen op historische doelpuntenpatronen en competitieniveau, NIET op teamnamen of reputatie
 - GELIJKSPEL WAARSCHUWING: Gelijkspel komt voor in slechts ~25-28% van alle wedstrijden. Overschat gelijkspelkansen NIET. Wees terughoudend met kansX boven 30% tenzij teams historisch veel gelijkspeelden
 - Thuisvoordeel is reëel: gemiddeld +5-8% kansverhoging voor thuisteam in Europese competities
-- Kleine competities (Noorwegen/Zweden/lagere divisies): data is onbetrouwbaarder, geef lagere confidence
+- Kleine competities (Noorwegen/Zweden/lagere divisies): data is onbetrouwbaarder, geef lagere confidence\n- LANDENTEAMS/TOERNOOI (WK, WK-kwalificatie, Nations League, vriendschappelijk): historische data is dun. Blijf dicht bij een gebalanceerde/Poisson-verwachting, wijk NIET sterk af op reputatie, en geef lagere confidence (c max 5)
 - Som van h+x+a moet exact 100 zijn
 
 WEDSTRIJDEN:
@@ -1372,6 +1377,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     const ai = aiResults[i] || { h: 50, x: 25, a: 25, c: 5 };
     const odds = oddsMap[m.fixtureId] || {};
     const confidence = parseInt(ai.c) || 5;
+    const tournament = isTournamentLeague(m.leagueId); // v127: landenduel-hardening
 
     const candidates = [
       // Als geen odds beschikbaar: bereken fair odds uit AI-kansen (geen edge, maar wel analyse)
@@ -1415,12 +1421,18 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
         pick: c.pick,
       });
 
-      // Strengere drempel voor gelijkspel picks
+      // v127: toernooi/landenduel — dunne data, scherpe markt → cap betrouwbaarheid + hogere edge-lat
+      if (tournament) {
+        conf.final = Math.min(conf.final, 60);
+        conf.score = Math.max(1, Math.min(10, Math.round(conf.final / 10)));
+      }
+
+      // Strengere drempel voor gelijkspel picks (en voor toernooi/landenduels)
       const minConf = c.pick === 'X' ? 6 : 5;
-      const minValue = c.pick === 'X' ? 10 : 3;
+      const minValue = c.pick === 'X' ? (tournament ? 12 : 10) : (tournament ? 6 : 3);
       if (conf.score < minConf || value < minValue) return;
 
-      const elite = isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds, pick: c.pick, poissonUsed: false });
+      const elite = !tournament && isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds, pick: c.pick, poissonUsed: false });
 
       const pickKey = `${m.fixtureId}_${c.pick}`;
       const existing = existingPicks[pickKey];
@@ -1468,7 +1480,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
           source: 'scheduled',
           sharp: !!sharpBoost,
           sharpMove: sharpBoost?.movement || null,
-          isSparseData: !hasRealOdds,  // true = geen bookmaker odds, fair-odds fallback gebruikt
+          isSparseData: !hasRealOdds || tournament,  // v127: landenduels altijd sparse (dunne data, ook mét odds)
         };
       }
     });
@@ -1696,6 +1708,7 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
   analyseBatchFull.forEach((m, i) => {
     const ai   = aiResults[i] || { h: 50, x: 25, a: 25, c: 5 };
     const odds = oddsMap[m.fixtureId] || {};
+    const tournament = isTournamentLeague(m.leagueId); // v127
 
     [
       { pick: '1', label: `${m.home} wint`, aiKans: ai.h, bookOdds: odds.home },
@@ -1720,8 +1733,14 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
         pick: c.pick,
       });
 
+      // v127: toernooi-hardening (zelfde als productie)
+      if (tournament) {
+        conf.final = Math.min(conf.final, 60);
+        conf.score = Math.max(1, Math.min(10, Math.round(conf.final / 10)));
+      }
+
       const minConf = c.pick === 'X' ? 6 : 5;
-      const minValue = c.pick === 'X' ? 10 : 3;
+      const minValue = c.pick === 'X' ? (tournament ? 12 : 10) : (tournament ? 6 : 3);
       if (conf.score < minConf || value < minValue) return;
 
       picks.push({
