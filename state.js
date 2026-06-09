@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v51: v26.35 — tijdelijk WK-only modus (alle competities verborgen, alleen WK 2026)
+// v52: v26.36 — scan-log datum-guard (onzin-jaren zoals 2001 niet meer tonen)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.35';
+const APP_VERSION = 'v26.36';
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
