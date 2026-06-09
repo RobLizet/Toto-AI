@@ -1627,8 +1627,8 @@ async function generateCombiTip() {
 
   const allMatches = (state.matches||[]).filter(m => !m.isDone);
 
-  // Blokkeer als geen wedstrijden geladen
-  if (!allMatches.length) {
+  // Blokkeer alleen als er noch geladen wedstrijden noch eerdere value-scans zijn
+  if (!allMatches.length && !(state.valueScans||[]).length) {
     const card = document.getElementById('combiCard');
     if (card) {
       card.innerHTML = `<div style="text-align:center;padding:1.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;">
@@ -1643,51 +1643,32 @@ async function generateCombiTip() {
     return;
   }
 
-  // Laad alle competities als te weinig wedstrijden met odds
-  const withOdds = allMatches.filter(m => m.homeOdds !== '—' && parseFloat(m.homeOdds) >= 1.40);
-  if (withOdds.length < 6) {
-    btn.textContent = '⟳ ALLE COMPS LADEN...';
-    const today = new Date().toISOString().split('T')[0];
-    const SCAN_IDS = [88,89,78,39,61,135,2,3,848,144,140,40,79,203,5,94,179,218,207,119,103,113,106,32,34,36,1];
-    const seen = new Set((state.matches||[]).map(m => m.id));
-    const extra = [];
-    await Promise.all(SCAN_IDS.map(async lid => {
-      try {
-        const season = seasonForLeague(lid);
-        const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${lid}&season=${season}&date=${today}&status=NS-1H-HT-2H`, null, 6000);
-        const d = await r.json();
-        (d.response||[]).forEach(f => {
-          const m = parseAPIMatch(f);
-          if (m && !seen.has(m.id)) { seen.add(m.id); extra.push(m); }
-        });
-      } catch(e) {}
-    }));
-    if (extra.length) {
-      btn.textContent = `⟳ ODDS OPHALEN (${extra.length})...`;
-      try { await fetchOddsForAllMatches(extra, null); } catch(e) {}
-      extra.forEach(m => state.matches.push(m));
-    }
-  }
-
-  // Filter: minimale odds 1.40, moet quotes hebben, niet afgelopen, alleen vandaag/morgen
+  // v26.37: kandidaten = value-picks uit de scan-engine (consistent met de scan-log + WK-hardening).
+  // Niet langer een losse selectie over alle odds; Claude kiest straks UITSLUITEND uit deze picks.
   const _todayStr = new Date().toISOString().split('T')[0];
-  const _tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-  const upcomingMatches = (state.matches||[]).filter(m => {
-    if (m.isDone) return false;
-    if (m.homeOdds === '—') return false;
-    if (parseFloat(m.homeOdds) < 1.40) return false;
-    if (parseFloat(m.awayOdds) < 1.10) return false;
-    // Datum check: alleen wedstrijden van vandaag of morgen
-    const mDate = m.dateISO || m.date || '';
-    if (mDate && mDate < _todayStr) return false; // verleden wedstrijden eruit
-    return true;
+  const _byMatch = {};
+  (state.valueScans || []).forEach(s => {
+    if (!s || !s.match || !s.pick || s.pick === 'X') return;
+    if (parseFloat(s.odds) < 1.40) return;
+    if (!(s.value > 0)) return;
+    const d = s.match.dateISO || s.match.date || '';
+    if (d && d < _todayStr) return;
+    const k = String(s.match.id);
+    if (!_byMatch[k] || (s.confidence || 0) > (_byMatch[k].confidence || 0)) _byMatch[k] = s;
   });
+  const upcomingMatches = Object.values(_byMatch)
+    .sort((a, b) => (b.confidence - a.confidence) || (b.value - a.value))
+    .map(s => ({
+      id: s.match.id, home: s.match.home, away: s.match.away, comp: s.match.comp || '',
+      date: s.match.date || '', time: s.match.time || '',
+      pick: s.pick, pickLabel: s.pickLabel, odds: s.odds, value: s.value, confidence: s.confidence
+    }));
 
-  if (!upcomingMatches.length) {
+  if (upcomingMatches.length < 2) {
     const card = document.getElementById('combiCard');
     if (card) {
       card.innerHTML = `<div style="text-align:center;padding:1.5rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.5);line-height:1.7;">Geen wedstrijden met bruikbare quotes (min. 1.40).<br>Laad meer wedstrijden of kies een andere competitie.</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.5);line-height:1.7;">Te weinig value-picks uit de scan.<br>Draai eerst een value-scan zodat de tips uit dezelfde analyse komen als de scan-log.</div>
       </div>`;
       card.style.display = 'block';
     }
@@ -1695,12 +1676,10 @@ async function generateCombiTip() {
     return;
   }
 
-  // ── FIX v18.2: Gebruik index als referentie, stuur fixtureId mee ──
-  // Zodat teamnamen altijd uit state.matches komen, niet uit AI response
-  const matchesCtx = upcomingMatches.slice(0,25).map((m, i) => {
-    const datum = m.date ? `${m.date} ${m.time}` : m.time;
-    return `[${i+1}] fixtureId=${m.id} | ${m.home} vs ${m.away} | ${m.comp} | ${datum} | 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}`;
-  }).join('\n');
+  // Engine-picks als context — Claude kiest hieruit, mag pick/odds NIET wijzigen
+  const matchesCtx = upcomingMatches.slice(0, 12).map((m, i) =>
+    `[${i+1}] fixtureId=${m.id} | ${m.home} vs ${m.away} | ${m.comp} | engine-pick=${m.pick} (${m.pickLabel}) | odds=${m.odds} | engine-value=${m.value}% | confidence=${m.confidence}/10`
+  ).join('\n');
 
   const vandaag = new Date().toLocaleDateString('nl-NL',{weekday:'long',day:'numeric',month:'long'});
 
@@ -1711,17 +1690,14 @@ async function generateCombiTip() {
 Het veld "match" MOET altijd de exacte teamnamen bevatten: "ThuisTeam vs UitTeam".
 Het veld "fixtureId" MOET de fixtureId zijn uit de invoer.
 
-CROSS-COMPETITIE SELECTIE:
-- Kies wedstrijden uit VERSCHILLENDE competities waar mogelijk — meer diversiteit = minder correlatie
-- Top 3 tips: de 3 beste value picks over ALLE beschikbare competities
-- ELKE pick moet een ANDERE wedstrijd zijn — NOOIT twee picks van dezelfde wedstrijd (zelfde fixtureId)
-- Combi: kies 3 legs uit MINIMAAL 2 verschillende competities
-- Vermijd picks uit dezelfde competitie op dezelfde speelronde in de combi (hoge correlatie)
-- Odds tussen 1.40 en 4.00 — NOOIT onder 1.40
-- Geef voorkeur aan: thuisfavorieten met motivatieverschil, ploegen in goede vorm, duidelijke kwaliteitsverschillen
-- GELIJKSPEL VERBOD: kies NOOIT pick "X" (gelijkspel) in top3 of combi — altijd "1" (thuis wint) of "2" (uit wint)
-- Combi totale odds maximaal 12.00 — kies veiligere picks als het hoger uitkomt
-- Geef bij elke top3 pick een zwakPunt (1 zin over het grootste risico)
+SELECTIE UIT ENGINE-PICKS:
+- Kies UITSLUITEND uit de aangeleverde engine-picks. Gebruik de gegeven "engine-pick" en "odds" EXACT — verzin NOOIT een andere uitslag, markt of odds.
+- Top 3 tips: de 3 sterkste engine-picks (hoogste confidence, dan value), elk een ANDERE wedstrijd (andere fixtureId).
+- Combi: 3 legs uit die picks, liefst uit MINIMAAL 2 verschillende competities (lagere correlatie).
+- Combi totale odds maximaal 12.00 — kies anders engine-picks met lagere odds.
+- "pick" is altijd "1" of "2" (de engine levert geen gelijkspelen).
+- "odds" = exact de gegeven odds; "vertrouwen" = de gegeven confidence (1-10).
+- Geef bij elke top3 pick een zwakPunt (1 zin over het grootste risico).
 
 {"top3":[
   {"fixtureId":"123","match":"ThuisTeam vs UitTeam","datum":"","pick":"","pickLabel":"","markt":"","odds":0,"vertrouwen":8,"reden":"30-40 woorden met concrete redenen","factoren":["",""],"risico":"","zwakPunt":"1 zin over het risico"},
