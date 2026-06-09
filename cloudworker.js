@@ -1,4 +1,4 @@
-// ProMatchXI WORKER v130
+// ProMatchXI WORKER v131
 // v104: No retry Anthropic, max 5 scans/dag, scan calls naar Haiku (10x goedkoper)
 // v101: Push naar owner player ID
 // v100: Rate limiting /anthropic — max 15/dag per user, 150 globaal
@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v130'; // v130: next= vangnet voor intl/Scand. leagues die date= mist // v129: paginering /fixtures?date=
+const VERSION = 'v131'; // v131: WK_ONLY_MODE — alleen WK 2026 scannen // v130: next= vangnet
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1183,7 +1183,8 @@ async function runScan(env, force = false) {
   const dateNow = new Date(today);
   const wkStart = new Date('2026-06-11');
   const wkEnd   = new Date('2026-07-20');
-  const isWKActive = dateNow >= wkStart && dateNow < wkEnd;
+  const WK_ONLY_MODE = true; // tijdelijk: alleen WK 2026 scannen. Zet op false om alle competities te herstellen.
+  const isWKActive = WK_ONLY_MODE || (dateNow >= wkStart && dateNow < wkEnd);
 
   let leagueConfig;
   if (isWKActive) {
