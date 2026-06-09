@@ -688,7 +688,9 @@ function openCompKeuze() {
   const WK_COMP = [{key:'wk2026',flag:'🏆',name:'WK 2026'}];
 
   let COMPS;
-  if (_isWKActive) {
+  if (typeof WK_ONLY_MODE !== 'undefined' && WK_ONLY_MODE) {
+    COMPS = [...WK_COMP]; // tijdelijk: alleen WK 2026
+  } else if (_isWKActive) {
     COMPS = [...WK_COMP, ...ZOMER_COMPS];
   } else if (_isPreEuroEnd) {
     COMPS = [...EURO_COMPS, ...ZOMER_COMPS, ...WK_COMP];
