@@ -307,7 +307,6 @@ function renderInstellingen() {
     },
     "calibration": { ".read": true, ".write": false },
     "picks": { ".read": "auth != null", ".write": "auth != null" },
-    "anonymous": { ".read": true, ".write": true }
   }
 }</div>
         <button class="small-action-btn" onclick="window.open('https://console.firebase.google.com/project/toto-ai-397cb/database/toto-ai-397cb-default-rtdb/rules','_blank')">
@@ -509,8 +508,9 @@ async function _fbAuthToken() {
 async function saveToFirebase() {
   const token = await _fbAuthToken();
   const user = firebase.auth().currentUser;
-  const uid = user ? user.uid : 'anonymous';
-  const basePath = user ? `users/${uid}` : 'anonymous';
+  const uid = user ? user.uid : null;
+  if (!uid) { console.warn('[Firebase] Geen uid beschikbaar'); return false; }
+  const basePath = `users/${uid}`;
 
   const payload = {
     anthropicKey:state.settings.anthropicKey||'',
@@ -550,7 +550,8 @@ async function restoreFromFirebase() {
   try {
     const token = await _fbAuthToken();
     const user = firebase.auth().currentUser;
-    const basePath = user ? `users/${user.uid}` : 'anonymous';
+    const basePath = user ? `users/${user.uid}` : null;
+    if (!basePath) { console.warn('[Firebase] Geen uid — skip'); return false; }
     const br = await fetch(`${FB_DB}/${basePath}/backup.json?auth=${token}`);
     if (!br.ok) throw new Error('Geen backup gevonden');
     const b = await br.json();
@@ -571,7 +572,8 @@ async function loadFromFirebase() {
   try {
     const token = await _fbAuthToken();
     const user = firebase.auth().currentUser;
-    const basePath = user ? `users/${user.uid}` : 'anonymous';
+    const basePath = user ? `users/${user.uid}` : null;
+    if (!basePath) { console.warn('[Firebase] Geen uid — skip'); return false; }
 
     const resp = await fetch(`${FB_DB}/${basePath}/settings.json?auth=${token}`);
     if (!resp.ok) return false;
@@ -659,7 +661,8 @@ async function loadFbBackupInfo() {
   try {
     const token = await _fbAuthToken();
     const user = firebase.auth().currentUser;
-    const basePath = user ? `users/${user.uid}` : 'anonymous';
+    const basePath = user ? `users/${user.uid}` : null;
+    if (!basePath) { console.warn('[Firebase] Geen uid — skip'); return false; }
     const br=await fetch(`${FB_DB}/${basePath}/backup.json?auth=${token}`);
     if (!br.ok) { el.textContent='Nog geen cloud backup'; return; }
     const b=await br.json();
