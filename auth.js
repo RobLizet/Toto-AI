@@ -303,9 +303,10 @@ async function logoutUser() {
 }
 
 function handleLoginBtnClick() {
-  if (_firebaseAuth && _firebaseAuth.currentUser) {
+  const cu = _firebaseAuth && _firebaseAuth.currentUser;
+  if (cu && !cu.isAnonymous) {
     switchScreen('instellingen');
-    showToast('✅ Ingelogd als ' + (_firebaseAuth.currentUser.displayName || _firebaseAuth.currentUser.email));
+    showToast('✅ Ingelogd als ' + (cu.displayName || cu.email));
   } else {
     showLoginScreen();
   }
