@@ -54,8 +54,8 @@ function renderWK2026Screen() {
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div style="display:flex;gap:.4rem;margin-bottom:.75rem;">
+      <!-- Tabs rij 1 -->
+      <div style="display:flex;gap:.4rem;margin-bottom:.4rem;">
         <button onclick="switchWKTab('picks')" id="wk-tab-picks"
           style="flex:1;padding:.4rem;border-radius:10px;border:1px solid rgba(220,38,38,.3);
           background:rgba(220,38,38,.12);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
@@ -64,6 +64,17 @@ function renderWK2026Screen() {
           style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
           background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
           font-weight:700;color:var(--sub);cursor:pointer;">📅 SCHEMA</button>
+        <button onclick="switchWKTab('standen')" id="wk-tab-standen"
+          style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
+          background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
+          font-weight:700;color:var(--sub);cursor:pointer;">📊 STAND</button>
+      </div>
+      <!-- Tabs rij 2 -->
+      <div style="display:flex;gap:.4rem;margin-bottom:.75rem;">
+        <button onclick="switchWKTab('topscorers')" id="wk-tab-topscorers"
+          style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
+          background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
+          font-weight:700;color:var(--sub);cursor:pointer;">⚽ TOP</button>
         <button onclick="switchWKTab('voorspelling')" id="wk-tab-voorspelling"
           style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
           background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
@@ -87,6 +98,22 @@ function renderWK2026Screen() {
         <div id="wk-schema-list">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);
             text-align:center;padding:1.5rem;">⟳ Schema laden...</div>
+        </div>
+      </div>
+
+      <!-- Standen tab -->
+      <div id="wk-tab-content-standen" style="display:none;">
+        <div id="wk-standen-list">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);
+            text-align:center;padding:1.5rem;">⟳ Standen laden...</div>
+        </div>
+      </div>
+
+      <!-- Topscorers tab -->
+      <div id="wk-tab-content-topscorers" style="display:none;">
+        <div id="wk-topscorers-list">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);
+            text-align:center;padding:1.5rem;">⟳ Topscorers laden...</div>
         </div>
       </div>
 
@@ -569,7 +596,7 @@ async function loadOranjeNieuws() {
 }
 
 function switchWKTab(tab) {
-  ['picks','schema','voorspelling','oranje'].forEach(t => {
+  ['picks','schema','standen','topscorers','voorspelling','oranje'].forEach(t => {
     const content = document.getElementById('wk-tab-content-' + t);
     const btn = document.getElementById('wk-tab-' + t);
     if (content) content.style.display = t === tab ? 'block' : 'none';
@@ -581,6 +608,8 @@ function switchWKTab(tab) {
   });
   if (tab === 'oranje') loadOranjeTab();
   if (tab === 'schema') loadWKSchema();
+  if (tab === 'standen') loadWKStanden();
+  if (tab === 'topscorers') loadWKTopscorers();
 }
 
 // ── WK Picks laden (uit Supabase via worker) ─────────────
@@ -770,14 +799,14 @@ function _renderWKSchema() {
   const el = document.getElementById('wk-schema-list');
   if (!el || !_wkFixtures.length) return;
 
-  // Groepnummers uit round string
+  // Groepletter uit round string (Group A t/m L)
   const getGroep = f => {
     const r = f.league?.round || '';
-    const m = r.match(/Group Stage - (\d+)/);
-    return m ? 'G' + m[1] : null;
+    const m = r.match(/Group (\w+)/);
+    return m ? m[1] : null;  // A, B, C ... L
   };
 
-  const groepen = [...new Set(_wkFixtures.map(getGroep).filter(Boolean))].sort((a,b)=>+a.slice(1)-+b.slice(1));
+  const groepen = [...new Set(_wkFixtures.map(getGroep).filter(Boolean))].sort();
 
   // Filter tabs
   let filterHtml = `<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;padding:.1rem 0;">
@@ -827,7 +856,7 @@ function _renderWKSchema() {
       const ghome = f.goals?.home ?? '';
       const gaway = f.goals?.away ?? '';
       const time = f.fixture?.date ? new Date(f.fixture.date).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '--:--';
-      const groep = getGroep(f) || '';
+      const groepLetter = getGroep(f) || '';
       const odds = _wkOdds[fid];
 
       // Score/tijd blok
@@ -868,7 +897,7 @@ function _renderWKSchema() {
       html += `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.85rem 1rem;margin-bottom:.5rem;">
         <!-- Groep label -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);font-weight:700;">${groep ? 'GROEP ' + groep.slice(1) : ''}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);font-weight:700;">${groepLetter ? 'GROEP ' + groepLetter : ''}</div>
           ${isDone ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">AFGELOPEN</div>` : ''}
         </div>
         <!-- Teams + Score -->
@@ -900,4 +929,128 @@ function _renderWKSchema() {
 function _wkFilterGroep(groep) {
   _wkActiveGroep = groep;
   _renderWKSchema();
+}
+
+// ── WK Standen laden ──────────────────────────────────────
+async function loadWKStanden() {
+  const el = document.getElementById('wk-standen-list');
+  if (!el) return;
+  el.innerHTML = `<div style="text-align:center;padding:1.5rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ Standen laden...</div>`;
+
+  try {
+    const res = await fetch('https://api.promatchxi.app/apif/standings?league=1&season=2026');
+    const raw = await res.json();
+    const resp = Array.isArray(raw) ? raw : (raw?.response || []);
+    const standings = resp[0]?.league?.standings || [];
+
+    if (!standings.length) {
+      el.innerHTML = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:1.5rem;text-align:center;">
+        <div style="font-size:1.5rem;margin-bottom:.5rem;">📊</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">Standen beschikbaar na eerste speelronde</div>
+      </div>`;
+      return;
+    }
+
+    let html = '';
+    standings.forEach(groep => {
+      if (!groep.length) return;
+      const groepNaam = groep[0].group || 'Groep';
+      const letter = groepNaam.replace('Group ', '');
+
+      html += `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem .85rem;margin-bottom:.6rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;margin-bottom:.6rem;letter-spacing:.05em;">
+          GROEP ${letter}
+        </div>
+        <div style="display:grid;grid-template-columns:auto 1fr repeat(5,auto);gap:.25rem .4rem;align-items:center;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">#</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">TEAM</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">GS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">W</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">D</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">V</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;font-weight:700;color:var(--ink);text-align:center;">PT</div>`;
+
+      groep.forEach((team, i) => {
+        const t = team.team?.name || '?';
+        const flag = WK_TEAM_FLAG(t);
+        const pts = team.points ?? 0;
+        const gs = team.all?.played ?? 0;
+        const w = team.all?.win ?? 0;
+        const d = team.all?.draw ?? 0;
+        const l = team.all?.lose ?? 0;
+        const through = i < 2;
+        const rowBg = through ? 'rgba(0,190,196,.04)' : 'transparent';
+
+        html += `
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:${through?'#00BEC4':'var(--sub)'};font-weight:700;background:${rowBg};border-radius:4px;padding:.15rem .2rem;">${i+1}</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:.6rem;font-weight:600;color:var(--ink);background:${rowBg};border-radius:4px;padding:.15rem .2rem;">${flag} ${t}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;background:${rowBg};border-radius:4px;padding:.15rem;">${gs}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;background:${rowBg};border-radius:4px;padding:.15rem;">${w}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;background:${rowBg};border-radius:4px;padding:.15rem;">${d}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;background:${rowBg};border-radius:4px;padding:.15rem;">${l}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:${through?'#00BEC4':'var(--ink)'};text-align:center;background:${rowBg};border-radius:4px;padding:.15rem;">${pts}</div>`;
+      });
+
+      html += `</div></div>`;
+    });
+
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;padding:1rem;">Fout: ${e.message}</div>`;
+  }
+}
+
+// ── WK Topscorers laden ────────────────────────────────────
+async function loadWKTopscorers() {
+  const el = document.getElementById('wk-topscorers-list');
+  if (!el) return;
+  el.innerHTML = `<div style="text-align:center;padding:1.5rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ Topscorers laden...</div>`;
+
+  try {
+    const res = await fetch('https://api.promatchxi.app/apif/topscorers?league=1&season=2026');
+    const raw = await res.json();
+    const scorers = Array.isArray(raw) ? raw : (raw?.response || []);
+
+    if (!scorers.length) {
+      el.innerHTML = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:1.5rem;text-align:center;">
+        <div style="font-size:1.5rem;margin-bottom:.5rem;">⚽</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">Topscorers beschikbaar na eerste speelronde</div>
+      </div>`;
+      return;
+    }
+
+    let html = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem .85rem;margin-bottom:.6rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;margin-bottom:.6rem;letter-spacing:.05em;">⚽ TOPSCORERS</div>
+      <div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:.3rem .5rem;align-items:center;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">#</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">SPELER</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">GS</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">ASS</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;font-weight:700;color:var(--ink);text-align:center;">⚽</div>`;
+
+    scorers.slice(0, 20).forEach((s, i) => {
+      const naam = s.player?.name || '?';
+      const land = s.statistics?.[0]?.team?.name || '';
+      const flag = WK_TEAM_FLAG(land);
+      const goals = s.statistics?.[0]?.goals?.total ?? 0;
+      const assists = s.statistics?.[0]?.goals?.assists ?? 0;
+      const games = s.statistics?.[0]?.games?.appearences ?? 0;
+      const isTop = i === 0;
+
+      html += `
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:${isTop?'#f59e0b':'var(--sub)'};font-weight:700;">${i+1}</div>
+        <div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:700;color:var(--ink);">${naam}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">${flag} ${land}</div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;">${games}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;">${assists}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;color:${isTop?'#f59e0b':'var(--ink)'};text-align:center;">${goals}</div>`;
+    });
+
+    html += `</div></div>`;
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;padding:1rem;">Fout: ${e.message}</div>`;
+  }
 }
