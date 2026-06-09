@@ -2750,7 +2750,7 @@ function renderScanLog() {
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;color:#C9A84C;">#' + (log.length-si) + '</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:rgba(255,255,255,.5);">';
       html += (function() {
-          var times = scan.picks.filter(function(p){return !!p.matchTime;}).map(function(p){return new Date(p.matchTime).getTime();}).filter(function(t){return !isNaN(t);});
+          var times = scan.picks.filter(function(p){return !!p.matchTime;}).map(function(p){return new Date(p.matchTime).getTime();}).filter(function(t){return !isNaN(t) && new Date(t).getFullYear()>=2024 && new Date(t).getFullYear()<=2031;});
           if (!times.length) return scan.date||'';
           times.sort(function(a,b){return a-b;});
           var earliest = new Date(times[0]);
