@@ -951,7 +951,7 @@ body.dark .odds-btn.value-highlight { background: rgba(29,185,116,.15) !importan
 body.dark .cd-standings-row { background: #1a2236 !important; }
 
 /* ── ANIMATIES ──────────────────────────────────────────────── */
-.screen.active { animation: fadeInScreen .2s ease; }
+.screen.active { display:block; animation: fadeInScreen .2s ease; }
 @keyframes fadeInScreen {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
