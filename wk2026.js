@@ -770,87 +770,122 @@ function _renderWKSchema() {
   const el = document.getElementById('wk-schema-list');
   if (!el || !_wkFixtures.length) return;
 
-  // Bouw groep-filter tabs
-  const groepen = [...new Set(_wkFixtures.map(f => {
+  // Groepnummers uit round string
+  const getGroep = f => {
     const r = f.league?.round || '';
     const m = r.match(/Group Stage - (\d+)/);
-    return m ? 'Groep ' + m[1] : (r.includes('Round') ? null : r);
-  }).filter(Boolean))].sort();
+    return m ? 'G' + m[1] : null;
+  };
 
-  let filterHtml = `<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.75rem;">
-    <button onclick="_wkFilterGroep('all')" id="wkf-all"
-      style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;padding:.25rem .55rem;border-radius:999px;border:1px solid var(--stroke);background:${_wkActiveGroep==='all'?'#00BEC4':'var(--card)'};color:${_wkActiveGroep==='all'?'#fff':'var(--sub)'};cursor:pointer;">
+  const groepen = [...new Set(_wkFixtures.map(getGroep).filter(Boolean))].sort((a,b)=>+a.slice(1)-+b.slice(1));
+
+  // Filter tabs
+  let filterHtml = `<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;padding:.1rem 0;">
+    <button onclick="_wkFilterGroep('all')"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;padding:.3rem .7rem;border-radius:999px;border:1.5px solid ${_wkActiveGroep==='all'?'#00BEC4':'var(--stroke)'};background:${_wkActiveGroep==='all'?'rgba(0,190,196,.15)':'var(--card)'};color:${_wkActiveGroep==='all'?'#00BEC4':'var(--sub)'};cursor:pointer;">
       ALLE</button>`;
   groepen.forEach(g => {
     const active = _wkActiveGroep === g;
     filterHtml += `<button onclick="_wkFilterGroep('${g}')"
-      style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;padding:.25rem .55rem;border-radius:999px;border:1px solid var(--stroke);background:${active?'#00BEC4':'var(--card)'};color:${active?'#fff':'var(--sub)'};cursor:pointer;">
-      ${g.replace('Groep ','G')}</button>`;
+      style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;padding:.3rem .7rem;border-radius:999px;border:1.5px solid ${active?'#00BEC4':'var(--stroke)'};background:${active?'rgba(0,190,196,.15)':'var(--card)'};color:${active?'#00BEC4':'var(--sub)'};cursor:pointer;">
+      ${g}</button>`;
   });
   filterHtml += `</div>`;
 
   // Filter wedstrijden
-  const filtered = _wkFixtures.filter(f => {
-    if (_wkActiveGroep === 'all') return true;
-    const r = f.league?.round || '';
-    const m = r.match(/Group Stage - (\d+)/);
-    const groepNr = m ? 'Groep ' + m[1] : r;
-    return groepNr === _wkActiveGroep;
-  });
+  const filtered = _wkFixtures.filter(f =>
+    _wkActiveGroep === 'all' || getGroep(f) === _wkActiveGroep
+  );
 
   // Groepeer per dag
   const byDay = {};
   filtered.forEach(f => {
-    const day = f.fixture?.date?.split('T')[0] || 'onbekend';
+    const day = f.fixture?.date?.split('T')[0] || 'x';
     if (!byDay[day]) byDay[day] = [];
     byDay[day].push(f);
   });
 
   let html = filterHtml;
+
   Object.entries(byDay).sort().forEach(([day, matches]) => {
     const d = new Date(day + 'T12:00:00');
-    const label = d.toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short' });
-    html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;color:var(--sub);margin:.6rem 0 .3rem;">${label.toUpperCase()}</div>`;
+    const dagLabel = d.toLocaleDateString('nl-NL', { weekday:'long', day:'numeric', month:'long' });
+
+    html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;
+      color:var(--sub);letter-spacing:.06em;margin:1.1rem 0 .5rem;text-transform:uppercase;">
+      ${dagLabel}</div>`;
+
     matches.forEach(f => {
       const fid = f.fixture?.id;
-      const time = f.fixture?.date ? new Date(f.fixture.date).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '?';
       const home = f.teams?.home?.name || '?';
       const away = f.teams?.away?.name || '?';
+      const hFlag = WK_TEAM_FLAG(home);
+      const aFlag = WK_TEAM_FLAG(away);
       const status = f.fixture?.status?.short;
       const isLive = ['1H','2H','HT','ET','PEN'].includes(status);
       const isDone = ['FT','AET','PEN'].includes(status);
       const ghome = f.goals?.home ?? '';
       const gaway = f.goals?.away ?? '';
+      const time = f.fixture?.date ? new Date(f.fixture.date).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '--:--';
+      const groep = getGroep(f) || '';
       const odds = _wkOdds[fid];
 
-      let scoreHtml = '';
+      // Score/tijd blok
+      let midHtml = '';
       if (isLive) {
-        scoreHtml = `<span style="color:#dc2626;font-weight:700;">${ghome}–${gaway} 🔴</span>`;
+        midHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:.15rem;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#dc2626;line-height:1;">${ghome} – ${gaway}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:#dc2626;font-weight:700;animation:blink 1s infinite;">● LIVE</div>
+        </div>`;
       } else if (isDone) {
-        scoreHtml = `<span style="color:var(--ink);font-weight:700;">${ghome}–${gaway}</span>`;
+        midHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--ink);line-height:1;">${ghome} – ${gaway}</div>`;
       } else {
-        scoreHtml = `<span style="color:var(--sub);">${time}</span>`;
-      }
-
-      let oddsHtml = '';
-      if (odds && !isDone) {
-        oddsHtml = `<div style="display:flex;gap:.3rem;margin-top:.3rem;">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);border-radius:5px;padding:.1rem .3rem;color:var(--ink);">1 ${odds.home?.toFixed(2)}</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;background:rgba(255,255,255,.04);border:1px solid var(--stroke);border-radius:5px;padding:.1rem .3rem;color:var(--sub);">X ${odds.draw?.toFixed(2)}</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);border-radius:5px;padding:.1rem .3rem;color:var(--ink);">2 ${odds.away?.toFixed(2)}</span>
+        midHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:.1rem;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);line-height:1;">vs</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#00BEC4;font-weight:700;">${time}</div>
         </div>`;
       }
 
-      const groep = (() => { const r=f.league?.round||''; const m=r.match(/Group Stage - (\d+)/); return m?'G'+m[1]:''; })();
-
-      html += `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:10px;padding:.5rem .65rem;margin-bottom:.3rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:600;color:var(--ink);">
-            ${WK_TEAM_FLAG(home)} ${home} <span style="color:var(--sub);font-weight:400;">vs</span> ${WK_TEAM_FLAG(away)} ${away}
+      // Odds blok
+      let oddsHtml = '';
+      if (odds && !isDone) {
+        oddsHtml = `<div style="display:flex;gap:.4rem;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--stroke);">
+          <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.15);border-radius:8px;padding:.3rem .2rem;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.1rem;">1</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${odds.home?.toFixed(2)}</div>
           </div>
-          <div style="text-align:right;flex-shrink:0;margin-left:.5rem;">
-            ${scoreHtml}
-            ${groep ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${groep}</div>` : ''}
+          <div style="flex:1;text-align:center;background:var(--card2,rgba(255,255,255,.03));border:1px solid var(--stroke);border-radius:8px;padding:.3rem .2rem;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.1rem;">X</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${odds.draw?.toFixed(2)}</div>
+          </div>
+          <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.15);border-radius:8px;padding:.3rem .2rem;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.1rem;">2</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${odds.away?.toFixed(2)}</div>
+          </div>
+        </div>`;
+      }
+
+      html += `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.85rem 1rem;margin-bottom:.5rem;">
+        <!-- Groep label -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);font-weight:700;">${groep ? 'GROEP ' + groep.slice(1) : ''}</div>
+          ${isDone ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">AFGELOPEN</div>` : ''}
+        </div>
+        <!-- Teams + Score -->
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem;">
+          <!-- Thuis -->
+          <div style="text-align:left;">
+            <div style="font-size:1.6rem;line-height:1;margin-bottom:.2rem;">${hFlag}</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:700;color:var(--ink);line-height:1.2;">${home}</div>
+          </div>
+          <!-- Midden: score of tijd -->
+          <div style="text-align:center;min-width:60px;">
+            ${midHtml}
+          </div>
+          <!-- Uit -->
+          <div style="text-align:right;">
+            <div style="font-size:1.6rem;line-height:1;margin-bottom:.2rem;">${aFlag}</div>
+            <div style="font-family:'DM Sans',sans-serif;font-size:.68rem;font-weight:700;color:var(--ink);line-height:1.2;">${away}</div>
           </div>
         </div>
         ${oddsHtml}
@@ -858,6 +893,7 @@ function _renderWKSchema() {
     });
   });
 
+  html += `<style>@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}</style>`;
   el.innerHTML = html;
 }
 
