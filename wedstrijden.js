@@ -46,6 +46,7 @@ function getActiveCOMPLIST() {
     { key:'asiancup',       flag:'🌏',  name:'Asian Cup' },
   ];
 
+  if (typeof WK_ONLY_MODE !== 'undefined' && WK_ONLY_MODE) return [...WK]; // tijdelijk: alleen WK 2026
   if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EXTRA, ...OVERIG];
   if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...EXTRA, ...OVERIG];
   return              [...EUROPEES, ...SCANDI, ...EXTRA, ...WK, ...INTERNATIONAAL, ...OVERIG];
