@@ -1,9 +1,12 @@
 // ═══════════════════════════════════════════════════════
 // STATE.JS — Centraal state object + persistence
-// v50: v26.34 — scan vangnet: next= aanvulling voor intl/Scand. leagues (busy-day robustness)
+// v51: v26.35 — tijdelijk WK-only modus (alle competities verborgen, alleen WK 2026)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.34';
+const APP_VERSION = 'v26.35';
+
+// Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
+const WK_ONLY_MODE = true;
 
 const STATE_KEY = 'totoai_state';
 
