@@ -708,7 +708,8 @@ async function loadWKSchema() {
     const res = await fetch(
       `https://api.promatchxi.app/apif/fixtures?league=1&season=2026&from=${today}&to=2026-07-20&timezone=Europe/Amsterdam`
     );
-    const fixtures = await res.json();
+    const raw = await res.json();
+    const fixtures = Array.isArray(raw) ? raw : (raw?.response || []);
 
     if (!fixtures?.length) {
       el.innerHTML = `
