@@ -918,6 +918,15 @@ function _renderWKSchema() {
           </div>
         </div>
         ${oddsHtml}
+        ${!isDone ? `
+        <div style="margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--stroke);">
+          <button onclick="analyseWKMatch(${fid},'${home.replace(/'/g,"\'")}','${away.replace(/'/g,"\'")}',${JSON.stringify(odds)||null})"
+            style="width:100%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);border-radius:10px;
+            padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;
+            color:#dc2626;cursor:pointer;letter-spacing:.04em;">
+            ⚡ AI ANALYSE
+          </button>
+        </div>` : ''}
       </div>`;
     });
   });
@@ -1053,4 +1062,138 @@ async function loadWKTopscorers() {
   } catch(e) {
     el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;padding:1rem;">Fout: ${e.message}</div>`;
   }
+}
+
+// ── WK Match Analyse ──────────────────────────────────────
+async function analyseWKMatch(fixtureId, home, away, odds) {
+  // Toon modal
+  let modal = document.getElementById('wk-analyse-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'wk-analyse-modal';
+    modal.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);
+      display:flex;align-items:flex-end;justify-content:center;`;
+    modal.innerHTML = `<div id="wk-analyse-modal-inner"
+      style="background:var(--bg,#0d1b2a);border-radius:20px 20px 0 0;width:100%;max-width:600px;
+      max-height:85vh;overflow-y:auto;padding:1.25rem 1.1rem 2rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <div id="wk-analyse-modal-title" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--ink);"></div>
+        <button onclick="document.getElementById('wk-analyse-modal').remove()"
+          style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:.3rem .6rem;
+          color:var(--sub);font-size:.9rem;cursor:pointer;">✕</button>
+      </div>
+      <div id="wk-analyse-modal-body"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+
+  const titleEl = document.getElementById('wk-analyse-modal-title');
+  const bodyEl = document.getElementById('wk-analyse-modal-body');
+  const hFlag = WK_TEAM_FLAG(home);
+  const aFlag = WK_TEAM_FLAG(away);
+
+  titleEl.textContent = `${hFlag} ${home} vs ${aFlag} ${away}`;
+  bodyEl.innerHTML = `<div style="text-align:center;padding:2rem 0;">
+    <div style="font-size:2rem;animation:spin 1s linear infinite;">⚽</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-top:.75rem;">
+      Claude analyseert wedstrijd...</div>
+    <style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>
+  </div>`;
+
+  // Cache check
+  const cacheKey = `wk_match_analyse_${fixtureId}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const { text, ts } = JSON.parse(cached);
+      if (Date.now() - ts < 6 * 3600 * 1000) {
+        _renderWKMatchAnalyse(bodyEl, text, home, away, odds, true);
+        return;
+      }
+    }
+  } catch(e) {}
+
+  // Bouw odds tekst
+  const oddsText = odds
+    ? `Huidige odds: ${home} wint @${odds.home?.toFixed(2)}, gelijkspel @${odds.draw?.toFixed(2)}, ${away} wint @${odds.away?.toFixed(2)}.`
+    : 'Odds nog niet beschikbaar.';
+
+  const prompt = `Je bent een voetbalanalist gespecialiseerd in WK voorspellingen.
+
+Analyseer deze WK 2026 wedstrijd:
+${hFlag} ${home} vs ${aFlag} ${away}
+
+${oddsText}
+
+Geef een beknopte maar scherpe analyse in het Nederlands met:
+1. **Sterktes/zwaktes** van beide teams (2-3 zinnen per team)
+2. **Head-to-head** historisch (indien relevant)
+3. **Verwachte speelstijl** en sleutelspelers
+4. **Voorspelling** met kansverdeling (bv. 45% ${home} / 25% gelijkspel / 30% ${away})
+5. **Value inschatting**: zijn de odds eerlijk, te hoog of te laag voor een team?
+6. **Jouw tip**: meest waarschijnlijke uitkomst in 1 zin
+
+Wees concreet en gebruik voetbalkennis. Maximaal 350 woorden.`;
+
+  try {
+    const res = await fetch('https://api.promatchxi.app/anthropic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5',
+        max_tokens: 600,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const api = await res.json();
+    const text = api?.content?.[0]?.text || '⚠️ Geen analyse ontvangen.';
+
+    // Cache opslaan
+    localStorage.setItem(cacheKey, JSON.stringify({ text, ts: Date.now() }));
+    _renderWKMatchAnalyse(bodyEl, text, home, away, odds, false);
+  } catch(e) {
+    bodyEl.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:#dc2626;text-align:center;padding:1rem;">
+      ⚠️ Analyse mislukt — probeer opnieuw</div>`;
+  }
+}
+
+function _renderWKMatchAnalyse(el, text, home, away, odds, fromCache) {
+  const hFlag = WK_TEAM_FLAG(home);
+  const aFlag = WK_TEAM_FLAG(away);
+
+  // Converteer markdown bold naar HTML
+  const html = text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+
+  let oddsHtml = '';
+  if (odds) {
+    oddsHtml = `<div style="display:flex;gap:.4rem;margin-bottom:1rem;">
+      <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.5rem .3rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.2rem;">${hFlag} 1</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${odds.home?.toFixed(2)}</div>
+      </div>
+      <div style="flex:1;text-align:center;background:rgba(255,255,255,.03);border:1px solid var(--stroke);border-radius:10px;padding:.5rem .3rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.2rem;">X</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${odds.draw?.toFixed(2)}</div>
+      </div>
+      <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.5rem .3rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.2rem;">${aFlag} 2</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${odds.away?.toFixed(2)}</div>
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML = `
+    ${oddsHtml}
+    <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.85rem 1rem;">
+      <p style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--ink);line-height:1.65;margin:0;">${html}</p>
+    </div>
+    ${fromCache ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;margin-top:.5rem;">📦 Gecached · verloopt na 6u</div>` : ''}
+    <button onclick="localStorage.removeItem('wk_match_analyse_${home}_${away}'); analyseWKMatch(0,'${home}','${away}',${JSON.stringify(odds)})"
+      style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;
+      padding:.4rem;font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);cursor:pointer;">
+      ↻ Nieuwe analyse
+    </button>`;
 }
