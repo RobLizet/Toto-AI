@@ -368,9 +368,9 @@ try {
     if (e.code !== 'auth/no-current-user') showError(e.message);
   });
 
-  // Al ingelogd? Direct door
+  // Al ingelogd? Direct door (anonieme sessie telt NIET als ingelogd)
   auth.onAuthStateChanged(user => {
-    if (user) goToApp();
+    if (user && !user.isAnonymous) goToApp();
   });
 } catch(e) {
   console.error('Firebase init mislukt:', e);
