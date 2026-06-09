@@ -37,7 +37,7 @@ function initFirebaseAuth() {
     // Auth state listener
     _firebaseAuth.onAuthStateChanged(user => {
       _currentUser = user;
-      if (user) {
+      if (user && !user.isAnonymous) {
         console.log('[Auth] Ingelogd:', user.email);
         localStorage.removeItem('totoai_skip_login');
         hideLoginScreen();
@@ -68,20 +68,34 @@ function initFirebaseAuth() {
         } else {
           _startApp();
         }
-      } else {
-        console.log('[Auth] Niet ingelogd — app werkt zonder auth');
+      } else if (user) {
+        // anoniem ingelogd — app werkt + geauthenticeerd, UI toont 'niet ingelogd'
+        console.log('[Auth] Anoniem ingelogd (uid ' + (user.uid||'').slice(0,6) + '…)');
         sessionStorage.removeItem('totoai_was_logged_in');
         hideLoginScreen();
-
-        // Topbar — rood = niet ingelogd
         const topbarUser = document.getElementById('topbar-user');
         if (topbarUser) topbarUser.style.display = 'none';
         const loginDot = document.getElementById('login-status-dot');
         if (loginDot) loginDot.style.background = '#dc2626';
         const loginBtn = document.getElementById('topbar-login-btn');
         if (loginBtn) loginBtn.style.display = 'flex';
-
         _startApp();
+      } else {
+        // geen sessie → anoniem inloggen; valt veilig terug als provider uit staat
+        console.log('[Auth] Geen sessie — anonieme sign-in proberen');
+        sessionStorage.removeItem('totoai_was_logged_in');
+        if (_firebaseAuth && _firebaseAuth.signInAnonymously) {
+          _firebaseAuth.signInAnonymously().catch(e => {
+            console.warn('[Auth] Anonieme sign-in niet beschikbaar:', e && (e.code || e.message));
+            hideLoginScreen();
+            const lb = document.getElementById('topbar-login-btn'); if (lb) lb.style.display = 'flex';
+            const ld = document.getElementById('login-status-dot'); if (ld) ld.style.background = '#dc2626';
+            _startApp();
+          });
+        } else {
+          hideLoginScreen();
+          _startApp();
+        }
       }
     });
   } catch(e) {
