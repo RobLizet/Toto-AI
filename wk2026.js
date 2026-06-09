@@ -694,14 +694,40 @@ function renderWKPickCard(p) {
     </div>`;
 }
 
+// Engelse teamnamen → vlag (API-Football gebruikt Engelse namen)
+const EN_FLAGS = {
+  'Mexico':'🇲🇽','South Africa':'🇿🇦','Canada':'🇨🇦','Bosnia & Herzegovina':'🇧🇦',
+  'USA':'🇺🇸','United States':'🇺🇸','Paraguay':'🇵🇾','Qatar':'🇶🇦','Switzerland':'🇨🇭',
+  'Brazil':'🇧🇷','Morocco':'🇲🇦','Haiti':'🇭🇹','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Australia':'🇦🇺',
+  'Turkiye':'🇹🇷','Turkey':'🇹🇷','Germany':'🇩🇪','Curacao':'🇨🇼','Netherlands':'🇳🇱',
+  'Japan':'🇯🇵','South Korea':'🇰🇷','Czech Republic':'🇨🇿','Argentina':'🇦🇷',
+  'Spain':'🇪🇸','Portugal':'🇵🇹','France':'🇫🇷','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Belgium':'🇧🇪',
+  'Italy':'🇮🇹','Croatia':'🇭🇷','Serbia':'🇷🇸','Poland':'🇵🇱','Denmark':'🇩🇰',
+  'Uruguay':'🇺🇾','Colombia':'🇨🇴','Ecuador':'🇪🇨','Peru':'🇵🇪','Chile':'🇨🇱',
+  'Venezuela':'🇻🇪','Bolivia':'🇧🇴','Senegal':'🇸🇳','Nigeria':'🇳🇬','Cameroon':'🇨🇲',
+  'Ghana':'🇬🇭','Tunisia':'🇹🇳','Algeria':'🇩🇿','Mali':'🇲🇱','Egypt':'🇪🇬',
+  'Iran':'🇮🇷','Saudi Arabia':'🇸🇦','Iraq':'🇮🇶','Jordan':'🇯🇴','United Arab Emirates':'🇦🇪',
+  'Honduras':'🇭🇳','Panama':'🇵🇦','Jamaica':'🇯🇲','Costa Rica':'🇨🇷','El Salvador':'🇸🇻',
+  'Guatemala':'🇬🇹','Suriname':'🇸🇷','Austria':'🇦🇹','Sweden':'🇸🇪','Norway':'🇳🇴',
+  'Finland':'🇫🇮','Ireland':'🇮🇪','Slovakia':'🇸🇰','Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','Ukraine':'🇺🇦',
+  'New Zealand':'🇳🇿','Indonesia':'🇮🇩','Philippines':'🇵🇭','Thailand':'🇹🇭',
+  'China':'🇨🇳','Uzbekistan':'🇺🇿','Kenya':'🇰🇪','DR Congo':'🇨🇩','Zambia':'🇿🇲',
+};
+
 function WK_TEAM_FLAG(team) {
-  return TEAM_FLAGS[team] ? TEAM_FLAGS[team] + ' ' : '';
+  return EN_FLAGS[team] || TEAM_FLAGS[team] || '🏳';
 }
 
 // ── WK Schema laden ───────────────────────────────────────
+let _wkFixtures = [];
+let _wkOdds = {};
+let _wkActiveGroep = 'all';
+
 async function loadWKSchema() {
   const el = document.getElementById('wk-schema-list');
   if (!el) return;
+
+  el.innerHTML = `<div style="text-align:center;padding:1.5rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ Wedstrijden laden...</div>`;
 
   try {
     const today = new Date().toISOString().split('T')[0];
@@ -709,56 +735,133 @@ async function loadWKSchema() {
       `https://api.promatchxi.app/apif/fixtures?league=1&season=2026&from=${today}&to=2026-07-20&timezone=Europe/Amsterdam`
     );
     const raw = await res.json();
-    const fixtures = Array.isArray(raw) ? raw : (raw?.response || []);
+    _wkFixtures = Array.isArray(raw) ? raw : (raw?.response || []);
 
-    if (!fixtures?.length) {
-      el.innerHTML = `
-        <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;
-          padding:1.2rem;text-align:center;">
-          <div style="font-size:1.5rem;margin-bottom:.5rem;">🗓️</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--ink);">
-            Schema beschikbaar vanaf 11 juni</div>
-        </div>`;
+    if (!_wkFixtures.length) {
+      el.innerHTML = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:1.2rem;text-align:center;"><div style="font-size:1.5rem;margin-bottom:.5rem;">🗓️</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--ink);">Geen wedstrijden gevonden</div></div>`;
       return;
     }
 
-    // Groepeer per dag
-    const byDay = {};
-    fixtures.forEach(f => {
-      const day = f.fixture?.date?.split('T')[0] || 'onbekend';
-      if (!byDay[day]) byDay[day] = [];
-      byDay[day].push(f);
-    });
+    // Haal odds op voor eerste wedstrijd als sample (goedkoop)
+    _loadWKOdds(_wkFixtures.slice(0, 8).map(f => f.fixture?.id).filter(Boolean));
 
-    let html = '';
-    Object.entries(byDay).sort().slice(0, 14).forEach(([day, matches]) => {
-      const d = new Date(day);
-      const label = d.toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short' });
-      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
-        color:var(--sub);margin:.6rem 0 .3rem;">${label.toUpperCase()}</div>`;
-      matches.forEach(f => {
-        const time = f.fixture?.date ? new Date(f.fixture.date).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '?';
-        const home = f.teams?.home?.name || '?';
-        const away = f.teams?.away?.name || '?';
-        const status = f.fixture?.status?.short;
-        const isLive = ['1H','2H','HT'].includes(status);
-        const score = isLive ? `<span style="color:#dc2626;font-weight:700;">${f.goals?.home??''}–${f.goals?.away??''} LIVE</span>` : time;
-        html += `
-          <div style="background:var(--card);border:1px solid var(--stroke);border-radius:10px;
-            padding:.5rem .65rem;margin-bottom:.3rem;display:flex;align-items:center;justify-content:space-between;">
-            <div style="font-family:'DM Sans',sans-serif;font-size:.6rem;font-weight:600;color:var(--ink);">
-              ${WK_TEAM_FLAG(home)}${home} vs ${WK_TEAM_FLAG(away)}${away}
-            </div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">
-              ${score}
-            </div>
-          </div>`;
-      });
-    });
-
-    el.innerHTML = html;
+    _renderWKSchema();
   } catch(e) {
-    el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;
-      color:var(--sub);text-align:center;padding:1rem;">Schema laadt na 11 juni</div>`;
+    el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;padding:1rem;">Fout bij laden: ${e.message}</div>`;
   }
+}
+
+async function _loadWKOdds(ids) {
+  for (const id of ids.slice(0, 5)) {
+    try {
+      const res = await fetch(`https://api.promatchxi.app/apif/odds?league=1&season=2026&fixture=${id}`);
+      const raw = await res.json();
+      const resp = Array.isArray(raw) ? raw : (raw?.response || []);
+      if (resp[0]?.bookmakers?.[0]?.bets?.[0]?.values) {
+        const vals = resp[0].bookmakers[0].bets[0].values;
+        _wkOdds[id] = { home: parseFloat(vals[0]?.odd), draw: parseFloat(vals[1]?.odd), away: parseFloat(vals[2]?.odd) };
+      }
+    } catch(e) {}
+  }
+  _renderWKSchema();
+}
+
+function _renderWKSchema() {
+  const el = document.getElementById('wk-schema-list');
+  if (!el || !_wkFixtures.length) return;
+
+  // Bouw groep-filter tabs
+  const groepen = [...new Set(_wkFixtures.map(f => {
+    const r = f.league?.round || '';
+    const m = r.match(/Group Stage - (\d+)/);
+    return m ? 'Groep ' + m[1] : (r.includes('Round') ? null : r);
+  }).filter(Boolean))].sort();
+
+  let filterHtml = `<div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.75rem;">
+    <button onclick="_wkFilterGroep('all')" id="wkf-all"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;padding:.25rem .55rem;border-radius:999px;border:1px solid var(--stroke);background:${_wkActiveGroep==='all'?'#00BEC4':'var(--card)'};color:${_wkActiveGroep==='all'?'#fff':'var(--sub)'};cursor:pointer;">
+      ALLE</button>`;
+  groepen.forEach(g => {
+    const active = _wkActiveGroep === g;
+    filterHtml += `<button onclick="_wkFilterGroep('${g}')"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;padding:.25rem .55rem;border-radius:999px;border:1px solid var(--stroke);background:${active?'#00BEC4':'var(--card)'};color:${active?'#fff':'var(--sub)'};cursor:pointer;">
+      ${g.replace('Groep ','G')}</button>`;
+  });
+  filterHtml += `</div>`;
+
+  // Filter wedstrijden
+  const filtered = _wkFixtures.filter(f => {
+    if (_wkActiveGroep === 'all') return true;
+    const r = f.league?.round || '';
+    const m = r.match(/Group Stage - (\d+)/);
+    const groepNr = m ? 'Groep ' + m[1] : r;
+    return groepNr === _wkActiveGroep;
+  });
+
+  // Groepeer per dag
+  const byDay = {};
+  filtered.forEach(f => {
+    const day = f.fixture?.date?.split('T')[0] || 'onbekend';
+    if (!byDay[day]) byDay[day] = [];
+    byDay[day].push(f);
+  });
+
+  let html = filterHtml;
+  Object.entries(byDay).sort().forEach(([day, matches]) => {
+    const d = new Date(day + 'T12:00:00');
+    const label = d.toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short' });
+    html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;color:var(--sub);margin:.6rem 0 .3rem;">${label.toUpperCase()}</div>`;
+    matches.forEach(f => {
+      const fid = f.fixture?.id;
+      const time = f.fixture?.date ? new Date(f.fixture.date).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '?';
+      const home = f.teams?.home?.name || '?';
+      const away = f.teams?.away?.name || '?';
+      const status = f.fixture?.status?.short;
+      const isLive = ['1H','2H','HT','ET','PEN'].includes(status);
+      const isDone = ['FT','AET','PEN'].includes(status);
+      const ghome = f.goals?.home ?? '';
+      const gaway = f.goals?.away ?? '';
+      const odds = _wkOdds[fid];
+
+      let scoreHtml = '';
+      if (isLive) {
+        scoreHtml = `<span style="color:#dc2626;font-weight:700;">${ghome}–${gaway} 🔴</span>`;
+      } else if (isDone) {
+        scoreHtml = `<span style="color:var(--ink);font-weight:700;">${ghome}–${gaway}</span>`;
+      } else {
+        scoreHtml = `<span style="color:var(--sub);">${time}</span>`;
+      }
+
+      let oddsHtml = '';
+      if (odds && !isDone) {
+        oddsHtml = `<div style="display:flex;gap:.3rem;margin-top:.3rem;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);border-radius:5px;padding:.1rem .3rem;color:var(--ink);">1 ${odds.home?.toFixed(2)}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;background:rgba(255,255,255,.04);border:1px solid var(--stroke);border-radius:5px;padding:.1rem .3rem;color:var(--sub);">X ${odds.draw?.toFixed(2)}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);border-radius:5px;padding:.1rem .3rem;color:var(--ink);">2 ${odds.away?.toFixed(2)}</span>
+        </div>`;
+      }
+
+      const groep = (() => { const r=f.league?.round||''; const m=r.match(/Group Stage - (\d+)/); return m?'G'+m[1]:''; })();
+
+      html += `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:10px;padding:.5rem .65rem;margin-bottom:.3rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:600;color:var(--ink);">
+            ${WK_TEAM_FLAG(home)} ${home} <span style="color:var(--sub);font-weight:400;">vs</span> ${WK_TEAM_FLAG(away)} ${away}
+          </div>
+          <div style="text-align:right;flex-shrink:0;margin-left:.5rem;">
+            ${scoreHtml}
+            ${groep ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:var(--sub);">${groep}</div>` : ''}
+          </div>
+        </div>
+        ${oddsHtml}
+      </div>`;
+    });
+  });
+
+  el.innerHTML = html;
+}
+
+function _wkFilterGroep(groep) {
+  _wkActiveGroep = groep;
+  _renderWKSchema();
 }
