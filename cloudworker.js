@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v131'; // v131: WK_ONLY_MODE — alleen WK 2026 scannen // v130: next= vangnet
+const VERSION = 'v132'; // v132: scan-test default leagues → WK 2026 (league 1) // v131: WK_ONLY_MODE — alleen WK 2026 scannen // v130: next= vangnet
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1615,7 +1615,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
 // Default: Eliteserien NO (113) + Allsvenskan SE (103), beide seizoen 2026
 // Gebruik: /scan-test?token=HMAC&league=113,103
 // Geeft volledige verbose output: fixtures, odds, AI, value picks, verdict
-async function runScanTest(env, leagueIds = [10, 5, 113, 103]) { // 10=Friendlies, 5=Nations League
+async function runScanTest(env, leagueIds = [1, 113, 103]) { // 1=WK 2026, 113=Allsvenskan, 103=Eliteserien
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
