@@ -799,14 +799,17 @@ function _renderWKSchema() {
   const el = document.getElementById('wk-schema-list');
   if (!el || !_wkFixtures.length) return;
 
-  // Groepletter uit round string (Group A t/m L)
+  // Groepletter: "Group Stage - 1" → "A", "Group Stage - 2" → "B", etc.
+  const _grpMap = {1:'A',2:'B',3:'C',4:'D',5:'E',6:'F',7:'G',8:'H',9:'I',10:'J',11:'K',12:'L'};
   const getGroep = f => {
     const r = f.league?.round || '';
-    const m = r.match(/Group (\w+)/);
-    return m ? m[1] : null;  // A, B, C ... L
+    const m = r.match(/Group Stage - (\d+)/);
+    if (m) return _grpMap[+m[1]] || m[1];
+    const m2 = r.match(/Group ([A-L])/);
+    return m2 ? m2[1] : null;
   };
 
-  const groepen = [...new Set(_wkFixtures.map(getGroep).filter(Boolean))].sort();
+  const groepen = [...new Set(_wkFixtures.map(getGroep).filter(Boolean))].sort((a,b)=>a.charCodeAt(0)-b.charCodeAt(0));
 
   // Filter tabs
   let filterHtml = `<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;padding:.1rem 0;">
