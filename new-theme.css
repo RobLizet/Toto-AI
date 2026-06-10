@@ -1138,10 +1138,22 @@ body.sky .theme-btn[onclick*="sky"] {
 body.creme {
   background: linear-gradient(180deg, #f5efe6 0%, #ede3d4 50%, #e5d5c0 100%) !important;
   color: #2c1a0e !important;
+  --stroke: rgba(184,142,50,.85) !important;
+  --card:   rgba(255,250,242,.92) !important;
 }
 
 body.creme .app { background: transparent !important; }
 body.creme .screen { background: transparent !important; }
+
+/* Crème — forceer 2px gouden rand op alle inline-gestijlde cards via outline trick */
+body.creme [style*="var(--stroke)"] {
+  border-width: 2px !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
+}
+body.creme [style*="var(--card)"] {
+  border: 2px solid rgba(184,142,50,.85) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
+}
 
 body.creme .match-card,
 body.creme .analyse-block,
