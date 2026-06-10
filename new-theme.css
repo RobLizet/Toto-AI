@@ -1159,7 +1159,8 @@ body.creme .nav-card,
 body.creme .dash-nav-card,
 body.creme #btProgressWrap {
   background: rgba(255,250,242,.90) !important;
-  border-color: rgba(139,90,43,.12) !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
   color: #2c1a0e !important;
 }
 
@@ -1231,20 +1232,30 @@ body.creme .bnav-label {
   font-size: .56rem !important;
   color: #7a5230 !important;
 }
-/* Crème bottom nav — eigen kleur per tab */
-body.creme [data-screen="dashboard"]       { color: #c07a2a !important; }
-body.creme [data-screen="wedstrijden"]     { color: #2a7a5a !important; }
-body.creme [data-screen="analyse"]         { color: #2a5a9a !important; }
-body.creme [data-screen="wallet"]          { color: #8a3a2a !important; }
-body.creme [data-screen="wk2026"]          { color: #c0392b !important; }
-body.creme [data-screen="instellingen"]    { color: #6a4a8a !important; }
-/* Active: iets feller + onderlijning */
-body.creme [data-screen="dashboard"].active    { color: #d4891a !important; }
-body.creme [data-screen="wedstrijden"].active  { color: #1a8a5a !important; }
-body.creme [data-screen="analyse"].active      { color: #1a5aaa !important; }
-body.creme [data-screen="wallet"].active       { color: #aa2a1a !important; }
-body.creme [data-screen="wk2026"].active       { color: #e02020 !important; }
-body.creme [data-screen="instellingen"].active { color: #7a3aaa !important; }
+/* Crème bottom nav — eigen kleur per tab (hoge specificiteit voor SVG currentColor) */
+body.creme .bottom-nav .bnav-btn[data-screen="dashboard"],
+body.creme .bottom-nav .bnav-btn[data-screen="dashboard"] svg,
+body.creme .bottom-nav .bnav-btn[data-screen="dashboard"] .bnav-label { color: #c07a2a !important; }
+
+body.creme .bottom-nav .bnav-btn[data-screen="wedstrijden"],
+body.creme .bottom-nav .bnav-btn[data-screen="wedstrijden"] svg,
+body.creme .bottom-nav .bnav-btn[data-screen="wedstrijden"] .bnav-label { color: #2a7a5a !important; }
+
+body.creme .bottom-nav .bnav-btn[data-screen="analyse"],
+body.creme .bottom-nav .bnav-btn[data-screen="analyse"] svg,
+body.creme .bottom-nav .bnav-btn[data-screen="analyse"] .bnav-label { color: #2a5a9a !important; }
+
+body.creme .bottom-nav .bnav-btn[data-screen="wallet"],
+body.creme .bottom-nav .bnav-btn[data-screen="wallet"] svg,
+body.creme .bottom-nav .bnav-btn[data-screen="wallet"] .bnav-label { color: #8a3a2a !important; }
+
+body.creme .bottom-nav .bnav-btn[data-screen="wk2026"],
+body.creme .bottom-nav .bnav-btn[data-screen="wk2026"] svg,
+body.creme .bottom-nav .bnav-btn[data-screen="wk2026"] .bnav-label { color: #c0392b !important; }
+
+body.creme .bottom-nav .bnav-btn[data-screen="instellingen"],
+body.creme .bottom-nav .bnav-btn[data-screen="instellingen"] svg,
+body.creme .bottom-nav .bnav-btn[data-screen="instellingen"] .bnav-label { color: #6a4a8a !important; }
 
 /* Crème — accenten */
 body.creme .section-header-title,
