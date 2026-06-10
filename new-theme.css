@@ -23,8 +23,8 @@
   --accent: #00BEC4;
 
   --font-main: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
-  --r:  18px;
-  --rs: 12px;
+  --r:  14px;
+  --rs: 10px;
 }
 
 /* Import Plus Jakarta Sans */
@@ -1264,8 +1264,8 @@ body.creme .wk-card,
 body.creme [style*="var(--card)"],
 body.creme .bt-subtab-bar,
 body.creme .wallet-chart-wrap {
-  border: 1.5px solid rgba(184,142,50,.55) !important;
-  box-shadow: 0 1px 8px rgba(184,142,50,.10) !important;
+  border: 2px solid rgba(184,142,50,.80) !important;
+  box-shadow: 0 2px 10px rgba(184,142,50,.18) !important;
 }
 
 /* Crème — cards */
