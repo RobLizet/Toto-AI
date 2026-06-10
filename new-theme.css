@@ -1270,6 +1270,26 @@ body.creme .screen * { color: #2c1a0e; }
 /* Crème — uitzonderingen teal/accent */
 body.creme .section-header-title { color: #8b5a1a !important; }
 
+/* Crème — universele gouden rand: pakt ook inline var(--stroke) cards */
+body.creme .wallet-big,
+body.creme .wallet-big-card,
+body.creme .stat-mini-card,
+body.creme .stat-mini,
+body.creme .w-stat,
+body.creme .w-item,
+body.creme .wallet-stat-card,
+body.creme .nav-card,
+body.creme .dash-nav-card {
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
+}
+
+/* Crème — wallet saldo card: override border:none uit base */
+body.creme .wallet-big {
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
+}
+
 /* Crème — gouden rand op alle cards */
 body.creme .match-card,
 body.creme .analyse-block,
@@ -1460,4 +1480,15 @@ body.creme .scan-comp-chip.on {
   background: rgba(0,190,196,.16) !important;
   color: #00838A !important;
   border-color: rgba(0,140,140,.55) !important;
+}
+/* Crème — vang alle resterende cards met var(--stroke) border */
+body.creme .league-card,
+body.creme .comp-card,
+body.creme .analytics-card,
+body.creme .pick-card,
+body.creme .scan-card,
+body.creme .overview-card,
+body.creme .worker-card {
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
 }
