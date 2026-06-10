@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v132'; // v132: scan-test default leagues → WK 2026 (league 1) // v131: WK_ONLY_MODE — alleen WK 2026 scannen // v130: next= vangnet
+const VERSION = 'v133'; // v133: scan-test default league 1 (WK) toegevoegd // v132: scan-test default leagues → WK 2026 (league 1) // v131: WK_ONLY_MODE — alleen WK 2026 scannen // v130: next= vangnet
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -2364,7 +2364,7 @@ export default {
       const validHMAC   = token  && await verifyHMAC(token, env.SCAN_SECRET);
       const validSecret = secret && secret === env.SCAN_SECRET;
       if (!validHMAC && !validSecret) return json({ error: 'Unauthorized' }, 401);
-      const leagueParam = url.searchParams.get('league') || '113,103';
+      const leagueParam = url.searchParams.get('league') || '1,113,103'; // 1=WK 2026
       const leagueIds = leagueParam.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
       const result = await runScanTest(env, leagueIds);
       return json(result);
