@@ -1241,6 +1241,33 @@ body.creme .screen * { color: #2c1a0e; }
 /* Crème — uitzonderingen teal/accent */
 body.creme .section-header-title { color: #8b5a1a !important; }
 
+/* Crème — gouden rand op alle cards */
+body.creme .match-card,
+body.creme .analyse-block,
+body.creme .analytics-block,
+body.creme .wallet-big,
+body.creme .w-item,
+body.creme .modal-box,
+body.creme .worker-pick-row,
+body.creme .stat-mini-card,
+body.creme .wallet-subtabs,
+body.creme .cd-tab,
+body.creme .open-bets-strip,
+body.creme .dash-card,
+body.creme .nav-card,
+body.creme .dash-nav-card,
+body.creme .bt-card,
+body.creme .league-card,
+body.creme .comp-card,
+body.creme #btProgressWrap,
+body.creme .wk-card,
+body.creme [style*="var(--card)"],
+body.creme .bt-subtab-bar,
+body.creme .wallet-chart-wrap {
+  border: 1.5px solid rgba(184,142,50,.55) !important;
+  box-shadow: 0 1px 8px rgba(184,142,50,.10) !important;
+}
+
 /* Crème — cards */
 body.creme .match-card,
 body.creme .analyse-block,
