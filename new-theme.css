@@ -1179,7 +1179,8 @@ body.creme .sub { color: #7a5230 !important; }
 /* Crème — settings scherm */
 body.creme .settings-section {
   background: rgba(255,250,242,.90) !important;
-  border-color: rgba(139,90,43,.12) !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
 }
 body.creme .settings-section-title,
 body.creme .settings-label,
@@ -1309,7 +1310,8 @@ body.creme .wallet-subtabs,
 body.creme .cd-tab,
 body.creme .open-bets-strip {
   background: rgba(255,250,242,0.90) !important;
-  border-color: rgba(139,90,43,0.12) !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
   color: #2c1a0e !important;
 }
 
@@ -1414,7 +1416,8 @@ body.creme .stat-mini-label { color: #6a4a2c !important; }
 /* Grafiek-kaart licht */
 body.creme .wallet-chart-wrap {
   background: rgba(255,250,242,.92) !important;
-  border-color: rgba(139,90,43,.14) !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
 }
 /* Chart-toggle knoppen */
 body.creme .chart-view-btn,
@@ -1434,15 +1437,15 @@ body.creme .bet-item,
 body.creme .tracker-bet-row,
 body.creme .backtest-pick-row {
   background: #fffaf2 !important;
-  border-color: rgba(139,90,43,.16) !important;
-  box-shadow: 0 2px 10px rgba(120,80,30,.07) !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
 }
 
 /* v26.32: Crème — top-dashboard-cards definiëren + competitie-tegels licht */
 body.creme .dash-soft {
   background: linear-gradient(135deg,#fffaf2,#f4e8d6) !important;
-  border-color: rgba(139,90,43,.18) !important;
-  box-shadow: 0 2px 12px rgba(120,80,30,.08) !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
 }
 body.creme .comp-chip,
 body.creme .scan-comp-chip {
