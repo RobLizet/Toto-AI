@@ -1876,9 +1876,9 @@ function openMatchAnalyseModal(m) {
     + '<button onclick="document.getElementById(\'match-analyse-modal\').remove()" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:.3rem .65rem;color:var(--sub);font-size:.95rem;cursor:pointer;">✕</button>'
     + '</div>'
     + (hasOdds ? '<div style="display:flex;gap:.4rem;margin-bottom:.9rem;">'
-      + '<div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.45rem .2rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.15rem;">1 THUIS</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:var(--ink,#fff);">' + m.homeOdds + '</div></div>'
-      + '<div style="flex:1;text-align:center;background:rgba(255,255,255,.03);border:1px solid var(--stroke);border-radius:10px;padding:.45rem .2rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.15rem;">X</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:var(--ink,#fff);">' + m.drawOdds + '</div></div>'
-      + '<div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.45rem .2rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.15rem;">2 UIT</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:var(--ink,#fff);">' + m.awayOdds + '</div></div>'
+      + '<div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.45rem .2rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:#00BEC4;font-weight:700;margin-bottom:.15rem;">1 THUIS</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:#00BEC4;">' + m.homeOdds + '</div></div>'
+      + '<div style="flex:1;text-align:center;background:rgba(255,255,255,.03);border:1px solid var(--stroke);border-radius:10px;padding:.45rem .2rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:#d97706;font-weight:700;margin-bottom:.15rem;">X</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:#d97706;">' + m.drawOdds + '</div></div>'
+      + '<div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.45rem .2rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:#dc2626;font-weight:700;margin-bottom:.15rem;">2 UIT</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:#dc2626;">' + m.awayOdds + '</div></div>'
       + '</div>' : '')
     + '<div id="modal-analyse-output" style="min-height:120px;">'
     + '<div style="text-align:center;padding:2rem 0;"><div style="font-size:2rem;">⚽</div>'
@@ -1934,7 +1934,7 @@ async function _runModalAnalyse(m) {
     });
     var api = await res.json();
     var text = (api && api.content && api.content[0] && api.content[0].text) || '⚠️ Geen analyse ontvangen.';
-    var html = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
+    var html = text.replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
     output.innerHTML = '<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.85rem 1rem;"><p style="font-family:\'DM Sans\',sans-serif;font-size:.7rem;color:var(--ink,#fff);line-height:1.65;margin:0;">' + html + '</p></div>';
   } catch(e) {
     if (output) output.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#dc2626;text-align:center;padding:1rem;">⚠️ Analyse mislukt: ' + (e.message||'onbekend') + '</div>';
