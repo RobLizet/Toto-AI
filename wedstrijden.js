@@ -801,7 +801,7 @@ function renderMatchCard(m) {
 
       <!-- Actieknoppen -->
       <div style="display:flex;gap:.4rem;padding:.0rem .9rem .7rem;">
-        <button onclick="event.stopPropagation();openMatchAnalyseModal(${JSON.stringify({id:m.id,home:m.home,away:m.away,homeOdds:m.homeOdds,drawOdds:m.drawOdds,awayOdds:m.awayOdds,league:m.league,leagueId:m.leagueId,homeId:m.homeId,awayId:m.awayId,date:m.matchDate||m.date})})"
+        <button onclick="event.stopPropagation();openMatchAnalyseModalById('${m.id}')"
           style="flex:1;padding:.4rem;border-radius:9px;background:rgba(0,190,196,.08);
           border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.55rem;
           font-weight:700;color:#00BEC4;cursor:pointer;">
@@ -1852,6 +1852,12 @@ async function loadCompWedstrijden(leagueId) {
 
 
 // ── Match Analyse Modal ───────────────────────────────────
+function openMatchAnalyseModalById(matchId) {
+  const m = (state.matches||[]).find(x => String(x.id) === String(matchId));
+  if (!m) { console.warn('Match niet gevonden:', matchId); return; }
+  openMatchAnalyseModal(m);
+}
+
 function openMatchAnalyseModal(m) {
   if (typeof m === 'string') { try { m = JSON.parse(m); } catch(e) { return; } }
   const existing = document.getElementById('match-analyse-modal');
