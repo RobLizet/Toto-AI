@@ -363,6 +363,12 @@ function _analyticsHTML(local, worker) {
         html += '<div onclick="showSharpPopup(\'' + dataId + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .5rem;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;border-radius:8px;transition:background .15s;">';
         html += '<div style="flex:1;min-width:0;">';
         html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + matchLabel + '</div>';
+        // v135b: datum + competitie tonen onder teamnamen
+        const metaLine = [
+          s.matchDate ? s.matchDate : (s.detectedAt ? s.detectedAt.split('T')[0] : null),
+          s.leagueName || null,
+        ].filter(Boolean).join(' · ');
+        if (metaLine) html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.35);margin-top:.08rem;">' + metaLine + '</div>';
         html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);margin-top:.1rem;">' + pickLabel + movBadge + scoreBadge + '</div>';
         html += '</div>';
         html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.4);margin-left:.5rem;">→</div>';
