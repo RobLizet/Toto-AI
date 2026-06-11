@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v134'; // v134: geen push bij lege scan // v133: scan-test default league 1 (WK) toegevoegd // v132: scan-test default leagues → WK 2026 (league 1) // v131: WK_ONLY_MODE — alleen WK 2026 scannen // v130: next= vangnet
+const VERSION = 'v135'; // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -173,6 +173,8 @@ async function sbSavePicks(picksObj, env) {
     status: p.status || 'pending', score: p.score || null,
     processed: p.processed || false, verified_at: p.verifiedAt || null,
     source: p.source || 'scheduled', updated_at: new Date().toISOString(),
+    // v135: sharp engine velden
+    sharp_score: p.sharpScore || null, sharp_tier: p.sharpTier || null, sharp_divergence: p.sharpDivergence || null,
   }));
   if (!rows.length) return;
   // v105: fixture_id extraheren uit id als het NULL is (legacy picks)
@@ -262,59 +264,327 @@ async function sbSaveDailyTip(tipData, env) {
   }], '?on_conflict=id');
 }
 
-// ── Supabase: sharp money detectie ───────────────────────
-async function detectSharpMoney(oddsMap, matches, env) {
-  const today = new Date().toISOString().split('T')[0];
-  const existing = await sb(env, 'odds_snapshots', 'GET', null,
-    `?match_date=eq.${today}&select=fixture_id,home_odds,draw_odds,away_odds,captured_at&order=captured_at.asc`
-  );
-  if (!existing || !existing.length) return {};
+// ══════════════════════════════════════════════════════════
+// v135: ELITE SHARP MONEY ENGINE
+// Drie lagen:
+//   1. saveMarketConsensusSnapshot  — sla multi-book consensus op (elke scan)
+//   2. detectSharpMoney             — vergelijk Poisson vs markt, bereken sharpScore
+//   3. saveSharpSignalResult        — post-settlement validatie
+// ══════════════════════════════════════════════════════════
 
+// ── Statische std-deviatie helper ────────────────────────
+function stdDev(arr) {
+  if (arr.length < 2) return 0;
+  const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+  const sq = arr.map(x => Math.pow(x - mean, 2));
+  return parseFloat(Math.sqrt(sq.reduce((a, b) => a + b, 0) / arr.length).toFixed(4));
+}
+
+// ── Sharp tier toewijzen o.b.v. score (0-100) ────────────
+function sharpTier(score) {
+  if (score >= 75) return 'elite';
+  if (score >= 55) return 'strong';
+  if (score >= 35) return 'moderate';
+  if (score >= 15) return 'weak';
+  return 'none';
+}
+
+// ── 1. Sla multi-bookmaker consensus snapshot op ─────────
+// Aangeroepen direct na fetchOddsForFixtures (die al alle books parset).
+// oddsMap heeft per fixture: { home, draw, away, books, fair:{home,draw,away} }
+// rawBooksMap optioneel: { fixtureId: { bookName: {h,d,a} } } voor variance + JSONB
+async function saveMarketConsensusSnapshot(oddsMap, matches, rawBooksMap, env) {
+  const today = new Date().toISOString().split('T')[0];
+  const now   = new Date().toISOString();
+  const rows  = [];
+
+  matches.forEach(m => {
+    const o = oddsMap[m.fixtureId];
+    if (!o || !o.home) return;
+
+    const raw    = rawBooksMap?.[m.fixtureId] || {};
+    const hArr   = Object.values(raw).map(b => b.h).filter(x => x > 1);
+    const dArr   = Object.values(raw).map(b => b.d).filter(x => x > 1);
+    const aArr   = Object.values(raw).map(b => b.a).filter(x => x > 1);
+
+    rows.push({
+      fixture_id:          m.fixtureId,
+      league_id:           m.leagueId || null,
+      match_date:          m.matchDate || today,
+      captured_at:         now,
+      home_odds_consensus: o.home,
+      draw_odds_consensus: o.draw,
+      away_odds_consensus: o.away,
+      home_implied_pct:    o.fair?.home ?? null,
+      draw_implied_pct:    o.fair?.draw ?? null,
+      away_implied_pct:    o.fair?.away ?? null,
+      home_variance:       stdDev(hArr) || null,
+      draw_variance:       stdDev(dArr) || null,
+      away_variance:       stdDev(aArr) || null,
+      bookmaker_count:     o.books || 0,
+      bookmaker_odds:      Object.keys(raw).length ? JSON.stringify(raw) : null,
+    });
+  });
+
+  if (!rows.length) return;
+  await sb(env, 'market_consensus', 'POST', rows);
+  console.log(`[Sharp] ${rows.length} consensus snapshots opgeslagen`);
+}
+
+// ── 2. Elite detectSharpMoney ─────────────────────────────
+// Combineert:
+//   a) Odds movement (opening vs huidig) — legacy steam/drift
+//   b) Poisson divergence vs markt fair implied
+//   c) Consensus sterkte (minder variance = meer boekmakers het eens)
+// Geeft sharpSignals terug voor gebruik in confidence-berekening
+async function detectSharpMoney(oddsMap, matches, env, poissonMap) {
+  const today = new Date().toISOString().split('T')[0];
+
+  // Haal opening odds op uit market_consensus (vroegste snapshot vandaag)
+  const existingConsensus = await sb(env, 'market_consensus', 'GET', null,
+    `?match_date=eq.${today}&select=fixture_id,home_odds_consensus,draw_odds_consensus,away_odds_consensus,home_variance,draw_variance,away_variance,bookmaker_count,home_implied_pct,draw_implied_pct,away_implied_pct,captured_at&order=captured_at.asc`
+  ) || [];
+
+  // Fallback: ook legacy odds_snapshots voor opening
+  const existingLegacy = await sb(env, 'odds_snapshots', 'GET', null,
+    `?match_date=eq.${today}&select=fixture_id,home_odds,draw_odds,away_odds,captured_at&order=captured_at.asc`
+  ) || [];
+
+  // Bouw opening map — consensus heeft prioriteit, anders legacy
   const openMap = {};
-  existing.forEach(r => {
-    if (openMap[r.fixture_id]) return; // v122: vroegste snapshot = opening
+  existingLegacy.forEach(r => {
+    if (openMap[r.fixture_id]) return;
     openMap[r.fixture_id] = {
-      home: parseFloat(r.home_odds),
-      draw: parseFloat(r.draw_odds),
-      away: parseFloat(r.away_odds),
+      home: parseFloat(r.home_odds), draw: parseFloat(r.draw_odds), away: parseFloat(r.away_odds),
+      homeVar: null, drawVar: null, awayVar: null, books: 0,
+      homeFair: null, drawFair: null, awayFair: null,
+    };
+  });
+  existingConsensus.forEach(r => {
+    openMap[r.fixture_id] = {
+      home:     parseFloat(r.home_odds_consensus),
+      draw:     parseFloat(r.draw_odds_consensus),
+      away:     parseFloat(r.away_odds_consensus),
+      homeVar:  r.home_variance  ? parseFloat(r.home_variance)  : null,
+      drawVar:  r.draw_variance  ? parseFloat(r.draw_variance)  : null,
+      awayVar:  r.away_variance  ? parseFloat(r.away_variance)  : null,
+      books:    r.bookmaker_count || 0,
+      homeFair: r.home_implied_pct ? parseFloat(r.home_implied_pct) : null,
+      drawFair: r.draw_implied_pct ? parseFloat(r.draw_implied_pct) : null,
+      awayFair: r.away_implied_pct ? parseFloat(r.away_implied_pct) : null,
     };
   });
 
-  const sharpSignals = {};
-  const movements = [];
-  const SHARP_THRESHOLD = 5;
+  const STEAM_THRESHOLD = 4;   // % odds daling = steam signaal
+  const DRIFT_THRESHOLD = 5;   // % odds stijging = drift signaal
+  const DIVERG_STRONG   = 10;  // pp: Poisson vs markt kloof als sterk
+  const DIVERG_MODERATE = 6;   // pp: kloof als matig
+
+  const sharpSignals  = {};
+  const movements     = [];
+  const mmmRows       = []; // model_market_comparison upserts
 
   matches.forEach(m => {
     const current = oddsMap[m.fixtureId];
     const opening = openMap[m.fixtureId];
-    if (!current || !opening) return;
-    const pickMap = {
-      '1': { open: opening.home, curr: current.home },
-      'X': { open: opening.draw, curr: current.draw },
-      '2': { open: opening.away, curr: current.away },
-    };
-    Object.entries(pickMap).forEach(([pick, { open, curr }]) => {
-      if (!open || !curr || open <= 1 || curr <= 1) return;
-      const movPct = parseFloat((((curr - open) / open) * 100).toFixed(1));
-      if (Math.abs(movPct) >= SHARP_THRESHOLD) {
-        const direction = movPct < 0 ? 'steam' : 'drift';
-        movements.push({ fixture_id: m.fixtureId, pick, from_odds: open, to_odds: curr,
-          movement_pct: movPct, direction, detected_at: new Date().toISOString() });
-        if (direction === 'steam') {
-          sharpSignals[m.fixtureId] = sharpSignals[m.fixtureId] || {};
-          sharpSignals[m.fixtureId][pick] = { movement: movPct };
-          console.log(`[Sharp] ${m.home} vs ${m.away} — ${pick} ${movPct}% steam`);
+    if (!current || !current.home) return;
+
+    // Poisson kansen van deze scan (optioneel meegegeven)
+    const poisson = poissonMap?.[m.fixtureId] || null;
+
+    const picks = [
+      { p: '1', open: opening?.home, curr: current.home,
+        openVar: opening?.homeVar, currFair: current.fair?.home, openFair: opening?.homeFair,
+        poissonPct: poisson?.h ?? null },
+      { p: 'X', open: opening?.draw, curr: current.draw,
+        openVar: opening?.drawVar, currFair: current.fair?.draw, openFair: opening?.drawFair,
+        poissonPct: poisson?.x ?? null },
+      { p: '2', open: opening?.away, curr: current.away,
+        openVar: opening?.awayVar, currFair: current.fair?.away, openFair: opening?.awayFair,
+        poissonPct: poisson?.a ?? null },
+    ];
+
+    picks.forEach(({ p, open, curr, openVar, currFair, openFair, poissonPct }) => {
+      if (!curr || curr <= 1) return;
+
+      // A) Odds movement
+      let movPct      = null;
+      let isSteam     = false;
+      let isDrift     = false;
+      if (open && open > 1) {
+        movPct  = parseFloat((((curr - open) / open) * 100).toFixed(1));
+        isSteam = movPct <= -STEAM_THRESHOLD;
+        isDrift = movPct >=  DRIFT_THRESHOLD;
+        if (Math.abs(movPct) >= STEAM_THRESHOLD) {
+          movements.push({
+            fixture_id: m.fixtureId, pick: p,
+            from_odds: open, to_odds: curr,
+            movement_pct: movPct,
+            direction: isSteam ? 'steam' : 'drift',
+            detected_at: new Date().toISOString(),
+          });
         }
       }
+
+      // B) Poisson vs markt divergentie
+      let divergence      = null;
+      let poissonOdds     = null;
+      const marketFair    = currFair ?? openFair ?? null;  // % markt implied
+      if (poissonPct !== null && marketFair !== null) {
+        divergence  = parseFloat(Math.abs(poissonPct - marketFair).toFixed(2));
+        poissonOdds = poissonPct > 0 ? parseFloat((100 / poissonPct).toFixed(2)) : null;
+      }
+
+      // C) Consensus sterkte (inverse variance → hoger = boekmakers het meer eens)
+      let consensusStrength = 50; // default neutraal
+      if (openVar !== null && openVar !== undefined) {
+        // variance 0 = perfect consensus (100), variance >0.3 = chaotisch (0)
+        consensusStrength = parseFloat(Math.max(0, Math.min(100, 100 - openVar * 333)).toFixed(1));
+      } else if (current.books > 0) {
+        // Schat consensus sterkte op basis van aantal bookmakers
+        consensusStrength = Math.min(100, 30 + current.books * 5);
+      }
+
+      // ── FINAL SHARP SCORE (0-100) ──────────────────────
+      // Gewichten: divergentie 40%, steam 30%, consensus 20%, boeken 10%
+      let score = 0;
+
+      // Divergentie component (0-40)
+      if (divergence !== null) {
+        if (divergence >= DIVERG_STRONG)   score += 40;
+        else if (divergence >= DIVERG_MODERATE) score += 25;
+        else if (divergence >= 3)          score += 12;
+      }
+
+      // Steam component (0-30)
+      if (isSteam) {
+        const steamStrength = movPct !== null ? Math.min(30, Math.abs(movPct) * 2) : 15;
+        score += steamStrength;
+      } else if (isDrift) {
+        score += 5; // drift is minder sterk signaal
+      }
+
+      // Consensus sterkte component (0-20)
+      score += (consensusStrength / 100) * 20;
+
+      // Boeken component (0-10)
+      score += Math.min(10, (current.books || 0) * 0.8);
+
+      score = parseFloat(Math.min(100, score).toFixed(1));
+      const tier = sharpTier(score);
+
+      // Steam signaal naar scan engine
+      if (isSteam || score >= 35) {
+        sharpSignals[m.fixtureId] = sharpSignals[m.fixtureId] || {};
+        sharpSignals[m.fixtureId][p] = {
+          movement:          movPct,
+          sharpScore:        score,
+          sharpTier:         tier,
+          divergence:        divergence,
+          consensusStrength: consensusStrength,
+          isSteam,
+          isDrift,
+        };
+        if (isSteam) console.log(`[Sharp] ${m.home} vs ${m.away} — ${p} ${movPct}% steam | score ${score} (${tier}) | div ${divergence}pp`);
+        else         console.log(`[Sharp] ${m.home} vs ${m.away} — ${p} score ${score} (${tier}) | div ${divergence}pp`);
+      }
+
+      // model_market_comparison row (upsert per fixture+pick)
+      mmmRows.push({
+        fixture_id:           m.fixtureId,
+        pick:                 p,
+        poisson_win_pct:      poissonPct ?? null,
+        poisson_odds:         poissonOdds,
+        market_implied_pct:   marketFair,
+        market_consensus_odds: curr,
+        bookmaker_count:      current.books || 0,
+        divergence_pct:       divergence,
+        opening_odds:         open ?? null,
+        movement_pct:         movPct,
+        movement_momentum:    null,          // uitbreiden met tijdsvenster later
+        consensus_strength:   consensusStrength,
+        is_steam:             isSteam,
+        is_drift:             isDrift,
+        steam_bookmakers:     0,             // uitbreiden via per-book analyse later
+        sharp_score:          score,
+        sharp_tier:           tier,
+        league_id:            m.leagueId || null,
+        match_date:           m.matchDate || today,
+        home:                 m.home,
+        away:                 m.away,
+        updated_at:           new Date().toISOString(),
+      });
     });
   });
 
+  // Sla movements op in bestaande tabel
   if (movements.length) {
     await sb(env, 'odds_movements', 'POST', movements);
     console.log(`[SB] ${movements.length} odds bewegingen opgeslagen`);
   }
+
+  // Sla model_market_comparison op (upsert op fixture_id+pick)
+  if (mmmRows.length) {
+    await sb(env, 'model_market_comparison', 'POST', mmmRows, '?on_conflict=fixture_id,pick');
+    console.log(`[Sharp] ${mmmRows.length} model-markt vergelijkingen opgeslagen`);
+  }
+
+  const eliteCount = Object.values(sharpSignals).flatMap(s => Object.values(s)).filter(v => v.sharpTier === 'elite').length;
+  console.log(`[Sharp] ${Object.keys(sharpSignals).length} fixtures met signaal, ${eliteCount} elite`);
   return sharpSignals;
 }
+
+// ── 3. Post-settlement: sla sharp signal resultaat op ─────
+// Aangeroepen vanuit verifyYesterdayPicks na settlement
+async function saveSharpSignalResult(pick, result, closingOdds, env) {
+  // Haal opgeslagen sharp data op uit model_market_comparison
+  const rows = await sb(env, 'model_market_comparison', 'GET', null,
+    `?fixture_id=eq.${pick.fixtureId}&pick=eq.${pick.pick}&select=*&limit=1`
+  );
+  const sharp = rows?.[0] || null;
+
+  // Haal opening odds op uit market_consensus
+  const snapRows = await sb(env, 'market_consensus', 'GET', null,
+    `?fixture_id=eq.${pick.fixtureId}&order=captured_at.asc&limit=1`
+  );
+  const snap     = snapRows?.[0] || null;
+  const openOdds = snap
+    ? (pick.pick === '1' ? snap.home_odds_consensus
+       : pick.pick === 'X' ? snap.draw_odds_consensus
+       : snap.away_odds_consensus)
+    : null;
+
+  const closingO  = closingOdds || pick.odds;
+  const clvPct    = openOdds && closingO
+    ? parseFloat(((pick.odds - closingO) / closingO * 100).toFixed(2))
+    : null;
+  const won       = result === 'win';
+  const signalCorrect = sharp?.is_steam ? won : null;  // only steam signals zijn binair correct/incorrect
+
+  await sb(env, 'sharp_signal_results', 'POST', [{
+    fixture_id:           pick.fixtureId,
+    pick:                 pick.pick,
+    sharp_score_at_pick:  sharp?.sharp_score    ?? null,
+    sharp_tier_at_pick:   sharp?.sharp_tier     ?? null,
+    poisson_vs_market_pct: sharp?.divergence_pct ?? null,
+    was_steam:            sharp?.is_steam       ?? false,
+    movement_at_pick:     sharp?.movement_pct   ?? null,
+    consensus_strength:   sharp?.consensus_strength ?? null,
+    our_odds:             pick.odds,
+    our_ai_kans:          pick.aiKans,
+    opening_odds:         openOdds ? parseFloat(openOdds) : null,
+    closing_odds:         closingO,
+    clv_pct:              clvPct,
+    result,
+    signal_correct:       signalCorrect,
+    league_id:            pick.leagueId || null,
+    match_date:           pick.matchDate || null,
+    home:                 pick.home,
+    away:                 pick.away,
+    settled_at:           new Date().toISOString(),
+  }], '?on_conflict=fixture_id,pick');
+}
+
 
 // ── Supabase: CLV opslaan na settlement ──────────────────
 async function saveCLV(pick, clv, won, closingOdds, env) {
@@ -1012,6 +1282,8 @@ async function verifyYesterdayPicks(env) {
     };
 
     try { await saveCLV(pick, clv, won, closingOdd || null, env); } catch(e) { console.error('[SB] CLV fout:', e.message); }
+    // v135: sla sharp signal resultaat op voor post-WK calibratie
+    try { await saveSharpSignalResult(pick, won ? 'win' : 'lose', closingOdd || null, env); } catch(e) { console.error('[SB] SharpResult fout:', e.message); }
     updated++;
     updatedIds.push(id);
   }
@@ -1357,7 +1629,10 @@ async function runScan(env, force = false) {
   let sharpSignals = {};
   try {
     await saveOddsSnapshots(oddsMap, batch, env);
-    sharpSignals = await detectSharpMoney(oddsMap, batch, env) || {};
+    // v135: market_consensus snapshot opslaan (multi-book variance + implied pct)
+    await saveMarketConsensusSnapshot(oddsMap, batch, null, env);
+    // v135: detectSharpMoney met Poisson map (null = eerste run, poisson komt na AI-ronde)
+    sharpSignals = await detectSharpMoney(oddsMap, batch, env, null) || {};
   } catch(e) {
     console.error('[SB] fout (non-fatal):', e.message);
   }
@@ -1457,9 +1732,11 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const openOdds = openingOdds ? openingOdds[c.pick === '1' ? 'home' : c.pick === 'X' ? 'draw' : 'away'] : null;
       const movement = calcOddsMovement(openOdds, c.bookOdds);
       const sharpBoost = sharpSignals?.[m.fixtureId]?.[c.pick];
+      // v135: marketSignal incorporeert sharpScore (0-100) direct als gewogen component
+      const baseMarketSignal = calcMarketSignal(movement, c.pick);
       const marketSignal = sharpBoost
-        ? Math.min(95, calcMarketSignal(movement, c.pick) + 15)
-        : calcMarketSignal(movement, c.pick);
+        ? Math.min(95, baseMarketSignal + Math.round((sharpBoost.sharpScore || 0) * 0.25))
+        : baseMarketSignal;
 
       const spread = Math.max(ai.h, ai.x, ai.a) - Math.min(ai.h, ai.x, ai.a);
       const dataQuality = Math.min(100, 50 + spread);
@@ -1534,6 +1811,9 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
           source: 'scheduled',
           sharp: !!sharpBoost,
           sharpMove: sharpBoost?.movement || null,
+          sharpScore: sharpBoost?.sharpScore || null,
+          sharpTier: sharpBoost?.sharpTier || null,
+          sharpDivergence: sharpBoost?.divergence || null,
           isSparseData: !hasRealOdds || tournament,  // v127: landenduels altijd sparse (dunne data, ook mét odds)
         };
       }
