@@ -308,23 +308,66 @@ function _analyticsHTML(local, worker) {
     html += _leagueRatingBlock(worker.leagueRating);
   }
 
-  // ── Sharp Money ──
+  // ── Sharp Money ── v135: klikbaar met popup
   if (worker && worker.sharpMoney) {
     const sm = worker.sharpMoney;
+    // Combineer steam movements + sharp scores voor volledige weergave
+    const sharpItems = [];
+    // Voeg topSharpScores toe als primaire bron (heeft teamnamen + alle data)
+    if (sm.topSharpScores && sm.topSharpScores.length) {
+      sm.topSharpScores.forEach(s => sharpItems.push({ ...s, _type: 'score' }));
+    }
+    // Voeg steam movements toe die nog niet in sharpItems zitten
+    if (sm.topSteam && sm.topSteam.length) {
+      sm.topSteam.forEach(s => {
+        const exists = sharpItems.find(x => x.fixtureId == s.fixtureId && x.pick === s.pick);
+        if (!exists) sharpItems.push({ ...s, _type: 'steam' });
+      });
+    }
+
     html += '<div class="analytics-block">';
     html += '<div class="analytics-block-title">SHARP MONEY <span style="font-size:.42rem;font-weight:400;color:rgba(255,255,255,.5);">laatste 7 dagen</span></div>';
-    if (sm.steamMovements7d === 0) {
+
+    if (sm.steamMovements7d === 0 && !sharpItems.length) {
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.5);text-align:center;padding:.5rem 0;">Geen steam movements gedetecteerd</div>';
     } else {
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#d97706;margin-bottom:.5rem;">🔥 ' + sm.steamMovements7d + ' steam movements</div>';
-      if (sm.topSteam && sm.topSteam.length) {
-        sm.topSteam.forEach(s => {
-          html += '<div style="display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,0.09);">';
-          html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#ffffff;">Fixture ' + s.fixtureId + ' · Pick ' + s.pick + '</div>';
-          html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:800;color:#d97706;">' + s.movement + '%</div>';
-          html += '</div>';
-        });
+      if (sm.steamMovements7d > 0) {
+        html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#d97706;margin-bottom:.5rem;">🔥 ' + sm.steamMovements7d + ' steam movements</div>';
       }
+      sharpItems.forEach(s => {
+        // Label voor pick kolom
+        const pickLabel = s.pick === '1' ? 'Thuis wint' : s.pick === 'X' ? 'Gelijkspel' : 'Uit wint';
+        // Team naam of fixture ID
+        const matchLabel = (s.home && s.away) ? (s.home + ' vs ' + s.away) : ('Fixture ' + s.fixtureId);
+        // Kleur + badge op basis van tier of beweging
+        const tier = s.sharpTier || (s.isSteam ? 'moderate' : null);
+        const tierColors = { elite: '#f59e0b', strong: '#00BEC4', moderate: '#7c3aed', weak: '#64748b' };
+        const tierIcons  = { elite: '⚡', strong: '📡', moderate: '👁', weak: '〰' };
+        const tierColor  = tierColors[tier] || '#d97706';
+        const tierIcon   = tierIcons[tier]  || '🔥';
+        // Beweging badge
+        const movPct = s.movementPct || s.movement || null;
+        const movBadge = (movPct !== null && Math.abs(movPct) >= 4)
+          ? '<span style="font-size:.38rem;color:#dc2626;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);border-radius:4px;padding:.05rem .25rem;margin-left:.3rem;">🔴 ' + parseFloat(movPct).toFixed(1) + '%</span>'
+          : '';
+        // Sharp score badge
+        const scoreBadge = s.sharpScore
+          ? '<span style="font-size:.38rem;color:' + tierColor + ';background:' + tierColor + '18;border:1px solid ' + tierColor + '33;border-radius:4px;padding:.05rem .25rem;margin-left:.25rem;">' + tierIcon + ' ' + Math.round(s.sharpScore) + '/100</span>'
+          : '';
+
+        // Sla data op in window voor popup
+        const dataId = 'sharp_' + s.fixtureId + '_' + s.pick;
+        window.__sharpData = window.__sharpData || {};
+        window.__sharpData[dataId] = s;
+
+        html += '<div onclick="showSharpPopup(\'' + dataId + '\')" style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .5rem;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;border-radius:8px;transition:background .15s;">';
+        html += '<div style="flex:1;min-width:0;">';
+        html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + matchLabel + '</div>';
+        html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);margin-top:.1rem;">' + pickLabel + movBadge + scoreBadge + '</div>';
+        html += '</div>';
+        html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.4);margin-left:.5rem;">→</div>';
+        html += '</div>';
+      });
     }
     html += '</div>';
   }
@@ -478,4 +521,138 @@ function _leagueRatingBlock(ratings) {
   });
   html += '</div>';
   return html;
+}
+
+// ── Sharp Money Detail Popup ─── v135 ──────────────────
+function showSharpPopup(dataId) {
+  const s = (window.__sharpData || {})[dataId];
+  if (!s) return;
+
+  const existing = document.getElementById('sharpPopupOverlay');
+  if (existing) existing.remove();
+
+  const tierColors = { elite: '#f59e0b', strong: '#00BEC4', moderate: '#7c3aed', weak: '#64748b' };
+  const tierIcons  = { elite: '⚡ ELITE SHARP', strong: '📡 SHARP', moderate: '👁 MATIG SHARP', weak: '〰 ZWAK SIGNAAL' };
+  const tier       = s.sharpTier || (s.isSteam ? 'moderate' : 'weak');
+  const tierColor  = tierColors[tier] || '#d97706';
+  const tierLabel  = tierIcons[tier]  || '🔥 STEAM';
+
+  const pickLabel  = s.pick === '1' ? 'Thuis wint' : s.pick === 'X' ? 'Gelijkspel' : 'Uit wint';
+  const matchLabel = (s.home && s.away) ? (s.home + ' vs ' + s.away) : ('Fixture ' + s.fixtureId);
+  const movPct     = parseFloat(s.movementPct || s.movement || 0);
+  const isSteam    = s.isSteam || movPct < -4;
+  const isDrift    = s.isDrift || movPct > 5;
+
+  // Odds rij helper
+  function oddsRow(label, from, to) {
+    if (!from && !to) return '';
+    const dir = to && from ? (to < from ? '↓' : to > from ? '↑' : '→') : '';
+    const dirColor = to < from ? '#dc2626' : to > from ? '#64748b' : '#ffffff';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;
+      padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.06);">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.55);">${label}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;">
+        ${from ? '<span style="color:rgba(255,255,255,.5);">'+parseFloat(from).toFixed(2)+'</span>' : '—'}
+        ${dir ? ' <span style="color:'+dirColor+';">'+dir+'</span> ' : ''}
+        ${to   ? '<span style="color:#fff;">'+parseFloat(to).toFixed(2)+'</span>' : ''}
+      </div>
+    </div>`;
+  }
+
+  // Kans rij helper
+  function pctRow(label, pct, color) {
+    if (pct == null) return '';
+    return `<div style="display:flex;align-items:center;gap:.5rem;padding:.25rem 0;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.5);min-width:80px;">${label}</div>
+      <div style="flex:1;background:rgba(255,255,255,.08);border-radius:999px;height:5px;">
+        <div style="background:${color};height:100%;border-radius:999px;width:${Math.min(100,parseFloat(pct))}%;"></div>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:${color};min-width:36px;text-align:right;">${parseFloat(pct).toFixed(1)}%</div>
+    </div>`;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'sharpPopupOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+
+  overlay.innerHTML = `
+    <div style="background:#0d1f2d;border-radius:20px 20px 0 0;width:100%;max-width:480px;
+      padding:1.25rem 1rem 2rem;max-height:88vh;overflow-y:auto;">
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.9rem;">
+        <div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:#fff;line-height:1.25;">${matchLabel}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-top:.15rem;">${pickLabel}${s.matchDate ? ' · ' + s.matchDate : ''}</div>
+        </div>
+        <button onclick="document.getElementById('sharpPopupOverlay').remove()"
+          style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.7);border-radius:50%;width:28px;height:28px;font-size:.8rem;cursor:pointer;flex-shrink:0;margin-left:.5rem;">✕</button>
+      </div>
+
+      <!-- Tier badge -->
+      <div style="display:inline-flex;align-items:center;gap:.4rem;background:${tierColor}18;
+        border:1px solid ${tierColor}44;border-radius:10px;padding:.4rem .75rem;margin-bottom:.9rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:800;color:${tierColor};">${tierLabel}</div>
+        ${s.sharpScore ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:${tierColor};opacity:.8;">${Math.round(s.sharpScore)}/100</div>` : ''}
+      </div>
+
+      <!-- Wat betekent dit -->
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:.6rem .7rem;margin-bottom:.75rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.25rem;">WAT BETEKENT DIT</div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:.58rem;line-height:1.6;color:rgba(255,255,255,.8);">
+          ${isSteam
+            ? `Grote professionele spelers (sharps) hebben ${Math.abs(movPct).toFixed(1)}% van de odds afgedrukt door fors op <b>${pickLabel}</b> te wedden. Bookmakers beschermen zichzelf — dit is een concrete bevestiging van jouw model.`
+            : isDrift
+            ? `De odds zijn ${movPct.toFixed(1)}% gestegen. Dat betekent dat recreatief geld de andere kant op gaat. Wees voorzichtig — de markt trekt weg van ${pickLabel}.`
+            : s.divergence
+            ? `Jouw Poisson model denkt ${parseFloat(s.divergence).toFixed(1)}pp anders dan de markt. Groot verschil = potentieel grote value. Nog geen odds beweging, maar de kloof is significant.`
+            : `Er is een sharp signaal gedetecteerd op ${pickLabel}.`
+          }
+        </div>
+      </div>
+
+      <!-- Odds beweging -->
+      ${(s.fromOdds || s.openingOdds || s.consensusOdds) ? `
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:.6rem .7rem;margin-bottom:.75rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.35rem;">ODDS BEWEGING</div>
+        ${oddsRow('Opening odds', s.fromOdds || s.openingOdds, null)}
+        ${oddsRow('Huidige odds', null, s.toOdds || s.consensusOdds)}
+        ${movPct ? `<div style="display:flex;justify-content:space-between;padding:.3rem 0;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.55);">Beweging</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:${isSteam ? '#dc2626' : '#64748b'};">
+            ${movPct > 0 ? '+' : ''}${movPct.toFixed(1)}% ${isSteam ? '🔴 STEAM' : isDrift ? '↑ DRIFT' : ''}
+          </div>
+        </div>` : ''}
+      </div>` : ''}
+
+      <!-- Model vs markt -->
+      ${(s.poissonPct || s.marketPct) ? `
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:.6rem .7rem;margin-bottom:.75rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.35rem;">MODEL vs MARKT</div>
+        ${pctRow('Jouw model', s.poissonPct, '#00BEC4')}
+        ${pctRow('Markt implied', s.marketPct, '#64748b')}
+        ${s.divergence ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin-top:.3rem;">
+          Kloof: <span style="color:#f59e0b;font-weight:700;">${parseFloat(s.divergence).toFixed(1)}pp</span>
+          ${parseFloat(s.divergence) >= 10 ? ' — groot verschil' : parseFloat(s.divergence) >= 6 ? ' — significant' : ''}
+        </div>` : ''}
+      </div>` : ''}
+
+      <!-- Consensus sterkte -->
+      ${s.consensusStrength != null ? `
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:.6rem .7rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.35rem;">BOOKMAKER CONSENSUS</div>
+        ${pctRow('Eens met odds', s.consensusStrength, s.consensusStrength > 70 ? '#00BEC4' : '#d97706')}
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:rgba(255,255,255,.4);margin-top:.25rem;">
+          ${parseFloat(s.consensusStrength) > 80
+            ? 'Boekmakers zijn het grotendeels eens — betrouwbaar signaal'
+            : parseFloat(s.consensusStrength) > 50
+            ? 'Redelijke consensus — signaal is matig betrouwbaar'
+            : 'Lage consensus — boekmakers zijn het oneens, wees voorzichtig'}
+        </div>
+      </div>` : ''}
+
+    </div>`;
+
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  document.body.appendChild(overlay);
 }
