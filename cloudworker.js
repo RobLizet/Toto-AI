@@ -674,34 +674,45 @@ async function handleAnalytics(env) {
           ? Math.round(withCLV.filter(r => parseFloat(r.clv_pct) > 0).length / withCLV.length * 100)
           : null,
       },
-      sharpMoney: {
-        steamMovements7d: sharpData.length,
-        // v135: teamnamen + opening/closing odds meegeven voor popup
-        topSteam: sharpData.slice(0, 5).map(r => {
-          // Zoek bijbehorende pick op voor teamnamen
-          return {
-            fixtureId: r.fixture_id,
-            pick:       r.pick,
-            movement:   r.movement_pct,
-            detectedAt: r.detected_at,
-            fromOdds:   r.from_odds   || null,
-            toOdds:     r.to_odds     || null,
-            direction:  r.direction   || 'steam',
-          };
-        }),
-        // v135: ook model_market_comparison meegeven voor sharpScore + teamnamen
-        topSharpScores: await (async () => {
-          try {
-            const today = new Date().toISOString().split('T')[0];
-            const sevenAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
-            const rows = await sb(env, 'model_market_comparison', 'GET', null,
-              `?match_date=gte.${sevenAgo}&sharp_score=gte.35&order=sharp_score.desc&limit=8`
-            ) || [];
-            return rows.map(r => ({
+      sharpMoney: await (async () => {
+        // v135b: teamnamen ophalen uit picks tabel via fixture IDs
+        const steamTop = sharpData.slice(0, 8);
+        const steamFixIds = [...new Set(steamTop.map(r => r.fixture_id))];
+
+        // Haal teamnamen + datum op uit picks tabel
+        let picksLookup = {};
+        if (steamFixIds.length) {
+          const pRows = await sb(env, 'picks', 'GET', null,
+            `?fixture_id=in.(${steamFixIds.join(',')})&select=fixture_id,home,away,match_date,match_time,league_name&limit=50`
+          ) || [];
+          pRows.forEach(p => {
+            if (!picksLookup[p.fixture_id]) {
+              picksLookup[p.fixture_id] = {
+                home: p.home, away: p.away,
+                matchDate: p.match_date, matchTime: p.match_time,
+                leagueName: p.league_name,
+              };
+            }
+          });
+        }
+
+        // topSharpScores uit model_market_comparison (heeft teamnamen al)
+        let topSharpScores = [];
+        try {
+          const sevenAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+          const rows = await sb(env, 'model_market_comparison', 'GET', null,
+            `?match_date=gte.${sevenAgo}&sharp_score=gte.35&order=sharp_score.desc&limit=8`
+          ) || [];
+          // Verrijk ook model_market_comparison rijen met picks data als home/away leeg is
+          topSharpScores = rows.map(r => {
+            const pk = picksLookup[r.fixture_id] || {};
+            return {
               fixtureId:         r.fixture_id,
               pick:              r.pick,
-              home:              r.home,
-              away:              r.away,
+              home:              r.home || pk.home || null,
+              away:              r.away || pk.away || null,
+              matchDate:         r.match_date || pk.matchDate || null,
+              leagueName:        pk.leagueName || null,
               sharpScore:        r.sharp_score,
               sharpTier:         r.sharp_tier,
               divergence:        r.divergence_pct,
@@ -713,11 +724,32 @@ async function handleAnalytics(env) {
               openingOdds:       r.opening_odds,
               consensusOdds:     r.market_consensus_odds,
               consensusStrength: r.consensus_strength,
-              matchDate:         r.match_date,
-            }));
-          } catch(e) { return []; }
-        })(),
-      },
+            };
+          });
+        } catch(e) { console.error('[Sharp] topSharpScores fout:', e.message); }
+
+        return {
+          steamMovements7d: sharpData.length,
+          topSteam: steamTop.map(r => {
+            const pk = picksLookup[r.fixture_id] || {};
+            return {
+              fixtureId:  r.fixture_id,
+              pick:       r.pick,
+              movement:   r.movement_pct,
+              detectedAt: r.detected_at,
+              fromOdds:   r.from_odds  || null,
+              toOdds:     r.to_odds    || null,
+              direction:  r.direction  || 'steam',
+              // v135b: teamnamen + datum vanuit picks tabel
+              home:       pk.home      || null,
+              away:       pk.away      || null,
+              matchDate:  pk.matchDate || null,
+              leagueName: pk.leagueName || null,
+            };
+          }),
+          topSharpScores,
+        };
+      })(),
     });
   } catch(e) {
     console.error('[Analytics] fout:', e);
