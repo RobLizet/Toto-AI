@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v135'; // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v136'; // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -988,8 +988,8 @@ async function handleFD(path, env) {
 // ── Anthropic proxy (/anthropic) ────────────────────────
 async function handleAnthropic(request, env) {
   // ── Rate limiting — beschermt tegen kosteninflatie ────
-  const MAX_USER_CALLS_PER_DAY  = 15;  // per gebruiker
-  const MAX_GLOBAL_CALLS_PER_DAY = 150; // totaal per dag (scan loops etc.)
+  const MAX_USER_CALLS_PER_DAY  = 50;  // per gebruiker (verhoogd v135c: testers + WK)
+  const MAX_GLOBAL_CALLS_PER_DAY = 400; // totaal per dag (12 cron-scans × meerdere wedstrijden)
 
   // Gebruiker UID uit Authorization header
   let uid = 'anonymous';
