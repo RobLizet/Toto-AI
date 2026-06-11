@@ -1493,6 +1493,36 @@ body.creme .scan-comp-chip.on {
   color: #00838A !important;
   border-color: rgba(0,140,140,.55) !important;
 }
+/* Crème — analyse screen: override hardcoded donkere achtergronden */
+body.creme .screen-analyse [style*="#0d1e24"],
+body.creme .screen-analyse [style*="#0f2230"],
+body.creme .screen-analyse [style*="#0B1519"],
+body.creme .screen-analyse [style*="#0b1519"],
+body.creme .screen-analyse [style*="0d1e24"],
+body.creme .screen-analyse [style*="0f2230"] {
+  background: rgba(255,250,242,.92) !important;
+  color: #2c1a0e !important;
+  border-color: rgba(184,142,50,.95) !important;
+}
+body.creme .screen-analyse [style*="linear-gradient(160deg,#0d1e24"] {
+  background: rgba(255,250,242,.92) !important;
+}
+/* Crème — scan log items en filters */
+body.creme .scan-log-item,
+body.creme .scan-entry,
+body.creme .scan-history-item {
+  background: rgba(255,250,242,.92) !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  color: #2c1a0e !important;
+}
+/* Crème — dropdowns en selects in analyse */
+body.creme .screen-analyse select,
+body.creme .screen-analyse input[type="text"] {
+  background: rgba(255,250,242,.92) !important;
+  color: #2c1a0e !important;
+  border: 1.5px solid rgba(184,142,50,.6) !important;
+}
+
 /* Crème — vang alle resterende cards met var(--stroke) border */
 body.creme .league-card,
 body.creme .comp-card,
