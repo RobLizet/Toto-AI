@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v133'; // v133: scan-test default league 1 (WK) toegevoegd // v132: scan-test default leagues → WK 2026 (league 1) // v131: WK_ONLY_MODE — alleen WK 2026 scannen // v130: next= vangnet
+const VERSION = 'v134'; // v134: geen push bij lege scan // v133: scan-test default league 1 (WK) toegevoegd // v132: scan-test default leagues → WK 2026 (league 1) // v131: WK_ONLY_MODE — alleen WK 2026 scannen // v130: next= vangnet
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1320,7 +1320,8 @@ async function runScan(env, force = false) {
       lastPickCount: 0, lastWithOdds: 0, lastWithoutOdds: 0,
       scanDate: today, version: VERSION, scansToday: scansToday0 };
     await sbUpdateScanStatus(scanData0, env);
-    await sendPushNotification(env, '🔍 Scan voltooid', `Geen wedstrijden gevonden voor ${today}`, { type: 'scan_empty' });
+    // v134: geen push bij lege scan — alleen pushen bij echte picks
+    console.log('[Scan] Geen wedstrijden in tijdvenster — stil afsluiten (geen push)');
     return;
   }
 
