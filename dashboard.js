@@ -73,6 +73,73 @@ function renderCLVBadge(p) {
   </span>`;
 }
 
+// ── Sharp Money badge ────────────────────────────────────
+// v135: toont steam/score op basis van sharpTier + odds beweging
+function renderSharpBadge(p) {
+  const tier  = p.sharpTier  || p.sharp_tier  || null;
+  const score = p.sharpScore != null ? parseFloat(p.sharpScore)
+              : p.sharp_score != null ? parseFloat(p.sharp_score) : null;
+  const move  = p.sharpMove  != null ? parseFloat(p.sharpMove)
+              : p.oddsMovement != null ? parseFloat(p.oddsMovement)
+              : p.odds_movement != null ? parseFloat(p.odds_movement) : null;
+  const div   = p.sharpDivergence != null ? parseFloat(p.sharpDivergence)
+              : p.sharp_divergence != null ? parseFloat(p.sharp_divergence) : null;
+
+  // Niets tonen als er geen enkel signaal is
+  const hasTier  = tier && tier !== 'none';
+  const hasSteam = move !== null && move < -4;
+  const hasDrift = move !== null && move > 5;
+  if (!hasTier && !hasSteam && score === null) return '';
+
+  // Kleur + label per tier
+  const CFG = {
+    elite:    { color: '#f59e0b', bg: 'rgba(245,158,11,.12)', icon: '⚡', label: 'ELITE SHARP' },
+    strong:   { color: '#00BEC4', bg: 'rgba(0,190,196,.10)',  icon: '📡', label: 'SHARP'       },
+    moderate: { color: '#7c3aed', bg: 'rgba(124,58,237,.10)', icon: '👁', label: 'MATIG SHARP' },
+    weak:     { color: '#64748b', bg: 'rgba(100,116,139,.08)', icon: '〰', label: 'ZWAK'        },
+  };
+  const cfg = CFG[tier] || (hasSteam ? CFG.moderate : null);
+  if (!cfg) return '';
+
+  // Steam tag
+  const steamTag = hasSteam
+    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;
+        color:#dc2626;background:rgba(220,38,38,.10);border:1px solid rgba(220,38,38,.22);
+        border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">
+        🔴 STEAM ${move.toFixed(1)}%
+      </span>`
+    : hasDrift
+    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;
+        color:#64748b;background:rgba(100,116,139,.08);border:1px solid rgba(100,116,139,.2);
+        border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">
+        ↑ DRIFT +${move.toFixed(1)}%
+      </span>`
+    : '';
+
+  // Score tag
+  const scoreTag = score !== null
+    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;
+        color:${cfg.color};background:${cfg.bg};border:1px solid ${cfg.color}33;
+        border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">
+        ${cfg.icon} ${cfg.label} ${Math.round(score)}/100
+      </span>`
+    : '';
+
+  // Divergentie tag
+  const divTag = div !== null && div >= 6
+    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;
+        color:rgba(255,255,255,.45);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+        border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">
+        📐 model ↔ markt ${div.toFixed(1)}pp
+      </span>`
+    : '';
+
+  const tags = [scoreTag, steamTag, divTag].filter(Boolean).join('');
+  if (!tags) return '';
+
+  return `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.3rem;">${tags}</div>`;
+}
+
 // ── Pick signalen — snelle uitleg per pick ────────────────
 function buildPickReasons(p) {
   const signals = [];
@@ -84,6 +151,16 @@ function buildPickReasons(p) {
   if (lock === 'triple')       signals.push({ icon: '🔒', text: 'Triple Lock — 3x bevestigd', color: '#00BEC4' });
   else if (lock === 'double')  signals.push({ icon: '🔒', text: 'Double Lock — 2x bevestigd', color: '#b45309' });
   if (p.elite)                 signals.push({ icon: '⭐', text: 'Elite pick', color: '#00a8ad' });
+  // v135: sharp money signalen
+  const _tier  = p.sharpTier || p.sharp_tier;
+  const _score = p.sharpScore != null ? parseFloat(p.sharpScore) : p.sharp_score != null ? parseFloat(p.sharp_score) : null;
+  const _move  = p.sharpMove != null ? parseFloat(p.sharpMove) : p.oddsMovement != null ? parseFloat(p.oddsMovement) : p.odds_movement != null ? parseFloat(p.odds_movement) : null;
+  if (_tier === 'elite' && _score !== null)
+    signals.push({ icon: '⚡', text: 'Elite Sharp ' + Math.round(_score) + '/100', color: '#f59e0b' });
+  else if (_tier === 'strong' && _score !== null)
+    signals.push({ icon: '📡', text: 'Sharp Money ' + Math.round(_score) + '/100', color: '#00BEC4' });
+  if (_move !== null && _move < -4)
+    signals.push({ icon: '🔴', text: 'Steam ' + _move.toFixed(1) + '%', color: '#dc2626' });
   if (p.poissonUsed || (p.poissonK1 && p.poissonK2))
     signals.push({ icon: '📐', text: 'Poisson + AI model', color: '#64748b' });
   if (p.aiKans && p.odds) {
@@ -989,7 +1066,7 @@ function showPicksModal() {
             </div>
             <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:${rel.color};font-weight:700;">${rel.score}/100</div>
           </div>
-          ${renderPickReasons(p)}${renderPickWeighting(p)}${clvHtml}${scoreHtml}
+          ${renderPickReasons(p)}${renderSharpBadge(p)}${renderPickWeighting(p)}${clvHtml}${scoreHtml}
         </div>`;
       }).join('')}
     </div>
