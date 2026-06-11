@@ -842,7 +842,13 @@ function selectMatchAndAnalyse(matchId) {
   if (m) selectMatch(m);
   setTimeout(() => {
     switchScreen('analyse');
-    setTimeout(() => showAnalyseSubTab('analyse'), 80);
+    setTimeout(() => {
+      showAnalyseSubTab('analyse');
+      // Auto-start analyse als wedstrijd geselecteerd
+      if (typeof runAnalyse === 'function') {
+        setTimeout(() => runAnalyse(), 150);
+      }
+    }, 80);
   }, 80);
 }
 
