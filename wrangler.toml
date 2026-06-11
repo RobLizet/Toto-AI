@@ -3,10 +3,11 @@ main = "cloudworker.js"
 compatibility_date = "2024-01-01"
 account_id = "08735b0b6c1df0b90041c2e1356f757d"
 
-# Scheduled triggers: dagelijks 08:00 NL (06:00 UTC) + elk uur 14:00-18:00 NL (12:00-16:00 UTC)
-# WK 2026 extra: 18:00 + 20:00 UTC voor USA-tijdzones (vroege avondwedstrijden)
+# Scheduled triggers (NL zomertijd = UTC+2)
+# 08:00 NL = 06:00 UTC — ochtendscan + settlement + dagelijkse tip
+# 14:00-24:00 NL = 12:00-22:00 UTC — elk uur voor optimale steam detectie
 [triggers]
-crons = ["0 6 * * *", "0 12-16 * * *", "0 18 * * *", "0 20 * * *"]
+crons = ["0 6 * * *", "0 12-22 * * *"]
 
 # Secrets (stel in via: wrangler secret put NAAM)
 # ANTHROPIC_KEY    — Anthropic API key
