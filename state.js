@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.62'; // v26.62: sharp popup klikbaar + teamnamen in analytics
+const APP_VERSION = 'v26.63'; // v26.63: sharp money teamnamen + datum fix // v26.62: sharp popup klikbaar + teamnamen in analytics
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
