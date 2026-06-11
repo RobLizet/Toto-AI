@@ -2458,17 +2458,17 @@ function renderScanLog() {
     + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\',odds:\'\',sort:\'newest\',sharp:false};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
     + '</div>'
     + '<div style="display:flex;gap:.3rem;flex-wrap:wrap;">'
-    + '<select onchange="window._scanFilter.conf=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.conf?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.conf=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.conf?'rgba(0,190,196,.12)':'var(--card)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Conf</option>'
     + [6,7,8,9,10].map(c => '<option value="'+c+'"'+(F.conf===String(c)?' selected':'')+'>conf '+c+'</option>').join('')
     + '</select>'
-    + '<select onchange="window._scanFilter.pick=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.pick?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.pick=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.pick?'rgba(0,190,196,.12)':'var(--card)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Pick type</option>'
     + '<option value="1"'+(F.pick==="1"?' selected':'')+'>🏠 Thuis</option>'
     + '<option value="X"'+(F.pick==="X"?' selected':'')+'>🤝 Gelijk</option>'
     + '<option value="2"'+(F.pick==="2"?' selected':'')+'>✈️ Uit</option>'
     + '</select>'
-    + '<select onchange="window._scanFilter.status=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.status?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.status=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.status?'rgba(0,190,196,.12)':'var(--card)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Status</option>'
     + '<option value="win"'+(F.status==="win"?' selected':'')+'>✅ Win</option>'
     + '<option value="lose"'+(F.status==="lose"?' selected':'')+'>❌ Verlies</option>'
@@ -2476,7 +2476,7 @@ function renderScanLog() {
     + '</select>'
 
     // Odds range filter
-    + '<select onchange="window._scanFilter.odds=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.odds?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.odds=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.odds?'rgba(0,190,196,.12)':'var(--card)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="">Odds</option>'
     + '<option value="1.0-1.5"'+(F.odds==="1.0-1.5"?' selected':'')+'>1.0–1.5</option>'
     + '<option value="1.5-2.0"'+(F.odds==="1.5-2.0"?' selected':'')+'>1.5–2.0</option>'
@@ -2486,7 +2486,7 @@ function renderScanLog() {
     + '</select>'
 
     // Sorteer optie
-    + '<select onchange="window._scanFilter.sort=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.sort!=="newest"?'rgba(0,190,196,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
+    + '<select onchange="window._scanFilter.sort=this.value;renderScanLog()" style="padding:.28rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:' + (F.sort!=="newest"?'rgba(0,190,196,.12)':'var(--card)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:var(--text);cursor:pointer;">'
     + '<option value="newest"'+(F.sort==="newest"?' selected':'')+'>🕐 Nieuwst</option>'
     + '<option value="value"'+(F.sort==="value"?' selected':'')+'>📈 Value%</option>'
     + '<option value="odds"'+(F.sort==="odds"?' selected':'')+'>🎯 Odds</option>'
@@ -2495,7 +2495,7 @@ function renderScanLog() {
 
     // Sharp money toggle
     + '<button onclick="window._scanFilter.sharp=!window._scanFilter.sharp;renderScanLog()" '
-    + 'style="padding:.28rem .6rem;border-radius:8px;border:1px solid ' + (F.sharp?'rgba(239,68,68,.4)':'rgba(255,255,255,0.09)') + ';background:' + (F.sharp?'rgba(239,68,68,.12)':'#0B1519') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:' + (F.sharp?'#ef4444':'var(--text)') + ';cursor:pointer;white-space:nowrap;">'
+    + 'style="padding:.28rem .6rem;border-radius:8px;border:1px solid ' + (F.sharp?'rgba(239,68,68,.4)':'rgba(255,255,255,0.09)') + ';background:' + (F.sharp?'rgba(239,68,68,.12)':'var(--card)') + ';font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:' + (F.sharp?'#ef4444':'var(--text)') + ';cursor:pointer;white-space:nowrap;">'
     + '🔥 Sharp' + (F.sharp?' ON':'') + '</button>'
 
     + '</div>'
@@ -2715,11 +2715,11 @@ function renderScanLog() {
       })();
 
       // Scan card header — zelfde stijl als match-card
-      html += '<div class="match-card" style="margin-bottom:.6rem;padding:0;background:#0d1e24 !important;">';
+      html += '<div class="match-card" style="margin-bottom:.6rem;padding:0;background:var(--card);">';
       
       // Header — klikbaar voor inklapbaar
       html += '<div onclick="(function(el){var c=document.getElementById(\'' + collapseId + '\');if(!c)return;var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'block\';el.querySelector(\'.scan-chevron\').style.transform=open?\'rotate(0deg)\':\'rotate(180deg)\';}).call(null,this.closest(\'.match-card\'))" '
-        + 'style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06);background:#0d1e24;">';
+        + 'style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;cursor:pointer;border-bottom:1px solid var(--stroke);">';
       
       // Links: nummer + datum
       html += '<div style="display:flex;align-items:center;gap:.5rem;">';
