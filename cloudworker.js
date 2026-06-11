@@ -676,10 +676,47 @@ async function handleAnalytics(env) {
       },
       sharpMoney: {
         steamMovements7d: sharpData.length,
-        topSteam: sharpData.slice(0, 5).map(r => ({
-          fixtureId: r.fixture_id, pick: r.pick,
-          movement: r.movement_pct, detectedAt: r.detected_at,
-        })),
+        // v135: teamnamen + opening/closing odds meegeven voor popup
+        topSteam: sharpData.slice(0, 5).map(r => {
+          // Zoek bijbehorende pick op voor teamnamen
+          return {
+            fixtureId: r.fixture_id,
+            pick:       r.pick,
+            movement:   r.movement_pct,
+            detectedAt: r.detected_at,
+            fromOdds:   r.from_odds   || null,
+            toOdds:     r.to_odds     || null,
+            direction:  r.direction   || 'steam',
+          };
+        }),
+        // v135: ook model_market_comparison meegeven voor sharpScore + teamnamen
+        topSharpScores: await (async () => {
+          try {
+            const today = new Date().toISOString().split('T')[0];
+            const sevenAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+            const rows = await sb(env, 'model_market_comparison', 'GET', null,
+              `?match_date=gte.${sevenAgo}&sharp_score=gte.35&order=sharp_score.desc&limit=8`
+            ) || [];
+            return rows.map(r => ({
+              fixtureId:         r.fixture_id,
+              pick:              r.pick,
+              home:              r.home,
+              away:              r.away,
+              sharpScore:        r.sharp_score,
+              sharpTier:         r.sharp_tier,
+              divergence:        r.divergence_pct,
+              movementPct:       r.movement_pct,
+              isSteam:           r.is_steam,
+              isDrift:           r.is_drift,
+              poissonPct:        r.poisson_win_pct,
+              marketPct:         r.market_implied_pct,
+              openingOdds:       r.opening_odds,
+              consensusOdds:     r.market_consensus_odds,
+              consensusStrength: r.consensus_strength,
+              matchDate:         r.match_date,
+            }));
+          } catch(e) { return []; }
+        })(),
       },
     });
   } catch(e) {
