@@ -1534,3 +1534,67 @@ body.creme .worker-card {
   border: 2px solid rgba(184,142,50,.95) !important;
   box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
 }
+
+/* ── Crème — BET KAARTEN (wallet tracker) ──────────────── */
+body.creme .bet-row,
+body.creme .combi-bet-row,
+body.creme .tracker-bet-row {
+  background: rgba(255,250,242,.92) !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 8px rgba(184,142,50,.18) !important;
+  color: #2c1a0e !important;
+}
+body.creme .bet-row *,
+body.creme .combi-bet-row *,
+body.creme .tracker-bet-row * { color: #2c1a0e !important; }
+/* uitzonderingen: status kleuren behouden */
+body.creme .bet-res.win,
+body.creme .combi-bet-result.win  { color: #16a34a !important; }
+body.creme .bet-res.lose,
+body.creme .combi-bet-result.lose { color: #dc2626 !important; }
+body.creme .bet-res.pending,
+body.creme .combi-bet-result.pending { color: #d97706 !important; }
+body.creme .bet-live-score,
+body.creme .bet-live-dot { color: #dc2626 !important; }
+
+/* ── Crème — PICK/SCAN KAARTEN (analyse scan log) ───────── */
+body.creme .pick-card,
+body.creme .scan-card,
+body.creme .worker-pick-row,
+body.creme .value-card {
+  background: rgba(255,250,242,.92) !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 10px rgba(184,142,50,.22) !important;
+  color: #2c1a0e !important;
+}
+
+/* ── Crème — FILTER KNOPPEN (Alles/Win/Verlies/Open/Locks) */
+body.creme .filter-btn,
+body.creme .scan-filter-btn,
+body.creme .tab-btn:not(.active) {
+  background: rgba(255,250,242,.85) !important;
+  border: 1.5px solid rgba(184,142,50,.5) !important;
+  color: #7a5230 !important;
+}
+body.creme .filter-btn.active,
+body.creme .scan-filter-btn.active,
+body.creme .tab-btn.active {
+  background: rgba(184,142,50,.15) !important;
+  border-color: rgba(184,142,50,.9) !important;
+  color: #5a3a0e !important;
+}
+
+/* ── Crème — swipe-inner achtergrond binnen bet-row ─────── */
+body.creme .swipe-inner {
+  background: rgba(255,250,242,.92) !important;
+}
+
+/* ── Crème — tekst in inline-gestijlde bet kaarten ──────── */
+body.creme [style*="color:#ffffff"],
+body.creme [style*="color: #ffffff"],
+body.creme [style*="color:rgba(255,255,255"] {
+  color: #2c1a0e !important;
+}
+/* Bewaar lichte tekst in donkere popups/overlays */
+body.creme .overlay-sheet *,
+body.creme [style*="border-radius:20px 20px 0 0"] * { color: inherit; }
