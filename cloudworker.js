@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v137'; // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v138'; // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1524,12 +1524,11 @@ async function runScan(env, force = false) {
   const dateNow = new Date(today);
   const wkStart = new Date('2026-06-11');
   const wkEnd   = new Date('2026-07-20');
-  const WK_ONLY_MODE = true; // tijdelijk: alleen WK 2026 scannen. Zet op false om alle competities te herstellen.
+  const WK_ONLY_MODE = false; // v138: alle actieve competities + WK
   const isWKActive = WK_ONLY_MODE || (dateNow >= wkStart && dateNow < wkEnd);
 
   let leagueConfig;
-  if (isWKActive) {
-    // Alleen WK
+  if (false) { // uitgeschakeld — altijd volledige config
     leagueConfig = [{ id: 1, s: 2026 }];
     console.log('[Scan] 🏆 WK actief — alleen WK (ID 1)');
   } else {
@@ -1563,12 +1562,17 @@ async function runScan(env, force = false) {
       { id: 3,   s: 2026 }, // Europa League
       { id: 848, s: 2026 }, // Conference League
       { id: 94,  s: 2025 }, // Primeira Liga Portugal (2025-26)
+      // ── Actief tijdens WK-zomer ──
+      { id: 307, s: 2026 }, // Saudi Pro League (jan–mei + aug–dec)
+      { id: 169, s: 2026 }, // Superliga Argentinië
+      { id: 188, s: 2026 }, // Primera División Chile
+      { id: 210, s: 2026 }, // Liga MX Mexico
     ];
     console.log('[Scan] Actieve leagues: WK + Friendlies + Nations League + Scandinavië + Zuid-Amerika + MLS + Azië');
   }
 
   // Leagues die UTC timezone gebruiken — date= werkt niet, gebruik next=15
-  const NEXT_LEAGUES = new Set([10, 5, 6, 29, 36, 113, 103, 119, 129, 253, 71, 239, 292, 98]); // 10=Friendlies, 5=NL, 6/29/36=WK kwal
+  const NEXT_LEAGUES = new Set([10, 5, 6, 29, 36, 113, 103, 119, 129, 253, 71, 239, 292, 98, 307, 169, 188, 210]); // 10=Friendlies, 5=NL, 6/29/36=WK kwal
 
   const SCAN_LEAGUES = leagueConfig.map(l => l.id);
   const SCAN_LEAGUE_SET = new Set(SCAN_LEAGUES);
@@ -1823,17 +1827,17 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
 
       // v127: toernooi/landenduel — dunne data, scherpe markt → cap betrouwbaarheid + hogere edge-lat
       if (tournament) {
-        conf.final = Math.min(conf.final, 60);
+        conf.final = Math.min(conf.final, 70); // v138: was 60, iets soepeler voor WK
         conf.score = Math.max(1, Math.min(10, Math.round(conf.final / 10)));
       }
 
       // Strengere drempel voor gelijkspel picks (en voor toernooi/landenduels)
-      // v136: strengere drempels — 1-3% value is ruis, niet inzetbaar
-      const minConf = 6;  // altijd conf 6+ (was 5 voor 1/2)
-      const minValue = c.pick === 'X' ? (tournament ? 14 : 12) : (tournament ? 8 : 6);  // was 3/6/10/12
+      // v138: WK-specifieke drempels — toernooi heeft dunne data, iets soepeler
+      const minConf = tournament ? 5 : 6;
+      const minValue = c.pick === 'X' ? (tournament ? 10 : 12) : (tournament ? 6 : 6);
       if (conf.score < minConf || value < minValue) return;
 
-      const elite = !tournament && isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds, pick: c.pick, poissonUsed: false });
+      const elite = isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds, pick: c.pick, poissonUsed: false }); // v138: ook WK-picks kunnen elite zijn
 
       const pickKey = `${m.fixtureId}_${c.pick}`;
       const existing = existingPicks[pickKey];
@@ -2173,13 +2177,13 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
 
       // v127: toernooi-hardening (zelfde als productie)
       if (tournament) {
-        conf.final = Math.min(conf.final, 60);
+        conf.final = Math.min(conf.final, 70); // v138: was 60, iets soepeler voor WK
         conf.score = Math.max(1, Math.min(10, Math.round(conf.final / 10)));
       }
 
-      // v136: strengere drempels — 1-3% value is ruis, niet inzetbaar
-      const minConf = 6;  // altijd conf 6+ (was 5 voor 1/2)
-      const minValue = c.pick === 'X' ? (tournament ? 14 : 12) : (tournament ? 8 : 6);  // was 3/6/10/12
+      // v138: WK-specifieke drempels — toernooi heeft dunne data, iets soepeler
+      const minConf = tournament ? 5 : 6;
+      const minValue = c.pick === 'X' ? (tournament ? 10 : 12) : (tournament ? 6 : 6);
       if (conf.score < minConf || value < minValue) return;
 
       picks.push({
