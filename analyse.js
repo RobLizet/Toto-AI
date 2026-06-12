@@ -1101,7 +1101,7 @@ function renderAnalyseScanResults(scans) {
       ${teltMee.map(s => renderPick(s, true)).join('')}
       ${teltNiet.length ? `
         <div style="padding:.35rem .9rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;
-          color:rgba(255,255,255,.5);background:rgba(15,23,42,.03);border-top:1px solid rgba(255,255,255,0.09);">
+          color:rgba(255,255,255,.5);background:var(--card-bg,rgba(0,0,0,.03));border-top:1px solid rgba(255,255,255,0.09);">
           ONDER DREMPEL (value ≥8%, conf ≥6/10)
         </div>
         ${teltNiet.map(s => renderPick(s, false)).join('')}
@@ -1122,7 +1122,7 @@ function openCardPopup(type, data) {
   overlay.onclick = e => { if(e.target===overlay) overlay.remove(); };
 
   const close = `<button onclick="document.getElementById('cardPopupOverlay').remove()"
-    style="background:rgba(15,23,42,.08);border:none;border-radius:50%;
+    style="background:var(--track-bg,rgba(0,0,0,.08));border:none;border-radius:50%;
     width:2rem;height:2rem;font-size:1rem;cursor:pointer;color:#ffffff;">✕</button>`;
 
   let content = '';
@@ -1243,7 +1243,7 @@ function openCardPopup(type, data) {
 
   overlay.innerHTML = `
     <div style="width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
-      background:linear-gradient(160deg,#0d1e24,#0f2230);
+      background:var(--sheet-bg,#0d1e24);
       border-radius:24px 24px 0 0;padding:1.2rem 1.1rem 2rem;
       box-shadow:0 -8px 40px rgba(15,23,42,.2);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;">
@@ -1454,7 +1454,7 @@ KWALITEITSREGELS:
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;color:#374151;margin-bottom:.5rem;">Quote: <b>${tip.odds}</b> &nbsp;·&nbsp; ${sterren}</div>
           ${tv !== null ? `
           <div style="display:flex;justify-content:space-between;align-items:center;background:${tv>=5?'rgba(0,190,196,.08)':'rgba(100,116,139,.05)'};
-            border:1px solid ${tv>=5?'rgba(0,190,196,.2)':'rgba(15,23,42,.08)'};border-radius:9px;padding:.5rem .7rem;margin-bottom:.6rem;">
+            border:1px solid ${tv>=5?'rgba(0,190,196,.2)':'var(--track-bg,rgba(0,0,0,.08))'};border-radius:9px;padding:.5rem .7rem;margin-bottom:.6rem;">
             <div>
               <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);font-weight:700;">⚡ VALUE</div>
               <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.5);">${tip.kans}% × ${tip.odds}</div>
@@ -1780,7 +1780,7 @@ function renderTop3EnCombi(result) {
     const cc = confColor(t.vertrouwen);
     const cbar = Math.round((t.vertrouwen/10)*100);
     const factoren = Array.isArray(t.factoren) ? t.factoren : [];
-    return `<div onclick="openTipPopup(${i})" style="background:#0d1e24;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.75rem .9rem;margin-bottom:.5rem;cursor:pointer;active:opacity:.85;">
+    return `<div onclick="openTipPopup(${i})" style="background:var(--card-bg-dark,rgba(0,0,0,.06));border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:.75rem .9rem;margin-bottom:.5rem;cursor:pointer;active:opacity:.85;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.4rem;">
         <div style="flex:1;"><div style="font-size:.88rem;font-weight:700;color:#ffffff;">${i+1}. ${t.match}</div>
           <div style="font-family:monospace;font-size:.52rem;color:#00a8ad;margin-top:2px;">📅 ${t.datum||''}</div>
@@ -1885,7 +1885,7 @@ function openTipPopup(index) {
 
   overlay.innerHTML = `
     <div style="width:100%;max-width:520px;max-height:92vh;overflow-y:auto;
-      background:linear-gradient(160deg,#0d1e24,#0f2230);
+      background:var(--sheet-bg,#0d1e24);
       border-radius:24px 24px 0 0;padding:1.2rem 1.1rem 2rem;
       box-shadow:0 -8px 40px rgba(15,23,42,.2);">
 
@@ -1897,7 +1897,7 @@ function openTipPopup(index) {
           TIP DETAILS
         </div>
         <button onclick="document.getElementById('tipPopupOverlay').remove()"
-          style="background:rgba(15,23,42,.08);border:none;border-radius:50%;
+          style="background:var(--track-bg,rgba(0,0,0,.08));border:none;border-radius:50%;
           width:2rem;height:2rem;font-size:1rem;cursor:pointer;color:#ffffff;">✕</button>
       </div>
 
@@ -2447,7 +2447,7 @@ function renderScanLog() {
   }
 
   function bar(pct, color) {
-    return '<div style="flex:1;background:rgba(15,23,42,.08);border-radius:999px;height:6px;">'
+    return '<div style="flex:1;background:var(--track-bg,rgba(0,0,0,.08));border-radius:999px;height:6px;">'
       + '<div style="height:100%;border-radius:999px;background:' + color + ';width:' + pct + '%;"></div>'
       + '</div>';
   }
@@ -2473,7 +2473,7 @@ function renderScanLog() {
     + '<div style="display:flex;gap:.4rem;margin-bottom:.5rem;">'
     + '<input id="scanSearchQ" type="text" placeholder="🔍 Zoek wedstrijd, competitie..." value="' + (F.q||'') + '" '
     + 'oninput="window._scanFilter.q=this.value;renderScanLog()" '
-    + 'style="flex:1;padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:#0B1519;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:var(--text);outline:none;" />'
+    + 'style="flex:1;padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:var(--input-bg,rgba(0,0,0,.06));font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:var(--text);outline:none;" />'
     + (activeFilters ? '<button onclick="window._scanFilter={q:\'\',conf:\'\',pick:\'\',comp:\'\',status:\'\',odds:\'\',sort:\'newest\',sharp:false};renderScanLog()" style="padding:.35rem .6rem;border-radius:8px;border:1px solid rgba(220,38,38,.2);background:rgba(220,38,38,.08);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;cursor:pointer;white-space:nowrap;">✕ Reset</button>' : '')
     + '</div>'
     + '<div style="display:flex;gap:.3rem;flex-wrap:wrap;">'
@@ -2545,7 +2545,7 @@ function renderScanLog() {
       var range = entry[0], results = entry[1];
       var tot = results.length;
       var wr  = tot ? Math.round(results.filter(Boolean).length/tot*100) : null;
-      html += '<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.5rem .3rem;">'
+      html += '<div style="text-align:center;background:var(--card-bg,rgba(0,0,0,.04));border-radius:10px;padding:.5rem .3rem;">'
         + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:var(--muted);">' + range + '</div>'
         + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:' + (wr===null?'var(--muted)':hrColor(wr)) + ';">' + (wr===null?'—':wr+'%') + '</div>'
         + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;color:var(--muted);">' + tot + ' picks</div>'
@@ -2631,7 +2631,7 @@ function renderScanLog() {
       + '</div>'
 
       // Samenvatting
-      + '<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;margin-bottom:.65rem;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;line-height:1.8;color:rgba(255,255,255,.5);">'
+      + '<div style="background:var(--card-bg,rgba(0,0,0,.04));border-radius:12px;padding:.6rem .7rem;margin-bottom:.65rem;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;line-height:1.8;color:rgba(255,255,255,.5);">'
       + '<b style="color:#ffffff;">' + allPicks.length + ' picks</b> geanalyseerd &middot; '
       + '<b style="color:' + (hitrate>=40?'#00BEC4':hitrate>=30?'#d97706':'#dc2626') + ';">' + hitrate + '% hitrate</b> &middot; '
       + '<b style="color:' + (roi>=0?'#00BEC4':'#dc2626') + ';">' + (roi>=0?'+':'') + roi.toFixed(1) + '% ROI</b>'
@@ -2646,7 +2646,7 @@ function renderScanLog() {
           const wr = tot ? Math.round(results.filter(r=>r.win).length/tot*100) : null;
           const avgRoi = tot ? results.reduce((s,r)=>s+r.roi,0)/tot : 0;
           const col = wr===null?'var(--sub)':wr>=50?'#00BEC4':wr>=35?'#d97706':'#dc2626';
-          return '<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem .2rem;">'
+          return '<div style="text-align:center;background:var(--card-bg,rgba(0,0,0,.04));border-radius:10px;padding:.4rem .2rem;">'
             + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);">' + range + '</div>'
             + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:' + col + ';">' + (wr===null?'—':wr+'%') + '</div>'
             + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:rgba(255,255,255,.5);">' + tot + 'x</div>'
@@ -2932,7 +2932,7 @@ function showScanPopup(scanIdx) {
     const lockBadge = p.lock === 'triple' ? '<span style="background:rgba(0,190,196,.12);color:#00BEC4;border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🏆 TRIPLE</span>'
       : p.lock === 'double' ? '<span style="background:rgba(0,190,196,.1);color:#1d4ed8;border:1px solid rgba(0,190,196,.2);font-family:monospace;font-size:.4rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🔒 DOUBLE</span>' : '';
 
-    picksHtml += `<div style="background:rgba(15,23,42,.03);border:1px solid rgba(15,23,42,.07);border-radius:12px;padding:.7rem .85rem;margin-bottom:.5rem;">
+    picksHtml += `<div style="background:var(--card-bg,rgba(0,0,0,.03));border:1px solid var(--card-bg,rgba(0,0,0,.07));border-radius:12px;padding:.7rem .85rem;margin-bottom:.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.35rem;">
         <div style="display:flex;align-items:center;gap:.4rem;flex:1;min-width:0;">
           <span style="font-size:1rem;">${icon}</span>
@@ -2942,7 +2942,7 @@ function showScanPopup(scanIdx) {
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.35rem;">
         <span style="background:rgba(0,190,196,.1);color:#6d28d9;border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;padding:2px 7px;border-radius:4px;">${p.pickLabel||p.pick}</span>
-        <span style="background:rgba(15,23,42,.06);color:var(--ink,#0f172a);border:1px solid rgba(15,23,42,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">@ ${p.odds}</span>
+        <span style="background:var(--card-bg,rgba(0,0,0,.06));color:var(--ink,#0f172a);border:1px solid rgba(15,23,42,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">@ ${p.odds}</span>
         <span style="background:rgba(0,190,196,.08);color:#1d4ed8;border:1px solid rgba(0,190,196,.18);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">${(p.value||0).toFixed(1)}% value</span>
         <span style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">conf ${p.confidence}/10</span>
         ${p.confidenceFinal ? `<span style="background:rgba(0,190,196,.08);color:#00BEC4;border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">CI ${p.confidenceFinal}</span>` : ''}
@@ -2956,9 +2956,9 @@ function showScanPopup(scanIdx) {
   overlay.id = 'scanPopupOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;padding:0;backdrop-filter:blur(2px);';
   overlay.innerHTML = `
-    <div style="background:#0d1e24;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
+    <div style="background:var(--sheet-bg,#0d1e24);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
       <!-- Header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid var(--track-bg,rgba(0,0,0,.08));">
         <div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">
             SCAN #${log.length - scanIdx}
@@ -2972,7 +2972,7 @@ function showScanPopup(scanIdx) {
             ${sw ? `<span style="color:#00BEC4;">${sw}W</span> ` : ''}${sl ? `<span style="color:#dc2626;">${sl}V</span> ` : ''}${sp ? `<span style="color:#d97706;">${sp}⏳</span>` : ''}
           </div>
           <button onclick="document.getElementById('scanPopupOverlay').remove()"
-            style="background:rgba(15,23,42,.07);border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+            style="background:var(--card-bg,rgba(0,0,0,.07));border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
         </div>
       </div>
       <!-- Picks lijst -->
@@ -3050,7 +3050,7 @@ function showScanLogStatsPopup() {
       ['ROI', (roi>=0?'+':'')+roi.toFixed(1)+'%', roi>=0?'#00BEC4':'#dc2626'],
       ['GEM. ODDS', avgOdds.toFixed(2), '#0f172a'],
       ['GEM. VALUE', avgValue.toFixed(1)+'%', '#00BEC4'],
-    ].map(([lbl,val,col]) => `<div style="background:rgba(15,23,42,.04);border-radius:12px;padding:.6rem .7rem;text-align:center;">
+    ].map(([lbl,val,col]) => `<div style="background:var(--card-bg,rgba(0,0,0,.04));border-radius:12px;padding:.6rem .7rem;text-align:center;">
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${col};">${val}</div>
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">${lbl}</div>
     </div>`).join('')}
@@ -3058,13 +3058,13 @@ function showScanLogStatsPopup() {
 
   // Per pick type
   if (Object.keys(byType).length) {
-    body += `<div style="background:rgba(15,23,42,.03);border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
+    body += `<div style="background:var(--card-bg,rgba(0,0,0,.03));border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.5rem;">🎯 PER PICK TYPE</div>`;
     Object.entries(byType).sort((a,b)=>b[1].total-a[1].total).forEach(([type,s]) => {
       const hr = Math.round(s.wins/s.total*100);
       body += `<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;min-width:2.5rem;">${type}</div>
-        <div style="flex:1;background:rgba(15,23,42,.08);border-radius:999px;height:6px;">
+        <div style="flex:1;background:var(--track-bg,rgba(0,0,0,.08));border-radius:999px;height:6px;">
           <div style="height:100%;border-radius:999px;background:${hrColor(hr)};width:${hr}%;"></div></div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.5);min-width:4rem;text-align:right;">${hr}% (${s.total})</div>
       </div>`;
@@ -3074,7 +3074,7 @@ function showScanLogStatsPopup() {
 
   // Per competitie
   if (Object.keys(byComp).length) {
-    body += `<div style="background:rgba(15,23,42,.03);border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
+    body += `<div style="background:var(--card-bg,rgba(0,0,0,.03));border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.5rem;">🏆 PER COMPETITIE</div>`;
     Object.entries(byComp).sort((a,b)=>(b[1].roi/b[1].total)-(a[1].roi/a[1].total)).slice(0,8).forEach(([comp,s]) => {
       const hr = Math.round(s.wins/s.total*100);
@@ -3090,13 +3090,13 @@ function showScanLogStatsPopup() {
   }
 
   // Per odds range
-  body += `<div style="background:rgba(15,23,42,.03);border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
+  body += `<div style="background:var(--card-bg,rgba(0,0,0,.03));border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
     <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.5rem;">📊 PER ODDS RANGE</div>
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem;">`;
   Object.entries(byOdds).forEach(([range,results]) => {
     const tot = results.length;
     const wr  = tot ? Math.round(results.filter(Boolean).length/tot*100) : null;
-    body += `<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:8px;padding:.4rem .2rem;">
+    body += `<div style="text-align:center;background:var(--card-bg,rgba(0,0,0,.04));border-radius:8px;padding:.4rem .2rem;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.5);">${range}</div>
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:${wr===null?'var(--sub)':hrColor(wr)};">${wr===null?'—':wr+'%'}</div>
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);">${tot}x</div>
@@ -3105,13 +3105,13 @@ function showScanLogStatsPopup() {
   body += '</div></div>';
 
   // Value kalibratie
-  body += `<div style="background:rgba(15,23,42,.03);border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
+  body += `<div style="background:var(--card-bg,rgba(0,0,0,.03));border-radius:12px;padding:.7rem .85rem;margin-bottom:.6rem;">
     <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.5rem;">📐 VALUE KALIBRATIE</div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;">`;
   Object.entries(vb).forEach(([range,results]) => {
     const tot = results.length;
     const wr  = tot ? Math.round(results.filter(Boolean).length/tot*100) : null;
-    body += `<div style="text-align:center;background:rgba(15,23,42,.04);border-radius:8px;padding:.4rem .2rem;">
+    body += `<div style="text-align:center;background:var(--card-bg,rgba(0,0,0,.04));border-radius:8px;padding:.4rem .2rem;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">${range}</div>
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${wr===null?'var(--sub)':hrColor(wr)};">${wr===null?'—':wr+'%'}</div>
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.5);">${tot} picks</div>
@@ -3123,14 +3123,14 @@ function showScanLogStatsPopup() {
   overlay.id = 'scanStatsPopupOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9998;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px);';
   overlay.innerHTML = `
-    <div style="background:#0d1e24;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid rgba(15,23,42,.08);">
+    <div style="background:var(--sheet-bg,#0d1e24);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid var(--track-bg,rgba(0,0,0,.08));">
         <div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">📊 SCAN LOG STATISTIEKEN</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-top:.1rem;">${allPicks.length} picks · ${settled.length} afgerond</div>
         </div>
         <button onclick="document.getElementById('scanStatsPopupOverlay').remove()"
-          style="background:rgba(15,23,42,.07);border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;">✕</button>
+          style="background:var(--card-bg,rgba(0,0,0,.07));border:none;border-radius:50%;width:2rem;height:2rem;font-size:.9rem;cursor:pointer;">✕</button>
       </div>
       <div style="overflow-y:auto;padding:.8rem 1rem 1.5rem;flex:1;">${body}</div>
     </div>`;
@@ -3372,7 +3372,7 @@ function showManualVerify(scanId, pickId, pick, matchName) {
         text-align:center;padding:.5rem;border-radius:8px;margin-bottom:1rem;min-height:1.5rem;"></div>
       <div style="display:flex;gap:.5rem;">
         <button onclick="document.getElementById('manual-verify-modal').remove()"
-          style="flex:1;padding:.65rem;border-radius:12px;background:rgba(15,23,42,.06);
+          style="flex:1;padding:.65rem;border-radius:12px;background:var(--card-bg,rgba(0,0,0,.06));
           border:1px solid rgba(255,255,255,0.09);font-family:\'IBM Plex Mono\',monospace;
           font-size:.6rem;font-weight:700;color:rgba(255,255,255,.5);cursor:pointer;">
           Annuleren
