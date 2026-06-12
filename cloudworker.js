@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v144'; // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v145'; // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -674,6 +674,51 @@ async function handleAnalytics(env) {
           ? Math.round(withCLV.filter(r => parseFloat(r.clv_pct) > 0).length / withCLV.length * 100)
           : null,
       },
+      // v144: pick tier performance + league tier data
+      pickTierPerformance: await (async () => {
+        try {
+          const rows = await sb(env, 'picks', 'GET', null,
+            `?status=in.(win,lose)&select=lock_level,elite,status,value,confidence,sharp_score,sharp_tier,league_name,pick,odds&limit=500`
+          ) || [];
+          const tiers = {};
+          rows.forEach(r => {
+            const tier = r.elite ? 'elite' : (r.lock_level || 'single');
+            if (!tiers[tier]) tiers[tier] = { total:0, wins:0, valueSum:0, confSum:0, sharpSum:0, sharpN:0 };
+            tiers[tier].total++;
+            if (r.status === 'win') tiers[tier].wins++;
+            tiers[tier].valueSum += parseFloat(r.value||0);
+            tiers[tier].confSum  += parseFloat(r.confidence||0);
+            if (r.sharp_score) { tiers[tier].sharpSum += parseFloat(r.sharp_score); tiers[tier].sharpN++; }
+          });
+          return Object.entries(tiers).map(([tier, s]) => ({
+            tier,
+            total:        s.total,
+            wins:         s.wins,
+            hitrate:      s.total ? parseFloat((s.wins/s.total*100).toFixed(1)) : 0,
+            avgValue:     s.total ? parseFloat((s.valueSum/s.total).toFixed(1)) : 0,
+            avgConf:      s.total ? parseFloat((s.confSum/s.total).toFixed(1)) : 0,
+            avgSharp:     s.sharpN ? parseFloat((s.sharpSum/s.sharpN).toFixed(1)) : null,
+          }));
+        } catch(e) { return []; }
+      })(),
+      leagueTiers: await (async () => {
+        try {
+          const rows = await sb(env, 'league_calibration', 'GET', null,
+            `?total=gt.0&select=league_id,league_name,wins,total,roi,factor,tier,avg_clv,clv_count&order=total.desc&limit=20`
+          ) || [];
+          return rows.map(r => ({
+            leagueId:   r.league_id,
+            leagueName: r.league_name,
+            wins:       r.wins,
+            total:      r.total,
+            hitrate:    r.total ? parseFloat((r.wins/r.total*100).toFixed(1)) : 0,
+            roi:        parseFloat(r.roi||0).toFixed(1),
+            factor:     parseFloat(r.factor||1).toFixed(3),
+            tier:       r.tier || 'onbekend',
+            avgClv:     r.avg_clv ? parseFloat(r.avg_clv).toFixed(2) : null,
+          }));
+        } catch(e) { return []; }
+      })(),
       sharpMoney: await (async () => {
         // v135b: teamnamen ophalen uit picks tabel via fixture IDs
         const steamTop = sharpData.slice(0, 8);
@@ -1496,6 +1541,51 @@ async function runWeeklyCalibration(env) {
       calibration[lid].weeklyUpdatedAt = new Date().toISOString();
     });
 
+    // v144: automatische tier berekening per league
+    const tierUpdates = [];
+    Object.entries(leagueStats).forEach(([lid, stats]) => {
+      if (stats.total < 10) return; // te weinig data
+      const hitrate = stats.wins / stats.total;
+      const avgClv = calibration[lid]?.clvSum && calibration[lid]?.clvCount
+        ? calibration[lid].clvSum / calibration[lid].clvCount : null;
+
+      let tier = 'neutraal';
+      if (hitrate >= 0.45 && (avgClv === null || avgClv >= 2))  tier = 'elite';
+      else if (hitrate >= 0.35 && (avgClv === null || avgClv >= 0)) tier = 'goed';
+      else if (hitrate < 0.25 || (avgClv !== null && avgClv < -3))  tier = 'risico';
+
+      // Factor aanpassen op basis van tier
+      if (!calibration[lid]) calibration[lid] = { leagueName: stats.name };
+      calibration[lid].tier = tier;
+      calibration[lid].tierUpdatedAt = new Date().toISOString();
+
+      // Extra penalty voor risico leagues
+      if (tier === 'risico' && calibration[lid].factor > 0.75) {
+        calibration[lid].factor = parseFloat(Math.max(0.70, calibration[lid].factor * 0.90).toFixed(3));
+        console.log(`[WeeklyCalib] ${stats.name} (${lid}) → RISICO tier, factor verlaagd naar ${calibration[lid].factor}`);
+      }
+      if (tier === 'elite' && calibration[lid].factor < 1.10) {
+        calibration[lid].factor = parseFloat(Math.min(1.30, calibration[lid].factor * 1.05).toFixed(3));
+        console.log(`[WeeklyCalib] ${stats.name} (${lid}) → ELITE tier, factor verhoogd naar ${calibration[lid].factor}`);
+      }
+
+      // Supabase tier update
+      tierUpdates.push({
+        league_id: lid,
+        tier,
+        tier_updated_at: new Date().toISOString(),
+        avg_clv: avgClv ? parseFloat(avgClv.toFixed(2)) : null,
+      });
+    });
+
+    // Sla tier updates op in Supabase
+    if (tierUpdates.length) {
+      for (const t of tierUpdates) {
+        await sb(env, 'league_calibration', 'POST', [t], '?on_conflict=league_id');
+      }
+      console.log(`[WeeklyCalib] ${tierUpdates.length} league tiers bijgewerkt`);
+    }
+
     await sbSaveCalibration(calibration, env);
     await fb(env, 'calibration', 'PUT', calibration); // FB fallback
     console.log(`[WeeklyCalib] ${Object.keys(leagueStats).length} leagues gecalibreerd`);
@@ -1896,9 +1986,14 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       }
 
       // Strengere drempel voor gelijkspel picks (en voor toernooi/landenduels)
-      // v138: WK-specifieke drempels — toernooi heeft dunne data, iets soepeler
-      const minConf = tournament ? 5 : 6;
-      const minValue = c.pick === 'X' ? (tournament ? 10 : 12) : (tournament ? 6 : 6);
+      // v144: league tier drempels — risico leagues hogere lat
+      const leagueTier = leagueCalibration[String(m.leagueId)]?.tier || 'neutraal';
+      const isRisico = leagueTier === 'risico';
+      const isEliteLeague = leagueTier === 'elite';
+      const minConf = tournament ? 5 : (isRisico ? 7 : 6);
+      const minValue = c.pick === 'X'
+        ? (tournament ? 10 : isRisico ? 15 : 12)
+        : (tournament ? 6  : isRisico ? 9  : 6);
       if (conf.score < minConf || value < minValue) return;
 
       // v140b: gelijkspel pas na 2 opeenvolgende bevestigingen (te wispelturig)
@@ -2276,9 +2371,14 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
         conf.score = Math.max(1, Math.min(10, Math.round(conf.final / 10)));
       }
 
-      // v138: WK-specifieke drempels — toernooi heeft dunne data, iets soepeler
-      const minConf = tournament ? 5 : 6;
-      const minValue = c.pick === 'X' ? (tournament ? 10 : 12) : (tournament ? 6 : 6);
+      // v144: league tier drempels — risico leagues hogere lat
+      const leagueTier = leagueCalibration[String(m.leagueId)]?.tier || 'neutraal';
+      const isRisico = leagueTier === 'risico';
+      const isEliteLeague = leagueTier === 'elite';
+      const minConf = tournament ? 5 : (isRisico ? 7 : 6);
+      const minValue = c.pick === 'X'
+        ? (tournament ? 10 : isRisico ? 15 : 12)
+        : (tournament ? 6  : isRisico ? 9  : 6);
       if (conf.score < minConf || value < minValue) return;
 
       // v140b: gelijkspel pas na 2 opeenvolgende bevestigingen (te wispelturig)
