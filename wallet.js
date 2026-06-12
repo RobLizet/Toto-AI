@@ -371,16 +371,16 @@ function renderBetHistory() {
     const scoreTag = b.score ? ` [${b.score}]` : (b.liveScore ? ` ⚽${b.liveScore}${b.liveMinute?` ${b.liveMinute}'`:''}` : '');
     const srcBadge = b.source === 'value' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(0,190,196,.1);color:#00BEC4;padding:1px 6px;border-radius:4px;font-weight:700;">⚡ Value</span> ' : b.source === 'analyse' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(0,190,196,.1);color:#00a8ad;padding:1px 6px;border-radius:4px;font-weight:700;">🤖 AI</span> ' : '';
     const legsHtml = isCombi && b.legs ? b.legs.map((l,i) => `
-      <div style="display:flex;justify-content:space-between;padding:.25rem 0;border-top:1px solid rgba(255,255,255,0.09);font-family:monospace;font-size:.5rem;">
-        <span style="color:#ffffff;">${l.match||''} — ${l.pick} @ ${l.odds}</span>
+      <div style="display:flex;justify-content:space-between;padding:.25rem 0;border-top:1px solid var(--bet-border,rgba(255,255,255,0.09));font-family:monospace;font-size:.5rem;">
+        <span style="color:var(--bet-text,#ffffff);">${l.match||''} — ${l.pick} @ ${l.odds}</span>
         <span style="color:${l.legStatus==='win'?'#00BEC4':l.legStatus==='lose'?'#dc2626':'#94a3b8'};">${l.legStatus==='win'?'✓':l.legStatus==='lose'?'✗':'⏳'}</span>
       </div>`).join('') : '';
     return `
     <div class="bet-row bet-${b.status||'pending'}" style="cursor:pointer;" data-bet="${JSON.stringify({id:b.id,match:b.matchName||b.match||'',pick:b.pick,pickLabel:b.pickLabel||b.pick,odds:b.odds,stake:b.amount||b.stake,status:b.status,date:b.date,markt:b.markt,note:b.note,payout:b.payout}).replace(/"/g,'&quot;')}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
         <div style="flex:1;">
-          <div style="font-size:.85rem;font-weight:700;color:#ffffff;">${srcBadge}${b.matchName||b.match||''}${scoreTag}</div>
-          <div style="font-family:monospace;font-size:.6rem;color:rgba(255,255,255,.5);margin-top:.15rem;">
+          <div style="font-size:.85rem;font-weight:700;color:var(--bet-text,#ffffff);">${srcBadge}${b.matchName||b.match||''}${scoreTag}</div>
+          <div style="font-family:monospace;font-size:.6rem;color:var(--bet-muted,rgba(255,255,255,.5));margin-top:.15rem;">
             ${isCombi ? `Combi ${b.legs?.length||0} legs` : b.pick} @ ${b.odds} · €${b.amount||b.stake||0} → €${b.payout||0} · ${b.date||''}
           </div>
           ${isCombi ? `<div style="margin-top:.3rem;">${legsHtml}</div>` : ''}
