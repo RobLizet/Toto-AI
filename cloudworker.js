@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v139'; // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v140'; // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1771,6 +1771,22 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
   // v117: watchdog — onderscheid stille AI-mislukking (parse/API-fout) van 'geen value'
   const aiFailed = analyseBatch.length > 0 && aiResults.length === 0;
   if (aiFailed) console.error(`[Scan] ⚠️ AI gaf 0 resultaten voor ${analyseBatch.length} wedstrijden — mogelijk parse/API-fout`);
+
+  // v139: bouw poissonMap uit AI-resultaten voor betere sharp divergentie berekening
+  // { fixtureId: { h: homeWinPct, x: drawPct, a: awayWinPct } }
+  const poissonMap = {};
+  analyseBatch.forEach((m, i) => {
+    const ai = aiResults[i];
+    if (!ai) return;
+    poissonMap[m.fixtureId] = { h: ai.h || 33, x: ai.x || 33, a: ai.a || 34 };
+  });
+
+  // Tweede detectSharpMoney aanroep met echte Poisson data (divergentie nu correct)
+  if (Object.keys(poissonMap).length > 0) {
+    try {
+      sharpSignals = await detectSharpMoney(oddsMap, batch, env, poissonMap) || sharpSignals;
+    } catch(e) { console.error('[Sharp] Tweede run fout:', e.message); }
+  }
 
   const newPicks = {};
   const existingPicks = await sbGetPicks(env);
