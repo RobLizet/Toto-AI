@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v145'; // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v146'; // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1233,15 +1233,47 @@ async function fetchOddsForFixtures(fixtureIds, env, maxCalls = 36) {
     return true;
   }
 
+  // v146: datum-bulk odds fetch — 1-2 calls i.p.v. 1 per fixture
+  // /odds?date=YYYY-MM-DD haalt alle odds voor die dag in 1 call op (paginated)
+  // Veel minder API-calls, voorkomt rate limiting
   try {
-    const B = 5;
-    for (let i = 0; i < fixtureIds.length; i += B) {
-      if (oddsCallsUsed >= maxCalls) break; // budget op -> rest via fair-odds fallback (v111)
-      const sl = fixtureIds.slice(i, i + B);
-      oddsCallsUsed += sl.length;
-      const rs = await Promise.allSettled(sl.map(id => apif(`/odds?fixture=${id}&bet=1`, env)));
-      rs.forEach((r, j) => { if (r.status === "fulfilled") parseConsensus(r.value, sl[j]); });
-      if (i + B < fixtureIds.length) await new Promise(r => setTimeout(r, 500));
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const fixtureSet = new Set(fixtureIds);
+
+    for (const date of [today, tomorrow]) {
+      if (oddsCallsUsed >= maxCalls) break;
+      try {
+        // Pagina 1
+        const r1 = await apif(`/odds?date=${date}&bet=1&page=1`, env);
+        oddsCallsUsed++;
+        if (r1?.length) {
+          r1.forEach(item => {
+            const fid = item.fixture?.id;
+            if (fid && fixtureSet.has(fid) && !oddsMap[fid]) parseConsensus([item], fid);
+          });
+          // Pagina 2 als nog niet alle fixtures gedekt
+          const covered = fixtureIds.filter(id => oddsMap[id]).length;
+          if (covered < fixtureIds.length && oddsCallsUsed < maxCalls) {
+            const r2 = await apif(`/odds?date=${date}&bet=1&page=2`, env);
+            oddsCallsUsed++;
+            if (r2?.length) r2.forEach(item => {
+              const fid = item.fixture?.id;
+              if (fid && fixtureSet.has(fid) && !oddsMap[fid]) parseConsensus([item], fid);
+            });
+          }
+        }
+      } catch(e) { console.error(`[Odds] Bulk datum ${date} fout:`, e.message); }
+    }
+
+    // Fallback: nog ontbrekende fixtures individueel ophalen (max 5)
+    const missing = fixtureIds.filter(id => !oddsMap[id]);
+    if (missing.length && oddsCallsUsed < maxCalls) {
+      console.log(`[Odds] Fallback: ${missing.length} fixtures individueel ophalen`);
+      const toFetch = missing.slice(0, Math.min(5, maxCalls - oddsCallsUsed));
+      oddsCallsUsed += toFetch.length;
+      const rs = await Promise.allSettled(toFetch.map(id => apif(`/odds?fixture=${id}&bet=1`, env)));
+      rs.forEach((r, j) => { if (r.status === 'fulfilled') parseConsensus(r.value, toFetch[j]); });
     }
   } catch (e) {
     console.error('[Odds] Fout bij ophalen:', e);
