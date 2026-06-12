@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v146'; // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v147'; // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1694,44 +1694,37 @@ async function runScan(env, force = false) {
     // Actieve competities buiten WK-periode:
     // 88 Eredivisie playoffs, 113 Eliteserien NO, 113→ check, 
     // 103 Allsvenskan SE, 2/3/848 CL/EL/ECL (t/m eind mei)
+    // v146: alleen echt actieve leagues tijdens WK-zomer (jun-jul 2026)
+    // Afgelopen: WK-kwal, Nations League, CL/EL/ECL, Portugal, Saudi, Chile, Liga MX
     leagueConfig = [
-      // ── Internationaal ──
-      { id: 1,   s: 2026 }, // WK 2026
-      { id: 4,   s: 2026 }, // WK kwalificatie Europa
-      { id: 10,  s: 2026 }, // International Friendlies (oefenwedstrijden)
-      { id: 5,   s: 2026 }, // Nations League
-      { id: 6,   s: 2026 }, // WK kwalificatie CONMEBOL
-      { id: 29,  s: 2026 }, // WK kwalificatie Afrika (CAF)
-      { id: 36,  s: 2026 }, // WK kwalificatie Azië (AFC)
+      // ── WK 2026 (hoofddoel) ──
+      { id: 1,   s: 2026 }, // FIFA World Cup 2026
+
       // ── Scandinavië (zomercompetities, volop actief) ──
       { id: 113, s: 2026 }, // Eliteserien Noorwegen
       { id: 103, s: 2026 }, // Allsvenskan Zweden
       { id: 119, s: 2026 }, // Superliga Denemarken
       { id: 129, s: 2026 }, // Veikkausliiga Finland
-      // ── Zuid-Amerika (actief jun–nov) ──
+
+      // ── Zuid-Amerika ──
       { id: 71,  s: 2026 }, // Brasileirao Série A
       { id: 239, s: 2026 }, // Copa Libertadores
+
       // ── Noord-Amerika ──
       { id: 253, s: 2026 }, // MLS
-      // ── Azië/Oceanie ──
+
+      // ── Azië ──
       { id: 292, s: 2026 }, // K League Zuid-Korea
-      { id: 98,  s: 2026 }, // J-League Japan (kalenderjaar — actief seizoen 2026)
-      // ── Europa eindcompetities (playoffs/finales) ──
-      { id: 2,   s: 2026 }, // Champions League
-      { id: 3,   s: 2026 }, // Europa League
-      { id: 848, s: 2026 }, // Conference League
-      { id: 94,  s: 2025 }, // Primeira Liga Portugal (2025-26)
-      // ── Actief tijdens WK-zomer ──
-      { id: 307, s: 2026 }, // Saudi Pro League (jan–mei + aug–dec)
-      { id: 169, s: 2026 }, // Superliga Argentinië
-      { id: 188, s: 2026 }, // Primera División Chile
-      { id: 210, s: 2026 }, // Liga MX Mexico
+      { id: 98,  s: 2026 }, // J-League Japan
+
+      // ── Argentinië (loopt door in zomer) ──
+      { id: 169, s: 2026 }, // Primera Division Argentinië
     ];
-    console.log('[Scan] Actieve leagues: WK + Friendlies + Nations League + Scandinavië + Zuid-Amerika + MLS + Azië');
+    console.log('[Scan] Actieve leagues (WK-zomer): WK + Scandinavië + Brazilië + Copa Lib + MLS + K League + J-League + Argentinië (11 leagues)');
   }
 
   // Leagues die UTC timezone gebruiken — date= werkt niet, gebruik next=15
-  const NEXT_LEAGUES = new Set([10, 5, 6, 29, 36, 113, 103, 119, 129, 253, 71, 239, 292, 98, 307, 169, 188, 210]); // 10=Friendlies, 5=NL, 6/29/36=WK kwal
+  const NEXT_LEAGUES = new Set([113, 103, 119, 129, 253, 71, 239, 292, 98, 169]); // v146: alleen actieve zomer-leagues // 10=Friendlies, 5=NL, 6/29/36=WK kwal
 
   const SCAN_LEAGUES = leagueConfig.map(l => l.id);
   const SCAN_LEAGUE_SET = new Set(SCAN_LEAGUES);
