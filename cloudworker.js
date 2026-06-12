@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v136'; // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v137'; // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1828,8 +1828,9 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       }
 
       // Strengere drempel voor gelijkspel picks (en voor toernooi/landenduels)
-      const minConf = c.pick === 'X' ? 6 : 5;
-      const minValue = c.pick === 'X' ? (tournament ? 12 : 10) : (tournament ? 6 : 3);
+      // v136: strengere drempels — 1-3% value is ruis, niet inzetbaar
+      const minConf = 6;  // altijd conf 6+ (was 5 voor 1/2)
+      const minValue = c.pick === 'X' ? (tournament ? 14 : 12) : (tournament ? 8 : 6);  // was 3/6/10/12
       if (conf.score < minConf || value < minValue) return;
 
       const elite = !tournament && isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds, pick: c.pick, poissonUsed: false });
@@ -1889,7 +1890,41 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     });
   });
 
-  const toSave = { ...existingPicks, ...newPicks };
+  // ── v136: PER WEDSTRIJD MAXIMAAL 1 PICK ─────────────────────
+  // Tegenstrijdige picks (Canada wint + Bosnia wint) zijn onacceptabel.
+  // Houd per fixtureId alleen de pick met de hoogste score: conf × value.
+  // Bestaande picks worden alleen vervangen als de nieuwe pick significant beter is.
+  const deduplicatedNew = {};
+  const newByFixture = {};
+  Object.entries(newPicks).forEach(([key, p]) => {
+    const fid = p.fixtureId;
+    const score = (p.confidenceFinal || 0) * (p.value || 0);
+    if (!newByFixture[fid] || score > newByFixture[fid].score) {
+      newByFixture[fid] = { key, score };
+    }
+  });
+  // Alleen de winnende pick per fixture opnemen
+  Object.values(newByFixture).forEach(({ key }) => {
+    deduplicatedNew[key] = newPicks[key];
+  });
+  const removedCount = Object.keys(newPicks).length - Object.keys(deduplicatedNew).length;
+  if (removedCount > 0) console.log(`[Scan] ${removedCount} tegenstrijdige picks verwijderd (1 pick per wedstrijd)`);
+
+  // Verwijder ook bestaande picks voor dezelfde wedstrijd als er een betere nieuwe pick is
+  const cleanedExisting = { ...existingPicks };
+  Object.values(deduplicatedNew).forEach(newPick => {
+    const fid = newPick.fixtureId;
+    // Verwijder bestaande picks voor deze fixture die een andere pick-kant zijn
+    Object.keys(cleanedExisting).forEach(k => {
+      if (cleanedExisting[k].fixtureId === fid && cleanedExisting[k].pick !== newPick.pick
+          && (cleanedExisting[k].status === 'pending')) {
+        console.log(`[Scan] Verwijder conflicterende bestaande pick: ${k} (${cleanedExisting[k].pick}) → vervangen door ${newPick.pick}`);
+        delete cleanedExisting[k];
+      }
+    });
+  });
+
+  const toSave = { ...cleanedExisting, ...deduplicatedNew };
   const entries = Object.entries(toSave)
     .sort((a, b) => new Date(b[1].lastScanAt || 0) - new Date(a[1].lastScanAt || 0))
     .slice(0, 200);
@@ -2142,8 +2177,9 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
         conf.score = Math.max(1, Math.min(10, Math.round(conf.final / 10)));
       }
 
-      const minConf = c.pick === 'X' ? 6 : 5;
-      const minValue = c.pick === 'X' ? (tournament ? 12 : 10) : (tournament ? 6 : 3);
+      // v136: strengere drempels — 1-3% value is ruis, niet inzetbaar
+      const minConf = 6;  // altijd conf 6+ (was 5 voor 1/2)
+      const minValue = c.pick === 'X' ? (tournament ? 14 : 12) : (tournament ? 8 : 6);  // was 3/6/10/12
       if (conf.score < minConf || value < minValue) return;
 
       picks.push({
