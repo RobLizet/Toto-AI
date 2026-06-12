@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v147'; // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v148'; // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1694,33 +1694,55 @@ async function runScan(env, force = false) {
     // Actieve competities buiten WK-periode:
     // 88 Eredivisie playoffs, 113 Eliteserien NO, 113→ check, 
     // 103 Allsvenskan SE, 2/3/848 CL/EL/ECL (t/m eind mei)
-    // v146: alleen echt actieve leagues tijdens WK-zomer (jun-jul 2026)
-    // Afgelopen: WK-kwal, Nations League, CL/EL/ECL, Portugal, Saudi, Chile, Liga MX
-    leagueConfig = [
-      // ── WK 2026 (hoofddoel) ──
-      { id: 1,   s: 2026 }, // FIFA World Cup 2026
+    // v148: automatische seizoenswisseling
+    // Fase 1: WK-zomer (t/m 19 jul 2026) — WK + actieve zomercompetities
+    // Fase 2: Post-WK / nieuw Europees seizoen (vanaf 20 jul 2026) — alleen Europa
+    const postWK = dateNow >= new Date('2026-07-20');
 
-      // ── Scandinavië (zomercompetities, volop actief) ──
-      { id: 113, s: 2026 }, // Eliteserien Noorwegen
-      { id: 103, s: 2026 }, // Allsvenskan Zweden
-      { id: 119, s: 2026 }, // Superliga Denemarken
-      { id: 129, s: 2026 }, // Veikkausliiga Finland
-
-      // ── Zuid-Amerika ──
-      { id: 71,  s: 2026 }, // Brasileirao Série A
-      { id: 239, s: 2026 }, // Copa Libertadores
-
-      // ── Noord-Amerika ──
-      { id: 253, s: 2026 }, // MLS
-
-      // ── Azië ──
-      { id: 292, s: 2026 }, // K League Zuid-Korea
-      { id: 98,  s: 2026 }, // J-League Japan
-
-      // ── Argentinië (loopt door in zomer) ──
-      { id: 169, s: 2026 }, // Primera Division Argentinië
-    ];
-    console.log('[Scan] Actieve leagues (WK-zomer): WK + Scandinavië + Brazilië + Copa Lib + MLS + K League + J-League + Argentinië (11 leagues)');
+    if (!postWK) {
+      // ── FASE 1: WK-zomer ──────────────────────────────────
+      leagueConfig = [
+        { id: 1,   s: 2026 }, // FIFA World Cup 2026
+        { id: 113, s: 2026 }, // Eliteserien Noorwegen
+        { id: 103, s: 2026 }, // Allsvenskan Zweden
+        { id: 119, s: 2026 }, // Superliga Denemarken
+        { id: 129, s: 2026 }, // Veikkausliiga Finland
+        { id: 71,  s: 2026 }, // Brasileirao Série A
+        { id: 239, s: 2026 }, // Copa Libertadores
+        { id: 253, s: 2026 }, // MLS
+        { id: 292, s: 2026 }, // K League Zuid-Korea
+        { id: 98,  s: 2026 }, // J-League Japan
+        { id: 169, s: 2026 }, // Primera Division Argentinië
+      ];
+      console.log('[Scan] FASE 1 — WK-zomer: 11 leagues actief');
+    } else {
+      // ── FASE 2: Post-WK — alleen Europa (nieuw seizoen 2026-27) ─
+      leagueConfig = [
+        // Top 5 Europa
+        { id: 39,  s: 2026 }, // Premier League Engeland
+        { id: 140, s: 2026 }, // La Liga Spanje
+        { id: 78,  s: 2026 }, // Bundesliga Duitsland
+        { id: 135, s: 2026 }, // Serie A Italië
+        { id: 61,  s: 2026 }, // Ligue 1 Frankrijk
+        // Europese subtop
+        { id: 88,  s: 2026 }, // Eredivisie Nederland
+        { id: 94,  s: 2026 }, // Primeira Liga Portugal
+        { id: 144, s: 2026 }, // Jupiler Pro League België
+        { id: 179, s: 2026 }, // Scottish Premiership
+        { id: 197, s: 2026 }, // Super League Zwitserland
+        { id: 203, s: 2026 }, // Super Lig Turkije
+        // Europese toernooien
+        { id: 2,   s: 2026 }, // Champions League
+        { id: 3,   s: 2026 }, // Europa League
+        { id: 848, s: 2026 }, // Conference League
+        // Scandinavië (lopen door)
+        { id: 113, s: 2026 }, // Eliteserien Noorwegen
+        { id: 103, s: 2026 }, // Allsvenskan Zweden
+        { id: 119, s: 2026 }, // Superliga Denemarken
+        { id: 129, s: 2026 }, // Veikkausliiga Finland
+      ];
+      console.log('[Scan] FASE 2 — Post-WK Europese seizoen: 18 leagues actief');
+    }
   }
 
   // Leagues die UTC timezone gebruiken — date= werkt niet, gebruik next=15
