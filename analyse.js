@@ -1646,16 +1646,35 @@ async function generateCombiTip() {
   // v26.37: kandidaten = value-picks uit de scan-engine (consistent met de scan-log + WK-hardening).
   // Niet langer een losse selectie over alle odds; Claude kiest straks UITSLUITEND uit deze picks.
   const _todayStr = new Date().toISOString().split('T')[0];
+  const _tomorrowStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
   const _byMatch = {};
+
   (state.valueScans || []).forEach(s => {
-    if (!s || !s.match || !s.pick || s.pick === 'X') return;
-    if (parseFloat(s.odds) < 1.40) return;
+    if (!s || !s.match || !s.pick || s.pick === 'X') return;       // geen gelijkspelen in combi
+    if (parseFloat(s.odds) < 1.40 || parseFloat(s.odds) > 6.00) return; // odds range
     if (!(s.value > 0)) return;
     const d = s.match.dateISO || s.match.date || '';
+    // v138: alleen vandaag + morgen (niet overmorgen of verder) — combi moet speelbaar zijn
     if (d && d < _todayStr) return;
+    if (d && d > _tomorrowStr) return;
     const k = String(s.match.id);
-    if (!_byMatch[k] || (s.confidence || 0) > (_byMatch[k].confidence || 0)) _byMatch[k] = s;
+    // v138: houd per fixture alleen beste pick (hoogste conf × value)
+    const score = (s.confidence || 0) * (s.value || 0);
+    const prevScore = _byMatch[k] ? (_byMatch[k].confidence || 0) * (_byMatch[k].value || 0) : -1;
+    if (!_byMatch[k] || score > prevScore) _byMatch[k] = s;
   });
+
+  // v138: verwijder fixtures waar de ene pick de andere tegenspreekt
+  // (kan niet meer voorkomen na worker fix, maar veiligheidsnet)
+  const _fixtureIds = Object.keys(_byMatch);
+  _fixtureIds.forEach(k => {
+    const pick = _byMatch[k].pick;
+    const conflicts = _fixtureIds.filter(k2 => k2 !== k &&
+      _byMatch[k2]?.match?.id === _byMatch[k]?.match?.id &&
+      _byMatch[k2]?.pick !== pick);
+    conflicts.forEach(k2 => delete _byMatch[k2]);
+  });
+
   const upcomingMatches = Object.values(_byMatch)
     .sort((a, b) => (b.confidence - a.confidence) || (b.value - a.value))
     .map(s => ({
