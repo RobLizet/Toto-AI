@@ -1624,3 +1624,43 @@ body.creme #cardPopupOverlay [style*="background:rgba(255,255,255,.05)"] {
 body.creme #cardPopupOverlay > div {
   background: #2c1a0e !important;
 }
+
+/* ── Crème — analytics sectie-titels + tekst leesbaar ──── */
+body.creme .analytics-block-title {
+  color: #2c1a0e !important;
+}
+body.creme .analytics-block-title span {
+  color: #7a5230 !important;
+}
+/* Alle witte IBM Plex Mono tekst in analytics blokken */
+body.creme .analytics-block [style*="color:#ffffff"],
+body.creme .analytics-block [style*="color: #ffffff"],
+body.creme .analytics-block [style*="color:rgba(255,255,255,.5)"],
+body.creme .analytics-block [style*="color:rgba(255,255,255,.4)"],
+body.creme .analytics-block [style*="color:rgba(255,255,255,.35)"],
+body.creme .analytics-block [style*="color:rgba(255,255,255,.55)"] {
+  color: #7a5230 !important;
+}
+body.creme .analytics-block [style*="color:rgba(255,255,255,.8)"],
+body.creme .analytics-block [style*="color:rgba(255,255,255,.85)"],
+body.creme .analytics-block [style*="color:rgba(255,255,255,.9)"] {
+  color: #2c1a0e !important;
+}
+/* Track/progress bar achtergrond in analytics */
+body.creme .analytics-block [style*="var(--track-bg"] {
+  background: rgba(0,0,0,.08) !important;
+}
+/* Pick tier performance balkjes — tekst */
+body.creme .analytics-block [style*="font-weight:700"],
+body.creme .analytics-block [style*="font-weight:800"] {
+  color: #2c1a0e !important;
+}
+/* Uitzonderingen: gekleurde waarden behouden */
+body.creme .analytics-block [style*="color:#00BEC4"],
+body.creme .analytics-block [style*="color:#d97706"],
+body.creme .analytics-block [style*="color:#dc2626"],
+body.creme .analytics-block [style*="color:#16a34a"],
+body.creme .analytics-block [style*="color:#f59e0b"],
+body.creme .analytics-block [style*="color:#7c3aed"] {
+  color: inherit !important;
+}
