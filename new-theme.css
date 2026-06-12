@@ -1598,3 +1598,29 @@ body.creme [style*="color:rgba(255,255,255"] {
 /* Bewaar lichte tekst in donkere popups/overlays */
 body.creme .overlay-sheet *,
 body.creme [style*="border-radius:20px 20px 0 0"] * { color: inherit; }
+
+/* ── Crème — VALUE PICK / BET DETAILS popup kaartjes ────── */
+/* De 3 kaartjes (PICK, ODDS, VALUE) in de card popup */
+body.creme #cardPopupOverlay [style*="background:rgba(0,190,196,.1)"],
+body.creme #cardPopupOverlay [style*="background:rgba(0,190,196,.08)"] {
+  background: rgba(0,150,155,.12) !important;
+  border-color: rgba(0,150,155,.35) !important;
+}
+body.creme #cardPopupOverlay [style*="background:rgba(22,163,74"],
+body.creme #cardPopupOverlay [style*="background:rgba(180,83,9"] {
+  background: rgba(184,142,50,.12) !important;
+  border-color: rgba(184,142,50,.4) !important;
+}
+/* Confidence blok */
+body.creme #cardPopupOverlay [style*="background:rgba(255,255,255,.07)"] {
+  background: rgba(255,250,242,.85) !important;
+  border-color: rgba(184,142,50,.3) !important;
+}
+/* Reason tekst blok */
+body.creme #cardPopupOverlay [style*="background:rgba(255,255,255,.05)"] {
+  background: rgba(255,250,242,.7) !important;
+}
+/* Popup sheet zelf donker houden (is bewust overlay) */
+body.creme #cardPopupOverlay > div {
+  background: #2c1a0e !important;
+}
