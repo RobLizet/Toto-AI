@@ -1664,3 +1664,28 @@ body.creme .analytics-block [style*="color:#f59e0b"],
 body.creme .analytics-block [style*="color:#7c3aed"] {
   color: inherit !important;
 }
+
+/* ── Crème — wallet bet-row CSS variabelen ──────────────── */
+body.creme {
+  --bet-text:   #2c1a0e;
+  --bet-muted:  #7a5230;
+  --bet-border: rgba(184,142,50,.25);
+}
+
+/* Extra zekerheid: alle directe kinderen van .bet-row */
+body.creme .bet-row > div,
+body.creme .bet-row div div {
+  color: #2c1a0e !important;
+}
+/* Maar status/pnl kleuren bewaren */
+body.creme .bet-row .bet-status,
+body.creme .bet-row [style*="color:#00BEC4"],
+body.creme .bet-row [style*="color:#dc2626"],
+body.creme .bet-row [style*="color:#d97706"],
+body.creme .bet-row [style*="color:#475569"] {
+  color: inherit !important;
+}
+/* Combi legs border */
+body.creme .bet-row [style*="rgba(255,255,255,0.09)"] {
+  border-color: rgba(184,142,50,.2) !important;
+}
