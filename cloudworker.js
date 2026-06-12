@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v140'; // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v141'; // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1856,12 +1856,33 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const minValue = c.pick === 'X' ? (tournament ? 10 : 12) : (tournament ? 6 : 6);
       if (conf.score < minConf || value < minValue) return;
 
+      // v140b: gelijkspel pas na 2 opeenvolgende bevestigingen (te wispelturig)
+      if (c.pick === 'X') {
+        const prevX = existingPicks[`${m.fixtureId}_X`];
+        if (!prevX) return; // eerste keer gelijkspel: blokkeer, wacht op bevestiging
+      }
+
       const elite = isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds, pick: c.pick, poissonUsed: false }); // v138: ook WK-picks kunnen elite zijn
 
       const pickKey = `${m.fixtureId}_${c.pick}`;
       const existing = existingPicks[pickKey];
       const scanCount = existing ? (existing.scanCount || 1) + 1 : 1;
       const lockLevel = scanCount >= 3 ? 'triple' : scanCount >= 2 ? 'double' : 'single';
+
+      // v140b: CONSISTENCY CHECK — pick richting mag niet wisselen tenzij odds >10% bewogen
+      const prevFixturePick = Object.values(existingPicks).find(p =>
+        p.fixtureId === m.fixtureId && p.status === 'pending' && p.pick !== c.pick
+      );
+      if (prevFixturePick) {
+        const oddsShift = prevFixturePick.odds
+          ? Math.abs((c.bookOdds - prevFixturePick.odds) / prevFixturePick.odds * 100)
+          : 0;
+        if (oddsShift < 10) {
+          // Odds niet genoeg bewogen — houd bestaande richting, negeer nieuwe
+          console.log(`[Scan] Consistency block: ${m.home} vs ${m.away} — ${c.pick} geblokkeerd, bestaande pick ${prevFixturePick.pick} blijft`);
+          return;
+        }
+      }
 
       if (!existing || value > (existing.value || 0) || scanCount > (existing.scanCount || 0)) {
         newPicks[pickKey] = {
@@ -2214,6 +2235,12 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
       const minConf = tournament ? 5 : 6;
       const minValue = c.pick === 'X' ? (tournament ? 10 : 12) : (tournament ? 6 : 6);
       if (conf.score < minConf || value < minValue) return;
+
+      // v140b: gelijkspel pas na 2 opeenvolgende bevestigingen (te wispelturig)
+      if (c.pick === 'X') {
+        const prevX = existingPicks[`${m.fixtureId}_X`];
+        if (!prevX) return; // eerste keer gelijkspel: blokkeer, wacht op bevestiging
+      }
 
       picks.push({
         match:      `${m.home} vs ${m.away}`,
