@@ -1692,6 +1692,24 @@ body.creme .analytics-block [style*="color:#7c3aed"] {
   color: inherit !important;
 }
 
+/* ── Crème — tracker-row (wallet geschiedenis kaartjes) ─── */
+body.creme .tracker-row {
+  background: #fffaf2 !important;
+  border: 2px solid rgba(184,142,50,.95) !important;
+  box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
+}
+body.creme .tracker-row * {
+  color: #2c1a0e !important;
+}
+/* Uitzonderingen status kleuren */
+body.creme .tracker-result.win  { color: #16a34a !important; }
+body.creme .tracker-result.lose { color: #dc2626 !important; }
+body.creme .tracker-result.pending { color: #d97706 !important; }
+body.creme .tracker-leg-status.win  { color: #16a34a !important; }
+body.creme .tracker-leg-status.lose { color: #dc2626 !important; }
+body.creme .tracker-row [style*="color:#00BEC4"] { color: #00838A !important; }
+body.creme .tracker-row [style*="color:#dc2626"] { color: #dc2626 !important; }
+
 /* ── Crème — wallet bet-row CSS variabelen ──────────────── */
 body.creme {
   --bet-text:   #2c1a0e;
