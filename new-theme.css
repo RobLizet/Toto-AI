@@ -1817,3 +1817,23 @@ body.creme .screen-wallet  [style*="color:#d97706"] { color: #b45309 !important;
 body.creme .screen-analyse [style*="color:#16a34a"],
 body.creme .screen-wallet  [style*="color:#16a34a"] { color: #16a34a !important; }
 body.creme .screen-analyse [style*="color:#f59e0b"] { color: #d97706 !important; }
+
+/* ── Crème — dark overlays/popups NIET overschrijven ───── */
+/* Monte Carlo, sharp popup, card popups blijven donker     */
+body.creme #monteCarloOverlay,
+body.creme #monteCarloOverlay *,
+body.creme #sharpPopupOverlay,
+body.creme #sharpPopupOverlay *,
+body.creme #cardPopupOverlay > div,
+body.creme #cardPopupOverlay > div * {
+  color: rgba(255,255,255,.85) !important;
+}
+/* Maar gekleurde waarden in popups bewaren */
+body.creme #monteCarloOverlay [style*="color:#00BEC4"],
+body.creme #sharpPopupOverlay [style*="color:#00BEC4"] { color: #00BEC4 !important; }
+body.creme #monteCarloOverlay [style*="color:#dc2626"],
+body.creme #sharpPopupOverlay [style*="color:#dc2626"] { color: #ff6b6b !important; }
+body.creme #monteCarloOverlay [style*="color:#d97706"] { color: #fbbf24 !important; }
+body.creme #monteCarloOverlay [style*="color:#16a34a"] { color: #4ade80 !important; }
+/* Section labels iets zachter */
+body.creme #monteCarloOverlay [style*="color:rgba(255,255,255,.4)"] { color: rgba(255,255,255,.6) !important; }
