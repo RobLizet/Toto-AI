@@ -377,7 +377,8 @@ function renderAnalyseScreen() {
   // ── COMBI TIPS ────────────────────────────────────────
   html += '<div class="analyse-block" style="padding:1.1rem;">';
   html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.05em;margin-bottom:.8rem;">🏆 COMBI TIPS</div>';
-  html += '<button id="combiGenBtn" onclick="generateCombiTip()" style="width:100%;padding:.8rem;font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;letter-spacing:.05em;background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;border-radius:12px;cursor:pointer;">⚡ GENEREER TOP 3 TIPS + COMBI</button>';
+  html += '<button id="combiGenBtn" onclick="generateCombiTip()" style="width:100%;padding:.8rem;font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;letter-spacing:.05em;background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:.5rem;">⚡ GENEREER TOP 3 TIPS + COMBI</button>';
+  html += '<button onclick="openMonteCarloModal()" style="width:100%;padding:.65rem;font-family:\'Bebas Neue\',sans-serif;font-size:1rem;letter-spacing:.05em;background:rgba(124,58,237,.15);border:1.5px solid rgba(124,58,237,.5);color:#a78bfa;border-radius:12px;cursor:pointer;">🎲 MONTE CARLO BANKROLL SIMULATIE</button>';
   html += '<div id="combiCard" style="display:none;margin-top:.8rem;"></div>';
   html += '</div>';
 
@@ -3481,4 +3482,182 @@ function confirmManualVerify(scanId, pickId, pick) {
   document.getElementById('manual-verify-modal')?.remove();
   showToast(`✅ Score ${hg}-${ag} opgeslagen`);
   renderScanLog();
+}
+
+// ══════════════════════════════════════════════════════════
+// v144: MONTE CARLO BANKROLL SIMULATIE
+// Simuleert 10.000 scenario's op basis van historische hitrate,
+// gemiddelde odds en Kelly inzet.
+// ══════════════════════════════════════════════════════════
+
+function openMonteCarloModal() {
+  document.getElementById('monteCarloOverlay')?.remove();
+
+  // Haal stats op uit state
+  const settled = (state.valueScans || []).filter(s => s.status === 'win' || s.status === 'lose');
+  const wins    = settled.filter(s => s.status === 'win').length;
+  const hitrate = settled.length > 0 ? wins / settled.length : 0.35;
+  const avgOdds = settled.length > 0
+    ? settled.reduce((sum, s) => sum + parseFloat(s.odds || 2), 0) / settled.length
+    : 2.5;
+
+  runMonteCarloSim(hitrate, avgOdds, 0.25, 100, 10000);
+}
+
+function runMonteCarloSim(hitrate, avgOdds, kellyFraction, nPicks, nSims) {
+  document.getElementById('monteCarloOverlay')?.remove();
+
+  // ── Simulatie ──────────────────────────────────────────
+  const kellyStake = Math.max(0.01, Math.min(0.20,
+    kellyFraction * ((hitrate * avgOdds - 1) / (avgOdds - 1))
+  ));
+
+  const finalBankrolls = [];
+  const drawdowns      = [];
+  let   allPaths       = []; // sample 200 paths voor grafiek
+
+  for (let sim = 0; sim < nSims; sim++) {
+    let bankroll = 1.0;
+    let peak     = 1.0;
+    let maxDD    = 0;
+    const path   = sim < 200 ? [1.0] : null;
+
+    for (let pick = 0; pick < nPicks; pick++) {
+      const stake = bankroll * kellyStake;
+      if (Math.random() < hitrate) {
+        bankroll += stake * (avgOdds - 1);
+      } else {
+        bankroll -= stake;
+      }
+      bankroll = Math.max(0, bankroll);
+      if (bankroll > peak) peak = bankroll;
+      const dd = (peak - bankroll) / peak;
+      if (dd > maxDD) maxDD = dd;
+      if (path) path.push(parseFloat(bankroll.toFixed(3)));
+    }
+
+    finalBankrolls.push(bankroll);
+    drawdowns.push(maxDD);
+    if (path) allPaths.push(path);
+  }
+
+  // ── Statistieken ───────────────────────────────────────
+  finalBankrolls.sort((a, b) => a - b);
+  drawdowns.sort((a, b) => a - b);
+
+  const p10  = finalBankrolls[Math.floor(nSims * 0.10)];
+  const p25  = finalBankrolls[Math.floor(nSims * 0.25)];
+  const p50  = finalBankrolls[Math.floor(nSims * 0.50)];
+  const p75  = finalBankrolls[Math.floor(nSims * 0.75)];
+  const p90  = finalBankrolls[Math.floor(nSims * 0.90)];
+  const mean = finalBankrolls.reduce((a,b) => a+b, 0) / nSims;
+  const pRuin= finalBankrolls.filter(b => b < 0.10).length / nSims * 100;
+  const pProfit = finalBankrolls.filter(b => b > 1.0).length / nSims * 100;
+  const medDD = drawdowns[Math.floor(nSims * 0.50)];
+  const p90DD = drawdowns[Math.floor(nSims * 0.90)];
+
+  // ── SVG grafiek (200 sample paths) ─────────────────────
+  const W = 340, H = 160, PAD = 30;
+  const maxB = Math.min(5, Math.max(...allPaths.flat()));
+  const scaleX = (i) => PAD + (i / nPicks) * (W - PAD * 2);
+  const scaleY = (v) => H - PAD - (Math.min(v, maxB) / maxB) * (H - PAD * 2);
+
+  let svgPaths = '';
+  allPaths.forEach((path, idx) => {
+    const d = path.map((v, i) => `${i===0?'M':'L'}${scaleX(i).toFixed(1)},${scaleY(v).toFixed(1)}`).join(' ');
+    const isBad = path[path.length-1] < 0.5;
+    svgPaths += `<path d="${d}" stroke="${isBad?'rgba(220,38,38,.12)':'rgba(0,190,196,.08)'}" stroke-width="1" fill="none"/>`;
+  });
+  // Mediaan lijn
+  const medPath = allPaths.sort((a,b) =>
+    a[a.length-1] - b[b.length-1])[Math.floor(allPaths.length/2)];
+  if (medPath) {
+    const md = medPath.map((v,i) => `${i===0?'M':'L'}${scaleX(i).toFixed(1)},${scaleY(v).toFixed(1)}`).join(' ');
+    svgPaths += `<path d="${md}" stroke="#00BEC4" stroke-width="2" fill="none"/>`;
+  }
+  // Baseline
+  svgPaths += `<line x1="${PAD}" y1="${scaleY(1)}" x2="${W-PAD}" y2="${scaleY(1)}" stroke="rgba(255,255,255,.2)" stroke-width="1" stroke-dasharray="4"/>`;
+
+  const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;">
+    <rect width="${W}" height="${H}" fill="transparent"/>
+    ${svgPaths}
+    <text x="${PAD}" y="${H-8}" font-family="monospace" font-size="9" fill="rgba(255,255,255,.3)">0</text>
+    <text x="${W-PAD-10}" y="${H-8}" font-family="monospace" font-size="9" fill="rgba(255,255,255,.3)">${nPicks}</text>
+    <text x="${PAD-5}" y="${scaleY(1)+4}" font-family="monospace" font-size="8" fill="rgba(255,255,255,.3)" text-anchor="end">1x</text>
+    <text x="${PAD-5}" y="${scaleY(maxB)+4}" font-family="monospace" font-size="8" fill="rgba(255,255,255,.3)" text-anchor="end">${maxB.toFixed(1)}x</text>
+  </svg>`;
+
+  // ── UI ─────────────────────────────────────────────────
+  function statRow(label, value, color) {
+    return `<div style="display:flex;justify-content:space-between;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.06);">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">${label}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;color:${color||'#fff'};">${value}</div>
+    </div>`;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'monteCarloOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+  overlay.innerHTML = `
+    <div style="background:#0d1f2d;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:1.25rem 1rem 2rem;max-height:92vh;overflow-y:auto;">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:800;color:#00BEC4;">🎲 MONTE CARLO SIMULATIE</div>
+        <button onclick="document.getElementById('monteCarloOverlay').remove()"
+          style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.7);border-radius:50%;width:28px;height:28px;cursor:pointer;">✕</button>
+      </div>
+
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:rgba(255,255,255,.4);margin-bottom:.75rem;">
+        ${nSims.toLocaleString()} simulaties · ${nPicks} picks · hitrate ${(hitrate*100).toFixed(1)}% · gem. odds ${avgOdds.toFixed(2)} · Kelly ${(kellyFraction*100).toFixed(0)}%
+      </div>
+
+      <!-- Grafiek -->
+      <div style="background:rgba(255,255,255,.03);border-radius:12px;padding:.5rem;margin-bottom:.75rem;">
+        ${svg}
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:rgba(255,255,255,.35);text-align:center;margin-top:.2rem;">200 sample-paden — cyaan = mediaan scenario</div>
+      </div>
+
+      <!-- Resultaten -->
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.6rem .7rem;margin-bottom:.75rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.35rem;">BANKROLL UITKOMSTEN (startbankroll = 1x)</div>
+        ${statRow('Pessimistisch (10%)', p10.toFixed(2)+'x', p10<1?'#dc2626':'#00BEC4')}
+        ${statRow('Laag kwartiel (25%)', p25.toFixed(2)+'x', p25<1?'#dc2626':'#d97706')}
+        ${statRow('Mediaan (50%)', p50.toFixed(2)+'x', p50<1?'#dc2626':'#00BEC4')}
+        ${statRow('Hoog kwartiel (75%)', p75.toFixed(2)+'x', '#00BEC4')}
+        ${statRow('Optimistisch (90%)', p90.toFixed(2)+'x', '#00BEC4')}
+        ${statRow('Gemiddeld rendement', mean.toFixed(2)+'x', mean<1?'#dc2626':'#00BEC4')}
+      </div>
+
+      <!-- Risico -->
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.6rem .7rem;margin-bottom:.75rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.35rem;">RISICO ANALYSE</div>
+        ${statRow('Kans op winst', pProfit.toFixed(1)+'%', pProfit>60?'#00BEC4':'#d97706')}
+        ${statRow('Kans op ruin (<10%)', pRuin.toFixed(1)+'%', pRuin<5?'#00BEC4':pRuin<15?'#d97706':'#dc2626')}
+        ${statRow('Mediaan max drawdown', (medDD*100).toFixed(1)+'%', medDD<0.3?'#00BEC4':'#d97706')}
+        ${statRow('Worst case drawdown (90%)', (p90DD*100).toFixed(1)+'%', p90DD<0.5?'#d97706':'#dc2626')}
+        ${statRow('Kelly inzet per pick', (kellyStake*100).toFixed(1)+'% bankroll', '#64748b')}
+      </div>
+
+      <!-- Sliders -->
+      <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.6rem .7rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.5rem;">PARAMETERS AANPASSEN</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <button onclick="runMonteCarloSim(${hitrate},${avgOdds},0.10,${nPicks},${nSims})"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;background:${kellyFraction===0.10?'rgba(0,190,196,.2)':'rgba(255,255,255,.06)'};border:1px solid rgba(0,190,196,.3);color:#00BEC4;border-radius:8px;padding:.35rem .6rem;cursor:pointer;">½ Kelly 10%</button>
+          <button onclick="runMonteCarloSim(${hitrate},${avgOdds},0.25,${nPicks},${nSims})"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;background:${kellyFraction===0.25?'rgba(0,190,196,.2)':'rgba(255,255,255,.06)'};border:1px solid rgba(0,190,196,.3);color:#00BEC4;border-radius:8px;padding:.35rem .6rem;cursor:pointer;">¼ Kelly 25%</button>
+          <button onclick="runMonteCarloSim(${hitrate},${avgOdds},0.50,${nPicks},${nSims})"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;background:${kellyFraction===0.50?'rgba(0,190,196,.2)':'rgba(255,255,255,.06)'};border:1px solid rgba(0,190,196,.3);color:#00BEC4;border-radius:8px;padding:.35rem .6rem;cursor:pointer;">½ Kelly 50%</button>
+          <button onclick="runMonteCarloSim(${hitrate},${avgOdds},0.10,50,${nSims})"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);border-radius:8px;padding:.35rem .6rem;cursor:pointer;">50 picks</button>
+          <button onclick="runMonteCarloSim(${hitrate},${avgOdds},0.10,200,${nSims})"
+            style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.6);border-radius:8px;padding:.35rem .6rem;cursor:pointer;">200 picks</button>
+        </div>
+      </div>
+
+    </div>`;
+
+  document.body.appendChild(overlay);
 }
