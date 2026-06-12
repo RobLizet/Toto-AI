@@ -386,6 +386,56 @@ function _analyticsHTML(local, worker) {
     html += '</div>';
   }
 
+  // ── Pick Tier Performance Dashboard ─────────────────
+  if (worker?.pickTierPerformance?.length) {
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">PICK TIER PERFORMANCE</div>';
+    const tierOrder = ['elite','triple','double','single'];
+    const tierLabels = { elite:'⭐ Elite', triple:'🔒🔒🔒 Triple', double:'🔒🔒 Double', single:'🔒 Single' };
+    const tierColors = { elite:'#f59e0b', triple:'#00BEC4', double:'#7c3aed', single:'#64748b' };
+    worker.pickTierPerformance
+      .sort((a,b) => (tierOrder.indexOf(a.tier)) - (tierOrder.indexOf(b.tier)))
+      .forEach(t => {
+        const color = tierColors[t.tier] || '#64748b';
+        const label = tierLabels[t.tier] || t.tier;
+        const roi = t.total > 0
+          ? ((t.wins * (1/0.35) - t.total) / t.total * 100).toFixed(0) // schatting
+          : null;
+        html += '<div style="display:flex;align-items:center;gap:.4rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.06);">';
+        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:${color};min-width:90px;">${label}</div>`;
+        html += '<div style="flex:1;">';
+        html += `<div style="background:var(--track-bg,rgba(0,0,0,.08));border-radius:999px;height:5px;overflow:hidden;">`;
+        html += `<div style="background:${color};height:100%;border-radius:999px;width:${Math.min(100,t.hitrate)}%;"></div></div>`;
+        html += '</div>';
+        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;color:${color};min-width:36px;text-align:right;">${t.hitrate}%</div>`;
+        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:rgba(255,255,255,.4);min-width:50px;text-align:right;">${t.wins}W/${t.total-t.wins}L</div>`;
+        html += '</div>';
+        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:rgba(255,255,255,.4);padding-bottom:.25rem;">`;
+        html += `gem. value +${t.avgValue}pp · conf ${t.avgConf}/10${t.avgSharp ? ` · sharp ${t.avgSharp}/100` : ''}</div>`;
+      });
+    html += '</div>';
+  }
+
+  // ── League Tier Dashboard ─────────────────────────────
+  if (worker?.leagueTiers?.length) {
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">LEAGUE RATINGS</div>';
+    const tierBg = { elite:'rgba(245,158,11,.12)', goed:'rgba(0,190,196,.08)', neutraal:'rgba(255,255,255,.04)', risico:'rgba(220,38,38,.08)', onbekend:'rgba(255,255,255,.03)' };
+    const tierBorder = { elite:'rgba(245,158,11,.4)', goed:'rgba(0,190,196,.3)', neutraal:'rgba(255,255,255,.1)', risico:'rgba(220,38,38,.3)', onbekend:'rgba(255,255,255,.08)' };
+    const tierIcon = { elite:'⭐', goed:'✅', neutraal:'〰', risico:'⚠️', onbekend:'❓' };
+    worker.leagueTiers.forEach(l => {
+      const tier = l.tier || 'onbekend';
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem .5rem;margin-bottom:.3rem;background:${tierBg[tier]||tierBg.onbekend};border:1px solid ${tierBorder[tier]||tierBorder.onbekend};border-radius:8px;">`;
+      html += '<div style="flex:1;min-width:0;">';
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;color:#fff;">${tierIcon[tier]||'❓'} ${l.leagueName}</div>`;
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:rgba(255,255,255,.4);margin-top:.05rem;">${l.total} picks · ${l.hitrate}% hitrate · factor ${l.factor}</div>`;
+      html += '</div>';
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:800;color:${l.hitrate>=45?'#00BEC4':l.hitrate>=35?'#d97706':'#dc2626'};">${l.roi > 0 ? '+' : ''}${l.roi}%</div>`;
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
   // ── Footer ──
   html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);text-align:center;padding:.75rem;margin-top:.25rem;">';
   html += 'Lokale data · ' + local.scansTotal + ' scans · CLV-engine via Supabase';
