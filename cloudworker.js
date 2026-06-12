@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v138'; // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v139'; // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1726,14 +1726,17 @@ KRITISCHE REGELS:
 - Baseer kansen op historische doelpuntenpatronen en competitieniveau, NIET op teamnamen of reputatie
 - GELIJKSPEL WAARSCHUWING: Gelijkspel komt voor in slechts ~25-28% van alle wedstrijden. Overschat gelijkspelkansen NIET. Wees terughoudend met kansX boven 30% tenzij teams historisch veel gelijkspeelden
 - Thuisvoordeel is reëel: gemiddeld +5-8% kansverhoging voor thuisteam in Europese competities
-- Kleine competities (Noorwegen/Zweden/lagere divisies): data is onbetrouwbaarder, geef lagere confidence\n- LANDENTEAMS/TOERNOOI (WK, WK-kwalificatie, Nations League, vriendschappelijk): historische data is dun. Blijf dicht bij een gebalanceerde/Poisson-verwachting, wijk NIET sterk af op reputatie, en geef lagere confidence (c max 5)
+- Kleine competities (Noorwegen/Zweden/lagere divisies): data is onbetrouwbaarder, geef lagere confidence
+- LANDENTEAMS/TOERNOOI [LANDENDUEL/TOERNOOI tag]: gebruik marktodds als sterke prior. Weeg FIFA-ranking: +20 plaatsen hoger = ca. +4% kansverhoging. Recente form laatste 3 duels zwaarder dan historisch gemiddelde. WK-groepsfase: hoge motivatie beide teams, verrassingen komen vaker voor. Confidence 5-7, nooit boven 7 voor landenduels
 - Som van h+x+a moet exact 100 zijn
 
 WEDSTRIJDEN:
 ${analyseBatch.map((m, i) => {
   const odds = oddsMap[m.fixtureId];
   const oddsStr = odds ? ` | Odds: ${odds.home}/${odds.draw}/${odds.away}` : '';
-  return `${i+1}. ${m.home} vs ${m.away} (${m.leagueName}, ${m.matchDate || 'datum?'})${oddsStr}`;
+  const isTournM = typeof isTournamentLeague === 'function' && isTournamentLeague(m.leagueId);
+  const tournTag = isTournM ? ' [LANDENDUEL/TOERNOOI]' : '';
+  return `${i+1}. ${m.home} vs ${m.away} (${m.leagueName}, ${m.matchDate || 'datum?'})${tournTag}${oddsStr}`;
 }).join('\n')}
 
 Antwoord ALLEEN met een JSON array — geen tekst, geen uitleg, geen markdown:
@@ -1961,15 +1964,25 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
 
   if (pushPicks.length > 0) {
     const top = pushPicks.sort((a, b) => (b.value || 0) - (a.value || 0))[0];
-    const icon = top.lockLevel === 'triple' ? '🔒🔒🔒' : top.elite ? '⭐' : '🔒🔒';
-    const title = top.elite
-      ? `${icon} Elite pick gevonden!`
-      : `${icon} ${top.lockLevel === 'triple' ? 'Triple' : 'Double'} Lock — ${nowStr}`;
-    const body = `${top.matchName} · ${top.pickLabel} @ ${top.odds} · +${Math.round(top.value)}% value`;
-    await sendPushNotification(env, title, body, {
-      type: 'value_alert', matchId: String(top.fixtureId),
-      pick: top.pick, value: top.value, lockLevel: top.lockLevel,
-    });
+    // v138: push alleen als wedstrijd binnen 6 uur begint (anders is push te vroeg/nutteloos)
+    const kickoffMs = top.matchTime ? new Date(top.matchTime).getTime() : 0;
+    const nowMs2 = Date.now();
+    const hoursToKickoff = kickoffMs > 0 ? (kickoffMs - nowMs2) / (1000 * 60 * 60) : 99;
+    const shouldPush = hoursToKickoff <= 6 && hoursToKickoff >= -1; // max 6u voor, tot 1u na aftrap
+    if (shouldPush || top.elite) { // elite picks altijd pushen
+      const icon = top.lockLevel === 'triple' ? '🔒🔒🔒' : top.elite ? '⭐' : '🔒🔒';
+      const timeTag = hoursToKickoff > 0 ? ` · ${Math.round(hoursToKickoff)}u voor aftrap` : '';
+      const title = top.elite
+        ? `${icon} Elite pick gevonden!${timeTag}`
+        : `${icon} ${top.lockLevel === 'triple' ? 'Triple' : 'Double'} Lock${timeTag}`;
+      const body = `${top.matchName} · ${top.pickLabel} @ ${top.odds} · +${Math.round(top.value)}% value`;
+      await sendPushNotification(env, title, body, {
+        type: 'value_alert', matchId: String(top.fixtureId),
+        pick: top.pick, value: top.value, lockLevel: top.lockLevel,
+      });
+    } else {
+      console.log(`[Push] Pick gevonden maar aftrap nog ${Math.round(hoursToKickoff)}u weg — geen push`);
+    }
   } else if (newCount > 0) {
     const valuePicks = Object.values(newPicks).filter(p => (p.value || 0) >= 15 && (p.confidence || 0) >= 7);
     if (valuePicks.length >= 1) {
