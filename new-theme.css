@@ -1734,3 +1734,86 @@ body.creme .bet-row [style*="color:#475569"] {
 body.creme .bet-row [style*="rgba(255,255,255,0.09)"] {
   border-color: rgba(184,142,50,.2) !important;
 }
+
+/* ══════════════════════════════════════════════════════════
+   v26.85: CRÈME — ALLE RESTERENDE DONKERE ELEMENTEN
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Scan pick kaartjes (Analyse tab) tekst ────────────── */
+body.creme .wpr-match { color: #2c1a0e !important; }
+body.creme .wpr-pick  { color: #7a5230 !important; }
+body.creme .worker-pick-row * { color: #2c1a0e !important; }
+body.creme .worker-pick-row [style*="color:#00BEC4"]  { color: #00838A !important; }
+body.creme .worker-pick-row [style*="color:#d97706"]  { color: #b45309 !important; }
+body.creme .worker-pick-row [style*="color:#dc2626"]  { color: #dc2626 !important; }
+body.creme .worker-pick-row [style*="color:#f59e0b"]  { color: #d97706 !important; }
+body.creme .worker-pick-row [style*="color:rgba(255,255,255"] { color: #7a5230 !important; }
+
+/* ── Wallet saldo grote tekst leesbaar ─────────────────── */
+body.creme #bigBalance { color: #2c1a0e !important; }
+body.creme .wallet-balance-label,
+body.creme [style*="HUIDIG SALDO"],
+body.creme .wallet-big [style*="color:rgba(255,255,255"] { color: #7a5230 !important; }
+body.creme .wallet-big [style*="color:#fff"]  { color: #2c1a0e !important; }
+body.creme .wallet-big [style*="color:#ffffff"] { color: #2c1a0e !important; }
+
+/* ── Wallet chart-view knoppen ─────────────────────────── */
+body.creme .chart-view-btn {
+  background: rgba(255,250,242,.85) !important;
+  border: 1.5px solid rgba(184,142,50,.4) !important;
+  color: #7a5230 !important;
+}
+body.creme .chart-view-btn.active {
+  background: rgba(184,142,50,.18) !important;
+  border-color: rgba(184,142,50,.9) !important;
+  color: #2c1a0e !important;
+}
+
+/* ── Analyse filter knoppen ────────────────────────────── */
+body.creme .scan-filter-btn,
+body.creme .pick-filter-btn {
+  background: rgba(255,250,242,.85) !important;
+  border: 1.5px solid rgba(184,142,50,.4) !important;
+  color: #7a5230 !important;
+}
+body.creme .scan-filter-btn.active,
+body.creme .pick-filter-btn.active {
+  background: rgba(184,142,50,.18) !important;
+  color: #2c1a0e !important;
+}
+
+/* ── Alle witte inline tekst in analyse screen ──────────── */
+body.creme .screen-analyse [style*="color:#fff"],
+body.creme .screen-analyse [style*="color: #fff"],
+body.creme .screen-analyse [style*="color:#ffffff"],
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.5)"],
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.4)"],
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.6)"],
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.7)"],
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.8)"] { color: #2c1a0e !important; }
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.3)"],
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.35)"],
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.45)"] { color: #7a5230 !important; }
+
+/* ── Alle witte inline tekst in wallet screen ───────────── */
+body.creme .screen-wallet [style*="color:#fff"],
+body.creme .screen-wallet [style*="color: #fff"],
+body.creme .screen-wallet [style*="color:#ffffff"],
+body.creme .screen-wallet [style*="color:rgba(255,255,255,.5)"],
+body.creme .screen-wallet [style*="color:rgba(255,255,255,.55)"],
+body.creme .screen-wallet [style*="color:rgba(255,255,255,.4)"],
+body.creme .screen-wallet [style*="color:rgba(255,255,255,.7)"],
+body.creme .screen-wallet [style*="color:rgba(255,255,255,.8)"] { color: #2c1a0e !important; }
+body.creme .screen-wallet [style*="color:rgba(255,255,255,.3)"],
+body.creme .screen-wallet [style*="color:rgba(255,255,255,.35)"] { color: #7a5230 !important; }
+
+/* Uitzonderingen: gekleurde waarden bewaren */
+body.creme .screen-analyse [style*="color:#00BEC4"],
+body.creme .screen-wallet  [style*="color:#00BEC4"] { color: #00838A !important; }
+body.creme .screen-analyse [style*="color:#dc2626"],
+body.creme .screen-wallet  [style*="color:#dc2626"] { color: #dc2626 !important; }
+body.creme .screen-analyse [style*="color:#d97706"],
+body.creme .screen-wallet  [style*="color:#d97706"] { color: #b45309 !important; }
+body.creme .screen-analyse [style*="color:#16a34a"],
+body.creme .screen-wallet  [style*="color:#16a34a"] { color: #16a34a !important; }
+body.creme .screen-analyse [style*="color:#f59e0b"] { color: #d97706 !important; }
