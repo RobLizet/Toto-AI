@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v143'; // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v144'; // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -807,36 +807,73 @@ function getOddsBucket(odds) {
 const TOURNAMENT_LEAGUES = new Set([1, 4, 5, 6, 10, 29, 36]);
 function isTournamentLeague(leagueId) { return TOURNAMENT_LEAGUES.has(Number(leagueId)); }
 
-function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, leagueId, odds, calibFactor, pick }) {
+// ── v144: calculateConfidenceV30 ──────────────────────────
+// Nieuwe gewichtsverdeling — AI maximaal 10% directe invloed
+//
+// Gewichten:
+//   40% fairImplied    — Shin de-vigged marktodds (objectieve prior, bookmaker consensus)
+//   20% valueScore     — Edge model vs markt (hoe groot is de kloof)
+//   20% dataQuality    — Spread AI-schattingen + league calibratie kwaliteit
+//   10% aiAdjustment   — AI-afwijking van markt, gecapped op ±20pp (nuancering, niet basis)
+//   10% marketSignal   — Sharp money + odds beweging
+//
+// Poisson/AI kansen zijn nu ALLEEN input voor value en aiAdjustment.
+// De markt (fairImplied) is de dominante factor.
+function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, leagueId, odds, calibFactor, pick, fairImplied: fairImpliedInput }) {
   const staticFactor = LEAGUE_FACTORS[leagueId] || 0.92;
-  // Blend: 70% historisch calibratie, 30% statisch (meer stabiliteit)
   const leagueFactor = calibFactor ? (staticFactor * 0.30 + calibFactor * 0.70) : staticFactor;
   const bucketFactor = ODDS_BUCKET_FACTORS[getOddsBucket(odds)] || 0.90;
+  const drawPenalty  = pick === 'X' ? 0.85 : 1.0;
 
-  // Draw penalty: gelijkspel is historisch moeilijker te voorspellen (~15% penalty)
-  const drawPenalty = pick === 'X' ? 0.85 : 1.0;
+  // 1. fairImplied: marktodds als objectieve prior (40%)
+  // Gebruik meegegeven fairImplied, anders bereken uit bookOdds
+  const marketBase = fairImpliedInput != null
+    ? Math.min(Math.max(fairImpliedInput, 5), 95)
+    : Math.min(Math.max(impliedProb(odds) * 100 * 0.95, 5), 95); // 0.95 = ruwe Shin benadering
+
+  // 2. valueScore: edge als % van markt, gecapped op 20pp = 100 (20%)
+  const valueScore = Math.min(Math.max(value, 0), 20) / 20 * 100;
+
+  // 3. dataQuality: spread van kansen + league kwaliteit (20%) — ongewijzigd
+  const dq = Math.min(dataQuality, 100);
+
+  // 4. aiAdjustment: hoeveel wijkt AI af van markt? Gecapped op ±20pp.
+  // Grote afwijking én in goede richting = kleine bonus. AI heeft max 10% gewicht.
+  // aiKans (modelProb) vs fairImplied → afwijking als signaal, niet als basis.
+  const aiDivergence = modelProb - marketBase; // positief = AI bullisher dan markt
+  // Converteer naar 0-100 score: 0pp afwijking = 50, +20pp = 100, -20pp = 0
+  const aiAdj = Math.min(100, Math.max(0, 50 + aiDivergence * 2.5));
+
+  // 5. marketSignal: sharp + beweging (10%) — ongewijzigd
+  const ms = Math.min(marketSignal, 100);
 
   const raw =
-    (Math.min(modelProb, 100) * 0.40) +
-    (Math.min(Math.max(value, 0), 15) / 15 * 100 * 0.30) + // v125: value = pp-edge; 15pp = vol
-    (Math.min(dataQuality, 100) * 0.20) +
-    (Math.min(marketSignal, 100) * 0.10);
+    (marketBase   * 0.40) +   // Markt als objectieve prior
+    (valueScore   * 0.20) +   // Edge/value
+    (dq           * 0.20) +   // Datakwaliteit
+    (aiAdj        * 0.10) +   // AI als nuancering (max 10%)
+    (ms           * 0.10);    // Sharp/beweging
 
   const final = Math.max(0, Math.min(100, raw * leagueFactor * bucketFactor * drawPenalty));
 
   return {
-    raw: parseFloat(raw.toFixed(1)),
-    final: parseFloat(final.toFixed(1)),
+    raw:         parseFloat(raw.toFixed(1)),
+    final:       parseFloat(final.toFixed(1)),
     leagueFactor,
     bucketFactor,
-    score: Math.max(1, Math.min(10, Math.round(final / 10))),
+    score:       Math.max(1, Math.min(10, Math.round(final / 10))),
+    // Debug info
+    _weights: { marketBase: parseFloat((marketBase*0.40).toFixed(1)), valueScore: parseFloat((valueScore*0.20).toFixed(1)),
+                dq: parseFloat((dq*0.20).toFixed(1)), aiAdj: parseFloat((aiAdj*0.10).toFixed(1)), ms: parseFloat((ms*0.10).toFixed(1)) }
   };
 }
 
 // Elite pick detectie — v31: gelijkspel nooit auto-elite, strengere criteria
 function isElitePick({ confidenceFinal, value, odds, pick, poissonUsed }) {
+  // v144: drempel herijkt voor nieuwe confidence formule (markt-dominant)
+  // Old: confidenceFinal >= 68 (AI-zwaar). New: >= 62 want markt is meer gedempt.
   return (
-    confidenceFinal >= 68 &&
+    confidenceFinal >= 62 &&
     value >= 8 &&
     odds >= 1.55 &&
     odds <= 4.80 &&
@@ -1841,14 +1878,15 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const dataQuality = Math.min(100, 50 + spread);
 
       const conf = calculateConfidenceV20({
-        modelProb: c.aiKans,
+        modelProb:     c.aiKans,     // AI-kans — nu max 10% invloed
         value,
         dataQuality,
         marketSignal,
-        leagueId: m.leagueId,
-        odds: c.bookOdds,
-        calibFactor: leagueCalibration[String(m.leagueId)]?.factor || null,
-        pick: c.pick,
+        leagueId:      m.leagueId,
+        odds:          c.bookOdds,
+        calibFactor:   leagueCalibration[String(m.leagueId)]?.factor || null,
+        pick:          c.pick,
+        fairImplied:   fairImplied,  // v144: markt als 40% prior
       });
 
       // v127: toernooi/landenduel — dunne data, scherpe markt → cap betrouwbaarheid + hogere edge-lat
