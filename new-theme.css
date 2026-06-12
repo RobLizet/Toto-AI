@@ -1463,15 +1463,42 @@ body.creme .chart-src-btn.active {
   background: #8b5a1a !important; color: #fff !important; border-color: #8b5a1a !important;
 }
 
-/* v26.28: Crème — bet history / tracker / backtest rijen licht (MIJN INZETTEN) */
+/* v26.83: Crème — bet-row + combi + swipe-inner volledig licht */
 body.creme .bet-row,
 body.creme .bet-item,
 body.creme .tracker-bet-row,
-body.creme .backtest-pick-row {
+body.creme .backtest-pick-row,
+body.creme .combi-bet-row {
   background: #fffaf2 !important;
   border: 2px solid rgba(184,142,50,.95) !important;
   box-shadow: 0 2px 12px rgba(184,142,50,.28) !important;
+  color: #2c1a0e !important;
 }
+body.creme .swipe-inner {
+  background: #fffaf2 !important;
+}
+/* Alle tekst in bet rijen donker */
+body.creme .bet-row *,
+body.creme .combi-bet-row * {
+  color: #2c1a0e !important;
+}
+/* Uitzonderingen — status kleuren bewaren */
+body.creme .bet-res.win,
+body.creme .combi-bet-result.win  { color: #16a34a !important; }
+body.creme .bet-res.lose,
+body.creme .combi-bet-result.lose { color: #dc2626 !important; }
+body.creme .bet-res.pending       { color: #d97706 !important; }
+body.creme .bet-live-score,
+body.creme .bet-live-dot          { color: #dc2626 !important; }
+body.creme .bet-live-dot          { background: #dc2626 !important; }
+/* Combi kleuren bewaren */
+body.creme .combi-bet-leg.leg-win  { color: #16a34a !important; border-left-color: #16a34a !important; }
+body.creme .combi-bet-leg.leg-lose { color: #dc2626 !important; border-left-color: #dc2626 !important; }
+/* Inline gekleurde bedragen bewaren */
+body.creme .bet-row [style*="color:#00BEC4"],
+body.creme .combi-bet-row [style*="color:#00BEC4"] { color: #00838A !important; }
+body.creme .bet-row [style*="color:#dc2626"],
+body.creme .combi-bet-row [style*="color:#dc2626"] { color: #dc2626 !important; }
 
 /* v26.32: Crème — top-dashboard-cards definiëren + competitie-tegels licht */
 body.creme .dash-soft {
