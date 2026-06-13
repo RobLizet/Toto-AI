@@ -1123,33 +1123,34 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
   const cached = typeof _cacheGet === 'function' ? _cacheGet(cacheKey) : null;
   let oddsData = cached;
 
+  // v26.94: via worker proxy met cache-bust (niet direct API-Sports — Cloudflare cache bypass)
   if (!oddsData) {
-    const bookmakers = [8, 6, 1, 16, 36, 5, 11, 3, 4, 7, 2]; // 16=Betfair, 36=Betsson voor Scandinavisch
+    const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
     const season = seasonForLeague(leagueId);
     const leagueMatch = (state.matches || []).find(m => String(m.leagueId) === String(leagueId));
     const matchDate = leagueMatch?.dateISO || new Date().toISOString().split('T')[0];
+    const cb = Date.now();
 
-    for (const bm of bookmakers) {
+    try {
+      // Probeer datum-bulk fetch (efficiënter)
+      const r = await apiFetch(`${WORKER}/apif/odds?date=${matchDate}&bet=1&page=1&_cb=${cb}`, null, 10000);
+      const d = await r.json();
+      const filtered = (d.response||[]).filter(o => String(o.fixture?.id) === String(leagueId) ||
+        (state.matches||[]).some(m => String(m.leagueId) === String(leagueId) && String(o.fixture?.id) === String(m.id)));
+      if (d.response?.length) {
+        oddsData = d.response;
+        if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData, 300); // 5 min cache
+      }
+    } catch(e) {}
+
+    // Fallback: per league
+    if (!oddsData?.length) {
       try {
-        const r = await apiFetch(
-          `https://v3.football.api-sports.io/odds?league=${leagueId}&season=${season}&date=${matchDate}&bookmaker=${bm}`,
-          null, 8000
-        );
-        const d = await r.json();
-        if (d.response?.length) {
-          oddsData = d.response;
-          if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData);
-          break;
-        }
-        const r2 = await apiFetch(
-          `https://v3.football.api-sports.io/odds?league=${leagueId}&season=${season}&bookmaker=${bm}&next=15`,
-          null, 8000
-        );
+        const r2 = await apiFetch(`${WORKER}/apif/odds?league=${leagueId}&season=${season}&date=${matchDate}&bet=1&_cb=${cb}`, null, 10000);
         const d2 = await r2.json();
         if (d2.response?.length) {
           oddsData = d2.response;
-          if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData);
-          break;
+          if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData, 300);
         }
       } catch(e) {}
     }
