@@ -119,7 +119,7 @@ async function apiFetch(url, _apiKey, timeoutMs = 10000) {
     }
 
     if (rateLimited && attempt < backoffs.length) {
-      console.warn(`[apiFetch] rate-limit, retry ${attempt + 1} over ${backoffs[attempt]}ms — ${apiPath}`);
+      console.warn(`[apiFetch] rate-limit, retry ${attempt + 1} over ${backoffs[attempt]}ms — ${target}`);
       await new Promise(res => setTimeout(res, backoffs[attempt]));
       continue;
     }
