@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v150'; // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v151-TEST'; // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -2040,10 +2040,10 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const leagueTier = leagueCalibration[String(m.leagueId)]?.tier || 'neutraal';
       const isRisico = leagueTier === 'risico';
       const isEliteLeague = leagueTier === 'elite';
-      const minConf = tournament ? 5 : (isRisico ? 7 : 6);
+      const minConf = tournament ? 3 : (isRisico ? 5 : 4);  // TEMP TEST
       const minValue = c.pick === 'X'
-        ? (tournament ? 10 : isRisico ? 15 : 12)
-        : (tournament ? 6  : isRisico ? 9  : 6);
+        ? (tournament ? 4 : isRisico ? 8 : 6)
+        : (tournament ? 2 : isRisico ? 5 : 3);              // TEMP TEST
       if (conf.score < minConf || value < minValue) return;
 
       // v140b: gelijkspel pas na 2 opeenvolgende bevestigingen (te wispelturig)
@@ -2425,10 +2425,10 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
       const leagueTier = leagueCalibration[String(m.leagueId)]?.tier || 'neutraal';
       const isRisico = leagueTier === 'risico';
       const isEliteLeague = leagueTier === 'elite';
-      const minConf = tournament ? 5 : (isRisico ? 7 : 6);
+      const minConf = tournament ? 3 : (isRisico ? 5 : 4);  // TEMP TEST
       const minValue = c.pick === 'X'
-        ? (tournament ? 10 : isRisico ? 15 : 12)
-        : (tournament ? 6  : isRisico ? 9  : 6);
+        ? (tournament ? 4 : isRisico ? 8 : 6)
+        : (tournament ? 2 : isRisico ? 5 : 3);              // TEMP TEST
       if (conf.score < minConf || value < minValue) return;
 
       // v140b: gelijkspel pas na 2 opeenvolgende bevestigingen (te wispelturig)
