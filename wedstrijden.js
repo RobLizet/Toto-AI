@@ -672,8 +672,11 @@ async function renderWedValuePicks() {
 
   const elite   = allPicks.filter(p => p.elite);
   const locks   = allPicks.filter(p => !p.elite && (p.lockLevel==='triple'||p.lockLevel==='double'));
-  const sharp   = allPicks.filter(p => !p.elite && p.lockLevel==='single' && (p.sharpTier==='elite'||p.sharpTier==='strong'||(p.sharpMove&&parseFloat(p.sharpMove)<-4)));
-  const regular = allPicks.filter(p => !p.elite && p.lockLevel==='single' && !sharp.includes(p));
+  const sharp   = allPicks.filter(p => !p.elite && !locks.includes(p) && (p.sharpTier==='elite'||p.sharpTier==='strong'||(p.sharpMove&&parseFloat(p.sharpMove)<-4)));
+  // v26.103: regular = catch-all. Elke niet-elite/lock/sharp pick valt hier, ongeacht
+  // lockLevel. Voorheen eiste dit lockLevel==='single', waardoor picks met een ontbrekende
+  // of andere lockLevel uit álle secties vielen (wel geteld in de header, niet getoond).
+  const regular = allPicks.filter(p => !p.elite && !locks.includes(p) && !sharp.includes(p));
 
   function section(title, icon, items, color) {
     if (!items.length) return '';
