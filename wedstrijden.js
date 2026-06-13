@@ -554,52 +554,103 @@ async function loadVandaagTab() {
 }
 
 // ── VALUE PICKS TAB — open value picks uit scan log ──
+// ══ v26.89: renderWedValuePicks — volledig picks overzicht ══
 function renderWedValuePicks() {
   const el = document.getElementById('wedValuePicksList');
   if (!el) return;
 
+  const nowMs   = Date.now();
+  const STALE   = 48 * 60 * 60 * 1000;
   const scanLog = state.scanLog || [];
-  const nowMs = Date.now();
-  const STALE_MS = 48 * 60 * 60 * 1000; // v26.8: open picks ouder dan 48u = wedstrijd voorbij → niet meer "open"
-  const picks = scanLog
-    .flatMap(s => (s.picks||[]).map(p => ({...p, scanDate: s.timestamp})))
+  const mono    = "font-family:'IBM Plex Mono',monospace";
+  const sans    = "font-family:'DM Sans',sans-serif";
+  const bebas   = "font-family:'Bebas Neue',sans-serif";
+
+  // Alle geldige open picks + dedupliceren per fixture
+  const seenFix = new Set();
+  const allPicks = scanLog
+    .flatMap(s => (s.picks||[]).map(p => ({ ...p, _scanTs: s.timestamp })))
     .filter(p => {
-      if (!(!p.status || p.status === 'pending')) return false;
+      if (p.status && p.status !== 'pending') return false;
       if ((p.value||0) < 5) return false;
-      const ts = typeof p.scanDate === 'number' ? p.scanDate : (p.scanDate ? new Date(p.scanDate).getTime() : 0);
-      if (ts && nowMs - ts > STALE_MS) return false; // verouderd → verbergen
+      if (p.pick === 'X') return false;
+      const ts = typeof p._scanTs === 'number' ? p._scanTs : new Date(p._scanTs||0).getTime();
+      if (ts && nowMs - ts > STALE) return false;
+      const fid = p.fixtureId || p.match;
+      if (seenFix.has(fid)) return false;
+      seenFix.add(fid);
       return true;
     })
-    .sort((a,b) => (b.value||0) - (a.value||0));
+    .sort((a,b) => ((b.confidence||0)*(b.value||0)) - ((a.confidence||0)*(a.value||0)));
 
-  if (!picks.length) {
-    el.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;">'
-      + '<div style="font-size:2rem;margin-bottom:.5rem;">⚡</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);">Geen open value picks</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.35);margin-top:.4rem;">Doe een value scan via Analyse tabblad</div>'
-      + '</div>';
+  if (!allPicks.length) {
+    el.innerHTML = `<div style="text-align:center;padding:2.5rem 1rem;">
+      <div style="font-size:2rem;margin-bottom:.5rem;">⚡</div>
+      <div style="${mono};font-size:.55rem;color:rgba(255,255,255,.5);">Geen open picks beschikbaar</div>
+      <div style="${mono};font-size:.46rem;color:rgba(255,255,255,.35);margin-top:.4rem;">Doe een scan via Matches → Multi-scan</div>
+    </div>`;
     return;
   }
 
-  el.innerHTML = picks.map(p => {
-    const valueColor = p.value >= 20 ? '#00BEC4' : p.value >= 10 ? '#f59e0b' : 'rgba(255,255,255,.5)';
-    const confColor  = p.confidence >= 8 ? '#00BEC4' : p.confidence >= 6 ? '#f59e0b' : '#ef4444';
-    return '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;'
-      + 'padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.6rem;cursor:pointer;backdrop-filter:blur(8px);"'
-      + ' onclick="switchScreen(\'analyse\')">'
-      + '<div style="flex:1;min-width:0;">'
-      + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (p.match||'?') + '</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin-top:.1rem;">'
-      + (p.pickLabel||p.pick||'?') + ' · <span style="color:#fff;font-weight:700;">@ ' + (p.odds||'?') + '</span>'
-      + ' · ' + (p.comp||'') + '</div>'
-      + '</div>'
-      + '<div style="text-align:right;flex-shrink:0;">'
-      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.15rem;color:' + valueColor + ';line-height:1;">+' + Math.round(p.value||0) + '%</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:' + confColor + ';">conf ' + (p.confidence||0) + '/10</div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
+  function badge(txt, color) {
+    return `<span style="font-size:.38rem;color:${color};background:${color}18;border:1px solid ${color}33;border-radius:4px;padding:.05rem .3rem;">${txt}</span>`;
+  }
+
+  function pickCard(p) {
+    const vc = p.value >= 20 ? '#00BEC4' : p.value >= 12 ? '#f59e0b' : '#d97706';
+    const cc = p.confidence >= 8 ? '#00BEC4' : p.confidence >= 6 ? '#f59e0b' : 'rgba(255,255,255,.5)';
+    const sharpT  = p.sharpTier || p.sharp_tier || '';
+    const sharpSc = p.sharpScore || p.sharp_score || 0;
+    const isSteam = p.sharpMove && parseFloat(p.sharpMove) < -4;
+    const badges = [
+      p.elite && badge('⭐ Elite', '#00BEC4'),
+      p.lockLevel === 'triple' && badge('🔒🔒🔒 Triple', '#7c3aed'),
+      p.lockLevel === 'double' && badge('🔒🔒 Double', '#7c3aed'),
+      sharpT === 'elite'    && badge('⚡ ' + Math.round(sharpSc) + '/100', '#f59e0b'),
+      sharpT === 'strong'   && badge('📡 ' + Math.round(sharpSc) + '/100', '#00BEC4'),
+      isSteam && badge('🔴 ' + parseFloat(p.sharpMove).toFixed(1) + '%', '#dc2626'),
+    ].filter(Boolean).join(' ');
+
+    return `<div class="worker-pick-row" onclick="switchScreen('analyse')" style="cursor:pointer;margin-bottom:.4rem;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;">
+        <div style="flex:1;min-width:0;">
+          <div style="${sans};font-size:.7rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||'?'}</div>
+          <div style="${mono};font-size:.44rem;color:rgba(255,255,255,.55);margin-top:.1rem;">${p.pickLabel||p.pick||'?'} · <b style="color:#fff;">@ ${p.odds||'?'}</b> · ${p.comp||''}</div>
+          ${badges ? `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.25rem;">${badges}</div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="${bebas};font-size:1.3rem;color:${vc};line-height:1;">+${Math.round(p.value||0)}%</div>
+          <div style="${mono};font-size:.4rem;color:${cc};">conf ${p.confidence||0}/10</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const elite   = allPicks.filter(p => p.elite);
+  const locks   = allPicks.filter(p => !p.elite && (p.lockLevel==='triple'||p.lockLevel==='double'));
+  const sharp   = allPicks.filter(p => !p.elite && p.lockLevel==='single' && (p.sharpTier==='elite'||p.sharpTier==='strong'||(p.sharpMove&&parseFloat(p.sharpMove)<-4)));
+  const regular = allPicks.filter(p => !p.elite && p.lockLevel==='single' && !sharp.includes(p));
+
+  function section(title, icon, items, color) {
+    if (!items.length) return '';
+    return `<div style="margin-bottom:.75rem;">
+      <div style="${mono};font-size:.48rem;font-weight:800;color:${color};letter-spacing:.06em;margin-bottom:.4rem;">
+        ${icon} ${title} <span style="font-weight:400;opacity:.6;">(${items.length})</span>
+      </div>
+      ${items.map(pickCard).join('')}
+    </div>`;
+  }
+
+  el.innerHTML =
+    `<div style="${mono};font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.08em;margin-bottom:.75rem;">
+      ⚡ VALUE PICKS OVERZICHT · ${allPicks.length} picks
+    </div>`
+    + section('ELITE PICKS',          '⭐', elite,   '#00BEC4')
+    + section('TRIPLE & DOUBLE LOCK', '🔒', locks,   '#7c3aed')
+    + section('SHARP MONEY',          '⚡', sharp,   '#f59e0b')
+    + section('VALUE PICKS',          '📊', regular, 'rgba(255,255,255,.5)');
 }
+
 
 // ── LIVE TAB — live wedstrijden tonen + cleanup ──
 async function renderLiveTab() {
