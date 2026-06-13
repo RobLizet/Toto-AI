@@ -3589,9 +3589,9 @@ function runMonteCarloSim(hitrate, avgOdds, kellyFraction, nPicks, nSims) {
 
   // ── UI ─────────────────────────────────────────────────
   function statRow(label, value, color) {
-    return `<div style="display:flex;justify-content:space-between;padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.06);">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">${label}</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:800;color:${color||'#fff'};">${value}</div>
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.08);">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(255,255,255,.75);">${label}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:${color||'#fff'};white-space:nowrap;margin-left:.5rem;">${value}</div>
     </div>`;
   }
 
@@ -3601,27 +3601,27 @@ function runMonteCarloSim(hitrate, avgOdds, kellyFraction, nPicks, nSims) {
   overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
 
   overlay.innerHTML = `
-    <div style="background:#0d1f2d;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:1.25rem 1rem 2rem;max-height:92vh;overflow-y:auto;">
+    <div style="background:#0d1f2d;border-radius:20px 20px 0 0;width:100%;max-width:100%;padding:1.25rem 1.25rem 2rem;max-height:92vh;overflow-y:auto;box-sizing:border-box;">
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:800;color:#00BEC4;">🎲 MONTE CARLO SIMULATIE</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:#00BEC4;">🎲 MONTE CARLO SIMULATIE</div>
         <button onclick="document.getElementById('monteCarloOverlay').remove()"
           style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.7);border-radius:50%;width:28px;height:28px;cursor:pointer;">✕</button>
       </div>
 
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:rgba(255,255,255,.4);margin-bottom:.75rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(255,255,255,.6);margin-bottom:.75rem;">
         ${nSims.toLocaleString()} simulaties · ${nPicks} picks · hitrate ${(hitrate*100).toFixed(1)}% · gem. odds ${avgOdds.toFixed(2)} · Kelly ${(kellyFraction*100).toFixed(0)}%
       </div>
 
       <!-- Grafiek -->
       <div style="background:rgba(255,255,255,.03);border-radius:12px;padding:.5rem;margin-bottom:.75rem;">
         ${svg}
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:rgba(255,255,255,.35);text-align:center;margin-top:.2rem;">200 sample-paden — cyaan = mediaan scenario</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(255,255,255,.6);text-align:center;margin-top:.2rem;">200 sample-paden — cyaan = mediaan scenario</div>
       </div>
 
       <!-- Resultaten -->
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.6rem .7rem;margin-bottom:.75rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.35rem;">BANKROLL UITKOMSTEN (startbankroll = 1x)</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(255,255,255,.7);font-weight:700;margin-bottom:.35rem;">BANKROLL UITKOMSTEN (startbankroll = 1x)</div>
         ${statRow('Pessimistisch (10%)', p10.toFixed(2)+'x', p10<1?'#dc2626':'#00BEC4')}
         ${statRow('Laag kwartiel (25%)', p25.toFixed(2)+'x', p25<1?'#dc2626':'#d97706')}
         ${statRow('Mediaan (50%)', p50.toFixed(2)+'x', p50<1?'#dc2626':'#00BEC4')}
@@ -3632,7 +3632,7 @@ function runMonteCarloSim(hitrate, avgOdds, kellyFraction, nPicks, nSims) {
 
       <!-- Risico -->
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.6rem .7rem;margin-bottom:.75rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.35rem;">RISICO ANALYSE</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(255,255,255,.7);font-weight:700;margin-bottom:.35rem;">RISICO ANALYSE</div>
         ${statRow('Kans op winst', pProfit.toFixed(1)+'%', pProfit>60?'#00BEC4':'#d97706')}
         ${statRow('Kans op ruin (<10%)', pRuin.toFixed(1)+'%', pRuin<5?'#00BEC4':pRuin<15?'#d97706':'#dc2626')}
         ${statRow('Mediaan max drawdown', (medDD*100).toFixed(1)+'%', medDD<0.3?'#00BEC4':'#d97706')}
@@ -3642,7 +3642,7 @@ function runMonteCarloSim(hitrate, avgOdds, kellyFraction, nPicks, nSims) {
 
       <!-- Sliders -->
       <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.6rem .7rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:rgba(255,255,255,.4);margin-bottom:.5rem;">PARAMETERS AANPASSEN</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(255,255,255,.7);font-weight:700;margin-bottom:.5rem;">PARAMETERS AANPASSEN</div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
           <button onclick="runMonteCarloSim(${hitrate},${avgOdds},0.10,${nPicks},${nSims})"
             style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;background:${kellyFraction===0.10?'rgba(0,190,196,.2)':'rgba(255,255,255,.06)'};border:1px solid rgba(0,190,196,.3);color:#00BEC4;border-radius:8px;padding:.35rem .6rem;cursor:pointer;">½ Kelly 10%</button>
