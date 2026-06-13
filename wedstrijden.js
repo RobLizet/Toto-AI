@@ -583,29 +583,28 @@ async function renderWedValuePicks() {
     if (res.ok) {
       const data = await res.json();
       const sbPicks = (data.picks || data || []).filter(p =>
-        p.status === 'pending' &&
-        (p.value||0) >= 5 &&
+        (!p.status || p.status === 'pending') &&
+        (p.value||0) >= 3 &&
         p.pick !== 'X' &&
-        (!p.match_date || p.match_date >= today)
+        (!(p.matchDate||p.match_date) || (p.matchDate||p.match_date) >= today)
       );
       sbPicks.forEach(p => {
-        const fid = p.fixture_id || p.fixtureId || p.id;
+        const fid = p.fixtureId || p.fixture_id || p.id;
         if (seenFix.has(fid)) return;
         seenFix.add(fid);
-        // Normaliseer Supabase velden naar scan-formaat
         allPicks.push({
-          match:      (p.home||'?') + ' vs ' + (p.away||'?'),
-          pickLabel:  p.pick_label || p.pick,
+          match:      p.matchName || ((p.home||'?') + ' vs ' + (p.away||'?')),
+          pickLabel:  p.pickLabel || p.pick_label || p.pick,
           pick:       p.pick,
           odds:       p.odds,
           value:      parseFloat(p.value||0),
-          confidence: parseFloat(p.confidence_final || p.confidence || 0),
-          comp:       p.league_name || '',
+          confidence: parseFloat(p.confidenceFinal || p.confidence_final || p.confidence || 0),
+          comp:       p.leagueName || p.league_name || '',
           elite:      p.elite,
-          lockLevel:  p.lock_level || 'single',
-          sharpTier:  p.sharp_tier,
-          sharpScore: p.sharp_score,
-          sharpMove:  p.odds_movement,
+          lockLevel:  p.lockLevel || p.lock_level || 'single',
+          sharpTier:  p.sharpTier || p.sharp_tier,
+          sharpScore: p.sharpScore || p.sharp_score,
+          sharpMove:  p.oddsMovement || p.odds_movement,
           fixtureId:  fid,
           _source:    'supabase',
         });
