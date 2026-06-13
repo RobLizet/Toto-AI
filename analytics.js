@@ -312,17 +312,45 @@ function _analyticsHTML(local, worker) {
   if (worker && worker.sharpMoney) {
     const sm = worker.sharpMoney;
     // Combineer steam movements + sharp scores voor volledige weergave
+    const today = new Date().toISOString().split('T')[0];
+
+    // v26.89: dedupliceer per fixture (1 pick per wedstrijd), filter gespeeld + gelijkspel + lage score
+    const seenFixtures = new Set();
     const sharpItems = [];
-    // Voeg topSharpScores toe als primaire bron (heeft teamnamen + alle data)
+
+    // Primaire bron: topSharpScores (heeft teamnamen + score)
     if (sm.topSharpScores && sm.topSharpScores.length) {
-      sm.topSharpScores.forEach(s => sharpItems.push({ ...s, _type: 'score' }));
+      sm.topSharpScores
+        .filter(s =>
+          s.pick !== 'X' &&                          // geen gelijkspelen
+          (s.sharpScore || 0) >= 50 &&               // minimaal moderate+ signaal
+          (!s.matchDate || s.matchDate >= today)      // geen gespeelde wedstrijden
+        )
+        .sort((a, b) => (b.sharpScore||0) - (a.sharpScore||0))
+        .forEach(s => {
+          const fid = s.fixtureId;
+          if (!seenFixtures.has(fid)) {
+            seenFixtures.add(fid);
+            sharpItems.push({ ...s, _type: 'score' });
+          }
+        });
     }
-    // Voeg steam movements toe die nog niet in sharpItems zitten
+
+    // Aanvulling: steam movements die nog niet in sharpItems zitten
     if (sm.topSteam && sm.topSteam.length) {
-      sm.topSteam.forEach(s => {
-        const exists = sharpItems.find(x => x.fixtureId == s.fixtureId && x.pick === s.pick);
-        if (!exists) sharpItems.push({ ...s, _type: 'steam' });
-      });
+      sm.topSteam
+        .filter(s =>
+          s.pick !== 'X' &&
+          (!s.matchDate || s.matchDate >= today) &&
+          Math.abs(parseFloat(s.movement || 0)) >= 6  // minimaal 6% beweging
+        )
+        .forEach(s => {
+          const fid = s.fixtureId;
+          if (!seenFixtures.has(fid)) {
+            seenFixtures.add(fid);
+            sharpItems.push({ ...s, _type: 'steam' });
+          }
+        });
     }
 
     html += '<div class="analytics-block">';
