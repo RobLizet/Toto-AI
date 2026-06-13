@@ -1203,7 +1203,11 @@ async function fetchOddsForAllMatches(matches, _apiKey) {
     byLeague[lid].push(m);
   });
 
+  let _leagueIdx = 0;
   for (const [leagueId] of Object.entries(byLeague)) {
+    // v26.99: throttle — kleine pauze tussen league-calls zodat de per-minuut
+    // rate-limit niet verzadigt bij het in één keer laden van veel competities.
+    if (_leagueIdx++ > 0) await new Promise(r => setTimeout(r, 220));
     const season = seasonForLeague(leagueId);
     // v26.97: per league ALLE unieke datums ophalen i.p.v. alleen de eerste match.
     // Hierdoor kregen WK-matches op 14 juni geen odds als er ook een match op 13 juni stond.
