@@ -76,8 +76,18 @@ function _apiThrottle() {
 }
 
 async function apiFetch(url, _apiKey, timeoutMs = 10000) {
-  const apiPath = url.replace('https://v3.football.api-sports.io', '');
-  const target = `${WORKER}/apif${apiPath}`;
+  // v26.101: robuuste URL-opbouw. Callers geven soms een api-sports URL door
+  // (https://v3.football.api-sports.io/...) en soms al een volledige worker-URL
+  // (`${WORKER}/apif/...`). Voorheen werd die laatste dubbel geprefixt →
+  // https://api.promatchxi.app/apifhttps://... → kapotte URL → lege schermen.
+  let target;
+  if (url.startsWith(WORKER)) {
+    target = url;                                              // al volledige worker-URL
+  } else if (/^https?:\/\//.test(url)) {
+    target = `${WORKER}/apif${url.replace('https://v3.football.api-sports.io', '')}`; // api-sports → proxy
+  } else {
+    target = `${WORKER}/apif${url.startsWith('/') ? '' : '/'}${url}`; // kaal pad
+  }
   await _apiThrottle(); // v26.100: anti-burst spacing
   // v26.98: rate-limit-aware retry. API-Football geeft een per-minuut overschrijding
   // terug als HTTP 200 met { errors: { rateLimit: "..." } } (soms als 429). Zonder
