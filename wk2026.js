@@ -760,8 +760,8 @@ async function loadWKSchema() {
 
   try {
     const today = new Date().toISOString().split('T')[0];
-    const res = await fetch(
-      `https://api.promatchxi.app/apif/fixtures?league=1&season=2026&from=${today}&to=2026-07-20&timezone=Europe/Amsterdam`
+    const res = await apiFetch(
+      `https://v3.football.api-sports.io/fixtures?league=1&season=2026&from=${today}&to=2026-07-20&timezone=Europe/Amsterdam`
     );
     const raw = await res.json();
     _wkFixtures = Array.isArray(raw) ? raw : (raw?.response || []);
@@ -783,7 +783,7 @@ async function loadWKSchema() {
 async function _loadWKOdds(ids) {
   for (const id of ids.slice(0, 5)) {
     try {
-      const res = await fetch(`https://api.promatchxi.app/apif/odds?league=1&season=2026&fixture=${id}`);
+      const res = await apiFetch(`https://v3.football.api-sports.io/odds?league=1&season=2026&fixture=${id}`);
       const raw = await res.json();
       const resp = Array.isArray(raw) ? raw : (raw?.response || []);
       if (resp[0]?.bookmakers?.[0]?.bets?.[0]?.values) {
@@ -950,7 +950,7 @@ async function loadWKStanden() {
   el.innerHTML = `<div style="text-align:center;padding:1.5rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ Standen laden...</div>`;
 
   try {
-    const res = await fetch('https://api.promatchxi.app/apif/standings?league=1&season=2026');
+    const res = await apiFetch('https://v3.football.api-sports.io/standings?league=1&season=2026');
     const raw = await res.json();
     const resp = Array.isArray(raw) ? raw : (raw?.response || []);
     const standings = resp[0]?.league?.standings || [];
@@ -1019,7 +1019,7 @@ async function loadWKTopscorers() {
   el.innerHTML = `<div style="text-align:center;padding:1.5rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ Topscorers laden...</div>`;
 
   try {
-    const res = await fetch('https://api.promatchxi.app/apif/topscorers?league=1&season=2026');
+    const res = await apiFetch('https://v3.football.api-sports.io/topscorers?league=1&season=2026');
     const raw = await res.json();
     const scorers = Array.isArray(raw) ? raw : (raw?.response || []);
 
