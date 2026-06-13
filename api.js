@@ -62,9 +62,23 @@ const FD_CODES = {
 };
 
 // ── API-Football via Worker /apif/* ─────────────────────
+// v26.100: globale throttle — serialiseert ALLE API-Football calls met een minimale
+// tussentijd. Zo kan geen enkel scherm (Matches, all-comps, WK-tab, odds, retries) de
+// per-minuut rate-limit verzadigen via een burst. Reservering is synchroon → race-vrij.
+const API_MIN_GAP = 120; // ms tussen opeenvolgende calls
+let _apiNextSlot = 0;
+function _apiThrottle() {
+  const now = Date.now();
+  const start = Math.max(now, _apiNextSlot);
+  _apiNextSlot = start + API_MIN_GAP;
+  const wait = start - now;
+  return wait > 0 ? new Promise(r => setTimeout(r, wait)) : Promise.resolve();
+}
+
 async function apiFetch(url, _apiKey, timeoutMs = 10000) {
   const apiPath = url.replace('https://v3.football.api-sports.io', '');
   const target = `${WORKER}/apif${apiPath}`;
+  await _apiThrottle(); // v26.100: anti-burst spacing
   // v26.98: rate-limit-aware retry. API-Football geeft een per-minuut overschrijding
   // terug als HTTP 200 met { errors: { rateLimit: "..." } } (soms als 429). Zonder
   // afvangen werd dat behandeld als "0 wedstrijden/odds" → valse lege schermen.
