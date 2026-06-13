@@ -555,25 +555,71 @@ async function loadVandaagTab() {
 
 // ── VALUE PICKS TAB — open value picks uit scan log ──
 // ══ v26.89: renderWedValuePicks — volledig picks overzicht ══
-function renderWedValuePicks() {
+async function renderWedValuePicks() {
   const el = document.getElementById('wedValuePicksList');
   if (!el) return;
 
-  const nowMs   = Date.now();
-  const STALE   = 48 * 60 * 60 * 1000;
-  const scanLog = state.scanLog || [];
-  const mono    = "font-family:'IBM Plex Mono',monospace";
-  const sans    = "font-family:'DM Sans',sans-serif";
-  const bebas   = "font-family:'Bebas Neue',sans-serif";
+  const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
+  const mono   = "font-family:'IBM Plex Mono',monospace";
+  const sans   = "font-family:'DM Sans',sans-serif";
+  const bebas  = "font-family:'Bebas Neue',sans-serif";
 
-  // Alle geldige open picks + dedupliceren per fixture
+  // Loading indicator
+  el.innerHTML = `<div style="display:flex;justify-content:center;padding:2rem;">
+    <div style="width:22px;height:22px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div>
+  </div>`;
+
+  const nowMs = Date.now();
+  const STALE = 48 * 60 * 60 * 1000;
+  const today = new Date().toISOString().split('T')[0];
   const seenFix = new Set();
-  const allPicks = scanLog
+  let allPicks = [];
+
+  // 1. Probeer Supabase picks ophalen via worker
+  try {
+    const uid = (typeof auth !== 'undefined' && auth.currentUser) ? auth.currentUser.uid : null;
+    const url = WORKER + '/picks' + (uid ? '?uid=' + uid : '');
+    const res  = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      const sbPicks = (data.picks || data || []).filter(p =>
+        p.status === 'pending' &&
+        (p.value||0) >= 5 &&
+        p.pick !== 'X' &&
+        (!p.match_date || p.match_date >= today)
+      );
+      sbPicks.forEach(p => {
+        const fid = p.fixture_id || p.fixtureId || p.id;
+        if (seenFix.has(fid)) return;
+        seenFix.add(fid);
+        // Normaliseer Supabase velden naar scan-formaat
+        allPicks.push({
+          match:      (p.home||'?') + ' vs ' + (p.away||'?'),
+          pickLabel:  p.pick_label || p.pick,
+          pick:       p.pick,
+          odds:       p.odds,
+          value:      parseFloat(p.value||0),
+          confidence: parseFloat(p.confidence_final || p.confidence || 0),
+          comp:       p.league_name || '',
+          elite:      p.elite,
+          lockLevel:  p.lock_level || 'single',
+          sharpTier:  p.sharp_tier,
+          sharpScore: p.sharp_score,
+          sharpMove:  p.odds_movement,
+          fixtureId:  fid,
+          _source:    'supabase',
+        });
+      });
+    }
+  } catch(e) { console.warn('[ValuePicks] Supabase fetch mislukt:', e.message); }
+
+  // 2. Aanvullen met lokale scanLog (handmatige scans)
+  const scanLog = state.scanLog || [];
+  scanLog
     .flatMap(s => (s.picks||[]).map(p => ({ ...p, _scanTs: s.timestamp })))
     .filter(p => {
       if (p.status && p.status !== 'pending') return false;
-      if ((p.value||0) < 5) return false;
-      if (p.pick === 'X') return false;
+      if ((p.value||0) < 5 || p.pick === 'X') return false;
       const ts = typeof p._scanTs === 'number' ? p._scanTs : new Date(p._scanTs||0).getTime();
       if (ts && nowMs - ts > STALE) return false;
       const fid = p.fixtureId || p.match;
@@ -581,7 +627,10 @@ function renderWedValuePicks() {
       seenFix.add(fid);
       return true;
     })
-    .sort((a,b) => ((b.confidence||0)*(b.value||0)) - ((a.confidence||0)*(a.value||0)));
+    .forEach(p => allPicks.push({ ...p, _source: 'local' }));
+
+  // Sorteer op conf × value
+  allPicks.sort((a,b) => ((b.confidence||0)*(b.value||0)) - ((a.confidence||0)*(a.value||0)));
 
   if (!allPicks.length) {
     el.innerHTML = `<div style="text-align:center;padding:2.5rem 1rem;">
@@ -650,6 +699,8 @@ function renderWedValuePicks() {
     + section('SHARP MONEY',          '⚡', sharp,   '#f59e0b')
     + section('VALUE PICKS',          '📊', regular, 'rgba(255,255,255,.5)');
 }
+
+
 
 
 // ── LIVE TAB — live wedstrijden tonen + cleanup ──
