@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v149'; // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v150'; // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -375,7 +375,7 @@ async function detectSharpMoney(oddsMap, matches, env, poissonMap) {
     };
   });
 
-  const STEAM_THRESHOLD = 4;   // % odds daling = steam signaal
+  const STEAM_THRESHOLD = 6;   // v26.89: 4→6% — alleen significante steam bewegingen
   const DRIFT_THRESHOLD = 5;   // % odds stijging = drift signaal
   const DIVERG_STRONG   = 10;  // pp: Poisson vs markt kloof als sterk
   const DIVERG_MODERATE = 6;   // pp: kloof als matig
@@ -473,8 +473,8 @@ async function detectSharpMoney(oddsMap, matches, env, poissonMap) {
       score = parseFloat(Math.min(100, score).toFixed(1));
       const tier = sharpTier(score);
 
-      // Steam signaal naar scan engine
-      if (isSteam || score >= 35) {
+      // Steam signaal naar scan engine — alleen bij voldoende kwaliteit
+      if (isSteam || score >= 55) {
         sharpSignals[m.fixtureId] = sharpSignals[m.fixtureId] || {};
         sharpSignals[m.fixtureId][p] = {
           movement:          movPct,
@@ -625,7 +625,7 @@ async function handleAnalytics(env) {
     ) || [];
     const sevenDaysAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
     const sharpData = await sb(env, 'odds_movements', 'GET', null,
-      `?detected_at=gte.${sevenDaysAgo}T00:00:00Z&direction=eq.steam&order=movement_pct.asc&limit=50`
+      `?detected_at=gte.${sevenDaysAgo}T00:00:00Z&direction=eq.steam&pick=neq.X&order=movement_pct.asc&limit=50`
     ) || [];
 
     const withCLV = clvData.filter(r => r.clv_pct !== null);
@@ -746,7 +746,7 @@ async function handleAnalytics(env) {
         try {
           const sevenAgo = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
           const rows = await sb(env, 'model_market_comparison', 'GET', null,
-            `?match_date=gte.${sevenAgo}&sharp_score=gte.35&order=sharp_score.desc&limit=8`
+            `?match_date=gte.${sevenAgo}&sharp_score=gte.55&pick=neq.X&order=sharp_score.desc&limit=8`
           ) || [];
           // Verrijk ook model_market_comparison rijen met picks data als home/away leeg is
           topSharpScores = rows.map(r => {
