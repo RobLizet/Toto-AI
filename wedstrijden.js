@@ -274,10 +274,6 @@ function renderWedstrijdenScreen() {
 
     <!-- ══ TAB: VALUE PICKS ══ -->
     <div id="wtab-content-value" style="display:none;">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.08em;margin-bottom:.65rem;display:flex;align-items:center;gap:.4rem;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        VALUE PICKS — OPEN BETS
-      </div>
       <div id="wedValuePicksList"></div>
     </div>
 
@@ -598,7 +594,7 @@ async function renderWedValuePicks() {
           pick:       p.pick,
           odds:       p.odds,
           value:      parseFloat(p.value||0),
-          confidence: parseFloat(p.confidenceFinal || p.confidence_final || p.confidence || 0),
+          confidence: parseFloat(p.confidence || p.confidence_final || 0),  // 1-10 score
           comp:       p.leagueName || p.league_name || '',
           elite:      p.elite,
           lockLevel:  p.lockLevel || p.lock_level || 'single',
