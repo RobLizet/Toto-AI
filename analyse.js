@@ -2389,11 +2389,41 @@ function renderScanLog() {
     return true;
   }
 
-  // Filter log: toon alleen scans met minstens 1 matchende pick
+  // v26.88: kwaliteitsfilter — verberg picks onder drempel + conflicterende richtingen
+  const MIN_VAL_DISPLAY = 5; // toon alleen picks met ≥5pp value (iets soepeler dan opslag)
+  const MIN_CONF_DISPLAY = 4; // en conf ≥4
+
+  // Per scan: dedupliceer op fixture_id — houd alleen beste pick per wedstrijd
+  function deduplicateByFixture(picks) {
+    const best = {};
+    picks.forEach(p => {
+      const fid = p.fixtureId || p.match || p.matchId || p.id;
+      if (!fid) return;
+      const score = (p.value||0) * (p.confidence||0);
+      const prev = best[fid];
+      if (!prev || score > (prev.value||0)*(prev.confidence||0)) best[fid] = p;
+    });
+    return Object.values(best);
+  }
+
   const _anyFilter = F.q || F.conf || F.pick || F.comp || F.status || F.odds || F.sharp;
-  let filteredLog = _anyFilter
-    ? log.map(s => ({ ...s, picks: s.picks.filter(pickMatchesFilter) })).filter(s => s.picks.length > 0)
-    : [...log];
+  let filteredLog = log
+    .map(s => ({
+      ...s,
+      picks: deduplicateByFixture(
+        (s.picks || []).filter(p =>
+          (p.value||0) >= MIN_VAL_DISPLAY &&
+          (p.confidence||0) >= MIN_CONF_DISPLAY
+        )
+      )
+    }))
+    .filter(s => s.picks.length > 0);
+
+  if (_anyFilter) {
+    filteredLog = filteredLog
+      .map(s => ({ ...s, picks: s.picks.filter(pickMatchesFilter) }))
+      .filter(s => s.picks.length > 0);
+  }
 
   // Sortering
   if (F.sort === 'value') {
