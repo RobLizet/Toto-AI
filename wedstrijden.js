@@ -1120,44 +1120,34 @@ async function loadFromFD(fdCode, fdKey, comp) {
 // ── Odds ophalen ─────────────────────────────────────────
 async function fetchOddsForMatches(leagueId, _apiKey) {
   if (!leagueId) return;
-  const cacheKey = `odds_league_${leagueId}`;
-  const cached = typeof _cacheGet === 'function' ? _cacheGet(cacheKey) : null;
-  let oddsData = cached;
+  // v26.97: via worker proxy met cache-bust (niet direct API-Sports — Cloudflare cache bypass)
+  const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
+  const season = seasonForLeague(leagueId);
+  // v26.97: ALLE unieke datums van deze league pakken (niet alleen de eerste match).
+  // Anders kreeg b.v. het WK met matches op meerdere dagen alleen odds voor 1 datum.
+  const leagueMatches = (state.matches || []).filter(m => String(m.leagueId) === String(leagueId));
+  let dates = [...new Set(leagueMatches.map(m => m.dateISO).filter(Boolean))];
+  if (!dates.length) dates = [new Date().toISOString().split('T')[0]];
+  const cb = Date.now();
 
-  // v26.94: via worker proxy met cache-bust (niet direct API-Sports — Cloudflare cache bypass)
-  if (!oddsData) {
-    const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
-    const season = seasonForLeague(leagueId);
-    const leagueMatch = (state.matches || []).find(m => String(m.leagueId) === String(leagueId));
-    const matchDate = leagueMatch?.dateISO || new Date().toISOString().split('T')[0];
-    const cb = Date.now();
-
-    try {
-      // Probeer datum-bulk fetch (efficiënter)
-      const r = await apiFetch(`${WORKER}/apif/odds?date=${matchDate}&bet=1&page=1&_cb=${cb}`, null, 10000);
-      const d = await r.json();
-      const filtered = (d.response||[]).filter(o => String(o.fixture?.id) === String(leagueId) ||
-        (state.matches||[]).some(m => String(m.leagueId) === String(leagueId) && String(o.fixture?.id) === String(m.id)));
-      if (d.response?.length) {
-        oddsData = d.response;
-        if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData, 300); // 5 min cache
-      }
-    } catch(e) {}
-
-    // Fallback: per league
-    if (!oddsData?.length) {
+  let oddsData = [];
+  for (const matchDate of dates) {
+    const cacheKey = `odds_league_${leagueId}_${matchDate}`;
+    let dayOdds = typeof _cacheGet === 'function' ? _cacheGet(cacheKey) : null;
+    if (!dayOdds?.length) {
       try {
-        const r2 = await apiFetch(`${WORKER}/apif/odds?league=${leagueId}&season=${season}&date=${matchDate}&bet=1&_cb=${cb}`, null, 10000);
-        const d2 = await r2.json();
-        if (d2.response?.length) {
-          oddsData = d2.response;
-          if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData, 300);
+        const r = await apiFetch(`${WORKER}/apif/odds?league=${leagueId}&season=${season}&date=${matchDate}&bet=1&_cb=${cb}`, null, 10000);
+        const d = await r.json();
+        if (d.response?.length) {
+          dayOdds = d.response;
+          if (typeof _cacheSet === 'function') _cacheSet(cacheKey, dayOdds, 300); // 5 min cache
         }
       } catch(e) {}
     }
+    if (dayOdds?.length) oddsData.push(...dayOdds);
   }
 
-  if (!oddsData?.length) return;
+  if (!oddsData.length) return;
 
   for (const odds of oddsData) {
     const fid = String(odds.fixture?.id);
@@ -1214,42 +1204,51 @@ async function fetchOddsForAllMatches(matches, _apiKey) {
   });
 
   for (const [leagueId] of Object.entries(byLeague)) {
-    const cacheKey = `odds_league_${leagueId}`;
-    let oddsData = typeof _cacheGet === 'function' ? _cacheGet(cacheKey) : null;
+    const season = seasonForLeague(leagueId);
+    // v26.97: per league ALLE unieke datums ophalen i.p.v. alleen de eerste match.
+    // Hierdoor kregen WK-matches op 14 juni geen odds als er ook een match op 13 juni stond.
+    const dates = [...new Set((byLeague[leagueId] || []).map(m => m.dateISO).filter(Boolean))];
+    if (!dates.length) dates.push(new Date().toISOString().split('T')[0]);
 
-    if (!oddsData) {
-      const bookmakers = [8, 6, 1, 16, 36]; // 16=Betfair, 36=Betsson voor Scandinavisch
-      for (const bm of bookmakers) {
+    let oddsData = [];
+    for (const matchDate of dates) {
+      const cacheKey = `odds_league_${leagueId}_${matchDate}`;
+      let dayOdds = typeof _cacheGet === 'function' ? _cacheGet(cacheKey) : null;
+      if (!dayOdds?.length) {
+        const bookmakers = [8, 6, 1, 16, 36]; // 16=Unibet, 36=BetVictor (o.a. Scandinavisch)
+        for (const bm of bookmakers) {
+          try {
+            const r = await apiFetch(
+              `https://v3.football.api-sports.io/odds?league=${leagueId}&season=${season}&date=${matchDate}&bookmaker=${bm}`,
+              null, 5000
+            );
+            const d = await r.json();
+            if (d.response?.length) {
+              dayOdds = d.response;
+              if (typeof _cacheSet === 'function') _cacheSet(cacheKey, dayOdds);
+              break;
+            }
+          } catch(e) {}
+        }
+      }
+      if (dayOdds?.length) oddsData.push(...dayOdds);
+    }
+
+    // Fallback: als geen enkele datum odds opleverde, next=20 zonder datum
+    if (!oddsData.length) {
+      for (const bm of [8, 6, 1, 16, 36]) {
         try {
-          const matchDate = byLeague[leagueId]?.[0]?.dateISO || new Date().toISOString().split('T')[0];
-          const season = seasonForLeague(leagueId);
-          // Eerst op datum proberen
-          const r = await apiFetch(
-            `https://v3.football.api-sports.io/odds?league=${leagueId}&season=${season}&date=${matchDate}&bookmaker=${bm}`,
-            null, 5000
-          );
-          const d = await r.json();
-          if (d.response?.length) {
-            oddsData = d.response;
-            if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData);
-            break;
-          }
-          // Fallback: next=20 zonder datum (pakt komende wedstrijden)
           const r2 = await apiFetch(
             `https://v3.football.api-sports.io/odds?league=${leagueId}&season=${season}&bookmaker=${bm}&next=20`,
             null, 5000
           );
           const d2 = await r2.json();
-          if (d2.response?.length) {
-            oddsData = d2.response;
-            if (typeof _cacheSet === 'function') _cacheSet(cacheKey, oddsData);
-            break;
-          }
+          if (d2.response?.length) { oddsData = d2.response; break; }
         } catch(e) {}
       }
     }
 
-    if (!oddsData?.length) continue;
+    if (!oddsData.length) continue;
 
     for (const odds of oddsData) {
       const fid = String(odds.fixture?.id);
