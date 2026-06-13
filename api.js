@@ -68,7 +68,7 @@ async function apiFetch(url, _apiKey, timeoutMs = 10000) {
   // v26.98: rate-limit-aware retry. API-Football geeft een per-minuut overschrijding
   // terug als HTTP 200 met { errors: { rateLimit: "..." } } (soms als 429). Zonder
   // afvangen werd dat behandeld als "0 wedstrijden/odds" → valse lege schermen.
-  const backoffs = [1500, 3000]; // ms; 1e poging + 2 retries
+  const backoffs = [2000, 4000, 6000]; // ms; 1e poging + 3 retries (vangt langere refresh-bursts)
   for (let attempt = 0; attempt <= backoffs.length; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
