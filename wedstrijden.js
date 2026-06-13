@@ -504,7 +504,7 @@ async function loadVandaagTab() {
     // Vervangt de oude, niet-bestaande fetchMatchesForLeague() die elke keer
     // stil faalde waardoor de Vandaag-tab altijd leeg bleef.
     const todayStr = new Date().toISOString().split('T')[0];
-    const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${todayStr}`, null, 12000);
+    const r = await apiFetch(`${WORKER}/apif/fixtures?date=${todayStr}&_cb=${Date.now()}`, null, 12000);
     const d = await r.json();
     const knownLeagueIds = new Set(Object.values(COMP_IDS));
     const now = Date.now();
@@ -1035,6 +1035,7 @@ function toggleMultiMode() {
 
 // ── Match laden ──────────────────────────────────────────
 async function loadMatches(comp) {
+  const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
   const list = document.getElementById('matchList');
   if (!list) return;
   list.innerHTML = '';
@@ -1065,7 +1066,7 @@ async function loadFromAPIFootball(comp, _apiKey) {
   showLoadingMsg(`⟳ ${COMP_NAMES[comp] || comp} laden...`, 'var(--muted)');
   try {
     const today = new Date().toISOString().split('T')[0];
-    let r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&date=${today}`, null, 10000);
+    let r = await apiFetch(`${WORKER}/apif/fixtures?league=${leagueId}&season=${season}&date=${today}&_cb=${Date.now()}`, null, 10000);
     let d = await r.json();
     if (d.response?.length > 0) {
       state.matches = d.response.map(f => parseAPIMatch(f)).filter(Boolean);
@@ -1074,7 +1075,7 @@ async function loadFromAPIFootball(comp, _apiKey) {
       fetchOddsForMatches(leagueId, null).then(() => renderMatches(state.matches));
       return true;
     }
-    r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&next=10`, null, 10000);
+    r = await apiFetch(`${WORKER}/apif/fixtures?league=${leagueId}&season=${season}&next=10&_cb=${Date.now()}`, null, 10000);
     d = await r.json();
     if (d.response?.length > 0) {
       state.matches = d.response.map(f => parseAPIMatch(f)).filter(Boolean);
@@ -1488,8 +1489,8 @@ async function loadTodayAllComps() {
   const tomorrow = new Date(todayDate.getTime() + 86400000).toISOString().split('T')[0];
   try {
     const [rToday, rTomorrow] = await Promise.all([
-      apiFetch(`https://v3.football.api-sports.io/fixtures?date=${today}`, null, 12000),
-      apiFetch(`https://v3.football.api-sports.io/fixtures?date=${tomorrow}`, null, 12000)
+      apiFetch(`${WORKER}/apif/fixtures?date=${today}&_cb=${Date.now()}`, null, 12000),
+      apiFetch(`${WORKER}/apif/fixtures?date=${tomorrow}&_cb=${Date.now()}`, null, 12000)
     ]);
     const dToday = await rToday.json();
     const dTomorrow = await rTomorrow.json();
