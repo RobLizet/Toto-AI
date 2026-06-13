@@ -64,13 +64,49 @@ const FD_CODES = {
 // ── API-Football via Worker /apif/* ─────────────────────
 async function apiFetch(url, _apiKey, timeoutMs = 10000) {
   const apiPath = url.replace('https://v3.football.api-sports.io', '');
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const r = await fetch(`${WORKER}/apif${apiPath}`, { signal: controller.signal });
-    clearTimeout(timer);
-    return r;
-  } catch(e) { clearTimeout(timer); throw e; }
+  const target = `${WORKER}/apif${apiPath}`;
+  // v26.98: rate-limit-aware retry. API-Football geeft een per-minuut overschrijding
+  // terug als HTTP 200 met { errors: { rateLimit: "..." } } (soms als 429). Zonder
+  // afvangen werd dat behandeld als "0 wedstrijden/odds" → valse lege schermen.
+  const backoffs = [1500, 3000]; // ms; 1e poging + 2 retries
+  for (let attempt = 0; attempt <= backoffs.length; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let r, text;
+    try {
+      r = await fetch(target, { signal: controller.signal });
+      clearTimeout(timer);
+      text = await r.text();
+    } catch(e) {
+      clearTimeout(timer);
+      throw e; // netwerk/timeout: ongewijzigd gedrag
+    }
+
+    // Rate-limit detecteren
+    let rateLimited = (r.status === 429);
+    if (!rateLimited && text) {
+      try {
+        const errs = JSON.parse(text)?.errors;
+        if (errs && (errs.rateLimit || errs.requests ||
+            (typeof errs === 'string' && /rate|limit|too many/i.test(errs)))) {
+          rateLimited = true;
+        }
+      } catch(e) { /* geen JSON: gewoon teruggeven */ }
+    }
+
+    if (rateLimited && attempt < backoffs.length) {
+      console.warn(`[apiFetch] rate-limit, retry ${attempt + 1} over ${backoffs[attempt]}ms — ${apiPath}`);
+      await new Promise(res => setTimeout(res, backoffs[attempt]));
+      continue;
+    }
+
+    // Verse Response teruggeven zodat caller .json()/.text() kan doen
+    return new Response(text, {
+      status: r.status,
+      statusText: r.statusText,
+      headers: { 'Content-Type': r.headers.get('Content-Type') || 'application/json' }
+    });
+  }
 }
 
 // ── football-data.org via Worker /fd/* ──────────────────
