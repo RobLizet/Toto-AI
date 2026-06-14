@@ -29,6 +29,20 @@ async function renderAnalyticsScreen() {
   screen.innerHTML = _analyticsHTML(local, workerData);
 }
 
+// v26.105: render de volledige analytics in een willekeurige container (bv. inline op Analyse)
+async function renderAnalyticsInto(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = _analyticsLoadingHTML();
+  const local = _calcLocalStats();
+  let workerData = null;
+  try {
+    const r = await fetch(ANALYTICS_WORKER + '/analytics');
+    if (r.ok) workerData = await r.json();
+  } catch(e) { console.warn('[Analytics inline] worker niet bereikbaar:', e.message); }
+  el.innerHTML = _analyticsHTML(local, workerData);
+}
+
 // ── Lokale statistieken berekenen uit scanLog ────────
 function _calcLocalStats() {
   const scanLog = state.scanLog || [];
