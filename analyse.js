@@ -1473,7 +1473,7 @@ KWALITEITSREGELS:
 
 // ── Scannen alle comp vandaag ─────────────────────────────
 async function scanAllTodayValue(mode = 'today') {
-  const btnId = mode === 'tomorrow' ? 'scanTomorrowBtn' : 'scanAllTodayBtn';
+  const btnId = (mode === 'tomorrow' || mode === '3days') ? 'scanTomorrowBtn' : 'scanAllTodayBtn';
   const btnContainer = document.getElementById(btnId);
   const btn = btnContainer?.querySelector('button') || btnContainer;
   const origText = btn?.textContent || '⚡ SCAN';
@@ -1481,6 +1481,7 @@ async function scanAllTodayValue(mode = 'today') {
   const now = new Date();
   const todayStr = now.toISOString().split('T')[0];
   const tomorrowStr = new Date(now.getTime() + 86400000).toISOString().split('T')[0];
+  const day3Str = new Date(now.getTime() + 2*86400000).toISOString().split('T')[0]; // v26.108: 3-dagen-scan
 
   // Laad alle competities als state.matches te weinig wedstrijden heeft
   const currentWithOdds = (state.matches||[]).filter(m =>
@@ -1505,9 +1506,12 @@ async function scanAllTodayValue(mode = 'today') {
     await Promise.all(SCAN_LEAGUE_IDS.map(async leagueId => {
       try {
         const season = seasonForLeague(leagueId);
-        const dateParam = mode === 'tomorrow' ? tomorrowStr : todayStr;
+        // v26.108: 3-dagen-scan haalt een datumrange op (vandaag t/m +2)
+        const dateQ = mode === '3days' ? `from=${todayStr}&to=${day3Str}`
+                    : mode === 'tomorrow' ? `date=${tomorrowStr}`
+                    : `date=${todayStr}`;
         const r = await apiFetch(
-          `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&date=${dateParam}&status=NS-1H-HT-2H`,
+          `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${season}&${dateQ}&status=NS-1H-HT-2H`,
           null, 8000
         );
         const d = await r.json();
@@ -1545,7 +1549,12 @@ async function scanAllTodayValue(mode = 'today') {
   });
 
   let candidates;
-  if (mode === 'tomorrow') {
+  if (mode === '3days') {
+    const win = new Set([todayStr, tomorrowStr, day3Str]);
+    candidates = allWithOdds.filter(m => { const d = m.dateISO||''; return !d || win.has(d); })
+      .sort((a,b) => (a.dateISO||'').localeCompare(b.dateISO||''));
+    if (!candidates.length) candidates = allWithOdds.slice(0, 25);
+  } else if (mode === 'tomorrow') {
     candidates = allWithOdds.filter(m => { const d = m.dateISO||''; return !d || d === todayStr || d === tomorrowStr; });
     if (!candidates.length) candidates = allWithOdds.slice(0, 25);
   } else {
