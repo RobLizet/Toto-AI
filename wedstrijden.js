@@ -417,6 +417,7 @@ function renderMatches(matches) {
 
 
 // ── Odds movement detectie voor sharp money badge ────────
+const SHARP_PCT = 6; // v26.118: uniforme sharp-drempel (odds-beweging %) — tune hier
 function getOddsMovement(matchId) {
   if (!matchId || !state.openingOdds) return null;
   const key = String(matchId);
@@ -432,7 +433,7 @@ function getOddsMovement(matchId) {
   ].forEach(({ pick, label, open, cur }) => {
     if (!open || !cur || open <= 1 || cur <= 1) return;
     const pct = ((cur - open) / open) * 100;
-    if (Math.abs(pct) >= 5) {
+    if (Math.abs(pct) >= SHARP_PCT) {
       results.push({ pick, label, pct: parseFloat(pct.toFixed(1)), open, cur });
     }
   });
@@ -447,8 +448,8 @@ function renderOddsMovementBadge(matchId) {
 
   const top = movements[0];
   // Odds daalt = geld stroomt op die uitkomst = sharp money
-  const isSharp = top.pct < -5;
-  const isRising = top.pct > 5;
+  const isSharp = top.pct <= -SHARP_PCT;
+  const isRising = top.pct >= SHARP_PCT;
 
   if (isSharp) {
     return `<div style="display:inline-flex;align-items:center;gap:.2rem;font-family:\'IBM Plex Mono\',monospace;
@@ -652,7 +653,7 @@ async function renderWedValuePicks() {
     const cc = p.confidence >= 8 ? '#00BEC4' : p.confidence >= 6 ? '#f59e0b' : 'rgba(255,255,255,.5)';
     const sharpT  = p.sharpTier || p.sharp_tier || '';
     const sharpSc = p.sharpScore || p.sharp_score || 0;
-    const isSteam = p.sharpMove && parseFloat(p.sharpMove) < -4;
+    const isSteam = p.sharpMove && parseFloat(p.sharpMove) <= -SHARP_PCT; // v26.118: 6%
     const badges = [
       p.elite && badge('⭐ Elite', '#00BEC4'),
       p.lockLevel === 'triple' && badge('🔒🔒🔒 Triple', '#7c3aed'),
@@ -679,7 +680,7 @@ async function renderWedValuePicks() {
 
   const elite   = allPicks.filter(p => p.elite);
   const locks   = allPicks.filter(p => !p.elite && (p.lockLevel==='triple'||p.lockLevel==='double'));
-  const sharp   = allPicks.filter(p => !p.elite && !locks.includes(p) && (p.sharpTier==='elite'||p.sharpTier==='strong'||(p.sharpMove&&parseFloat(p.sharpMove)<-4)));
+  const sharp   = allPicks.filter(p => !p.elite && !locks.includes(p) && (p.sharpTier==='elite'||p.sharpTier==='strong'||(p.sharpMove&&parseFloat(p.sharpMove)<=-SHARP_PCT)));
   // v26.103: regular = catch-all. Elke niet-elite/lock/sharp pick valt hier, ongeacht
   // lockLevel. Voorheen eiste dit lockLevel==='single', waardoor picks met een ontbrekende
   // of andere lockLevel uit álle secties vielen (wel geteld in de header, niet getoond).
@@ -2067,3 +2068,4 @@ async function _runModalAnalyse(m) {
     if (output) output.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#dc2626;text-align:center;padding:1rem;">⚠️ Analyse mislukt: ' + (e.message||'onbekend') + '</div>';
   }
 }
+
