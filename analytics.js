@@ -54,7 +54,7 @@ async function renderAnalyticsInto(containerId) {
 function _calcLocalStats(allPicksOverride) {
   const scanLog = state.scanLog || [];
   const allPicks = allPicksOverride || scanLog.flatMap(s => s.picks || []);
-  const DREMPEL = { minValue: 8, minConf: 6 };
+  const DREMPEL = { minValue: 6, minConf: 5 }; // v26.115: iets minder streng (was 8/6)
 
   const kwali = allPicks.filter(p =>
     !p.isSparseData &&
