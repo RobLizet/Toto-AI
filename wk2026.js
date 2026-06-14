@@ -620,15 +620,14 @@ async function loadWKPicks() {
   try {
     const res = await fetch('https://api.promatchxi.app/picks');
     const data = await res.json();
-    const allPicks = Object.values(data || {});
+    const allPicks = data.picks || (Array.isArray(data) ? data : []);
 
     // Filter WK picks (league id 1)
-    const wkPicks = allPicks.filter(p =>
-      p.leagueId === 1 || p.leagueId === '1' ||
-      (p.comp || '').toLowerCase().includes('world cup') ||
-      (p.comp || '').toLowerCase().includes('wk') ||
-      (p.comp || '').toLowerCase().includes('fifa')
-    );
+    const wkPicks = allPicks.filter(p => {
+      const nm = ((p.leagueName || p.comp || '') + '').toLowerCase();
+      return p.leagueId === 1 || p.leagueId === '1' ||
+        nm.includes('world cup') || nm.includes('wk') || nm.includes('fifa');
+    });
 
     if (!wkPicks.length) {
       el.innerHTML = `
