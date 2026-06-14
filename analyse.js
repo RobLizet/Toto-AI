@@ -1473,7 +1473,7 @@ KWALITEITSREGELS:
 
 // ── Scannen alle comp vandaag ─────────────────────────────
 async function scanAllTodayValue(mode = 'today') {
-  const btnId = (mode === 'tomorrow' || mode === '3days') ? 'scanTomorrowBtn' : 'scanAllTodayBtn';
+  const btnId = mode === '3days' ? 'scan3DaysBtn' : mode === 'tomorrow' ? 'scanTomorrowBtn' : 'scanAllTodayBtn';
   const btnContainer = document.getElementById(btnId);
   const btn = btnContainer?.querySelector('button') || btnContainer;
   const origText = btn?.textContent || '⚡ SCAN';
