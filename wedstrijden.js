@@ -803,7 +803,7 @@ function renderMatchCard(m) {
 
   const scanResult = (state.lastScanResults||[]).find(s => String(s.matchId) === String(m.id));
   const sharpBadge = renderOddsMovementBadge(m.id);
-  const valueBadge = scanResult && scanResult.value >= 5 ? `
+  const valueBadge = scanResult && scanResult.value >= 5 && scanResult.pick !== 'X' ? `
     <div style="position:absolute;top:8px;right:8px;font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:900;
       color:${scanResult.value >= 15 ? '#00BEC4' : '#f59e0b'};
       background:${scanResult.value >= 15 ? 'rgba(0,190,196,.12)' : 'rgba(245,158,11,.1)'};
