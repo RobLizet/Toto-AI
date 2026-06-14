@@ -819,9 +819,10 @@ function openCompKeuze() {
 
 // ── Picks Insight Modal — AI analyse van je statistieken ──
 async function openPicksInsight() {
+  if (state._qualityPicks === undefined && typeof loadQualityPicks === 'function') { try { await loadQualityPicks(); } catch(e){} }
   // Verzamel alle statistieken
   const scanLog = state.scanLog || [];
-  const allPicks = scanLog.flatMap(s => s.picks || []);
+  const allPicks = state._qualityPicks ? state._qualityPicks.slice() : scanLog.flatMap(s => s.picks || []); // v26.117: Supabase-picks
   const DREMPEL = { minValue: 6, minConf: 5 }; // v26.116: 6/5
   const kwali = allPicks.filter(p => !p.isSparseData && (p.value||0) >= DREMPEL.minValue && (p.confidence||0) >= DREMPEL.minConf);
   const settled = kwali.filter(p => p.status === 'win' || p.status === 'lose');
@@ -989,7 +990,7 @@ Geef een heldere analyse in het Nederlands.` }]
 // ── Picks Modal ──────────────────────────────────────────
 function showPicksModal() {
   const scanLog = state.scanLog || [];
-  const allPicks = scanLog.flatMap(s => s.picks || []);
+  const allPicks = state._qualityPicks ? state._qualityPicks.slice() : scanLog.flatMap(s => s.picks || []); // v26.117: Supabase-picks
   const DREMPEL = { minValue: 6, minConf: 5 }; // v26.116: 6/5
   const kwaliPicks = allPicks.filter(p =>
     !p.isSparseData &&
@@ -1151,8 +1152,8 @@ async function loadLiveScores() {
 
   // Verzamel pending picks uit scanLog
   const scanLog = state.scanLog || [];
-  const allPicks = scanLog.flatMap(s => s.picks || []);
-  const pendingPicks = allPicks.filter(p => p.status === 'pending' && p.fixtureId).filter(passesEliteFilter);
+  const allPicks = state._qualityPicks ? state._qualityPicks.slice() : scanLog.flatMap(s => s.picks || []); // v26.117: Supabase-picks
+  const pendingPicks = allPicks.filter(p => p.status === 'pending' && p.fixtureId && (p.value||0) >= 6 && (p.confidence||0) >= 5).filter(passesEliteFilter); // v26.117: kwaliteit 6/5
 
   // Dedup op fixtureId + pick
   const seen = new Set();
