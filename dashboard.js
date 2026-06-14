@@ -317,9 +317,25 @@ async function fetchDailyTip() {
   } catch(e) { return null; }
 }
 
+// v26.116: haal de echte kwaliteitspicks (Supabase /picks) op voor de 100-teller en cache ze
+async function loadQualityPicks() {
+  if (state._qualityPicksLoading) return;
+  state._qualityPicksLoading = true;
+  try {
+    const r = await fetch('https://api.promatchxi.app/picks');
+    if (r.ok) {
+      const d = await r.json();
+      state._qualityPicks = d.picks || (Array.isArray(d) ? d : []);
+      if (typeof renderDashboard === 'function') renderDashboard();
+    }
+  } catch(e) { console.warn('[Dashboard] kwaliteitspicks niet bereikbaar:', e.message); }
+  finally { state._qualityPicksLoading = false; }
+}
+
 function renderDashboard() {
   const screen = document.getElementById('screen-dashboard');
   if (!screen) return;
+  if (state._qualityPicks === undefined && typeof loadQualityPicks === 'function') loadQualityPicks(); // v26.116
   checkAdminStatus(); // v32.2: zorg dat admin status altijd actueel is bij render
 
   const wallet = state.wallet || { balance: 500, bets: [] };
@@ -334,7 +350,7 @@ function renderDashboard() {
 
   // Scan log stats
   const scanLog = state.scanLog || [];
-  const allPicksRaw = scanLog.flatMap(s => s.picks || []);
+  const allPicksRaw = state._qualityPicks ? state._qualityPicks.slice() : scanLog.flatMap(s => s.picks || []); // v26.116: echte Supabase-picks
   // Dedup op fixtureId+pick — settled altijd behouden, pending alleen meest recente
   const _seenDash = new Set();
   const _staleMs = Date.now() - 2*24*60*60*1000; // open picks van 2+ dagen geleden settelen nooit meer
@@ -348,7 +364,7 @@ function renderDashboard() {
     return true;
   });
   // Alleen kwalitatieve picks voor de 100 teller
-  const DREMPEL = { minValue: 8, minConf: 6 };
+  const DREMPEL = { minValue: 6, minConf: 5 }; // v26.116: 6/5
   const kwaliPicks = allPicks.filter(p =>
     !p.isSparseData &&
     (p.value||0) >= DREMPEL.minValue &&
@@ -806,7 +822,7 @@ async function openPicksInsight() {
   // Verzamel alle statistieken
   const scanLog = state.scanLog || [];
   const allPicks = scanLog.flatMap(s => s.picks || []);
-  const DREMPEL = { minValue: 8, minConf: 6 };
+  const DREMPEL = { minValue: 6, minConf: 5 }; // v26.116: 6/5
   const kwali = allPicks.filter(p => !p.isSparseData && (p.value||0) >= DREMPEL.minValue && (p.confidence||0) >= DREMPEL.minConf);
   const settled = kwali.filter(p => p.status === 'win' || p.status === 'lose');
   const wins = settled.filter(p => p.status === 'win');
@@ -974,7 +990,7 @@ Geef een heldere analyse in het Nederlands.` }]
 function showPicksModal() {
   const scanLog = state.scanLog || [];
   const allPicks = scanLog.flatMap(s => s.picks || []);
-  const DREMPEL = { minValue: 8, minConf: 6 };
+  const DREMPEL = { minValue: 6, minConf: 5 }; // v26.116: 6/5
   const kwaliPicks = allPicks.filter(p =>
     !p.isSparseData &&
     (p.value||0) >= DREMPEL.minValue &&
@@ -1278,3 +1294,4 @@ function liveCardHtml(pick, fx) {
     </div>
   </div>`;
 }
+
