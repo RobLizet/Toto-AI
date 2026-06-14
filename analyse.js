@@ -490,6 +490,48 @@ function showAnalyseSubTab(tab) {
 
 
 // ── Value scan (per competitie) ───────────────────────────
+// v26.111: batch-scan — scant ALLE geladen matches in stukken van 15.
+// scanValueAll capt intern op 15 (AI-JSON-truncatie); deze wrapper draait meerdere
+// batches en voegt de resultaten samen in state.valueScans.
+async function scanValueBatched() {
+  if (window._scanBusy) { alert('Er loopt al een scan. Wacht tot die klaar is.'); return; }
+  const oddsOk = m => {
+    const h = parseFloat(m.homeOdds), d = parseFloat(m.drawOdds), a = parseFloat(m.awayOdds);
+    return !m.isDone && m.homeOdds !== '\u2014' && m.drawOdds !== '\u2014' && m.awayOdds !== '\u2014'
+      && h > 1 && d > 1 && a > 1 && !isNaN(h) && !isNaN(d) && !isNaN(a);
+  };
+  const all = (state.matches || []).filter(oddsOk);
+  if (!all.length) { alert('Geen wedstrijden met quotes. Laad eerst wedstrijden.'); return; }
+  if (all.length <= 15) { return scanValueAll(false); }  // \u226415 \u2192 \u00e9\u00e9n scan
+
+  const btn = document.getElementById('valueScanBtn');
+  const fullMatches = state.matches;
+  const chunks = [];
+  for (let i = 0; i < all.length; i += 15) chunks.push(all.slice(i, i + 15));
+  const accumulated = [];
+  window._suppressScanPush = true;  // geen push per batch
+  try {
+    for (let c = 0; c < chunks.length; c++) {
+      if (btn) { btn.disabled = true; btn.textContent = `\u27f3 BATCH ${c + 1}/${chunks.length} (${chunks[c].length})...`; }
+      state.matches = chunks[c];
+      await scanValueAll(true);                        // scant batch \u2192 zet state.valueScans
+      accumulated.push(...(state.valueScans || []));   // verzamel resultaten
+    }
+  } finally {
+    window._suppressScanPush = false;
+    state.matches = fullMatches;                       // volledige lijst herstellen
+    state.valueScans = accumulated;                    // alle batch-resultaten samen
+    window._scanBusy = false;
+    // \u00e9\u00e9nmalig de volledige resultaten tonen
+    const displayAll = [...accumulated].sort((a,b) => (b.value||-999) - (a.value||-999)).filter(s => s.value >= 5);
+    if (typeof renderValueBannerInAnalyse === 'function') renderValueBannerInAnalyse(displayAll, accumulated.length);
+    if (typeof renderAnalyseScanResults === 'function') renderAnalyseScanResults(displayAll);
+    if (typeof renderMatches === 'function') renderMatches(state.matches);
+    if (btn) { btn.disabled = false; btn.textContent = '\u26a1 OPNIEUW SCANNEN'; }
+  }
+  if (typeof showToast === 'function') showToast(`Scan klaar \u2014 ${accumulated.length} resultaten uit ${all.length} wedstrijden`);
+}
+
 async function scanValueAll(silent = false) {
   if (window._scanBusy) {
     if (!silent) alert('Er loopt al een scan. Wacht tot die klaar is.');
@@ -882,7 +924,7 @@ SCHAARSE DATA:
     renderMatches(state.matches);
 
     // Push notificaties
-    if (state.settings.notifEnabled) {
+    if (state.settings.notifEnabled && !window._suppressScanPush) {
       const threshold = state.settings.notifThreshold || 15;
       const strong = scans.filter(s => s.value >= threshold && (s.confidence || 0) >= 6);
 
@@ -1568,6 +1610,16 @@ async function scanAllTodayValue(mode = 'today') {
   if (!candidates.length) {
     if (btn) { btn.disabled = false; btn.textContent = origText; }
     showToast('Geen wedstrijden met quotes gevonden voor vandaag.');
+    return;
+  }
+
+  // v26.111: 3-dagen-scan toont eerst de matches + SCAN VALUE-knop (net als 'vandaag').
+  // De SCAN VALUE-knop scant daarna ALLE matches in batches via scanValueBatched().
+  if (mode === '3days') {
+    state.matches = candidates;
+    if (typeof renderMatches === 'function') renderMatches(state.matches);
+    if (btn) { btn.disabled = false; btn.textContent = origText; }
+    if (typeof showToast === 'function') showToast(`${candidates.length} wedstrijden geladen — druk onderin op ⚡ SCAN VALUE`);
     return;
   }
 
