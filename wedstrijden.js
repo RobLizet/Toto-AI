@@ -225,11 +225,11 @@ function renderWedstrijdenScreen() {
       </button>
     </div>
     <div id="scanTomorrowBtn" style="display:none;width:100%;margin-bottom:.7rem;">
-      <button onclick="scanAllTodayValue('tomorrow')"
+      <button onclick="scanAllTodayValue('3days')"
         style="width:100%;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);
         color:#2563eb;font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:700;
         padding:.55rem;border-radius:10px;cursor:pointer;">
-        📅 SCAN MORGEN
+        📅 SCAN 3 DAGEN
       </button>
     </div>
     <div id="allCompsLoading" style="display:none;flex-direction:column;align-items:center;padding:1.5rem;gap:.6rem;">
