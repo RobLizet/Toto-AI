@@ -240,6 +240,14 @@ function renderWedstrijdenScreen() {
     <!-- Match lijst -->
     <div id="matchList" class="match-list"></div>
 
+    <!-- COMBI TIPS (verplaatst van Analyse — v26.105) -->
+    <div class="analyse-block" style="padding:1.1rem;margin-top:.7rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.05em;margin-bottom:.8rem;">🏆 COMBI TIPS</div>
+      <button id="combiGenBtn" onclick="generateCombiTip()" style="width:100%;padding:.8rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.05em;background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:.5rem;">⚡ GENEREER TOP 3 TIPS + COMBI</button>
+      <button onclick="openMonteCarloModal()" style="width:100%;padding:.65rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.05em;background:rgba(124,58,237,.15);border:1.5px solid rgba(124,58,237,.5);color:#a78bfa;border-radius:12px;cursor:pointer;">🎲 MONTE CARLO BANKROLL SIMULATIE</button>
+      <div id="combiCard" style="display:none;margin-top:.8rem;"></div>
+    </div>
+
     <!-- Value scan button (per competitie) -->
     <div id="scanValueSection" style="margin-top:.5rem;display:none;">
       <button onclick="scanValueAll()"
