@@ -249,7 +249,7 @@ function renderWedstrijdenScreen() {
 
     <!-- Value scan button (per competitie) -->
     <div id="scanValueSection" style="margin-top:.5rem;display:none;">
-      <button onclick="scanValueAll()"
+      <button onclick="scanValueBatched()"
         style="width:100%;background:linear-gradient(135deg,rgba(0,190,196,.1),rgba(5,150,105,.06));
         border:1.5px solid rgba(0,190,196,.3);color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;
         font-size:.65rem;font-weight:800;padding:.65rem;border-radius:12px;cursor:pointer;"
