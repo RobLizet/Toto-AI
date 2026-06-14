@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v152'; // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v153'; // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1703,19 +1703,9 @@ async function runScan(env, force = false) {
     if (!postWK) {
       // ── FASE 1: WK-zomer ──────────────────────────────────
       leagueConfig = [
-        { id: 1,   s: 2026 }, // FIFA World Cup 2026
-        { id: 113, s: 2026 }, // Eliteserien Noorwegen
-        { id: 103, s: 2026 }, // Allsvenskan Zweden
-        { id: 119, s: 2026 }, // Superliga Denemarken
-        { id: 129, s: 2026 }, // Veikkausliiga Finland
-        { id: 71,  s: 2026 }, // Brasileirao Série A
-        { id: 239, s: 2026 }, // Copa Libertadores
-        { id: 253, s: 2026 }, // MLS
-        { id: 292, s: 2026 }, // K League Zuid-Korea
-        { id: 98,  s: 2026 }, // J-League Japan
-        { id: 169, s: 2026 }, // Primera Division Argentinië
+        { id: 1,   s: 2026 }, // FIFA World Cup 2026 — v153: WK-only tijdens toernooi
       ];
-      console.log('[Scan] FASE 1 — WK-zomer: 11 leagues actief');
+      console.log('[Scan] FASE 1 — WK-only: alleen World Cup (league 1)');
     } else {
       // ── FASE 2: Post-WK — alleen Europa (nieuw seizoen 2026-27) ─
       leagueConfig = [
@@ -1750,7 +1740,7 @@ async function runScan(env, force = false) {
   }
 
   // Leagues die UTC timezone gebruiken — date= werkt niet, gebruik next=15
-  const NEXT_LEAGUES = new Set([113, 103, 119, 129, 253, 71, 239, 292, 98, 169]); // v146: alleen actieve zomer-leagues // 10=Friendlies, 5=NL, 6/29/36=WK kwal
+  const NEXT_LEAGUES = new Set([1, 113, 103, 119, 129, 253, 71, 239, 292, 98, 169]); // v153: WK (1) vangnet // v146: alleen actieve zomer-leagues // 10=Friendlies, 5=NL, 6/29/36=WK kwal
 
   const SCAN_LEAGUES = leagueConfig.map(l => l.id);
   const SCAN_LEAGUE_SET = new Set(SCAN_LEAGUES);
