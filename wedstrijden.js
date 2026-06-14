@@ -663,7 +663,7 @@ async function renderWedValuePicks() {
       isSteam && badge('🔴 ' + parseFloat(p.sharpMove).toFixed(1) + '%', '#dc2626'),
     ].filter(Boolean).join(' ');
 
-    return `<div class="worker-pick-row" onclick="switchScreen('analyse')" style="cursor:pointer;margin-bottom:.4rem;">
+    return `<div class="worker-pick-row" onclick="openValuePickPopup(${allPicks.indexOf(p)})" style="cursor:pointer;margin-bottom:.4rem;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;">
         <div style="flex:1;min-width:0;">
           <div style="${sans};font-size:.7rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||'?'}</div>
@@ -696,6 +696,7 @@ async function renderWedValuePicks() {
     </div>`;
   }
 
+  state._valuePicksList = allPicks; // v26.107: voor openValuePickPopup
   el.innerHTML =
     `<div style="${mono};font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);letter-spacing:.08em;margin-bottom:.75rem;">
       ⚡ VALUE PICKS OVERZICHT · ${allPicks.length} picks
@@ -708,6 +709,20 @@ async function renderWedValuePicks() {
 
 
 
+
+// v26.107: open de value-pick detail-popup vanuit de Value Picks-lijst
+function openValuePickPopup(i) {
+  const p = (state._valuePicksList || [])[i];
+  if (!p) return;
+  const s = { ...p, id: p.fixtureId || p.fixture_id || p.id || p.match?.id || '' };
+  // match is in deze lijst een string ("Home vs Away") → splitsen voor de modal-titel
+  if (typeof s.match === 'string' && !s.home) {
+    const parts = s.match.split(' vs ');
+    s.home = parts[0] || '?';
+    s.away = parts.slice(1).join(' vs ') || '?';
+  }
+  if (typeof openCardPopup === 'function') openCardPopup('scan', s);
+}
 
 // ── LIVE TAB — live wedstrijden tonen + cleanup ──
 async function renderLiveTab() {
