@@ -1562,7 +1562,8 @@ async function scanAllTodayValue(mode = 'today') {
     candidates = byDate.length ? byDate : allWithOdds.filter(m => !m.dateISO).concat(byDate);
     if (!candidates.length) candidates = allWithOdds.slice(0, 20);
   }
-  candidates = candidates.slice(0, 25);
+  const scanCap = mode === '3days' ? 50 : 25; // v26.110: 3-dagen-scan hogere cap
+  candidates = candidates.slice(0, scanCap);
 
   if (!candidates.length) {
     if (btn) { btn.disabled = false; btn.textContent = origText; }
