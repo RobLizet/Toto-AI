@@ -330,53 +330,8 @@ function renderAnalyseScreen() {
 
   // v26.104: SCAN VANDAAG/MORGEN-knoppen verwijderd (dubbel met SCAN VALUE op Matches + MULTI-SCAN)
 
-  // ── STATISTIEKEN ─────────────────────────────────────
-  html += '<div class="analyse-block" style="padding:1.1rem;">';
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;">';
-  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.05em;">📊 STATISTIEKEN</div>';
-  html += '<button onclick="switchScreen(\'analytics\')" style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:700;background:rgba(0,190,196,.12);border:1.5px solid rgba(0,190,196,.3);color:#00BEC4;border-radius:8px;padding:.3rem .6rem;cursor:pointer;">Volledig →</button>';
-  html += '</div>';
-
-  if (scanROI !== null) {
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-bottom:.9rem;">';
-    html += '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:.9rem .5rem;text-align:center;">';
-    html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.8rem;color:' + (scanHitrate>=50?'#00BEC4':'#dc2626') + ';line-height:1;">' + scanHitrate + '%</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);margin-top:.25rem;">HITRATE</div>';
-    html += '</div>';
-    html += '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:.9rem .5rem;text-align:center;">';
-    html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.8rem;color:' + (scanROI>=0?'#00BEC4':'#dc2626') + ';line-height:1;">' + (scanROI>=0?'+':'') + scanROI + '%</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);margin-top:.25rem;">ROI</div>';
-    html += '</div>';
-    html += '<div style="background:rgba(255,255,255,.06);border-radius:14px;padding:.9rem .5rem;text-align:center;">';
-    html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.8rem;color:' + (isCalibrated?'#00BEC4':'#d97706') + ';line-height:1;">' + settledPicks.length + '</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.5);margin-top:.25rem;">PICKS</div>';
-    html += '</div>';
-    html += '</div>';
-    html += '<div style="background:rgba(255,255,255,.06);border-radius:999px;height:8px;margin-bottom:.5rem;overflow:hidden;">';
-    html += '<div style="background:linear-gradient(90deg,#00BEC4,#00a8ad);height:100%;border-radius:999px;width:' + Math.min(100,settledPicks.length) + '%;transition:width .4s;"></div>';
-    html += '</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.4);text-align:right;">' + settledPicks.length + ' / 100 picks gesettled</div>';
-  }
-
-  if (weekScans.length > 0) {
-    html += '<div style="margin-top:.9rem;padding-top:.9rem;border-top:1px solid rgba(255,255,255,.08);">';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:.6rem;letter-spacing:.06em;">DEZE WEEK</div>';
-    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.5rem;">';
-    html += '<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:.7rem .3rem;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#2563eb;line-height:1;">' + weekScans.length + '</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.2rem;">SCANS</div></div>';
-    html += '<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:.7rem .3rem;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#00a8ad;line-height:1;">' + weekPicks.length + '</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.2rem;">PICKS</div></div>';
-    html += '<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:.7rem .3rem;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:' + (weekHR!==null&&weekHR>=50?'#00BEC4':'#dc2626') + ';line-height:1;">' + (weekHR!==null?weekHR+'%':'—') + '</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.2rem;">HITRATE</div></div>';
-    html += '<div style="background:rgba(255,255,255,.06);border-radius:12px;padding:.7rem .3rem;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#00BEC4;line-height:1;">' + weekPicks.filter(p=>p.status==='pending').length + '</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.4);margin-top:.2rem;">OPEN</div></div>';
-    html += '</div></div>';
-  }
-  html += '</div>';
-
-  // ── COMBI TIPS ────────────────────────────────────────
-  html += '<div class="analyse-block" style="padding:1.1rem;">';
-  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.05em;margin-bottom:.8rem;">🏆 COMBI TIPS</div>';
-  html += '<button id="combiGenBtn" onclick="generateCombiTip()" style="width:100%;padding:.8rem;font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;letter-spacing:.05em;background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:.5rem;">⚡ GENEREER TOP 3 TIPS + COMBI</button>';
-  html += '<button onclick="openMonteCarloModal()" style="width:100%;padding:.65rem;font-family:\'Bebas Neue\',sans-serif;font-size:1rem;letter-spacing:.05em;background:rgba(124,58,237,.15);border:1.5px solid rgba(124,58,237,.5);color:#a78bfa;border-radius:12px;cursor:pointer;">🎲 MONTE CARLO BANKROLL SIMULATIE</button>';
-  html += '<div id="combiCard" style="display:none;margin-top:.8rem;"></div>';
-  html += '</div>';
+  // ── STATISTIEKEN — volledige analytics inline (v26.105) ──
+  html += '<div id="analyseAnalytics"></div>';
 
   // ── CLAUDE INSIGHT ────────────────────────────────────
   html += '<div id="claude-insight-block" style="margin-bottom:14px;">';
@@ -404,6 +359,7 @@ function renderAnalyseScreen() {
   html += '</div>';
 
   screen.innerHTML = html;
+  if (typeof renderAnalyticsInto === 'function') renderAnalyticsInto('analyseAnalytics'); // v26.105: volledige analytics inline op Analyse
   } catch(e) {
     console.error('[renderAnalyseScreen] fout:', e.message, e.stack);
     const em=e.message||'onbekend'; screen.innerHTML = '<div style="padding:1.5rem;background:rgba(232,64,74,.1);border:1px solid rgba(232,64,74,.3);border-radius:12px;margin:.5rem;"><div style="font-size:13px;font-weight:800;color:#e8404a;margin-bottom:6px;">⚠ Fout</div><div style="font-size:11px;color:#fff;font-family:monospace;word-break:break-all;">'+em+'</div><button onclick="renderAnalyseScreen()" style="margin-top:10px;padding:7px 14px;background:#00BEC4;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;">↺ Opnieuw</button></div>';
