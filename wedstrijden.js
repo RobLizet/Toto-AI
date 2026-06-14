@@ -138,6 +138,12 @@ function renderWedstrijdenScreen() {
         background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.3);color:#00BEC4;">
         📌 MULTI-SCAN
       </button>
+      <button id="scan3DaysBtn" onclick="scanAllTodayValue('3days')"
+        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
+        padding:.35rem .8rem;border-radius:999px;cursor:pointer;
+        background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.35);color:#a78bfa;">
+        📅 SCAN 3 DAGEN
+      </button>
       <button onclick="loadTodayAllComps()"
         style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
         padding:.35rem .8rem;border-radius:999px;cursor:pointer;
@@ -224,14 +230,7 @@ function renderWedstrijdenScreen() {
         ⚡ SCAN ALLES VANDAAG
       </button>
     </div>
-    <div id="scanTomorrowBtn" style="display:none;width:100%;margin-bottom:.7rem;">
-      <button onclick="scanAllTodayValue('3days')"
-        style="width:100%;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);
-        color:#2563eb;font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:700;
-        padding:.55rem;border-radius:10px;cursor:pointer;">
-        📅 SCAN 3 DAGEN
-      </button>
-    </div>
+    <!-- v26.109: SCAN 3 DAGEN verplaatst naar actiebalk naast MULTI-SCAN -->
     <div id="allCompsLoading" style="display:none;flex-direction:column;align-items:center;padding:1.5rem;gap:.6rem;">
       <div style="width:24px;height:24px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div>
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.5);">Wedstrijden laden...</div>
