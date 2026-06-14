@@ -14,17 +14,19 @@ async function renderAnalyticsScreen() {
   // Toon laadstatus
   screen.innerHTML = _analyticsLoadingHTML();
 
-  // Lokale data berekenen
-  const local = _calcLocalStats();
-
-  // Worker data ophalen
-  let workerData = null;
+  // v26.114: KPI's uit de echte Supabase-picks (kwaliteit: value>=8, conf>=6)
+  let supabasePicks = null, workerData = null;
   try {
-    const r = await fetch(ANALYTICS_WORKER + '/analytics');
-    if (r.ok) workerData = await r.json();
+    const [pr, ar] = await Promise.all([
+      fetch(ANALYTICS_WORKER + '/picks'),
+      fetch(ANALYTICS_WORKER + '/analytics'),
+    ]);
+    if (pr.ok) { const pd = await pr.json(); supabasePicks = pd.picks || (Array.isArray(pd) ? pd : []); }
+    if (ar.ok) workerData = await ar.json();
   } catch(e) {
     console.warn('[Analytics] Worker niet bereikbaar:', e.message);
   }
+  const local = _calcLocalStats(supabasePicks || undefined);
 
   screen.innerHTML = _analyticsHTML(local, workerData);
 }
@@ -34,19 +36,24 @@ async function renderAnalyticsInto(containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = _analyticsLoadingHTML();
-  const local = _calcLocalStats();
-  let workerData = null;
+  // v26.114: KPI's uit de echte Supabase-picks (kwaliteit: value>=8, conf>=6)
+  let supabasePicks = null, workerData = null;
   try {
-    const r = await fetch(ANALYTICS_WORKER + '/analytics');
-    if (r.ok) workerData = await r.json();
+    const [pr, ar] = await Promise.all([
+      fetch(ANALYTICS_WORKER + '/picks'),
+      fetch(ANALYTICS_WORKER + '/analytics'),
+    ]);
+    if (pr.ok) { const pd = await pr.json(); supabasePicks = pd.picks || (Array.isArray(pd) ? pd : []); }
+    if (ar.ok) workerData = await ar.json();
   } catch(e) { console.warn('[Analytics inline] worker niet bereikbaar:', e.message); }
+  const local = _calcLocalStats(supabasePicks || undefined);
   el.innerHTML = _analyticsHTML(local, workerData);
 }
 
 // ── Lokale statistieken berekenen uit scanLog ────────
-function _calcLocalStats() {
+function _calcLocalStats(allPicksOverride) {
   const scanLog = state.scanLog || [];
-  const allPicks = scanLog.flatMap(s => s.picks || []);
+  const allPicks = allPicksOverride || scanLog.flatMap(s => s.picks || []);
   const DREMPEL = { minValue: 8, minConf: 6 };
 
   const kwali = allPicks.filter(p =>
@@ -140,7 +147,7 @@ function _calcLocalStats() {
         return order.indexOf(a[0]) - order.indexOf(b[0]);
       }),
     confBuckets: Object.entries(confBuckets),
-    scansTotal: scanLog.length,
+    scansTotal: allPicksOverride ? allPicks.length : scanLog.length,
     openPicks: kwali.filter(p => !p.status || p.status === 'pending').length,
   };
 }
