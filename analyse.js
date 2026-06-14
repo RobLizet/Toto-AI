@@ -108,6 +108,10 @@ const LEAGUE_TRUST = {
   71: 'good', 253: 'good', // Brazilië + MLS
   // Matig — lagere confidence
   98: 'medium', 292: 'medium', 128: 'medium', 239: 'medium',
+  // v26.106: WK + overige actieve scan-competities (voorheen ten onrechte 'Onbekende competitie')
+  1: 'top',                                   // FIFA World Cup
+  119: 'good', 144: 'good', 43: 'good', 79: 'good',   // Denemarken, België, KKD, 2.Bundesliga
+  129: 'medium', 169: 'medium', 179: 'medium', 197: 'medium', 203: 'medium', 80: 'medium', // Finland, Argentinië, Schotland, Zwitserland, Turkije, 3.Liga
   // Onbekend = default medium
 };
 
@@ -680,7 +684,7 @@ GELIJKSPEL WAARSCHUWING — KRITISCH:
 - Gelijkspel is statistisch de slechtst voorspelbare uitkomst
 
 VALUE DETECTIE:
-- reason = sterkste VOETBAL-argument voor de pick (vorm, H2H, blessures, motivatie), max 12 woorden. NOEM GEEN odds of marktgetallen — die staan al apart in de UI.
+- reason = korte onderbouwing IN DE RICHTING VAN DE PICK (max 14 woorden). Verklaar waarom júist deze uitkomst value heeft. Bij een underdog/value-pick: leg uit waarom de markt de tegenstander overschat of waarom deze kant ondergewaardeerd is — beschrijf NOOIT alleen de kracht van de tegenstander, want dat spreekt de pick tegen. Marktovershatting mag je benoemen, maar geen kale odds-getallen.
 - confidence 8-10: meerdere ankers bevestigen + consistente signalen
 - confidence 6-7: 1-2 ankers bevestigen, 1 conflicterend signaal
 - confidence 1-5: schaarse data of sterke divergentie tussen ankers
