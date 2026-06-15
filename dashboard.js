@@ -390,11 +390,12 @@ function renderDashboard() {
   // v26.24: Laatste scan — toont álle picks (ook lichte) van de meest recente scan, tikbaar naar de scan-log
   const _sortedScans = [...scanLog].sort((a,b) => new Date(b.timestamp||0) - new Date(a.timestamp||0));
   const _latestScan = _sortedScans[0] || null;
-  const laatsteScanCard = (_latestScan && (_latestScan.picks||[]).length) ? (() => {
+  const laatsteScanCard = (_latestScan && (_latestScan.picks||[]).filter(p=>!matchHasStarted(p)).length) ? (() => {
     const t = _latestScan.timestamp ? new Date(_latestScan.timestamp).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}) : '';
-    const lp = (_latestScan.picks||[]).slice().sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,5);
+    const _livePicks = (_latestScan.picks||[]).filter(p => !matchHasStarted(p)); // v26.123: geen verleden wedstrijden
+    const lp = _livePicks.slice().sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,5);
     let h = '<div class="dash-soft" style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,190,196,.25);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.55);">🔍 LAATSTE SCAN'+(t?' · '+t:'')+'</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.4);">'+(_latestScan.picks||[]).length+' picks</div></div>';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.55);">🔍 LAATSTE SCAN'+(t?' · '+t:'')+'</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.4);">'+_livePicks.length+' picks</div></div>';
     lp.forEach(p => {
       const v = Math.round(p.value||0); const sign = v>=0?'+':'';
       const light = (p.isSparseData || (p.confidence||0) < 6 || (p.value||0) < 8);
