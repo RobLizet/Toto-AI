@@ -383,8 +383,10 @@ function renderDashboard() {
   const sortedSettled = [...settledPicks].reverse();
   for (const sp of sortedSettled) { if (sp.status === 'win') winStreak++; else break; }
 
-  // Value picks beschikbaar
-  const valuePicks = (state.valueScans||[]).filter(s => s.value >= 5 && !matchHasStarted(s.match)); // v26.123: geen verleden wedstrijden
+  // v26.125: BESTE VALUE PICK uit de worker-picks (één bron van waarheid), niet uit de
+  // frontend-scan (state.valueScans). Alleen aankomende, nog niet begonnen, pending picks.
+  const valuePicks = (state._qualityPicks || [])
+    .filter(p => (!p.status || p.status === 'pending') && !matchHasStarted(p) && (p.value || 0) >= 5);
   const topValuePick = valuePicks.sort((a,b) => (b.value||0)-(a.value||0))[0];
 
   // v26.24: Laatste scan — toont álle picks (ook lichte) van de meest recente scan, tikbaar naar de scan-log
@@ -512,7 +514,7 @@ function renderDashboard() {
     ${topValuePick ? `
     <div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.04));
       border:1px solid rgba(22,163,74,.2);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;cursor:pointer;"
-      onclick="(function(){var mid=(topValuePick&&(topValuePick.match?.id||topValuePick.matchId||''));switchScreen('analyse');setTimeout(()=>{showAnalyseSubTab('scan');if(mid&&typeof openValueAnalysis==='function')openValueAnalysis(mid);},150);})()">
+      onclick="(function(){var mid=(topValuePick&&(topValuePick.match?.id||topValuePick.matchId||topValuePick.fixtureId||''));switchScreen('analyse');setTimeout(()=>{showAnalyseSubTab('scan');if(mid&&typeof openValueAnalysis==='function')openValueAnalysis(mid);},150);})()">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#00BEC4;margin-bottom:.2rem;">⚡ BESTE VALUE PICK</div>
