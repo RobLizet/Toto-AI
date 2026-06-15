@@ -507,11 +507,71 @@ function showAnalyseSubTab(tab) {
 }
 
 
+// v26.126: WORKER = ENIGE VALUE-ENGINE. De frontend berekent geen value meer; alle
+// value-weergave komt uit de worker-picks (/picks). Deze mapper zet een worker-pick om
+// naar de bestaande valueScans-vorm zodat balk, popup, wallet en combi-tips ongewijzigd werken.
+function workerPickToScan(p) {
+  const odds = parseFloat(p.odds) || 0;
+  const kans = (typeof p.aiKans === 'number') ? p.aiKans : (parseFloat(p.aiKans) || 0);
+  const kelly = (typeof calcKelly === 'function' && kans && odds) ? calcKelly(kans, odds) : 0;
+  return {
+    id: p.fixtureId, matchId: p.fixtureId, fixtureId: p.fixtureId,
+    match: { id: p.fixtureId, home: p.home, away: p.away, comp: p.leagueName || '',
+             dateISO: p.matchDate || '', matchTime: p.matchTime || '', date: p.matchDate || '', time: '' },
+    home: p.home, away: p.away, comp: p.leagueName || '', leagueName: p.leagueName || '',
+    pick: p.pick, pickLabel: p.pickLabel || p.pick,
+    kans: Math.round(kans), odds,
+    value: (typeof p.value === 'number') ? p.value : (parseFloat(p.value) || 0),
+    confidence: (typeof p.confidence === 'number') ? p.confidence : (parseFloat(p.confidence) || 0),
+    kelly, reason: p.reason || '',
+    sharp: !!p.elite, poissonUsed: true, _hasXG: false,
+    isSparseData: false, oddsMovement: p.oddsMovement || null,
+    status: (p.status && p.status !== 'pending') ? p.status : undefined,
+    matchTime: p.matchTime || null, matchDate: p.matchDate || null,
+  };
+}
+
+// Haalt de worker-picks op en vult state.valueScans (enige bron). Vervangt de oude client-scan.
+async function refreshValueScansFromWorker(silent = false) {
+  const btns = ['valueScanBtn','valueScanBtn2','multiScanBtn']
+    .map(id => document.getElementById(id)).filter(Boolean);
+  const saved = btns.map(b => b.textContent);
+  btns.forEach(b => { b.disabled = true; b.textContent = '\u27f3 LADEN...'; });
+  try {
+    try {
+      const r = await fetch('https://api.promatchxi.app/picks');
+      if (r.ok) { const d = await r.json(); state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); }
+    } catch(e) { console.warn('[ValueScan] /picks niet bereikbaar:', e.message); }
+
+    const picks = (state._qualityPicks || [])
+      .filter(p => (!p.status || p.status === 'pending'))
+      .map(workerPickToScan)
+      .filter(s => !matchHasStarted(s))
+      .filter(s => (s.value || 0) >= 5)
+      .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+    state.valueScans = picks;
+    if (typeof saveState === 'function') saveState();
+    if (typeof renderValueBannerInAnalyse === 'function') renderValueBannerInAnalyse(picks, picks.length);
+    if (typeof renderAnalyseScanResults === 'function') renderAnalyseScanResults(picks);
+    if (typeof renderMatches === 'function') renderMatches(state.matches);
+    if (!silent && typeof showToast === 'function') {
+      showToast(picks.length ? `${picks.length} value picks uit de worker` : 'Geen gekwalificeerde value picks');
+    }
+  } catch(e) {
+    console.warn('[ValueScan] worker-bron fout:', e.message);
+    if (!silent && typeof showToast === 'function') showToast('Kon worker-picks niet laden');
+  } finally {
+    btns.forEach((b, i) => { b.disabled = false; b.textContent = saved[i]; });
+  }
+}
+
 // ── Value scan (per competitie) ───────────────────────────
-// v26.111: batch-scan — scant ALLE geladen matches in stukken van 15.
-// scanValueAll capt intern op 15 (AI-JSON-truncatie); deze wrapper draait meerdere
-// batches en voegt de resultaten samen in state.valueScans.
+// v26.126: client-scan vervangen door worker-bron. Wrappers delegeren naar refreshValueScansFromWorker.
 async function scanValueBatched() {
+  return refreshValueScansFromWorker(false);
+}
+async function _scanValueBatched_legacy() {
   if (window._scanBusy) { alert('Er loopt al een scan. Wacht tot die klaar is.'); return; }
   const oddsOk = m => {
     const h = parseFloat(m.homeOdds), d = parseFloat(m.drawOdds), a = parseFloat(m.awayOdds);
@@ -551,6 +611,9 @@ async function scanValueBatched() {
 }
 
 async function scanValueAll(silent = false) {
+  return refreshValueScansFromWorker(silent); // v26.126: worker = enige value-engine
+}
+async function _scanValueAll_legacy(silent = false) {
   if (window._scanBusy) {
     if (!silent) alert('Er loopt al een scan. Wacht tot die klaar is.');
     return;
