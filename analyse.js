@@ -548,6 +548,8 @@ async function refreshValueScansFromWorker(silent = false) {
           const sd = await sr.json();
           if (sd && sd.reason === 'cooldown' && typeof showToast === 'function') {
             showToast(`Net gescand \u2014 toon laatste picks (wacht ${sd.retryAfter||60}s)`);
+          } else if (sd && sd.reason === 'daglimiet' && typeof showToast === 'function') {
+            showToast(`Daglimiet bereikt (${sd.scansToday||''}/${sd.cap||25} scans) \u2014 toon laatste picks`);
           }
         }
       } catch(e) { console.warn('[ValueScan] /scan-now niet bereikbaar:', e.message); }
