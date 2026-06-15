@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v154'; // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v155'; // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -589,29 +589,44 @@ async function saveSharpSignalResult(pick, result, closingOdds, env) {
 
 
 // ── Supabase: CLV opslaan na settlement ──────────────────
+// v155: robuust — opening = vroegste snapshot, closing = live API of laatste snapshot.
+// Bailt niet meer op lege live-CLV (die ontbreekt vaak omdat de API-odds na aftrap weg zijn);
+// dan komt de slotkoers uit de odds_snapshots-tijdreeks. Geen slot = overslaan i.p.v. ruis schrijven.
 async function saveCLV(pick, clv, won, closingOdds, env) {
-  if (clv === null || clv === undefined) return;
-  // v103: haal opening odds op uit snapshots voor echte CLV berekening
-  let openingOdds = null;
+  const pickOf = (s) => pick.pick === '1' ? s.home_odds
+                      : pick.pick === 'X' ? s.draw_odds
+                      : s.away_odds;
+
+  let openingOdds = null, snapClose = null;
   try {
-    const snap = await sb(env, 'odds_snapshots', 'GET', null,
-      `?fixture_id=eq.${pick.fixtureId}&order=captured_at.asc&limit=1`
-    );
-    if (snap?.length > 0) {
-      const s = snap[0];
-      openingOdds = pick.pick === '1' ? s.home_odds :
-                    pick.pick === 'X' ? s.draw_odds : s.away_odds;
-      if (openingOdds) openingOdds = parseFloat(openingOdds);
-    }
+    const [first, last] = await Promise.all([
+      sb(env, 'odds_snapshots', 'GET', null,
+        `?fixture_id=eq.${pick.fixtureId}&order=captured_at.asc&limit=1`),
+      sb(env, 'odds_snapshots', 'GET', null,
+        `?fixture_id=eq.${pick.fixtureId}&order=captured_at.desc&limit=1`),
+    ]);
+    if (first?.length) { const v = parseFloat(pickOf(first[0])); if (v > 1) openingOdds = v; }
+    if (last?.length)  { const v = parseFloat(pickOf(last[0]));  if (v > 1) snapClose   = v; }
   } catch(e) { console.warn('[CLV] Snapshot ophalen mislukt:', e.message); }
+
+  // Slotkoers: live API > laatste snapshot. Geen betrouwbaar slot = niet schrijven.
+  const closeO = (closingOdds && closingOdds > 1) ? parseFloat(closingOdds) : snapClose;
+  if (!closeO || !(pick.odds > 1)) {
+    console.warn(`[CLV] Geen slotkoers voor fixture ${pick.fixtureId} (${pick.pick}) — overgeslagen`);
+    return;
+  }
+
+  const clvPct = (clv !== null && clv !== undefined)
+    ? clv
+    : parseFloat(((pick.odds / closeO - 1) * 100).toFixed(2));
 
   await sb(env, 'clv_results', 'POST', [{
     fixture_id: pick.fixtureId,
     pick: pick.pick,
     our_odds: pick.odds,
-    opening_odds: openingOdds || null,
-    closing_odds: closingOdds || pick.odds,
-    clv_pct: clv,
+    opening_odds: openingOdds,
+    closing_odds: closeO,
+    clv_pct: clvPct,
     status: won ? 'win' : 'lose',
     match_date: pick.matchDate || null,
     league_id: pick.leagueId || null,
@@ -1853,8 +1868,13 @@ async function runScan(env, force = false) {
   const batch = allMatches.slice(0, 12);
   console.log(`[Scan] ${batch.length} wedstrijden gevonden, odds ophalen...`);
 
-  const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
-  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, 24); // v116: budget 24 — batch 12 + ~12 misc subrequests blijft < 50
+  // v155: snapshot-dekking verbreed. We halen odds op voor ALLE aankomende fixtures
+  // (today+tomorrow, actieve leagues) i.p.v. alleen de 12 die we AI-analyseren.
+  // De bulk date-fetch dekt de hele dag al in 2-4 calls, dus dit kost nauwelijks extra
+  // subrequests. Resultaat: elke fixture krijgt meerdere snapshots over de 6 dagelijkse
+  // cron-runs -> een echte opening->closing curve i.p.v. 1 losse meting (CLV-fix).
+  const fixtureIds = allMatches.map(m => m.fixtureId).filter(Boolean);
+  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, 30); // bulk dekt alles; fallback gecapt op 5
   console.log(`[Scan] Odds gevonden voor ${Object.keys(oddsMap).length} wedstrijden`);
 
   const oddsHistoryPath = `odds_history/${today}`;
@@ -1871,7 +1891,7 @@ async function runScan(env, force = false) {
 
   let sharpSignals = {};
   try {
-    await saveOddsSnapshots(oddsMap, batch, env);
+    await saveOddsSnapshots(oddsMap, allMatches, env); // v155: snapshot alle aankomende fixtures, niet alleen de 12-batch
     // v135: market_consensus snapshot opslaan (multi-book variance + implied pct)
     await saveMarketConsensusSnapshot(oddsMap, batch, null, env);
     // v135: detectSharpMoney met Poisson map (null = eerste run, poisson komt na AI-ronde)
