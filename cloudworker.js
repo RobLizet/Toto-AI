@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v155'; // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v156'; // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -118,6 +118,28 @@ async function saveOddsSnapshots(oddsMap, matches, env) {
   if (!rows.length) return;
   await sb(env, 'odds_snapshots', 'POST', rows); // v122: append -> oddshistorie (opening->closing)
   console.log(`[SB] ${rows.length} odds snapshots opgeslagen`);
+}
+
+// ── Lichte snapshot-run voor late kickoffs (cron-gap 23-05 UTC) ──
+// v156: WK 2026 (Amerika's) trapt vaak 23:00-05:00 UTC af — buiten de hoofd-cron (06 + 12-22).
+// Deze run ververst alleen de odds van fixtures die de hoofdscan AL volgt (zelfde league-set,
+// geen drift), zodat hun slotkoers vers blijft. Geen AI, geen picks, geen settlement.
+async function snapshotOddsOnly(env) {
+  try {
+    const today    = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    const rows = await sb(env, 'odds_snapshots', 'GET', null,
+      `?match_date=in.(${today},${tomorrow})&select=fixture_id,league_id,match_date`);
+    const seen = new Set();
+    const matches = (rows || [])
+      .filter(r => r.fixture_id && !seen.has(r.fixture_id) && seen.add(r.fixture_id))
+      .map(r => ({ fixtureId: r.fixture_id, leagueId: r.league_id, matchDate: r.match_date }));
+    if (!matches.length) { console.log('[Snapshot-only] geen getrackte fixtures'); return; }
+    const ids = matches.map(m => m.fixtureId);
+    const oddsMap = await fetchOddsForFixtures(ids, env, 12); // geen AI; ruim binnen subrequest-budget
+    await saveOddsSnapshots(oddsMap, matches, env);
+    console.log(`[Snapshot-only] ${Object.keys(oddsMap).length}/${ids.length} fixtures ververst`);
+  } catch(e) { console.error('[Snapshot-only] fout:', e.message); }
 }
 
 // ── Supabase: picks ophalen ──────────────────────────────
@@ -3040,11 +3062,17 @@ export default {
     const hour = now.getUTCHours();
     const isSunday = now.getUTCDay() === 0;
     ctx.waitUntil((async () => {
-      await runScan(env);
-      await verifyYesterdayPicks(env);
-      if (hour === 6) await generateDailyTip(env);
-      if (hour === 6) await keepSupabaseAlive(env);
-      if (isSunday && hour === 6) await runWeeklyCalibration(env);
+      const fullScan = hour === 6 || (hour >= 12 && hour <= 22);
+      if (fullScan) {
+        await runScan(env);
+        await verifyYesterdayPicks(env);
+        if (hour === 6) await generateDailyTip(env);
+        if (hour === 6) await keepSupabaseAlive(env);
+        if (isSunday && hour === 6) await runWeeklyCalibration(env);
+      } else {
+        // v156: cron-gap (23-05 UTC) — alleen odds-snapshots voor late kickoffs (WK Amerika's)
+        await snapshotOddsOnly(env);
+      }
     })());
   }
 };
