@@ -322,12 +322,13 @@ async function loadQualityPicks() {
   if (state._qualityPicksLoading) return;
   state._qualityPicksLoading = true;
   try {
-    const r = await fetch('https://api.promatchxi.app/picks');
-    if (r.ok) {
-      const d = await r.json();
-      state._qualityPicks = d.picks || (Array.isArray(d) ? d : []);
-      if (typeof renderDashboard === 'function') renderDashboard();
-    }
+    const [pr, ar] = await Promise.all([
+      fetch('https://api.promatchxi.app/picks'),
+      fetch('https://api.promatchxi.app/analytics'),
+    ]);
+    if (pr.ok) { const d = await pr.json(); state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); }
+    if (ar.ok) { const a = await ar.json(); state._clvSummary = a.clvSummary || null; } // v26.120: CLV op home
+    if (typeof renderDashboard === 'function') renderDashboard();
   } catch(e) { console.warn('[Dashboard] kwaliteitspicks niet bereikbaar:', e.message); }
   finally { state._qualityPicksLoading = false; }
 }
@@ -486,6 +487,11 @@ function renderDashboard() {
         <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${scanROI !== null && scanROI >= 0 ? '#00BEC4' : '#ef4444'};line-height:1;">${scanROI !== null ? (scanROI>=0?'+':'')+scanROI.toFixed(1)+'%' : '—'}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
         <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${winStreak >= 3 ? '#00BEC4' : winStreak >= 1 ? '#d97706' : '#ffffff'};line-height:1;">${winStreak > 0 ? '🔥'+winStreak : winPicks.length+'/'+settledPicks.length}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">${winStreak > 0 ? 'STREAK' : 'W/L'}</div></div>
       </div>
+      ${state._clvSummary && state._clvSummary.picks ? `<div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">\u{1F4C8} GEM. CLV</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${Number(state._clvSummary.avgCLV)>=0?'#00BEC4':'#ef4444'};">${Number(state._clvSummary.avgCLV)>=0?'+':''}${state._clvSummary.avgCLV}%</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.4);">\u00b7 ${state._clvSummary.pctBeatClose}% beat close</span>
+      </div>` : ''}
     </div>
 
     <!-- Open bets -->
@@ -1295,4 +1301,5 @@ function liveCardHtml(pick, fx) {
     </div>
   </div>`;
 }
+
 
