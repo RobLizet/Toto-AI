@@ -1601,6 +1601,16 @@ async function loadTodayAllComps() {
 
 // ── Multi-scan ────────────────────────────────────────────
 async function runMultiScan() {
+  // v26.126: worker is de enige value-engine — multi-league client-scan vervangen door
+  // één refresh uit de worker-picks (die alle actieve leagues al dekt).
+  if (typeof refreshValueScansFromWorker === 'function') {
+    await refreshValueScansFromWorker(false);
+    if (typeof renderMultiScanResults === 'function') renderMultiScanResults((state.valueScans || []), (state.favoriteComps || []).length);
+    return;
+  }
+  return _runMultiScan_legacy();
+}
+async function _runMultiScan_legacy() {
   const favs = state.favoriteComps || [];
   if (favs.length < 2) { alert('Selecteer minimaal 2 competities via 📌 MULTI-SCAN SELECTEREN.'); return; }
   const btn = document.getElementById('multiScanBtn');
