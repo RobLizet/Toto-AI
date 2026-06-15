@@ -824,7 +824,9 @@ SCHAARSE DATA:
         makePick('1', `${match.home} wint`, k1, match.homeOdds),
         makePick('X', 'Gelijkspel', kX, match.drawOdds),
         makePick('2', `${match.away} wint`, k2, match.awayOdds),
-      ].filter(Boolean);
+      ].filter(Boolean)
+       // v26.123: favorite-longshot guardrail — longshots (hoge odds) niet als value-pick tonen
+       .filter(p => p.odds < ((typeof FE_LONGSHOT_ODDS === 'number') ? FE_LONGSHOT_ODDS : 3.5));
 
       // Sanity checks
       const favoriteOdds = Math.min(parseFloat(match.homeOdds)||99, parseFloat(match.awayOdds)||99);
