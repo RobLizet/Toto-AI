@@ -7,7 +7,7 @@ account_id = "08735b0b6c1df0b90041c2e1356f757d"
 # 08:00 NL = 06:00 UTC — ochtendscan + settlement + dagelijkse tip
 # 14:00-24:00 NL = 12:00-22:00 UTC — elk uur voor optimale steam detectie
 [triggers]
-crons = ["0 6 * * *", "0 12-22 * * *"]
+crons = ["0 6 * * *", "0 12-22 * * *", "0 23 * * *", "0 0-5 * * *"]
 
 # Secrets (stel in via: wrangler secret put NAAM)
 # ANTHROPIC_KEY    — Anthropic API key
