@@ -127,6 +127,24 @@ const EXOTIC_KEYWORDS = [
   'san marino','gibraltar','faroe','andorra','liechtenstein'
 ];
 
+// v26.119: league-trust ook op competitienaam herkennen — lokale scan-picks missen soms leagueId
+function _resolveLeagueTrust(pick) {
+  if (LEAGUE_TRUST[pick.leagueId]) return LEAGUE_TRUST[pick.leagueId];
+  const nm = (pick.comp || pick.leagueName || '').toLowerCase();
+  if (!nm) return null;
+  const NAME_TRUST = [
+    ['world cup','top'], ['wereldkampioenschap','top'], ['fifa world','top'],
+    ['champions league','top'], ['premier league','top'], ['la liga','top'],
+    ['serie a','top'], ['bundesliga','top'], ['ligue 1','top'], ['eredivisie','top'],
+    ['eliteserien','good'], ['allsvenskan','good'], ['superliga','good'],
+    ['brasileir','good'], ['libertadores','good'],
+    ['veikkausliiga','medium'], ['mls','medium'], ['j1 league','medium'], ['j-league','medium'],
+    ['k league','medium'], ['k-league','medium'], ['primera nacional','medium'],
+  ];
+  for (const [k,t] of NAME_TRUST) if (nm.includes(k)) return t;
+  return null;
+}
+
 function getBullshitScore(pick) {
   const warnings = [];
   let score = 0; // 0 = ok, hoger = meer zorgen
@@ -139,7 +157,7 @@ function getBullshitScore(pick) {
   }
 
   // 2. League trust level
-  const trust = LEAGUE_TRUST[pick.leagueId];
+  const trust = _resolveLeagueTrust(pick); // v26.119: leagueId OF naam
   if (!trust || trust === 'medium') {
     // Niet top/good — lagere betrouwbaarheid
     if (!trust) {
@@ -3709,3 +3727,4 @@ function runMonteCarloSim(hitrate, avgOdds, kellyFraction, nPicks, nSims) {
 
   document.body.appendChild(overlay);
 }
+
