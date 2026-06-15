@@ -330,6 +330,11 @@ function shinDevig(oddsArr) {
 
 // Value berekening met overround correctie
 // Vergelijkt AI kans met faire implied kans (niet raw bookmaker kans)
+// v26.123: value-hardening in de frontend (mirror van worker v157) — anders tonen de
+// in-app VALUE SCAN en BESTE VALUE PICK nog ruwe AI-edges (favorite-longshot-bias).
+const FE_MARKET_SHRINK = 0.55; // model 55% richting faire markt getrokken vóór de edge
+const FE_LONGSHOT_ODDS = 3.5;  // odds >= dit = longshot: niet als value-pick tonen
+
 function calcValueFair(aiKans, odds, homeOdds, drawOdds, awayOdds) {
   if (!aiKans || !odds || odds <= 1) return null;
   const h = parseFloat(homeOdds), d = parseFloat(drawOdds), a = parseFloat(awayOdds);
@@ -342,7 +347,10 @@ function calcValueFair(aiKans, odds, homeOdds, drawOdds, awayOdds) {
   });
   if (p == null) return calcValue(aiKans, odds);
   const fairImplied = p * 100;
-  return parseFloat((aiKans - fairImplied).toFixed(2));
+  // v26.123: shrinkage naar markt-prior zodat AI-ruis geen value op longshots maakt
+  const w = (typeof FE_MARKET_SHRINK === 'number') ? FE_MARKET_SHRINK : 0;
+  const modelProb = w * fairImplied + (1 - w) * aiKans;
+  return parseFloat((modelProb - fairImplied).toFixed(2));
 }
 
 function calcKelly(kans, odds) {
