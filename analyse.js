@@ -992,6 +992,8 @@ SCHAARSE DATA:
 }
 
 function renderValueBannerInAnalyse(displayScans, total) {
+  // v26.123: verberg picks op wedstrijden die al begonnen/afgelopen zijn (geen fantoom-picks)
+  displayScans = (displayScans || []).filter(s => !matchHasStarted(s.match));
   const banners = [
     document.getElementById('valueBanner'),
     document.getElementById('valueBanner2')
