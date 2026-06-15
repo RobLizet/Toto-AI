@@ -538,6 +538,20 @@ async function refreshValueScansFromWorker(silent = false) {
   const saved = btns.map(b => b.textContent);
   btns.forEach(b => { b.disabled = true; b.textContent = '\u27f3 LADEN...'; });
   try {
+    // v26.127: handmatige scan (niet-silent) triggert eerst een worker-scan-nu; daarna lezen we /picks.
+    // Silent/achtergrond-refreshes lezen alleen de laatste picks (geen scan-kosten).
+    if (!silent) {
+      try {
+        btns.forEach(b => { b.textContent = '\u27f3 SCANNEN...'; });
+        const sr = await fetch('https://api.promatchxi.app/scan-now');
+        if (sr.ok) {
+          const sd = await sr.json();
+          if (sd && sd.reason === 'cooldown' && typeof showToast === 'function') {
+            showToast(`Net gescand \u2014 toon laatste picks (wacht ${sd.retryAfter||60}s)`);
+          }
+        }
+      } catch(e) { console.warn('[ValueScan] /scan-now niet bereikbaar:', e.message); }
+    }
     try {
       const r = await fetch('https://api.promatchxi.app/picks');
       if (r.ok) { const d = await r.json(); state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); }
