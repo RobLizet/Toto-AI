@@ -384,7 +384,7 @@ function renderDashboard() {
   for (const sp of sortedSettled) { if (sp.status === 'win') winStreak++; else break; }
 
   // Value picks beschikbaar
-  const valuePicks = (state.valueScans||[]).filter(s => s.value >= 5);
+  const valuePicks = (state.valueScans||[]).filter(s => s.value >= 5 && !matchHasStarted(s.match)); // v26.123: geen verleden wedstrijden
   const topValuePick = valuePicks.sort((a,b) => (b.value||0)-(a.value||0))[0];
 
   // v26.24: Laatste scan — toont álle picks (ook lichte) van de meest recente scan, tikbaar naar de scan-log
