@@ -689,7 +689,7 @@ function renderDashboard() {
 }
 
 function renderDailyTipCard(tip) {
-    const tipCard = document.getElementById('dailyTipCard');
+    const tipCard = document.getElementById('daily-tip-card');
     if (!tipCard) return;
     // Geen tip of niet gekwalificeerd
     if (!tip || !tip.qualified) {
