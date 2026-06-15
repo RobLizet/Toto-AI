@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v156'; // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v157'; // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1330,11 +1330,20 @@ function impliedProb(odds) {
   return 1 / odds;
 }
 
+// v157: value-hardening tegen favorite-longshot-bias
+const MARKET_SHRINK_BASE       = 0.50; // model 50% richting faire markt getrokken (normale leagues)
+const MARKET_SHRINK_TOURNAMENT = 0.65; // toernooi/landenduel: scherpe markt + zwak model -> meer shrink
+const LONGSHOT_ODDS            = 3.5;  // odds >= dit = longshot
+const LONGSHOT_MIN_SHARP       = 55;   // longshot-value alleen toegestaan mét sharpScore >= dit
+
 // v125: value = de-vigde procentpunt-edge (modelkans% − faire consensus-implied%).
+// v157: model eerst richting de markt schrinken zodat AI-ruis niet als value op longshots verschijnt.
 // Intern consistent met CLV — we meten tegen de faire (vig-vrije) marktkans, niet tegen de ruwe odds.
-function calculateValue(aiKans, fairImpliedPct, pick) {
+function calculateValue(aiKans, fairImpliedPct, pick, marketShrink = 0) {
   if (fairImpliedPct == null || fairImpliedPct <= 0) return 0;
-  let value = aiKans - fairImpliedPct;
+  const w = Math.min(Math.max(marketShrink, 0), 0.9);
+  const modelProb = w * fairImpliedPct + (1 - w) * aiKans; // shrinkage naar markt-prior
+  let value = modelProb - fairImpliedPct;
   if (pick === 'X') value = value * 0.80; // gelijkspel-bias correctie (behouden)
   return parseFloat(value.toFixed(1));
 }
@@ -2035,7 +2044,8 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const hasRealOdds = !!(odds?.home);
       // v125: edge tegen faire consensus; bij sparse (geen consensus) terugval op ruwe implied
       const fairImplied = fairImpliedFor(odds, c.pick) ?? (impliedProb(c.bookOdds) * 100);
-      const value = calculateValue(c.aiKans, fairImplied, c.pick);
+      const marketShrink = tournament ? MARKET_SHRINK_TOURNAMENT : MARKET_SHRINK_BASE; // v157
+      const value = calculateValue(c.aiKans, fairImplied, c.pick, marketShrink);
       if (value < 3) return;
       const ev = calcEV(c.aiKans, c.bookOdds);
       const kelly = calcKellyW(c.aiKans, c.bookOdds);
@@ -2043,6 +2053,14 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const openOdds = openingOdds ? openingOdds[c.pick === '1' ? 'home' : c.pick === 'X' ? 'draw' : 'away'] : null;
       const movement = calcOddsMovement(openOdds, c.bookOdds);
       const sharpBoost = sharpSignals?.[m.fixtureId]?.[c.pick];
+
+      // v157: favorite-longshot guardrail — value op underdogs (hoge odds) alleen toelaten
+      // als sharp money bevestigt. Voorkomt dat AI-ruis een longshot als 'beste value' opvoert.
+      if (c.bookOdds >= LONGSHOT_ODDS && (sharpBoost?.sharpScore || 0) < LONGSHOT_MIN_SHARP) {
+        console.log(`[Scan] Longshot-guard: ${m.home} vs ${m.away} ${c.pick} @${c.bookOdds} — geen sharp-bevestiging (score ${sharpBoost?.sharpScore || 0}), overgeslagen`);
+        return;
+      }
+
       // v135: marketSignal incorporeert sharpScore (0-100) direct als gewogen component
       const baseMarketSignal = calcMarketSignal(movement, c.pick);
       const marketSignal = sharpBoost
@@ -2434,7 +2452,8 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
     ].forEach(c => {
       if (!c.bookOdds || c.bookOdds <= 1) return;
       const fairImplied = fairImpliedFor(odds, c.pick) ?? (impliedProb(c.bookOdds) * 100);
-      const value = calculateValue(c.aiKans, fairImplied, c.pick);
+      const marketShrink = tournament ? MARKET_SHRINK_TOURNAMENT : MARKET_SHRINK_BASE; // v157
+      const value = calculateValue(c.aiKans, fairImplied, c.pick, marketShrink);
       if (value < 3) return;
       const ev = calcEV(c.aiKans, c.bookOdds);
       const kelly = calcKellyW(c.aiKans, c.bookOdds);
