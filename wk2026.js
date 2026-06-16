@@ -181,7 +181,7 @@ function renderWK2026Screen() {
 
         <!-- Meta -->
         <div style="text-align:center;padding:.5rem 0 1rem;">
-          <div id="wk-meta" style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);"></div>
+          <div id="wk-meta" style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);"></div>
           <button onclick="generateWKPrediction(true)"
             style="margin-top:.5rem;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);
             border-radius:999px;padding:.3rem .9rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;
@@ -356,7 +356,7 @@ function renderWKData(data) {
             </div>
             <span style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;color:#dc2626;">${t.kans}%</span>
           </div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);
             margin-bottom:.2rem;">${t.reden}</div>
           <div style="height:3px;background:var(--stroke);border-radius:2px;">
             <div style="height:100%;width:${barW}%;background:linear-gradient(90deg,#dc2626,#be185d);
@@ -386,7 +386,7 @@ function renderWKData(data) {
       return `
         <div style="background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.1);
           border-radius:10px;padding:.4rem .5rem;display:flex;align-items:center;gap:.3rem;">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;font-weight:700;
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;
             color:#dc2626;min-width:.7rem;">G${g}</span>
           <span style="font-size:.85rem;">${flag}</span>
           <span style="font-family:'DM Sans',sans-serif;font-size:.58rem;font-weight:600;
@@ -451,7 +451,7 @@ function showWKWidget(el, data) {
           <span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#dc2626;
             font-weight:700;">${data.kampioenKans}%</span>
         </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);
           margin-top:.1rem;">
           Top 4: ${(data.top4||[]).slice(0,4).map(t=>`${TEAM_FLAGS[t.land]||''}${t.land}`).join(' · ')}
         </div>
@@ -497,15 +497,15 @@ function loadOranjeTab() {
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.8rem;">
         <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#ff6600;">3e</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.85);">WK 2022</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.95);">WK 2022</div>
         </div>
         <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#00BEC4;">G</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.85);">GROEP</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.95);">GROEP</div>
         </div>
         <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#fff;">26</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.85);">SPELERS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.95);">SPELERS</div>
         </div>
       </div>
 
@@ -518,9 +518,9 @@ function loadOranjeTab() {
           {date:'21 jun', opp:'🇦🇹 Oostenrijk', loc:'Boston', time:'21:00'},
         ].map(g => `
           <div style="display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid rgba(255,255,255,.06);">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.75);width:3rem;">${g.date}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.88);width:3rem;">${g.date}</div>
             <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:700;color:#fff;flex:1;">NL vs ${g.opp}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.85);">${g.time}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${g.time}</div>
           </div>
         `).join('')}
       </div>
@@ -551,7 +551,7 @@ function loadOranjeTab() {
               color:${p.pos==='FWD'?'#ff6600':p.pos==='MID'?'#00BEC4':p.pos==='DEF'?'#3b82f6':'#a855f7'};
               width:2.2rem;">${p.pos}</div>
             <div style="font-family:'DM Sans',sans-serif;font-size:.6rem;font-weight:700;color:#fff;flex:1;">${p.name}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.75);">${p.club}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.88);">${p.club}</div>
           </div>
         `).join('')}
       </div>
@@ -586,7 +586,7 @@ async function loadOranjeNieuws() {
         </div>
       `).join('');
     } else {
-      el.innerHTML = '<div style="text-align:center;padding:1rem;font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.75);">Geen nieuws gevonden</div>';
+      el.innerHTML = '<div style="text-align:center;padding:1rem;font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.88);">Geen nieuws gevonden</div>';
     }
   } catch(e) {
     el.innerHTML = '<div style="color:#dc2626;font-family:monospace;font-size:.5rem;padding:.5rem;">Fout: ' + e.message + '</div>';
@@ -660,19 +660,19 @@ async function loadWKPicks() {
         <div style="flex:1;background:var(--card);border:1px solid var(--stroke);border-radius:10px;
           padding:.5rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#dc2626;">${wkPicks.length}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">PICKS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">PICKS</div>
         </div>
         <div style="flex:1;background:var(--card);border:1px solid var(--stroke);border-radius:10px;
           padding:.5rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${wins/total>=.4?'#00BEC4':'#dc2626'};">
             ${total ? Math.round(wins/total*100) : '—'}%</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">HITRATE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">HITRATE</div>
         </div>
         <div style="flex:1;background:var(--card);border:1px solid var(--stroke);border-radius:10px;
           padding:.5rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:${roi>=0?'#00BEC4':'#dc2626'};">
             ${roi>=0?'+':''}${roi.toFixed(1)}%</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">ROI</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">ROI</div>
         </div>
       </div>`;
 
@@ -866,7 +866,7 @@ function _renderWKSchema() {
       if (isLive) {
         midHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:.15rem;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#dc2626;line-height:1;">${ghome} – ${gaway}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:#dc2626;font-weight:700;animation:blink 1s infinite;">● LIVE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:#dc2626;font-weight:700;animation:blink 1s infinite;">● LIVE</div>
         </div>`;
       } else if (isDone) {
         midHtml = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--ink);line-height:1;">${ghome} – ${gaway}</div>`;
@@ -882,15 +882,15 @@ function _renderWKSchema() {
       if (odds && !isDone) {
         oddsHtml = `<div style="display:flex;gap:.4rem;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--stroke);">
           <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.15);border-radius:8px;padding:.3rem .2rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.1rem;">1</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.1rem;">1</div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${odds.home?.toFixed(2)}</div>
           </div>
           <div style="flex:1;text-align:center;background:var(--card2,rgba(255,255,255,.03));border:1px solid var(--stroke);border-radius:8px;padding:.3rem .2rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.1rem;">X</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.1rem;">X</div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${odds.draw?.toFixed(2)}</div>
           </div>
           <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.15);border-radius:8px;padding:.3rem .2rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.1rem;">2</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.1rem;">2</div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:var(--ink);">${odds.away?.toFixed(2)}</div>
           </div>
         </div>`;
@@ -899,8 +899,8 @@ function _renderWKSchema() {
       html += `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.85rem 1rem;margin-bottom:.5rem;">
         <!-- Groep label -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);font-weight:700;">${groepLetter ? 'GROEP ' + groepLetter : ''}</div>
-          ${isDone ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.4rem;color:var(--sub);">AFGELOPEN</div>` : ''}
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);font-weight:700;">${groepLetter ? 'GROEP ' + groepLetter : ''}</div>
+          ${isDone ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">AFGELOPEN</div>` : ''}
         </div>
         <!-- Teams + Score -->
         <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.5rem;">
@@ -973,13 +973,13 @@ async function loadWKStanden() {
           GROEP ${letter}
         </div>
         <div style="display:grid;grid-template-columns:auto 1fr repeat(5,auto);gap:.25rem .4rem;align-items:center;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">#</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">TEAM</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">GS</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">W</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">D</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">V</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;font-weight:700;color:var(--ink);text-align:center;">PT</div>`;
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">#</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">TEAM</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;">GS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;">W</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;">D</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;">V</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;color:var(--ink);text-align:center;">PT</div>`;
 
       groep.forEach((team, i) => {
         const t = team.team?.name || '?';
@@ -1033,11 +1033,11 @@ async function loadWKTopscorers() {
     let html = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem .85rem;margin-bottom:.6rem;">
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;margin-bottom:.6rem;letter-spacing:.05em;">⚽ TOPSCORERS</div>
       <div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:.3rem .5rem;align-items:center;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">#</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">SPELER</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">GS</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;">ASS</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;font-weight:700;color:var(--ink);text-align:center;">⚽</div>`;
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">#</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">SPELER</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;">GS</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;">ASS</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;color:var(--ink);text-align:center;">⚽</div>`;
 
     scorers.slice(0, 20).forEach((s, i) => {
       const naam = s.player?.name || '?';
@@ -1052,7 +1052,7 @@ async function loadWKTopscorers() {
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:${isTop?'#f59e0b':'var(--sub)'};font-weight:700;">${i+1}</div>
         <div>
           <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:700;color:var(--ink);">${naam}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);">${flag} ${land}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">${flag} ${land}</div>
         </div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;">${games}</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);text-align:center;">${assists}</div>
@@ -1173,15 +1173,15 @@ function _renderWKMatchAnalyse(el, text, home, away, odds, fromCache) {
   if (odds) {
     oddsHtml = `<div style="display:flex;gap:.4rem;margin-bottom:1rem;">
       <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.5rem .3rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.2rem;">${hFlag} 1</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.2rem;">${hFlag} 1</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${odds.home?.toFixed(2)}</div>
       </div>
       <div style="flex:1;text-align:center;background:rgba(255,255,255,.03);border:1px solid var(--stroke);border-radius:10px;padding:.5rem .3rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.2rem;">X</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.2rem;">X</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${odds.draw?.toFixed(2)}</div>
       </div>
       <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.5rem .3rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);margin-bottom:.2rem;">${aFlag} 2</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-bottom:.2rem;">${aFlag} 2</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink);">${odds.away?.toFixed(2)}</div>
       </div>
     </div>`;
@@ -1192,7 +1192,7 @@ function _renderWKMatchAnalyse(el, text, home, away, odds, fromCache) {
     <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.85rem 1rem;">
       <p style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--ink);line-height:1.65;margin:0;">${html}</p>
     </div>
-    ${fromCache ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.38rem;color:var(--sub);text-align:center;margin-top:.5rem;">📦 Gecached · verloopt na 6u</div>` : ''}
+    ${fromCache ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-align:center;margin-top:.5rem;">📦 Gecached · verloopt na 6u</div>` : ''}
     <button onclick="localStorage.removeItem('wk_match_analyse_${home}_${away}'); analyseWKMatch(0,'${home}','${away}',${JSON.stringify(odds)})"
       style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;
       padding:.4rem;font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);cursor:pointer;">
