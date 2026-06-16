@@ -497,15 +497,15 @@ function loadOranjeTab() {
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.8rem;">
         <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#ff6600;">3e</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.5);">WK 2022</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.72);">WK 2022</div>
         </div>
         <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#00BEC4;">G</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.5);">GROEP</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.72);">GROEP</div>
         </div>
         <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#fff;">26</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.5);">SPELERS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.72);">SPELERS</div>
         </div>
       </div>
 
@@ -518,9 +518,9 @@ function loadOranjeTab() {
           {date:'21 jun', opp:'🇦🇹 Oostenrijk', loc:'Boston', time:'21:00'},
         ].map(g => `
           <div style="display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid rgba(255,255,255,.06);">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.4);width:3rem;">${g.date}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.62);width:3rem;">${g.date}</div>
             <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:700;color:#fff;flex:1;">NL vs ${g.opp}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.5);">${g.time}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.72);">${g.time}</div>
           </div>
         `).join('')}
       </div>
@@ -551,7 +551,7 @@ function loadOranjeTab() {
               color:${p.pos==='FWD'?'#ff6600':p.pos==='MID'?'#00BEC4':p.pos==='DEF'?'#3b82f6':'#a855f7'};
               width:2.2rem;">${p.pos}</div>
             <div style="font-family:'DM Sans',sans-serif;font-size:.6rem;font-weight:700;color:#fff;flex:1;">${p.name}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.4);">${p.club}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.62);">${p.club}</div>
           </div>
         `).join('')}
       </div>
@@ -586,7 +586,7 @@ async function loadOranjeNieuws() {
         </div>
       `).join('');
     } else {
-      el.innerHTML = '<div style="text-align:center;padding:1rem;font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.4);">Geen nieuws gevonden</div>';
+      el.innerHTML = '<div style="text-align:center;padding:1rem;font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.62);">Geen nieuws gevonden</div>';
     }
   } catch(e) {
     el.innerHTML = '<div style="color:#dc2626;font-family:monospace;font-size:.5rem;padding:.5rem;">Fout: ' + e.message + '</div>';
