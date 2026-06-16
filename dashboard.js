@@ -397,7 +397,7 @@ function renderDashboard() {
     const _livePicks = (_latestScan.picks||[]).filter(p => !matchHasStarted(p)); // v26.123: geen verleden wedstrijden
     const lp = _livePicks.slice().sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,5);
     let h = '<div class="dash-soft" style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,190,196,.25);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.55);">🔍 LAATSTE SCAN'+(t?' · '+t:'')+'</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.4);">'+_livePicks.length+' picks</div></div>';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.55);">🔍 LAATSTE SCAN'+(t?' · '+t:'')+'</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.62);">'+_livePicks.length+' picks</div></div>';
     lp.forEach(p => {
       const v = Math.round(p.value||0); const sign = v>=0?'+':'';
       const light = (p.isSparseData || (p.confidence||0) < 6 || (p.value||0) < 8);
@@ -406,7 +406,7 @@ function renderDashboard() {
       const vcol = v>=8?'#00BEC4':(v>=0?'#94a3b8':'#ef4444');
       h += '<div onclick="openScanLog(\''+q+'\')" style="display:flex;align-items:center;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;">';
       h += '<div style="flex:1;min-width:0;padding-right:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(p.match||'?')+badge+'</div>';
-      h += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);">'+(p.pickLabel||p.pick||'')+' · @'+(Number(p.odds)||0).toFixed(2)+'</div></div>';
+      h += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.72);">'+(p.pickLabel||p.pick||'')+' · @'+(Number(p.odds)||0).toFixed(2)+'</div></div>';
       h += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:.95rem;color:'+vcol+';">'+sign+v+'%</div></div>';
     });
     h += '<div onclick="openScanLog(\'\')" style="text-align:center;margin-top:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#00BEC4;cursor:pointer;">Volledige scan-log →</div>';
@@ -445,7 +445,7 @@ function renderDashboard() {
     <!-- Dashboard tabs -->
     <div style="display:flex;gap:.4rem;margin-bottom:.75rem;background:rgba(15,23,42,.04);border-radius:12px;padding:.25rem;">
       <button id="dashTabOverview" onclick="switchDashTab('overview')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,0.05);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);">📊 OVERZICHT</button>
-      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.5);"><span id="liveDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc2626;margin-right:.3rem;vertical-align:middle;"></span>LIVE</button>
+      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.72);"><span id="liveDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc2626;margin-right:.3rem;vertical-align:middle;"></span>LIVE</button>
     </div>
 
     <div id="dashOverviewContent">
@@ -457,13 +457,13 @@ function renderDashboard() {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;padding-right:.5rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.5);">🎯 VOORTGANG NAAR <span style="color:#00BEC4;">100</span> PICKS</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.72);">🎯 VOORTGANG NAAR <span style="color:#00BEC4;">100</span> PICKS</div>
             <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
           </div>
           <div style="background:rgba(255,255,255,.08);border-radius:999px;height:7px;overflow:hidden;margin-bottom:.35rem;">
             <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#00BEC4,#00e5c8);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
           </div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);display:flex;gap:.35rem;flex-wrap:wrap;">
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.72);display:flex;gap:.35rem;flex-wrap:wrap;">
             ${(() => {
               // U2: geen dubbele cijfers — inline = voortgang, statrij hieronder = prestatie
               const parts = [];
@@ -491,9 +491,9 @@ function renderDashboard() {
         <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${winStreak >= 3 ? '#00BEC4' : winStreak >= 1 ? '#d97706' : '#ffffff'};line-height:1;">${winStreak > 0 ? '🔥'+winStreak : winPicks.length+'/'+settledPicks.length}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:var(--muted);margin-top:.15rem;">${winStreak > 0 ? 'STREAK' : 'W/L'}</div></div>
       </div>
       ${state._clvSummary && Number(state._clvSummary.picks) >= 20 ? `<div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">\u{1F4C8} GEM. CLV</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.72);">\u{1F4C8} GEM. CLV</span>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${Number(state._clvSummary.avgCLV)>=0?'#00BEC4':'#ef4444'};">${Number(state._clvSummary.avgCLV)>=0?'+':''}${state._clvSummary.avgCLV}%</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.4);">\u00b7 ${state._clvSummary.pctBeatClose}% beat close \u00b7 n=${state._clvSummary.picks}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.62);">\u00b7 ${state._clvSummary.pctBeatClose}% beat close \u00b7 n=${state._clvSummary.picks}</span>
       </div>` : ''}
     </div>
 
@@ -504,7 +504,7 @@ function renderDashboard() {
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;font-weight:800;color:#00BEC4;">⏳ ${openBets.length} OPEN BET${openBets.length>1?'S':''}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);margin-top:.15rem;">${openBets.slice(0,2).map(b=>b.matchName||b.match||'?').join(' · ')}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.72);margin-top:.15rem;">${openBets.slice(0,2).map(b=>b.matchName||b.match||'?').join(' · ')}</div>
         </div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00BEC4;">€${openBets.reduce((s,b)=>s+b.amount,0).toFixed(0)}</div>
       </div>
@@ -519,7 +519,7 @@ function renderDashboard() {
         <div style="flex:1;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#00BEC4;margin-bottom:.2rem;">⚡ BESTE VALUE PICK</div>
           <div style="font-family:\'DM Sans\',sans-serif;font-size:.8rem;font-weight:700;color:#ffffff;">${topValuePick.match?.home||topValuePick.home||'?'} vs ${topValuePick.match?.away||topValuePick.away||'?'}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.15rem;">${topValuePick.pickLabel||topValuePick.pick} · conf ${topValuePick.confidence||'?'}/10</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.72);margin-top:.15rem;">${topValuePick.pickLabel||topValuePick.pick} · conf ${topValuePick.confidence||'?'}/10</div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#00BEC4;">+${Math.round(topValuePick.value||0)}%</div>
@@ -544,7 +544,7 @@ function renderDashboard() {
           </svg>
         </div>
         <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">WEDSTRIJDEN</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">Laad matches, bekijk quotes en value indicators</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.72);line-height:1.5;flex:1;">Laad matches, bekijk quotes en value indicators</div>
         <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">LIVE API</span></div>
       </div>
 
@@ -563,7 +563,7 @@ function renderDashboard() {
           </svg>
         </div>
         <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">ANALYSE</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">AI analyse, value scan en combi tips</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.72);line-height:1.5;flex:1;">AI analyse, value scan en combi tips</div>
         <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">AI POWERED</span></div>
       </div>
 
@@ -580,7 +580,7 @@ function renderDashboard() {
           </svg>
         </div>
         <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">WALLET</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">Bets, tracker, backtest en pick analyse</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.72);line-height:1.5;flex:1;">Bets, tracker, backtest en pick analyse</div>
         <div style="margin-top:8px;"><span style="font-size:12px;font-weight:800;color:#C9A84C;">€${wallet.balance.toFixed(0)}</span></div>
       </div>
 
@@ -595,7 +595,7 @@ function renderDashboard() {
           <div style="font-size:11px;line-height:1.3;">🇳🇱🏴󠁧󠁢󠁥󠁮󠁧󠁿<br>🇩🇪🇪🇸🇮🇹🇧🇪</div>
         </div>
         <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">COMPETITIES</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.5);line-height:1.5;flex:1;">Stand, topscorers en wedstrijden per competitie</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.72);line-height:1.5;flex:1;">Stand, topscorers en wedstrijden per competitie</div>
         <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#C9A84C;border:1px solid rgba(201,168,76,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">INFO</span></div>
       </div>
 
@@ -608,23 +608,23 @@ function renderDashboard() {
     <!-- Weekoverzicht -->
     ${weekScans.length ? `
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);margin-bottom:.5rem;">📅 DEZE WEEK</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.72);margin-bottom:.5rem;">📅 DEZE WEEK</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.4rem;">
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">${weekScans.length}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);">SCANS</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.72);">SCANS</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00a8ad;">${weekPicksArr.length}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);">PICKS</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.72);">PICKS</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${weekHR!==null&&weekHR>=50?'#00BEC4':'#dc2626'};">${weekHR !== null ? weekHR+'%' : '—'}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);">HITRATE</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.72);">HITRATE</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">${weekOpen}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);">OPEN</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.72);">OPEN</div>
         </div>
       </div>
     </div>` : ''}
@@ -633,21 +633,21 @@ function renderDashboard() {
     ${scanROI !== null ? `
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.5);">📊 TRACKRECORD</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);">${settledPicks.length}/100 picks</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.72);">📊 TRACKRECORD</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.72);">${settledPicks.length}/100 picks</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${scanHitrate>=50?'#00BEC4':'#dc2626'};">${scanHitrate}%</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.5);">HITRATE</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.72);">HITRATE</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${scanROI>=0?'#00BEC4':'#dc2626'};">${scanROI>=0?'+':''}${scanROI.toFixed(1)}%</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.5);">ROI</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.72);">ROI</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${isCalibrated?'#00BEC4':'#d97706'};">${isCalibrated?'✓':`${settledPicks.length}/10`}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.5);">${isCalibrated?'AI GECALIB.':'AI LEERT'}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.72);">${isCalibrated?'AI GECALIB.':'AI LEERT'}</div>
         </div>
       </div>
       <div style="background:rgba(15,23,42,.06);border-radius:999px;height:5px;overflow:hidden;margin-top:.5rem;">
@@ -656,12 +656,12 @@ function renderDashboard() {
     </div>` : ''}
 
     <!-- Disclaimer -->
-    <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.5);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid rgba(255,255,255,0.09);margin-top:.5rem;">
+    <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.72);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid rgba(255,255,255,0.09);margin-top:.5rem;">
       ⚠️ Uitsluitend voor <b>entertainment & educatie</b> · Geen echt gokadvies<br>
       Speel verantwoord · 18+ · Verslavingslijn: 0900-1090
     </div>
 
-    <div style="font-family:'Dancing Script',cursive;font-size:.75rem;color:rgba(255,255,255,.5);text-align:center;padding:.5rem 0 1rem;">
+    <div style="font-family:'Dancing Script',cursive;font-size:.75rem;color:rgba(255,255,255,.72);text-align:center;padding:.5rem 0 1rem;">
       Made by Rob Borghouts
     </div>
     </div><!-- /dashOverviewContent -->
@@ -669,10 +669,10 @@ function renderDashboard() {
     <!-- Live scores content -->
     <div id="dashLiveContent" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.5);">🔴 LIVE STANDEN VAN JE PICKS</div>
-        <button onclick="loadLiveScores()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.25rem .5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);cursor:pointer;">⟳ Ververs</button>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.72);">🔴 LIVE STANDEN VAN JE PICKS</div>
+        <button onclick="loadLiveScores()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.25rem .5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.72);cursor:pointer;">⟳ Ververs</button>
       </div>
-      <div id="liveScoresList"><div style="text-align:center;padding:2rem;color:rgba(255,255,255,.5);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">Tik op LIVE om standen te laden...</div></div>
+      <div id="liveScoresList"><div style="text-align:center;padding:2rem;color:rgba(255,255,255,.72);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">Tik op LIVE om standen te laden...</div></div>
     </div>
   `;
 
@@ -700,8 +700,8 @@ function renderDailyTipCard(tip) {
         <div style="display:flex;align-items:center;gap:.5rem;">
           <div style="font-size:1.1rem;">🎯</div>
           <div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:rgba(255,255,255,.5);">TIP VAN DE DAG</div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);">Vandaag geen gekwalificeerde pick — scan meer wedstrijden.</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:rgba(255,255,255,.72);">TIP VAN DE DAG</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.72);">Vandaag geen gekwalificeerde pick — scan meer wedstrijden.</div>
           </div>
         </div>
       </div>`;
@@ -719,7 +719,7 @@ function renderDailyTipCard(tip) {
       onclick="switchScreen('analyse');setTimeout(()=>{showAnalyseSubTab('scan');if(tip&&tip.fixtureId&&typeof openValueAnalysis==='function')openValueAnalysis(tip.fixtureId);},150)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;letter-spacing:.04em;">🎯 TIP VAN DE DAG</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.5);">${isToday ? 'Vandaag' : (tip.date||'')}</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.72);">${isToday ? 'Vandaag' : (tip.date||'')}</div>
       </div>
       <div style="font-family:\'DM Sans\',sans-serif;font-size:.85rem;font-weight:800;color:#ffffff;margin-bottom:.3rem;">${tip.match||'?'}</div>
       <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;">
@@ -730,9 +730,9 @@ function renderDailyTipCard(tip) {
         <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;font-weight:800;color:${valColor};">+${Math.round(tip.value||0)}%</span>
         <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:#f59e0b;margin-left:auto;">${stars}</span>
       </div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.5);line-height:1.65;">${tip.analyse||tip.tip||''}</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.72);line-height:1.65;">${tip.analyse||tip.tip||''}</div>
       ${tip.zwakPunt ? `<div style="margin-top:.35rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:.25rem .5rem;border-radius:6px;background:rgba(255,165,0,.07);border:1px solid rgba(255,165,0,.2);color:#d97706;">⚡ Risico: ${tip.zwakPunt}</div>` : ''}
-      <div style="margin-top:.45rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);opacity:.7;">
+      <div style="margin-top:.45rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.72);opacity:.7;">
         🎲 ${conf}/10 confidence · ${tip.markt||'Uitslag'} · Uitsluitend entertainment & educatie
       </div>
     </div>`;
@@ -807,7 +807,7 @@ function openCompKeuze() {
   COMPS.forEach(c => {
     const tile = document.createElement('div');
     tile.style.cssText = 'background:rgba(255,255,255,.8);border:1.5px solid rgba(15,23,42,.08);border-radius:14px;padding:.7rem .4rem;text-align:center;cursor:pointer;';
-    tile.innerHTML = `<div style="font-size:1.4rem;">${c.flag}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:rgba(255,255,255,.5);margin-top:.2rem;">${c.name}</div>`;
+    tile.innerHTML = `<div style="font-size:1.4rem;">${c.flag}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:rgba(255,255,255,.72);margin-top:.2rem;">${c.name}</div>`;
     tile.onclick = () => {
       overlay.remove();
       if (typeof openCompDetail === 'function') openCompDetail(c.key);
@@ -886,11 +886,11 @@ async function openPicksInsight() {
     <div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:999px;margin:0 auto .75rem;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#ef4444;">📊 INZICHT IN JOUW CIJFERS</div>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:1.2rem;cursor:pointer;">✕</button>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:rgba(255,255,255,.62);font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
     <div id="insightContent">
       <div style="text-align:center;padding:2rem 0;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.4);">⏳ AI analyseert jouw statistieken...</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.62);">⏳ AI analyseert jouw statistieken...</div>
       </div>
     </div>`;
 
@@ -984,7 +984,7 @@ Geef een heldere analyse in het Nederlands.` }]
         ].map(([label, val, color]) => `
           <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:.45rem .3rem;text-align:center;">
             <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:${color};line-height:1;">${val}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:rgba(255,255,255,.4);margin-top:2px;">${label}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:rgba(255,255,255,.62);margin-top:2px;">${label}</div>
           </div>`).join('')}
       </div>`;
 
@@ -1060,14 +1060,14 @@ function showPicksModal() {
         ['ROI', roi !== null ? (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%' : '—'],
       ].map(([label, val]) => `
         <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.4rem;text-align:center;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.5);">${label}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;color:rgba(255,255,255,.72);">${label}</div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#00BEC4;">${val}</div>
         </div>`).join('')}
     </div>
 
     <!-- Picks lijst -->
     ${eliteOn ? (hiddenCount > 0 ? `<div onclick="togglePicksFilter()" style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:.45rem .65rem;margin-bottom:.5rem;cursor:pointer;"><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.55);">🔒 ${hiddenCount} pick${hiddenCount===1?'':'s'} verborgen (B/C)</span><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:700;color:#00BEC4;">toon alles →</span></div>` : '') : `<div onclick="togglePicksFilter()" style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:8px;padding:.45rem .65rem;margin-bottom:.5rem;cursor:pointer;"><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.55);">👁 Alle tiers zichtbaar</span><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:700;color:#00BEC4;">alleen Elite/A+ →</span></div>`}
-    ${sorted.length === 0 ? '<div style="text-align:center;color:rgba(255,255,255,.5);font-size:.8rem;padding:1rem;">Nog geen picks — scan wedstrijden!</div>' :
+    ${sorted.length === 0 ? '<div style="text-align:center;color:rgba(255,255,255,.72);font-size:.8rem;padding:1rem;">Nog geen picks — scan wedstrijden!</div>' :
       sorted.map(p => {
         const rel = calcReliabilityScore(p);
         const cat = getPickCategory(p);
@@ -1078,7 +1078,7 @@ function showPicksModal() {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div style="flex:1;min-width:0;">
               <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.7rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
-              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.5);">${p.pickLabel||p.pick||'?'} · @${parseFloat(p.odds||2).toFixed(2)} · +${Math.round(p.value||0)}% value</div>
+              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.72);">${p.pickLabel||p.pick||'?'} · @${parseFloat(p.odds||2).toFixed(2)} · +${Math.round(p.value||0)}% value</div>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
               <div style="font-size:1rem;">${statusIcon(p.status)}</div>
@@ -1086,7 +1086,7 @@ function showPicksModal() {
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:.4rem;margin:.3rem 0;">
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.4);">RELIABILITY</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.62);">RELIABILITY</div>
             <div style="flex:1;background:rgba(255,255,255,.1);border-radius:999px;height:5px;overflow:hidden;">
               <div style="background:${rel.barColor};height:100%;border-radius:999px;width:${rel.score}%;"></div>
             </div>
@@ -1173,7 +1173,7 @@ async function loadLiveScores() {
   });
 
   if (!uniquePicks.length) {
-    list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.5);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;line-height:1.6;">Geen openstaande picks om live te volgen.<br>Doe eerst een scan!</div>';
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.72);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;line-height:1.6;">Geen openstaande picks om live te volgen.<br>Doe eerst een scan!</div>';
     return;
   }
 
@@ -1221,7 +1221,7 @@ async function loadLiveScores() {
 
     // Update tijd
     const now = new Date();
-    list.innerHTML += `<div style="text-align:center;padding:.5rem;color:rgba(255,255,255,.5);font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;">Laatst bijgewerkt: ${now.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ververst elke 60s</div>`;
+    list.innerHTML += `<div style="text-align:center;padding:.5rem;color:rgba(255,255,255,.72);font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;">Laatst bijgewerkt: ${now.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ververst elke 60s</div>`;
   } catch(e) {
     list.innerHTML = '<div style="text-align:center;padding:2rem;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">Fout bij laden live data. Probeer opnieuw.</div>';
   }
@@ -1235,7 +1235,7 @@ function liveCardHtml(pick, fx) {
     const dt = [pick.matchDate||pick.date, pick.matchTime||pick.time].filter(Boolean).join(' ');
     return `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;font-weight:700;">${matchName}</div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.5);margin-top:.2rem;">${pick.pickLabel||pick.pick} @ ${pick.odds}${dt ? ' · 📅 ' + dt : ''} · ⏳ Nog niet begonnen</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.72);margin-top:.2rem;">${pick.pickLabel||pick.pick} @ ${pick.odds}${dt ? ' · 📅 ' + dt : ''} · ⏳ Nog niet begonnen</div>
     </div>`;
   }
 
@@ -1298,7 +1298,7 @@ function liveCardHtml(pick, fx) {
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--text);min-width:50px;text-align:center;">${homeGoals} - ${awayGoals}</div>
       <div style="flex:1;text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:${pick.pick==='2'?'700':'400'};">${awayTeam}</div>
     </div>
-    <div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.5);margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.09);">
+    <div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.72);margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.09);">
       🎯 ${pick.pickLabel||pick.pick} @ ${pick.odds} · +${pick.value||0}% value
       ${kickoffStr ? `<br>📅 ${kickoffStr}` : ''}
     </div>
