@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v160'; // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v161'; // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -907,7 +907,7 @@ function calculateConfidenceV20({ modelProb, value, dataQuality, marketSignal, l
   const staticFactor = LEAGUE_FACTORS[leagueId] || 0.92;
   const leagueFactor = calibFactor ? (staticFactor * 0.30 + calibFactor * 0.70) : staticFactor;
   const bucketFactor = ODDS_BUCKET_FACTORS[getOddsBucket(odds)] || 0.90;
-  const drawPenalty  = pick === 'X' ? 0.85 : 1.0;
+  const drawPenalty  = pick === 'X' ? 0.90 : 1.0; // v161: iets verzacht (was 0.85)
 
   // 1. fairImplied: marktodds als objectieve prior (40%)
   // Gebruik meegegeven fairImplied, anders bereken uit bookOdds
@@ -1331,8 +1331,8 @@ function impliedProb(odds) {
 }
 
 // v157: value-hardening tegen favorite-longshot-bias
-const MARKET_SHRINK_BASE       = 0.50; // model 50% richting faire markt getrokken (normale leagues)
-const MARKET_SHRINK_TOURNAMENT = 0.65; // toernooi/landenduel: scherpe markt + zwak model -> meer shrink
+const MARKET_SHRINK_BASE       = 0.45; // v161: iets lichter (was 0.50) — meer thuis/uit-value laten doorkomen
+const MARKET_SHRINK_TOURNAMENT = 0.55; // v161: iets lichter (was 0.65) — toernooi nog steeds scherper richting markt
 const LONGSHOT_ODDS            = 3.5;  // odds >= dit = longshot
 const LONGSHOT_MIN_SHARP       = 55;   // longshot-value alleen toegestaan mét sharpScore >= dit
 
@@ -1344,7 +1344,7 @@ function calculateValue(aiKans, fairImpliedPct, pick, marketShrink = 0) {
   const w = Math.min(Math.max(marketShrink, 0), 0.9);
   const modelProb = w * fairImpliedPct + (1 - w) * aiKans; // shrinkage naar markt-prior
   let value = modelProb - fairImpliedPct;
-  if (pick === 'X') value = value * 0.80; // gelijkspel-bias correctie (behouden)
+  if (pick === 'X') value = value * 0.88; // v161: gelijkspel-straf iets verzacht (was 0.80)
   return parseFloat(value.toFixed(1));
 }
 
@@ -2056,7 +2056,10 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
 
       // v157: favorite-longshot guardrail — value op underdogs (hoge odds) alleen toelaten
       // als sharp money bevestigt. Voorkomt dat AI-ruis een longshot als 'beste value' opvoert.
-      if (c.bookOdds >= LONGSHOT_ODDS && (sharpBoost?.sharpScore || 0) < LONGSHOT_MIN_SHARP) {
+      // v161: longshot-guardrail, met uitzondering voor draws waar het model de gelijkspel
+      // sterk steunt (aiKans X >= 33%). 2-scan-bevestiging + draw-minValue blijven de remmen.
+      const strongDraw = (c.pick === 'X' && c.aiKans >= 33);
+      if (c.bookOdds >= LONGSHOT_ODDS && (sharpBoost?.sharpScore || 0) < LONGSHOT_MIN_SHARP && !strongDraw) {
         console.log(`[Scan] Longshot-guard: ${m.home} vs ${m.away} ${c.pick} @${c.bookOdds} — geen sharp-bevestiging (score ${sharpBoost?.sharpScore || 0}), overgeslagen`);
         return;
       }
@@ -2095,7 +2098,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const isEliteLeague = leagueTier === 'elite';
       const minConf = tournament ? 5 : (isRisico ? 7 : 6);
       const minValue = c.pick === 'X'
-        ? (tournament ? 10 : isRisico ? 15 : 12)
+        ? (tournament ? 7  : isRisico ? 12 : 9)   // v161: draw-drempel licht verlaagd
         : (tournament ? 6  : isRisico ? 9  : 6);
       if (conf.score < minConf || value < minValue) return;
 
@@ -2482,7 +2485,7 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
       const isEliteLeague = leagueTier === 'elite';
       const minConf = tournament ? 5 : (isRisico ? 7 : 6);
       const minValue = c.pick === 'X'
-        ? (tournament ? 10 : isRisico ? 15 : 12)
+        ? (tournament ? 7  : isRisico ? 12 : 9)   // v161: draw-drempel licht verlaagd
         : (tournament ? 6  : isRisico ? 9  : 6);
       if (conf.score < minConf || value < minValue) return;
 
