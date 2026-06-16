@@ -469,7 +469,7 @@ body.dark .analytics-stat-card { background:#0d1e24; }
 .wallet-bal-card::before { content:''; position:absolute; top:-20px; right:-20px; width:100px; height:100px; background:var(--card2); border-radius:50%; }
 .wallet-bal-card .label  { font-family:'IBM Plex Mono',monospace; font-size:.46rem; color:rgba(255,255,255,.55); letter-spacing:.08em; margin-bottom:.3rem; }
 .wallet-bal-card .amount { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; color:#fff; letter-spacing:.03em; line-height:1; }
-.wallet-bal-card .sub    { font-family:'IBM Plex Mono',monospace; font-size:.44rem; color:rgba(255,255,255,.85); margin-top:.25rem; }
+.wallet-bal-card .sub    { font-family:'IBM Plex Mono',monospace; font-size:.44rem; color:rgba(255,255,255,.95); margin-top:.25rem; }
 .wallet-bal-card .roi    { font-weight:700; color:#22c55e; }
 
 /* ── Match row v30 ────────────────────────────────── */
