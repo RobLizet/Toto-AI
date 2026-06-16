@@ -874,8 +874,8 @@ body.dark {
   --stroke:   rgba(255,255,255,.08) !important;
   --ink:      #e8edf5 !important;
   --text:     #e8edf5 !important;
-  --sub:      #a6b4d0 !important;
-  --muted:    #a6b4d0 !important;
+  --sub:      #c2cde2 !important;
+  --muted:    #c2cde2 !important;
   --blue-pale: rgba(59,130,246,.12) !important;
 }
 
@@ -1662,8 +1662,8 @@ body.creme .analytics-block-title span {
 /* Alle witte IBM Plex Mono tekst in analytics blokken */
 body.creme .analytics-block [style*="color:#ffffff"],
 body.creme .analytics-block [style*="color: #ffffff"],
-body.creme .analytics-block [style*="color:rgba(255,255,255,.72)"],
-body.creme .analytics-block [style*="color:rgba(255,255,255,.62)"],
+body.creme .analytics-block [style*="color:rgba(255,255,255,.85)"],
+body.creme .analytics-block [style*="color:rgba(255,255,255,.75)"],
 body.creme .analytics-block [style*="color:rgba(255,255,255,.35)"],
 body.creme .analytics-block [style*="color:rgba(255,255,255,.55)"] {
   color: #7a5230 !important;
@@ -1786,8 +1786,8 @@ body.creme .pick-filter-btn.active {
 body.creme .screen-analyse [style*="color:#fff"],
 body.creme .screen-analyse [style*="color: #fff"],
 body.creme .screen-analyse [style*="color:#ffffff"],
-body.creme .screen-analyse [style*="color:rgba(255,255,255,.72)"],
-body.creme .screen-analyse [style*="color:rgba(255,255,255,.62)"],
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.85)"],
+body.creme .screen-analyse [style*="color:rgba(255,255,255,.75)"],
 body.creme .screen-analyse [style*="color:rgba(255,255,255,.6)"],
 body.creme .screen-analyse [style*="color:rgba(255,255,255,.7)"],
 body.creme .screen-analyse [style*="color:rgba(255,255,255,.8)"] { color: #2c1a0e !important; }
@@ -1799,9 +1799,9 @@ body.creme .screen-analyse [style*="color:rgba(255,255,255,.45)"] { color: #7a52
 body.creme .screen-wallet [style*="color:#fff"],
 body.creme .screen-wallet [style*="color: #fff"],
 body.creme .screen-wallet [style*="color:#ffffff"],
-body.creme .screen-wallet [style*="color:rgba(255,255,255,.72)"],
+body.creme .screen-wallet [style*="color:rgba(255,255,255,.85)"],
 body.creme .screen-wallet [style*="color:rgba(255,255,255,.55)"],
-body.creme .screen-wallet [style*="color:rgba(255,255,255,.62)"],
+body.creme .screen-wallet [style*="color:rgba(255,255,255,.75)"],
 body.creme .screen-wallet [style*="color:rgba(255,255,255,.7)"],
 body.creme .screen-wallet [style*="color:rgba(255,255,255,.8)"] { color: #2c1a0e !important; }
 body.creme .screen-wallet [style*="color:rgba(255,255,255,.3)"],
@@ -1836,4 +1836,4 @@ body.creme #sharpPopupOverlay [style*="color:#dc2626"] { color: #ff6b6b !importa
 body.creme #monteCarloOverlay [style*="color:#d97706"] { color: #fbbf24 !important; }
 body.creme #monteCarloOverlay [style*="color:#16a34a"] { color: #4ade80 !important; }
 /* Section labels iets zachter */
-body.creme #monteCarloOverlay [style*="color:rgba(255,255,255,.62)"] { color: rgba(255,255,255,.6) !important; }
+body.creme #monteCarloOverlay [style*="color:rgba(255,255,255,.75)"] { color: rgba(255,255,255,.6) !important; }
