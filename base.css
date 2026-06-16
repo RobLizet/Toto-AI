@@ -5,7 +5,7 @@
   --bg1:#0B1519;--bg2:#091e24;--bg3:#04383F;
   --card:#0d1e24;--card2:#0a1a20;
   --stroke:rgba(255,255,255,0.09);--border:rgba(255,255,255,0.09);
-  --ink:#ffffff;--sub:rgba(255,255,255,0.85);--muted:rgba(255,255,255,0.75);
+  --ink:#ffffff;--sub:rgba(255,255,255,0.92);--muted:rgba(255,255,255,0.85);
   --text:#ffffff;
   --teal:#00BEC4;--green:#1DB974;--red:#e8404a;--amber:#F5A623;
   --gold:#C9A84C;--gold-l:rgba(201,168,76,.12);
@@ -59,7 +59,7 @@ body::before{
   padding:2px 8px;border-radius:5px;margin-left:6px;}
 .topbar-user{font-size:11px;font-weight:600;color:rgba(255,255,255,.6);}
 .topbar-icon-btn{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
-  color:rgba(255,255,255,.85);width:34px;height:34px;border-radius:9px;
+  color:rgba(255,255,255,.95);width:34px;height:34px;border-radius:9px;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   transition:background .15s;position:relative;}
 .topbar-icon-btn:hover{background:rgba(255,255,255,.12);}
@@ -94,7 +94,7 @@ body::before{
 
 /* SECTION HEADER */
 .section-header{font-family:var(--font);font-size:11px;font-weight:700;
-  color:rgba(255,255,255,.75);letter-spacing:.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.88);letter-spacing:.5px;text-transform:uppercase;
   margin:14px 0 8px;display:flex;align-items:center;gap:6px;}
 .section-header::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.09);}
 
@@ -109,7 +109,7 @@ body::before{
 /* COMP CHIPS */
 .comp-chip,.scan-comp-chip{font-family:var(--font);font-size:11.5px;font-weight:600;
   padding:5px 13px;border-radius:20px;background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.95);border:1px solid rgba(255,255,255,.1);
   cursor:pointer;transition:all .15s;white-space:nowrap;}
 .comp-chip.active,.comp-chip.fav,.scan-comp-chip.on{
   background:#00BEC4;color:#fff;border-color:#00BEC4;}
@@ -163,7 +163,7 @@ body::before{
   border:1px solid rgba(0,190,196,.2);border-radius:var(--r);
   padding:18px 16px;margin-bottom:10px;}
 .wallet-bal-card .label{font-family:var(--font);font-size:11px;font-weight:600;
-  color:rgba(255,255,255,.85);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;}
+  color:rgba(255,255,255,.95);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;}
 .wallet-bal-card .amount{font-family:var(--font);font-size:30px;font-weight:800;
   color:#fff;letter-spacing:-0.5px;}
 .wallet-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));
@@ -171,24 +171,24 @@ body::before{
 .w-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
   border-radius:var(--rs);padding:9px 6px;text-align:center;}
 .w-label{font-family:var(--font);font-size:9px;font-weight:700;
-  color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;}
+  color:rgba(255,255,255,.88);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;}
 .w-item .val{font-family:var(--font);font-size:14px;font-weight:800;color:#fff;}
 .wallet-subtabs{display:flex;gap:5px;margin-bottom:12px;padding:3px;
   background:rgba(255,255,255,.05);border-radius:30px;border:1px solid rgba(255,255,255,.09);}
 .wsub-btn{flex:1;font-family:var(--font);font-size:11.5px;font-weight:700;
   padding:7px 4px;border-radius:26px;border:none;background:transparent;
-  color:rgba(255,255,255,.75);cursor:pointer;transition:all .2s;}
+  color:rgba(255,255,255,.88);cursor:pointer;transition:all .2s;}
 .bt-subtab{font-family:var(--font);font-size:11.5px;font-weight:700;
   padding:7px 16px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.09);
-  background:rgba(255,255,255,.05);color:rgba(255,255,255,.85);cursor:pointer;}
+  background:rgba(255,255,255,.05);color:rgba(255,255,255,.95);cursor:pointer;}
 .bt-subtab.active{background:#00BEC4;color:#fff;border-color:#00BEC4;}
 .tracker-filter,.bt-filter-btn{font-family:var(--font);font-size:11px;font-weight:600;
   padding:5px 11px;border-radius:20px;border:1px solid rgba(255,255,255,.1);
-  background:rgba(255,255,255,.05);color:rgba(255,255,255,.85);cursor:pointer;}
+  background:rgba(255,255,255,.05);color:rgba(255,255,255,.95);cursor:pointer;}
 .tracker-filter.active,.bt-filter-btn.active{background:#00BEC4;color:#fff;border-color:#00BEC4;}
 .stat-mini-card{background:rgba(255,255,255,.07);border-radius:var(--rs);padding:9px 8px;text-align:center;}
 .stat-mini-label{font-family:var(--font);font-size:9px;font-weight:700;
-  color:rgba(255,255,255,.75);text-transform:uppercase;margin-bottom:3px;}
+  color:rgba(255,255,255,.88);text-transform:uppercase;margin-bottom:3px;}
 .stat-mini-val{font-family:var(--font);font-size:15px;font-weight:800;color:#fff;}
 .export-btn,.small-action-btn{font-family:var(--font);font-size:11.5px;font-weight:700;
   background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
@@ -199,7 +199,7 @@ body::before{
   border-radius:var(--r);padding:12px 14px;margin-bottom:10px;}
 .chart-view-btn,.chart-src-btn{font-family:var(--font);font-size:10.5px;font-weight:700;
   border-radius:6px;padding:4px 9px;border:1px solid rgba(255,255,255,.1);
-  background:transparent;color:rgba(255,255,255,.85);cursor:pointer;}
+  background:transparent;color:rgba(255,255,255,.95);cursor:pointer;}
 .chart-view-btn.active,.chart-src-btn.active{background:#00BEC4;color:#fff;border-color:#00BEC4;}
 #btProgressBar{background:linear-gradient(90deg,#00BEC4,#1DB974);}
 
@@ -207,7 +207,7 @@ body::before{
 .modal-box{border-radius:20px;background:rgba(11,21,25,.97);
   border:1px solid rgba(255,255,255,.1);box-shadow:0 20px 60px rgba(0,0,0,.6);}
 .modal-title{font-family:var(--font);font-size:16px;font-weight:800;color:#fff;}
-.modal-label{font-family:var(--font);font-size:11px;font-weight:700;color:rgba(255,255,255,.85);}
+.modal-label{font-family:var(--font);font-size:11px;font-weight:700;color:rgba(255,255,255,.95);}
 .modal-input,.modal-select{font-family:var(--font);font-size:13.5px;font-weight:500;
   border:1.5px solid rgba(255,255,255,.15);border-radius:10px;
   padding:10px 12px;color:#fff;background:rgba(255,255,255,.07);}
@@ -244,7 +244,7 @@ body::before{
 #installBanner.show{display:flex;}
 .install-btn{background:#00BEC4;color:#fff;border:none;border-radius:999px;
   font-family:var(--font);font-size:.62rem;font-weight:700;padding:6px 14px;cursor:pointer;}
-.dismiss-btn{background:transparent;border:none;color:rgba(255,255,255,.75);cursor:pointer;font-size:1rem;}
+.dismiss-btn{background:transparent;border:none;color:rgba(255,255,255,.88);cursor:pointer;font-size:1rem;}
 @keyframes bell-ring{0%,100%{transform:rotate(0);}20%{transform:rotate(15deg);}
   40%{transform:rotate(-15deg);}60%{transform:rotate(10deg);}80%{transform:rotate(-10deg);}}
 .bell-ring{animation:bell-ring .5s ease;}
@@ -254,14 +254,14 @@ body::before{
 #fab-chat{background:rgba(0,40,50,.95);box-shadow:0 4px 16px rgba(0,0,0,.5);}
 .sort-btn{font-family:var(--font);font-size:11px;font-weight:600;border-radius:20px;
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
-  color:rgba(255,255,255,.85);}
+  color:rgba(255,255,255,.95);}
 .sort-btn.active{background:#00BEC4;color:#fff;border-color:#00BEC4;}
 .cd-standings-row{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:9px;}
 .st-team-name{font-size:12px;font-weight:700;color:#fff;}
 .st-pts{font-family:var(--font);font-size:14px;font-weight:800;color:#fff;}
 .analytics-block{padding:14px;margin-bottom:10px;}
 .analytics-block-title{font-family:var(--font);font-size:11px;font-weight:700;
-  color:rgba(255,255,255,.75);letter-spacing:.4px;text-transform:uppercase;}
+  color:rgba(255,255,255,.88);letter-spacing:.4px;text-transform:uppercase;}
 .wk-countdown{background:linear-gradient(135deg,rgba(0,50,60,.8),rgba(0,30,45,.6));
   border:1px solid rgba(0,190,196,.2);border-radius:var(--r);}
 .wk-countdown-title{font-family:var(--font);font-size:11px;font-weight:700;
@@ -273,7 +273,7 @@ body::before{
 .dash-nav-card:active{transform:scale(.98);}
 .dash-nav-title{font-family:var(--font);font-size:14px;font-weight:800;color:#fff;
   text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:4px;}
-.dash-nav-sub{font-family:var(--font);font-size:10.5px;color:rgba(255,255,255,.85);
+.dash-nav-sub{font-family:var(--font);font-size:10.5px;color:rgba(255,255,255,.95);
   line-height:1.5;flex:1;}
 .dash-nav-badge{font-family:var(--font);font-size:10px;font-weight:800;margin-top:6px;color:#00BEC4;}
 .dash-nav-icon{font-size:22px;margin-bottom:6px;}
