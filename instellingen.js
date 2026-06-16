@@ -13,7 +13,7 @@ function renderInstellingen() {
           <div class="topbar-logo">ProMatchXI</div>
           <div class="made-by">Instellingen</div>
         </div>
-        <div id="authUserInfo" style="margin-left:auto;font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);text-align:right;max-width:200px;"></div>
+        <div id="authUserInfo" style="margin-left:auto;font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.72);text-align:right;max-width:200px;"></div>
       </div>
 
       <div id="firebaseStatus" style="display:none;font-family:monospace;font-size:.52rem;padding:.35rem .75rem;border-radius:10px;margin-bottom:.75rem;background:rgba(22,163,74,.08);color:#00BEC4;"></div>
@@ -29,7 +29,7 @@ function renderInstellingen() {
             <input class="settings-input" id="settAnthropicKey" type="password" placeholder="sk-ant-...">
             <button class="key-vis-btn" onclick="toggleKeyVisibility('settAnthropicKey',this)">👁</button>
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">Voor AI-analyse · console.anthropic.com</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.72);margin-top:2px;">Voor AI-analyse · console.anthropic.com</div>
         </div>
 
         <div class="settings-field">
@@ -38,7 +38,7 @@ function renderInstellingen() {
             <input class="settings-input" id="settFootballKey" type="password" placeholder="Optioneel (server heeft eigen key)">
             <button class="key-vis-btn" onclick="toggleKeyVisibility('settFootballKey',this)">👁</button>
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">Jouw eigen Football API key (rapidapi.com)</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.72);margin-top:2px;">Jouw eigen Football API key (rapidapi.com)</div>
         </div>
 
         <div class="settings-field">
@@ -47,7 +47,7 @@ function renderInstellingen() {
             <input class="settings-input" id="settFdKey" type="password" placeholder="Optioneel">
             <button class="key-vis-btn" onclick="toggleKeyVisibility('settFdKey',this)">👁</button>
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">football-data.org voor gratis quotes</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.72);margin-top:2px;">football-data.org voor gratis quotes</div>
         </div>
       </div>
 
@@ -58,7 +58,7 @@ function renderInstellingen() {
         <div class="settings-field">
           <label class="settings-label">Startbalans (€)</label>
           <input class="settings-input" id="settStartBalance" type="number" min="0" step="50">
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">Huidig saldo: <span id="currentBalanceDisplay">—</span></div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.72);margin-top:2px;">Huidig saldo: <span id="currentBalanceDisplay">—</span></div>
         </div>
 
         <div class="settings-field">
@@ -98,7 +98,7 @@ function renderInstellingen() {
       <!-- TRIPLE LOCK INSTELLINGEN -->
       <div class="settings-section">
         <div class="settings-section-title">🏆 TRIPLE LOCK CRITERIA</div>
-        <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);margin-bottom:.75rem;line-height:1.5;">
+        <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.72);margin-bottom:.75rem;line-height:1.5;">
           Picks die aan alle criteria voldoen worden als Triple Lock gemarkeerd.
         </div>
 
@@ -124,7 +124,7 @@ function renderInstellingen() {
         <div class="settings-row">
           <div>
             <div class="settings-label">Toon alleen Elite / A+</div>
-            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);">Verbergt B/C-picks in het overzicht — focus op de sterkste signalen</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.72);">Verbergt B/C-picks in het overzicht — focus op de sterkste signalen</div>
           </div>
           <button id="eliteOnlyBtn" class="toggle-btn ${localStorage.getItem('totoai_eliteOnly')!=='0'?'active':''}" onclick="toggleEliteOnly()">${localStorage.getItem('totoai_eliteOnly')!=='0'?'Aan ✓':'Uit'}</button>
         </div>
@@ -137,7 +137,7 @@ function renderInstellingen() {
         <div class="settings-row">
           <div>
             <div class="settings-label">Notificaties</div>
-            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);">Value alerts en wedstrijd herinneringen</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.72);">Value alerts en wedstrijd herinneringen</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;">
             <button id="notifToggleBtn" class="toggle-btn" onclick="toggleNotifications()">Inschakelen</button>
@@ -152,7 +152,7 @@ function renderInstellingen() {
           <div class="settings-field" style="margin-top:.5rem;">
             <label class="settings-label">Value drempel (%)</label>
             <input class="settings-input" id="notifThreshold" type="number" min="5" max="50" step="5">
-            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);margin-top:2px;">Minimale value % voor push alert</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.72);margin-top:2px;">Minimale value % voor push alert</div>
           </div>
 
           <div class="settings-field">
@@ -171,7 +171,7 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">⏱️ AUTOMATISCHE SCAN</div>
         <div class="settings-row">
-          <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.5);line-height:1.6;">
+          <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.72);line-height:1.6;">
             Auto-scan instellingen zijn verplaatst naar de <b style="color:#ffffff;">Analyse tab</b>.<br>
             Tik op ⏱️ naast de scan-knop om het paneel te openen.
           </div>
@@ -194,7 +194,7 @@ function renderInstellingen() {
         <div class="settings-row">
           <div>
             <div class="settings-label">Auto-dark</div>
-            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.5);">Schakel automatisch naar dark bij nacht</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.72);">Schakel automatisch naar dark bij nacht</div>
           </div>
           <button id="autoDarkBtn" class="toggle-btn" onclick="toggleAutoDark()">Uit</button>
         </div>
@@ -213,7 +213,7 @@ function renderInstellingen() {
       <!-- ANALYTICS -->
       <div class="settings-section">
         <div class="settings-section-title">📊 ANALYTICS</div>
-        <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.5);margin-bottom:.6rem;">Pick statistieken, ROI curve en scan log analyse.</div>
+        <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.72);margin-bottom:.6rem;">Pick statistieken, ROI curve en scan log analyse.</div>
         <button class="small-action-btn" onclick="switchScreen('analytics')" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;font-size:.52rem;padding:.55rem;">📊 Open Analytics</button>
       </div>
 
@@ -224,7 +224,7 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">☁️ CLOUD BACKUP</div>
         <div id="fbAutoSyncStatus" style="display:none;font-family:monospace;font-size:.5rem;color:#00BEC4;margin-bottom:.5rem;">✅ Auto-sync actief</div>
-        <div id="fbBackupInfo" style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);margin-bottom:.75rem;line-height:1.5;">Laden...</div>
+        <div id="fbBackupInfo" style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.72);margin-bottom:.75rem;line-height:1.5;">Laden...</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
           <button class="small-action-btn" onclick="saveToFirebase().then(()=>showFirebaseStatus('✅ Opgeslagen!','#00BEC4')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#dc2626'))">☁️ Opslaan</button>
           <button class="small-action-btn" onclick="restoreFromFirebase()">🔄 Herstellen</button>
@@ -281,7 +281,7 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">👤 ACCOUNT</div>
         <div id="authAccountSection">
-          <div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.5);margin-bottom:.6rem;line-height:1.6;">
+          <div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.72);margin-bottom:.6rem;line-height:1.6;">
             Log in om data te synchroniseren tussen apparaten.
           </div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
@@ -297,7 +297,7 @@ function renderInstellingen() {
           ⚠️ Controleer of je Firebase Database Rules correct zijn ingesteld.<br>
           Open Firebase Console → Realtime Database → Rules
         </div>
-        <div style="font-family:monospace;font-size:.48rem;background:rgba(15,23,42,.05);border-radius:10px;padding:.6rem .8rem;color:rgba(255,255,255,.5);margin-bottom:.5rem;white-space:pre-wrap;">{
+        <div style="font-family:monospace;font-size:.48rem;background:rgba(15,23,42,.05);border-radius:10px;padding:.6rem .8rem;color:rgba(255,255,255,.72);margin-bottom:.5rem;white-space:pre-wrap;">{
   "rules": {
     "users": {
       "$uid": {
@@ -348,11 +348,11 @@ function renderInstellingen() {
       <!-- APP INFO -->
       <div class="settings-section">
         <div class="settings-section-title">ℹ️ APP INFO</div>
-        <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.5);line-height:1.8;">
+        <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.72);line-height:1.8;">
           <div>ProMatchXI <span id='appVersionLabel'></span> · AppsMadeByRobB</div>
           <div>🌐 promatchxi.app</div>
           <div>📧 zweetzakken@gmail.com</div>
-          <div style="margin-top:.4rem;font-size:.47rem;color:rgba(255,255,255,.5);">
+          <div style="margin-top:.4rem;font-size:.47rem;color:rgba(255,255,255,.72);">
             ⚠️ Uitsluitend voor entertainment en educatie. Geen echt gokadvies.
             Speel verantwoord · 18+ · Verslavingslijn: 0900-1090
           </div>
