@@ -345,7 +345,11 @@ function _analyticsHTML(local, worker) {
         .filter(s => {
           if (s.pick === 'X') return false;                       // geen gelijkspelen
           if ((s.sharpScore || 0) < 50) return false;             // minimaal moderate+ signaal
-          if (s.matchDate && s.matchDate < today) return false;   // geen gespeelde wedstrijden
+          // v26.134: verberg al-afgetrapte wedstrijden op echte aftraptijd (niet alleen datum)
+          const _started = (typeof matchHasStarted === 'function')
+            ? matchHasStarted({ matchTime: s.matchTime, matchDate: s.matchDate })
+            : (s.matchDate && s.matchDate < today);
+          if (_started) return false;
           // v26.133: verberg kale model-markt-kloven die de verkeerde kant op wijzen
           // (model lager dan markt op deze pick = negatieve value). Echte steam/beweging blijft staan.
           const hasRealMovement = Math.abs(parseFloat(s.movementPct || s.movement || 0)) >= 4 || s.isSteam;
