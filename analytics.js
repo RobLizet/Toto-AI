@@ -342,11 +342,17 @@ function _analyticsHTML(local, worker) {
     // Primaire bron: topSharpScores (heeft teamnamen + score)
     if (sm.topSharpScores && sm.topSharpScores.length) {
       sm.topSharpScores
-        .filter(s =>
-          s.pick !== 'X' &&                          // geen gelijkspelen
-          (s.sharpScore || 0) >= 50 &&               // minimaal moderate+ signaal
-          (!s.matchDate || s.matchDate >= today)      // geen gespeelde wedstrijden
-        )
+        .filter(s => {
+          if (s.pick === 'X') return false;                       // geen gelijkspelen
+          if ((s.sharpScore || 0) < 50) return false;             // minimaal moderate+ signaal
+          if (s.matchDate && s.matchDate < today) return false;   // geen gespeelde wedstrijden
+          // v26.133: verberg kale model-markt-kloven die de verkeerde kant op wijzen
+          // (model lager dan markt op deze pick = negatieve value). Echte steam/beweging blijft staan.
+          const hasRealMovement = Math.abs(parseFloat(s.movementPct || s.movement || 0)) >= 4 || s.isSteam;
+          const knownNegative = (s.poissonPct != null && s.marketPct != null && Number(s.poissonPct) < Number(s.marketPct));
+          if (knownNegative && !hasRealMovement) return false;
+          return true;
+        })
         .sort((a, b) => (b.sharpScore||0) - (a.sharpScore||0))
         .forEach(s => {
           const fid = s.fixtureId;
