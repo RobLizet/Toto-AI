@@ -710,7 +710,9 @@ function showSharpPopup(dataId) {
             : isDrift
             ? `De odds zijn ${movPct.toFixed(1)}% gestegen. Dat betekent dat recreatief geld de andere kant op gaat. Wees voorzichtig — de markt trekt weg van ${pickLabel}.`
             : s.divergence
-            ? `Jouw Poisson model denkt ${parseFloat(s.divergence).toFixed(1)}pp anders dan de markt. Groot verschil = potentieel grote value. Nog geen odds beweging, maar de kloof is significant.`
+            ? ((Number(s.poissonPct) >= Number(s.marketPct))
+               ? `Jouw model schat ${pickLabel} ${parseFloat(s.divergence).toFixed(1)}pp HOGER in dan de markt — dat is potentieel value op deze uitkomst. Nog geen odds beweging, maar de kloof is significant.`
+               : `Jouw model schat ${pickLabel} ${parseFloat(s.divergence).toFixed(1)}pp LÁGER in dan de markt. De markt prijst deze uitkomst juist hóger dan jouw model — dus géén value op ${pickLabel} (de value zit eerder op een andere uitkomst).`)
             : `Er is een sharp signaal gedetecteerd op ${pickLabel}.`
           }
         </div>
