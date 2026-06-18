@@ -739,8 +739,6 @@ function scheduleLiveAutoRefresh() {
 async function refreshLiveScores() {
   _liveRefreshTimer = null;
   try {
-    const liveOnes = (state.matches || []).filter(m => m.isLive);
-    if (!liveOnes.length) return;       // klaar -> finally stopt de timer
     const ml = document.getElementById('matchList');
     const lv = document.getElementById('wtab-content-live');
     const mlVisible = ml && ml.offsetParent !== null;
@@ -750,22 +748,33 @@ async function refreshLiveScores() {
     const today = new Date().toISOString().split('T')[0];
     const r = await apiFetch(`${WORKER}/apif/fixtures?date=${today}&_cb=${Date.now()}`, null, 12000);
     const d = await r.json();
-    const map = {};
-    (d.response || []).forEach(f => { if (f.fixture) map[String(f.fixture.id)] = f; });
+    const knownLeagueIds = new Set(Object.values(COMP_IDS));
 
-    liveOnes.forEach(m => {
-      const f = map[String(m.id)];
-      if (!f) return;
+    // hele dag-lijst herbekijken: nieuw gestart toevoegen, afgelopen markeren, lopende bijwerken
+    (d.response || []).forEach(f => {
+      if (!f.fixture || !f.league || !knownLeagueIds.has(f.league.id)) return;
       const fresh = parseAPIMatch(f);
       if (!fresh) return;
-      m.isLive = fresh.isLive; m.isDone = fresh.isDone;
-      m.liveMin = fresh.liveMin; m.score = fresh.score;  // alleen status/score; odds behouden
-      const el = document.getElementById('match-' + m.id);
-      if (el) {
-        if (m.isLive) { const c = renderMatchCard(m); if (c) el.replaceWith(c); }
-        else { el.remove(); }            // afgelopen/bevroren -> uit de lijst
+      const idx = state.matches.findIndex(m => String(m.id) === String(fresh.id));
+      if (idx >= 0) {
+        const m = state.matches[idx];                 // bestaand: alleen status/score; odds behouden
+        m.isLive = fresh.isLive; m.isDone = fresh.isDone;
+        m.liveMin = fresh.liveMin; m.score = fresh.score;
+      } else if (fresh.isLive) {
+        state.matches.push(fresh);                     // nieuw gestarte live-wedstrijd
       }
     });
+
+    // zichtbare lijsten goedkoop opnieuw opbouwen vanuit state (geen odds-fetch)
+    if (lvVisible && typeof renderLiveTab === 'function') renderLiveTab();
+    if (mlVisible) {
+      state.matches.forEach(m => {
+        const el = document.getElementById('match-' + m.id);
+        if (!el) return;
+        if (m.isDone) el.remove();
+        else if (m.isLive) { const c = renderMatchCard(m); if (c) el.replaceWith(c); }
+      });
+    }
   } catch(e) { /* stil: netwerk/parse-fout niet fataal */ }
   finally { scheduleLiveAutoRefresh(); }
 }
