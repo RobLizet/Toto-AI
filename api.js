@@ -159,8 +159,11 @@ function parseAPIMatch(f) {
   const dateObj = fix.date ? new Date(fix.date) : null;
   const timeStr = dateObj ? dateObj.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' }) : '--:--';
   const dateStr = dateObj ? dateObj.toLocaleDateString('nl-NL', { weekday:'short', day:'numeric', month:'short' }) : '';
-  const isLive = ['1H','HT','2H','ET','BT','P','INT','LIVE'].includes(fix.status?.short);
-  const isDone = ['FT','AET','PEN'].includes(fix.status?.short);
+  const _kickMs = dateObj ? dateObj.getTime() : 0;
+  const _short = fix.status?.short;
+  const _staleLive = (typeof isStaleLive === 'function') && isStaleLive(_short, _kickMs);
+  const isLive = !_staleLive && ['1H','HT','2H','ET','BT','P','INT','LIVE'].includes(_short);
+  const isDone = ['FT','AET','PEN'].includes(_short) || _staleLive;
   let homeOdds = '—', drawOdds = '—', awayOdds = '—';
   let homePct = 33, drawPct = 33, awayPct = 34;
   const bk = f.bookmakers?.[0] || f.odds?.bookmakers?.[0];
