@@ -828,7 +828,7 @@ function renderMatchCard(m) {
       <span style="color:#dc2626;">${m.awayPct}% 2</span>
     </div>` : '';
 
-  const oddsCards = hasOdds ? `
+  const oddsCards = (m.isLive || m.isDone) ? '' : hasOdds ? `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.45rem;padding:.1rem .9rem .5rem;">
       <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','1','Thuis wint',${m.homeOdds})"
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
@@ -930,7 +930,7 @@ function renderMatchCard(m) {
           font-weight:700;color:#00BEC4;cursor:pointer;">
           🤖 ANALYSE
         </button>
-        ${hasOdds ? `
+        ${(hasOdds && !m.isLive && !m.isDone) ? `
         <button onclick="event.stopPropagation();toggleCombiAdd('${m.id}')"
           id="combi-btn-${m.id}"
           style="flex:1;padding:.4rem;border-radius:9px;
