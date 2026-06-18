@@ -523,7 +523,11 @@ async function loadVandaagTab() {
       const isFinished = ['FT','AET','PEN','CANC','ABD','AWD','WO'].includes(status);
       const isLive = ['1H','2H','HT','ET','BT','P','INT','LIVE'].includes(status);
       if (isFinished) return false;
-      if (isLive) return true;
+      if (isLive) {
+        const _k = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
+        if (typeof isStaleLive === 'function' && isStaleLive(status, _k)) return false; // bevroren live-status
+        return true;
+      }
       // NS/TBD/PST: kickoff vandaag (vanaf 30 min geleden t/m einde dag)
       const kickoff = f.fixture?.date ? new Date(f.fixture.date).getTime() : 0;
       return kickoff > now - 30 * 60 * 1000;
@@ -1530,7 +1534,11 @@ async function loadTodayAllComps() {
       const isFinished = ['FT','AET','PEN','CANC','ABD','AWD','WO'].includes(status);
       // Lopende wedstrijden (LIVE) wel tonen
       const isLive = ['1H','2H','HT','ET','BT','P','INT','LIVE'].includes(status);
-      if (isLive) return true;
+      if (isLive) {
+        const _k = f.fixture.date ? new Date(f.fixture.date).getTime() : 0;
+        if (typeof isStaleLive === 'function' && isStaleLive(status, _k)) return false; // bevroren live-status
+        return true;
+      }
       if (isFinished) return false;
       // NS/TBD/PST: alleen tonen als kickoff binnen 48 uur valt (of binnen 30 min gestart)
       const kickoff = f.fixture.date ? new Date(f.fixture.date).getTime() : 0;
