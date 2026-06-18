@@ -728,6 +728,48 @@ function openValuePickPopup(i) {
   if (typeof openCardPopup === 'function') openCardPopup('scan', s);
 }
 
+// ── LIVE AUTO-REFRESH (elke 90s; alleen bij live-wedstrijden + zichtbaar scherm + voorgrond) ──
+let _liveRefreshTimer = null;
+function scheduleLiveAutoRefresh() {
+  if (_liveRefreshTimer) { clearTimeout(_liveRefreshTimer); _liveRefreshTimer = null; }
+  const hasLive = (state.matches || []).some(m => m.isLive);
+  if (!hasLive) return;                 // niets live -> geen timer
+  _liveRefreshTimer = setTimeout(refreshLiveScores, 90000);
+}
+async function refreshLiveScores() {
+  _liveRefreshTimer = null;
+  try {
+    const liveOnes = (state.matches || []).filter(m => m.isLive);
+    if (!liveOnes.length) return;       // klaar -> finally stopt de timer
+    const ml = document.getElementById('matchList');
+    const lv = document.getElementById('wtab-content-live');
+    const mlVisible = ml && ml.offsetParent !== null;
+    const lvVisible = lv && lv.style.display !== 'none' && lv.offsetParent !== null;
+    if (document.hidden || !(mlVisible || lvVisible)) return; // niet zichtbaar/voorgrond -> finally herplant (geen API-call)
+
+    const today = new Date().toISOString().split('T')[0];
+    const r = await apiFetch(`${WORKER}/apif/fixtures?date=${today}&_cb=${Date.now()}`, null, 12000);
+    const d = await r.json();
+    const map = {};
+    (d.response || []).forEach(f => { if (f.fixture) map[String(f.fixture.id)] = f; });
+
+    liveOnes.forEach(m => {
+      const f = map[String(m.id)];
+      if (!f) return;
+      const fresh = parseAPIMatch(f);
+      if (!fresh) return;
+      m.isLive = fresh.isLive; m.isDone = fresh.isDone;
+      m.liveMin = fresh.liveMin; m.score = fresh.score;  // alleen status/score; odds behouden
+      const el = document.getElementById('match-' + m.id);
+      if (el) {
+        if (m.isLive) { const c = renderMatchCard(m); if (c) el.replaceWith(c); }
+        else { el.remove(); }            // afgelopen/bevroren -> uit de lijst
+      }
+    });
+  } catch(e) { /* stil: netwerk/parse-fout niet fataal */ }
+  finally { scheduleLiveAutoRefresh(); }
+}
+
 // ── LIVE TAB — live wedstrijden tonen + cleanup ──
 async function renderLiveTab() {
   const list  = document.getElementById('liveMatchList');
@@ -765,6 +807,7 @@ async function renderLiveTab() {
     const card = renderMatchCard(m);
     if (card) list.appendChild(card);
   });
+  scheduleLiveAutoRefresh();
 }
 
 // ── CLEANUP: verwijder afgeronde wedstrijden ouder dan 24u ──
@@ -795,6 +838,7 @@ function cleanupOldLiveMatches() {
 function renderMatchCard(m) {
   if (!m) return null;
   const card = document.createElement('div');
+  card.id = 'match-' + m.id;
   card.className = 'match-card' + (m.isLive ? ' value-glow' : '');
   card.style.background = 'rgba(255,255,255,0.05)';
   card.style.border = '1px solid rgba(255,255,255,0.08)';
@@ -1594,6 +1638,7 @@ async function loadTodayAllComps() {
     const withOdds = state.matches.filter(m => m.homeOdds !== '—').length;
     if (scanAll) { scanAll.querySelector('button').disabled = false; scanAll.querySelector('button').textContent = withOdds > 0 ? `⚡ SCAN ALLES VANDAAG (${withOdds})` : '⚡ SCAN ALLES VANDAAG'; }
     if (btn) { btn.textContent = '🔄 Verversen'; btn.style.opacity = '1'; btn.disabled = false; }
+    if (typeof scheduleLiveAutoRefresh === 'function') scheduleLiveAutoRefresh();
   } catch(e) {
     if (list) list.innerHTML = `
       <div style="text-align:center;padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:.6rem;">
