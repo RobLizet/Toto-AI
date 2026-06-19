@@ -737,7 +737,7 @@ function toggleKeyVisibility(inputId, btn) {
 
 const ANTHROPIC_PRICES = {
   'claude-haiku-4-5-20251001': { input: 0.00000025, output: 0.00000125 },
-  'claude-sonnet-4-20250514':  { input: 0.000003,   output: 0.000015   },
+  'claude-sonnet-4-6':  { input: 0.000003,   output: 0.000015   },
   'claude-sonnet-4-6':         { input: 0.000003,   output: 0.000015   },
   'default':                   { input: 0.000003,   output: 0.000015   }
 };
