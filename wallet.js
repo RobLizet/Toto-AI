@@ -1935,7 +1935,7 @@ async function analyseJacksBets() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 800,
         system: `Je bent een professionele voetbalanalist. Geef een technische voetbalanalyse — geen betting advies, nooit praten over geld of inzetten.
 
@@ -2309,7 +2309,7 @@ async function analyseJacksPhotoBets() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 800,
         system: `Je bent een professionele voetbalanalist. Geef een technische voetbalanalyse per wedstrijd.
 
