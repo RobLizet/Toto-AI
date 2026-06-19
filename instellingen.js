@@ -377,7 +377,7 @@ function saveSettings() {
   state.settings.defaultComp     = document.getElementById('settDefaultComp')?.value||'eredivisie';
   state.settings.startBalance    = parseInt(document.getElementById('settStartBalance')?.value)||500;
   state.settings.defaultBet      = parseInt(document.getElementById('settDefaultBet')?.value)||10;
-  state.settings.defaultBookmaker= document.getElementById('settDefaultBookmaker')?.value||'Jacks';
+  state.settings.defaultBookmaker= document.getElementById('settDefaultBookmaker')?.value||'Bet365';
   state.settings.notifThreshold  = parseInt(document.getElementById('notifThreshold')?.value)||20;
   state.settings.tripleMinOdds   = parseFloat(document.getElementById('tripleMinOdds')?.value)||1.6;
   state.settings.tripleMinValue  = parseFloat(document.getElementById('tripleMinValue')?.value)||12;
@@ -410,7 +410,7 @@ function applySettings() {
   _s('betAmount',        state.settings.defaultBet||10);
 
   const bm = document.getElementById('settDefaultBookmaker');
-  if (bm) bm.value = state.settings.defaultBookmaker||'Jacks';
+  if (bm) bm.value = state.settings.defaultBookmaker||'Bet365';
 
   const bal = document.getElementById('currentBalanceDisplay');
   if (bal) bal.textContent = '€'+(state.wallet.balance||0).toFixed(2).replace('.',',');
