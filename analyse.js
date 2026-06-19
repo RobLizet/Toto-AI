@@ -42,7 +42,7 @@ async function loadClaudeInsight(force) {
   try {
     const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/anthropic', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:400, messages:[{role:'user',content:prompt}] })
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user',content:prompt}] })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const d = await res.json();
@@ -788,7 +788,7 @@ async function _scanValueAll_legacy(silent = false) {
     if (!ctx || ctx.trim().length < 20) throw new Error('Lege scan context — geen geldige wedstrijden');
     const dynamicTokens = Math.min(4000, Math.max(1500, candidates.length * 130));
     const data = await anthropicFetch(null, {
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: dynamicTokens,
       temperature: 0,
       system: `RESPOND WITH VALID JSON ONLY. NO TEXT BEFORE OR AFTER JSON. START WITH { END WITH }.
@@ -1377,6 +1377,23 @@ function openValueAnalysis(matchId) {
 }
 
 // ── AI diepte analyse ─────────────────────────────────────
+function buildModelVsMarktHTML(poisson, m) {
+  const oH = parseFloat(m.homeOdds), oD = parseFloat(m.drawOdds), oA = parseFloat(m.awayOdds);
+  if (!poisson || !poisson.valid || !(oH > 1 && oD > 1 && oA > 1)) return '';
+  const rawH = 1/oH, rawD = 1/oD, rawA = 1/oA, s = rawH + rawD + rawA;
+  const rows = [
+    ['1', `${m.home} wint`, poisson.k1, rawH/s*100],
+    ['X', 'Gelijkspel',     poisson.kX, rawD/s*100],
+    ['2', `${m.away} wint`, poisson.k2, rawA/s*100],
+  ];
+  const body = rows.map(r => {
+    const model = Number(r[2]), markt = Number(r[3]), diff = model - markt, pos = diff >= 0;
+    const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
+    return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.22rem 0;font-family:'IBM Plex Mono',monospace;font-size:.6rem;"><span style="color:#fff;">${r[0]} ${r[1]}</span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model.toFixed(0)}% \u00b7 markt ${markt.toFixed(0)}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
+  }).join('');
+  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);"><div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\ud83d\udcd0 MODEL vs MARKT (vig eruit)</div>${body}<div style="font-size:.55rem;color:rgba(255,255,255,.62);margin-top:.35rem;line-height:1.5;">+pp = model hoger dan markt (mogelijk value) \u00b7 \u2212pp = lager (geen value op die uitkomst)</div></div>`;
+}
+
 async function runAnalyse() {
   const m = state.selectedMatch;
   if (!m) { alert('Selecteer eerst een wedstrijd'); return; }
@@ -1475,7 +1492,7 @@ Blessures: ${injStr}
 Formaties: ${formationStr}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}`;
 
     const data = await anthropicFetchWithRetry(null, {
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1800,
       system: `Je bent een kritische, conservatieve voetbalanalist voor een bettingadvies app. JSON only, geen tekst buiten JSON.
 
@@ -1531,7 +1548,8 @@ KWALITEITSREGELS:
       : '';
     fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', result.tactiek || '—', '#d97706'));
-    fill('kans',    sectionCard('🎯', 'KANSEN', result.kans || '—', '#00BEC4'));
+    const _mvm = (typeof buildModelVsMarktHTML === 'function') ? buildModelVsMarktHTML(poisson, m) : '';
+    fill('kans',    sectionCard('🎯', 'KANSEN', (result.kans || '—') + _mvm, '#00BEC4'));
     fill('risico',  sectionCard('⚠️', 'RISICO', result.risico || '—', '#dc2626'));
     fill('advies',  sectionCard('💡', 'ADVIES', result.advies || '—', '#00BEC4'));
 
@@ -1824,7 +1842,7 @@ async function generateCombiTip() {
 
   try {
     const data = await anthropicFetch(null, {
-      model:'claude-sonnet-4-20250514', max_tokens:1600,
+      model:'claude-sonnet-4-6', max_tokens:1600,
       system:`Je bent sportadviseur. JSON only, geen tekst buiten JSON.
 Het veld "match" MOET altijd de exacte teamnamen bevatten: "ThuisTeam vs UitTeam".
 Het veld "fixtureId" MOET de fixtureId zijn uit de invoer.
@@ -3437,7 +3455,7 @@ Advies: ${state._lastAnalyseResult.advies || ''}` : '';
     const historyToSend = _chatHistory.slice(-6);
 
     const data = await anthropicFetch(null, {
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 600,
       system: `Je bent een voetbalanalist die vragen beantwoordt over een specifieke wedstrijd. 
 Geef korte, directe antwoorden (max 3-4 zinnen). Gebruik de beschikbare data.
