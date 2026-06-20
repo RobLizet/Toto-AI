@@ -2015,9 +2015,9 @@ function openJacksPhotoImport() {
         <label style="display:block;width:100%;padding:.65rem;border-radius:12px;text-align:center;
           background:linear-gradient(135deg,rgba(255,140,0,.12),rgba(255,100,0,.08));
           border:2px dashed rgba(255,140,0,.4);cursor:pointer;margin-bottom:.6rem;">
-          <div style="font-family:monospace;font-size:.65rem;font-weight:800;color:#e67e00;">📷 Kies screenshot</div>
+          <div style="font-family:monospace;font-size:.65rem;font-weight:800;color:#e67e00;">📷 Kies screenshot(s)</div>
           <div style="font-family:monospace;font-size:.48rem;color:rgba(255,255,255,.95);margin-top:.2rem;">JPG of PNG</div>
-          <input type="file" accept="image/*" onchange="handleJacksPhotoUpload(event)" style="display:none;">
+          <input type="file" accept="image/*" multiple onchange="handleJacksPhotoUpload(event)" style="display:none;">
         </label>
         <div id="jacksPhotoPreview" style="display:none;margin-bottom:.6rem;">
           <img id="jacksPhotoImg" style="width:100%;border-radius:10px;max-height:200px;object-fit:contain;background:rgba(255,255,255,.04);">
@@ -2064,10 +2064,9 @@ function closeJacksPhotoImport() {
 }
 
 async function handleJacksPhotoUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+  const files = Array.from(event.target.files || []);
+  if (!files.length) return;
 
-  // Toon preview
   const preview = document.getElementById('jacksPhotoPreview');
   const img     = document.getElementById('jacksPhotoImg');
   const status  = document.getElementById('jacksPhotoStatus');
@@ -2075,56 +2074,56 @@ async function handleJacksPhotoUpload(event) {
   const btn     = document.getElementById('jacksPhotoImportBtn');
 
   if (preview && img) {
-    img.src = URL.createObjectURL(file);
+    img.src = URL.createObjectURL(files[0]);
     preview.style.display = 'block';
   }
-
   if (status) {
     status.style.display = 'block';
     status.style.color = '#d97706';
-    status.textContent = '⟳ AI leest je betgeschiedenis uit...';
+    status.textContent = files.length > 1
+      ? `\u27f3 AI leest ${files.length} screenshots uit...`
+      : '\u27f3 AI leest je betgeschiedenis uit...';
   }
   if (betsEl) betsEl.innerHTML = '';
   if (btn)    btn.style.display = 'none';
 
   try {
-    // Converteer afbeelding naar base64
-    const base64 = await new Promise((res, rej) => {
+    // alle gekozen afbeeldingen naar base64
+    const images = await Promise.all(files.map(f => new Promise((res, rej) => {
       const reader = new FileReader();
-      reader.onload = () => res(reader.result.split(',')[1]);
+      reader.onload  = () => res({ data: reader.result.split(',')[1], type: f.type || 'image/jpeg' });
       reader.onerror = () => rej(new Error('Lezen mislukt'));
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(f);
+    })));
+
+    const content = images.map(im => ({
+      type: 'image',
+      source: { type: 'base64', media_type: im.type, data: im.data }
+    }));
+    content.push({
+      type: 'text',
+      text: files.length > 1
+        ? `Dit zijn ${files.length} screenshots van dezelfde betgeschiedenis (gescrold/overlappend). Combineer tot \u00e9\u00e9n lijst. ONTDUBBEL: dezelfde weddenschap die op meerdere screenshots staat tel je maar \u00e9\u00e9n keer. Als de legs van een combi over screenshots doorlopen, voeg ze samen tot \u00e9\u00e9n bet. Geef alleen JSON terug.`
+        : `Extraheer alle weddenschappen uit deze betgeschiedenis screenshot. Geef alleen JSON terug.`
     });
 
-    // Stuur naar Anthropic API met vision
     const response = await fetch('https://api.promatchxi.app/anthropic', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1500,
-        system: `Je bent een assistent die betgeschiedenissen uit screenshots van Jacks.nl uittrekt.
+        max_tokens: 2000,
+        system: `Je bent een assistent die betgeschiedenissen uit screenshots van een bookmaker-app (bijv. Bet365, Jacks) uittrekt.
 Geef ALLEEN geldige JSON terug, geen tekst daaromheen.
 
-BELANGRIJK: Als meerdere wedstrijden samen 1 coupon vormen (combi/meervoudig), geef ze dan als 1 bet met legs.
-Formaat voor combi: {"bets":[{"type":"combi","date":"16-05-2026","stake":10.00,"payout":522.31,"totalOdds":52.23,"status":"open","legs":[{"match":"Newcastle United vs West Ham","pick":"Newcastle United","odds":0},{"match":"Leeds United vs Brighton","pick":"Leeds United","odds":0}]}]}
-Formaat voor single: {"bets":[{"type":"single","match":"Ajax vs PSV","date":"16-05-2026","pick":"1","odds":2.10,"stake":10.00,"payout":21.00,"status":"gewonnen"}]}
+BELANGRIJK: Als meerdere wedstrijden samen 1 coupon vormen (combi/meervoudig/N-voud), geef ze dan als 1 bet met legs.
+ONTDUBBELEN: bij meerdere screenshots die deels dezelfde inhoud tonen, lijst elke weddenschap maar \u00c9\u00c9N keer (zelfde inzet + uitbetaling + teams = zelfde bet).
+Formaat voor combi: {"bets":[{"type":"combi","date":"21-06-2026","stake":10.00,"payout":522.31,"totalOdds":52.23,"status":"open","legs":[{"match":"Newcastle vs West Ham","pick":"Newcastle","odds":0}]}]}
+Formaat voor single: {"bets":[{"type":"single","match":"Ajax vs PSV","date":"21-06-2026","pick":"1","odds":2.10,"stake":10.00,"payout":21.00,"status":"open"}]}
 Status opties: "gewonnen", "verloren", "open"
 Als je geen bets kunt vinden: {"bets":[]}
 Datum formaat: dd-mm-yyyy`,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: file.type || 'image/jpeg', data: base64 }
-            },
-            {
-              type: 'text',
-              text: 'Extraheer alle weddenschappen uit deze Jacks betgeschiedenis screenshot. Geef alleen JSON terug.'
-            }
-          ]
-        }]
+        messages: [{ role: 'user', content }]
       })
     });
 
