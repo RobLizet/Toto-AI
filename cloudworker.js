@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v165'; // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v166'; // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1531,6 +1531,40 @@ async function verifyYesterdayPicks(env) {
 }
 
 // ── League calibratie bijwerken na settlement ─────────────
+async function settleShadowPicks(env) {
+  try {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 30);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const rows = await sb(env, 'shadow_picks', 'GET', null,
+      `?status=eq.pending&match_date=gte.${cutoffStr}&match_date=lt.${tomorrowStr}&select=id,fixture_id,pick&limit=40`);
+    if (!rows || !rows.length) { console.log('[Shadow] geen pending schaduw-picks'); return; }
+    const fixtureIds = [...new Set(rows.map(r => r.fixture_id).filter(Boolean))].slice(0, 15);
+    const results = await Promise.all(fixtureIds.map(id => apif(`/fixtures?id=${id}`, env)));
+    const resultMap = {};
+    results.forEach((data, i) => {
+      const fx = data?.[0]; if (!fx) return;
+      const st = fx.fixture?.status?.short;
+      if (!['FT','AET','PEN'].includes(st)) return;
+      resultMap[String(fixtureIds[i])] = { home: fx.goals?.home ?? 0, away: fx.goals?.away ?? 0 };
+    });
+    let settled = 0;
+    for (const r of rows) {
+      const res = resultMap[String(r.fixture_id)];
+      if (!res) continue;
+      const winner = res.home > res.away ? '1' : res.home < res.away ? '2' : 'X';
+      const won = (r.pick === winner);
+      await sb(env, 'shadow_picks', 'PATCH',
+        { status: won ? 'win' : 'lose', score: `${res.home}-${res.away}`, settled_at: new Date().toISOString() },
+        `?id=eq.${r.id}`);
+      settled++;
+    }
+    console.log(`[Shadow] ${settled} schaduw-picks afgerekend`);
+  } catch(e) { console.error('[Shadow] settle fout:', e.message); }
+}
+
 async function updateLeagueCalibration(env, picks, updatedIds) {
   try {
     const calibration = await sbGetCalibration(env);
@@ -2019,6 +2053,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
   }
 
   const newPicks = {};
+  const shadowRows = []; // v166: bijna-value picks voor schaduw-trackrecord
   const existingPicks = await sbGetPicks(env);
   const todayHistory = await fb(env, `odds_history/${today}`) || {};
   const leagueCalibration = await sbGetCalibration(env);
@@ -2063,6 +2098,10 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const strongDraw = (c.pick === 'X' && c.aiKans >= 33);
       if (c.bookOdds >= LONGSHOT_ODDS && (sharpBoost?.sharpScore || 0) < LONGSHOT_MIN_SHARP && !strongDraw) {
         console.log(`[Scan] Longshot-guard: ${m.home} vs ${m.away} ${c.pick} @${c.bookOdds} — geen sharp-bevestiging (score ${sharpBoost?.sharpScore || 0}), overgeslagen`);
+        shadowRows.push({ fixture_id: m.fixtureId, pick: c.pick, pick_label: c.label, reason: 'longshot',
+          model_pct: Math.round(c.aiKans), market_pct: parseFloat(fairImplied.toFixed(1)), value_pct: parseFloat(value.toFixed(1)),
+          odds: c.bookOdds, sharp_score: sharpBoost?.sharpScore || 0, confidence: null,
+          home: m.home, away: m.away, match_date: m.matchDate || today, match_time: m.matchTime || null });
         return;
       }
 
@@ -2102,12 +2141,26 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const minValue = c.pick === 'X'
         ? (tournament ? 7  : isRisico ? 12 : 9)   // v161: draw-drempel licht verlaagd
         : (tournament ? 6  : isRisico ? 9  : 6);
-      if (conf.score < minConf || value < minValue) return;
+      if (conf.score < minConf || value < minValue) {
+        if (value < minValue && value >= minValue * 0.6) {
+          shadowRows.push({ fixture_id: m.fixtureId, pick: c.pick, pick_label: c.label, reason: 'below_threshold',
+            model_pct: Math.round(c.aiKans), market_pct: parseFloat(fairImplied.toFixed(1)), value_pct: parseFloat(value.toFixed(1)),
+            odds: c.bookOdds, sharp_score: sharpBoost?.sharpScore || 0, confidence: conf.score,
+            home: m.home, away: m.away, match_date: m.matchDate || today, match_time: m.matchTime || null });
+        }
+        return;
+      }
 
       // v140b: gelijkspel pas na 2 opeenvolgende bevestigingen (te wispelturig)
       if (c.pick === 'X') {
         const prevX = existingPicks[`${m.fixtureId}_X`];
-        if (!prevX) return; // eerste keer gelijkspel: blokkeer, wacht op bevestiging
+        if (!prevX) {
+          shadowRows.push({ fixture_id: m.fixtureId, pick: c.pick, pick_label: c.label, reason: 'draw',
+            model_pct: Math.round(c.aiKans), market_pct: parseFloat(fairImplied.toFixed(1)), value_pct: parseFloat(value.toFixed(1)),
+            odds: c.bookOdds, sharp_score: sharpBoost?.sharpScore || 0, confidence: conf.score,
+            home: m.home, away: m.away, match_date: m.matchDate || today, match_time: m.matchTime || null });
+          return; // eerste keer gelijkspel: blokkeer, wacht op bevestiging
+        }
       }
 
       const elite = isElitePick({ confidenceFinal: conf.final, value, odds: c.bookOdds, pick: c.pick, poissonUsed: false }); // v138: ook WK-picks kunnen elite zijn
@@ -2181,6 +2234,12 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       }
     });
   });
+
+  // v166: schaduw-trackrecord — bijna-value picks wegschrijven (upsert op fixture_id,pick)
+  if (shadowRows.length) {
+    await sb(env, 'shadow_picks', 'POST', shadowRows, '?on_conflict=fixture_id,pick');
+    console.log(`[Scan] ${shadowRows.length} schaduw-picks gelogd`);
+  }
 
   // ── v136: PER WEDSTRIJD MAXIMAAL 1 PICK ─────────────────────
   // Tegenstrijdige picks (Canada wint + Bosnia wint) zijn onacceptabel.
@@ -2898,6 +2957,7 @@ export default {
         return json({ error: 'Unauthorized' }, 401);
       }
       await verifyYesterdayPicks(env);
+      await settleShadowPicks(env);
       return json({ status: 'settlement klaar', version: VERSION });
     }
 
@@ -3138,6 +3198,7 @@ export default {
       if (fullScan) {
         await runScan(env);
         await verifyYesterdayPicks(env);
+        await settleShadowPicks(env);
         if (hour === 6) await generateDailyTip(env);
         if (hour === 6) await keepSupabaseAlive(env);
         if (isSunday && hour === 6) await runWeeklyCalibration(env);
