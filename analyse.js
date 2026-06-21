@@ -380,6 +380,18 @@ function renderAnalyseScreen() {
   html += '<div id="scan-log-content" style="display:none;"></div>';
   html += '</div>';
 
+  // ── SCHADUW-PICKS — bijna-value, standaard ingeklapt ──
+  html += `<div class="analyse-block" id="analyse-shadow-block" style="padding:0;overflow:hidden;">
+    <div class="analyse-block-header" onclick="toggleShadowBlock(this)" style="cursor:pointer;padding:1rem 1.1rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">🕶️ SCHADUW-PICKS</div>
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);">net buiten filter</div>
+        <svg class="sh-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div id="shadow-content" style="display:none;padding:0 1.1rem 1rem;"></div>
+  </div>`;
+
   screen.innerHTML = html;
   if (typeof renderAnalyticsInto === 'function') renderAnalyticsInto('analyseAnalytics'); // v26.105: volledige analytics inline op Analyse
   } catch(e) {
@@ -397,6 +409,68 @@ function renderAnalyseScreen() {
   }, 150);
 }
 
+
+function toggleShadowBlock(headerEl) {
+  const c = document.getElementById('shadow-content');
+  if (!c) return;
+  const open = c.style.display !== 'none';
+  c.style.display = open ? 'none' : 'block';
+  const chev = headerEl.querySelector('.sh-chevron');
+  if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+  if (!open && typeof renderShadowTrackrecord === 'function') renderShadowTrackrecord();
+}
+
+async function renderShadowTrackrecord() {
+  const el = document.getElementById('shadow-content');
+  if (!el) return;
+  el.innerHTML = `<div style="padding:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.62);">\u27f3 Laden...</div>`;
+  try {
+    const r = await fetch('https://api.promatchxi.app/shadow?_cb=' + Date.now());
+    const d = await r.json();
+    const summary = d.summary || [];
+    const picks = d.picks || [];
+    const labels = { longshot: 'Longshots', draw: 'Gelijke spelen', below_threshold: 'Net onder drempel' };
+    let html = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:rgba(255,255,255,.62);line-height:1.6;margin:.2rem 0 .7rem;">Wedstrijden die n\u00e9t buiten je value-filter vielen \u2014 zo zie je of het filter terecht streng is. Niet meegeteld in je echte trackrecord.</div>`;
+    if (!summary.length) {
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.7);">Nog geen schaduw-picks.</div>`;
+    } else {
+      summary.forEach(s => {
+        const afg = s.afgerekend || 0;
+        const roi = s.roi_pct;
+        const roiKleur = roi == null ? 'rgba(255,255,255,.6)' : (roi >= 0 ? '#16c784' : '#dc2626');
+        html += `<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:.6rem .75rem;margin-bottom:.45rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem;"><span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;color:#fff;">${labels[s.reason] || s.reason}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);">${afg} afgerekend \u00b7 ${s.open||0} open</span></div>`;
+        if (afg > 0) {
+          html += `<div style="display:flex;gap:1rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;">
+            <span style="color:rgba(255,255,255,.88);">Hitrate <b style="color:#fff;">${s.hitrate_pct ?? '\u2013'}%</b></span>
+            <span style="color:rgba(255,255,255,.88);">Gem. odds <b style="color:#fff;">${s.gem_odds ?? '\u2013'}</b></span>
+            <span style="color:rgba(255,255,255,.88);">ROI <b style="color:${roiKleur};">${roi == null ? '\u2013' : (roi>=0?'+':'') + roi + '%'}</b></span>
+          </div>`;
+        } else {
+          html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.55);">nog niet afgerekend \u2014 uitslagen volgen</div>`;
+        }
+        html += `</div>`;
+      });
+    }
+    if (picks.length) {
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.06em;margin:.6rem 0 .35rem;">RECENT</div>`;
+      const rb = { longshot:'longshot', draw:'gelijk', below_threshold:'net-onder' };
+      picks.slice(0, 25).forEach(p => {
+        const icon = p.status === 'win' ? '\u2705' : p.status === 'lose' ? '\u274c' : '\u23f3';
+        html += `<div style="display:flex;align-items:center;gap:.5rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.06);">
+          <span style="font-size:.8rem;">${icon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${p.home||''} vs ${p.away||''}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.62);">${p.pick_label||p.pick} @ ${p.odds||'?'} \u00b7 model ${p.model_pct||'?'}% vs markt ${p.market_pct||'?'}% \u00b7 ${rb[p.reason]||p.reason}${p.score ? ' \u00b7 ' + p.score : ''}</div>
+          </div>
+        </div>`;
+      });
+    }
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = `<div style="padding:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#dc2626;">Kon schaduw-picks niet laden.</div>`;
+  }
+}
 
 // ── Auto-scan: laad wedstrijden (vandaag+morgen) + scan direct ──
 async function autoScanAndSwitch() {
