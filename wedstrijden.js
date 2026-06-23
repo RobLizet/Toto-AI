@@ -358,6 +358,11 @@ function renderMatches(matches) {
   const list = document.getElementById('matchList');
   if (!list) return;
 
+  // v26.143: vangnet — afgelopen of lang-gepasseerde wedstrijden nooit als speelbaar tonen
+  const _STALE_MS = 2.5 * 60 * 60 * 1000;
+  const _nowRM = Date.now();
+  matches = (matches || []).filter(m => m.isLive || (!m.isDone && (!m.kickoffMs || m.kickoffMs > _nowRM - _STALE_MS)));
+
   const loadingEl = document.getElementById('match-loading');
   if (loadingEl) loadingEl.style.display = 'none';
 
@@ -732,9 +737,12 @@ function openValuePickPopup(i) {
 let _liveRefreshTimer = null;
 function scheduleLiveAutoRefresh() {
   if (_liveRefreshTimer) { clearTimeout(_liveRefreshTimer); _liveRefreshTimer = null; }
+  const _nowSL = Date.now();
   const hasLive = (state.matches || []).some(m => m.isLive);
-  if (!hasLive) return;                 // niets live -> geen timer
-  _liveRefreshTimer = setTimeout(refreshLiveScores, 90000);
+  // v26.143: ook verversen als een niet-live wedstrijd al had moeten beginnen maar nog niet als afgelopen is gemarkeerd
+  const hasPendingFinish = (state.matches || []).some(m => !m.isLive && !m.isDone && m.kickoffMs && m.kickoffMs < _nowSL);
+  if (!hasLive && !hasPendingFinish) return;   // niets live én niets te settelen -> geen timer
+  _liveRefreshTimer = setTimeout(refreshLiveScores, hasLive ? 90000 : 60000);
 }
 async function refreshLiveScores() {
   _liveRefreshTimer = null;
