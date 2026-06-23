@@ -206,7 +206,7 @@ function parseAPIMatch(f) {
     homeOdds, drawOdds, awayOdds, homePct, drawPct, awayPct,
     score: isDone || isLive ? `${goals.home ?? 0}-${goals.away ?? 0}` : null,
     liveMin: fix.status?.elapsed,
-    isLive, isDone,
+    isLive, isDone, kickoffMs: _kickMs,
     venue: fix.venue?.name || '',
     fixture: { neutral: fix.neutral || false },
     raw: f,
