@@ -354,14 +354,31 @@ function showLoadingMsg(msg, color) {
 }
 
 // ── Match cards renderen ──────────────────────────────────
+// v26.144: robuuste kickoff-tijd — werkt ook voor gecachte objecten van vóór kickoffMs (val terug op opgeslagen raw fixture-datum)
+function matchKickoffMs(m) {
+  if (m && m.kickoffMs) return m.kickoffMs;
+  const iso = m && (m.raw?.fixture?.date || m.raw?.utcDate);
+  if (iso) { const t = Date.parse(iso); if (!isNaN(t)) return t; }
+  if (m && m.dateISO && /^\d{2}:\d{2}$/.test(m.time || '')) {
+    const t = Date.parse(`${m.dateISO}T${m.time}:00`);
+    if (!isNaN(t)) return t;
+  }
+  return 0;
+}
+
 function renderMatches(matches) {
   const list = document.getElementById('matchList');
   if (!list) return;
 
-  // v26.143: vangnet — afgelopen of lang-gepasseerde wedstrijden nooit als speelbaar tonen
+  // v26.144: vangnet — afgelopen/gepasseerde wedstrijden nooit als speelbaar tonen (kickoff via matchKickoffMs, ook voor oude cache)
   const _STALE_MS = 2.5 * 60 * 60 * 1000;
   const _nowRM = Date.now();
-  matches = (matches || []).filter(m => m.isLive || (!m.isDone && (!m.kickoffMs || m.kickoffMs > _nowRM - _STALE_MS)));
+  matches = (matches || []).filter(m => {
+    if (m.isLive) return true;
+    if (m.isDone) return false;
+    const ko = matchKickoffMs(m);
+    return !ko || ko > _nowRM - _STALE_MS;
+  });
 
   const loadingEl = document.getElementById('match-loading');
   if (loadingEl) loadingEl.style.display = 'none';
@@ -740,7 +757,7 @@ function scheduleLiveAutoRefresh() {
   const _nowSL = Date.now();
   const hasLive = (state.matches || []).some(m => m.isLive);
   // v26.143: ook verversen als een niet-live wedstrijd al had moeten beginnen maar nog niet als afgelopen is gemarkeerd
-  const hasPendingFinish = (state.matches || []).some(m => !m.isLive && !m.isDone && m.kickoffMs && m.kickoffMs < _nowSL);
+  const hasPendingFinish = (state.matches || []).some(m => { if (m.isLive || m.isDone) return false; const ko = matchKickoffMs(m); return ko && ko < _nowSL; });
   if (!hasLive && !hasPendingFinish) return;   // niets live én niets te settelen -> geen timer
   _liveRefreshTimer = setTimeout(refreshLiveScores, hasLive ? 90000 : 60000);
 }
