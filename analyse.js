@@ -1466,7 +1466,20 @@ function buildModelVsMarktHTML(poisson, m) {
     const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
     return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.22rem 0;font-family:'IBM Plex Mono',monospace;font-size:.6rem;"><span style="color:#fff;">${r[0]} ${r[1]}</span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model.toFixed(0)}% \u00b7 markt ${markt.toFixed(0)}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
   }).join('');
-  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);"><div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\ud83d\udcd0 MODEL vs MARKT (vig eruit)</div>${body}<div style="font-size:.55rem;color:rgba(255,255,255,.62);margin-top:.35rem;line-height:1.5;">+pp = model hoger dan markt (mogelijk value) \u00b7 \u2212pp = lager (geen value op die uitkomst)</div></div>`;
+  // v26.146: doelpunten-markten (model) — O/U 1.5/2.5/3.5 + BTTS uit lambdaHome/lambdaAway
+  let goalsHTML = '';
+  const gm = (typeof goalMarketProbs === 'function') ? goalMarketProbs(poisson.lambdaHome, poisson.lambdaAway) : null;
+  if (gm) {
+    const expG = (Number(poisson.lambdaHome) + Number(poisson.lambdaAway)).toFixed(1);
+    const grow = (lab, o, u) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;font-family:'IBM Plex Mono',monospace;font-size:.58rem;"><span style="color:#fff;">${lab}</span><span style="color:rgba(255,255,255,.88);">Over <b style="color:#c084fc;">${o}%</b> \u00b7 Under <b style="color:#c084fc;">${u}%</b></span></div>`;
+    goalsHTML = `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\u26bd DOELPUNTEN \u2014 model (verw. ${expG} goals)</div>
+      ${grow('Over/Under 1.5', gm.o15, gm.u15)}${grow('Over/Under 2.5', gm.o25, gm.u25)}${grow('Over/Under 3.5', gm.o35, gm.u35)}
+      <div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;font-family:'IBM Plex Mono',monospace;font-size:.58rem;"><span style="color:#fff;">Beide teams scoren</span><span style="color:rgba(255,255,255,.88);">Ja <b style="color:#c084fc;">${gm.bttsY}%</b> \u00b7 Nee <b style="color:#c084fc;">${gm.bttsN}%</b></span></div>
+      <div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.3rem;line-height:1.5;">Modelkans uit verwachte goals \u00b7 value op deze markten verschijnt als de scan ze als pick selecteert</div>
+    </div>`;
+  }
+  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);"><div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\ud83d\udcd0 MODEL vs MARKT (vig eruit)</div>${body}<div style="font-size:.55rem;color:rgba(255,255,255,.62);margin-top:.35rem;line-height:1.5;">+pp = model hoger dan markt (mogelijk value) \u00b7 \u2212pp = lager (geen value op die uitkomst)</div>${goalsHTML}</div>`;
 }
 
 async function runAnalyse() {
