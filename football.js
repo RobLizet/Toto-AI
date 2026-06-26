@@ -215,8 +215,9 @@ function goalMarketProbs(lambdaHome, lambdaAway, maxGoals = 8, useDixonColes = t
 // Geeft { ou: { '2.5': {over,under,fairOver,fairUnder}, ... }, btts: {yes,no,fairYes,fairNo} } of null.
 async function fetchGoalOdds(fixtureId) {
   try {
-    const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}`, null, 6000);
-    const resp = r?.response || (Array.isArray(r) ? r : []);
+    const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}`, null, 7000);
+    const data = await r.json();
+    const resp = data?.response || [];
     const books = resp?.[0]?.bookmakers || [];
     if (!books.length) return null;
     const med = arr => { const s = arr.filter(x => x > 1).sort((a, b) => a - b); if (!s.length) return 0; const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; };
