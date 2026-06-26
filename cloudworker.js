@@ -2769,6 +2769,25 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
           ? `⚠️ Geen odds — bookmakers hebben nog geen quotes voor deze wedstrijden`
           : `ℹ️ Geen value gevonden — markt efficiënt vandaag`;
 
+  // v173: diagnose — toont de berekende goal-markten ook als ze de value-poort niet halen.
+  let goalsDebug;
+  if (enableGoals) {
+    const shrink = lid => (isTournamentLeague(lid) ? MARKET_SHRINK_TOURNAMENT : MARKET_SHRINK_BASE);
+    goalsDebug = analyseBatchFull.map((m, i) => {
+      const ai = aiResults[i]; const odds = oddsMap[m.fixtureId] || {};
+      const cand = buildGoalCandidates(m, ai, odds);
+      return {
+        match: `${m.home} vs ${m.away}`,
+        gh: ai?.gh ?? null, ga: ai?.ga ?? null,
+        hasOU: !!odds.ou, hasBTTS: !!odds.btts,
+        markten: cand.map(c => ({
+          pick: c.pick, odds: c.bookOdds, model: c.aiKans, fair: c.fairImplied,
+          value: calculateValue(c.aiKans, c.fairImplied, c.pick, shrink(m.leagueId)),
+        })),
+      };
+    });
+  }
+
   return {
     ok:              true,
     version:         VERSION,
@@ -2783,6 +2802,7 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
     totalPicks:      picks.length,
     strongPicks:     strongPicks.length,
     elitePicks:      elitePicks.length,
+    goalsDebug,
     picks:           picks.slice(0, 15),
     allMatches:      batch.map(m => ({
       fixtureId: m.fixtureId,
