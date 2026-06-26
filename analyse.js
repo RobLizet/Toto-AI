@@ -392,6 +392,18 @@ function renderAnalyseScreen() {
     <div id="shadow-content" style="display:none;padding:0 1.1rem 1rem;"></div>
   </div>`;
 
+  // ── DOELPUNTEN-MARKTEN — O/U + BTTS, standaard ingeklapt ──
+  html += `<div class="analyse-block" id="analyse-goalmarkt-block" style="padding:0;overflow:hidden;">
+    <div class="analyse-block-header" onclick="toggleGoalMarktBlock(this)" style="cursor:pointer;padding:1rem 1.1rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">⚽ DOELPUNTEN-MARKTEN</div>
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);">O/U + BTTS</div>
+        <svg class="gm-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div id="goalmarkt-content" style="display:none;padding:0 1.1rem 1rem;"></div>
+  </div>`;
+
   screen.innerHTML = html;
   if (typeof renderAnalyticsInto === 'function') renderAnalyticsInto('analyseAnalytics'); // v26.105: volledige analytics inline op Analyse
   } catch(e) {
@@ -418,6 +430,78 @@ function toggleShadowBlock(headerEl) {
   const chev = headerEl.querySelector('.sh-chevron');
   if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
   if (!open && typeof renderShadowTrackrecord === 'function') renderShadowTrackrecord();
+}
+
+// v26.151: doelpunten-markten trackrecord (hitrate/ROI/value per O/U-lijn + BTTS) uit /picks
+function toggleGoalMarktBlock(headerEl) {
+  const c = document.getElementById('goalmarkt-content');
+  if (!c) return;
+  const open = c.style.display !== 'none';
+  c.style.display = open ? 'none' : 'block';
+  const chev = headerEl.querySelector('.gm-chevron');
+  if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+  if (!open && typeof renderGoalMarktBreakdown === 'function') renderGoalMarktBreakdown();
+}
+
+async function renderGoalMarktBreakdown() {
+  const el = document.getElementById('goalmarkt-content');
+  if (!el) return;
+  const mono = "font-family:'IBM Plex Mono',monospace;";
+  el.innerHTML = `<div style="${mono}font-size:.5rem;color:rgba(255,255,255,.6);text-align:center;padding:.6rem;">⟳ laden…</div>`;
+  let picks = state._qualityPicks;
+  if (!picks || !picks.length) {
+    try { const r = await fetch('https://api.promatchxi.app/picks'); if (r.ok) { const d = await r.json(); picks = state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); } } catch (e) {}
+  }
+  picks = picks || [];
+  const isGoal = p => { const g = (typeof pickMarket === 'function') ? pickMarket(p.pick).group : ''; return g && g !== '1X2' && g !== 'OVERIG'; };
+  const goalPicks = picks.filter(isGoal);
+  if (!goalPicks.length) {
+    el.innerHTML = `<div style="${mono}font-size:.54rem;color:rgba(255,255,255,.7);line-height:1.7;padding:.3rem 0;">Nog geen doelpunten-picks. Deze verschijnen zodra de scan O/U of BTTS als value-pick selecteert — tijdens de WK weinig, vanaf de league-switch op 20 juli meer volume.</div>`;
+    return;
+  }
+  const SET = ['win', 'lose', 'loss', 'lost'];
+  const lbl = k => {
+    k = String(k).toUpperCase();
+    if (k === 'BTTS' || k === 'BTTS-J') return 'Beide scoren · Ja';
+    if (k === 'NOBTTS' || k === 'BTTS-N') return 'Beide scoren · Nee';
+    if (k[0] === 'O') return 'Over ' + k.slice(1);
+    if (k[0] === 'U') return 'Under ' + k.slice(1);
+    return k;
+  };
+  const by = {};
+  goalPicks.forEach(p => {
+    const k = String(p.pick).toUpperCase();
+    if (!by[k]) by[k] = { n: 0, settled: 0, wins: 0, sumVal: 0, sumOdds: 0, profit: 0 };
+    const b = by[k];
+    b.n++; b.sumVal += parseFloat(p.value) || 0; b.sumOdds += parseFloat(p.odds) || 0;
+    if (SET.includes(p.status)) { b.settled++; if (p.status === 'win') { b.wins++; b.profit += (parseFloat(p.odds) || 0) - 1; } else b.profit -= 1; }
+  });
+  const keys = Object.keys(by).sort();
+  const tot = { n: 0, settled: 0, wins: 0, profit: 0 };
+  const row = (label, b, head) => {
+    const hr = b.settled ? Math.round(b.wins / b.settled * 100) + '%' : '—';
+    const roi = b.settled ? ((b.profit / b.settled * 100 >= 0 ? '+' : '') + (b.profit / b.settled * 100).toFixed(0) + '%') : '—';
+    const roiCol = !b.settled ? 'rgba(255,255,255,.5)' : (b.profit >= 0 ? '#16c784' : '#dc2626');
+    const av = b.n ? (b.sumVal / b.n).toFixed(1) : '—';
+    return `<div style="display:grid;grid-template-columns:1.5fr .8fr .8fr .8fr .7fr;gap:.3rem;padding:.35rem .1rem;border-bottom:1px solid rgba(255,255,255,.06);${mono}font-size:.5rem;${head ? 'color:rgba(255,255,255,.5);font-weight:700;letter-spacing:.04em;' : 'color:#fff;'}">
+      <span>${label}</span>
+      <span style="text-align:right;color:${head ? 'inherit' : 'rgba(255,255,255,.8)'};">${head ? 'n' : b.n + (b.settled < b.n ? '·' + (b.n - b.settled) + 'o' : '')}</span>
+      <span style="text-align:right;color:${head ? 'inherit' : 'rgba(255,255,255,.8)'};">${head ? 'hit' : hr}</span>
+      <span style="text-align:right;color:${head ? 'inherit' : roiCol};font-weight:${head ? '700' : '800'};">${head ? 'roi' : roi}</span>
+      <span style="text-align:right;color:${head ? 'inherit' : '#c084fc'};">${head ? 'val' : av}</span>
+    </div>`;
+  };
+  let html = `<div style="${mono}font-size:.52rem;color:rgba(255,255,255,.62);line-height:1.6;margin:.2rem 0 .6rem;">Volwaardige value-picks op O/U en BTTS. n = aantal (·Xo = open). CLV volgt later.</div>`;
+  html += row('Markt', { n: 0 }, true);
+  keys.forEach(k => { const b = by[k]; tot.n += b.n; tot.settled += b.settled; tot.wins += b.wins; tot.profit += b.profit; html += row(lbl(k), b, false); });
+  html += `<div style="display:grid;grid-template-columns:1.5fr .8fr .8fr .8fr .7fr;gap:.3rem;padding:.45rem .1rem .1rem;${mono}font-size:.52rem;font-weight:800;color:#00BEC4;">
+    <span>TOTAAL</span>
+    <span style="text-align:right;">${tot.n}</span>
+    <span style="text-align:right;">${tot.settled ? Math.round(tot.wins / tot.settled * 100) + '%' : '—'}</span>
+    <span style="text-align:right;color:${!tot.settled ? '#00BEC4' : (tot.profit >= 0 ? '#16c784' : '#dc2626')};">${tot.settled ? ((tot.profit >= 0 ? '+' : '') + (tot.profit / tot.settled * 100).toFixed(0) + '%') : '—'}</span>
+    <span></span>
+  </div>`;
+  el.innerHTML = html;
 }
 
 async function renderShadowTrackrecord() {
