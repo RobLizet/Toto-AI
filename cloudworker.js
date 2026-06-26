@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v172'; // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v173'; // v173: doelpunten-markten (O/U 1.5/2.5/3.5 + BTTS) in scan-test achter ?goals=1 — Poisson uit AI-goals (gh/ga), 2-weg Shin de-vig, productie-cron ONGEWIJZIGD // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1231,7 +1231,7 @@ async function handleProxy(urlParam, request, env) {
 }
 
 // ── Odds ophalen voor wedstrijden ────────────────────────
-async function fetchOddsForFixtures(fixtureIds, env, maxCalls = 36) {
+async function fetchOddsForFixtures(fixtureIds, env, maxCalls = 36, enableGoals = false) {
   const oddsMap = {};
   let oddsCallsUsed = 0; // bewaak Cloudflare 50-subrequest-budget
 
@@ -1272,6 +1272,47 @@ async function fetchOddsForFixtures(fixtureIds, env, maxCalls = 36) {
       }
     };
     return true;
+  }
+
+  // v173: O/U (bet 5) + BTTS (bet 8) — vult bestaande 1X2-entry aan met consensus + 2-weg de-vig.
+  function parseGoalConsensus(data, fid) {
+    if (!data || !data.length || !oddsMap[fid]) return;
+    const books = data[0]?.bookmakers || [];
+    const ouRaw = { '1.5': { O: [], U: [] }, '2.5': { O: [], U: [] }, '3.5': { O: [], U: [] } };
+    const bttsRaw = { Y: [], N: [] };
+    for (const bm of books) {
+      for (const bet of (bm.bets || [])) {
+        if (bet.id === 5) {
+          for (const v of (bet.values || [])) {
+            const mt = /^(Over|Under)\s+(\d+\.\d)$/.exec(v.value || '');
+            if (!mt || !ouRaw[mt[2]]) continue;
+            const od = parseFloat(v.odd || 0);
+            if (od > 1) ouRaw[mt[2]][mt[1] === 'Over' ? 'O' : 'U'].push(od);
+          }
+        } else if (bet.id === 8) {
+          for (const v of (bet.values || [])) {
+            const od = parseFloat(v.odd || 0);
+            if (od <= 1) continue;
+            if (/^yes$/i.test(v.value)) bttsRaw.Y.push(od);
+            else if (/^no$/i.test(v.value)) bttsRaw.N.push(od);
+          }
+        }
+      }
+    }
+    const ou = {};
+    for (const line of ['1.5', '2.5', '3.5']) {
+      const O = median(ouRaw[line].O), U = median(ouRaw[line].U);
+      if (O > 1 && U > 1) {
+        const f = devig2(O, U);
+        ou[line] = { over: parseFloat(O.toFixed(2)), under: parseFloat(U.toFixed(2)), fairOver: f.a, fairUnder: f.b };
+      }
+    }
+    const Y = median(bttsRaw.Y), N = median(bttsRaw.N);
+    if (Object.keys(ou).length) oddsMap[fid].ou = ou;
+    if (Y > 1 && N > 1) {
+      const f = devig2(Y, N);
+      oddsMap[fid].btts = { yes: parseFloat(Y.toFixed(2)), no: parseFloat(N.toFixed(2)), fairYes: f.a, fairNo: f.b };
+    }
   }
 
   // v146: datum-bulk odds fetch — 1-2 calls i.p.v. 1 per fixture
@@ -1316,6 +1357,29 @@ async function fetchOddsForFixtures(fixtureIds, env, maxCalls = 36) {
       oddsCallsUsed += toFetch.length;
       const rs = await Promise.allSettled(toFetch.map(id => apif(`/odds?fixture=${id}&bet=1`, env)));
       rs.forEach((r, j) => { if (r.status === 'fulfilled') parseConsensus(r.value, toFetch[j]); });
+    }
+
+    // v173: doelpunten-markten ophalen (alleen indien gevraagd) — vult bestaande entries aan.
+    if (enableGoals) {
+      for (const betId of [5, 8]) {
+        for (const date of [today, tomorrow]) {
+          if (oddsCallsUsed >= maxCalls) break;
+          for (const page of [1, 2]) {
+            if (oddsCallsUsed >= maxCalls) break;
+            try {
+              const r = await apif(`/odds?date=${date}&bet=${betId}&page=${page}&_cb=${Date.now()}`, env);
+              oddsCallsUsed++;
+              if (r?.length) r.forEach(item => {
+                const fid = item.fixture?.id;
+                if (fid && fixtureSet.has(fid)) parseGoalConsensus([item], fid);
+              });
+              if (!r?.length) break; // geen verdere pagina
+            } catch (e) { console.error(`[Odds] Goals bet=${betId} ${date} p${page}:`, e.message); }
+          }
+        }
+      }
+      const withGoals = Object.values(oddsMap).filter(o => o.ou || o.btts).length;
+      console.log(`[Odds] Goal-markten: ${withGoals}/${Object.keys(oddsMap).length} fixtures met O/U of BTTS`);
     }
   } catch (e) {
     console.error('[Odds] Fout bij ophalen:', e);
@@ -1382,6 +1446,93 @@ function shinDevig(oddsArr) {
     if (sum > 1) lo = z; else hi = z;
   }
   return probs((lo + hi) / 2);
+}
+
+// ── v173: doelpunten-markten (O/U + BTTS) uit verwachte goals ─────────────
+// Onafhankelijke Poisson op lambdaHome/lambdaAway → modelkansen per markt.
+const GOAL_LINES = ['1.5', '2.5', '3.5'];
+
+function poissonPmf(k, lambda) {
+  if (lambda <= 0) return k === 0 ? 1 : 0;
+  let logp = -lambda + k * Math.log(lambda);
+  for (let i = 2; i <= k; i++) logp -= Math.log(i);
+  return Math.exp(logp);
+}
+
+// Geeft modelkansen (0-100) voor O/U 1.5/2.5/3.5 + BTTS uit lambdaHome/lambdaAway.
+function goalMarkets(lh, la, maxGoals = 10) {
+  lh = Math.max(0.05, Math.min(6, lh));
+  la = Math.max(0.05, Math.min(6, la));
+  if (!isFinite(lh) || !isFinite(la)) return null;
+  const ph = [], pa = [];
+  for (let i = 0; i <= maxGoals; i++) { ph[i] = poissonPmf(i, lh); pa[i] = poissonPmf(i, la); }
+  let pO15 = 0, pO25 = 0, pO35 = 0, pBTTS = 0;
+  for (let i = 0; i <= maxGoals; i++) for (let j = 0; j <= maxGoals; j++) {
+    const p = ph[i] * pa[j], tot = i + j;
+    if (tot >= 2) pO15 += p;
+    if (tot >= 3) pO25 += p;
+    if (tot >= 4) pO35 += p;
+    if (i >= 1 && j >= 1) pBTTS += p;
+  }
+  const pct = x => parseFloat((x * 100).toFixed(1));
+  return {
+    ou: {
+      '1.5': { over: pct(pO15), under: pct(1 - pO15) },
+      '2.5': { over: pct(pO25), under: pct(1 - pO25) },
+      '3.5': { over: pct(pO35), under: pct(1 - pO35) },
+    },
+    btts: { yes: pct(pBTTS), no: pct(1 - pBTTS) },
+  };
+}
+
+// 2-weg Shin de-vig (over/under of yes/no). Geeft faire kansen (0-100).
+function devig2(a, b) {
+  const [fa, fb] = shinDevig([a, b]);
+  return { a: parseFloat((fa * 100).toFixed(1)), b: parseFloat((fb * 100).toFixed(1)) };
+}
+
+// Marktgroep van een pick — bepaalt of twee picks elkaar mogen verdringen (consistency).
+function marketGroup(pick) {
+  if (pick === '1' || pick === 'X' || pick === '2') return '1X2';
+  if (pick === 'BTTS' || pick === 'NOBTTS') return 'BTTS';
+  if (pick && (pick[0] === 'O' || pick[0] === 'U')) return 'OU' + pick.slice(1).replace('.', '');
+  return 'OVERIG';
+}
+
+// Afrekenen van een doelpunten-pick vanuit eindstand. Geeft 'win'/'lose' of null (geen goal-markt).
+function settleGoalMarket(pick, gh, ga) {
+  if (gh == null || ga == null) return null;
+  const tot = gh + ga;
+  if (pick && (pick[0] === 'O' || pick[0] === 'U')) {
+    const line = parseFloat(pick.slice(1));
+    if (!isFinite(line)) return null;
+    const over = tot > line;
+    return (pick[0] === 'O') === over ? 'win' : 'lose';
+  }
+  if (pick === 'BTTS')   return (gh >= 1 && ga >= 1) ? 'win' : 'lose';
+  if (pick === 'NOBTTS') return (gh >= 1 && ga >= 1) ? 'lose' : 'win';
+  return null;
+}
+
+// Bouwt de goal-markt-kandidaten voor één wedstrijd (leeg als AI geen goals gaf of geen odds).
+function buildGoalCandidates(m, ai, odds) {
+  const out = [];
+  if (!ai || ai.gh == null || ai.ga == null) return out;
+  const gm = goalMarkets(parseFloat(ai.gh), parseFloat(ai.ga));
+  if (!gm) return out;
+  for (const line of GOAL_LINES) {
+    const o = odds?.ou?.[line];
+    if (!o) continue;
+    const grp = 'OU' + line.replace('.', '');
+    if (o.over > 1)  out.push({ pick: 'O' + line, label: `Meer dan ${line} goals`,   aiKans: gm.ou[line].over,  bookOdds: o.over,  fairImplied: o.fairOver,  marketGroup: grp });
+    if (o.under > 1) out.push({ pick: 'U' + line, label: `Minder dan ${line} goals`, aiKans: gm.ou[line].under, bookOdds: o.under, fairImplied: o.fairUnder, marketGroup: grp });
+  }
+  const b = odds?.btts;
+  if (b) {
+    if (b.yes > 1) out.push({ pick: 'BTTS',   label: 'Beide teams scoren',     aiKans: gm.btts.yes, bookOdds: b.yes, fairImplied: b.fairYes, marketGroup: 'BTTS' });
+    if (b.no  > 1) out.push({ pick: 'NOBTTS', label: 'Niet beide teams scoren', aiKans: gm.btts.no,  bookOdds: b.no,  fairImplied: b.fairNo,  marketGroup: 'BTTS' });
+  }
+  return out;
 }
 
 // ── Datum normalisatie helper ─────────────────────────────
@@ -2385,7 +2536,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
 // Default: Eliteserien NO (113) + Allsvenskan SE (103), beide seizoen 2026
 // Gebruik: /scan-test?token=HMAC&league=113,103
 // Geeft volledige verbose output: fixtures, odds, AI, value picks, verdict
-async function runScanTest(env, leagueIds = [1, 113, 103]) { // 1=WK 2026, 113=Allsvenskan, 103=Eliteserien
+async function runScanTest(env, leagueIds = [1, 113, 103], enableGoals = false) { // 1=WK 2026, 113=Allsvenskan, 103=Eliteserien
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
@@ -2464,8 +2615,8 @@ async function runScanTest(env, leagueIds = [1, 113, 103]) { // 1=WK 2026, 113=A
   if (bettable.length !== allMatches.length) log.push(`[ScanTest] ${allMatches.length - bettable.length} jeugdwedstrijden (U15-U23) uitgefilterd`);
   const batch = bettable.slice(0, 10);
   const fixtureIds = batch.map(m => m.fixtureId).filter(Boolean);
-  const oddsMap = await fetchOddsForFixtures(fixtureIds, env);
-  log.push(`[ScanTest] Odds: ${Object.keys(oddsMap).length}/${batch.length} fixtures gedekt`);
+  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, 36, enableGoals);
+  log.push(`[ScanTest] Odds: ${Object.keys(oddsMap).length}/${batch.length} fixtures gedekt${enableGoals ? ' (incl. goal-markten)' : ''}`);
   batch.forEach(m => {
     const o = oddsMap[m.fixtureId];
     log.push(`[ScanTest]   ${m.home} vs ${m.away} (${m.matchDate}) → ${o ? `${o.home}/${o.draw}/${o.away}` : 'geen odds'}`);
@@ -2481,7 +2632,7 @@ KRITISCHE REGELS:
 - Baseer kansen op historische doelpuntenpatronen en competitieniveau, NIET op teamnamen of reputatie
 - GELIJKSPEL WAARSCHUWING: Gelijkspel komt voor in slechts ~25-28% van alle wedstrijden. Overschat gelijkspelkansen NIET. Wees terughoudend met kansX boven 30%
 - Thuisvoordeel is reëel: gemiddeld +5-8% kansverhoging voor thuisteam in Europese competities
-- Som van h+x+a moet exact 100 zijn
+- Som van h+x+a moet exact 100 zijn${enableGoals ? '\n- Schat OOK het verwachte aantal doelpunten per team: gh = thuis, ga = uit (realistisch 0.3-3.5, gebaseerd op aanval/verdediging en competitieniveau)' : ''}
 
 WEDSTRIJDEN:
 ${analyseBatchFull.map((m, i) => {
@@ -2491,7 +2642,7 @@ ${analyseBatchFull.map((m, i) => {
 }).join('\n')}
 
 Antwoord ALLEEN met een JSON array — geen tekst, geen uitleg:
-[{"h":52,"x":26,"a":22,"c":7},...]
+[{"h":52,"x":26,"a":22,"c":7${enableGoals ? ',"gh":1.6,"ga":1.1' : ''}},...]
 Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
 
   let aiResults = [];
@@ -2534,13 +2685,15 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
     const odds = oddsMap[m.fixtureId] || {};
     const tournament = isTournamentLeague(m.leagueId); // v127
 
-    [
+    const candidates1x2 = [
       { pick: '1', label: `${m.home} wint`, aiKans: ai.h, bookOdds: odds.home },
       { pick: 'X', label: 'Gelijkspel',     aiKans: ai.x, bookOdds: odds.draw },
       { pick: '2', label: `${m.away} wint`,  aiKans: ai.a, bookOdds: odds.away },
-    ].forEach(c => {
+    ];
+    const candidates = enableGoals ? candidates1x2.concat(buildGoalCandidates(m, ai, odds)) : candidates1x2;
+    candidates.forEach(c => {
       if (!c.bookOdds || c.bookOdds <= 1) return;
-      const fairImplied = fairImpliedFor(odds, c.pick) ?? (impliedProb(c.bookOdds) * 100);
+      const fairImplied = (c.fairImplied != null) ? c.fairImplied : (fairImpliedFor(odds, c.pick) ?? (impliedProb(c.bookOdds) * 100));
       const marketShrink = tournament ? MARKET_SHRINK_TOURNAMENT : MARKET_SHRINK_BASE; // v157
       const value = calculateValue(c.aiKans, fairImplied, c.pick, marketShrink);
       if (value < 3) return;
@@ -2586,6 +2739,7 @@ Exact ${analyseBatchFull.length} objecten, zelfde volgorde.`;
         matchDate:  m.matchDate,
         pick:       c.pick,
         pickLabel:  c.label,
+        marketGroup: marketGroup(c.pick),
         odds:       c.bookOdds,
         value:      parseFloat(value.toFixed(1)),
         ev,
@@ -3206,7 +3360,8 @@ export default {
       if (!validHMAC && !validSecret) return json({ error: 'Unauthorized' }, 401);
       const leagueParam = url.searchParams.get('league') || '1,113,103'; // 1=WK 2026
       const leagueIds = leagueParam.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
-      const result = await runScanTest(env, leagueIds);
+      const enableGoals = url.searchParams.get('goals') === '1'; // v173: O/U + BTTS testen
+      const result = await runScanTest(env, leagueIds, enableGoals);
       return json(result);
     }
 
