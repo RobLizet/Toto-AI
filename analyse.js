@@ -448,6 +448,48 @@ async function renderGoalMarktBreakdown() {
   if (!el) return;
   const mono = "font-family:'IBM Plex Mono',monospace;";
   el.innerHTML = `<div style="${mono}font-size:.5rem;color:rgba(255,255,255,.6);text-align:center;padding:.6rem;">⟳ laden…</div>`;
+
+  // v26.152: primair de server-view incl. CLV; terugval op client-berekening (zonder CLV)
+  let srvRows = null;
+  try {
+    const r = await fetch('https://api.promatchxi.app/goal-markets');
+    if (r.ok) { const d = await r.json(); if (d && d.ok) srvRows = d.breakdown || []; }
+  } catch (e) {}
+  if (srvRows) {
+    if (!srvRows.length) {
+      el.innerHTML = `<div style="${mono}font-size:.54rem;color:rgba(255,255,255,.7);line-height:1.7;padding:.3rem 0;">Nog geen doelpunten-picks. Deze verschijnen zodra de scan O/U of BTTS als value-pick selecteert — tijdens de WK weinig, vanaf de league-switch op 20 juli meer volume.</div>`;
+      return;
+    }
+    const GRID = 'display:grid;grid-template-columns:1.4fr .7fr .55fr .7fr .55fr .7fr;gap:.2rem;';
+    const sideLbl = r => (r.markt === 'BTTS') ? ('Beide · ' + r.kant) : (r.kant + ' ' + String(r.markt).replace('O/U ', ''));
+    const tot = { n: 0, settled: 0, wins: 0, profit: 0, clvW: 0, clvN: 0 };
+    let body = '';
+    srvRows.forEach(r => {
+      const n = r.n || 0, settled = r.settled || 0, open = n - settled;
+      const roiv = r.roi_pct, clvv = r.avg_clv_pct;
+      const roi = (roiv != null) ? ((roiv >= 0 ? '+' : '') + Math.round(roiv) + '%') : '—';
+      const clv = (clvv != null) ? ((clvv >= 0 ? '+' : '') + clvv + '%') : '—';
+      const roiCol = (roiv == null) ? 'rgba(255,255,255,.5)' : (roiv >= 0 ? '#16c784' : '#dc2626');
+      const clvCol = (clvv == null) ? 'rgba(255,255,255,.4)' : (clvv >= 0 ? '#16c784' : '#dc2626');
+      tot.n += n; tot.settled += settled; tot.wins += (r.wins || 0);
+      if (roiv != null) tot.profit += roiv / 100 * settled;
+      if (clvv != null) { tot.clvW += clvv * (r.n_clv || 0); tot.clvN += (r.n_clv || 0); }
+      body += `<div style="${GRID}padding:.32rem .1rem;border-bottom:1px solid rgba(255,255,255,.06);${mono}font-size:.5rem;color:#fff;">
+        <span>${sideLbl(r)}</span>
+        <span style="text-align:right;color:rgba(255,255,255,.8);">${n}${open > 0 ? '·' + open + 'o' : ''}</span>
+        <span style="text-align:right;color:rgba(255,255,255,.8);">${r.hitrate_pct != null ? r.hitrate_pct + '%' : '—'}</span>
+        <span style="text-align:right;color:${roiCol};font-weight:800;">${roi}</span>
+        <span style="text-align:right;color:#c084fc;">${r.avg_value != null ? r.avg_value : '—'}</span>
+        <span style="text-align:right;color:${clvCol};font-weight:700;">${clv}</span></div>`;
+    });
+    const totRoi = tot.settled ? ((tot.profit / tot.settled * 100 >= 0 ? '+' : '') + Math.round(tot.profit / tot.settled * 100) + '%') : '—';
+    const totClv = tot.clvN ? (((tot.clvW / tot.clvN) >= 0 ? '+' : '') + (tot.clvW / tot.clvN).toFixed(1) + '%') : '—';
+    const head = `<div style="${GRID}padding:.35rem .1rem;border-bottom:1px solid rgba(255,255,255,.1);${mono}font-size:.46rem;color:rgba(255,255,255,.5);font-weight:700;letter-spacing:.03em;"><span>Markt</span><span style="text-align:right;">n</span><span style="text-align:right;">hit</span><span style="text-align:right;">roi</span><span style="text-align:right;">val</span><span style="text-align:right;">clv</span></div>`;
+    el.innerHTML = `<div style="${mono}font-size:.5rem;color:rgba(255,255,255,.62);line-height:1.6;margin:.2rem 0 .6rem;">Volwaardige value-picks op O/U + BTTS. n = aantal (·Xo = open) · CLV = slotkoers-edge (positief = je sloeg een betere prijs dan de markt sloot).</div>${head}${body}<div style="${GRID}padding:.45rem .1rem .1rem;${mono}font-size:.52rem;font-weight:800;color:#00BEC4;"><span>TOTAAL</span><span style="text-align:right;">${tot.n}</span><span style="text-align:right;">${tot.settled ? Math.round(tot.wins / tot.settled * 100) + '%' : '—'}</span><span style="text-align:right;color:${!tot.settled ? '#00BEC4' : (tot.profit >= 0 ? '#16c784' : '#dc2626')};">${totRoi}</span><span></span><span style="text-align:right;">${totClv}</span></div>`;
+    return;
+  }
+
+  // ── Terugval: client-berekening uit /picks (zonder CLV) ──
   let picks = state._qualityPicks;
   if (!picks || !picks.length) {
     try { const r = await fetch('https://api.promatchxi.app/picks'); if (r.ok) { const d = await r.json(); picks = state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); } } catch (e) {}
