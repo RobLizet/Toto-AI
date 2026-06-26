@@ -1258,9 +1258,14 @@ function liveCardHtml(pick, fx) {
 
   // Bepaal of pick momenteel wint
   let pickWinning = false;
-  if (pick.pick === '1') pickWinning = homeGoals > awayGoals;
-  else if (pick.pick === '2') pickWinning = awayGoals > homeGoals;
-  else if (pick.pick === 'X') pickWinning = homeGoals === awayGoals;
+  const _pk = String(pick.pick || ''); const _tot = homeGoals + awayGoals;
+  if (_pk === '1') pickWinning = homeGoals > awayGoals;
+  else if (_pk === '2') pickWinning = awayGoals > homeGoals;
+  else if (_pk === 'X') pickWinning = homeGoals === awayGoals;
+  else if (_pk[0] === 'O' && /\d/.test(_pk)) pickWinning = _tot > parseFloat(_pk.slice(1));
+  else if (_pk[0] === 'U' && /\d/.test(_pk)) pickWinning = _tot < parseFloat(_pk.slice(1));
+  else if (_pk === 'BTTS' || _pk === 'BTTS-J') pickWinning = homeGoals >= 1 && awayGoals >= 1;
+  else if (_pk === 'NOBTTS' || _pk === 'BTTS-N') pickWinning = !(homeGoals >= 1 && awayGoals >= 1);
 
   // Status indicator
   let statusBadge, statusColor, borderColor;
@@ -1299,7 +1304,7 @@ function liveCardHtml(pick, fx) {
       <div style="flex:1;text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:${pick.pick==='2'?'700':'400'};">${awayTeam}</div>
     </div>
     <div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.95);margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.09);">
-      🎯 ${pick.pickLabel||pick.pick} @ ${pick.odds} · +${pick.value||0}% value
+      ${(function(){var mk=pickMarket(pick.pick);return (mk.group!=='1X2'&&mk.label)?`<span style="background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);color:#c084fc;border-radius:4px;padding:.05rem .3rem;font-weight:700;margin-right:.3rem;">${mk.label.toUpperCase()}</span>`:'';})()}🎯 ${pick.pickLabel||pick.pick} @ ${pick.odds} · +${pick.value||0}% value
       ${kickoffStr ? `<br>📅 ${kickoffStr}` : ''}
     </div>
   </div>`;
