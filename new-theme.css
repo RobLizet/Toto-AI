@@ -1837,3 +1837,11 @@ body.creme #monteCarloOverlay [style*="color:#d97706"] { color: #fbbf24 !importa
 body.creme #monteCarloOverlay [style*="color:#16a34a"] { color: #4ade80 !important; }
 /* Section labels iets zachter */
 body.creme #monteCarloOverlay [style*="color:rgba(255,255,255,.88)"] { color: rgba(255,255,255,.6) !important; }
+
+/* v26.153: gedimde witte tekst feller voor leesbaarheid.
+   Target alleen inline rgba-wit met lage opacity; gekleurde tekst (hex) blijft ongemoeid.
+   !important verslaat de inline color (die zelf geen !important heeft). */
+[style*="rgba(255,255,255,.5"],
+[style*="rgba(255,255,255,.6"],
+[style*="rgba(255,255,255,.7"] { color: rgba(255,255,255,.96) !important; }
+[style*="rgba(255,255,255,.8"] { color: #ffffff !important; }
