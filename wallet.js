@@ -466,11 +466,10 @@ async function checkBetResult(betId) {
       leg.score = `${hg}-${ag}`;
       let won = false;
       const p = leg.pick;
-      if (p==='1') won=hg>ag; else if(p==='2') won=ag>hg; else if(p==='X') won=hg===ag;
+      const _g = (typeof settleGoalPick === 'function') ? settleGoalPick(p, hg, ag) : null;
+      if (_g != null) won = (_g === 'win');
+      else if (p==='1') won=hg>ag; else if(p==='2') won=ag>hg; else if(p==='X') won=hg===ag;
       else if(p==='1X') won=hg>=ag; else if(p==='X2') won=ag>=hg;
-      else if(p==='O2.5') won=(hg+ag)>2.5; else if(p==='U2.5') won=(hg+ag)<2.5;
-      else if(p==='O1.5') won=(hg+ag)>1.5; else if(p==='O3.5') won=(hg+ag)>3.5;
-      else if(p==='BTTS-J') won=hg>0&&ag>0; else if(p==='BTTS-N') won=hg===0||ag===0;
       leg.legStatus = won ? 'win' : 'lose';
     } catch(e) {}
   }
