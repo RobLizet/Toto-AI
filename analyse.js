@@ -2458,16 +2458,13 @@ async function verifyScanLog() {
       pick.verifiedAt = new Date().toISOString();
 
       const t = (pick.pick||'').toUpperCase();
-      if      (t === '1')    pick.status = home > away   ? 'win' : 'lose';
+      const _g = (typeof settleGoalPick === 'function') ? settleGoalPick(t, home, away) : null;
+      if      (_g != null)   pick.status = _g;
+      else if (t === '1')    pick.status = home > away   ? 'win' : 'lose';
       else if (t === 'X')    pick.status = home === away  ? 'win' : 'lose';
       else if (t === '2')    pick.status = away > home   ? 'win' : 'lose';
       else if (t === '1X')   pick.status = home >= away  ? 'win' : 'lose';
       else if (t === 'X2')   pick.status = away >= home  ? 'win' : 'lose';
-      else if (t === 'O25')  pick.status = (home+away) > 2.5 ? 'win' : 'lose';
-      else if (t === 'U25')  pick.status = (home+away) < 2.5 ? 'win' : 'lose';
-      else if (t === 'O15')  pick.status = (home+away) > 1.5 ? 'win' : 'lose';
-      else if (t === 'O35')  pick.status = (home+away) > 3.5 ? 'win' : 'lose';
-      else if (t === 'BTTS') pick.status = (home > 0 && away > 0) ? 'win' : 'lose';
       else pick.status = 'void';
 
       verified++;
@@ -2530,15 +2527,13 @@ async function autoVerifyPendingPicks() {
         pick.score = `${hg}-${ag}`;
         pick.verifiedAt = new Date().toISOString();
         const t = (pick.pick || '').toUpperCase();
-        if      (t === '1')      pick.status = hg > ag  ? 'win' : 'lose';
+        const _g = (typeof settleGoalPick === 'function') ? settleGoalPick(t, hg, ag) : null;
+        if      (_g != null)     pick.status = _g;
+        else if (t === '1')      pick.status = hg > ag  ? 'win' : 'lose';
         else if (t === 'X')      pick.status = hg === ag ? 'win' : 'lose';
         else if (t === '2')      pick.status = ag > hg  ? 'win' : 'lose';
         else if (t === '1X')     pick.status = hg >= ag ? 'win' : 'lose';
         else if (t === 'X2')     pick.status = ag >= hg ? 'win' : 'lose';
-        else if (t === 'O2.5')   pick.status = (hg+ag) > 2.5 ? 'win' : 'lose';
-        else if (t === 'U2.5')   pick.status = (hg+ag) < 2.5 ? 'win' : 'lose';
-        else if (t === 'BTTS-J') pick.status = (hg>0 && ag>0) ? 'win' : 'lose';
-        else if (t === 'BTTS-N') pick.status = (hg===0 || ag===0) ? 'win' : 'lose';
         else pick.status = 'void';
         verified++;
       });
