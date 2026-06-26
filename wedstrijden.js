@@ -869,6 +869,37 @@ function cleanupOldLiveMatches() {
   }
 }
 
+// v26.148: goals-quotes (O/U 1.5/2.5/3.5 + BTTS) op de wedstrijd-kaart — on-demand opgehaald.
+async function toggleGoalOdds(matchId, btn) {
+  const box = document.getElementById('goalodds-' + matchId);
+  if (!box) return;
+  if (box.style.display !== 'none') { box.style.display = 'none'; if (btn) btn.innerHTML = '\u26bd MEER / MINDER GOALS \u25be'; return; }
+  box.style.display = 'block';
+  if (btn) btn.innerHTML = '\u26bd MEER / MINDER GOALS \u25b4';
+  if (box.dataset.loaded === '1') return;
+  box.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.6);text-align:center;padding:.4rem;">\u27f3 goals-quotes laden\u2026</div>';
+  let go = null;
+  try { go = (typeof fetchGoalOdds === 'function') ? await fetchGoalOdds(matchId) : null; } catch (e) {}
+  if (!go || (!Object.keys(go.ou || {}).length && !go.btts)) {
+    box.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.55);text-align:center;padding:.45rem;background:rgba(255,255,255,.03);border-radius:8px;border:1px dashed rgba(255,255,255,.1);">Geen O/U-odds beschikbaar voor deze wedstrijd</div>';
+    box.dataset.loaded = '1'; return;
+  }
+  const oddsBtn = (pick, label, odds) => `<button onclick="event.stopPropagation();openBetModal(event,'${matchId}','${pick}','${String(label).replace(/'/g, "\\'")}',${odds})"
+    style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.22);border-radius:10px;padding:.4rem .3rem;cursor:pointer;text-align:center;">
+    <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:#c084fc;letter-spacing:.04em;margin-bottom:.25rem;">${label}</div>
+    <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.25rem;color:#c084fc;line-height:1;">${Number(odds).toFixed(2)}</div></button>`;
+  let html = '';
+  for (const line of ['1.5', '2.5', '3.5']) {
+    const o = go.ou[line]; if (!o) continue;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem;">${oddsBtn('O' + line, 'Over ' + line, o.over)}${oddsBtn('U' + line, 'Under ' + line, o.under)}</div>`;
+  }
+  if (go.btts) {
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;">${oddsBtn('BTTS', 'Beide scoren', go.btts.yes)}${oddsBtn('NOBTTS', 'Niet beide', go.btts.no)}</div>`;
+  }
+  box.innerHTML = html;
+  box.dataset.loaded = '1';
+}
+
 function renderMatchCard(m) {
   if (!m) return null;
   const card = document.createElement('div');
@@ -941,6 +972,13 @@ function renderMatchCard(m) {
         🎰 Andere quotes gebruiken
       </button>
       ${sharpBadge}
+    </div>
+    <div style="padding:0 .9rem .5rem;">
+      <button onclick="event.stopPropagation();toggleGoalOdds('${m.id}',this)"
+        style="width:100%;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.25);border-radius:10px;
+        padding:.4rem;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;
+        color:#c084fc;letter-spacing:.05em;">\u26bd MEER / MINDER GOALS \u25be</button>
+      <div id="goalodds-${m.id}" style="display:none;margin-top:.4rem;"></div>
     </div>` : `
     <!-- v18.4: geen odds — vriendelijke melding ipv leeg -->
     <div style="padding:.4rem .9rem .5rem;">
