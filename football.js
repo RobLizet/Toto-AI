@@ -190,6 +190,27 @@ function poissonMatchProbs(lambdaHome, lambdaAway, maxGoals = 6, useDixonColes =
   return { p1: p1/total, pX: pX/total, p2: p2/total };
 }
 
+// v26.146: model-kansen voor doelpunten-markten (O/U 1.5/2.5/3.5 + BTTS) uit lambdaHome/lambdaAway.
+// Zelfde Poisson + Dixon-Coles als poissonMatchProbs, zodat de getallen consistent zijn met 1X2.
+function goalMarketProbs(lambdaHome, lambdaAway, maxGoals = 8, useDixonColes = true) {
+  if (!(lambdaHome > 0 && lambdaAway > 0)) return null;
+  let o15 = 0, o25 = 0, o35 = 0, btts = 0, tot = 0;
+  const grid = [];
+  for (let h = 0; h <= maxGoals; h++) for (let a = 0; a <= maxGoals; a++) {
+    let p = poissonProb(lambdaHome, h) * poissonProb(lambdaAway, a);
+    if (useDixonColes) p *= dixonColesTau(h, a, lambdaHome, lambdaAway);
+    grid.push([h, a, p]); tot += p;
+  }
+  if (tot <= 0) return null;
+  for (const [h, a, p0] of grid) {
+    const p = p0 / tot, t = h + a;
+    if (t >= 2) o15 += p; if (t >= 3) o25 += p; if (t >= 4) o35 += p;
+    if (h >= 1 && a >= 1) btts += p;
+  }
+  const pc = x => Math.round(x * 100);
+  return { o15: pc(o15), u15: pc(1-o15), o25: pc(o25), u25: pc(1-o25), o35: pc(o35), u35: pc(1-o35), bttsY: pc(btts), bttsN: pc(1-btts) };
+}
+
 function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null) {
   if (!stats?.goals) return null;
   const gf = stats.goals.for?.average;
