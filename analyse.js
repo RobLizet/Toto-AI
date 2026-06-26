@@ -1239,6 +1239,7 @@ function renderAnalyseScanResults(scans) {
             TELT NIET MEE</span>` : `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;
             background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);
             color:#00BEC4;border-radius:4px;padding:.1rem .3rem;font-weight:700;">✓ PICK</span>`}
+          ${(function(){var mk=pickMarket(s.pick);return (mk.group!=='1X2'&&mk.label)?`<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);color:#c084fc;border-radius:4px;padding:.1rem .3rem;font-weight:700;">${mk.label.toUpperCase()}</span>`:'';})()}
         </div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">
           ${s.pickLabel} · ${s.kans||'?'}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):s._hasXG?' (xG)':''} · ${s.reason||''}
