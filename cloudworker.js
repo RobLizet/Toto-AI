@@ -1359,25 +1359,15 @@ async function fetchOddsForFixtures(fixtureIds, env, maxCalls = 36, enableGoals 
       rs.forEach((r, j) => { if (r.status === 'fulfilled') parseConsensus(r.value, toFetch[j]); });
     }
 
-    // v173: doelpunten-markten ophalen (alleen indien gevraagd) — vult bestaande entries aan.
+    // v173b: doelpunten-markten per-fixture ophalen (datum-bulk mist WK-fixtures diep in paginatie).
+    // Eén call zonder bet-filter levert bet 5 (O/U) én bet 8 (BTTS) tegelijk → 1 call per fixture.
     if (enableGoals) {
-      for (const betId of [5, 8]) {
-        for (const date of [today, tomorrow]) {
-          if (oddsCallsUsed >= maxCalls) break;
-          for (const page of [1, 2]) {
-            if (oddsCallsUsed >= maxCalls) break;
-            try {
-              const r = await apif(`/odds?date=${date}&bet=${betId}&page=${page}&_cb=${Date.now()}`, env);
-              oddsCallsUsed++;
-              if (r?.length) r.forEach(item => {
-                const fid = item.fixture?.id;
-                if (fid && fixtureSet.has(fid)) parseGoalConsensus([item], fid);
-              });
-              if (!r?.length) break; // geen verdere pagina
-            } catch (e) { console.error(`[Odds] Goals bet=${betId} ${date} p${page}:`, e.message); }
-          }
-        }
-      }
+      const covered = fixtureIds.filter(id => oddsMap[id]); // alleen waar 1X2-consensus al lukte
+      const budget = Math.max(0, maxCalls - oddsCallsUsed);
+      const toFetch = covered.slice(0, budget);
+      oddsCallsUsed += toFetch.length;
+      const rs = await Promise.allSettled(toFetch.map(id => apif(`/odds?fixture=${id}`, env)));
+      rs.forEach((r, j) => { if (r.status === 'fulfilled') parseGoalConsensus(r.value, toFetch[j]); });
       const withGoals = Object.values(oddsMap).filter(o => o.ou || o.btts).length;
       console.log(`[Odds] Goal-markten: ${withGoals}/${Object.keys(oddsMap).length} fixtures met O/U of BTTS`);
     }
