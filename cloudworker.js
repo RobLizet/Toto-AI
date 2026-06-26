@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v173'; // v173: doelpunten-markten (O/U 1.5/2.5/3.5 + BTTS) in scan-test achter ?goals=1 — Poisson uit AI-goals (gh/ga), 2-weg Shin de-vig, productie-cron ONGEWIJZIGD // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v174'; // v174: doelpunten-markten LIVE in productie-cron (O/U 1.5/2.5/3.5 + BTTS als volwaardige picks, vlag ENABLE_GOAL_MARKETS) + afrekening voor alle goal-markten; consistency-check per marktgroep, longshot-guard alleen op 1X2 // v173: goal-markten in scan-test (?goals=1) — Poisson uit AI-goals, 2-weg de-vig // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1440,6 +1440,7 @@ function shinDevig(oddsArr) {
 
 // ── v173: doelpunten-markten (O/U + BTTS) uit verwachte goals ─────────────
 // Onafhankelijke Poisson op lambdaHome/lambdaAway → modelkansen per markt.
+const ENABLE_GOAL_MARKETS = true; // productie-cron: goal-markten (O/U 1.5/2.5/3.5 + BTTS) als volwaardige picks
 const GOAL_LINES = ['1.5', '2.5', '3.5'];
 
 function poissonPmf(k, lambda) {
@@ -1499,8 +1500,8 @@ function settleGoalMarket(pick, gh, ga) {
     const over = tot > line;
     return (pick[0] === 'O') === over ? 'win' : 'lose';
   }
-  if (pick === 'BTTS')   return (gh >= 1 && ga >= 1) ? 'win' : 'lose';
-  if (pick === 'NOBTTS') return (gh >= 1 && ga >= 1) ? 'lose' : 'win';
+  if (pick === 'BTTS' || pick === 'BTTS-J')   return (gh >= 1 && ga >= 1) ? 'win' : 'lose';
+  if (pick === 'NOBTTS' || pick === 'BTTS-N') return (gh >= 1 && ga >= 1) ? 'lose' : 'win';
   return null;
 }
 
@@ -1619,12 +1620,11 @@ async function verifyYesterdayPicks(env) {
     const hg = result.home, ag = result.away;
     let won = false;
     const p = pick.betType || pick.pick || '1';
-    if (p === '1') won = hg > ag;
+    const gm = settleGoalMarket(p, hg, ag); // v173: O/U (alle lijnen) + BTTS
+    if (gm !== null) won = (gm === 'win');
+    else if (p === '1') won = hg > ag;
     else if (p === '2') won = ag > hg;
     else if (p === 'X') won = hg === ag;
-    else if (p === 'O2.5') won = (hg + ag) > 2.5;
-    else if (p === 'U2.5') won = (hg + ag) < 2.5;
-    else if (p === 'BTTS-J') won = hg > 0 && ag > 0;
 
     let clv = null;
     let closingOdd = null; // v103: buiten try voor scope bij saveCLV
@@ -2083,7 +2083,7 @@ async function runScan(env, force = false) {
   // subrequests. Resultaat: elke fixture krijgt meerdere snapshots over de 6 dagelijkse
   // cron-runs -> een echte opening->closing curve i.p.v. 1 losse meting (CLV-fix).
   const fixtureIds = allMatches.map(m => m.fixtureId).filter(Boolean);
-  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, 30); // bulk dekt alles; fallback gecapt op 5
+  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, 30, ENABLE_GOAL_MARKETS); // bulk dekt alles; fallback gecapt op 5
   console.log(`[Scan] Odds gevonden voor ${Object.keys(oddsMap).length} wedstrijden`);
 
   const oddsHistoryPath = `odds_history/${today}`;
@@ -2127,7 +2127,7 @@ KRITISCHE REGELS:
 - Thuisvoordeel is reëel: gemiddeld +5-8% kansverhoging voor thuisteam in Europese competities
 - Kleine competities (Noorwegen/Zweden/lagere divisies): data is onbetrouwbaarder, geef lagere confidence
 - LANDENTEAMS/TOERNOOI [LANDENDUEL/TOERNOOI tag]: gebruik marktodds als sterke prior. Weeg FIFA-ranking: +20 plaatsen hoger = ca. +4% kansverhoging. Recente form laatste 3 duels zwaarder dan historisch gemiddelde. WK-groepsfase: hoge motivatie beide teams, verrassingen komen vaker voor. Confidence 5-7, nooit boven 7 voor landenduels
-- Som van h+x+a moet exact 100 zijn
+- Som van h+x+a moet exact 100 zijn${ENABLE_GOAL_MARKETS ? '\n- Schat OOK het verwachte aantal doelpunten per team: gh = thuis, ga = uit (realistisch 0.3-3.5, gebaseerd op aanval/verdediging en competitieniveau)' : ''}
 
 WEDSTRIJDEN:
 ${analyseBatch.map((m, i) => {
@@ -2139,7 +2139,7 @@ ${analyseBatch.map((m, i) => {
 }).join('\n')}
 
 Antwoord ALLEEN met een JSON array — geen tekst, geen uitleg, geen markdown:
-[{"h":52,"x":26,"a":22,"c":7},...]
+[{"h":52,"x":26,"a":22,"c":7${ENABLE_GOAL_MARKETS ? ',"gh":1.6,"ga":1.1' : ''}},...]
 Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
 
   let aiResults = [];
@@ -2213,6 +2213,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       { pick: 'X', label: 'Gelijkspel',     aiKans: ai.x, bookOdds: odds?.draw || parseFloat((100/(ai.x*0.9)).toFixed(2)) },
       { pick: '2', label: `${m.away} wint`, aiKans: ai.a, bookOdds: odds?.away || parseFloat((100/(ai.a*0.9)).toFixed(2)) },
     ];
+    if (ENABLE_GOAL_MARKETS) candidates.push(...buildGoalCandidates(m, ai, odds)); // v173: O/U + BTTS
 
     const fixtureHistory = todayHistory[m.fixtureId] || {};
     const openingOdds = fixtureHistory.opening || null;
@@ -2222,7 +2223,8 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       // Markeer als sparse als er geen echte bookmaker odds waren
       const hasRealOdds = !!(odds?.home);
       // v125: edge tegen faire consensus; bij sparse (geen consensus) terugval op ruwe implied
-      const fairImplied = fairImpliedFor(odds, c.pick) ?? (impliedProb(c.bookOdds) * 100);
+      // v173: goal-markten leveren hun eigen 2-weg de-vigde fairImplied mee
+      const fairImplied = (c.fairImplied != null) ? c.fairImplied : (fairImpliedFor(odds, c.pick) ?? (impliedProb(c.bookOdds) * 100));
       const marketShrink = tournament ? MARKET_SHRINK_TOURNAMENT : MARKET_SHRINK_BASE; // v157
       const value = calculateValue(c.aiKans, fairImplied, c.pick, marketShrink);
       if (value < 3) {
@@ -2230,7 +2232,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
         // RUWE divergentie (model - markt, vóór shrink) reëel is. Meet de hele twijfelzone
         // voor de draw-evaluatie. Raakt de echte-pick-selectie NIET (die blijft value>=3).
         const rawDiv = c.aiKans - fairImplied;
-        if (rawDiv >= SHADOW_MIN_RAW_DIV) {
+        if (rawDiv >= SHADOW_MIN_RAW_DIV && marketGroup(c.pick) === '1X2') { // v173: schaduw alleen voor 1X2 (draw-evaluatie)
           const sReason = c.pick === 'X' ? 'draw' : (c.bookOdds >= LONGSHOT_ODDS ? 'longshot' : 'below_threshold');
           shadowRows.push({ fixture_id: m.fixtureId, pick: c.pick, pick_label: c.label, reason: sReason,
             model_pct: Math.round(c.aiKans), market_pct: parseFloat(fairImplied.toFixed(1)), value_pct: parseFloat(value.toFixed(1)),
@@ -2251,7 +2253,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       // v161: longshot-guardrail, met uitzondering voor draws waar het model de gelijkspel
       // sterk steunt (aiKans X >= 33%). 2-scan-bevestiging + draw-minValue blijven de remmen.
       const strongDraw = (c.pick === 'X' && c.aiKans >= 33);
-      if (c.bookOdds >= LONGSHOT_ODDS && (sharpBoost?.sharpScore || 0) < LONGSHOT_MIN_SHARP && !strongDraw) {
+      if (marketGroup(c.pick) === '1X2' && c.bookOdds >= LONGSHOT_ODDS && (sharpBoost?.sharpScore || 0) < LONGSHOT_MIN_SHARP && !strongDraw) {
         console.log(`[Scan] Longshot-guard: ${m.home} vs ${m.away} ${c.pick} @${c.bookOdds} — geen sharp-bevestiging (score ${sharpBoost?.sharpScore || 0}), overgeslagen`);
         shadowRows.push({ fixture_id: m.fixtureId, pick: c.pick, pick_label: c.label, reason: 'longshot',
           model_pct: Math.round(c.aiKans), market_pct: parseFloat(fairImplied.toFixed(1)), value_pct: parseFloat(value.toFixed(1)),
@@ -2325,9 +2327,12 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       const scanCount = existing ? (existing.scanCount || 1) + 1 : 1;
       const lockLevel = scanCount >= 3 ? 'triple' : scanCount >= 2 ? 'double' : 'single';
 
-      // v140b: CONSISTENCY CHECK — pick richting mag niet wisselen tenzij odds >10% bewogen
+      // v140b: CONSISTENCY CHECK — pick-richting mag niet wisselen tenzij odds >10% bewogen
+      // v173: alleen binnen dezelfde marktgroep (1X2, O/U-per-lijn, BTTS) — verschillende
+      // markten op dezelfde wedstrijd mogen náást elkaar bestaan.
+      const cGroup = marketGroup(c.pick);
       const prevFixturePick = Object.values(existingPicks).find(p =>
-        p.fixtureId === m.fixtureId && p.status === 'pending' && p.pick !== c.pick
+        p.fixtureId === m.fixtureId && p.status === 'pending' && p.pick !== c.pick && marketGroup(p.pick) === cGroup
       );
       if (prevFixturePick) {
         const oddsShift = prevFixturePick.odds
