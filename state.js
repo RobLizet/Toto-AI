@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.161'; // v26.161: simpele Haiku-analyse-modal verwijderd (dode code) — alleen de rijke analyse blijft over
+const APP_VERSION = 'v26.162'; // v26.162: FIX — rijke analyse (runAnalyse) rendert nu in een modal met echte rb-*-containers; die elementen bestonden nergens waardoor de analyse stil faalde. Match-knop + scan-knoppen openen deze modal
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
