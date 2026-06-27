@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.159'; // v26.159: inzet-advies (units) ook op de losse pick-kaarten in het scan-overzicht (compacte lijst + detail-popup)
+const APP_VERSION = 'v26.160'; // v26.160: match-knop ANALYSE opent nu de RIJKE analyse (runAnalyse) i.p.v. de simpele Haiku-modal — incl. model-vs-markt, VALUE-INDEX, 'waarom value' + inzet-advies + doelpunten
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
