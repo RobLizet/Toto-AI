@@ -6,6 +6,7 @@ const WORKER = 'https://api.promatchxi.app';
 
 const COMP_IDS = {
   eredivisie: 88, kkd: 89, bundesliga: 78, premier: 39,
+  oefennl: 667, // Friendlies Clubs (gefilterd op NL-clubs)
   beker: 90, champions: 2, ligue1: 61, seriea: 135, nations: 5, wk2026: 1,
   jupiler: 144, laliga: 140, championship: 40, bundesliga2: 79, superlig: 203,
   // Extra voor scan coverage
@@ -39,6 +40,7 @@ const COMP_IDS = {
 };
 
 const COMP_NAMES = {
+  oefennl: '🤝 Oefenduels NL',
   eredivisie: '🇳🇱 Eredivisie', kkd: '🇳🇱 Keuken Kampioen', bundesliga: '🇩🇪 Bundesliga',
   premier: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League', beker: '🏆 KNVB Beker', champions: '⭐ Champions League',
   ligue1: '🇫🇷 Ligue 1', seriea: '🇮🇹 Serie A', nations: '🌍 Nations League',
@@ -248,7 +250,7 @@ function parseFDMatch(m, compName) {
 
 function getCurrentSeason(comp) {
   // WK + Scandinavische competities draaien in seizoen 2026
-  const season2026 = ['wk2026', 'norway', 'sweden', 'europa', 'conference', 'champions'];
+  const season2026 = ['wk2026', 'norway', 'sweden', 'europa', 'conference', 'champions', 'oefennl'];
   if (season2026.includes(comp)) return 2026;
   return 2025;
 }
