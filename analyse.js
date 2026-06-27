@@ -1580,59 +1580,63 @@ function openValueAnalysis(matchId) {
 // ── AI diepte analyse ─────────────────────────────────────
 function buildModelVsMarktHTML(poisson, m, goalOdds) {
   const oH = parseFloat(m.homeOdds), oD = parseFloat(m.drawOdds), oA = parseFloat(m.awayOdds);
-  if (!poisson || !poisson.valid || !(oH > 1 && oD > 1 && oA > 1)) return '';
-  const rawH = 1/oH, rawD = 1/oD, rawA = 1/oA, s = rawH + rawD + rawA;
-  const rows = [
-    ['1', `${m.home} wint`, poisson.k1, rawH/s*100],
-    ['X', 'Gelijkspel',     poisson.kX, rawD/s*100],
-    ['2', `${m.away} wint`, poisson.k2, rawA/s*100],
-  ];
-  const body = rows.map(r => {
-    const model = Number(r[2]), markt = Number(r[3]), diff = model - markt, pos = diff >= 0;
-    const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
-    return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.22rem 0;font-family:'IBM Plex Mono',monospace;font-size:.6rem;"><span style="color:#fff;">${r[0]} ${r[1]}</span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model.toFixed(0)}% \u00b7 markt ${markt.toFixed(0)}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
-  }).join('');
-  // v26.146/147: doelpunten-markten — model uit lambda, markt + value zodra O/U-odds binnen zijn
+  const odds1x2 = (oH > 1 && oD > 1 && oA > 1);
+  const modelValid = !!(poisson && poisson.valid);
+  const F = "font-family:'IBM Plex Mono',monospace;";
+
+  // ── 1X2 model vs markt (alleen als model én odds er zijn) ──
+  let body = '';
+  if (modelValid && odds1x2) {
+    const rawH = 1/oH, rawD = 1/oD, rawA = 1/oA, s = rawH + rawD + rawA;
+    const rows = [
+      ['1', `${m.home} wint`, poisson.k1, rawH/s*100],
+      ['X', 'Gelijkspel',     poisson.kX, rawD/s*100],
+      ['2', `${m.away} wint`, poisson.k2, rawA/s*100],
+    ];
+    const rowsHTML = rows.map(r => {
+      const model = Number(r[2]), markt = Number(r[3]), diff = model - markt, pos = diff >= 0;
+      const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
+      return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.22rem 0;${F}font-size:.6rem;"><span style="color:#fff;">${r[0]} ${r[1]}</span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model.toFixed(0)}% \u00b7 markt ${markt.toFixed(0)}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
+    }).join('');
+    body = `<div style="${F}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\ud83d\udcd0 MODEL vs MARKT (vig eruit)</div>${rowsHTML}<div style="font-size:.55rem;color:rgba(255,255,255,.62);margin-top:.35rem;line-height:1.5;">+pp = model hoger dan markt (mogelijk value) \u00b7 \u2212pp = lager</div>`;
+  }
+
+  // ── Doelpunten-markten: toon zodra er O/U-odds zijn OF een model-lambda is ──
+  const gm = (modelValid && typeof goalMarketProbs === 'function') ? goalMarketProbs(poisson.lambdaHome, poisson.lambdaAway) : null;
+  const hasMarket = !!(goalOdds && (Object.keys(goalOdds.ou || {}).length || goalOdds.btts));
   let goalsHTML = '';
-  const gm = (typeof goalMarketProbs === 'function') ? goalMarketProbs(poisson.lambdaHome, poisson.lambdaAway) : null;
-  if (gm) {
-    const expG = (Number(poisson.lambdaHome) + Number(poisson.lambdaAway)).toFixed(1);
-    // rij MET markt + value (pp), met odds
+  if (gm || hasMarket) {
     const mrow = (label, odds, model, markt) => {
       const diff = model - markt, pos = diff >= 0;
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
-      return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;font-family:'IBM Plex Mono',monospace;font-size:.57rem;"><span style="color:#fff;">${label}${odds?` <span style="color:#00BEC4;">@${odds}</span>`:''}</span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
+      return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#00BEC4;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
     };
-    // rij ZONDER markt (alleen model) — terugval als odds ontbreken
-    const grow = (lab, o, u) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;font-family:'IBM Plex Mono',monospace;font-size:.57rem;"><span style="color:#fff;">${lab}</span><span style="color:rgba(255,255,255,.88);">Over <b style="color:#c084fc;">${o}%</b> \u00b7 Under <b style="color:#c084fc;">${u}%</b></span></div>`;
+    const krow = (label, odds, markt) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#00BEC4;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);">faire kans <b style="color:#c084fc;">${markt}%</b></span></div>`;
+    const grow = (lab, o, u) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${lab}</span><span style="color:rgba(255,255,255,.88);">Over <b style="color:#c084fc;">${o}%</b> \u00b7 Under <b style="color:#c084fc;">${u}%</b></span></div>`;
     const lineMap = { '1.5': ['o15','u15'], '2.5': ['o25','u25'], '3.5': ['o35','u35'] };
     let goalRows = '';
     for (const line of ['1.5', '2.5', '3.5']) {
-      const o = goalOdds?.ou?.[line];
-      const [ok, uk] = lineMap[line];
-      if (o) {
-        goalRows += mrow(`Over ${line}`,  o.over,  gm[ok], o.fairOver);
-        goalRows += mrow(`Under ${line}`, o.under, gm[uk], o.fairUnder);
-      } else {
-        goalRows += grow(`Over/Under ${line}`, gm[ok], gm[uk]);
-      }
+      const o = goalOdds?.ou?.[line]; const [ok, uk] = lineMap[line];
+      if (o && gm)      { goalRows += mrow(`Over ${line}`, o.over, gm[ok], o.fairOver); goalRows += mrow(`Under ${line}`, o.under, gm[uk], o.fairUnder); }
+      else if (o)       { goalRows += krow(`Over ${line}`, o.over, o.fairOver);        goalRows += krow(`Under ${line}`, o.under, o.fairUnder); }
+      else if (gm)      { goalRows += grow(`Over/Under ${line}`, gm[ok], gm[uk]); }
     }
     const b = goalOdds?.btts;
-    if (b) {
-      goalRows += mrow('Beide scoren - Ja', b.yes, gm.bttsY, b.fairYes);
-      goalRows += mrow('Beide scoren - Nee', b.no, gm.bttsN, b.fairNo);
-    } else {
-      goalRows += `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;font-family:'IBM Plex Mono',monospace;font-size:.57rem;"><span style="color:#fff;">Beide teams scoren</span><span style="color:rgba(255,255,255,.88);">Ja <b style="color:#c084fc;">${gm.bttsY}%</b> \u00b7 Nee <b style="color:#c084fc;">${gm.bttsN}%</b></span></div>`;
-    }
-    const hasMarket = !!(goalOdds && (Object.keys(goalOdds.ou || {}).length || goalOdds.btts));
-    const subtitle = hasMarket ? `model vs markt \u00b7 verw. ${expG} goals` : `model (verw. ${expG} goals) \u00b7 geen O/U-odds`;
-    goalsHTML = `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\u26bd DOELPUNTEN \u2014 ${subtitle}</div>
+    if (b && gm)   { goalRows += mrow('Beide scoren - Ja', b.yes, gm.bttsY, b.fairYes); goalRows += mrow('Beide scoren - Nee', b.no, gm.bttsN, b.fairNo); }
+    else if (b)    { goalRows += krow('Beide scoren - Ja', b.yes, b.fairYes);           goalRows += krow('Beide scoren - Nee', b.no, b.fairNo); }
+    else if (gm)   { goalRows += `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">Beide teams scoren</span><span style="color:rgba(255,255,255,.88);">Ja <b style="color:#c084fc;">${gm.bttsY}%</b> \u00b7 Nee <b style="color:#c084fc;">${gm.bttsN}%</b></span></div>`; }
+    const expG = gm ? ` \u00b7 verw. ${(Number(poisson.lambdaHome) + Number(poisson.lambdaAway)).toFixed(1)} goals` : '';
+    const subtitle = (gm && hasMarket) ? `model vs markt${expG}` : (hasMarket ? 'markt (vig eruit) \u2014 model n.v.t.' : `model${expG}`);
+    const note = (gm && hasMarket) ? '+pp = model hoger dan markt (mogelijk value)' : (hasMarket ? 'Faire markt-kansen \u2014 model niet beschikbaar (te weinig vormdata voor dit team)' : 'Modelkans uit verwachte goals \u2014 O/U-odds nog niet gepost voor deze wedstrijd');
+    goalsHTML = `<div style="${body ? 'margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);' : ''}">
+      <div style="${F}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\u26bd DOELPUNTEN \u2014 ${subtitle}</div>
       ${goalRows}
-      <div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.3rem;line-height:1.5;">${hasMarket ? '+pp = model hoger dan markt (mogelijk value)' : 'Modelkans uit verwachte goals \u2014 O/U-odds niet beschikbaar voor deze wedstrijd'}</div>
+      <div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.3rem;line-height:1.5;">${note}</div>
     </div>`;
   }
-  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);"><div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\ud83d\udcd0 MODEL vs MARKT (vig eruit)</div>${body}<div style="font-size:.55rem;color:rgba(255,255,255,.62);margin-top:.35rem;line-height:1.5;">+pp = model hoger dan markt (mogelijk value) \u00b7 \u2212pp = lager (geen value op die uitkomst)</div>${goalsHTML}</div>`;
+
+  if (!body && !goalsHTML) return '';
+  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">${body}${goalsHTML}</div>`;
 }
 
 async function runAnalyse() {
