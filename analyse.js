@@ -1833,6 +1833,8 @@ KWALITEITSREGELS:
       const conf = tip.confidence || 5;
       const confKleur = conf >= 8 ? '#00BEC4' : conf >= 6 ? '#d97706' : '#dc2626';
       const sterren = '⭐'.repeat(Math.min(tip.sterren||3, 5)) + '☆'.repeat(5 - Math.min(tip.sterren||3, 5));
+      const _uitleg = (typeof valueUitleg === 'function') ? valueUitleg(tip.kans, tip.odds) : '';
+      const _unit = (typeof unitAdvies === 'function') ? unitAdvies(conf, tv || 0) : { units: 1, eur: '' };
 
       document.getElementById('rb-tip').innerHTML = `
         <div style="background:linear-gradient(135deg,rgba(0,190,196,.06),rgba(0,190,196,.06));
@@ -1849,6 +1851,7 @@ KWALITEITSREGELS:
             </div>
             <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.8rem;color:${tvColor};">${tv>0?'+':''}${tv.toFixed(1)}%</div>
           </div>` : ''}
+          ${_uitleg ? `<div style="font-size:.72rem;line-height:1.6;color:rgba(255,255,255,.95);margin-bottom:.6rem;padding:.55rem .7rem;background:rgba(0,190,196,.06);border-left:2px solid rgba(0,190,196,.5);border-radius:6px;"><b style="color:#00BEC4;">💡 Waarom value?</b><br>${_uitleg}</div>` : ''}
           <div style="margin-bottom:.6rem;">
             <div style="font-family:monospace;font-size:.52rem;color:#374151;margin-bottom:.3rem;display:flex;justify-content:space-between;">
               <span>KANS</span><span style="color:${kleur};font-weight:700;">${tip.kans}%</span>
@@ -1868,6 +1871,16 @@ KWALITEITSREGELS:
               <div style="background:${confKleur};width:${Math.round(conf/10*100)}%;height:100%;"></div>
             </div>
             ${tip.confidenceReden ? `<div style="font-size:.7rem;color:#64748b;font-style:italic;margin-top:.3rem;">${tip.confidenceReden}</div>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:.5rem .7rem;margin-bottom:.6rem;">
+            <div>
+              <div style="font-family:monospace;font-size:.52rem;font-weight:700;color:#475569;">📊 INZET-ADVIES</div>
+              <div style="font-size:.62rem;color:rgba(255,255,255,.7);margin-top:.15rem;">Vaste units · geen Kelly (edge nog niet bewezen)</div>
+            </div>
+            <div style="text-align:right;white-space:nowrap;">
+              <span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#00BEC4;">${_unit.units}</span>
+              <span style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.8);"> unit${_unit.units===1?'':'s'}${_unit.eur}</span>
+            </div>
           </div>
           <div style="display:flex;gap:.4rem;">
             <button onclick="openBetModal(null,'${m.id}','${tip.pick}','${(tip.pickLabel||'').replace(/'/g,"\\'")}',${tip.odds})"
