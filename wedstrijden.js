@@ -15,6 +15,7 @@ function getActiveCOMPLIST() {
   const isPreEuroEnd = now < euroEnd;
 
   const WK       = [{ key:'wk2026',    flag:'🏆', name:'WK 2026' }];
+  const OEFEN    = [{ key:'oefennl',   flag:'🤝', name:'Oefenduels NL' }];
   const SCANDI   = [
     { key:'norway',   flag:'🇳🇴', name:'Eliteserien' },
     { key:'sweden',   flag:'🇸🇪', name:'Allsvenskan' },
@@ -46,8 +47,8 @@ function getActiveCOMPLIST() {
     { key:'asiancup',       flag:'🌏',  name:'Asian Cup' },
   ];
 
-  if (typeof WK_ONLY_MODE !== 'undefined' && WK_ONLY_MODE) return [...WK]; // tijdelijk: alleen WK 2026
-  if (isWK)          return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EXTRA, ...OVERIG];
+  if (typeof WK_ONLY_MODE !== 'undefined' && WK_ONLY_MODE) return [...WK, ...OEFEN]; // tijdelijk: WK 2026 + NL-oefenduels
+  if (isWK)          return [...WK, ...OEFEN, ...INTERNATIONAAL, ...SCANDI, ...EXTRA, ...OVERIG];
   if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...EXTRA, ...OVERIG];
   return              [...EUROPEES, ...SCANDI, ...EXTRA, ...WK, ...INTERNATIONAAL, ...OVERIG];
 }
@@ -537,6 +538,7 @@ async function loadVandaagTab() {
     const r = await apiFetch(`${WORKER}/apif/fixtures?date=${todayStr}&_cb=${Date.now()}`, null, 12000);
     const d = await r.json();
     const knownLeagueIds = new Set(Object.values(COMP_IDS));
+    knownLeagueIds.delete(667); // oefenduels (globaal) niet in Vandaag-tab — alleen via eigen chip
     const now = Date.now();
 
     const fixtures = (d.response || []).filter(f => {
@@ -774,6 +776,7 @@ async function refreshLiveScores() {
     const r = await apiFetch(`${WORKER}/apif/fixtures?date=${today}&_cb=${Date.now()}`, null, 12000);
     const d = await r.json();
     const knownLeagueIds = new Set(Object.values(COMP_IDS));
+    knownLeagueIds.delete(667); // oefenduels (globaal) niet in Vandaag-tab — alleen via eigen chip
 
     // hele dag-lijst herbekijken: nieuw gestart toevoegen, afgelopen markeren, lopende bijwerken
     (d.response || []).forEach(f => {
@@ -1186,6 +1189,8 @@ async function loadMatches(comp) {
   if (!list) return;
   list.innerHTML = '';
   showSkeletonCards(5);
+  // v26.157: Nederlandse oefenduels (Friendlies Clubs, gefilterd op NL-clubs) — eigen pad
+  if (comp === 'oefennl') { await loadDutchFriendlies(); return; }
   try {
     const result = await loadFromAPIFootball(comp, null);
     if (result) return;
@@ -1203,6 +1208,84 @@ async function loadMatches(comp) {
   }
   // v18.4: lege state via renderMatches (met actieknoppen)
   renderMatches([]);
+}
+
+// ── v26.157: Nederlandse oefenduels (Friendlies Clubs 667, gefilterd op Eredivisie+KKD-clubs) ──
+let _nlClubIds = null;
+async function getNLClubIds() {
+  if (_nlClubIds && _nlClubIds.size) return _nlClubIds;
+  const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
+  const ids = new Set();
+  for (const lg of [88, 89]) {           // 88 = Eredivisie, 89 = KKD
+    for (const ssn of [2025, 2026]) {     // huidige + komende seizoen (promotie/degradatie)
+      try {
+        const r = await apiFetch(`${WORKER}/apif/teams?league=${lg}&season=${ssn}&_cb=${Date.now()}`, null, 10000);
+        const d = await r.json();
+        (d.response || []).forEach(t => { if (t.team?.id) ids.add(t.team.id); });
+      } catch (e) {}
+    }
+  }
+  _nlClubIds = ids;
+  return ids;
+}
+
+async function loadDutchFriendlies() {
+  const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
+  showLoadingMsg('⟳ Oefenduels NL laden...', 'var(--muted)');
+  try {
+    const ids = await getNLClubIds();
+    if (!ids.size) { showLoadingMsg('⚠ Kon clublijst niet laden', 'var(--red)'); return; }
+    const now = new Date();
+    const from = now.toISOString().split('T')[0];
+    const to = new Date(now.getTime() + 45 * 86400000).toISOString().split('T')[0];
+    const r = await apiFetch(`${WORKER}/apif/fixtures?league=667&season=2026&from=${from}&to=${to}&_cb=${Date.now()}`, null, 12000);
+    const d = await r.json();
+    const nl = (d.response || [])
+      .filter(f => ids.has(f.teams?.home?.id) || ids.has(f.teams?.away?.id))
+      .sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+    if (!nl.length) { renderMatches([]); showLoadingMsg('📌 Nog geen Nederlandse oefenduels gepland', 'var(--muted)'); return; }
+    state.matches = nl.map(f => parseAPIMatch(f)).filter(Boolean);
+    renderMatches(state.matches);
+    saveOpeningOdds(state.matches);
+    fetchFriendlyOdds(state.matches).then(() => renderMatches(state.matches));
+  } catch (e) {
+    console.warn('[loadDutchFriendlies]', e.message);
+    showLoadingMsg('⚠ Oefenduels laden mislukt', 'var(--red)');
+  }
+}
+
+// Friendlies zitten in de globale league 667 → league-bulk odds zou wereldwijd zijn.
+// Daarom per-fixture 1X2-odds (consensus over bookmakers). Veel pre-season duels hebben
+// nog geen odds; die blijven gewoon zonder quotes staan (wel analyseerbaar via vorm).
+async function fetchFriendlyOdds(matches) {
+  const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
+  const cb = Date.now();
+  for (const m of (matches || []).slice(0, 24)) {
+    if (!m.id) continue;
+    try {
+      const r = await apiFetch(`${WORKER}/apif/odds?fixture=${m.id}&bet=1&_cb=${cb}`, null, 9000);
+      const d = await r.json();
+      const books = d.response?.[0]?.bookmakers || [];
+      let H = 0, D = 0, A = 0, n = 0;
+      for (const bm of books) {
+        const bet = (bm.bets || []).find(b => b.id === 1 || b.name === 'Match Winner');
+        if (!bet?.values) continue;
+        const h = parseFloat(bet.values.find(v => v.value === 'Home')?.odd);
+        const dr = parseFloat(bet.values.find(v => v.value === 'Draw')?.odd);
+        const a = parseFloat(bet.values.find(v => v.value === 'Away')?.odd);
+        if (h > 1 && dr > 1 && a > 1) { H += h; D += dr; A += a; n++; }
+      }
+      if (n) {
+        m.homeOdds = (H / n).toFixed(2);
+        m.drawOdds = (D / n).toFixed(2);
+        m.awayOdds = (A / n).toFixed(2);
+        const inv = 1 / (H / n) + 1 / (D / n) + 1 / (A / n);
+        m.homePct = Math.round((1 / (H / n)) / inv * 100);
+        m.drawPct = Math.round((1 / (D / n)) / inv * 100);
+        m.awayPct = 100 - m.homePct - m.drawPct;
+      }
+    } catch (e) {}
+  }
 }
 
 async function loadFromAPIFootball(comp, _apiKey) {
