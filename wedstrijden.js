@@ -1047,7 +1047,7 @@ function renderMatchCard(m) {
 
       <!-- Actieknoppen -->
       <div style="display:flex;gap:.4rem;padding:.0rem .9rem .7rem;">
-        <button onclick="event.stopPropagation();selectMatchAndAnalyse('${m.id}')"
+        <button onclick="event.stopPropagation();openMatchAnalyseModalById('${m.id}')"
           style="flex:1;padding:.4rem;border-radius:9px;background:rgba(0,190,196,.08);
           border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.55rem;
           font-weight:700;color:#00BEC4;cursor:pointer;">
@@ -1084,18 +1084,8 @@ function selectMatch(m) {
 }
 
 function selectMatchAndAnalyse(matchId) {
-  const m = (state.matches||[]).find(x => String(x.id) === String(matchId));
-  if (m) selectMatch(m);
-  setTimeout(() => {
-    switchScreen('analyse');
-    setTimeout(() => {
-      showAnalyseSubTab('analyse');
-      // Auto-start analyse als wedstrijd geselecteerd
-      if (typeof runAnalyse === 'function') {
-        setTimeout(() => runAnalyse(), 150);
-      }
-    }, 80);
-  }, 80);
+  // v26.162: opent de rijke analyse als modal (runAnalyse rendert daar in echte containers).
+  if (typeof openMatchAnalyseModalById === 'function') { openMatchAnalyseModalById(matchId); return; }
 }
 
 function goToAnalyse(matchId) {
@@ -2197,3 +2187,43 @@ async function loadCompWedstrijden(leagueId) {
 }
 
 
+
+// ── v26.162: Wedstrijd-analyse modal — host voor de RIJKE analyse (runAnalyse).
+// runAnalyse rendert in #rb-* / #entityChips / #analyseOutput; die bestonden nergens,
+// waardoor de rijke analyse nooit toonde. Deze modal levert die containers + draait runAnalyse.
+function openMatchAnalyseModalById(matchId) {
+  const m = (state.matches || []).find(x => String(x.id) === String(matchId));
+  if (!m) { console.warn('Match niet gevonden:', matchId); return; }
+  state.selectedMatch = m;
+  const existing = document.getElementById('match-analyse-modal');
+  if (existing) existing.remove();
+  const hasOdds = m.homeOdds && m.homeOdds !== '\u2014' && m.drawOdds && m.awayOdds;
+  const modal = document.createElement('div');
+  modal.id = 'match-analyse-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:flex-end;justify-content:center;';
+  modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
+  const oddsRow = hasOdds ? `<div style="display:flex;gap:.4rem;margin-bottom:.8rem;">
+      <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.4rem .2rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#00BEC4;font-weight:700;">1 THUIS</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#00BEC4;">${m.homeOdds}</div></div>
+      <div style="flex:1;text-align:center;background:rgba(255,255,255,.03);border:1px solid var(--stroke);border-radius:10px;padding:.4rem .2rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#d97706;font-weight:700;">X</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#d97706;">${m.drawOdds}</div></div>
+      <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.4rem .2rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#dc2626;font-weight:700;">2 UIT</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#dc2626;">${m.awayOdds}</div></div>
+    </div>` : '';
+  modal.innerHTML = `
+    <div style="background:var(--bg,#0d1b2a);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:1.1rem 1rem 2.5rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--ink,#fff);line-height:1;">${m.home || '?'} vs ${m.away || '?'}</div>
+        <button onclick="document.getElementById('match-analyse-modal').remove()" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:.3rem .65rem;color:var(--sub);font-size:.95rem;cursor:pointer;">✕</button>
+      </div>
+      ${oddsRow}
+      <div style="text-align:center;padding:.3rem 0 .7rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">⚽ Claude analyseert…</div></div>
+      <div id="entityChips" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.7rem;justify-content:center;"></div>
+      <div id="analyseOutput" style="display:none;">
+        <div id="rb-vorm"></div><div id="rb-stats"></div><div id="rb-tactiek"></div>
+        <div id="rb-kans"></div><div id="rb-risico"></div><div id="rb-advies"></div>
+        <div id="rb-tip"></div>
+      </div>
+      <button id="analyseBtn" style="display:none;"></button>
+      <button onclick="openMatchAnalyseModalById('${m.id}')" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">↻ Nieuwe analyse</button>
+    </div>`;
+  document.body.appendChild(modal);
+  if (typeof runAnalyse === 'function') runAnalyse();
+}
