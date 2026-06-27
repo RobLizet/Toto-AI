@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.155'; // v26.155: analyse-prompt herschreven — leidt met beschikbare uitslagen + odds + model, databeperking kort in 'risico' i.p.v. als hoofdthema; pick-voorzichtigheid behouden
+const APP_VERSION = 'v26.156'; // v26.156: VALUE-INDEX bovenaan analyse-blok — grootste model-vs-markt edge (pp) van de wedstrijd + bijbehorende pick
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
