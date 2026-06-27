@@ -3225,6 +3225,7 @@ function renderScanLog() {
           : '';
         var deletePickBtn = '<button class="delete-pick-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" style="font-family:monospace;font-size:.54rem;padding:2px 5px;border-radius:6px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);color:#dc2626;cursor:pointer;flex-shrink:0;">🗑</button>';
         var vColor = (p.value||0) >= 20 ? '#00BEC4' : (p.value||0) >= 10 ? '#d97706' : 'rgba(255,255,255,.4)';
+        var _u = (typeof unitAdvies === 'function') ? unitAdvies(p.confidence, p.value) : { units: 1, eur: '' };
         var sharpBadge = p.sharp ? '<span style="font-size:.36rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">🔥 SHARP</span>' : '';
         
         html += '<div style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .9rem;border-top:1px solid rgba(255,255,255,.05);">';
@@ -3236,6 +3237,7 @@ function renderScanLog() {
           + ' <span style="color:rgba(255,255,255,.88);">@</span> <span style="color:#fff;font-weight:700;">' + p.odds + '</span>'
           + ' · <span style="color:' + vColor + ';font-weight:700;">' + (p.value||0).toFixed(1) + '% value</span>'
           + ' · conf ' + p.confidence + '/10'
+          + ' · <span style="color:#00BEC4;font-weight:700;">📊 ' + _u.units + 'u' + _u.eur + '</span>'
           + '</div>';
         html += '</div>';
         if (p.score) html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#fff;background:rgba(255,255,255,.08);border-radius:8px;padding:.15rem .4rem;flex-shrink:0;">' + p.score + '</div>';
@@ -3377,6 +3379,7 @@ function showScanPopup(scanIdx) {
     const elite = p.elite ? '<span style="background:rgba(0,190,196,.12);color:#00BEC4;border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.46rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">⭐ ELITE</span>' : '';
     const lockBadge = p.lock === 'triple' ? '<span style="background:rgba(0,190,196,.12);color:#00BEC4;border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.46rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🏆 TRIPLE</span>'
       : p.lock === 'double' ? '<span style="background:rgba(0,190,196,.1);color:#1d4ed8;border:1px solid rgba(0,190,196,.2);font-family:monospace;font-size:.46rem;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:.3rem;">🔒 DOUBLE</span>' : '';
+    const _u = (typeof unitAdvies === 'function') ? unitAdvies(p.confidence, p.value) : { units: 1, eur: '' };
 
     picksHtml += `<div style="background:var(--card-bg,rgba(0,0,0,.03));border:1px solid var(--card-bg,rgba(0,0,0,.07));border-radius:12px;padding:.7rem .85rem;margin-bottom:.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.35rem;">
@@ -3391,6 +3394,7 @@ function showScanPopup(scanIdx) {
         <span style="background:var(--card-bg,rgba(0,0,0,.06));color:var(--ink,#0f172a);border:1px solid rgba(15,23,42,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">@ ${p.odds}</span>
         <span style="background:rgba(0,190,196,.08);color:#1d4ed8;border:1px solid rgba(0,190,196,.18);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">${(p.value||0).toFixed(1)}% value</span>
         <span style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">conf ${p.confidence}/10</span>
+        <span style="background:rgba(0,190,196,.12);color:#00BEC4;border:1px solid rgba(0,190,196,.25);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;padding:2px 7px;border-radius:4px;">📊 ${_u.units}u${_u.eur}</span>
         ${p.confidenceFinal ? `<span style="background:rgba(0,190,196,.08);color:#00BEC4;border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">CI ${p.confidenceFinal}</span>` : ''}
         ${elite}${lockBadge}
       </div>
