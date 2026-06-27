@@ -785,6 +785,11 @@ async function refreshValueScansFromWorker(silent = false) {
 // ── Value scan (per competitie) ───────────────────────────
 // v26.126: client-scan vervangen door worker-bron. Wrappers delegeren naar refreshValueScansFromWorker.
 async function scanValueBatched() {
+  // v26.157: oefenduels nooit op value scannen — experimentele opstellingen = ruis, geen edge.
+  if (state.activeComp === 'oefennl') {
+    if (typeof showLoadingMsg === 'function') showLoadingMsg('🤝 Oefenduels worden niet op value gescand (onbetrouwbaar) — open een duel en tik ANALYSE.', 'var(--muted)');
+    return;
+  }
   return refreshValueScansFromWorker(false);
 }
 async function _scanValueBatched_legacy() {
