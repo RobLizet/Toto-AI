@@ -1047,7 +1047,7 @@ function renderMatchCard(m) {
 
       <!-- Actieknoppen -->
       <div style="display:flex;gap:.4rem;padding:.0rem .9rem .7rem;">
-        <button onclick="event.stopPropagation();openMatchAnalyseModalById('${m.id}')"
+        <button onclick="event.stopPropagation();selectMatchAndAnalyse('${m.id}')"
           style="flex:1;padding:.4rem;border-radius:9px;background:rgba(0,190,196,.08);
           border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.55rem;
           font-weight:700;color:#00BEC4;cursor:pointer;">
