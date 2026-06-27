@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.158'; // v26.158: bankroll-units (vaste unit-strategie, geen Kelly) + 'waarom value'-uitleg in gewone taal in de tip; unit-grootte instelbaar
+const APP_VERSION = 'v26.159'; // v26.159: inzet-advies (units) ook op de losse pick-kaarten in het scan-overzicht (compacte lijst + detail-popup)
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
