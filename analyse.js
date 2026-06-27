@@ -1583,6 +1583,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
   const odds1x2 = (oH > 1 && oD > 1 && oA > 1);
   const modelValid = !!(poisson && poisson.valid);
   const F = "font-family:'IBM Plex Mono',monospace;";
+  const edges = []; // verzamelt model-vs-markt edges voor de VALUE-INDEX
 
   // ── 1X2 model vs markt (alleen als model én odds er zijn) ──
   let body = '';
@@ -1595,6 +1596,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     ];
     const rowsHTML = rows.map(r => {
       const model = Number(r[2]), markt = Number(r[3]), diff = model - markt, pos = diff >= 0;
+      edges.push({ label: `${r[0]} ${r[1]}`, edge: diff });
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
       return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.22rem 0;${F}font-size:.6rem;"><span style="color:#fff;">${r[0]} ${r[1]}</span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model.toFixed(0)}% \u00b7 markt ${markt.toFixed(0)}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
     }).join('');
@@ -1608,6 +1610,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
   if (gm || hasMarket) {
     const mrow = (label, odds, model, markt) => {
       const diff = model - markt, pos = diff >= 0;
+      edges.push({ label: `${label} @${odds}`, edge: diff });
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
       return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#00BEC4;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
     };
@@ -1636,7 +1639,21 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
   }
 
   if (!body && !goalsHTML) return '';
-  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">${body}${goalsHTML}</div>`;
+
+  // ── VALUE-INDEX: grootste model-vs-markt edge van de wedstrijd ──
+  let header = '';
+  if (edges.length) {
+    const best = edges.reduce((a, b) => b.edge > a.edge ? b : a);
+    const v = best.edge;
+    const col = v >= 3 ? '#16c784' : (v >= 0 ? '#d9a521' : '#dc2626');
+    const tag = v >= 5 ? 'sterke value' : (v >= 3 ? 'value' : (v >= 0 ? 'nauwelijks value' : 'geen value'));
+    header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.5rem .7rem;margin-bottom:.55rem;background:rgba(255,255,255,.04);border:1px solid ${col}55;border-radius:.55rem;">
+      <div style="min-width:0;"><div style="${F}font-size:.46rem;color:rgba(255,255,255,.6);letter-spacing:.09em;">VALUE-INDEX</div><div style="${F}font-size:.62rem;color:#fff;margin-top:.14rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${best.label}</div></div>
+      <div style="text-align:right;flex-shrink:0;"><div style="${F}font-weight:800;color:${col};line-height:1;font-size:1.25rem;">${v >= 0 ? '+' : ''}${v.toFixed(1)}<span style="font-size:.6rem;font-weight:600;"> pp</span></div><div style="${F}font-size:.45rem;color:${col};margin-top:.16rem;letter-spacing:.04em;">${tag}</div></div>
+    </div>`;
+  }
+
+  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">${header}${body}${goalsHTML}</div>`;
 }
 
 async function runAnalyse() {
