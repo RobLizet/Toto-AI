@@ -3,12 +3,37 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.157'; // v26.157: Nederlandse oefenduels (Friendlies Clubs, gefilterd op Eredivisie+KKD-clubs) als eigen chip — tonen+analyseren, geen value-scan
+const APP_VERSION = 'v26.158'; // v26.158: bankroll-units (vaste unit-strategie, geen Kelly) + 'waarom value'-uitleg in gewone taal in de tip; unit-grootte instelbaar
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
 
 const STATE_KEY = 'totoai_state';
+
+// ── v26.158: bankroll & uitleg ──────────────────────────────
+// Vaste unit-strategie (BEWUST géén Kelly: Kelly schaalt op de geschatte edge,
+// en die is nog niet gevalideerd → zou fouten vergroten). Units volgen de confidence.
+function unitAdvies(confidence, value) {
+  const c = Number(confidence) || 0, v = Number(value) || 0;
+  let units = 1;
+  if (c >= 8) units = 3;
+  else if (c >= 7) units = 2.5;
+  else if (c >= 6) units = 2;
+  else if (c >= 5) units = 1.5;
+  if (v >= 12 && units < 3) units += 0.5;
+  const us = (typeof state !== 'undefined' && state.settings && Number(state.settings.unitSize) > 0) ? Number(state.settings.unitSize) : 0;
+  const eur = us ? ` = \u20ac${(units * us).toFixed(2)}` : '';
+  return { units, eur };
+}
+// Value in gewone taal: model-kans vs break-even-kans uit de quote.
+function valueUitleg(modelPct, odds) {
+  const o = parseFloat(odds), mp = Math.round(Number(modelPct));
+  if (!(o > 1) || !isFinite(mp)) return '';
+  const be = Math.round(100 / o);
+  const diff = mp - be;
+  if (diff <= 0) return `Bij een quote van ${o} moet deze uitkomst ongeveer ${be}% kans hebben om quitte te spelen; het model schat ${mp}%. Weinig tot geen voordeel hier.`;
+  return `Bij een quote van ${o} hoeft deze uitkomst maar ${be}% kans te hebben om quitte te spelen. Het model schat ${mp}% \u2014 dat is ${diff} procentpunt hoger. Dat overschot is de \u201evalue\u201d: je krijgt een betere prijs dan de kans rechtvaardigt.`;
+}
 
 // v26.145: markt-helper — vertaalt een pick-code naar markt-groep + nette badge.
 // Maakt doelpunten-picks (O/U 1.5/2.5/3.5 + BTTS) naast 1X2 herkenbaar in de UI.
