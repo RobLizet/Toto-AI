@@ -67,6 +67,12 @@ function renderInstellingen() {
         </div>
 
         <div class="settings-field">
+          <label class="settings-label">Unit-grootte (€ per unit)</label>
+          <input class="settings-input" id="settUnitSize" type="number" min="0" step="1" placeholder="bijv. 10 — vaste basisinzet">
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">1 unit = je vaste basisinzet (tip: ~1% van je bankroll). Het inzet-advies bij een pick rekent units × dit bedrag om naar €.</div>
+        </div>
+
+        <div class="settings-field">
           <label class="settings-label">Standaard bookmaker</label>
           <select class="settings-input" id="settDefaultBookmaker">
             <option>Jacks</option>
@@ -377,6 +383,7 @@ function saveSettings() {
   state.settings.defaultComp     = document.getElementById('settDefaultComp')?.value||'eredivisie';
   state.settings.startBalance    = parseInt(document.getElementById('settStartBalance')?.value)||500;
   state.settings.defaultBet      = parseInt(document.getElementById('settDefaultBet')?.value)||10;
+  state.settings.unitSize        = parseFloat(document.getElementById('settUnitSize')?.value)||0;
   state.settings.defaultBookmaker= document.getElementById('settDefaultBookmaker')?.value||'Bet365';
   state.settings.notifThreshold  = parseInt(document.getElementById('notifThreshold')?.value)||20;
   state.settings.tripleMinOdds   = parseFloat(document.getElementById('tripleMinOdds')?.value)||1.6;
@@ -407,6 +414,7 @@ function applySettings() {
   _s('settDefaultComp',  state.settings.defaultComp||'eredivisie');
   _s('settStartBalance', state.settings.startBalance||500);
   _s('settDefaultBet',   state.settings.defaultBet||10);
+  _s('settUnitSize',     state.settings.unitSize||'');
   _s('betAmount',        state.settings.defaultBet||10);
 
   const bm = document.getElementById('settDefaultBookmaker');
