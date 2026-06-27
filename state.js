@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.156'; // v26.156: VALUE-INDEX bovenaan analyse-blok — grootste model-vs-markt edge (pp) van de wedstrijd + bijbehorende pick
+const APP_VERSION = 'v26.157'; // v26.157: Nederlandse oefenduels (Friendlies Clubs, gefilterd op Eredivisie+KKD-clubs) als eigen chip — tonen+analyseren, geen value-scan
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
