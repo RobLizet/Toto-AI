@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.163'; // v26.163: @odds in doelpunten/model-vs-markt leesbaarder — lichtere teal (#5eead4) + font-weight i.p.v. dimme #00BEC4
+const APP_VERSION = 'v26.164'; // v26.164: wedstrijdlijst laadt vandaag t/m +3 dagen (NS/live) i.p.v. enkel vandaag — alle aankomende WK-/toernooiduels verschijnen nu als kaarten
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
