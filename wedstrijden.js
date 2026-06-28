@@ -370,6 +370,7 @@ function matchKickoffMs(m) {
 function renderMatches(matches) {
   const list = document.getElementById('matchList');
   if (!list) return;
+  ensureWorkerPicks(); // v26.165: laad worker-picks → value-badges + gloed verschijnen zonder scannen
 
   // v26.144: vangnet — afgelopen/gepasseerde wedstrijden nooit als speelbaar tonen (kickoff via matchKickoffMs, ook voor oude cache)
   const _STALE_MS = 2.5 * 60 * 60 * 1000;
@@ -903,6 +904,39 @@ async function toggleGoalOdds(matchId, btn) {
   box.dataset.loaded = '1';
 }
 
+// v26.165: één bron voor "deze wedstrijd heeft een value-pick" — persistente worker-pick (/picks)
+// én sessie-scan (lastScanResults). Voedt de value-badge + gloed op de wedstrijdkaart,
+// zodat value in Matches in één oogopslag zichtbaar is (ook ná handmatige SCAN 3 DAGEN).
+function getMatchValuePick(m) {
+  if (!m) return null;
+  // 1) sessie-scan (vers na een handmatige scan)
+  const sr = (state.lastScanResults || []).find(s => String(s.matchId) === String(m.id));
+  if (sr && Number(sr.value) >= 5 && sr.pick !== 'X') {
+    return { value: Number(sr.value) || 0, label: sr.pickLabel || sr.pick || 'VALUE' };
+  }
+  // 2) persistente worker-pick (zonder scannen, uit /picks) — alleen nog-openstaande picks
+  const wp = (state._qualityPicks || []).find(p =>
+    String(p.fixtureId) === String(m.id) &&
+    (String(p.status || '').toLowerCase() === 'pending' || !p.status)
+  );
+  if (wp) return { value: Number(wp.value) || 0, label: wp.pickLabel || wp.pick || 'VALUE' };
+  return null;
+}
+
+// v26.165: laad de persistente worker-picks zodat value-badges zonder scannen verschijnen.
+async function ensureWorkerPicks(force) {
+  if (state._workerPicksLoading) return;
+  if (!force && state._workerPicksLoaded) return;
+  state._workerPicksLoading = true;
+  try {
+    const r = await fetch('https://api.promatchxi.app/picks');
+    if (r.ok) { const d = await r.json(); state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); }
+  } catch (e) {}
+  state._workerPicksLoaded = true;
+  state._workerPicksLoading = false;
+  if (typeof renderMatches === 'function' && (state.matches || []).length) renderMatches(state.matches);
+}
+
 function renderMatchCard(m) {
   if (!m) return null;
   const card = document.createElement('div');
@@ -920,12 +954,21 @@ function renderMatchCard(m) {
 
   const scanResult = (state.lastScanResults||[]).find(s => String(s.matchId) === String(m.id));
   const sharpBadge = renderOddsMovementBadge(m.id);
-  const valueBadge = scanResult && scanResult.value >= 5 && scanResult.pick !== 'X' ? `
+  // v26.165: value-badge + gloed uit gecombineerde bron (worker-picks /picks + sessie-scan)
+  const _vp = getMatchValuePick(m);
+  if (_vp && !m.isDone) {
+    const _strong = _vp.value >= 15;
+    card.style.border = _strong ? '1px solid rgba(0,190,196,.5)' : '1px solid rgba(245,158,11,.4)';
+    card.style.boxShadow = _strong
+      ? '0 0 0 1px rgba(0,190,196,.3), 0 0 20px rgba(0,190,196,.22)'
+      : '0 0 0 1px rgba(245,158,11,.25), 0 0 18px rgba(245,158,11,.16)';
+  }
+  const valueBadge = (_vp && !m.isDone) ? `
     <div style="position:absolute;top:8px;right:8px;font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:900;
-      color:${scanResult.value >= 15 ? '#00BEC4' : '#f59e0b'};
-      background:${scanResult.value >= 15 ? 'rgba(0,190,196,.12)' : 'rgba(245,158,11,.1)'};
-      border:1px solid ${scanResult.value >= 15 ? 'rgba(0,190,196,.3)' : 'rgba(245,158,11,.3)'};
-      padding:2px 8px;border-radius:999px;">⚡ +${Math.round(scanResult.value)}%</div>` : '';
+      color:${_vp.value >= 15 ? '#00BEC4' : '#f59e0b'};
+      background:${_vp.value >= 15 ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)'};
+      border:1px solid ${_vp.value >= 15 ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)'};
+      padding:2px 8px;border-radius:999px;z-index:2;">⚡ +${Math.round(_vp.value)}%</div>` : '';
 
   const statusTxt = m.isLive ? (m.liveMin ? m.liveMin + "'" : 'LIVE') : m.isDone ? 'FT' : m.time;
   const inCombi   = (state.combiBuilder||[]).some(l => String(l.matchId) === String(m.id));
