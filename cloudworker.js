@@ -6,13 +6,13 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v177'; // v177: /health activeHours teruggebracht naar werkelijke scan-uren (06 + 12-16 UTC) — geen valse scan_verouderd-WARN meer 's avonds/'s nachts // v176: /goal-markets endpoint (serveert v_goal_market_performance incl. CLV) voor de app // v175: closing O/U + BTTS-odds meegeschreven in odds_snapshots (goal_odds jsonb) voor CLV op doelpunten-markten — zonder extra API-calls (hoofdscan haalt ze al op) // v174: doelpunten-markten LIVE in productie-cron (O/U 1.5/2.5/3.5 + BTTS als volwaardige picks, vlag ENABLE_GOAL_MARKETS) + afrekening voor alle goal-markten; consistency-check per marktgroep, longshot-guard alleen op 1X2 // v173: goal-markten in scan-test (?goals=1) — Poisson uit AI-goals, 2-weg de-vig // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v178'; // v178: eigen Anthropic-key support — frontend stuurt x-user-anthropic-key mee; worker gebruikt die i.p.v. env-key, slaat daglimiet + kostentracking over (gebruiker betaalt zelf) // v177: /health activeHours teruggebracht naar werkelijke scan-uren (06 + 12-16 UTC) — geen valse scan_verouderd-WARN meer 's avonds/'s nachts // v176: /goal-markets endpoint (serveert v_goal_market_performance incl. CLV) voor de app // v175: closing O/U + BTTS-odds meegeschreven in odds_snapshots (goal_odds jsonb) voor CLV op doelpunten-markten — zonder extra API-calls (hoofdscan haalt ze al op) // v174: doelpunten-markten LIVE in productie-cron (O/U 1.5/2.5/3.5 + BTTS als volwaardige picks, vlag ENABLE_GOAL_MARKETS) + afrekening voor alle goal-markten; consistency-check per marktgroep, longshot-guard alleen op 1X2 // v173: goal-markten in scan-test (?goals=1) — Poisson uit AI-goals, 2-weg de-vig // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, x-api-key, anthropic-version, Authorization, x-user-anthropic-key',
 };
 
 // v115: jeugd-/onder-teams (U15–U23) hebben vrijwel nooit weddenschapsmarkten en
@@ -1121,6 +1121,11 @@ async function handleAnthropic(request, env) {
   const MAX_USER_CALLS_PER_DAY  = 50;  // per gebruiker (verhoogd v135c: testers + WK)
   const MAX_GLOBAL_CALLS_PER_DAY = 400; // totaal per dag (12 cron-scans × meerdere wedstrijden)
 
+  // v178: eigen Anthropic-key van de gebruiker → loopt op HUN tegoed; dan geen daglimiet en geen kostentracking op jou
+  const clientKey = request.headers.get('x-user-anthropic-key') || '';
+  const useOwnKey = clientKey.startsWith('sk-ant-');
+  const apiKey = useOwnKey ? clientKey : env.ANTHROPIC_KEY;
+
   // Gebruiker UID uit Authorization header
   let uid = 'anonymous';
   const authHeader = request.headers.get('Authorization') || '';
@@ -1132,31 +1137,33 @@ async function handleAnthropic(request, env) {
   const today = new Date().toISOString().split('T')[0];
   const monthKey = today.slice(0, 7); // YYYY-MM
 
-  // Check globale dagelijkse limiet via Firebase (snel)
-  try {
-    const globalKey = `usage/daily/${today}`;
-    const globalCount = (await fb(env, globalKey)) || 0;
-    if (globalCount >= MAX_GLOBAL_CALLS_PER_DAY) {
-      console.warn(`[Anthropic] Globale daglimiet bereikt: ${globalCount}/${MAX_GLOBAL_CALLS_PER_DAY}`);
-      return json({ error: 'Daglimiet bereikt — probeer morgen opnieuw', type: 'rate_limit', limit: MAX_GLOBAL_CALLS_PER_DAY }, 429);
-    }
-
-    // Check gebruiker daglimiet
-    if (uid !== 'anonymous') {
-      const userKey = `usage/users/${uid}/${today}`;
-      const userCount = (await fb(env, userKey)) || 0;
-      if (userCount >= MAX_USER_CALLS_PER_DAY) {
-        console.warn(`[Anthropic] User daglimiet bereikt: ${uid} ${userCount}/${MAX_USER_CALLS_PER_DAY}`);
-        return json({ error: `Jouw daglimiet van ${MAX_USER_CALLS_PER_DAY} analyses bereikt — morgen weer beschikbaar`, type: 'rate_limit', limit: MAX_USER_CALLS_PER_DAY }, 429);
+  // Daglimieten gelden alleen op de gedeelde (worker-)key. Eigen-key-gebruikers betalen zelf → geen limiet.
+  if (!useOwnKey) {
+    try {
+      const globalKey = `usage/daily/${today}`;
+      const globalCount = (await fb(env, globalKey)) || 0;
+      if (globalCount >= MAX_GLOBAL_CALLS_PER_DAY) {
+        console.warn(`[Anthropic] Globale daglimiet bereikt: ${globalCount}/${MAX_GLOBAL_CALLS_PER_DAY}`);
+        return json({ error: 'Daglimiet bereikt — probeer morgen opnieuw of voeg je eigen Anthropic-key toe in Instellingen', type: 'rate_limit', limit: MAX_GLOBAL_CALLS_PER_DAY }, 429);
       }
-      // Teller ophogen
-      await fb(env, userKey, 'PUT', userCount + 1);
-    }
 
-    // Globale teller ophogen
-    await fb(env, globalKey, 'PUT', globalCount + 1);
-  } catch(e) {
-    console.warn('[Anthropic] Rate limit check fout (doorgaan):', e.message);
+      // Check gebruiker daglimiet
+      if (uid !== 'anonymous') {
+        const userKey = `usage/users/${uid}/${today}`;
+        const userCount = (await fb(env, userKey)) || 0;
+        if (userCount >= MAX_USER_CALLS_PER_DAY) {
+          console.warn(`[Anthropic] User daglimiet bereikt: ${uid} ${userCount}/${MAX_USER_CALLS_PER_DAY}`);
+          return json({ error: `Jouw daglimiet van ${MAX_USER_CALLS_PER_DAY} analyses bereikt — morgen weer, of voeg je eigen Anthropic-key toe in Instellingen voor onbeperkt gebruik`, type: 'rate_limit', limit: MAX_USER_CALLS_PER_DAY }, 429);
+        }
+        // Teller ophogen
+        await fb(env, userKey, 'PUT', userCount + 1);
+      }
+
+      // Globale teller ophogen
+      await fb(env, globalKey, 'PUT', globalCount + 1);
+    } catch(e) {
+      console.warn('[Anthropic] Rate limit check fout (doorgaan):', e.message);
+    }
   }
 
   // v97: valideer body vóór doorsturen naar Anthropic — voorkomt 400-loop bij multiscan
@@ -1181,7 +1188,7 @@ async function handleAnthropic(request, env) {
   const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
-      'x-api-key': env.ANTHROPIC_KEY,
+      'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
       'content-type': 'application/json',
     },
@@ -1193,8 +1200,8 @@ async function handleAnthropic(request, env) {
     console.error('[Anthropic] 400 van Anthropic API:', JSON.stringify(data).substring(0, 300));
   }
 
-  // ── Kosten bijhouden in Supabase ──
-  if (res.status === 200 && data.usage) {
+  // ── Kosten bijhouden in Supabase (alleen op de gedeelde key — eigen-key-gebruik is hun kost) ──
+  if (res.status === 200 && data.usage && !useOwnKey) {
     try {
       const inputTokens  = data.usage.input_tokens  || 0;
       const outputTokens = data.usage.output_tokens || 0;
