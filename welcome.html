@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="nl" data-lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d1117" />
+  <title>ProMatchXI — AI Voetbal Value-analyse / AI Football Value Betting</title>
+
+  <!-- SEO (NL + EN) -->
+  <meta name="description" content="ProMatchXI vergelijkt een Poisson-model met consensus-odds van ~13 bookmakers en AI-analyse om value in voetbalweddenschappen te vinden. | ProMatchXI compares a Poisson model with consensus odds from ~13 bookmakers and AI analysis to find value in football betting. 18+." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://promatchxi.app/welcome.html" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ProMatchXI" />
+  <meta property="og:title" content="ProMatchXI — AI Voetbal Value-analyse / AI Football Value Betting" />
+  <meta property="og:description" content="Vind value in voetbalweddenschappen met Poisson + AI. | Find value in football betting with Poisson + AI. 18+." />
+  <meta property="og:url" content="https://promatchxi.app/welcome.html" />
+  <meta property="og:image" content="https://promatchxi.app/icon-192.png" />
+  <meta property="og:locale" content="nl_NL" />
+  <meta property="og:locale:alternate" content="en_US" />
+  <meta name="twitter:card" content="summary" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --bg:#0d1117; --bg2:#0f1623;
+      --card:rgba(255,255,255,.04); --stroke:rgba(255,255,255,.09);
+      --ink:#ffffff; --sub:rgba(255,255,255,.62);
+      --teal:#00BEC4; --teal-lite:#5eead4;
+      --amber:#d97706; --red:#dc2626; --purple:#c084fc;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      background:radial-gradient(120% 80% at 50% -10%, #11202f 0%, var(--bg) 55%);
+      color:var(--ink); font-family:'DM Sans',system-ui,sans-serif;
+      line-height:1.6; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    }
+    .wrap{max-width:1000px;margin:0 auto;padding:0 1.25rem}
+    .mono{font-family:'IBM Plex Mono',monospace}
+
+    /* taal-schakelaar */
+    html[data-lang="nl"] .t-en{display:none}
+    html[data-lang="en"] .t-nl{display:none}
+
+    /* topbar */
+    header{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+      background:rgba(13,17,23,.72);border-bottom:1px solid var(--stroke)}
+    .bar{display:flex;align-items:center;justify-content:space-between;height:60px}
+    .logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.04em;line-height:1}
+    .logo b{color:var(--teal)}
+    .right{display:flex;align-items:center;gap:.6rem}
+    .age{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;color:var(--teal-lite);
+      border:1px solid rgba(0,190,196,.35);border-radius:999px;padding:.2rem .5rem}
+    .toggle{display:flex;border:1px solid var(--stroke);border-radius:999px;overflow:hidden}
+    .lang-btn{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:700;letter-spacing:.05em;
+      background:transparent;color:var(--sub);border:none;padding:.3rem .6rem;cursor:pointer}
+    .lang-btn[aria-pressed="true"]{background:var(--teal);color:#04222a}
+
+    /* hero */
+    .hero{padding:3.5rem 0 2.5rem;display:grid;grid-template-columns:1.15fr .85fr;gap:2.5rem;align-items:center}
+    .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:700;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--teal);margin-bottom:1rem}
+    h1{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:clamp(2.6rem,7vw,4.2rem);
+      line-height:.96;letter-spacing:.01em;margin-bottom:1rem}
+    h1 .accent{color:var(--teal)}
+    .lede{font-size:1.05rem;color:var(--sub);max-width:34ch;margin-bottom:1.6rem}
+    .cta-row{display:flex;flex-wrap:wrap;gap:.7rem}
+    .btn{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:.8rem;letter-spacing:.03em;
+      border-radius:12px;padding:.8rem 1.3rem;cursor:pointer;text-decoration:none;display:inline-block;
+      transition:transform .12s ease, box-shadow .2s ease}
+    .btn-primary{background:var(--teal);color:#04222a;box-shadow:0 0 26px rgba(0,190,196,.28)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 34px rgba(0,190,196,.45)}
+    .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--stroke)}
+    .btn-ghost:hover{border-color:var(--teal)}
+
+    /* signature: value-index readout */
+    .readout{background:linear-gradient(165deg,rgba(0,190,196,.07),rgba(255,255,255,.02));
+      border:1px solid rgba(0,190,196,.3);border-radius:18px;padding:1.2rem 1.25rem;
+      box-shadow:0 0 0 1px rgba(0,190,196,.06), 0 18px 50px rgba(0,0,0,.4)}
+    .readout .lbl{font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.2em;
+      color:var(--teal);text-transform:uppercase}
+    .readout .pick{font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:600;margin:.35rem 0 .2rem}
+    .readout .pick .odd{color:var(--teal-lite)}
+    .readout .edge{display:flex;align-items:baseline;justify-content:space-between;margin:.55rem 0 .15rem}
+    .readout .pp{font-family:'Bebas Neue',sans-serif;font-size:2.6rem;line-height:1;color:var(--teal)}
+    .readout .tag{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--teal-lite)}
+    .readout .mvm{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--sub);
+      border-top:1px solid var(--stroke);padding-top:.55rem;margin-top:.55rem}
+    .readout .mvm b{color:var(--ink);font-weight:600}
+
+    /* sections */
+    section{padding:2.5rem 0}
+    .kicker{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--sub);margin-bottom:.8rem}
+    h2{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:clamp(1.8rem,5vw,2.6rem);
+      letter-spacing:.01em;margin-bottom:1.5rem}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+    .feat{background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:1.25rem}
+    .feat .ic{font-size:1.3rem;margin-bottom:.5rem}
+    .feat h3{font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.35rem}
+    .feat p{font-size:.9rem;color:var(--sub)}
+
+    /* steps */
+    .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;counter-reset:s}
+    .step{position:relative;background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:1.2rem 1rem}
+    .step .n{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:700;color:var(--teal);
+      border:1px solid rgba(0,190,196,.3);border-radius:8px;width:1.7rem;height:1.7rem;
+      display:flex;align-items:center;justify-content:center;margin-bottom:.6rem}
+    .step h3{font-size:.92rem;font-weight:700;margin-bottom:.3rem}
+    .step p{font-size:.82rem;color:var(--sub)}
+
+    /* responsible / footer */
+    .note{background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.25);border-radius:14px;
+      padding:1.1rem 1.2rem;font-size:.88rem;color:var(--sub)}
+    .note b{color:var(--amber)}
+    footer{border-top:1px solid var(--stroke);padding:2rem 0 3rem;margin-top:1rem}
+    .foot{display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;align-items:center;justify-content:center;
+      font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--sub)}
+    .foot a{color:var(--teal-lite);text-decoration:none}
+    .foot a:hover{text-decoration:underline}
+
+    /* reveal */
+    .rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease, transform .6s ease}
+    .rv.in{opacity:1;transform:none}
+    @media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}.btn{transition:none}}
+
+    @media (max-width:760px){
+      .hero{grid-template-columns:1fr;gap:1.6rem;padding:2.4rem 0 1.5rem}
+      .lede{max-width:none}
+      .grid{grid-template-columns:1fr}
+      .steps{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width:430px){ .steps{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap bar">
+      <div class="logo">ProMatch<b>XI</b></div>
+      <div class="right">
+        <span class="age">18+</span>
+        <div class="toggle" role="group" aria-label="Language">
+          <button class="lang-btn" data-l="nl" onclick="setLang('nl')" aria-pressed="true">NL</button>
+          <button class="lang-btn" data-l="en" onclick="setLang('en')" aria-pressed="false">EN</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- HERO -->
+    <div class="hero">
+      <div>
+        <div class="eyebrow">
+          <span class="t-nl">AI Voetbal Value-analyse</span>
+          <span class="t-en">AI Football Value Analysis</span>
+        </div>
+        <h1>
+          <span class="t-nl">Vind de value die de bookmaker <span class="accent">mist</span>.</span>
+          <span class="t-en">Find the value the bookmaker <span class="accent">misses</span>.</span>
+        </h1>
+        <p class="lede">
+          <span class="t-nl">ProMatchXI vergelijkt een eigen Poisson-model met de consensus-odds van ~13 bookmakers en voegt AI-analyse toe — zodat je in één oogopslag ziet wáár de waarde zit.</span>
+          <span class="t-en">ProMatchXI compares its own Poisson model against consensus odds from ~13 bookmakers and adds AI analysis — so you see at a glance where the value is.</span>
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="/">
+            <span class="t-nl">Open de app</span><span class="t-en">Open the app</span>
+          </a>
+          <a class="btn btn-ghost" href="#how">
+            <span class="t-nl">Hoe het werkt</span><span class="t-en">How it works</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- signature value-index readout -->
+      <div class="readout" aria-hidden="true">
+        <div class="lbl">Value-index</div>
+        <div class="pick">Under 2.5 <span class="odd">@2.49</span></div>
+        <div class="edge">
+          <span class="pp">+6.2<span style="font-size:1rem;font-family:'IBM Plex Mono',monospace"> pp</span></span>
+          <span class="tag"><span class="t-nl">sterke value</span><span class="t-en">strong value</span></span>
+        </div>
+        <div class="mvm">model <b>71%</b> · <span class="t-nl">markt</span><span class="t-en">market</span> <b>65%</b></div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <section id="features">
+      <div class="kicker"><span class="t-nl">Hoe het de waarde vindt</span><span class="t-en">How it finds value</span></div>
+      <h2><span class="t-nl">Model, markt en AI — samen.</span><span class="t-en">Model, market and AI — together.</span></h2>
+      <div class="grid">
+        <div class="feat rv">
+          <div class="ic">📊</div>
+          <h3>Poisson-model</h3>
+          <p><span class="t-nl">Een statistisch model schat de échte kans op elke uitslag en doelpuntenmarkt.</span><span class="t-en">A statistical model estimates the true probability of each result and goals market.</span></p>
+        </div>
+        <div class="feat rv">
+          <div class="ic">⚖️</div>
+          <h3><span class="t-nl">Consensus van ~13 bookmakers</span><span class="t-en">Consensus of ~13 bookmakers</span></h3>
+          <p><span class="t-nl">Eén eerlijke marktprijs, met de bookmaker-marge eruit gerekend.</span><span class="t-en">One fair market price, with the bookmaker margin removed.</span></p>
+        </div>
+        <div class="feat rv">
+          <div class="ic">🤖</div>
+          <h3>AI-analyse</h3>
+          <p><span class="t-nl">De AI weegt vorm, odds en model en legt in gewone taal uit waaróm iets value is.</span><span class="t-en">The AI weighs form, odds and model, and explains in plain language why something is value.</span></p>
+        </div>
+        <div class="feat rv">
+          <div class="ic">📈</div>
+          <h3><span class="t-nl">Trackrecord &amp; betrouwbaarheid</span><span class="t-en">Track record &amp; reliability</span></h3>
+          <p><span class="t-nl">Reliability Score, tiers en CLV-tracking houden de prestaties eerlijk bij.</span><span class="t-en">Reliability Score, tiers and CLV tracking keep performance honest.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how">
+      <div class="kicker"><span class="t-nl">In vier stappen</span><span class="t-en">In four steps</span></div>
+      <h2><span class="t-nl">Van scan tot inzet-advies.</span><span class="t-en">From scan to staking advice.</span></h2>
+      <div class="steps">
+        <div class="step rv"><div class="n mono">1</div><h3>Scan</h3><p><span class="t-nl">De app scant aankomende wedstrijden op value.</span><span class="t-en">The app scans upcoming matches for value.</span></p></div>
+        <div class="step rv"><div class="n mono">2</div><h3>Value-index</h3><p><span class="t-nl">Het grootste verschil tussen model en markt komt bovenaan.</span><span class="t-en">The biggest gap between model and market rises to the top.</span></p></div>
+        <div class="step rv"><div class="n mono">3</div><h3><span class="t-nl">Analyse</span><span class="t-en">Analysis</span></h3><p><span class="t-nl">Open een wedstrijd voor een complete analyse + inzet-advies.</span><span class="t-en">Open a match for a full analysis + staking advice.</span></p></div>
+        <div class="step rv"><div class="n mono">4</div><h3><span class="t-nl">Volg &amp; leer</span><span class="t-en">Track &amp; learn</span></h3><p><span class="t-nl">Resultaten en CLV worden bijgehouden zodat je ziet wat werkt.</span><span class="t-en">Results and CLV are tracked so you see what works.</span></p></div>
+      </div>
+    </section>
+
+    <!-- RESPONSIBLE -->
+    <section>
+      <div class="note rv">
+        <span class="t-nl"><b>18+ · Wed met beleid.</b> ProMatchXI is een informatie- en analysetool, geen bookmaker en geen garantie op winst. Speel je niet meer in de hand? Kijk op <a href="https://www.loketkansspel.nl" target="_blank" rel="noopener" style="color:var(--teal-lite)">loketkansspel.nl</a>.</span>
+        <span class="t-en"><b>18+ · Bet responsibly.</b> ProMatchXI is an information and analysis tool — not a bookmaker and not a guarantee of profit. Losing control of your play? In the Netherlands, see <a href="https://www.loketkansspel.nl" target="_blank" rel="noopener" style="color:var(--teal-lite)">loketkansspel.nl</a>.</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap foot">
+      <span>© 2026 ProMatchXI</span>
+      <span>·</span>
+      <a href="privacy.html"><span class="t-nl">Privacybeleid</span><span class="t-en">Privacy policy</span></a>
+      <span>·</span>
+      <a href="/"><span class="t-nl">Open de app</span><span class="t-en">Open the app</span></a>
+      <span>·</span>
+      <span>18+</span>
+    </div>
+  </footer>
+
+  <script>
+    function setLang(l){
+      l = (l === 'en') ? 'en' : 'nl';
+      document.documentElement.setAttribute('data-lang', l);
+      document.documentElement.setAttribute('lang', l);
+      try { localStorage.setItem('pmx_lang', l); } catch(e){}
+      document.querySelectorAll('.lang-btn').forEach(function(b){
+        b.setAttribute('aria-pressed', String(b.dataset.l === l));
+      });
+    }
+    (function(){
+      var l = 'nl';
+      try {
+        var saved = localStorage.getItem('pmx_lang');
+        if (saved) l = saved;
+        else if (((navigator.language||'').slice(0,2)) === 'en') l = 'en';
+      } catch(e){}
+      setLang(l);
+    })();
+    // scroll-reveal
+    (function(){
+      if (!('IntersectionObserver' in window)) { document.querySelectorAll('.rv').forEach(function(e){e.classList.add('in')}); return; }
+      var io = new IntersectionObserver(function(es){
+        es.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+      }, {threshold:.12});
+      document.querySelectorAll('.rv').forEach(function(e){ io.observe(e); });
+    })();
+  </script>
+</body>
+</html>
