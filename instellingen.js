@@ -21,6 +21,14 @@ function renderInstellingen() {
       <!-- API KEYS -->
       <div class="settings-section">
         <div class="settings-section-title">🔑 API KEYS</div>
+        <div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.25);border-radius:12px;padding:.7rem .8rem;margin-bottom:.85rem;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;color:#5eead4;margin-bottom:.4rem;">💡 EIGEN KEY = ONBEPERKTE AI-ANALYSE</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:.66rem;line-height:1.6;color:rgba(255,255,255,.88);">
+            De app werkt meteen op een gedeelde key, met een <b>daglimiet</b> op AI-analyses. Wil je <b>onbeperkt</b> analyseren? Maak een eigen (gratis) Anthropic-key aan op <b style="color:#5eead4;">console.anthropic.com</b> en plak 'm hieronder — dan loopt de AI op <b>jouw eigen tegoed</b> en vervalt de daglimiet voor jou.
+            <br><br>
+            Je key wordt alleen op <b>dit apparaat</b> opgeslagen en nooit gedeeld.
+          </div>
+        </div>
         <div id="apiKeysStatus" style="font-family:monospace;font-size:.55rem;margin-bottom:.75rem;line-height:1.6;"></div>
 
         <div class="settings-field">
