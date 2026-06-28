@@ -41,7 +41,8 @@ async function loadClaudeInsight(force) {
   const prompt = 'Je bent een eerlijke betting analyst. Analyseer deze statistieken van een Nederlandse AI-betting app en geef feedback in 4-5 zinnen, informele toon, geen bullet points:\n\nGesettled: '+st.length+' picks ('+w.length+' win)\nHitrate: '+hr+'%\nROI: '+(roi>=0?'+':'')+roi+'%\nOpen: '+ap.filter(p=>p.status==='pending').length+'\nPer type: '+ps+'\nLaatste 10: '+(l10hr!==null?l10hr+'% hitrate, ROI '+l10roi+'%':'te weinig data')+'\n\nBespreek: eerlijk oordeel, 1 sterkte, 1 verbeterpunt, verwachting richting 100 picks.';
   try {
     const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/anthropic', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method: 'POST', headers: {'Content-Type':'application/json',
+        ...((state.settings && state.settings.anthropicKey && state.settings.anthropicKey.startsWith('sk-ant-')) ? { 'x-user-anthropic-key': state.settings.anthropicKey } : {})},
       body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user',content:prompt}] })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -281,7 +282,8 @@ async function anthropicFetch(apiKey, body) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(authToken ? { 'Authorization': 'Bearer ' + authToken } : {})
+      ...(authToken ? { 'Authorization': 'Bearer ' + authToken } : {}),
+      ...((state.settings && state.settings.anthropicKey && state.settings.anthropicKey.startsWith('sk-ant-')) ? { 'x-user-anthropic-key': state.settings.anthropicKey } : {})
     },
     body: JSON.stringify(body)
   });
