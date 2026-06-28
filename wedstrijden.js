@@ -1285,10 +1285,14 @@ async function loadFromAPIFootball(comp, _apiKey) {
   showLoadingMsg(`⟳ ${COMP_NAMES[comp] || comp} laden...`, 'var(--muted)');
   try {
     const today = new Date().toISOString().split('T')[0];
-    let r = await apiFetch(`${WORKER}/apif/fixtures?league=${leagueId}&season=${season}&date=${today}&_cb=${Date.now()}`, null, 10000);
+    // v26.164: lijst toont vandaag t/m +3 dagen (alleen nog-te-spelen/live) i.p.v. enkel vandaag,
+    // zodat aankomende WK-/toernooiduels op meerdere dagen als kaarten verschijnen.
+    const day3 = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
+    let r = await apiFetch(`${WORKER}/apif/fixtures?league=${leagueId}&season=${season}&from=${today}&to=${day3}&status=NS-1H-HT-2H&_cb=${Date.now()}`, null, 10000);
     let d = await r.json();
     if (d.response?.length > 0) {
-      state.matches = d.response.map(f => parseAPIMatch(f)).filter(Boolean);
+      state.matches = d.response.map(f => parseAPIMatch(f)).filter(Boolean)
+        .sort((a, b) => new Date(a.dateISO || 0) - new Date(b.dateISO || 0));
       renderMatches(state.matches);
       saveOpeningOdds(state.matches);
       fetchOddsForMatches(leagueId, null).then(() => renderMatches(state.matches));
