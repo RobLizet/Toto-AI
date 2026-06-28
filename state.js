@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.167'; // v26.167: Google Analytics (GA4, G-DMER7ZGE21) tag geplaatst in index.html + welcome.html; privacybeleid bijgewerkt met Analytics/cookie-vermelding (AVG)
+const APP_VERSION = 'v26.168'; // v26.168: JSON-LD structured data (SoftwareApplication) toegevoegd aan index.html + welcome.html voor SEO — naam, categorie, zoekwoorden (value betting voetbal, AI voetbalanalyse, voetbal value picks e.a.), NL/EN, 18+
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
