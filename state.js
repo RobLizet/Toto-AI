@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.165'; // v26.165: value-merk op wedstrijdkaarten — badge (⚡ +X%) + teal/amber gloed op duels met een value-pick, gevoed door persistente worker-picks (/picks, zonder scannen) EN sessie-scan (ook na handmatige SCAN 3 DAGEN)
+const APP_VERSION = 'v26.166'; // v26.166: eigen Anthropic-key wordt nu echt gebruikt — frontend stuurt x-user-anthropic-key mee (als sk-ant-...) naar de worker (v178), die 'm gebruikt i.p.v. de gedeelde key + daglimiet vervalt. Uitleg-box in Instellingen toegevoegd
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
