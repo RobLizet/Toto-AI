@@ -3,7 +3,7 @@
 // v53: v26.37 — combi-tips uit scan-engine picks (consistent met scan-log, geen losse Claude-selectie)
 // ═══════════════════════════════════════════════════════
 
-const APP_VERSION = 'v26.166'; // v26.166: eigen Anthropic-key wordt nu echt gebruikt — frontend stuurt x-user-anthropic-key mee (als sk-ant-...) naar de worker (v178), die 'm gebruikt i.p.v. de gedeelde key + daglimiet vervalt. Uitleg-box in Instellingen toegevoegd
+const APP_VERSION = 'v26.167'; // v26.167: Google Analytics (GA4, G-DMER7ZGE21) tag geplaatst in index.html + welcome.html; privacybeleid bijgewerkt met Analytics/cookie-vermelding (AVG)
 
 // Tijdelijk: alleen WK 2026 tonen/scannen. Zet op false om alle competities te herstellen.
 const WK_ONLY_MODE = true;
