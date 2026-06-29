@@ -180,7 +180,13 @@
       'wed.loadingscorers': '⟳ Topscorers laden...',
       'wed.nodata': 'Geen data beschikbaar',
       'wed.loadfirst': 'Laad eerst wedstrijden',
-      'wed.nodatacup': 'Geen data beschikbaar voor KNVB Beker'
+      'wed.nodatacup': 'Geen data beschikbaar voor KNVB Beker',
+      'wed.loaderror': 'Laad fout',
+      'wed.retry': '↺ Opnieuw proberen',
+      'wed.tapname': 'Tik naam → analyse',
+      'wed.analysing': '⚽ Claude analyseert…',
+      'wed.newanalysis': '↻ Nieuwe analyse',
+      'wed.refreshbtn': '🔄 Verversen'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -350,7 +356,13 @@
       'wed.loadingscorers': '⟳ Loading top scorers...',
       'wed.nodata': 'No data available',
       'wed.loadfirst': 'Load matches first',
-      'wed.nodatacup': 'No data available for KNVB Cup'
+      'wed.nodatacup': 'No data available for KNVB Cup',
+      'wed.loaderror': 'Load error',
+      'wed.retry': '↺ Try again',
+      'wed.tapname': 'Tap name → analysis',
+      'wed.analysing': '⚽ Claude is analysing…',
+      'wed.newanalysis': '↻ New analysis',
+      'wed.refreshbtn': '🔄 Refreshing'
     }
   };
 
