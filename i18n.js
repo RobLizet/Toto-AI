@@ -212,7 +212,19 @@
       'wal.nofinished': 'Nog geen afgeronde weddenschappen',
       'wal.nobetssource': 'Geen bets voor deze bron',
       'wal.noexport': 'Geen bets om te exporteren',
-      'wal.notrackerbets': 'Geen tracker bets'
+      'wal.notrackerbets': 'Geen tracker bets',
+      'wal.claudeanalyse': '🤖 CLAUDE ANALYSE',
+      'wal.importedfromjacks': 'geïmporteerd van Jacks',
+      'wal.confirmclearall': 'Weet je het zeker? Dit wist ALLE inzetten.',
+      'wal.fillstake': 'Vul een geldige inzet in',
+      'wal.fillodds': 'Vul een geldige quote in',
+      'wal.fillstake2': 'Vul een inzet in',
+      'wal.fill2legs': 'Vul minimaal 2 complete legs in',
+      'wal.fillall': 'Vul alle velden in',
+      'wal.deleteconfirm': 'Verwijderen?',
+      'wal.noopenpickscheck': 'Geen open picks om te checken',
+      'wal.deletepick': 'Pick verwijderen?',
+      'wal.alreadysaved': 'Al opgeslagen'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -414,7 +426,19 @@
       'wal.nofinished': 'No settled bets yet',
       'wal.nobetssource': 'No bets for this source',
       'wal.noexport': 'No bets to export',
-      'wal.notrackerbets': 'No tracker bets'
+      'wal.notrackerbets': 'No tracker bets',
+      'wal.claudeanalyse': '🤖 CLAUDE ANALYSIS',
+      'wal.importedfromjacks': 'imported from Jacks',
+      'wal.confirmclearall': 'Are you sure? This clears ALL bets.',
+      'wal.fillstake': 'Enter a valid stake',
+      'wal.fillodds': 'Enter valid odds',
+      'wal.fillstake2': 'Enter a stake',
+      'wal.fill2legs': 'Enter at least 2 complete legs',
+      'wal.fillall': 'Fill in all fields',
+      'wal.deleteconfirm': 'Delete?',
+      'wal.noopenpickscheck': 'No open picks to check',
+      'wal.deletepick': 'Delete pick?',
+      'wal.alreadysaved': 'Already saved'
     }
   };
 

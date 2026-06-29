@@ -33,7 +33,7 @@ function renderAnalysePopup(text, onImport) {
     <div style="background:#0f1923;border-radius:20px 20px 0 0;width:100%;max-height:88vh;
       overflow-y:auto;padding:1.2rem 1.1rem 2rem;border-top:2px solid rgba(0,190,196,.3);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#00BEC4;letter-spacing:.05em;">🤖 CLAUDE ANALYSE</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#00BEC4;letter-spacing:.05em;">${t('wal.claudeanalyse','🤖 CLAUDE ANALYSE')}</div>
         <button onclick="document.getElementById('analyse-popup-overlay').remove()"
           style="background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6);
           font-size:1.1rem;width:32px;height:32px;border-radius:50%;cursor:pointer;">✕</button>
@@ -533,7 +533,7 @@ function closeDepositModal()  { closeModal('deposit-modal'); }
 function closeWithdrawModal() { closeModal('withdraw-modal'); }
 function closeTrackerModal()  { closeModal('tracker-modal'); }
 function clearWallet() {
-  if (!confirm('Weet je het zeker? Dit wist ALLE inzetten.')) return;
+  if (!confirm(t('wal.confirmclearall','Weet je het zeker? Dit wist ALLE inzetten.'))) return;
   const nb = parseInt(document.getElementById('settStartBalance')?.value)||state.settings.startBalance||500;
   state.wallet.balance=nb; state.wallet.totalStaked=0; state.wallet.totalWon=0; state.wallet.bets=[];
   state.settings.startBalance=nb;
@@ -741,8 +741,8 @@ function confirmBet() {
   const odds  = parseFloat(document.getElementById('bet-odds')?.value)  || 0;
   const note  = document.getElementById('bet-note')?.value?.trim() || '';
 
-  if (!stake || stake <= 0) { alert('Vul een geldige inzet in'); return; }
-  if (!odds  || odds  <= 1) { alert('Vul een geldige quote in');  return; }
+  if (!stake || stake <= 0) { alert(t('wal.fillstake','Vul een geldige inzet in')); return; }
+  if (!odds  || odds  <= 1) { alert(t('wal.fillodds','Vul een geldige quote in'));  return; }
   if (stake > state.wallet.balance) { alert('Onvoldoende saldo!'); return; }
 
   const pb    = pendingBet || {};
@@ -862,11 +862,11 @@ function confirmTracker() {
   const date     = document.getElementById('trDate').value;
   const bookmaker= document.getElementById('trBookmaker').value.trim();
   const note     = document.getElementById('trNote').value.trim();
-  if (!stake) { alert('Vul een inzet in'); return; }
+  if (!stake) { alert(t('wal.fillstake2','Vul een inzet in')); return; }
   let bet;
   if (trackerType==='combi') {
     const validLegs = trackerLegs.filter(l => l.match&&l.pick&&parseFloat(l.odds)>1);
-    if (validLegs.length<2) { alert('Vul minimaal 2 complete legs in'); return; }
+    if (validLegs.length<2) { alert(t('wal.fill2legs','Vul minimaal 2 complete legs in')); return; }
     const combiOdds = validLegs.reduce((a,l)=>a*parseFloat(l.odds),1);
     bet = {
       id: Date.now(), match:`Combi: ${validLegs.map(l=>l.match.split(' vs ')[0]).join(' + ')}`,
@@ -879,7 +879,7 @@ function confirmTracker() {
     const match = document.getElementById('trMatch').value.trim();
     const pick  = document.getElementById('trPick').value.trim();
     const odds  = parseFloat(document.getElementById('trOdds').value);
-    if (!match||!pick||!odds) { alert('Vul alle velden in'); return; }
+    if (!match||!pick||!odds) { alert(t('wal.fillall','Vul alle velden in')); return; }
     bet = {
       id:Date.now(), match, date, bookmaker, pick, markt:document.getElementById('trMarkt').value,
       odds, stake, payout:parseFloat((stake*odds).toFixed(2)), source:trackerSource, note, status:'pending', score:null
@@ -902,7 +902,7 @@ function cycleTrackerStatus(id) {
   saveState(); renderTracker(); updateTrackerStats();
 }
 function deleteTrackerBet(id) {
-  if (!confirm('Verwijderen?')) return;
+  if (!confirm(t('wal.deleteconfirm','Verwijderen?'))) return;
   state.tracker.bets = state.tracker.bets.filter(b => b.id!==id);
   saveState(); renderTracker(); updateTrackerStats();
 }
@@ -1431,7 +1431,7 @@ async function checkBacktestPick(pickId) {
 
 async function checkAllBacktestPicks() {
   const picks = (state.valueBacktest?.picks||[]).filter(p=>p.status==='pending');
-  if (!picks.length) { showToast('Geen open picks om te checken'); return; }
+  if (!picks.length) { showToast(t('wal.noopenpickscheck','Geen open picks om te checken')); return; }
   showToast(`⟳ Checken ${picks.length} picks...`);
   for (const p of picks) { await checkBacktestPick(p.id); }
   showToast('✓ Klaar met checken');
@@ -1446,7 +1446,7 @@ function cycleBacktestStatus(id) {
 }
 
 function deleteBacktestPick(id) {
-  if (!confirm('Pick verwijderen?')) return;
+  if (!confirm(t('wal.deletepick','Pick verwijderen?'))) return;
   state.valueBacktest.picks = state.valueBacktest.picks.filter(p=>String(p.id)!==String(id));
   saveState(); renderBacktest();
 }
@@ -1861,7 +1861,7 @@ function parseJacksImport() {
   closeJacksImport();
   renderTracker();
   updateTrackerStats();
-  showToast(`✅ ${imported} bets geïmporteerd van Jacks`);
+  showToast(`✅ ${imported} bets ${t('wal.importedfromjacks','geïmporteerd van Jacks')}`);
 }
 
 // Directe import zonder analyse (via knop)
@@ -2363,7 +2363,7 @@ function ptSaveFromScan(home, away, pick, pickLabel, odds, value, confidence, po
   const existing = state.valueBacktest.picks.find(p =>
     p.matchName===`${home} vs ${away}` && p.pick===pick && p.date===new Date().toLocaleDateString('nl-NL')
   );
-  if (existing) { showToast('Al opgeslagen'); return; }
+  if (existing) { showToast(t('wal.alreadysaved','Al opgeslagen')); return; }
   const pt = {
     id: Date.now()+'_pt',
     matchName:`${home} vs ${away}`,
