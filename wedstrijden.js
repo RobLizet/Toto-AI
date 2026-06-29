@@ -1829,15 +1829,15 @@ async function loadTodayAllComps() {
     await fetchOddsForAllMatches(state.matches, null);
     const withOdds = state.matches.filter(m => m.homeOdds !== '—').length;
     if (scanAll) { scanAll.querySelector('button').disabled = false; scanAll.querySelector('button').textContent = withOdds > 0 ? `⚡ SCAN ALLES VANDAAG (${withOdds})` : '⚡ SCAN ALLES VANDAAG'; }
-    if (btn) { btn.textContent = '🔄 Verversen'; btn.style.opacity = '1'; btn.disabled = false; }
+    if (btn) { btn.textContent = t('wed.refreshbtn','🔄 Verversen'); btn.style.opacity = '1'; btn.disabled = false; }
     if (typeof scheduleLiveAutoRefresh === 'function') scheduleLiveAutoRefresh();
   } catch(e) {
     if (list) list.innerHTML = `
       <div style="text-align:center;padding:2rem 1.25rem;display:flex;flex-direction:column;align-items:center;gap:.6rem;">
         <div style="font-size:1.8rem;opacity:.4;">⚠️</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:#dc2626;font-weight:700;">Laad fout</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:#dc2626;font-weight:700;">${t('wed.loaderror','Laad fout')}</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:rgba(255,255,255,.95);">${e.message}</div>
-        <button onclick="loadTodayAllComps()" style="padding:.45rem .9rem;border-radius:10px;background:rgba(15,23,42,.05);border:1px solid rgba(255,255,255,0.09);font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:rgba(255,255,255,.95);cursor:pointer;">↺ Opnieuw proberen</button>
+        <button onclick="loadTodayAllComps()" style="padding:.45rem .9rem;border-radius:10px;background:rgba(15,23,42,.05);border:1px solid rgba(255,255,255,0.09);font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:rgba(255,255,255,.95);cursor:pointer;">${t('wed.retry','↺ Opnieuw proberen')}</button>
       </div>`;
     if (btn) { btn.style.opacity = '1'; btn.disabled = false; }
   }
@@ -1957,7 +1957,7 @@ function renderMultiScanResults(picks, numComps) {
       </div>`;
     }).join('')}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem;">
-      <span style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);">Tik naam → analyse</span>
+      <span style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${t('wed.tapname','Tik naam → analyse')}</span>
       <button onclick="this.parentElement.parentElement.style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.95);cursor:pointer;">✕</button>
     </div>
   `;
@@ -2250,9 +2250,9 @@ function openMatchAnalyseModalById(matchId) {
   modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:flex-end;justify-content:center;';
   modal.onclick = function(e) { if (e.target === modal) modal.remove(); };
   const oddsRow = hasOdds ? `<div style="display:flex;gap:.4rem;margin-bottom:.8rem;">
-      <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.4rem .2rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#00BEC4;font-weight:700;">1 THUIS</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#00BEC4;">${m.homeOdds}</div></div>
+      <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.4rem .2rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#00BEC4;font-weight:700;">1 ${t('wed.home','THUIS')}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#00BEC4;">${m.homeOdds}</div></div>
       <div style="flex:1;text-align:center;background:rgba(255,255,255,.03);border:1px solid var(--stroke);border-radius:10px;padding:.4rem .2rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#d97706;font-weight:700;">X</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#d97706;">${m.drawOdds}</div></div>
-      <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.4rem .2rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#dc2626;font-weight:700;">2 UIT</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#dc2626;">${m.awayOdds}</div></div>
+      <div style="flex:1;text-align:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.4rem .2rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:#dc2626;font-weight:700;">2 ${t('wed.away','UIT')}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#dc2626;">${m.awayOdds}</div></div>
     </div>` : '';
   modal.innerHTML = `
     <div style="background:var(--bg,#0d1b2a);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:1.1rem 1rem 2.5rem;">
@@ -2261,7 +2261,7 @@ function openMatchAnalyseModalById(matchId) {
         <button onclick="document.getElementById('match-analyse-modal').remove()" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:.3rem .65rem;color:var(--sub);font-size:.95rem;cursor:pointer;">✕</button>
       </div>
       ${oddsRow}
-      <div style="text-align:center;padding:.3rem 0 .7rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">⚽ Claude analyseert…</div></div>
+      <div style="text-align:center;padding:.3rem 0 .7rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">${t('wed.analysing','⚽ Claude analyseert…')}</div></div>
       <div id="entityChips" style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.7rem;justify-content:center;"></div>
       <div id="analyseOutput" style="display:none;">
         <div id="rb-vorm"></div><div id="rb-stats"></div><div id="rb-tactiek"></div>
@@ -2269,7 +2269,7 @@ function openMatchAnalyseModalById(matchId) {
         <div id="rb-tip"></div>
       </div>
       <button id="analyseBtn" style="display:none;"></button>
-      <button onclick="openMatchAnalyseModalById('${m.id}')" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">↻ Nieuwe analyse</button>
+      <button onclick="openMatchAnalyseModalById('${m.id}')" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">${t('wed.newanalysis','↻ Nieuwe analyse')}</button>
     </div>`;
   document.body.appendChild(modal);
   if (typeof runAnalyse === 'function') runAnalyse();
