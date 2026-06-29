@@ -667,8 +667,8 @@ async function renderWedValuePicks() {
   if (!allPicks.length) {
     el.innerHTML = `<div style="text-align:center;padding:2.5rem 1rem;">
       <div style="font-size:2rem;margin-bottom:.5rem;">⚡</div>
-      <div style="${mono};font-size:.55rem;color:rgba(255,255,255,.95);">Geen open picks beschikbaar</div>
-      <div style="${mono};font-size:.46rem;color:rgba(255,255,255,.35);margin-top:.4rem;">Doe een scan via Matches → Multi-scan</div>
+      <div style="${mono};font-size:.55rem;color:rgba(255,255,255,.95);">${t('wed.noopenpicks','Geen open picks beschikbaar')}</div>
+      <div style="${mono};font-size:.46rem;color:rgba(255,255,255,.35);margin-top:.4rem;">${t('wed.doscan','Doe een scan via Matches → Multi-scan')}</div>
     </div>`;
     return;
   }
@@ -877,7 +877,7 @@ function cleanupOldLiveMatches() {
 async function toggleGoalOdds(matchId, btn) {
   const box = document.getElementById('goalodds-' + matchId);
   if (!box) return;
-  if (box.style.display !== 'none') { box.style.display = 'none'; if (btn) btn.innerHTML = '\u26bd MEER / MINDER GOALS \u25be'; return; }
+  if (box.style.display !== 'none') { box.style.display = 'none'; if (btn) btn.innerHTML = '\u26bd '+t('wed.moregoals','MEER / MINDER GOALS')+' \u25be'; return; }
   box.style.display = 'block';
   if (btn) btn.innerHTML = '\u26bd MEER / MINDER GOALS \u25b4';
   if (box.dataset.loaded === '1') return;
@@ -993,21 +993,21 @@ function renderMatchCard(m) {
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;
-          color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.3rem;">1 THUIS</div>
+          color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.3rem;">1 ${t('wed.home','THUIS')}</div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#00BEC4;line-height:1;">${m.homeOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.home, parseFloat(m.homeOdds))}</div>
       </button>
       <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','X','Gelijkspel',${m.drawOdds})"
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;
-          color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.3rem;">X GELIJK</div>
+          color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.3rem;">X ${t('wed.draw','GELIJK')}</div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#d97706;line-height:1;">${m.drawOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.draw, parseFloat(m.drawOdds))}</div>
       </button>
       <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','2','Uit wint',${m.awayOdds})"
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;
-          color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.3rem;">2 UIT</div>
+          color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.3rem;">2 ${t('wed.away','UIT')}</div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#dc2626;line-height:1;">${m.awayOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.away, parseFloat(m.awayOdds))}</div>
       </button>
     </div>
@@ -1023,7 +1023,7 @@ function renderMatchCard(m) {
       <button onclick="event.stopPropagation();toggleGoalOdds('${m.id}',this)"
         style="width:100%;background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.25);border-radius:10px;
         padding:.4rem;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;
-        color:#c084fc;letter-spacing:.05em;">\u26bd MEER / MINDER GOALS \u25be</button>
+        color:#c084fc;letter-spacing:.05em;">\u26bd ${t('wed.moregoals','MEER / MINDER GOALS')} \u25be</button>
       <div id="goalodds-${m.id}" style="display:none;margin-top:.4rem;"></div>
     </div>` : `
     <!-- v18.4: geen odds — vriendelijke melding ipv leeg -->
