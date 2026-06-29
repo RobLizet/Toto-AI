@@ -17,7 +17,17 @@
       'common.back': 'Terug',
       'common.loading': 'Laden…',
       'common.yes': 'Ja',
-      'common.no': 'Nee'
+      'common.no': 'Nee',
+      // app-chrome (fase 2) — NL ongewijzigd t.o.v. huidige labels
+      'nav.home': 'Home',
+      'nav.matches': 'Matches',
+      'nav.analyse': 'Analyse',
+      'nav.wallet': 'Wallet',
+      'nav.wk': 'WK 2026',
+      'nav.settings': 'Instellingen',
+      'login.signin': 'Inloggen',
+      'login.register': 'Registreren',
+      'settings.cookies': 'Cookievoorkeuren'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -30,7 +40,16 @@
       'common.back': 'Back',
       'common.loading': 'Loading…',
       'common.yes': 'Yes',
-      'common.no': 'No'
+      'common.no': 'No',
+      'nav.home': 'Home',
+      'nav.matches': 'Matches',
+      'nav.analyse': 'Analysis',
+      'nav.wallet': 'Wallet',
+      'nav.wk': 'WC 2026',
+      'nav.settings': 'Settings',
+      'login.signin': 'Sign in',
+      'login.register': 'Register',
+      'settings.cookies': 'Cookie preferences'
     }
   };
 
@@ -73,6 +92,29 @@
   window.tr         = t;     // veilig alias (mocht 't' ooit botsen)
   window.pmxLang    = currentLang;
   window.setAppLang = setAppLang;
+
+  // Statische HTML vertalen: elk element met data-i18n / data-i18n-ph
+  function applyStaticI18n(root) {
+    root = root || document;
+    try {
+      var nodes = root.querySelectorAll('[data-i18n]');
+      for (var i = 0; i < nodes.length; i++) {
+        var k = nodes[i].getAttribute('data-i18n');
+        if (k) nodes[i].textContent = t(k);
+      }
+      var ph = root.querySelectorAll('[data-i18n-ph]');
+      for (var j = 0; j < ph.length; j++) {
+        var pk = ph[j].getAttribute('data-i18n-ph');
+        if (pk) ph[j].setAttribute('placeholder', t(pk));
+      }
+    } catch (e) {}
+  }
+  window.applyStaticI18n = applyStaticI18n;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { applyStaticI18n(); });
+  } else {
+    applyStaticI18n();
+  }
 
   // html lang gelijktrekken met opgeslagen voorkeur (vóór state geladen is)
   try { document.documentElement.setAttribute('lang', currentLang()); } catch (e) {}
