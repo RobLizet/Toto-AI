@@ -154,7 +154,21 @@
       'dash.taplive': 'Tik op LIVE om standen te laden...',
       'dash.nolivepicks': 'Geen openstaande picks om live te volgen.<br>Doe eerst een scan!',
       'dash.liveerror': 'Fout bij laden live data. Probeer opnieuw.',
-      'dash.choosecomp': 'KIES COMPETITIE'
+      'dash.choosecomp': 'KIES COMPETITIE',
+      'wed.manualinput': 'HANDMATIGE INVOER',
+      'wed.ph.home': 'Thuisploeg',
+      'wed.ph.away': 'Uitploeg',
+      'wed.ph.comp': 'Competitie',
+      'wed.add': '✓ TOEVOEGEN',
+      'wed.loading': 'Wedstrijden laden...',
+      'wed.gentips': '⚡ GENEREER TOP 3 TIPS + COMBI',
+      'wed.montecarlo': '🎲 MONTE CARLO BANKROLL SIMULATIE',
+      'wed.nomatchestoday': 'Geen wedstrijden vandaag gevonden',
+      'wed.reload': '↺ Opnieuw laden',
+      'wed.cleanup': '🗑 Opruimen',
+      'wed.nolive': 'Geen live wedstrijden',
+      'wed.place': '💶 PLAATSEN',
+      'wed.clear': '✕ WISSEN'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -298,7 +312,21 @@
       'dash.taplive': 'Tap LIVE to load scores...',
       'dash.nolivepicks': 'No open picks to follow live.<br>Run a scan first!',
       'dash.liveerror': 'Error loading live data. Please try again.',
-      'dash.choosecomp': 'CHOOSE COMPETITION'
+      'dash.choosecomp': 'CHOOSE COMPETITION',
+      'wed.manualinput': 'MANUAL ENTRY',
+      'wed.ph.home': 'Home team',
+      'wed.ph.away': 'Away team',
+      'wed.ph.comp': 'Competition',
+      'wed.add': '✓ ADD',
+      'wed.loading': 'Loading matches...',
+      'wed.gentips': '⚡ GENERATE TOP 3 TIPS + COMBI',
+      'wed.montecarlo': '🎲 MONTE CARLO BANKROLL SIMULATION',
+      'wed.nomatchestoday': 'No matches found today',
+      'wed.reload': '↺ Reload',
+      'wed.cleanup': '🗑 Clean up',
+      'wed.nolive': 'No live matches',
+      'wed.place': '💶 PLACE',
+      'wed.clear': '✕ CLEAR'
     }
   };
 
