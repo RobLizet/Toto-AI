@@ -395,7 +395,9 @@ function renderInstellingen() {
 // ── SETTINGS OPSLAAN / LADEN ─────────────────────────
 
 function saveSettings() {
-  state.settings.anthropicKey    = document.getElementById('settAnthropicKey')?.value.trim()||'';
+  const _rawAnthropicKey = document.getElementById('settAnthropicKey')?.value || '';
+  const _mAnthropicKey = _rawAnthropicKey.match(/sk-ant-[A-Za-z0-9_-]+/);
+  state.settings.anthropicKey    = _mAnthropicKey ? _mAnthropicKey[0] : _rawAnthropicKey.trim();
   state.settings.footballKey     = document.getElementById('settFootballKey')?.value.trim()||'';
   state.settings.fdKey           = document.getElementById('settFdKey')?.value.trim()||'';
   state.settings.defaultComp     = document.getElementById('settDefaultComp')?.value||'eredivisie';

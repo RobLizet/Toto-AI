@@ -42,7 +42,7 @@ async function loadClaudeInsight(force) {
   try {
     const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/anthropic', {
       method: 'POST', headers: {'Content-Type':'application/json',
-        ...((state.settings && state.settings.anthropicKey && state.settings.anthropicKey.startsWith('sk-ant-')) ? { 'x-user-anthropic-key': state.settings.anthropicKey } : {})},
+        ...(_userAnthropicKey ? { 'x-user-anthropic-key': _userAnthropicKey } : {})},
       body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user',content:prompt}] })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -278,6 +278,9 @@ async function anthropicFetch(apiKey, body) {
   if (!body.messages[0].content || !String(body.messages[0].content).trim()) {
     throw new Error('Ongeldige API body: lege message content');
   }
+  const _akRaw = (state.settings && state.settings.anthropicKey) || '';
+  const _akMatch = _akRaw.match(/sk-ant-[A-Za-z0-9_-]+/);
+  const _userAnthropicKey = _akMatch ? _akMatch[0] : '';
   const res = await fetch(WORKER + '/anthropic', {
     method: 'POST',
     headers: {
@@ -297,7 +300,7 @@ async function anthropicFetch(apiKey, body) {
       if (detail) errMsg += ': ' + String(detail).substring(0, 80);
     } catch(e) {}
     // Ongeldige EIGEN Anthropic-key -> duidelijke melding i.p.v. cryptische 401
-    const usedOwnKey = !!(state.settings && state.settings.anthropicKey && state.settings.anthropicKey.startsWith('sk-ant-'));
+    const usedOwnKey = !!_userAnthropicKey;
     if (res.status === 401 && usedOwnKey && /api-key|authentication/i.test(String(detail) + ' ' + errMsg)) {
       const ke = new Error((typeof t === 'function') ? t('ai.invalidkey','Je eigen Anthropic-key is ongeldig \u2014 verwijder \'m in Instellingen.') : 'Je eigen Anthropic-key is ongeldig \u2014 verwijder \'m in Instellingen.');
       ke.code = 'INVALID_USER_KEY';
