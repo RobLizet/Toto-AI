@@ -239,6 +239,7 @@ function renderInstellingen() {
         <div class="settings-section-title">📊 ANALYTICS</div>
         <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);margin-bottom:.6rem;">Pick statistieken, ROI curve en scan log analyse.</div>
         <button class="small-action-btn" onclick="switchScreen('analytics')" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;font-size:.52rem;padding:.55rem;">📊 Open Analytics</button>
+        <button class="small-action-btn" onclick="pmxOpenConsent()" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;font-size:.52rem;padding:.55rem;margin-top:.4rem;">🍪 ${t('settings.cookies','Cookievoorkeuren')}</button>
       </div>
 
       <!-- OPSLAAN KNOP -->
