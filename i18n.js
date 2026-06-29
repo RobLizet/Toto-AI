@@ -247,7 +247,24 @@
       'an.avgvalue': 'GEM. VALUE',
       'an.sharphigh': 'Boekmakers zijn het grotendeels eens \u2014 betrouwbaar signaal',
       'an.sharpmed': 'Redelijke consensus \u2014 signaal is matig betrouwbaar',
-      'an.competition': 'Competitie '
+      'an.competition': 'Competitie ',
+      'wk.schedule': 'SCHEMA',
+      'wk.standings': 'STAND',
+      'wk.loadingpicks': 'WK picks laden...',
+      'wk.loadingschedule': 'Schema laden...',
+      'wk.loadingstand': 'Standen laden...',
+      'wk.loadingscorers': 'Topscorers laden...',
+      'wk.groupwinners': 'GROEPSFASE WINNAARS',
+      'wk.retry': 'Opnieuw',
+      'wk.netherlands': 'NEDERLAND',
+      'wk.nlgroup': 'WK 2026 \u00b7 Groep G',
+      'wk.group': 'GROEP',
+      'wk.players': 'SPELERS',
+      'wk.nonews': 'Geen nieuws gevonden',
+      'wk.loadingmatches': 'Wedstrijden laden...',
+      'wk.nomatches': 'Geen wedstrijden gevonden',
+      'wk.standingsafter': 'Standen beschikbaar na eerste speelronde',
+      'wk.group2': 'Groep'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -484,7 +501,24 @@
       'an.avgvalue': 'AVG VALUE',
       'an.sharphigh': 'Bookmakers largely agree \u2014 reliable signal',
       'an.sharpmed': 'Reasonable consensus \u2014 signal is moderately reliable',
-      'an.competition': 'Competition '
+      'an.competition': 'Competition ',
+      'wk.schedule': 'SCHEDULE',
+      'wk.standings': 'STANDINGS',
+      'wk.loadingpicks': 'Loading WC picks...',
+      'wk.loadingschedule': 'Loading schedule...',
+      'wk.loadingstand': 'Loading standings...',
+      'wk.loadingscorers': 'Loading top scorers...',
+      'wk.groupwinners': 'GROUP STAGE WINNERS',
+      'wk.retry': 'Retry',
+      'wk.netherlands': 'NETHERLANDS',
+      'wk.nlgroup': 'WC 2026 \u00b7 Group G',
+      'wk.group': 'GROUP',
+      'wk.players': 'PLAYERS',
+      'wk.nonews': 'No news found',
+      'wk.loadingmatches': 'Loading matches...',
+      'wk.nomatches': 'No matches found',
+      'wk.standingsafter': 'Standings available after the first round',
+      'wk.group2': 'Group'
     }
   };
 

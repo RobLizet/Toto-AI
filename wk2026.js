@@ -63,11 +63,11 @@ function renderWK2026Screen() {
         <button onclick="switchWKTab('schema')" id="wk-tab-schema"
           style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
           background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
-          font-weight:700;color:var(--sub);cursor:pointer;">📅 SCHEMA</button>
+          font-weight:700;color:var(--sub);cursor:pointer;">📅 ${t('wk.schedule','SCHEMA')}</button>
         <button onclick="switchWKTab('standen')" id="wk-tab-standen"
           style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
           background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
-          font-weight:700;color:var(--sub);cursor:pointer;">📊 STAND</button>
+          font-weight:700;color:var(--sub);cursor:pointer;">📊 ${t('wk.standings','STAND')}</button>
       </div>
       <!-- Tabs rij 2 -->
       <div style="display:flex;gap:.4rem;margin-bottom:.75rem;">
@@ -89,7 +89,7 @@ function renderWK2026Screen() {
       <div id="wk-tab-content-picks">
         <div id="wk-picks-list" style="margin-bottom:.75rem;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);
-            text-align:center;padding:1.5rem;">⟳ WK picks laden...</div>
+            text-align:center;padding:1.5rem;">⟳ ${t('wk.loadingpicks','WK picks laden...')}</div>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ function renderWK2026Screen() {
       <div id="wk-tab-content-schema" style="display:none;">
         <div id="wk-schema-list">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);
-            text-align:center;padding:1.5rem;">⟳ Schema laden...</div>
+            text-align:center;padding:1.5rem;">⟳ ${t('wk.loadingschedule','Schema laden...')}</div>
         </div>
       </div>
 
@@ -105,7 +105,7 @@ function renderWK2026Screen() {
       <div id="wk-tab-content-standen" style="display:none;">
         <div id="wk-standen-list">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);
-            text-align:center;padding:1.5rem;">⟳ Standen laden...</div>
+            text-align:center;padding:1.5rem;">⟳ ${t('wk.loadingstand','Standen laden...')}</div>
         </div>
       </div>
 
@@ -113,7 +113,7 @@ function renderWK2026Screen() {
       <div id="wk-tab-content-topscorers" style="display:none;">
         <div id="wk-topscorers-list">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);
-            text-align:center;padding:1.5rem;">⟳ Topscorers laden...</div>
+            text-align:center;padding:1.5rem;">⟳ ${t('wk.loadingscorers','Topscorers laden...')}</div>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ function renderWK2026Screen() {
         <div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;
           padding:.75rem .85rem;margin-bottom:.75rem;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;
-            color:var(--sub);margin-bottom:.6rem;">📋 GROEPSFASE WINNAARS</div>
+            color:var(--sub);margin-bottom:.6rem;">📋 ${t('wk.groupwinners','GROEPSFASE WINNAARS')}</div>
           <div id="wk-groups" style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;"></div>
         </div>
 
@@ -311,7 +311,7 @@ Respond ALLEEN met valid JSON, geen tekst buiten de JSON.`;
       <button onclick="generateWKPrediction(true)" style="margin-top:.5rem;
         background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);
         border-radius:999px;padding:.3rem .9rem;font-family:'IBM Plex Mono',monospace;
-        font-size:.44rem;color:#dc2626;cursor:pointer;font-weight:700;">↻ Opnieuw</button>`;
+        font-size:.44rem;color:#dc2626;cursor:pointer;font-weight:700;">↻ ${t('wk.retry','Opnieuw')}</button>`;
   } finally {
     if (btn) btn.style.display = 'block';
   }
@@ -488,8 +488,8 @@ function loadOranjeTab() {
       <div style="display:flex;align-items:center;gap:.8rem;background:linear-gradient(135deg,rgba(255,102,0,.15),rgba(255,140,0,.08));border:1.5px solid rgba(255,102,0,.3);border-radius:16px;padding:1rem;margin-bottom:.8rem;">
         <div style="font-size:2.5rem;">🇳🇱</div>
         <div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#ff6600;letter-spacing:.05em;line-height:1;">NEDERLAND</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.6);">WK 2026 · Groep G</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#ff6600;letter-spacing:.05em;line-height:1;">${t('wk.netherlands','NEDERLAND')}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.6);">${t('wk.nlgroup','WK 2026 · Groep G')}</div>
         </div>
       </div>
 
@@ -501,11 +501,11 @@ function loadOranjeTab() {
         </div>
         <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#00BEC4;">G</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.95);">GROEP</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.95);">${t('wk.group','GROEP')}</div>
         </div>
         <div style="background:rgba(255,255,255,.05);border-radius:12px;padding:.7rem .3rem;text-align:center;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#fff;">26</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.95);">SPELERS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:rgba(255,255,255,.95);">${t('wk.players','SPELERS')}</div>
         </div>
       </div>
 
@@ -586,7 +586,7 @@ async function loadOranjeNieuws() {
         </div>
       `).join('');
     } else {
-      el.innerHTML = '<div style="text-align:center;padding:1rem;font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.88);">Geen nieuws gevonden</div>';
+      el.innerHTML = '<div style="text-align:center;padding:1rem;font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.88);">'+t('wk.nonews','Geen nieuws gevonden')+'</div>';
     }
   } catch(e) {
     el.innerHTML = '<div style="color:#dc2626;font-family:monospace;font-size:.5rem;padding:.5rem;">Fout: ' + e.message + '</div>';
@@ -755,7 +755,7 @@ async function loadWKSchema() {
   const el = document.getElementById('wk-schema-list');
   if (!el) return;
 
-  el.innerHTML = `<div style="text-align:center;padding:1.5rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ Wedstrijden laden...</div>`;
+  el.innerHTML = `<div style="text-align:center;padding:1.5rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ ${t('wk.loadingmatches','Wedstrijden laden...')}</div>`;
 
   try {
     const today = new Date().toISOString().split('T')[0];
@@ -766,7 +766,7 @@ async function loadWKSchema() {
     _wkFixtures = Array.isArray(raw) ? raw : (raw?.response || []);
 
     if (!_wkFixtures.length) {
-      el.innerHTML = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:1.2rem;text-align:center;"><div style="font-size:1.5rem;margin-bottom:.5rem;">🗓️</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--ink);">Geen wedstrijden gevonden</div></div>`;
+      el.innerHTML = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:1.2rem;text-align:center;"><div style="font-size:1.5rem;margin-bottom:.5rem;">🗓️</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--ink);">${t('wk.nomatches','Geen wedstrijden gevonden')}</div></div>`;
       return;
     }
 
@@ -946,7 +946,7 @@ function _wkFilterGroep(groep) {
 async function loadWKStanden() {
   const el = document.getElementById('wk-standen-list');
   if (!el) return;
-  el.innerHTML = `<div style="text-align:center;padding:1.5rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ Standen laden...</div>`;
+  el.innerHTML = `<div style="text-align:center;padding:1.5rem;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">⟳ ${t('wk.loadingstand','Standen laden...')}</div>`;
 
   try {
     const res = await apiFetch('https://v3.football.api-sports.io/standings?league=1&season=2026');
@@ -957,7 +957,7 @@ async function loadWKStanden() {
     if (!standings.length) {
       el.innerHTML = `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:1.5rem;text-align:center;">
         <div style="font-size:1.5rem;margin-bottom:.5rem;">📊</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">Standen beschikbaar na eerste speelronde</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">${t('wk.standingsafter','Standen beschikbaar na eerste speelronde')}</div>
       </div>`;
       return;
     }
@@ -965,7 +965,7 @@ async function loadWKStanden() {
     let html = '';
     standings.forEach(groep => {
       if (!groep.length) return;
-      const groepNaam = groep[0].group || 'Groep';
+      const groepNaam = groep[0].group || t('wk.group2','Groep');
       const letter = groepNaam.replace('Group ', '');
 
       html += `<div style="background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:.75rem .85rem;margin-bottom:.6rem;">
