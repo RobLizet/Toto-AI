@@ -168,7 +168,13 @@
       'wed.cleanup': '🗑 Opruimen',
       'wed.nolive': 'Geen live wedstrijden',
       'wed.place': '💶 PLAATSEN',
-      'wed.clear': '✕ WISSEN'
+      'wed.clear': '✕ WISSEN',
+      'wed.noopenpicks': 'Geen open picks beschikbaar',
+      'wed.doscan': 'Doe een scan via Matches → Multi-scan',
+      'wed.home': 'THUIS',
+      'wed.draw': 'GELIJK',
+      'wed.away': 'UIT',
+      'wed.moregoals': 'MEER / MINDER GOALS'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -326,7 +332,13 @@
       'wed.cleanup': '🗑 Clean up',
       'wed.nolive': 'No live matches',
       'wed.place': '💶 PLACE',
-      'wed.clear': '✕ CLEAR'
+      'wed.clear': '✕ CLEAR',
+      'wed.noopenpicks': 'No open picks available',
+      'wed.doscan': 'Run a scan via Matches → Multi-scan',
+      'wed.home': 'HOME',
+      'wed.draw': 'DRAW',
+      'wed.away': 'AWAY',
+      'wed.moregoals': 'MORE / FEWER GOALS'
     }
   };
 
