@@ -202,10 +202,10 @@ function renderWedstrijdenScreen() {
     </div>
     <div id="manualMatchSection" style="display:none;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);
       border-radius:14px;padding:.9rem;margin-bottom:.7rem;">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.95);margin-bottom:.6rem;">HANDMATIGE INVOER</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.95);margin-bottom:.6rem;">${t('wed.manualinput','HANDMATIGE INVOER')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.4rem;">
-        <input id="manualHome" type="text" placeholder="Thuisploeg" style="font-family:monospace;font-size:.62rem;padding:.4rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;">
-        <input id="manualAway" type="text" placeholder="Uitploeg" style="font-family:monospace;font-size:.62rem;padding:.4rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;">
+        <input id="manualHome" type="text" placeholder="${t('wed.ph.home','Thuisploeg')}" style="font-family:monospace;font-size:.62rem;padding:.4rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;">
+        <input id="manualAway" type="text" placeholder="${t('wed.ph.away','Uitploeg')}" style="font-family:monospace;font-size:.62rem;padding:.4rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;margin-bottom:.4rem;">
         <input id="manualOdds1" type="number" step=".01" placeholder="1" style="font-family:monospace;font-size:.62rem;padding:.4rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;">
@@ -213,10 +213,10 @@ function renderWedstrijdenScreen() {
         <input id="manualOdds2" type="number" step=".01" placeholder="2" style="font-family:monospace;font-size:.62rem;padding:.4rem .5rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.5rem;">
-        <input id="manualLeague" type="text" placeholder="Competitie" style="font-family:monospace;font-size:.62rem;padding:.4rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;">
+        <input id="manualLeague" type="text" placeholder="${t('wed.ph.comp','Competitie')}" style="font-family:monospace;font-size:.62rem;padding:.4rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;">
         <input id="manualDate" type="date" style="font-family:monospace;font-size:.62rem;padding:.4rem .6rem;border-radius:8px;border:1px solid rgba(255,255,255,0.09);background:rgba(255,255,255,0.05);color:#ffffff;outline:none;">
       </div>
-      <button onclick="addManualMatch()" style="width:100%;background:linear-gradient(135deg,rgba(0,190,196,.15),rgba(0,190,196,.1));border:1px solid rgba(0,190,196,.3);color:#00BEC4;font-family:monospace;font-size:.6rem;font-weight:700;padding:.5rem;border-radius:9px;cursor:pointer;">✓ TOEVOEGEN</button>
+      <button onclick="addManualMatch()" style="width:100%;background:linear-gradient(135deg,rgba(0,190,196,.15),rgba(0,190,196,.1));border:1px solid rgba(0,190,196,.3);color:#00BEC4;font-family:monospace;font-size:.6rem;font-weight:700;padding:.5rem;border-radius:9px;cursor:pointer;">${t('wed.add','✓ TOEVOEGEN')}</button>
     </div>
 
     <!-- Match loading -->
@@ -234,7 +234,7 @@ function renderWedstrijdenScreen() {
     <!-- v26.109: SCAN 3 DAGEN verplaatst naar actiebalk naast MULTI-SCAN -->
     <div id="allCompsLoading" style="display:none;flex-direction:column;align-items:center;padding:1.5rem;gap:.6rem;">
       <div style="width:24px;height:24px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.95);">Wedstrijden laden...</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.95);">${t('wed.loading','Wedstrijden laden...')}</div>
     </div>
 
     <!-- Match lijst -->
@@ -243,8 +243,8 @@ function renderWedstrijdenScreen() {
     <!-- COMBI TIPS (verplaatst van Analyse — v26.105) -->
     <div class="analyse-block" style="padding:1.1rem;margin-top:.7rem;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.05em;margin-bottom:.8rem;">🏆 COMBI TIPS</div>
-      <button id="combiGenBtn" onclick="generateCombiTip()" style="width:100%;padding:.8rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.05em;background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:.5rem;">⚡ GENEREER TOP 3 TIPS + COMBI</button>
-      <button onclick="openMonteCarloModal()" style="width:100%;padding:.65rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.05em;background:rgba(124,58,237,.15);border:1.5px solid rgba(124,58,237,.5);color:#a78bfa;border-radius:12px;cursor:pointer;">🎲 MONTE CARLO BANKROLL SIMULATIE</button>
+      <button id="combiGenBtn" onclick="generateCombiTip()" style="width:100%;padding:.8rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.05em;background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:.5rem;">${t('wed.gentips','⚡ GENEREER TOP 3 TIPS + COMBI')}</button>
+      <button onclick="openMonteCarloModal()" style="width:100%;padding:.65rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.05em;background:rgba(124,58,237,.15);border:1.5px solid rgba(124,58,237,.5);color:#a78bfa;border-radius:12px;cursor:pointer;">${t('wed.montecarlo','🎲 MONTE CARLO BANKROLL SIMULATIE')}</button>
       <div id="combiCard" style="display:none;margin-top:.8rem;"></div>
     </div>
 
@@ -270,13 +270,13 @@ function renderWedstrijdenScreen() {
       </div>
       <div id="allCompsLoadingVandaag" style="display:none;flex-direction:column;align-items:center;padding:2rem;gap:.6rem;">
         <div style="width:24px;height:24px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.95);">Wedstrijden laden...</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.95);">${t('wed.loading','Wedstrijden laden...')}</div>
       </div>
       <div id="vandaagMatchList" class="match-list"></div>
       <div id="vandaagEmpty" style="display:none;text-align:center;padding:2.5rem 1rem;">
         <div style="font-size:2rem;margin-bottom:.5rem;">📅</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">Geen wedstrijden vandaag gevonden</div>
-        <button onclick="loadVandaagTab()" style="margin-top:.8rem;padding:.45rem .9rem;border-radius:10px;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;cursor:pointer;">↺ Opnieuw laden</button>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">${t('wed.nomatchestoday','Geen wedstrijden vandaag gevonden')}</div>
+        <button onclick="loadVandaagTab()" style="margin-top:.8rem;padding:.45rem .9rem;border-radius:10px;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;cursor:pointer;">${t('wed.reload','↺ Opnieuw laden')}</button>
       </div>
     </div>
 
@@ -292,12 +292,12 @@ function renderWedstrijdenScreen() {
           <span style="width:8px;height:8px;background:#ef4444;border-radius:50%;animation:blink .9s infinite;box-shadow:0 0 5px #ef4444;display:inline-block;"></span>
           LIVE WEDSTRIJDEN
         </div>
-        <button onclick="cleanupOldLiveMatches()" style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;padding:.25rem .55rem;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#ef4444;cursor:pointer;">🗑 Opruimen</button>
+        <button onclick="cleanupOldLiveMatches()" style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;padding:.25rem .55rem;border-radius:8px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#ef4444;cursor:pointer;">${t('wed.cleanup','🗑 Opruimen')}</button>
       </div>
       <div id="liveMatchList" class="match-list"></div>
       <div id="liveEmpty" style="display:none;text-align:center;padding:2.5rem 1rem;">
         <div style="font-size:2rem;margin-bottom:.5rem;">📡</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">Geen live wedstrijden</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">${t('wed.nolive','Geen live wedstrijden')}</div>
       </div>
     </div>
 
@@ -311,8 +311,8 @@ function renderWedstrijdenScreen() {
         <div class="combi-builder-legs" id="combiBuilderLegs"></div>
         <div id="combiBetSlipTotal"></div>
         <div class="combi-builder-actions">
-          <button onclick="placeCombi()" class="combi-place-btn">💶 PLAATSEN</button>
-          <button onclick="clearCombi()" class="combi-clear-btn">✕ WISSEN</button>
+          <button onclick="placeCombi()" class="combi-place-btn">${t('wed.place','💶 PLAATSEN')}</button>
+          <button onclick="clearCombi()" class="combi-clear-btn">${t('wed.clear','✕ WISSEN')}</button>
         </div>
       </div>
     </div>
