@@ -141,44 +141,44 @@ function renderWalletScreen() {
       <!-- WALLET TAB -->
       <div id="wsub-content-wallet" style="display:none;">
         <div style="background:linear-gradient(135deg,#061518,#04383F);border:1px solid rgba(0,190,196,.2);border-radius:18px;padding:1.1rem 1.2rem;margin-bottom:.75rem;box-shadow:0 4px 18px rgba(0,0,0,.35);">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.55);letter-spacing:.08em;margin-bottom:.3rem;">HUIDIG SALDO</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.55);letter-spacing:.08em;margin-bottom:.3rem;">${t('wal.currentbalance','HUIDIG SALDO')}</div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:2.4rem;color:#fff;letter-spacing:.03em;line-height:1;" id="bigBalance">€0,00</div>
           <div class="wallet-actions">
-            <button style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;cursor:pointer;" onclick="openDepositModal()">+ Storten</button>
-            <button style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.7);cursor:pointer;" onclick="openWithdrawModal()">- Opnemen</button>
-            <button style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#ef4444;cursor:pointer;" onclick="clearWallet()">Wissen</button>
+            <button style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;cursor:pointer;" onclick="openDepositModal()">${t('wal.deposit','+ Storten')}</button>
+            <button style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.7);cursor:pointer;" onclick="openWithdrawModal()">${t('wal.withdraw','- Opnemen')}</button>
+            <button style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#ef4444;cursor:pointer;" onclick="clearWallet()">${t('wal.clear','Wissen')}</button>
           </div>
         </div>
         <div class="wallet-strip">
-          <div class="w-item bal"><div class="w-label">Saldo</div><div class="val" id="miniBalance">€0,00</div></div>
+          <div class="w-item bal"><div class="w-label">${t('wal.balance','Saldo')}</div><div class="val" id="miniBalance">€0,00</div></div>
           <div class="w-item"><div class="w-label">W/V</div><div class="val" id="miniPnl">+€0,00</div></div>
           <div class="w-item"><div class="w-label">Bets</div><div class="val" id="miniBets">0</div></div>
           <div class="w-item"><div class="w-label">Hitrate</div><div class="val" id="miniRate">—</div></div>
           <div class="w-item"><div class="w-label">Avg EV</div><div class="val" id="miniEV" style="color:#00a8ad;">—</div></div>
         </div>
         <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
-          <div class="stat-mini-card"><div class="stat-mini-label">Ingezet</div><div class="stat-mini-val" id="totalStaked">€0,00</div></div>
-          <div class="stat-mini-card"><div class="stat-mini-label">Ontvangen</div><div class="stat-mini-val" id="totalWon">€0,00</div></div>
+          <div class="stat-mini-card"><div class="stat-mini-label">${t('wal.staked','Ingezet')}</div><div class="stat-mini-val" id="totalStaked">€0,00</div></div>
+          <div class="stat-mini-card"><div class="stat-mini-label">${t('wal.received','Ontvangen')}</div><div class="stat-mini-val" id="totalWon">€0,00</div></div>
           <div class="stat-mini-card"><div class="stat-mini-label">Hitrate</div><div class="stat-mini-val" id="hitRate">—</div></div>
         </div>
         <div class="wallet-chart-wrap">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
             <div style="display:flex;gap:.3rem;">
-              <button id="cv-saldo" class="chart-view-btn active" onclick="setChartView('saldo')">Saldo</button>
+              <button id="cv-saldo" class="chart-view-btn active" onclick="setChartView('saldo')">${t('wal.balance','Saldo')}</button>
               <button id="cv-pnl" class="chart-view-btn" onclick="setChartView('pnl')">W/V</button>
             </div>
             <div style="display:flex;gap:.3rem;">
-              <button id="cs-all"     class="chart-src-btn active" onclick="setChartSource('all')">Alles</button>
+              <button id="cs-all"     class="chart-src-btn active" onclick="setChartSource('all')">${t('wal.all','Alles')}</button>
               <button id="cs-analyse" class="chart-src-btn" onclick="setChartSource('analyse')">AI</button>
               <button id="cs-value"   class="chart-src-btn" onclick="setChartSource('value')">Value</button>
-              <button id="cs-eigen"   class="chart-src-btn" onclick="setChartSource('eigen')">Eigen</button>
+              <button id="cs-eigen"   class="chart-src-btn" onclick="setChartSource('eigen')">${t('wal.own','Eigen')}</button>
             </div>
           </div>
           <canvas id="walletChart" height="100"></canvas>
           <div id="chartEmpty" style="display:none;font-family:monospace;font-size:.6rem;color:rgba(255,255,255,.95);text-align:center;padding:1.5rem 0;"></div>
         </div>
-        <button class="export-btn" onclick="exportWalletCSV()">📥 Exporteer als CSV</button>
-        <div class="section-header"><span>MIJN INZETTEN</span></div>
+        <button class="export-btn" onclick="exportWalletCSV()">${t('wal.exportcsv','📥 Exporteer als CSV')}</button>
+        <div class="section-header"><span>${t('wal.mybets','MIJN INZETTEN')}</span></div>
         <div id="betHistoryList"></div>
       </div>
 
@@ -186,10 +186,10 @@ function renderWalletScreen() {
       <div id="wsub-content-tracker" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
           <div class="section-header" style="margin-bottom:0;">📒 TRACKER</div>
-          <button class="add-tracker-btn" onclick="openTrackerModal()">+ Bet toevoegen</button>
+          <button class="add-tracker-btn" onclick="openTrackerModal()">${t('wal.addbet','+ Bet toevoegen')}</button>
         </div>
         <div class="wallet-strip" style="margin-bottom:.75rem;">
-          <div class="w-item"><div class="w-label">Ingezet</div><div class="val" id="trStaked">€0</div></div>
+          <div class="w-item"><div class="w-label">${t('wal.staked','Ingezet')}</div><div class="val" id="trStaked">€0</div></div>
           <div class="w-item"><div class="w-label">W/V</div><div class="val" id="trPnl">€0,00</div></div>
           <div class="w-item"><div class="w-label">Bets</div><div class="val" id="trBets">0</div></div>
           <div class="w-item"><div class="w-label">ROI</div><div class="val" id="trRoi">—</div></div>
@@ -200,20 +200,20 @@ function renderWalletScreen() {
         </div>
         <div style="display:flex;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap;">
           <button class="small-action-btn" style="background:rgba(255,140,0,.1);border-color:rgba(255,140,0,.3);color:#e67e00;font-weight:800;"
-            onclick="openJacksPhotoImport()">📸 Importeer van Jacks</button>
+            onclick="openJacksPhotoImport()">${t('wal.importjacks','📸 Importeer van Jacks')}</button>
         </div>
         <div class="tracker-filter-row">
-          <button id="tf-all"     class="tracker-filter active" onclick="setTrackerFilter('all')">Alles</button>
+          <button id="tf-all"     class="tracker-filter active" onclick="setTrackerFilter('all')">${t('wal.all','Alles')}</button>
           <button id="tf-open"    class="tracker-filter" onclick="setTrackerFilter('open')">Open</button>
           <button id="tf-win"     class="tracker-filter" onclick="setTrackerFilter('win')">Win</button>
-          <button id="tf-lose"    class="tracker-filter" onclick="setTrackerFilter('lose')">Verlies</button>
+          <button id="tf-lose"    class="tracker-filter" onclick="setTrackerFilter('lose')">${t('wal.loss','Verlies')}</button>
           <button id="tf-analyse" class="tracker-filter" onclick="setTrackerFilter('analyse')">AI</button>
           <button id="tf-value"   class="tracker-filter" onclick="setTrackerFilter('value')">Value</button>
         </div>
         <div style="display:flex;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap;">
           <button class="export-btn" onclick="exportTrackerCSV()">📥 Export CSV</button>
           <button class="small-action-btn" style="background:rgba(255,140,0,.1);border-color:rgba(255,140,0,.3);color:#e67e00;font-weight:800;"
-            onclick="openJacksImport()">🎰 Importeer van Jacks</button>
+            onclick="openJacksImport()">${t('wal.importjacks2','🎰 Importeer van Jacks')}</button>
         </div>
         <div id="trackerList"></div>
       </div>
@@ -221,10 +221,10 @@ function renderWalletScreen() {
       <!-- RESULTATEN TAB (was: Backtest + Picks samengevoegd) -->
       <div id="wsub-content-backtest" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
-          <div class="section-header" style="margin-bottom:0;">📊 VALUE RESULTATEN</div>
+          <div class="section-header" style="margin-bottom:0;">${t('wal.valueresults','📊 VALUE RESULTATEN')}</div>
           <div style="display:flex;gap:.4rem;">
-            <button class="small-action-btn" onclick="checkAllBacktestPicks()">🔍 Alles checken</button>
-            <button class="small-action-btn danger" onclick="clearBacktest()">Wissen</button>
+            <button class="small-action-btn" onclick="checkAllBacktestPicks()">${t('wal.checkall','🔍 Alles checken')}</button>
+            <button class="small-action-btn danger" onclick="clearBacktest()">${t('wal.clear','Wissen')}</button>
           </div>
         </div>
 
@@ -234,7 +234,7 @@ function renderWalletScreen() {
         <!-- Sub-tabs -->
         <div class="bt-subtabs">
           <button id="bts-picks" class="bt-subtab active" onclick="setBtSubTab('picks')">Picks</button>
-          <button id="bts-comps" class="bt-subtab" onclick="setBtSubTab('comps')">Per Competitie</button>
+          <button id="bts-comps" class="bt-subtab" onclick="setBtSubTab('comps')">${t('wal.percomp','Per Competitie')}</button>
         </div>
 
         <!-- Stats strip -->
@@ -269,9 +269,9 @@ function renderWalletScreen() {
 
         <!-- Filter rij -->
         <div id="btFilterRow" class="tracker-filter-row" style="display:none;margin-bottom:.5rem;">
-          <button id="btf-all"     class="bt-filter-btn active" onclick="setBtFilter('all')">Alles</button>
+          <button id="btf-all"     class="bt-filter-btn active" onclick="setBtFilter('all')">${t('wal.all','Alles')}</button>
           <button id="btf-win"     class="bt-filter-btn" onclick="setBtFilter('win')">Win</button>
-          <button id="btf-lose"    class="bt-filter-btn" onclick="setBtFilter('lose')">Verlies</button>
+          <button id="btf-lose"    class="bt-filter-btn" onclick="setBtFilter('lose')">${t('wal.loss','Verlies')}</button>
           <button id="btf-pending" class="bt-filter-btn" onclick="setBtFilter('pending')">Open</button>
           <button id="btf-lock"    class="bt-filter-btn" onclick="setBtFilter('lock')">🔒 Locks</button>
         </div>
