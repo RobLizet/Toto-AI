@@ -186,7 +186,25 @@
       'wed.tapname': 'Tik naam → analyse',
       'wed.analysing': '⚽ Claude analyseert…',
       'wed.newanalysis': '↻ Nieuwe analyse',
-      'wed.refreshbtn': '🔄 Verversen'
+      'wed.refreshbtn': '🔄 Verversen',
+      'wal.balance': 'Saldo',
+      'wal.all': 'Alles',
+      'wal.clear': 'Wissen',
+      'wal.staked': 'Ingezet',
+      'wal.loss': 'Verlies',
+      'wal.own': 'Eigen',
+      'wal.received': 'Ontvangen',
+      'wal.currentbalance': 'HUIDIG SALDO',
+      'wal.deposit': '+ Storten',
+      'wal.withdraw': '- Opnemen',
+      'wal.exportcsv': '📥 Exporteer als CSV',
+      'wal.mybets': 'MIJN INZETTEN',
+      'wal.addbet': '+ Bet toevoegen',
+      'wal.importjacks': '📸 Importeer van Jacks',
+      'wal.importjacks2': '🎰 Importeer van Jacks',
+      'wal.valueresults': '📊 VALUE RESULTATEN',
+      'wal.checkall': '🔍 Alles checken',
+      'wal.percomp': 'Per Competitie'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -362,7 +380,25 @@
       'wed.tapname': 'Tap name → analysis',
       'wed.analysing': '⚽ Claude is analysing…',
       'wed.newanalysis': '↻ New analysis',
-      'wed.refreshbtn': '🔄 Refreshing'
+      'wed.refreshbtn': '🔄 Refreshing',
+      'wal.balance': 'Balance',
+      'wal.all': 'All',
+      'wal.clear': 'Clear',
+      'wal.staked': 'Staked',
+      'wal.loss': 'Loss',
+      'wal.own': 'Own',
+      'wal.received': 'Received',
+      'wal.currentbalance': 'CURRENT BALANCE',
+      'wal.deposit': '+ Deposit',
+      'wal.withdraw': '- Withdraw',
+      'wal.exportcsv': '📥 Export as CSV',
+      'wal.mybets': 'MY BETS',
+      'wal.addbet': '+ Add bet',
+      'wal.importjacks': '📸 Import from Jacks',
+      'wal.importjacks2': '🎰 Import from Jacks',
+      'wal.valueresults': '📊 VALUE RESULTS',
+      'wal.checkall': '🔍 Check all',
+      'wal.percomp': 'Per Competition'
     }
   };
 
