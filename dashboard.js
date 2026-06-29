@@ -543,8 +543,8 @@ function renderDashboard() {
             <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
           </svg>
         </div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">WEDSTRIJDEN</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">Laad matches, bekijk quotes en value indicators</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">${t('dash.tile.matches','WEDSTRIJDEN')}</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">${t('dash.tile.matches_sub','Laad matches, bekijk quotes en value indicators')}</div>
         <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">LIVE API</span></div>
       </div>
 
@@ -562,8 +562,8 @@ function renderDashboard() {
             <line x1="6" y1="16" x2="10" y2="16"/><line x1="22" y1="16" x2="26" y2="16"/>
           </svg>
         </div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">ANALYSE</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">AI analyse, value scan en combi tips</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">${t('dash.tile.analyse','ANALYSE')}</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">${t('dash.tile.analyse_sub','AI analyse, value scan en combi tips')}</div>
         <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">AI POWERED</span></div>
       </div>
 
@@ -579,8 +579,8 @@ function renderDashboard() {
             <circle cx="12" cy="12" r="8" stroke-dasharray="3 2"/><path d="M12 8v4l3 3"/>
           </svg>
         </div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">WALLET</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">Bets, tracker, backtest en pick analyse</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">${t('dash.tile.wallet','WALLET')}</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">${t('dash.tile.wallet_sub','Bets, tracker, backtest en pick analyse')}</div>
         <div style="margin-top:8px;"><span style="font-size:12px;font-weight:800;color:#C9A84C;">€${wallet.balance.toFixed(0)}</span></div>
       </div>
 
@@ -594,8 +594,8 @@ function renderDashboard() {
           </svg>
           <div style="font-size:11px;line-height:1.3;">🇳🇱🏴󠁧󠁢󠁥󠁮󠁧󠁿<br>🇩🇪🇪🇸🇮🇹🇧🇪</div>
         </div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">COMPETITIES</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">Stand, topscorers en wedstrijden per competitie</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">${t('dash.tile.comps','COMPETITIES')}</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">${t('dash.tile.comps_sub','Stand, topscorers en wedstrijden per competitie')}</div>
         <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#C9A84C;border:1px solid rgba(201,168,76,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">INFO</span></div>
       </div>
 
@@ -608,7 +608,7 @@ function renderDashboard() {
     <!-- Weekoverzicht -->
     ${weekScans.length ? `
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.95);margin-bottom:.5rem;">📅 DEZE WEEK</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.95);margin-bottom:.5rem;">${t('dash.thisweek','📅 DEZE WEEK')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.4rem;">
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">${weekScans.length}</div>
@@ -647,7 +647,7 @@ function renderDashboard() {
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${isCalibrated?'#00BEC4':'#d97706'};">${isCalibrated?'✓':`${settledPicks.length}/10`}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">${isCalibrated?'AI GECALIB.':'AI LEERT'}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">${isCalibrated?t('dash.aicalib','AI GECALIB.'):t('dash.ailearn','AI LEERT')}</div>
         </div>
       </div>
       <div style="background:rgba(15,23,42,.06);border-radius:999px;height:5px;overflow:hidden;margin-top:.5rem;">
@@ -657,7 +657,7 @@ function renderDashboard() {
 
     <!-- Disclaimer -->
     <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid rgba(255,255,255,0.09);margin-top:.5rem;">
-      ⚠️ Uitsluitend voor <b>entertainment & educatie</b> · Geen echt gokadvies<br>
+      ⚠️ Uitsluitend voor <b>${t('dash.disclaimer1','entertainment & educatie')}</b> · ${t('dash.disclaimer2','Geen echt gokadvies')}<br>
       Speel verantwoord · 18+ · Verslavingslijn: 0900-1090
     </div>
 
@@ -669,10 +669,10 @@ function renderDashboard() {
     <!-- Live scores content -->
     <div id="dashLiveContent" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🔴 LIVE STANDEN VAN JE PICKS</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🔴 ${t('dash.livescores','LIVE STANDEN VAN JE PICKS')}</div>
         <button onclick="loadLiveScores()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.25rem .5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.95);cursor:pointer;">⟳ ${t('dash.refresh','Ververs')}</button>
       </div>
-      <div id="liveScoresList"><div style="text-align:center;padding:2rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">Tik op LIVE om standen te laden...</div></div>
+      <div id="liveScoresList"><div style="text-align:center;padding:2rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">${t('dash.taplive','Tik op LIVE om standen te laden...')}</div></div>
     </div>
   `;
 
@@ -756,7 +756,7 @@ function openCompKeuze() {
   // Header
   const hdr = document.createElement('div');
   hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:.85rem;';
-  hdr.innerHTML = '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;background:linear-gradient(135deg,#00BEC4,#00a8ad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">KIES COMPETITIE</div>';
+  hdr.innerHTML = '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;background:linear-gradient(135deg,#00BEC4,#00a8ad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">'+t('dash.choosecomp','KIES COMPETITIE')+'</div>';
   const closeBtn = document.createElement('button');
   closeBtn.style.cssText = 'background:rgba(15,23,42,.08);border:none;border-radius:50%;width:2rem;height:2rem;font-size:1rem;cursor:pointer;';
   closeBtn.textContent = '✕';
@@ -1173,7 +1173,7 @@ async function loadLiveScores() {
   });
 
   if (!uniquePicks.length) {
-    list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;line-height:1.6;">Geen openstaande picks om live te volgen.<br>Doe eerst een scan!</div>';
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;line-height:1.6;">'+t('dash.nolivepicks','Geen openstaande picks om live te volgen.<br>Doe eerst een scan!')+'</div>';
     return;
   }
 
@@ -1223,7 +1223,7 @@ async function loadLiveScores() {
     const now = new Date();
     list.innerHTML += `<div style="text-align:center;padding:.5rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">Laatst bijgewerkt: ${now.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ververst elke 60s</div>`;
   } catch(e) {
-    list.innerHTML = '<div style="text-align:center;padding:2rem;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">Fout bij laden live data. Probeer opnieuw.</div>';
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">'+t('dash.liveerror','Fout bij laden live data. Probeer opnieuw.')+'</div>';
   }
 }
 
