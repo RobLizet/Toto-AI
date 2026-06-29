@@ -136,7 +136,25 @@
       'set.hint.account': 'Log in om data te synchroniseren tussen apparaten.',
       'set.hint.ownkeytitle': '✨ EIGEN KEY = ONBEPERKTE AI-ANALYSE',
       'set.hint.unitsize': '1 unit = je vaste basisinzet (tip: ~1% van je bankroll). Het inzet-advies bij een pick rekent units × dit bedrag om naar €.',
-      'set.hint.dbrules': '⚠️ Controleer of je Firebase Database Rules correct zijn ingesteld.<br>Open Firebase Console → Realtime Database → Rules'
+      'set.hint.dbrules': '⚠️ Controleer of je Firebase Database Rules correct zijn ingesteld.<br>Open Firebase Console → Realtime Database → Rules',
+      'dash.tile.matches': 'WEDSTRIJDEN',
+      'dash.tile.matches_sub': 'Laad matches, bekijk quotes en value indicators',
+      'dash.tile.analyse': 'ANALYSE',
+      'dash.tile.analyse_sub': 'AI analyse, value scan en combi tips',
+      'dash.tile.wallet': 'WALLET',
+      'dash.tile.wallet_sub': 'Bets, tracker, backtest en pick analyse',
+      'dash.tile.comps': 'COMPETITIES',
+      'dash.tile.comps_sub': 'Stand, topscorers en wedstrijden per competitie',
+      'dash.thisweek': '📅 DEZE WEEK',
+      'dash.aicalib': 'AI GECALIB.',
+      'dash.ailearn': 'AI LEERT',
+      'dash.disclaimer1': 'entertainment & educatie',
+      'dash.disclaimer2': 'Geen echt gokadvies',
+      'dash.livescores': 'LIVE STANDEN VAN JE PICKS',
+      'dash.taplive': 'Tik op LIVE om standen te laden...',
+      'dash.nolivepicks': 'Geen openstaande picks om live te volgen.<br>Doe eerst een scan!',
+      'dash.liveerror': 'Fout bij laden live data. Probeer opnieuw.',
+      'dash.choosecomp': 'KIES COMPETITIE'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -262,7 +280,25 @@
       'set.hint.account': 'Sign in to sync data across devices.',
       'set.hint.ownkeytitle': '✨ OWN KEY = UNLIMITED AI ANALYSIS',
       'set.hint.unitsize': '1 unit = your fixed base stake (tip: ~1% of your bankroll). The stake advice on a pick converts units × this amount into €.',
-      'set.hint.dbrules': '⚠️ Check that your Firebase Database Rules are set correctly.<br>Open Firebase Console → Realtime Database → Rules'
+      'set.hint.dbrules': '⚠️ Check that your Firebase Database Rules are set correctly.<br>Open Firebase Console → Realtime Database → Rules',
+      'dash.tile.matches': 'MATCHES',
+      'dash.tile.matches_sub': 'Load matches, view odds and value indicators',
+      'dash.tile.analyse': 'ANALYSIS',
+      'dash.tile.analyse_sub': 'AI analysis, value scan and combi tips',
+      'dash.tile.wallet': 'WALLET',
+      'dash.tile.wallet_sub': 'Bets, tracker, backtest and pick analysis',
+      'dash.tile.comps': 'COMPETITIONS',
+      'dash.tile.comps_sub': 'Standings, top scorers and matches per competition',
+      'dash.thisweek': '📅 THIS WEEK',
+      'dash.aicalib': 'AI CALIB.',
+      'dash.ailearn': 'AI LEARNING',
+      'dash.disclaimer1': 'entertainment & education',
+      'dash.disclaimer2': 'Not real betting advice',
+      'dash.livescores': 'LIVE SCORES OF YOUR PICKS',
+      'dash.taplive': 'Tap LIVE to load scores...',
+      'dash.nolivepicks': 'No open picks to follow live.<br>Run a scan first!',
+      'dash.liveerror': 'Error loading live data. Please try again.',
+      'dash.choosecomp': 'CHOOSE COMPETITION'
     }
   };
 
