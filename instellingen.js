@@ -195,6 +195,16 @@ function renderInstellingen() {
         </div>
       </div>
 
+      <!-- TAAL / LANGUAGE -->
+      <div class="settings-section">
+        <div class="settings-section-title">🌐 ${t('settings.lang.title','TAAL / LANGUAGE')}</div>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem;">
+          <button class="theme-btn" onclick="setAppLang('nl')" ${(state.settings.lang||'nl')==='nl'?'style=\"outline:2px solid #14b8a6;outline-offset:1px;\"':''}>🇳🇱 Nederlands</button>
+          <button class="theme-btn" onclick="setAppLang('en')" ${(state.settings.lang||'nl')==='en'?'style=\"outline:2px solid #14b8a6;outline-offset:1px;\"':''}>🇬🇧 English</button>
+        </div>
+        <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);">${t('settings.lang.hint','')}</div>
+      </div>
+
       <!-- THEMA -->
       <div class="settings-section">
         <div class="settings-section-title">🎨 THEMA</div>
