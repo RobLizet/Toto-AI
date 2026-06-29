@@ -204,7 +204,15 @@
       'wal.importjacks2': '🎰 Importeer van Jacks',
       'wal.valueresults': '📊 VALUE RESULTATEN',
       'wal.checkall': '🔍 Alles checken',
-      'wal.percomp': 'Per Competitie'
+      'wal.percomp': 'Per Competitie',
+      'wal.profiteuro': 'Winst/€',
+      'wal.progresstrackrecord': 'VOORTGANG TRACKRECORD',
+      'wal.check': '🔍 Check',
+      'wal.nobets': 'Nog geen weddenschappen',
+      'wal.nofinished': 'Nog geen afgeronde weddenschappen',
+      'wal.nobetssource': 'Geen bets voor deze bron',
+      'wal.noexport': 'Geen bets om te exporteren',
+      'wal.notrackerbets': 'Geen tracker bets'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -398,7 +406,15 @@
       'wal.importjacks2': '🎰 Import from Jacks',
       'wal.valueresults': '📊 VALUE RESULTS',
       'wal.checkall': '🔍 Check all',
-      'wal.percomp': 'Per Competition'
+      'wal.percomp': 'Per Competition',
+      'wal.profiteuro': 'Profit/€',
+      'wal.progresstrackrecord': 'TRACK RECORD PROGRESS',
+      'wal.check': '🔍 Check',
+      'wal.nobets': 'No bets yet',
+      'wal.nofinished': 'No settled bets yet',
+      'wal.nobetssource': 'No bets for this source',
+      'wal.noexport': 'No bets to export',
+      'wal.notrackerbets': 'No tracker bets'
     }
   };
 
