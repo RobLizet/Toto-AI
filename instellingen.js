@@ -32,30 +32,30 @@ function renderInstellingen() {
         <div id="apiKeysStatus" style="font-family:monospace;font-size:.55rem;margin-bottom:.75rem;line-height:1.6;"></div>
 
         <div class="settings-field">
-          <label class="settings-label">Anthropic API Key</label>
+          <label class="settings-label">${t('set.lbl.anthropic','Anthropic API Key')}</label>
           <div style="display:flex;gap:.4rem;">
             <input class="settings-input" id="settAnthropicKey" type="password" placeholder="sk-ant-...">
             <button class="key-vis-btn" onclick="toggleKeyVisibility('settAnthropicKey',this)">👁</button>
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">Voor AI-analyse · console.anthropic.com</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">${t('set.hint.anthropic','Voor AI-analyse · console.anthropic.com')}</div>
         </div>
 
         <div class="settings-field">
-          <label class="settings-label">API-Football Key</label>
+          <label class="settings-label">${t('set.lbl.football','API-Football Key')}</label>
           <div style="display:flex;gap:.4rem;">
-            <input class="settings-input" id="settFootballKey" type="password" placeholder="Optioneel (server heeft eigen key)">
+            <input class="settings-input" id="settFootballKey" type="password" placeholder="${t('set.ph.football','Optioneel (server heeft eigen key)')}">
             <button class="key-vis-btn" onclick="toggleKeyVisibility('settFootballKey',this)">👁</button>
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">Jouw eigen Football API key (rapidapi.com)</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">${t('set.hint.football','Jouw eigen Football API key (rapidapi.com)')}</div>
         </div>
 
         <div class="settings-field">
-          <label class="settings-label">FootballData API Key (FD)</label>
+          <label class="settings-label">${t('set.lbl.fd','FootballData API Key (FD)')}</label>
           <div style="display:flex;gap:.4rem;">
-            <input class="settings-input" id="settFdKey" type="password" placeholder="Optioneel">
+            <input class="settings-input" id="settFdKey" type="password" placeholder="${t('set.ph.optional','Optioneel')}">
             <button class="key-vis-btn" onclick="toggleKeyVisibility('settFdKey',this)">👁</button>
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">football-data.org voor gratis quotes</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">${t('set.hint.fd','football-data.org voor gratis quotes')}</div>
         </div>
       </div>
 
@@ -64,24 +64,24 @@ function renderInstellingen() {
         <div class="settings-section-title">⚙️ ${t('set.sec.defaults','STANDAARD INSTELLINGEN')}</div>
 
         <div class="settings-field">
-          <label class="settings-label">Startbalans (€)</label>
+          <label class="settings-label">${t('set.lbl.startbalance','Startbalans (€)')}</label>
           <input class="settings-input" id="settStartBalance" type="number" min="0" step="50">
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">Huidig saldo: <span id="currentBalanceDisplay">—</span></div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">${t('set.hint.balance','Huidig saldo:')} <span id="currentBalanceDisplay">—</span></div>
         </div>
 
         <div class="settings-field">
-          <label class="settings-label">Standaard inzet (€)</label>
+          <label class="settings-label">${t('set.lbl.defaultbet','Standaard inzet (€)')}</label>
           <input class="settings-input" id="settDefaultBet" type="number" min="1" step="5">
         </div>
 
         <div class="settings-field">
-          <label class="settings-label">Unit-grootte (€ per unit)</label>
+          <label class="settings-label">${t('set.lbl.unitsize','Unit-grootte (€ per unit)')}</label>
           <input class="settings-input" id="settUnitSize" type="number" min="0" step="1" placeholder="bijv. 10 — vaste basisinzet">
           <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">1 unit = je vaste basisinzet (tip: ~1% van je bankroll). Het inzet-advies bij een pick rekent units × dit bedrag om naar €.</div>
         </div>
 
         <div class="settings-field">
-          <label class="settings-label">Standaard bookmaker</label>
+          <label class="settings-label">${t('set.lbl.bookmaker','Standaard bookmaker')}</label>
           <select class="settings-input" id="settDefaultBookmaker">
             <option>Jacks</option>
             <option>Unibet</option>
@@ -94,7 +94,7 @@ function renderInstellingen() {
         </div>
 
         <div class="settings-field">
-          <label class="settings-label">Standaard competitie</label>
+          <label class="settings-label">${t('set.lbl.comp','Standaard competitie')}</label>
           <select class="settings-input" id="settDefaultComp">
             <option value="eredivisie">🇳🇱 Eredivisie</option>
             <option value="premier">🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League</option>
@@ -113,20 +113,20 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">🏆 ${t('set.sec.triplelock','TRIPLE LOCK CRITERIA')}</div>
         <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);margin-bottom:.75rem;line-height:1.5;">
-          Picks die aan alle criteria voldoen worden als Triple Lock gemarkeerd.
+          ${t('set.hint.triplelock','Picks die aan alle criteria voldoen worden als Triple Lock gemarkeerd.')}
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">
           <div class="settings-field">
-            <label class="settings-label">Min. quote</label>
+            <label class="settings-label">${t('set.lbl.minodds','Min. quote')}</label>
             <input class="settings-input" id="tripleMinOdds" type="number" step="0.1" min="1.2">
           </div>
           <div class="settings-field">
-            <label class="settings-label">Min. value %</label>
+            <label class="settings-label">${t('set.lbl.minvalue','Min. value %')}</label>
             <input class="settings-input" id="tripleMinValue" type="number" step="1" min="1">
           </div>
           <div class="settings-field">
-            <label class="settings-label">Min. conf</label>
+            <label class="settings-label">${t('set.lbl.minconf','Min. conf')}</label>
             <input class="settings-input" id="tripleMinConf" type="number" min="1" max="10">
           </div>
         </div>
@@ -137,10 +137,10 @@ function renderInstellingen() {
         <div class="settings-section-title">🎯 ${t('set.sec.pickdisplay','PICK-WEERGAVE')}</div>
         <div class="settings-row">
           <div>
-            <div class="settings-label">Toon alleen Elite / A+</div>
-            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);">Verbergt B/C-picks in het overzicht — focus op de sterkste signalen</div>
+            <div class="settings-label">${t('set.lbl.eliteonly','Toon alleen Elite / A+')}</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);">${t('set.hint.eliteonly','Verbergt B/C-picks in het overzicht — focus op de sterkste signalen')}</div>
           </div>
-          <button id="eliteOnlyBtn" class="toggle-btn ${localStorage.getItem('totoai_eliteOnly')!=='0'?'active':''}" onclick="toggleEliteOnly()">${localStorage.getItem('totoai_eliteOnly')!=='0'?'Aan ✓':'Uit'}</button>
+          <button id="eliteOnlyBtn" class="toggle-btn ${localStorage.getItem('totoai_eliteOnly')!=='0'?'active':''}" onclick="toggleEliteOnly()">${localStorage.getItem('totoai_eliteOnly')!=='0'?t('common.on_check','Aan ✓'):t('common.off','Uit')}</button>
         </div>
       </div>
 
@@ -150,33 +150,33 @@ function renderInstellingen() {
 
         <div class="settings-row">
           <div>
-            <div class="settings-label">Notificaties</div>
-            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);">Value alerts en wedstrijd herinneringen</div>
+            <div class="settings-label">${t('set.lbl.notif','Notificaties')}</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);">${t('set.hint.notif','Value alerts en wedstrijd herinneringen')}</div>
           </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;">
-            <button id="notifToggleBtn" class="toggle-btn" onclick="toggleNotifications()">Inschakelen</button>
+            <button id="notifToggleBtn" class="toggle-btn" onclick="toggleNotifications()">${t('common.enable','Inschakelen')}</button>
             <div id="notifStatusBadge" style="font-family:monospace;font-size:.45rem;padding:2px 6px;border-radius:6px;"></div>
           </div>
         </div>
 
         <div style="margin-top:.4rem;">
-          <button class="small-action-btn" onclick="debugPush()" style="font-size:.48rem;">🐛 Push debug</button>
+          <button class="small-action-btn" onclick="debugPush()" style="font-size:.48rem;">🐛 ${t('set.btn.pushdebug','Push debug')}</button>
         </div>
         <div id="notifEnabledSection">
           <div class="settings-field" style="margin-top:.5rem;">
-            <label class="settings-label">Value drempel (%)</label>
+            <label class="settings-label">${t('set.lbl.valuethreshold','Value drempel (%)')}</label>
             <input class="settings-input" id="notifThreshold" type="number" min="5" max="50" step="5">
-            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">Minimale value % voor push alert</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">${t('set.hint.valuethreshold','Minimale value % voor push alert')}</div>
           </div>
 
           <div class="settings-field">
-            <label class="settings-label">VAPID Public Key (optioneel)</label>
+            <label class="settings-label">${t('set.lbl.vapid','VAPID Public Key (optioneel)')}</label>
             <input class="settings-input" id="vapidPublicKey" type="text" placeholder="BG...">
           </div>
 
           <div style="display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap;">
-            <button class="small-action-btn" onclick="testNotification()">🔔 Test</button>
-            <button class="small-action-btn" onclick="toggleAutoValueAlerts()">⚡ Auto alerts</button>
+            <button class="small-action-btn" onclick="testNotification()">🔔 ${t('common.test','Test')}</button>
+            <button class="small-action-btn" onclick="toggleAutoValueAlerts()">⚡ ${t('set.btn.autoalerts','Auto alerts')}</button>
           </div>
         </div>
       </div>
@@ -190,7 +190,7 @@ function renderInstellingen() {
             Tik op ⏱️ naast de scan-knop om het paneel te openen.
           </div>
           <button class="small-action-btn" onclick="switchScreen('analyse');showAnalyseSubTab('scan');setTimeout(toggleAutoScanPanel,150)">
-            → Ga naar Analyse
+            ${t('set.btn.goanalyse','→ Ga naar Analyse')}
           </button>
         </div>
       </div>
@@ -217,10 +217,10 @@ function renderInstellingen() {
 
         <div class="settings-row">
           <div>
-            <div class="settings-label">Auto-dark</div>
-            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);">Schakel automatisch naar dark bij nacht</div>
+            <div class="settings-label">${t('set.lbl.autodark','Auto-dark')}</div>
+            <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);">${t('set.hint.autodark','Schakel automatisch naar dark bij nacht')}</div>
           </div>
-          <button id="autoDarkBtn" class="toggle-btn" onclick="toggleAutoDark()">Uit</button>
+          <button id="autoDarkBtn" class="toggle-btn" onclick="toggleAutoDark()">${t('common.off','Uit')}</button>
         </div>
       </div>
 
@@ -228,17 +228,17 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">💰 ${t('set.sec.wallet','WALLET BEHEER')}</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-          <button class="small-action-btn danger" onclick="confirmResetWallet()">🗑 Wallet wissen</button>
-          <button class="small-action-btn" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('tracker'),100)">📒 Naar Tracker</button>
-          <button class="small-action-btn" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('backtest'),100)">📊 Naar Backtest</button>
+          <button class="small-action-btn danger" onclick="confirmResetWallet()">🗑 ${t('set.btn.walletclear','Wallet wissen')}</button>
+          <button class="small-action-btn" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('tracker'),100)">📒 ${t('set.btn.totracker','Naar Tracker')}</button>
+          <button class="small-action-btn" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('backtest'),100)">📊 ${t('set.btn.tobacktest','Naar Backtest')}</button>
         </div>
       </div>
 
       <!-- ANALYTICS -->
       <div class="settings-section">
         <div class="settings-section-title">📊 ${t('set.sec.analytics','ANALYTICS')}</div>
-        <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);margin-bottom:.6rem;">Pick statistieken, ROI curve en scan log analyse.</div>
-        <button class="small-action-btn" onclick="switchScreen('analytics')" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;font-size:.52rem;padding:.55rem;">📊 Open Analytics</button>
+        <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);margin-bottom:.6rem;">${t('set.hint.analytics','Pick statistieken, ROI curve en scan log analyse.')}</div>
+        <button class="small-action-btn" onclick="switchScreen('analytics')" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;font-size:.52rem;padding:.55rem;">📊 ${t('set.btn.openanalytics','Open Analytics')}</button>
         <button class="small-action-btn" onclick="pmxOpenConsent()" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;font-size:.52rem;padding:.55rem;margin-top:.4rem;">🍪 ${t('settings.cookies','Cookievoorkeuren')}</button>
       </div>
 
