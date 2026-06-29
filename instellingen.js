@@ -20,7 +20,7 @@ function renderInstellingen() {
 
       <!-- API KEYS -->
       <div class="settings-section">
-        <div class="settings-section-title">🔑 API KEYS</div>
+        <div class="settings-section-title">🔑 ${t('set.sec.apikeys','API KEYS')}</div>
         <div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.25);border-radius:12px;padding:.7rem .8rem;margin-bottom:.85rem;">
           <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;color:#5eead4;margin-bottom:.4rem;">💡 EIGEN KEY = ONBEPERKTE AI-ANALYSE</div>
           <div style="font-family:'DM Sans',sans-serif;font-size:.66rem;line-height:1.6;color:rgba(255,255,255,.88);">
@@ -61,7 +61,7 @@ function renderInstellingen() {
 
       <!-- STANDAARD INSTELLINGEN -->
       <div class="settings-section">
-        <div class="settings-section-title">⚙️ STANDAARD INSTELLINGEN</div>
+        <div class="settings-section-title">⚙️ ${t('set.sec.defaults','STANDAARD INSTELLINGEN')}</div>
 
         <div class="settings-field">
           <label class="settings-label">Startbalans (€)</label>
@@ -111,7 +111,7 @@ function renderInstellingen() {
 
       <!-- TRIPLE LOCK INSTELLINGEN -->
       <div class="settings-section">
-        <div class="settings-section-title">🏆 TRIPLE LOCK CRITERIA</div>
+        <div class="settings-section-title">🏆 ${t('set.sec.triplelock','TRIPLE LOCK CRITERIA')}</div>
         <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);margin-bottom:.75rem;line-height:1.5;">
           Picks die aan alle criteria voldoen worden als Triple Lock gemarkeerd.
         </div>
@@ -134,7 +134,7 @@ function renderInstellingen() {
 
       <!-- PICK-WEERGAVE -->
       <div class="settings-section">
-        <div class="settings-section-title">🎯 PICK-WEERGAVE</div>
+        <div class="settings-section-title">🎯 ${t('set.sec.pickdisplay','PICK-WEERGAVE')}</div>
         <div class="settings-row">
           <div>
             <div class="settings-label">Toon alleen Elite / A+</div>
@@ -146,7 +146,7 @@ function renderInstellingen() {
 
       <!-- NOTIFICATIES -->
       <div class="settings-section">
-        <div class="settings-section-title">🔔 PUSH NOTIFICATIES</div>
+        <div class="settings-section-title">🔔 ${t('set.sec.push','PUSH NOTIFICATIES')}</div>
 
         <div class="settings-row">
           <div>
@@ -183,7 +183,7 @@ function renderInstellingen() {
 
       <!-- AUTOMATISCHE SCAN — verplaatst naar Analyse tab -->
       <div class="settings-section">
-        <div class="settings-section-title">⏱️ AUTOMATISCHE SCAN</div>
+        <div class="settings-section-title">⏱️ ${t('set.sec.autoscan','AUTOMATISCHE SCAN')}</div>
         <div class="settings-row">
           <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);line-height:1.6;">
             Auto-scan instellingen zijn verplaatst naar de <b style="color:#ffffff;">Analyse tab</b>.<br>
@@ -207,7 +207,7 @@ function renderInstellingen() {
 
       <!-- THEMA -->
       <div class="settings-section">
-        <div class="settings-section-title">🎨 THEMA</div>
+        <div class="settings-section-title">🎨 ${t('set.sec.theme','THEMA')}</div>
 
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.75rem;">
           <button class="theme-btn" onclick="setTheme('')">🌑 Default</button>
@@ -226,7 +226,7 @@ function renderInstellingen() {
 
       <!-- WALLET BEHEER -->
       <div class="settings-section">
-        <div class="settings-section-title">💰 WALLET BEHEER</div>
+        <div class="settings-section-title">💰 ${t('set.sec.wallet','WALLET BEHEER')}</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
           <button class="small-action-btn danger" onclick="confirmResetWallet()">🗑 Wallet wissen</button>
           <button class="small-action-btn" onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('tracker'),100)">📒 Naar Tracker</button>
@@ -236,18 +236,18 @@ function renderInstellingen() {
 
       <!-- ANALYTICS -->
       <div class="settings-section">
-        <div class="settings-section-title">📊 ANALYTICS</div>
+        <div class="settings-section-title">📊 ${t('set.sec.analytics','ANALYTICS')}</div>
         <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);margin-bottom:.6rem;">Pick statistieken, ROI curve en scan log analyse.</div>
         <button class="small-action-btn" onclick="switchScreen('analytics')" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;font-size:.52rem;padding:.55rem;">📊 Open Analytics</button>
         <button class="small-action-btn" onclick="pmxOpenConsent()" style="width:100%;justify-content:center;display:flex;align-items:center;gap:.4rem;font-size:.52rem;padding:.55rem;margin-top:.4rem;">🍪 ${t('settings.cookies','Cookievoorkeuren')}</button>
       </div>
 
       <!-- OPSLAAN KNOP -->
-      <button class="save-settings-btn" onclick="saveSettings()">💾 OPSLAAN</button>
+      <button class="save-settings-btn" onclick="saveSettings()">💾 ${t('set.save','OPSLAAN')}</button>
 
       <!-- CLOUD BACKUP (Firebase) -->
       <div class="settings-section">
-        <div class="settings-section-title">☁️ CLOUD BACKUP</div>
+        <div class="settings-section-title">☁️ ${t('set.sec.cloudbackup','CLOUD BACKUP')}</div>
         <div id="fbAutoSyncStatus" style="display:none;font-family:monospace;font-size:.5rem;color:#00BEC4;margin-bottom:.5rem;">✅ Auto-sync actief</div>
         <div id="fbBackupInfo" style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);margin-bottom:.75rem;line-height:1.5;">Laden...</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
@@ -260,7 +260,7 @@ function renderInstellingen() {
 
       <!-- LOKALE BACKUP -->
       <div class="settings-section">
-        <div class="settings-section-title">📦 LOKALE BACKUP</div>
+        <div class="settings-section-title">📦 ${t('set.sec.localbackup','LOKALE BACKUP')}</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
           <button class="small-action-btn" onclick="exportBackup()">📥 Exporteer JSON</button>
           <label class="small-action-btn" style="cursor:pointer;">
@@ -272,7 +272,7 @@ function renderInstellingen() {
 
       <!-- KOSTEN TRACKER -->
       <div class="settings-section">
-        <div class="settings-section-title">💸 KOSTEN TRACKER</div>
+        <div class="settings-section-title">💸 ${t('set.sec.costs','KOSTEN TRACKER')}</div>
         <div class="wallet-strip" style="margin-bottom:.75rem;">
           <div class="w-item">
             <div class="w-label">Tokens in</div>
@@ -304,7 +304,7 @@ function renderInstellingen() {
 
       <!-- ACCOUNT / AUTH -->
       <div class="settings-section">
-        <div class="settings-section-title">👤 ACCOUNT</div>
+        <div class="settings-section-title">👤 ${t('set.sec.account','ACCOUNT')}</div>
         <div id="authAccountSection">
           <div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.95);margin-bottom:.6rem;line-height:1.6;">
             Log in om data te synchroniseren tussen apparaten.
@@ -317,7 +317,7 @@ function renderInstellingen() {
 
       <!-- FIREBASE SECURITY -->
       <div class="settings-section">
-        <div class="settings-section-title">🔒 DATABASE BEVEILIGING</div>
+        <div class="settings-section-title">🔒 ${t('set.sec.dbsecurity','DATABASE BEVEILIGING')}</div>
         <div id="fbSecurityStatus" style="font-family:monospace;font-size:.52rem;margin-bottom:.75rem;line-height:1.6;padding:.6rem .8rem;border-radius:10px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);color:#dc2626;">
           ⚠️ Controleer of je Firebase Database Rules correct zijn ingesteld.<br>
           Open Firebase Console → Realtime Database → Rules
@@ -342,7 +342,7 @@ function renderInstellingen() {
       <!-- ADMIN TOOLS -->
       ${window._isAdmin ? `
       <div class="settings-section" style="border:1px solid rgba(220,38,38,.25);background:rgba(220,38,38,.04);">
-        <div class="settings-section-title" style="color:#dc2626;">🔧 ADMIN TOOLS</div>
+        <div class="settings-section-title" style="color:#dc2626;">🔧 ${t('set.sec.admin','ADMIN TOOLS')}</div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
           <button onclick="(async()=>{
             this.disabled=true;this.textContent='⟳ Scannen...';
@@ -372,7 +372,7 @@ function renderInstellingen() {
 
       <!-- APP INFO -->
       <div class="settings-section">
-        <div class="settings-section-title">ℹ️ APP INFO</div>
+        <div class="settings-section-title">ℹ️ ${t('set.sec.appinfo','APP INFO')}</div>
         <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);line-height:1.8;">
           <div>ProMatchXI <span id='appVersionLabel'></span> · AppsMadeByRobB</div>
           <div>🌐 promatchxi.app</div>
