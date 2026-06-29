@@ -155,7 +155,7 @@ function _calcLocalStats(allPicksOverride) {
 // ── Loading HTML ──────────────────────────────────────
 function _analyticsLoadingHTML() {
   return '<div style="padding:2rem;text-align:center;">' +
-    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.95);">📊 Analytics laden...</div>' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.95);">📊 ' + t('an.loading','Analytics laden...') + '</div>' +
     '</div>';
 }
 
@@ -166,28 +166,28 @@ function _analyticsHTML(local, worker) {
   // ── Header ──
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">';
   html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;">📊 STATS & ANALYTICS</div>';
-  html += '<button onclick="renderAnalyticsScreen()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:rgba(255,255,255,.95);cursor:pointer;">↻ Vernieuwen</button>';
+  html += '<button onclick="renderAnalyticsScreen()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:rgba(255,255,255,.95);cursor:pointer;">↻ ' + t('an.refresh','Vernieuwen') + '</button>';
   html += '</div>';
 
   // ── KPI row ──
   html += '<div class="analytics-block">';
-  html += '<div class="analytics-block-title">OVERZICHT</div>';
+  html += '<div class="analytics-block-title">' + t('an.overview','OVERZICHT') + '</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
-  html += _kpi('PICKS TOTAAL', local.total + '/100', '#00BEC4');
+  html += _kpi(t('an.pickstotal','PICKS TOTAAL'), local.total + '/100', '#00BEC4');
   html += _kpi('SETTLED', local.settled, '#00a8ad');
   html += _kpi('HITRATE', local.hitrate !== null ? local.hitrate + '%' : '—', local.hitrate !== null && local.hitrate >= 50 ? '#00BEC4' : '#dc2626');
   html += _kpi('ROI', local.roi !== null ? (local.roi >= 0 ? '+' : '') + local.roi + '%' : '—', local.roi !== null && local.roi >= 0 ? '#00BEC4' : '#dc2626');
   html += '</div>';
   html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;">';
-  html += _kpiSmall('GEM. ODDS', local.avgOdds || '—');
-  html += _kpiSmall('GEM. VALUE', local.avgValue ? local.avgValue + '%' : '—');
+  html += _kpiSmall(t('an.avgodds','GEM. ODDS'), local.avgOdds || '—');
+  html += _kpiSmall(t('an.avgvalue','GEM. VALUE'), local.avgValue ? local.avgValue + '%' : '—');
   html += _kpiSmall('OPEN', local.openPicks);
   html += '</div>';
 
   // Voortgangsbalk
   html += '<div style="margin-top:.65rem;">';
   html += '<div style="display:flex;justify-content:space-between;margin-bottom:.25rem;">';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.95);">VOORTGANG NAAR 100 PICKS</div>';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.95);">' + t('an.progress','VOORTGANG NAAR 100 PICKS') + '</div>';
   html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.95);">' + local.total + '/100</div>';
   html += '</div>';
   html += '<div style="background:var(--track-bg,rgba(255,255,255,.1));border-radius:999px;height:6px;overflow:hidden;">';
@@ -241,7 +241,7 @@ function _analyticsHTML(local, worker) {
   // ── Confidence correlatie ──
   if (local.settled >= 5) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">CONFIDENCE vs RESULTAAT</div>';
+    html += '<div class="analytics-block-title">' + t('an.confvsresult','CONFIDENCE vs RESULTAAT') + '</div>';
     local.confBuckets.forEach(([label, d]) => {
       const hr = d.t > 0 ? Math.round(d.w / d.t * 100) : 0;
       html += '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">';
@@ -259,7 +259,7 @@ function _analyticsHTML(local, worker) {
   // ── Per league ──
   if (local.byLeague.length > 0) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">PER COMPETITIE</div>';
+    html += '<div class="analytics-block-title">' + t('an.percomp','PER COMPETITIE') + '</div>';
     local.byLeague.forEach(([lid, d]) => {
       const hr = d.total > 0 ? Math.round(d.wins / d.total * 100) : 0;
       const roi = parseFloat((d.roi / d.total).toFixed(1));
@@ -307,14 +307,14 @@ function _analyticsHTML(local, worker) {
   } else {
     html += '<div class="analytics-block">';
     html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">via Supabase</span></div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);text-align:center;padding:.6rem 0;line-height:1.45;">CLV verschijnt zodra picks settelen.<br>De engine bouwt nu oddshistorie op (worker v122+).</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);text-align:center;padding:.6rem 0;line-height:1.45;">' + t('an.clvempty','CLV verschijnt zodra picks settelen.') + '<br>De engine bouwt nu oddshistorie op (worker v122+).</div>';
     html += '</div>';
   }
 
   // ── CLV Trend (v124: v_clv_trend) ──
   if (worker && worker.clvTrend && worker.clvTrend.length >= 2) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">CLV TREND <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">cumulatief gemiddelde</span></div>';
+    html += '<div class="analytics-block-title">CLV TREND <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">' + t('an.cumavg','cumulatief gemiddelde') + '</span></div>';
     html += _clvTrendChart(worker.clvTrend);
     html += '</div>';
   }
@@ -385,10 +385,10 @@ function _analyticsHTML(local, worker) {
     }
 
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">SHARP MONEY <span style="font-size:.42rem;font-weight:400;color:rgba(255,255,255,.95);">laatste 7 dagen</span></div>';
+    html += '<div class="analytics-block-title">SHARP MONEY <span style="font-size:.42rem;font-weight:400;color:rgba(255,255,255,.95);">' + t('an.last7days','laatste 7 dagen') + '</span></div>';
 
     if (sm.steamMovements7d === 0 && !sharpItems.length) {
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.95);text-align:center;padding:.5rem 0;">Geen steam movements gedetecteerd</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.95);text-align:center;padding:.5rem 0;">' + t('an.nosteam','Geen steam movements gedetecteerd') + '</div>';
     } else {
       if (sm.steamMovements7d > 0) {
         html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:#d97706;margin-bottom:.5rem;">🔥 ' + sm.steamMovements7d + ' steam movements</div>';
@@ -441,7 +441,7 @@ function _analyticsHTML(local, worker) {
   if (local.settled === 0 && !worker) {
     html += '<div style="text-align:center;padding:2rem;opacity:.5;">';
     html += '<div style="font-size:2rem;margin-bottom:.5rem;">📊</div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.95);">Nog geen settled picks — scan wedstrijden om data op te bouwen.</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.95);">' + t('an.nosettled','Nog geen settled picks — scan wedstrijden om data op te bouwen.') + '</div>';
     html += '</div>';
   }
 
@@ -554,13 +554,13 @@ const _LEAGUE_NAMES = {
   848:'Conference League',40:'Championship',119:'Eredivisie playoffs',
   113:'Eliteserien',103:'Allsvenskan',
 };
-function _leagueLabel(id){ return _LEAGUE_NAMES[id] || ('Competitie ' + id); }
+function _leagueLabel(id){ return _LEAGUE_NAMES[id] || (t('an.competition','Competitie ') + id); }
 
 // ── CLV trend chart (SVG, cumulatief gemiddelde) ──────
 function _clvTrendChart(trend) {
   const pts = trend.filter(t => t.cumAvgCLV !== null && t.cumAvgCLV !== undefined)
                    .map(t => Number(t.cumAvgCLV));
-  if (pts.length < 2) return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);text-align:center;padding:.5rem 0;">Trend verschijnt vanaf 2 settled picks.</div>';
+  if (pts.length < 2) return '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);text-align:center;padding:.5rem 0;">' + t('an.trendempty','Trend verschijnt vanaf 2 settled picks.') + '</div>';
   const W = 300, H = 80, PAD = 10;
   const min = Math.min(...pts, -2);
   const max = Math.max(...pts, 2);
@@ -587,7 +587,7 @@ function _roiBlocks(recent, market) {
   const fmtPct = (v) => (v === null || v === undefined || v === '') ? '—' : (Number(v)>=0?'+':'') + Number(v).toFixed(1) + '%';
   const col = (v) => (v === null || v === undefined || v === '') ? '#ffffff' : (Number(v)>=0?'#00BEC4':'#ef4444');
   let html = '<div class="analytics-block">';
-  html += '<div class="analytics-block-title">ROI & RENDEMENT <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">via Supabase</span></div>';
+  html += '<div class="analytics-block-title">' + t('an.roireturn','ROI & RENDEMENT') + ' <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">via Supabase</span></div>';
   if (recent.length) {
     html += '<div style="display:grid;grid-template-columns:repeat(' + Math.min(recent.length,2) + ',1fr);gap:.5rem;margin-bottom:.55rem;">';
     recent.forEach(r => {
@@ -600,7 +600,7 @@ function _roiBlocks(recent, market) {
     html += '</div>';
   }
   if (market.length) {
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);margin:.2rem 0 .3rem;">PER MARKT</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);margin:.2rem 0 .3rem;">' + t('an.permarket','PER MARKT') + '</div>';
     market.forEach(m => {
       const hr = (m.hitrate==null)?null:Math.round(Number(m.hitrate));
       html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,0.07);">';
@@ -615,10 +615,10 @@ function _roiBlocks(recent, market) {
   return html;
 }
 
-// ── Competitie-rating (betrouwbaarheid 0-100) ─────────
+// ── Competitie-rating (' + t('an.reliability','betrouwbaarheid') + ' 0-100) ─────────
 function _leagueRatingBlock(ratings) {
   let html = '<div class="analytics-block">';
-  html += '<div class="analytics-block-title">COMPETITIE-RATING <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">betrouwbaarheid</span></div>';
+  html += '<div class="analytics-block-title">' + t('an.comprating','COMPETITIE-RATING') + ' <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">betrouwbaarheid</span></div>';
   ratings.forEach(r => {
     const rel = (r.reliability==null)?0:Number(r.reliability);
     const relCol = rel >= 70 ? '#00BEC4' : rel >= 45 ? '#d97706' : '#ef4444';
@@ -761,9 +761,9 @@ function showSharpPopup(dataId) {
         ${pctRow('Eens met odds', s.consensusStrength, s.consensusStrength > 70 ? '#00BEC4' : '#d97706')}
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:rgba(255,255,255,.88);margin-top:.25rem;">
           ${parseFloat(s.consensusStrength) > 80
-            ? 'Boekmakers zijn het grotendeels eens — betrouwbaar signaal'
+            ? t('an.sharphigh','Boekmakers zijn het grotendeels eens — betrouwbaar signaal')
             : parseFloat(s.consensusStrength) > 50
-            ? 'Redelijke consensus — signaal is matig betrouwbaar'
+            ? t('an.sharpmed','Redelijke consensus — signaal is matig betrouwbaar')
             : 'Lage consensus — boekmakers zijn het oneens, wees voorzichtig'}
         </div>
       </div>` : ''}
