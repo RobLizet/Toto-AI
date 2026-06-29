@@ -290,11 +290,19 @@ async function anthropicFetch(apiKey, body) {
   if (!res.ok) {
     // Lees de error body voor debugging
     let errMsg = 'Worker HTTP ' + res.status;
+    let detail = '';
     try {
       const errData = await res.json();
-      const detail = errData?.error?.message || errData?.error || errData?.message || '';
+      detail = errData?.error?.message || errData?.error || errData?.message || '';
       if (detail) errMsg += ': ' + String(detail).substring(0, 80);
     } catch(e) {}
+    // Ongeldige EIGEN Anthropic-key -> duidelijke melding i.p.v. cryptische 401
+    const usedOwnKey = !!(state.settings && state.settings.anthropicKey && state.settings.anthropicKey.startsWith('sk-ant-'));
+    if (res.status === 401 && usedOwnKey && /api-key|authentication/i.test(String(detail) + ' ' + errMsg)) {
+      const ke = new Error((typeof t === 'function') ? t('ai.invalidkey','Je eigen Anthropic-key is ongeldig \u2014 verwijder \'m in Instellingen.') : 'Je eigen Anthropic-key is ongeldig \u2014 verwijder \'m in Instellingen.');
+      ke.code = 'INVALID_USER_KEY';
+      throw ke;
+    }
     console.error('[AI] Fout:', errMsg);
     throw new Error(errMsg);
   }
@@ -307,6 +315,7 @@ async function anthropicFetchWithRetry(apiKey, body, retries = 3) {
       const result = await anthropicFetch(apiKey, body);
       return result;
     } catch(e) {
+      if (e && e.code === 'INVALID_USER_KEY') throw e; // geen retry op ongeldige eigen key
       const is529 = e.message && e.message.includes('529');
       const is529b = e.message && e.message.includes('overloaded');
       if (i === retries) throw e;
@@ -1906,12 +1915,22 @@ KWALITEITSREGELS:
     }
 
   } catch(e) {
-    sections.forEach(id => {
-      const el = document.getElementById('rb-' + id);
-      if (el && !el.innerHTML) el.innerHTML = `<div style="font-family:monospace;font-size:.58rem;color:#dc2626;">⚠ ${e.message}</div>`;
-      const chip = document.getElementById('ec-' + id);
-      if (chip) chip.className = 'entity-chip err';
-    });
+    if (e && e.code === 'INVALID_USER_KEY') {
+      // Eén duidelijke melding i.p.v. 7x dezelfde 401
+      sections.forEach((id, idx) => {
+        const el = document.getElementById('rb-' + id);
+        if (el) el.innerHTML = idx === 0 ? `<div style="font-family:monospace;font-size:.62rem;color:#dc2626;line-height:1.6;">⚠ ${e.message}</div>` : '';
+        const chip = document.getElementById('ec-' + id);
+        if (chip) chip.className = 'entity-chip err';
+      });
+    } else {
+      sections.forEach(id => {
+        const el = document.getElementById('rb-' + id);
+        if (el && !el.innerHTML) el.innerHTML = `<div style="font-family:monospace;font-size:.58rem;color:#dc2626;">⚠ ${e.message}</div>`;
+        const chip = document.getElementById('ec-' + id);
+        if (chip) chip.className = 'entity-chip err';
+      });
+    }
   }
 
   if (btn) { btn.disabled = false; btn.textContent = '⚽ ANALYSEER OPNIEUW'; }

@@ -224,7 +224,8 @@
       'wal.deleteconfirm': 'Verwijderen?',
       'wal.noopenpickscheck': 'Geen open picks om te checken',
       'wal.deletepick': 'Pick verwijderen?',
-      'wal.alreadysaved': 'Al opgeslagen'
+      'wal.alreadysaved': 'Al opgeslagen',
+      'ai.invalidkey': 'Je eigen Anthropic-key is ongeldig \u2014 verwijder \'m in Instellingen.'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -438,7 +439,8 @@
       'wal.deleteconfirm': 'Delete?',
       'wal.noopenpickscheck': 'No open picks to check',
       'wal.deletepick': 'Delete pick?',
-      'wal.alreadysaved': 'Already saved'
+      'wal.alreadysaved': 'Already saved',
+      'ai.invalidkey': 'Your own Anthropic key is invalid \u2014 remove it in Settings.'
     }
   };
 
