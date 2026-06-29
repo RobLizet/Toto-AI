@@ -444,8 +444,8 @@ function renderDashboard() {
 
     <!-- Dashboard tabs -->
     <div style="display:flex;gap:.4rem;margin-bottom:.75rem;background:rgba(15,23,42,.04);border-radius:12px;padding:.25rem;">
-      <button id="dashTabOverview" onclick="switchDashTab('overview')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,0.05);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);">📊 OVERZICHT</button>
-      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.95);"><span id="liveDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc2626;margin-right:.3rem;vertical-align:middle;"></span>LIVE</button>
+      <button id="dashTabOverview" onclick="switchDashTab('overview')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,0.05);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);">📊 ${t('dash.overview','OVERZICHT')}</button>
+      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.95);"><span id="liveDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc2626;margin-right:.3rem;vertical-align:middle;"></span>${t('dash.live','LIVE')}</button>
     </div>
 
     <div id="dashOverviewContent">
@@ -457,7 +457,7 @@ function renderDashboard() {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;padding-right:.5rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🎯 VOORTGANG NAAR <span style="color:#00BEC4;">100</span> PICKS</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🎯 ${t('dash.progress1','VOORTGANG NAAR')} <span style="color:#00BEC4;">100</span> ${t('dash.progress2','PICKS')}</div>
             <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
           </div>
           <div style="background:rgba(255,255,255,.08);border-radius:999px;height:7px;overflow:hidden;margin-bottom:.35rem;">
@@ -517,7 +517,7 @@ function renderDashboard() {
       onclick="(function(){var mid=(topValuePick&&(topValuePick.match?.id||topValuePick.matchId||topValuePick.fixtureId||''));switchScreen('analyse');setTimeout(()=>{showAnalyseSubTab('scan');if(mid&&typeof openValueAnalysis==='function')openValueAnalysis(mid);},150);})()">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#00BEC4;margin-bottom:.2rem;">⚡ BESTE VALUE PICK</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#00BEC4;margin-bottom:.2rem;">⚡ ${t('dash.bestvalue','BESTE VALUE PICK')}</div>
           <div style="font-family:\'DM Sans\',sans-serif;font-size:.8rem;font-weight:700;color:#ffffff;">${topValuePick.match?.home||topValuePick.home||'?'} vs ${topValuePick.match?.away||topValuePick.away||'?'}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);margin-top:.15rem;">${topValuePick.pickLabel||topValuePick.pick} · conf ${topValuePick.confidence||'?'}/10</div>
         </div>
@@ -633,7 +633,7 @@ function renderDashboard() {
     ${scanROI !== null ? `
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.95);">📊 TRACKRECORD</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.95);">📊 ${t('dash.trackrecord','TRACKRECORD')}</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">${settledPicks.length}/100 picks</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">
@@ -670,7 +670,7 @@ function renderDashboard() {
     <div id="dashLiveContent" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🔴 LIVE STANDEN VAN JE PICKS</div>
-        <button onclick="loadLiveScores()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.25rem .5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.95);cursor:pointer;">⟳ Ververs</button>
+        <button onclick="loadLiveScores()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.25rem .5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.95);cursor:pointer;">⟳ ${t('dash.refresh','Ververs')}</button>
       </div>
       <div id="liveScoresList"><div style="text-align:center;padding:2rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">Tik op LIVE om standen te laden...</div></div>
     </div>
@@ -718,7 +718,7 @@ function renderDailyTipCard(tip) {
       border:1px solid rgba(0,190,196,.2);border-radius:16px;padding:.85rem 1rem;cursor:pointer;"
       onclick="switchScreen('analyse');setTimeout(()=>{showAnalyseSubTab('scan');if(tip&&tip.fixtureId&&typeof openValueAnalysis==='function')openValueAnalysis(tip.fixtureId);},150)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
-        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;letter-spacing:.04em;">🎯 TIP VAN DE DAG</div>
+        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;letter-spacing:.04em;">🎯 ${t('dash.tipofday','TIP VAN DE DAG')}</div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.95);">${isToday ? 'Vandaag' : (tip.date||'')}</div>
       </div>
       <div style="font-family:\'DM Sans\',sans-serif;font-size:.85rem;font-weight:800;color:#ffffff;margin-bottom:.3rem;">${tip.match||'?'}</div>
@@ -885,7 +885,7 @@ async function openPicksInsight() {
   sheet.innerHTML = `
     <div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:999px;margin:0 auto .75rem;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#ef4444;">📊 INZICHT IN JOUW CIJFERS</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#ef4444;">📊 ${t('dash.insight','INZICHT IN JOUW CIJFERS')}</div>
       <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:rgba(255,255,255,.88);font-size:1.2rem;cursor:pointer;">✕</button>
     </div>
     <div id="insightContent">
@@ -1033,7 +1033,7 @@ function showPicksModal() {
 
   sheet.innerHTML = `
     <div style="width:40px;height:4px;background:rgba(0,0,0,.15);border-radius:2px;margin:0 auto .75rem;"></div>
-    <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;margin-bottom:.5rem;">🎯 Picks Overzicht</div>
+    <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;margin-bottom:.5rem;">🎯 ${t('dash.picksoverview','Picks Overzicht')}</div>
     <details open style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:10px;padding:.5rem .7rem;margin-bottom:.75rem;">
       <summary style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:#00BEC4;cursor:pointer;">📋 Pick-kwaliteit checklist</summary>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.95);line-height:1.7;margin-top:.5rem;">
