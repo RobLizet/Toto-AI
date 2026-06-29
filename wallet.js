@@ -242,7 +242,7 @@ function renderWalletScreen() {
           <div class="w-item"><div class="w-label">Picks</div><div class="val" id="btTotal">0</div></div>
           <div class="w-item"><div class="w-label">Hitrate</div><div class="val" id="btHitrate">—</div></div>
           <div class="w-item"><div class="w-label">ROI</div><div class="val" id="btRoi">—</div></div>
-          <div class="w-item"><div class="w-label">Winst/€</div><div class="val" id="btProfit">—</div></div>
+          <div class="w-item"><div class="w-label">${t('wal.profiteuro','Winst/€')}</div><div class="val" id="btProfit">—</div></div>
         </div>
 
         <!-- Killer stats — ROI 7d, win streak, beste league, elite, CLV -->
@@ -251,7 +251,7 @@ function renderWalletScreen() {
         <!-- Voortgangsbalk naar 100 picks -->
         <div id="btProgressWrap" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
-            <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);">VOORTGANG TRACKRECORD</div>
+            <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${t('wal.progresstrackrecord','VOORTGANG TRACKRECORD')}</div>
             <div id="btProgressLabel" style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00BEC4;letter-spacing:.04em;">0/100</div>
           </div>
           <div style="background:rgba(0,0,0,.08);border-radius:999px;height:7px;overflow:hidden;">
@@ -362,7 +362,7 @@ function renderBetHistory() {
   const list = document.getElementById('betHistoryList');
   if (!list) return;
   const bets = [...(state.wallet.bets||[])].reverse();
-  if (!bets.length) { list.innerHTML = '<div class="empty-state">Nog geen weddenschappen</div>'; return; }
+  if (!bets.length) { list.innerHTML = '<div class="empty-state">'+t('wal.nobets','Nog geen weddenschappen')+'</div>'; return; }
   list.innerHTML = bets.map(b => {
     const isCombi = b.type === 'combi';
     const pnlText = b.status==='win' ? `+€${(b.payout-(b.amount||b.stake)).toFixed(2)}`
@@ -390,7 +390,7 @@ function renderBetHistory() {
       <div style="display:flex;justify-content:space-between;align-items:center;">
         ${isCombi
           ? `<button class="small-action-btn" onclick="checkBetResult(${b.id})">🔍</button>`
-          : `<button class="small-action-btn" onclick="checkBetResult(${b.id})">🔍 Check</button>`}
+          : `<button class="small-action-btn" onclick="checkBetResult(${b.id})">${t('wal.check','🔍 Check')}</button>`}
         <div class="bet-status ${b.status||'pending'}" onclick="${isCombi?`cycleCombiBetStatus(${b.id})`:`cycleBetStatus(${b.id})`}"
           style="color:${pnlColor};font-family:monospace;font-size:.6rem;font-weight:700;cursor:pointer;">${pnlText}</div>
       </div>
@@ -572,7 +572,7 @@ function renderWalletChart() {
   const settled = chartSource==='all' ? allSettled : allSettled.filter(b => (b.source||'eigen')===chartSource);
   if (!settled.length) {
     canvas.style.display='none';
-    if (emptyEl) { emptyEl.style.display='block'; emptyEl.textContent=chartSource==='all'?'Nog geen afgeronde weddenschappen':'Geen bets voor deze bron'; }
+    if (emptyEl) { emptyEl.style.display='block'; emptyEl.textContent=chartSource==='all'?t('wal.nofinished','Nog geen afgeronde weddenschappen'):t('wal.nobetssource','Geen bets voor deze bron'); }
     return;
   }
   canvas.style.display='block';
@@ -658,7 +658,7 @@ async function fetchLiveScoresForBets() {
 
 function exportWalletCSV() {
   const bets = state.wallet?.bets||[];
-  if (!bets.length) { alert('Geen bets om te exporteren'); return; }
+  if (!bets.length) { alert(t('wal.noexport','Geen bets om te exporteren')); return; }
   const headers = ['Datum','Wedstrijd','Pick','Quote','Inzet','Uitbetaling','W/V','Status','Score','Bron'];
   const rows = bets.map(b => {
     const pnl = b.status==='win' ? (b.payout-(b.amount||b.stake)).toFixed(2)
@@ -670,7 +670,7 @@ function exportWalletCSV() {
 
 function exportTrackerCSV() {
   const bets = state.tracker?.bets||[];
-  if (!bets.length) { alert('Geen tracker bets'); return; }
+  if (!bets.length) { alert(t('wal.notrackerbets','Geen tracker bets')); return; }
   const headers = ['Datum','Wedstrijd','Pick','Quote','Inzet','Uitbetaling','Status','Score','Bron','Bookmaker','Note'];
   const rows = bets.map(b => [b.date,b.match||'',b.pick,b.odds,b.stake,b.payout,b.status,b.score||'',(b.source||'eigen'),b.bookmaker||'',(b.note||'').replace(/,/g,' ')].join(','));
   downloadFile([headers.join(','),...rows].join('\n'), 'totoai-tracker-'+new Date().toLocaleDateString('nl-NL').replace(/\//g,'-')+'.csv', 'text/csv');
