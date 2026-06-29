@@ -22,7 +22,7 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">🔑 ${t('set.sec.apikeys','API KEYS')}</div>
         <div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.25);border-radius:12px;padding:.7rem .8rem;margin-bottom:.85rem;">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;color:#5eead4;margin-bottom:.4rem;">💡 EIGEN KEY = ONBEPERKTE AI-ANALYSE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:700;color:#5eead4;margin-bottom:.4rem;">${t('set.hint.ownkeytitle','💡 EIGEN KEY = ONBEPERKTE AI-ANALYSE')}</div>
           <div style="font-family:'DM Sans',sans-serif;font-size:.66rem;line-height:1.6;color:rgba(255,255,255,.88);">
             De app werkt meteen op een gedeelde key, met een <b>daglimiet</b> op AI-analyses. Wil je <b>onbeperkt</b> analyseren? Maak een eigen (gratis) Anthropic-key aan op <b style="color:#5eead4;">console.anthropic.com</b> en plak 'm hieronder — dan loopt de AI op <b>jouw eigen tegoed</b> en vervalt de daglimiet voor jou.
             <br><br>
@@ -77,7 +77,7 @@ function renderInstellingen() {
         <div class="settings-field">
           <label class="settings-label">${t('set.lbl.unitsize','Unit-grootte (€ per unit)')}</label>
           <input class="settings-input" id="settUnitSize" type="number" min="0" step="1" placeholder="bijv. 10 — vaste basisinzet">
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">1 unit = je vaste basisinzet (tip: ~1% van je bankroll). Het inzet-advies bij een pick rekent units × dit bedrag om naar €.</div>
+          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">${t('set.hint.unitsize','1 unit = je vaste basisinzet (tip: ~1% van je bankroll). Het inzet-advies bij een pick rekent units × dit bedrag om naar €.')}</div>
         </div>
 
         <div class="settings-field">
@@ -251,9 +251,9 @@ function renderInstellingen() {
         <div id="fbAutoSyncStatus" style="display:none;font-family:monospace;font-size:.5rem;color:#00BEC4;margin-bottom:.5rem;">✅ Auto-sync actief</div>
         <div id="fbBackupInfo" style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);margin-bottom:.75rem;line-height:1.5;">Laden...</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-          <button class="small-action-btn" onclick="saveToFirebase().then(()=>showFirebaseStatus('✅ Opgeslagen!','#00BEC4')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#dc2626'))">☁️ Opslaan</button>
-          <button class="small-action-btn" onclick="restoreFromFirebase()">🔄 Herstellen</button>
-          <button class="small-action-btn" style="background:rgba(0,168,173,.1);border-color:rgba(0,168,173,.3);color:#00a8ad;font-weight:800;" onclick="importFromFirebaseBtn()">📥 Importeer alles</button>
+          <button class="small-action-btn" onclick="saveToFirebase().then(()=>showFirebaseStatus('✅ Opgeslagen!','#00BEC4')).catch(e=>showFirebaseStatus('⚠ '+e.message,'#dc2626'))">☁️ ${t('common.save','Opslaan')}</button>
+          <button class="small-action-btn" onclick="restoreFromFirebase()">🔄 ${t('set.btn.restore','Herstellen')}</button>
+          <button class="small-action-btn" style="background:rgba(0,168,173,.1);border-color:rgba(0,168,173,.3);color:#00a8ad;font-weight:800;" onclick="importFromFirebaseBtn()">📥 ${t('set.btn.importall','Importeer alles')}</button>
         </div>
         <div id="backupStatus" style="display:none;font-family:monospace;font-size:.55rem;padding:.5rem .75rem;border-radius:10px;margin-top:.5rem;"></div>
       </div>
@@ -262,9 +262,9 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">📦 ${t('set.sec.localbackup','LOKALE BACKUP')}</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-          <button class="small-action-btn" onclick="exportBackup()">📥 Exporteer JSON</button>
+          <button class="small-action-btn" onclick="exportBackup()">📥 ${t('set.btn.exportjson','Exporteer JSON')}</button>
           <label class="small-action-btn" style="cursor:pointer;">
-            📤 Importeer
+            📤 ${t('set.btn.import','Importeer')}
             <input type="file" accept=".json" onchange="importBackup(event)" style="display:none;">
           </label>
         </div>
@@ -275,24 +275,24 @@ function renderInstellingen() {
         <div class="settings-section-title">💸 ${t('set.sec.costs','KOSTEN TRACKER')}</div>
         <div class="wallet-strip" style="margin-bottom:.75rem;">
           <div class="w-item">
-            <div class="w-label">Tokens in</div>
+            <div class="w-label">${t('set.lbl.tokensin','Tokens in')}</div>
             <div class="val" id="costTokensIn">0</div>
           </div>
           <div class="w-item">
-            <div class="w-label">Tokens uit</div>
+            <div class="w-label">${t('set.lbl.tokensout','Tokens uit')}</div>
             <div class="val" id="costTokensOut">0</div>
           </div>
           <div class="w-item">
-            <div class="w-label">Kosten</div>
+            <div class="w-label">${t('set.lbl.cost','Kosten')}</div>
             <div class="val" id="costTotal">$0.000</div>
           </div>
           <div class="w-item">
-            <div class="w-label">Calls</div>
+            <div class="w-label">${t('set.lbl.calls','Calls')}</div>
             <div class="val" id="costCalls">0</div>
           </div>
         </div>
         <div style="display:flex;gap:.4rem;margin-top:.4rem;flex-wrap:wrap;align-items:center;">
-          <button class="small-action-btn danger" onclick="resetCostCounter()">Reset teller</button>
+          <button class="small-action-btn danger" onclick="resetCostCounter()">${t('set.btn.resetcounter','Reset teller')}</button>
           <a href="https://console.anthropic.com/settings/billing" target="_blank"
              style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;font-weight:700;
                     padding:.35rem .7rem;border-radius:8px;border:1.5px solid rgba(99,102,241,.35);
@@ -307,10 +307,10 @@ function renderInstellingen() {
         <div class="settings-section-title">👤 ${t('set.sec.account','ACCOUNT')}</div>
         <div id="authAccountSection">
           <div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.95);margin-bottom:.6rem;line-height:1.6;">
-            Log in om data te synchroniseren tussen apparaten.
+            ${t('set.hint.account','Log in om data te synchroniseren tussen apparaten.')}
           </div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
-            <button class="small-action-btn" onclick="showLoginScreen()">🔐 Inloggen / Registreren</button>
+            <button class="small-action-btn" onclick="showLoginScreen()">🔐 ${t('set.btn.loginregister','Inloggen / Registreren')}</button>
           </div>
         </div>
       </div>
@@ -319,8 +319,7 @@ function renderInstellingen() {
       <div class="settings-section">
         <div class="settings-section-title">🔒 ${t('set.sec.dbsecurity','DATABASE BEVEILIGING')}</div>
         <div id="fbSecurityStatus" style="font-family:monospace;font-size:.52rem;margin-bottom:.75rem;line-height:1.6;padding:.6rem .8rem;border-radius:10px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);color:#dc2626;">
-          ⚠️ Controleer of je Firebase Database Rules correct zijn ingesteld.<br>
-          Open Firebase Console → Realtime Database → Rules
+          ${t('set.hint.dbrules','⚠️ Controleer of je Firebase Database Rules correct zijn ingesteld.<br>Open Firebase Console → Realtime Database → Rules')}
         </div>
         <div style="font-family:monospace;font-size:.48rem;background:rgba(15,23,42,.05);border-radius:10px;padding:.6rem .8rem;color:rgba(255,255,255,.95);margin-bottom:.5rem;white-space:pre-wrap;">{
   "rules": {
@@ -335,7 +334,7 @@ function renderInstellingen() {
   }
 }</div>
         <button class="small-action-btn" onclick="window.open('https://console.firebase.google.com/project/toto-ai-397cb/database/toto-ai-397cb-default-rtdb/rules','_blank')">
-          🔗 Open Firebase Rules
+          🔗 ${t('set.btn.fbrules','Open Firebase Rules')}
         </button>
       </div>
 
@@ -351,8 +350,8 @@ function renderInstellingen() {
             alert(r.status||r.error||JSON.stringify(r));
           })()" style="flex:1;background:rgba(0,168,173,.1);border:1px solid rgba(0,168,173,.3);
             border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;
-            font-weight:700;color:#00a8ad;cursor:pointer;">🔍 Worker Scan</button>
-          <button id="adminScanTestBtn" onclick="triggerScanTest()" style="flex:1;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;font-weight:700;color:#a78bfa;cursor:pointer;">🧪 Scan Test</button>
+            font-weight:700;color:#00a8ad;cursor:pointer;">🔍 ${t('set.btn.workerscan','Worker Scan')}</button>
+          <button id="adminScanTestBtn" onclick="triggerScanTest()" style="flex:1;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;font-weight:700;color:#a78bfa;cursor:pointer;">🧪 ${t('set.btn.scantest','Scan Test')}</button>
           <button onclick="(async()=>{
             this.disabled=true;this.textContent='⟳ Settlen...';
             const r=await triggerWorkerSettle();
@@ -360,14 +359,14 @@ function renderInstellingen() {
             alert(r.status||r.error||JSON.stringify(r));
           })()" style="flex:1;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.3);
             border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;
-            font-weight:700;color:#00BEC4;cursor:pointer;">✅ Settle</button>
+            font-weight:700;color:#00BEC4;cursor:pointer;">✅ ${t('set.btn.settle','Settle')}</button>
         </div>
         <div style="margin-top:.5rem;">
-          <button onclick="logoutUser()" style="width:100%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;font-weight:700;color:#dc2626;cursor:pointer;">🚪 Uitloggen</button>
+          <button onclick="logoutUser()" style="width:100%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:10px;padding:.5rem;font-family:var(--font);font-size:.5rem;font-weight:700;color:#dc2626;cursor:pointer;">🚪 ${t('set.btn.logout','Uitloggen')}</button>
         </div>
       </div>` : `
       <div class="settings-section">
-        <button onclick="logoutUser()" style="width:100%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:10px;padding:.55rem;font-family:var(--font);font-size:.5rem;font-weight:700;color:#dc2626;cursor:pointer;">🚪 Uitloggen</button>
+        <button onclick="logoutUser()" style="width:100%;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:10px;padding:.55rem;font-family:var(--font);font-size:.5rem;font-weight:700;color:#dc2626;cursor:pointer;">🚪 ${t('set.btn.logout','Uitloggen')}</button>
       </div>`}
 
       <!-- APP INFO -->
