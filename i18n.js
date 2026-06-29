@@ -174,7 +174,13 @@
       'wed.home': 'THUIS',
       'wed.draw': 'GELIJK',
       'wed.away': 'UIT',
-      'wed.moregoals': 'MEER / MINDER GOALS'
+      'wed.moregoals': 'MEER / MINDER GOALS',
+      'wed.loadingstand': '⟳ Stand laden...',
+      'wed.nostandings': 'Geen stand beschikbaar',
+      'wed.loadingscorers': '⟳ Topscorers laden...',
+      'wed.nodata': 'Geen data beschikbaar',
+      'wed.loadfirst': 'Laad eerst wedstrijden',
+      'wed.nodatacup': 'Geen data beschikbaar voor KNVB Beker'
     },
     en: {
       'settings.lang.title': 'LANGUAGE / TAAL',
@@ -338,7 +344,13 @@
       'wed.home': 'HOME',
       'wed.draw': 'DRAW',
       'wed.away': 'AWAY',
-      'wed.moregoals': 'MORE / FEWER GOALS'
+      'wed.moregoals': 'MORE / FEWER GOALS',
+      'wed.loadingstand': '⟳ Loading standings...',
+      'wed.nostandings': 'No standings available',
+      'wed.loadingscorers': '⟳ Loading top scorers...',
+      'wed.nodata': 'No data available',
+      'wed.loadfirst': 'Load matches first',
+      'wed.nodatacup': 'No data available for KNVB Cup'
     }
   };
 
