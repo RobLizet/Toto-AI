@@ -970,6 +970,17 @@ function renderMatchCard(m) {
     if (!e.target.closest('button')) openCardPopup('match', m);
   };
 
+  // v26.192: één bron van waarheid voor odds-movement — opening + huidige op de GETOONDE consensusquote
+  // (voorheen vergeleek de badge tegen state.bookmakerOdds uit een ander fetch-pad → kon afwijken van de pijl)
+  {
+    const _ho = parseFloat(m.homeOdds), _do = parseFloat(m.drawOdds), _ao = parseFloat(m.awayOdds);
+    if (m.id && _ho > 1 && _do > 1 && _ao > 1) {
+      if (!state.openingOdds) state.openingOdds = {};
+      if (!state.openingOdds[m.id]) state.openingOdds[m.id] = { home: _ho, draw: _do, away: _ao, ts: Date.now() };
+      if (!state.bookmakerOdds) state.bookmakerOdds = {};
+      state.bookmakerOdds[m.id] = { home: _ho, draw: _do, away: _ao };
+    }
+  }
   const scanResult = (state.lastScanResults||[]).find(s => String(s.matchId) === String(m.id));
   const sharpBadge = renderOddsMovementBadge(m.id);
   // v26.165: value-badge + gloed uit gecombineerde bron (worker-picks /picks + sessie-scan)
@@ -1573,25 +1584,8 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
     if (h)    match.homeOdds = parseFloat(h.odd).toFixed(2);
     if (draw) match.drawOdds = parseFloat(draw.odd).toFixed(2);
     if (a)    match.awayOdds = parseFloat(a.odd).toFixed(2);
-    // Sla opening odds op als ze nog niet bestaan (voor movement detectie)
-    if (h && draw && a) {
-      if (!state.openingOdds) state.openingOdds = {};
-      if (!state.openingOdds[fid]) {
-        state.openingOdds[fid] = {
-          home: parseFloat(h.odd),
-          draw: parseFloat(draw.odd),
-          away: parseFloat(a.odd),
-          ts: Date.now()
-        };
-      }
-      // Huidige odds ook opslaan in bookmakerOdds voor movement vergelijking
-      if (!state.bookmakerOdds) state.bookmakerOdds = {};
-      state.bookmakerOdds[fid] = {
-        home: parseFloat(h.odd),
-        draw: parseFloat(draw.odd),
-        away: parseFloat(a.odd),
-      };
-    }
+    // v26.192: opening/huidige odds-snapshot verplaatst naar renderMatchCard (op de getoonde consensus),
+    // zodat de movement-pijl en de sharp-badge altijd dezelfde bron gebruiken.
     if (h && draw && a) {
       const inv = 1/parseFloat(h.odd) + 1/parseFloat(draw.odd) + 1/parseFloat(a.odd);
       match.homePct = Math.round((1/parseFloat(h.odd))/inv*100);
