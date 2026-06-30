@@ -255,6 +255,7 @@ html, body {
   color: var(--muted); letter-spacing: .1em;
 }
 </style>
+<script src="i18n.js?v=1782782998"></script>
 </head>
 <body>
 
@@ -263,20 +264,20 @@ html, body {
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner"></div>
-  <div class="loading-text" id="loadingText">INLOGGEN...</div>
+  <div class="loading-text" id="loadingText" data-i18n="login.loggingin">INLOGGEN...</div>
 </div>
 
 <div class="container">
   <div class="logo-wrap">
     <div class="logo">ProMatch <span class="logo-ai">XI</span></div>
-    <div class="tagline">Slimme voetbalanalyse · v15.0</div>
+    <div class="tagline" data-i18n="login.tagline">Slimme voetbalanalyse · v15.0</div>
   </div>
 
   <div class="card">
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab active" id="tab-in" onclick="switchTab('in')">Inloggen</button>
-      <button class="tab" id="tab-reg" onclick="switchTab('reg')">Registreren</button>
+      <button class="tab active" id="tab-in" onclick="switchTab('in')" data-i18n="login.signin">Inloggen</button>
+      <button class="tab" id="tab-reg" onclick="switchTab('reg')" data-i18n="login.register">Registreren</button>
     </div>
 
     <!-- Error -->
@@ -285,14 +286,14 @@ html, body {
     <!-- Inloggen form -->
     <div class="form" id="form-in">
       <div>
-        <label class="input-label">E-mailadres</label>
-        <input class="input" id="in-email" type="email" placeholder="jouw@email.nl" autocomplete="email">
+        <label class="input-label" data-i18n="login.email">E-mailadres</label>
+        <input class="input" id="in-email" type="email" placeholder="jouw@email.nl" data-i18n-ph="login.emailph" autocomplete="email">
       </div>
       <div>
-        <label class="input-label">Wachtwoord</label>
+        <label class="input-label" data-i18n="login.password">Wachtwoord</label>
         <input class="input" id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password">
       </div>
-      <button class="btn-primary" id="btn-login" onclick="doLogin()">Inloggen</button>
+      <button class="btn-primary" id="btn-login" onclick="doLogin()" data-i18n="login.signin">Inloggen</button>
 
       <div class="divider"><span>of</span></div>
 
@@ -303,25 +304,25 @@ html, body {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
-        Doorgaan met Google
+        <span data-i18n="login.googlecontinue">Doorgaan met Google</span>
       </button>
     </div>
 
     <!-- Registreren form -->
     <div class="form form-hidden" id="form-reg">
       <div>
-        <label class="input-label">E-mailadres</label>
-        <input class="input" id="reg-email" type="email" placeholder="jouw@email.nl" autocomplete="email">
+        <label class="input-label" data-i18n="login.email">E-mailadres</label>
+        <input class="input" id="reg-email" type="email" placeholder="jouw@email.nl" data-i18n-ph="login.emailph" autocomplete="email">
       </div>
       <div>
-        <label class="input-label">Wachtwoord</label>
-        <input class="input" id="reg-pass" type="password" placeholder="Min. 6 tekens" autocomplete="new-password">
+        <label class="input-label" data-i18n="login.password">Wachtwoord</label>
+        <input class="input" id="reg-pass" type="password" placeholder="Min. 6 tekens" data-i18n-ph="login.pwminph" autocomplete="new-password">
       </div>
       <div>
-        <label class="input-label">Wachtwoord herhalen</label>
+        <label class="input-label" data-i18n="login.passwordrepeat">Wachtwoord herhalen</label>
         <input class="input" id="reg-pass2" type="password" placeholder="••••••••" autocomplete="new-password">
       </div>
-      <button class="btn-primary" id="btn-reg" onclick="doRegister()">Account aanmaken</button>
+      <button class="btn-primary" id="btn-reg" onclick="doRegister()" data-i18n="login.createaccount">Account aanmaken</button>
 
       <div class="divider"><span>of</span></div>
 
@@ -332,11 +333,11 @@ html, body {
           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
-        Registreren met Google
+        <span data-i18n="login.googleregister">Registreren met Google</span>
       </button>
     </div>
 
-    <button class="btn-skip" onclick="doSkip()">Verder zonder account →</button>
+    <button class="btn-skip" onclick="doSkip()" data-i18n="login.continueanon">Verder zonder account →</button>
   </div>
 
   <div class="footer">
@@ -373,12 +374,12 @@ try {
     if (user && !user.isAnonymous) goToApp();
   });
 } catch(e) {
-  console.error('Firebase init mislukt:', e);
+  console.error(t('login.fbinitfailed','Firebase init mislukt:'), e);
 }
 
 // ── Helpers ──
 function showLoading(txt) {
-  document.getElementById('loadingText').textContent = txt || 'LADEN...';
+  document.getElementById('loadingText').textContent = txt || t('login.loading2','LADEN...');
   document.getElementById('loadingOverlay').classList.add('show');
 }
 function hideLoading() {
@@ -391,7 +392,7 @@ function showError(msg) {
   setTimeout(() => el.classList.remove('show'), 4000);
 }
 function goToApp() {
-  showLoading('APP LADEN...');
+  showLoading(t('login.apploading','APP LADEN...'));
   window.location.href = 'index.html';
 }
 
@@ -408,22 +409,22 @@ function switchTab(tab) {
 async function doLogin() {
   const email = document.getElementById('in-email').value.trim();
   const pass  = document.getElementById('in-pass').value;
-  if (!email || !pass) { showError('Vul e-mail en wachtwoord in'); return; }
+  if (!email || !pass) { showError(t('login.fillcred','Vul e-mail en wachtwoord in')); return; }
   const btn = document.getElementById('btn-login');
-  btn.disabled = true; btn.textContent = 'INLOGGEN...';
+  btn.disabled = true; btn.textContent = t('login.loggingin','INLOGGEN...');
   try {
     await auth.signInWithEmailAndPassword(email, pass);
     goToApp();
   } catch(e) {
     const msgs = {
-      'auth/user-not-found':    'Geen account gevonden',
-      'auth/wrong-password':    'Verkeerd wachtwoord',
-      'auth/invalid-credential':'E-mail of wachtwoord onjuist',
-      'auth/invalid-email':     'Ongeldig e-mailadres',
-      'auth/too-many-requests': 'Te veel pogingen, probeer later'
+      'auth/user-not-found':    t('login.noaccount','Geen account gevonden'),
+      'auth/wrong-password':    t('login.wrongpw','Verkeerd wachtwoord'),
+      'auth/invalid-credential':t('login.credwrong','E-mail of wachtwoord onjuist'),
+      'auth/invalid-email':     t('login.invalidemail','Ongeldig e-mailadres'),
+      'auth/too-many-requests': t('login.toomany','Te veel pogingen, probeer later')
     };
     showError(msgs[e.code] || e.message);
-    btn.disabled = false; btn.textContent = 'INLOGGEN';
+    btn.disabled = false; btn.textContent = t('login.signincaps','INLOGGEN');
   }
 }
 
@@ -432,22 +433,22 @@ async function doRegister() {
   const email = document.getElementById('reg-email').value.trim();
   const pass  = document.getElementById('reg-pass').value;
   const pass2 = document.getElementById('reg-pass2').value;
-  if (!email || !pass) { showError('Vul alle velden in'); return; }
-  if (pass.length < 6) { showError('Wachtwoord min. 6 tekens'); return; }
-  if (pass !== pass2)  { showError('Wachtwoorden komen niet overeen'); return; }
+  if (!email || !pass) { showError(t('login.fillall','Vul alle velden in')); return; }
+  if (pass.length < 6) { showError(t('auth.pwmin','Wachtwoord min. 6 tekens')); return; }
+  if (pass !== pass2)  { showError(t('auth.pwmismatch','Wachtwoorden komen niet overeen')); return; }
   const btn = document.getElementById('btn-reg');
-  btn.disabled = true; btn.textContent = 'ACCOUNT AANMAKEN...';
+  btn.disabled = true; btn.textContent = t('login.creatingaccount','ACCOUNT AANMAKEN...');
   try {
     await auth.createUserWithEmailAndPassword(email, pass);
     goToApp();
   } catch(e) {
     const msgs = {
-      'auth/email-already-in-use': 'E-mail al in gebruik',
-      'auth/invalid-email':        'Ongeldig e-mailadres',
-      'auth/weak-password':        'Wachtwoord te zwak'
+      'auth/email-already-in-use': t('login.emailinuse','E-mail al in gebruik'),
+      'auth/invalid-email':        t('login.invalidemail','Ongeldig e-mailadres'),
+      'auth/weak-password':        t('login.pwweak','Wachtwoord te zwak')
     };
     showError(msgs[e.code] || e.message);
-    btn.disabled = false; btn.textContent = 'ACCOUNT AANMAKEN';
+    btn.disabled = false; btn.textContent = t('login.createaccountcaps','ACCOUNT AANMAKEN');
   }
 }
 
@@ -478,11 +479,11 @@ async function doGoogle() {
   } catch(e) {
     hideLoading();
     const msgs = {
-      'auth/network-request-failed': 'Geen internetverbinding',
-      'auth/user-disabled':          'Account geblokkeerd',
+      'auth/network-request-failed': t('login.noconnection','Geen internetverbinding'),
+      'auth/user-disabled':          t('login.accountblocked','Account geblokkeerd'),
       'auth/operation-not-allowed':  'Google login niet ingeschakeld'
     };
-    showError(msgs[e.code] || 'Google login mislukt: ' + e.message);
+    showError(msgs[e.code] || t('login.googlefailed','Google login mislukt: ') + e.message);
     console.error('[Google login]', e.code, e.message);
   }
 }
