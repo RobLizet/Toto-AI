@@ -1360,6 +1360,18 @@ function renderMatchesInto(matches, listId) {
   visible.forEach(m => { const c = renderMatchCard(m); if (c) list.appendChild(c); });
 }
 
+// Laadt worker-scan-picks (/picks) naar state._qualityPicks zonder Matches-tab te herrenderen.
+// Voedt de value-badges op de eigen schermen (renderMatchCard -> getMatchValuePick).
+async function ensureQualityPicksLoaded() {
+  if (state._workerPicksLoaded || state._qpScreenLoading) return;
+  state._qpScreenLoading = true;
+  try {
+    const r = await fetch('https://api.promatchxi.app/picks');
+    if (r.ok) { const d = await r.json(); state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); state._workerPicksLoaded = true; }
+  } catch (e) {}
+  state._qpScreenLoading = false;
+}
+
 function _screenLoadingMsg(loadingId, msg, color) {
   const el = document.getElementById(loadingId);
   if (!el) return;
@@ -1427,6 +1439,7 @@ async function loadEKKwal() {
     if (!fx.length) { renderMatchesInto([], 'ekkwal-list'); _screenLoadingMsg('ekkwal-loading', t('wed.no_ekkwal', '\ud83d\udccc EK 2028-kwalificatie start in 2027 \u2014 nog geen wedstrijden gepland'), 'var(--muted)'); return; }
     const ms = fx.map(f => parseAPIMatch(f)).filter(Boolean);
     const le = document.getElementById('ekkwal-loading'); if (le) le.style.display = 'none';
+    await ensureQualityPicksLoaded();            // value-badges zoals gewone wedstrijden (zodra EK gescand wordt)
     renderMatchesInto(ms, 'ekkwal-list');
     saveOpeningOdds(ms);
     fetchFriendlyOdds(ms).then(() => renderMatchesInto(ms, 'ekkwal-list'));
