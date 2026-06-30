@@ -483,7 +483,7 @@ function renderDashboard() {
               const parts = [];
               if (kwaliPicks.length > 0) {
                 parts.push('<span>' + kwaliPicks.length + '/100 picks</span>');
-                if (settledPicks.length > 0) parts.push('<span>' + settledPicks.length + ' afgerond</span>');
+                if (settledPicks.length > 0) parts.push('<span>' + settledPicks.length + ' ' + t('dash.settled','afgerond') + '</span>');
               }
               return parts.length ? parts.join(' · ') : '<span>Scan wedstrijden →</span>';
             })()}
@@ -715,7 +715,7 @@ function renderDailyTipCard(tip) {
           <div style="font-size:1.1rem;">🎯</div>
           <div>
             <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:rgba(255,255,255,.95);">TIP VAN DE DAG</div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">Vandaag geen gekwalificeerde pick — scan meer wedstrijden.</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${t('dash.noqualpick','Vandaag geen gekwalificeerde pick — scan meer wedstrijden.')}</div>
           </div>
         </div>
       </div>`;
@@ -1235,7 +1235,7 @@ async function loadLiveScores() {
 
     // Update tijd
     const now = new Date();
-    list.innerHTML += `<div style="text-align:center;padding:.5rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">Laatst bijgewerkt: ${now.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ververst elke 60s</div>`;
+    list.innerHTML += `<div style="text-align:center;padding:.5rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">${t('dash.lastupdated','Laatst bijgewerkt')}: ${now.toLocaleTimeString(pmxLang()==='en'?'en-GB':'nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ${t('dash.refreshes60','ververst elke 60s')}</div>`;
   } catch(e) {
     list.innerHTML = '<div style="text-align:center;padding:2rem;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">'+t('dash.liveerror','Fout bij laden live data. Probeer opnieuw.')+'</div>';
   }
@@ -1249,7 +1249,7 @@ function liveCardHtml(pick, fx) {
     const dt = [pick.matchDate||pick.date, pick.matchTime||pick.time].filter(Boolean).join(' ');
     return `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;font-weight:700;">${matchName}</div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.95);margin-top:.2rem;">${pick.pickLabel||pick.pick} @ ${pick.odds}${dt ? ' · 📅 ' + dt : ''} · ⏳ Nog niet begonnen</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.95);margin-top:.2rem;">${pick.pickLabel||pick.pick} @ ${pick.odds}${dt ? ' · 📅 ' + dt : ''} · ⏳ ${t('dash.notstarted','Nog niet begonnen')}</div>
     </div>`;
   }
 
@@ -1284,7 +1284,7 @@ function liveCardHtml(pick, fx) {
   // Status indicator
   let statusBadge, statusColor, borderColor;
   if (notStarted) {
-    statusBadge = '⏳ Nog niet begonnen';
+    statusBadge = '⏳ ' + t('dash.notstarted','Nog niet begonnen');
     statusColor = '#64748b';
     borderColor = 'rgba(255,255,255,0.09)';
   } else if (isLive) {

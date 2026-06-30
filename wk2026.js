@@ -50,7 +50,7 @@ function renderWK2026Screen() {
           -webkit-background-clip:text;-webkit-text-fill-color:transparent;
           letter-spacing:.03em;">🏆 WK 2026</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);margin-top:.1rem;">
-          AI VOORSPELLING · 48 TEAMS · 104 WEDSTRIJDEN
+          ${t('wk.aiprediction','AI VOORSPELLING')} · 48 ${t('wk.teams','TEAMS')} · 104 ${t('wk.matches_label','WEDSTRIJDEN')}
         </div>
       </div>
 
@@ -82,7 +82,7 @@ function renderWK2026Screen() {
         <button onclick="switchWKTab('oranje')" id="wk-tab-oranje"
           style="flex:1;padding:.4rem;border-radius:10px;border:1px solid var(--stroke);
           background:var(--card);font-family:'IBM Plex Mono',monospace;font-size:.46rem;
-          font-weight:700;color:var(--sub);cursor:pointer;">🇳🇱 ORANJE</button>
+          font-weight:700;color:var(--sub);cursor:pointer;">🇳🇱 ${t('wk.oranje','ORANJE')}</button>
       </div>
 
       <!-- Picks tab -->
@@ -125,7 +125,7 @@ function renderWK2026Screen() {
         style="width:100%;background:linear-gradient(135deg,#dc2626,#be185d);
         border:none;border-radius:14px;padding:.85rem;margin-bottom:1rem;cursor:pointer;
         font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:white;letter-spacing:.05em;">
-        ⚡ GENEREER AI VOORSPELLING
+        ⚡ ${t('wk.genai','GENEREER AI VOORSPELLING')}
       </button>
 
       <!-- Loading -->
@@ -679,7 +679,7 @@ async function loadWKPicks() {
     // Pending picks
     if (byStatus.pending.length) {
       html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
-        color:var(--sub);margin-bottom:.4rem;">⏳ OPEN PICKS</div>`;
+        color:var(--sub);margin-bottom:.4rem;">⏳ ${t('wk.openpicks','OPEN PICKS')}</div>`;
       byStatus.pending.forEach(p => { html += renderWKPickCard(p); });
     }
 
@@ -688,7 +688,7 @@ async function loadWKPicks() {
       new Date(b.matchDate||0) - new Date(a.matchDate||0));
     if (settled.length) {
       html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:700;
-        color:var(--sub);margin:.6rem 0 .4rem;">✅ AFGEROND</div>`;
+        color:var(--sub);margin:.6rem 0 .4rem;">✅ ${t('wk.settled','AFGEROND')}</div>`;
       settled.forEach(p => { html += renderWKPickCard(p); });
     }
 

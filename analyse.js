@@ -52,7 +52,7 @@ async function loadClaudeInsight(force) {
       +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">'
       +'<div style="width:26px;height:26px;border-radius:50%;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
       +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
-      +'</div><div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:#00BEC4;">CLAUDE ANALYSEERT</div>'
+      +'</div><div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:#00BEC4;">'+t('ana.claudeanalyzes','CLAUDE ANALYSEERT')+'</div>'
       +'<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.88);">Op basis van '+st.length+' gesettled picks</div></div></div>'
       +'<div style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;line-height:1.65;color:var(--ink);background:rgba(0,190,196,.04);border-left:2px solid rgba(0,190,196,.3);border-radius:0 8px 8px 0;padding:.6rem .75rem;margin-bottom:.5rem;">'
       +txt.replace(/\n/g,'<br>')+'</div>'
@@ -374,8 +374,8 @@ function renderAnalyseScreen() {
   html += '<div onclick="toggleClaudeInsight()" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,190,196,.22),rgba(0,140,160,.15));border:2px solid rgba(0,190,196,.5);border-radius:16px;padding:1.1rem 1.2rem;display:flex;align-items:center;gap:.9rem;box-shadow:0 4px 20px rgba(0,190,196,.2);">';
   html += '<div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#00BEC4,#0077a8);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg></div>';
   html += '<div style="flex:1;">';
-  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#00BEC4;letter-spacing:.08em;line-height:1;">CLAUDE ANALYSEERT</div>';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.6);margin-top:.25rem;">AI-analyse van jouw picks & prestaties</div>';
+  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#00BEC4;letter-spacing:.08em;line-height:1;">'+t('ana.claudeanalyzes','CLAUDE ANALYSEERT')+'</div>';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.6);margin-top:.25rem;">'+t('ana.aianalysis_sub','AI-analyse van jouw picks & prestaties')+'</div>';
   html += '</div>';
   html += '<span id="claudeInsightToggle" style="font-size:1.2rem;color:#00BEC4;font-weight:700;">▼</span>';
   html += '</div>';
@@ -397,9 +397,9 @@ function renderAnalyseScreen() {
   // ── SCHADUW-PICKS — bijna-value, standaard ingeklapt ──
   html += `<div class="analyse-block" id="analyse-shadow-block" style="padding:0;overflow:hidden;">
     <div class="analyse-block-header" onclick="toggleShadowBlock(this)" style="cursor:pointer;padding:1rem 1.1rem;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">🕶️ SCHADUW-PICKS</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">🕶️ ${t('ana.shadowpicks','SCHADUW-PICKS')}</div>
       <div style="display:flex;align-items:center;gap:.5rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);">net buiten filter</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);">${t('ana.justoutside','net buiten filter')}</div>
         <svg class="sh-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     </div>
@@ -409,7 +409,7 @@ function renderAnalyseScreen() {
   // ── DOELPUNTEN-MARKTEN — O/U + BTTS, standaard ingeklapt ──
   html += `<div class="analyse-block" id="analyse-goalmarkt-block" style="padding:0;overflow:hidden;">
     <div class="analyse-block-header" onclick="toggleGoalMarktBlock(this)" style="cursor:pointer;padding:1rem 1.1rem;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">⚽ DOELPUNTEN-MARKTEN</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">⚽ ${t('ana.goalmarkets','DOELPUNTEN-MARKTEN')}</div>
       <div style="display:flex;align-items:center;gap:.5rem;">
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);">O/U + BTTS</div>
         <svg class="gm-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>

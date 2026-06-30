@@ -205,7 +205,7 @@ function _analyticsHTML(local, worker) {
   // ── Per pick type ──
   if (local.settled > 0) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">UITSLAG TYPE</div>';
+    html += '<div class="analytics-block-title">' + t('an.resulttype','UITSLAG TYPE') + '</div>';
     html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">';
     ['1','X','2'].forEach(pick => {
       const d = local.byPick[pick];
@@ -245,7 +245,8 @@ function _analyticsHTML(local, worker) {
     local.confBuckets.forEach(([label, d]) => {
       const hr = d.t > 0 ? Math.round(d.w / d.t * 100) : 0;
       html += '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);min-width:80px;">' + label + '</div>';
+      var _cl = label.indexOf('laag')===0 ? t('an.conf_low',label) : label.indexOf('midden')===0 ? t('an.conf_mid',label) : label.indexOf('hoog')===0 ? t('an.conf_high',label) : label;
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);min-width:80px;">' + _cl + '</div>';
       html += '<div style="flex:1;background:var(--track-bg,rgba(255,255,255,.1));border-radius:999px;height:8px;overflow:hidden;">';
       html += '<div style="background:' + (hr >= 50 ? '#00BEC4' : hr >= 35 ? '#d97706' : '#dc2626') + ';height:100%;border-radius:999px;width:' + hr + '%;transition:width .4s;"></div>';
       html += '</div>';
@@ -497,7 +498,7 @@ function _analyticsHTML(local, worker) {
 
   // ── Footer ──
   html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);text-align:center;padding:.75rem;margin-top:.25rem;">';
-  html += 'Lokale data · ' + local.scansTotal + ' scans · CLV-engine via Supabase';
+  html += t('an.localdata','Lokale data') + ' · ' + local.scansTotal + ' ' + t('an.scans','scans') + ' · ' + t('an.clvengine','CLV-engine via Supabase');
   html += '</div>';
 
   return html;

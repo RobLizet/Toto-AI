@@ -161,19 +161,19 @@ function renderWedstrijdenScreen() {
         style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
         padding:.35rem .8rem;border-radius:999px;cursor:pointer;
         background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.35);color:#a78bfa;">
-        📅 SCAN 3 DAGEN
+        📅 ${t('wed.scan3days','SCAN 3 DAGEN')}
       </button>
       <button onclick="loadTodayAllComps()"
         style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
         padding:.35rem .8rem;border-radius:999px;cursor:pointer;
         background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.25);color:#00BEC4;">
-        📅 VANDAAG
+        📅 ${t('wed.todaybtn','VANDAAG')}
       </button>
       <button onclick="openCompDetail(state.activeComp)"
         style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
         padding:.35rem .8rem;border-radius:999px;cursor:pointer;
         background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.25);color:#00BEC4;">
-        📊 STAND & INFO
+        📊 ${t('wed.standinfo','STAND & INFO')}
       </button>
     </div>
 
@@ -215,7 +215,7 @@ function renderWedstrijdenScreen() {
         style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
         padding:.35rem .8rem;border-radius:999px;
         background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.95);cursor:pointer;">
-        ➕ Wedstrijd handmatig toevoegen
+        ➕ ${t('wed.addmanual','Wedstrijd handmatig toevoegen')}
       </button>
     </div>
     <div id="manualMatchSection" style="display:none;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);
@@ -417,8 +417,8 @@ function renderMatches(matches) {
         </div>
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;
           color:rgba(255,255,255,.95);line-height:1.75;max-width:240px;">
-          Niets gevonden voor <b style="color:#ffffff;">${_cname}</b> vandaag.<br>
-          Probeer een andere competitie of laad alles van vandaag.
+          ${t('wed.nothingfound','Niets gevonden voor')} <b style="color:#ffffff;">${_cname}</b> ${t('wed.today_lc','vandaag')}.<br>
+          ${t('wed.trycomp','Probeer een andere competitie of laad alles van vandaag.')}
         </div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:.3rem;">
           <button onclick="loadTodayAllComps()"
@@ -427,14 +427,14 @@ function renderMatches(matches) {
             border:1px solid rgba(0,190,196,.25);
             font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:700;
             color:#2563eb;cursor:pointer;">
-            📅 Alles vandaag laden
+            📅 ${t('wed.loadalltoday','Alles vandaag laden')}
           </button>
           <button onclick="loadMatches('${_comp}')"
             style="padding:.5rem 1rem;border-radius:10px;
             background:rgba(15,23,42,.04);border:1px solid rgba(255,255,255,0.09);
             font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:700;
             color:rgba(255,255,255,.95);cursor:pointer;">
-            ↺ Opnieuw
+            ↺ ${t('wed.retryshort','Opnieuw')}
           </button>
         </div>
       </div>`;
