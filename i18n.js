@@ -799,6 +799,35 @@
     try { location.reload(); } catch (e) {}
   }
 
+  // v26.195: pick-label + markt vertaler (scan-data, NL→EN, alleen bij EN; anders ongewijzigd)
+  function tPick(label) {
+    if (!label || currentLang() !== 'en') return label || '';
+    var s = String(label);
+    var m = s.match(/^Meer dan ([0-9.]+) goals$/i);
+    if (m) return 'Over ' + m[1] + ' goals';
+    m = s.match(/^Minder dan ([0-9.]+) goals$/i);
+    if (m) return 'Under ' + m[1] + ' goals';
+    var fixed = {
+      'Beide teams scoren': 'Both teams to score',
+      'Niet beide teams scoren': 'Not both teams to score',
+      'Beide scoren': 'Both score',
+      'Gelijkspel': 'Draw',
+      'Thuis wint': 'Home win',
+      'Uit wint': 'Away win'
+    };
+    if (fixed[s]) return fixed[s];
+    m = s.match(/^(.+) wint$/);
+    if (m) return m[1] + ' to win';
+    return s;
+  }
+  function tMarket(mk) {
+    if (!mk || currentLang() !== 'en') return mk || '';
+    var map = { 'Doelpunten': 'Goals', 'Uitslag': 'Result', 'Beide scoren': 'BTTS', 'DOELPUNTEN': 'GOALS', 'UITSLAG': 'RESULT', 'BEIDE SCOREN': 'BTTS' };
+    return map[String(mk)] || mk;
+  }
+  window.tPick   = tPick;
+  window.tMarket = tMarket;
+
   // exporteren naar globale scope
   window.I18N       = I18N;
   window.t          = t;     // canonieke helper

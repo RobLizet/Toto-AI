@@ -716,7 +716,7 @@ function renderWKPickCard(p) {
         </div>
       </div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);">
-        ${p.pickLabel||p.pick} @ ${p.odds} · conf ${p.confidence}/10
+        ${tPick(p.pickLabel||p.pick)} @ ${p.odds} · conf ${p.confidence}/10
         ${p.sharp ? '<span style="color:#ef4444;margin-left:.3rem;">🔥 SHARP</span>' : ''}
       </div>
     </div>`;
