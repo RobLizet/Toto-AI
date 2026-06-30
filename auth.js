@@ -26,7 +26,7 @@ function initFirebaseAuth() {
     _firebaseAuth.getRedirectResult().then(result => {
       if (result?.user) {
         console.log('[Auth] Redirect login gelukt:', result.user.email);
-        showToast('✅ Ingelogd als ' + (result.user.displayName || result.user.email));
+        showToast(t('auth.loggedinas','✅ Ingelogd als ') + (result.user.displayName || result.user.email));
       }
     }).catch(e => {
       if (e.code && e.code !== 'auth/no-current-user') {
@@ -63,7 +63,7 @@ function initFirebaseAuth() {
           loadFromFirebase().then(() => {
             saveState();
             _startApp();
-            showToast('✅ Keys geladen vanuit Firebase');
+            showToast(t('auth.keysloaded','✅ Keys geladen vanuit Firebase'));
           }).catch(() => _startApp());
         } else {
           _startApp();
@@ -199,7 +199,7 @@ async function loginWithEmail() {
   const password = (document.getElementById('login-password') || document.getElementById('loginPassword'))?.value;
   const btn      = document.querySelector('#login-form-in .login-submit-btn');
 
-  if (!email || !password) { showToast('Vul email en wachtwoord in'); return; }
+  if (!email || !password) { showToast(t('auth.fillcredentials','Vul email en wachtwoord in')); return; }
   if (btn) { btn.textContent = '⟳ Inloggen...'; btn.disabled = true; }
 
   try {
@@ -224,15 +224,15 @@ async function registerWithEmail() {
   const password2 = (document.getElementById('reg-password2'))?.value;
   const btn       = document.querySelector('#login-form-reg .login-submit-btn');
 
-  if (!email || !password) { showToast('Vul email en wachtwoord in'); return; }
-  if (password.length < 6) { showToast('Wachtwoord min. 6 tekens'); return; }
-  if (password2 !== undefined && password !== password2) { showToast('Wachtwoorden komen niet overeen'); return; }
+  if (!email || !password) { showToast(t('auth.fillcredentials','Vul email en wachtwoord in')); return; }
+  if (password.length < 6) { showToast(t('auth.pwmin','Wachtwoord min. 6 tekens')); return; }
+  if (password2 !== undefined && password !== password2) { showToast(t('auth.pwmismatch','Wachtwoorden komen niet overeen')); return; }
   if (btn) { btn.textContent = '⟳ Account aanmaken...'; btn.disabled = true; }
 
   try {
     if (!_firebaseAuth) throw new Error('Firebase niet beschikbaar');
     await _firebaseAuth.createUserWithEmailAndPassword(email, password);
-    showToast('✅ Account aangemaakt!');
+    showToast(t('auth.accountcreated','✅ Account aangemaakt!'));
   } catch(e) {
     const msgs = {
       'auth/email-already-in-use': 'Email al in gebruik',
@@ -253,17 +253,17 @@ async function loginWithGoogle() {
     // Probeer popup eerst (werkt beter in PWA/TWA)
     // Val terug op redirect als popup geblokkeerd wordt
     try {
-      showToast('⟳ Google login...');
+      showToast(t('auth.googlelogin','⟳ Google login...'));
       const result = await _firebaseAuth.signInWithPopup(provider);
       if (result?.user) {
-        showToast('✅ Ingelogd als ' + (result.user.displayName || result.user.email));
+        showToast(t('auth.loggedinas','✅ Ingelogd als ') + (result.user.displayName || result.user.email));
       }
     } catch(popupErr) {
       // Popup geblokkeerd of niet ondersteund → redirect
       if (popupErr.code === 'auth/popup-blocked' ||
           popupErr.code === 'auth/popup-closed-by-user' ||
           popupErr.code === 'auth/cancelled-popup-request') {
-        showToast('⟳ Doorsturen naar Google...');
+        showToast(t('auth.googleredirect','⟳ Doorsturen naar Google...'));
         await _firebaseAuth.signInWithRedirect(provider);
       } else {
         throw popupErr;
@@ -271,7 +271,7 @@ async function loginWithGoogle() {
     }
   } catch(e) {
     console.error('[Auth] Google login fout:', e.code, e.message);
-    showToast('❌ Google login mislukt: ' + (e.message || e.code));
+    showToast(t('auth.googlefailed','❌ Google login mislukt: ') + (e.message || e.code));
   }
 }
 
@@ -306,7 +306,7 @@ function handleLoginBtnClick() {
   const cu = _firebaseAuth && _firebaseAuth.currentUser;
   if (cu && !cu.isAnonymous) {
     switchScreen('instellingen');
-    showToast('✅ Ingelogd als ' + (cu.displayName || cu.email));
+    showToast(t('auth.loggedinas','✅ Ingelogd als ') + (cu.displayName || cu.email));
   } else {
     showLoginScreen();
   }

@@ -121,7 +121,7 @@ function sendValueNotification(scan) {
 }
 
 async function toggleNotifications() {
-  if (!('Notification' in window)) { alert('Je browser ondersteunt geen notificaties.'); return; }
+  if (!('Notification' in window)) { alert(t('notif.unsupported','Je browser ondersteunt geen notificaties.')); return; }
   if (state.settings.notifEnabled) {
     state.settings.notifEnabled = false;
     saveState(); updateNotifUI(); return;
@@ -152,7 +152,7 @@ async function toggleNotifications() {
     return;
   }
   if (Notification.permission === 'denied') {
-    alert('Notificaties zijn geblokkeerd. Zet ze aan via je browser-instellingen.');
+    alert(t('notif.blocked','Notificaties zijn geblokkeerd. Zet ze aan via je browser-instellingen.'));
     return;
   }
   const result = await Notification.requestPermission();
@@ -358,7 +358,7 @@ function toggleAutoValueAlerts() {
   const pill = document.getElementById('autoAlertsPill');
   if (pill) pill.classList.toggle('on', !!state.settings.autoValueAlerts);
   saveState();
-  showToast(state.settings.autoValueAlerts ? '⚡ Auto alerts aan' : '⚡ Auto alerts uit');
+  showToast(state.settings.autoValueAlerts ? t('notif.autoalertson','⚡ Auto alerts aan') : t('notif.autoalertsoff','⚡ Auto alerts uit'));
 }
 
 // ── Debug push functie ───────────────────────────────

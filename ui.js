@@ -200,7 +200,7 @@ function openQuickBet(matchId, pick, pickLabel, odds, type) {
   if (type === 'combi') {
     addValuePickToCombi(matchId, pick, pickLabel, odds,
       state.selectedMatch?.home || '', state.selectedMatch?.away || '');
-    showToast('➕ Toegevoegd aan combi');
+    showToast(t('ui.addedtocombi','➕ Toegevoegd aan combi'));
   } else {
     openBetModal(null, matchId, pick, pickLabel, odds);
   }

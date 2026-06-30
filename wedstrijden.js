@@ -1264,10 +1264,10 @@ async function getNLClubIds() {
 
 async function loadDutchFriendlies() {
   const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
-  showLoadingMsg('⟳ Oefenduels NL laden...', 'var(--muted)');
+  showLoadingMsg(t('wed.loadingfriendlies','⟳ Oefenduels NL laden...'), 'var(--muted)');
   try {
     const ids = await getNLClubIds();
-    if (!ids.size) { showLoadingMsg('⚠ Kon clublijst niet laden', 'var(--red)'); return; }
+    if (!ids.size) { showLoadingMsg(t('wed.clublisterror','⚠ Kon clublijst niet laden'), 'var(--red)'); return; }
     const now = new Date();
     const from = now.toISOString().split('T')[0];
     const to = new Date(now.getTime() + 45 * 86400000).toISOString().split('T')[0];
@@ -1276,14 +1276,14 @@ async function loadDutchFriendlies() {
     const nl = (d.response || [])
       .filter(f => ids.has(f.teams?.home?.id) || ids.has(f.teams?.away?.id))
       .sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
-    if (!nl.length) { renderMatches([]); showLoadingMsg('📌 Nog geen Nederlandse oefenduels gepland', 'var(--muted)'); return; }
+    if (!nl.length) { renderMatches([]); showLoadingMsg(t('wed.nofriendlies','📌 Nog geen Nederlandse oefenduels gepland'), 'var(--muted)'); return; }
     state.matches = nl.map(f => parseAPIMatch(f)).filter(Boolean);
     renderMatches(state.matches);
     saveOpeningOdds(state.matches);
     fetchFriendlyOdds(state.matches).then(() => renderMatches(state.matches));
   } catch (e) {
     console.warn('[loadDutchFriendlies]', e.message);
-    showLoadingMsg('⚠ Oefenduels laden mislukt', 'var(--red)');
+    showLoadingMsg(t('wed.friendliesfailed','⚠ Oefenduels laden mislukt'), 'var(--red)');
   }
 }
 
@@ -1325,7 +1325,7 @@ async function loadFromAPIFootball(comp, _apiKey) {
   const leagueId = COMP_IDS[comp];
   if (!leagueId) return false;
   const season = getCurrentSeason(comp);
-  showLoadingMsg(`⟳ ${COMP_NAMES[comp] || comp} laden...`, 'var(--muted)');
+  showLoadingMsg(`⟳ ${COMP_NAMES[comp] || comp} ${t('wed.loadingsuffix','laden...')}`, 'var(--muted)');
   try {
     const today = new Date().toISOString().split('T')[0];
     // v26.164: lijst toont vandaag t/m +3 dagen (alleen nog-te-spelen/live) i.p.v. enkel vandaag,
@@ -1363,7 +1363,7 @@ async function loadFromFD(fdCode, fdKey, comp) {
   const dateTo = new Date(today.getTime() + 2 * 86400000).toISOString().split('T')[0];
   const compName = {eredivisie:'Eredivisie',bundesliga:'Bundesliga',premier:'Premier League',beker:'KNVB Beker',champions:'Champions League'}[comp] || comp;
   try {
-    showLoadingMsg('⟳ football-data.org laden...', 'var(--muted)');
+    showLoadingMsg(t('wed.loadingfd','⟳ football-data.org laden...'), 'var(--muted)');
     let resp = await fdFetch(`https://api.football-data.org/v4/competitions/${fdCode}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`, fdKey);
     if (!resp.ok && resp.status !== 404) { showLoadingMsg(`⚠ football-data.org fout: HTTP ${resp.status}`, 'var(--red)'); return false; }
     let data = await resp.json();

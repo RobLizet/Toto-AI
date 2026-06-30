@@ -501,7 +501,7 @@ function deleteBet(id) {
   const bet = state.wallet.bets.find(b => b.id===id);
   if (!bet) return;
   const label = bet.type==='combi' ? `Combi €${bet.amount?.toFixed(2)}` : `${bet.matchName} — ${bet.pick}`;
-  if (!confirm(`Verwijderen: ${label}?`)) return;
+  if (!confirm(`${t('wal.deletelabel','Verwijderen')}: ${label}?`)) return;
   if (bet.status==='pending') { state.wallet.balance+=bet.amount; state.wallet.totalStaked-=bet.amount; }
   if (bet.status==='win')     { state.wallet.balance-=bet.payout; state.wallet.totalWon-=bet.payout; }
   state.wallet.bets = state.wallet.bets.filter(b => b.id!==id);
@@ -1452,7 +1452,7 @@ function deleteBacktestPick(id) {
 }
 
 function clearBacktest() {
-  if (!confirm('Alle resultaten wissen?')) return;
+  if (!confirm(t('wal.clearallresults','Alle resultaten wissen?'))) return;
   state.valueBacktest={picks:[]};
   saveState(); renderBacktest();
   showToast('🗑 Resultaten gewist');
