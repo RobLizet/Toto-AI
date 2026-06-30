@@ -1523,7 +1523,7 @@ function openCardPopup(type, data) {
       </div>
       ${b.note ? `<div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.6rem .8rem;margin-bottom:.75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:#ffffff;">📝 ${b.note}</div>` : ''}
       ${!isOpen ? `<div style="background:rgba(${isWin?'22,163,74':'220,38,38'},.08);border:1px solid rgba(${isWin?'22,163,74':'220,38,38'},.2);border-radius:12px;padding:.7rem;text-align:center;margin-bottom:.75rem;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">RESULTAAT</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${t('ana.result_hdr','RESULTAAT')}</div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.6rem;color:${pnlColor};">${isWin?'+':''}€${Math.abs(pnl).toFixed(2)}</div>
       </div>` : ''}`;
 
@@ -1826,16 +1826,16 @@ KWALITEITSREGELS:
         <div style="font-size:.82rem;line-height:1.7;color:#ffffff;">${content}</div>
       </div>`;
 
-    fill('vorm',    sectionCard('⚡', 'VORM', result.vorm || '—', '#2563eb'));
+    fill('vorm',    sectionCard('⚡', t('ana.form','VORM'), result.vorm || '—', '#2563eb'));
     const predBadge = predictions?.advice
       ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API: ${predictions.advice}${predictions.percent?.home !== null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
       : '';
     fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', result.tactiek || '—', '#d97706'));
     const _mvm = (typeof buildModelVsMarktHTML === 'function') ? buildModelVsMarktHTML(poisson, m, goalOdds) : '';
-    fill('kans',    sectionCard('🎯', 'KANSEN', (result.kans || '—') + _mvm, '#00BEC4'));
+    fill('kans',    sectionCard('🎯', t('ana.chances','KANSEN'), (result.kans || '—') + _mvm, '#00BEC4'));
     fill('risico',  sectionCard('⚠️', 'RISICO', result.risico || '—', '#dc2626'));
-    fill('advies',  sectionCard('💡', 'ADVIES', result.advies || '—', '#00BEC4'));
+    fill('advies',  sectionCard('💡', t('ana.advice','ADVIES'), result.advies || '—', '#00BEC4'));
 
     // Tip sectie
     const tip = result.tip;
@@ -1853,7 +1853,7 @@ KWALITEITSREGELS:
       document.getElementById('rb-tip').innerHTML = `
         <div style="background:linear-gradient(135deg,rgba(0,190,196,.06),rgba(0,190,196,.06));
           border:1px solid rgba(0,190,196,.15);border-radius:14px;padding:.9rem;margin-bottom:.6rem;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;font-weight:700;letter-spacing:.05em;margin-bottom:.4rem;">🏆 BESTE TIP · ${tip.markt||'Uitslag'}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;font-weight:700;letter-spacing:.05em;margin-bottom:.4rem;">🏆 ${t('ana.besttip','BESTE TIP')} · ${tMarket(tip.markt||'Uitslag')}</div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#ffffff;margin-bottom:.3rem;">${tip.pick} — ${tip.pickLabel}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;color:#374151;margin-bottom:.5rem;">Quote: <b>${tip.odds}</b> &nbsp;·&nbsp; ${sterren}</div>
           ${tv !== null ? `
@@ -1888,7 +1888,7 @@ KWALITEITSREGELS:
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:.5rem .7rem;margin-bottom:.6rem;">
             <div>
-              <div style="font-family:monospace;font-size:.52rem;font-weight:700;color:#475569;">📊 INZET-ADVIES</div>
+              <div style="font-family:monospace;font-size:.52rem;font-weight:700;color:#475569;">📊 ${t('ana.stakeadvice','INZET-ADVIES')}</div>
               <div style="font-size:.62rem;color:rgba(255,255,255,.7);margin-top:.15rem;">Vaste units · geen Kelly (edge nog niet bewezen)</div>
             </div>
             <div style="text-align:right;white-space:nowrap;">
@@ -3600,7 +3600,7 @@ function showScanLogStatsPopup() {
     <div style="background:var(--sheet-bg,#0d1e24);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 32px rgba(15,23,42,.18);">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:.85rem 1rem .7rem;border-bottom:1px solid var(--track-bg,rgba(0,0,0,.08));">
         <div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">📊 SCAN LOG STATISTIEKEN</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">📊 ${t('ana.scanlogstats','SCAN LOG STATISTIEKEN')}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);margin-top:.1rem;">${allPicks.length} picks · ${settled.length} afgerond</div>
         </div>
         <button onclick="document.getElementById('scanStatsPopupOverlay').remove()"

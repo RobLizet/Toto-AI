@@ -328,6 +328,17 @@
       'clog.intro': 'Versiegeschiedenis van ProMatchXI — van v11.40 tot heden.'
     },
     en: {
+      // ── v26.196: disclaimer + Analyse-kopjes ──
+      'dash.onlyfor': 'Only for',
+      'dash.playresp': 'Play responsibly',
+      'dash.helpline': 'Helpline',
+      'ana.result_hdr': 'RESULT',
+      'ana.form': 'FORM',
+      'ana.chances': 'PROBABILITIES',
+      'ana.advice': 'ADVICE',
+      'ana.besttip': 'BEST TIP',
+      'ana.stakeadvice': 'STAKE ADVICE',
+      'ana.scanlogstats': 'SCAN LOG STATS',
       // ── v26.194: aanvullende UI-vertalingen ──
       'wed.scan3days': 'SCAN 3 DAYS',
       'wed.todaybtn': 'TODAY',
