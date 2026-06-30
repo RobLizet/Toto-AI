@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // ROUTER.JS — switchScreen, bottom nav, back button
 // v31: meer-menu verwijderd — WK2026 + Instellingen naar bottom nav
+// v32: eigen sub-schermen oefennl + ekkwal (bereikbaar via knoppen in Matches, back-knop terug naar wedstrijden)
 // ═══════════════════════════════════════════════════════
 
 // switchScreen is de nieuwe naam, switchTab is de alias (legacy)
@@ -58,6 +59,12 @@ function switchScreen(name) {
       break;
     case 'wk2026':
       if (typeof renderWK2026Screen === 'function') renderWK2026Screen();
+      break;
+    case 'oefennl':
+      if (typeof renderOefenNLScreen === 'function') renderOefenNLScreen();
+      break;
+    case 'ekkwal':
+      if (typeof renderEKKwalScreen === 'function') renderEKKwalScreen();
       break;
   }
 

@@ -15,7 +15,7 @@ function getActiveCOMPLIST() {
   const isPreEuroEnd = now < euroEnd;
 
   const WK       = [{ key:'wk2026',    flag:'🏆', name:'WK 2026' }];
-  const OEFEN    = [{ key:'oefennl',   flag:'🤝', name:'Oefenduels NL' }];
+  const OEFEN    = []; // v26.190: NL-oefenduels verhuisd naar eigen scherm (screen-oefennl)
   const SCANDI   = [
     { key:'norway',   flag:'🇳🇴', name:'Eliteserien' },
     { key:'sweden',   flag:'🇸🇪', name:'Allsvenskan' },
@@ -105,6 +105,24 @@ function renderWedstrijdenScreen() {
 
     <!-- ══ TAB: WEDSTRIJDEN ══ -->
     <div id="wtab-content-wedstrijden">
+
+    <!-- v26.190: eigen tabs voor NL-oefenduels + EK-kwalificatie -->
+    <div style="display:flex;gap:.5rem;margin-bottom:.7rem;">
+      <button onclick="switchScreen('oefennl')"
+        style="flex:1;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.6rem .4rem;
+        background:rgba(255,255,255,.05);color:rgba(255,255,255,.92);
+        font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;gap:.35rem;">
+        <span style="font-size:.9rem;">🤝</span> ${t('wed.tab_oefennl','Oefenduels NL')}
+      </button>
+      <button onclick="switchScreen('ekkwal')"
+        style="flex:1;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.6rem .4rem;
+        background:rgba(255,255,255,.05);color:rgba(255,255,255,.92);
+        font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;gap:.35rem;">
+        <span style="font-size:.9rem;">🇪🇺</span> ${t('wed.tab_ekkwal','EK-kwalificatie')}
+      </button>
+    </div>
 
     <!-- Competitie tiles - compact grid -->
     <div style="margin-bottom:.6rem;">
@@ -1319,6 +1337,119 @@ async function fetchFriendlyOdds(matches) {
       }
     } catch (e) {}
   }
+}
+
+// ════════════════════════════════════════════════════════════
+// v26.190: EIGEN SCHERMEN — NL-oefenduels + EK-kwalificatie
+// Hergebruiken renderMatchCard (kaart-builder), schrijven naar eigen container.
+// ════════════════════════════════════════════════════════════
+
+// Lichte renderer naar een willekeurige container (vangt afgelopen/stale duels af, net als renderMatches)
+function renderMatchesInto(matches, listId) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const now = Date.now();
+  const STALE = 2.5 * 60 * 60 * 1000;
+  const visible = (matches || []).filter(m => {
+    if (m.isLive) return true;
+    if (m.isDone) return false;
+    const ko = matchKickoffMs(m);
+    return !ko || ko > now - STALE;
+  });
+  list.innerHTML = '';
+  visible.forEach(m => { const c = renderMatchCard(m); if (c) list.appendChild(c); });
+}
+
+function _screenLoadingMsg(loadingId, msg, color) {
+  const el = document.getElementById(loadingId);
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.color = color || 'var(--muted)';
+  el.innerHTML = msg;
+}
+
+// ── NL-oefenduels (league 667 Friendlies Clubs, gefilterd op Eredivisie+KKD-clubs) ──
+async function loadOefenNL() {
+  const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
+  _screenLoadingMsg('oefennl-loading', t('wed.loadingfriendlies', '\u27f3 Oefenduels NL laden...'));
+  try {
+    const ids = await getNLClubIds();
+    if (!ids.size) { _screenLoadingMsg('oefennl-loading', t('wed.clublisterror', '\u26a0 Kon clublijst niet laden'), 'var(--red)'); return; }
+    const now = new Date();
+    const from = now.toISOString().split('T')[0];
+    const to = new Date(now.getTime() + 45 * 86400000).toISOString().split('T')[0];
+    const r = await apiFetch(`${WORKER}/apif/fixtures?league=667&season=2026&from=${from}&to=${to}&_cb=${Date.now()}`, null, 12000);
+    const d = await r.json();
+    const nl = (d.response || [])
+      .filter(f => ids.has(f.teams?.home?.id) || ids.has(f.teams?.away?.id))
+      .sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+    if (!nl.length) { renderMatchesInto([], 'oefennl-list'); _screenLoadingMsg('oefennl-loading', t('wed.nofriendlies', '\ud83d\udccc Nog geen Nederlandse oefenduels gepland'), 'var(--muted)'); return; }
+    const ms = nl.map(f => parseAPIMatch(f)).filter(Boolean);
+    const le = document.getElementById('oefennl-loading'); if (le) le.style.display = 'none';
+    renderMatchesInto(ms, 'oefennl-list');
+    saveOpeningOdds(ms);
+    fetchFriendlyOdds(ms).then(() => renderMatchesInto(ms, 'oefennl-list'));
+  } catch (e) {
+    console.warn('[loadOefenNL]', e.message);
+    _screenLoadingMsg('oefennl-loading', t('wed.friendliesfailed', '\u26a0 Oefenduels laden mislukt'), 'var(--red)');
+  }
+}
+
+function renderOefenNLScreen() {
+  const s = document.getElementById('screen-oefennl');
+  if (!s) return;
+  s.innerHTML = `
+    <div style="display:flex;align-items:center;gap:.55rem;margin-bottom:.85rem;">
+      <div style="font-size:1.5rem;">\ud83e\udd1d</div>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:.04em;color:#fff;line-height:1;">${t('wed.tab_oefennl','Oefenduels NL')}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);margin-top:.2rem;">${t('wed.oefennl_sub','Eredivisie & KKD-clubs \u00b7 tonen + analyseren, geen value-scan')}</div>
+      </div>
+    </div>
+    <div id="oefennl-loading" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.6rem;text-align:center;padding:1.2rem;"></div>
+    <div id="oefennl-list"></div>`;
+  loadOefenNL();
+}
+
+// ── EK-kwalificatie (league 960 Euro Championship - Qualification) ──
+// EK 2028-qualifiers starten mrt 2027 (season 2027). Tot dan toont de API geen fixtures.
+async function loadEKKwal() {
+  const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
+  _screenLoadingMsg('ekkwal-loading', t('wed.loading_ekkwal', '\u27f3 EK-kwalificatie laden...'));
+  try {
+    const now = new Date();
+    const from = now.toISOString().split('T')[0];
+    const to = new Date(now.getTime() + 60 * 86400000).toISOString().split('T')[0];
+    // season 2027 = EK 2028-kwalificatie (start jaar). Vult zich automatisch zodra API-Football de fixtures publiceert.
+    const r = await apiFetch(`${WORKER}/apif/fixtures?league=960&season=2027&from=${from}&to=${to}&_cb=${Date.now()}`, null, 12000);
+    const d = await r.json();
+    const fx = (d.response || []).sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+    if (!fx.length) { renderMatchesInto([], 'ekkwal-list'); _screenLoadingMsg('ekkwal-loading', t('wed.no_ekkwal', '\ud83d\udccc EK 2028-kwalificatie start in 2027 \u2014 nog geen wedstrijden gepland'), 'var(--muted)'); return; }
+    const ms = fx.map(f => parseAPIMatch(f)).filter(Boolean);
+    const le = document.getElementById('ekkwal-loading'); if (le) le.style.display = 'none';
+    renderMatchesInto(ms, 'ekkwal-list');
+    saveOpeningOdds(ms);
+    fetchFriendlyOdds(ms).then(() => renderMatchesInto(ms, 'ekkwal-list'));
+  } catch (e) {
+    console.warn('[loadEKKwal]', e.message);
+    _screenLoadingMsg('ekkwal-loading', t('wed.ekkwal_failed', '\u26a0 EK-kwalificatie laden mislukt'), 'var(--red)');
+  }
+}
+
+function renderEKKwalScreen() {
+  const s = document.getElementById('screen-ekkwal');
+  if (!s) return;
+  s.innerHTML = `
+    <div style="display:flex;align-items:center;gap:.55rem;margin-bottom:.85rem;">
+      <div style="font-size:1.5rem;">\ud83c\uddea\ud83c\uddfa</div>
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;letter-spacing:.04em;color:#fff;line-height:1;">${t('wed.tab_ekkwal','EK-kwalificatie')}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);margin-top:.2rem;">${t('wed.ekkwal_sub','Kwalificatie EK 2028 \u00b7 start voorjaar 2027')}</div>
+      </div>
+    </div>
+    <div id="ekkwal-loading" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:.6rem;text-align:center;padding:1.2rem;"></div>
+    <div id="ekkwal-list"></div>`;
+  loadEKKwal();
 }
 
 async function loadFromAPIFootball(comp, _apiKey) {
