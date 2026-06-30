@@ -440,7 +440,21 @@ function renderDashboard() {
   const calibMeta = window._calibrationCache?.meta || {};
   const isCalibrated = (calibMeta.settledBets || 0) >= 10;
 
+  const _dashLang = (typeof pmxLang === 'function' ? pmxLang() : 'nl');
+  const _flagBtn = (code, flag, label, on) =>
+    `<button onclick="setAppLang('${code}')" title="${label}" aria-label="${label}"
+      style="border:1.5px solid ${on ? 'rgba(0,190,196,.7)' : 'rgba(255,255,255,.12)'};
+      background:${on ? 'rgba(0,190,196,.14)' : 'rgba(255,255,255,.04)'};
+      border-radius:10px;padding:.25rem .5rem;font-size:1.15rem;line-height:1;cursor:pointer;
+      opacity:${on ? '1' : '.5'};transition:all .15s;">${flag}</button>`;
+
   screen.innerHTML = `
+
+    <!-- v26.193: taalkeuze NL/GB -->
+    <div style="display:flex;justify-content:flex-end;gap:.4rem;margin-bottom:.6rem;">
+      ${_flagBtn('nl', '🇳🇱', 'Nederlands', _dashLang === 'nl')}
+      ${_flagBtn('en', '🇬🇧', 'English', _dashLang === 'en')}
+    </div>
 
     <!-- Dashboard tabs -->
     <div style="display:flex;gap:.4rem;margin-bottom:.75rem;background:rgba(15,23,42,.04);border-radius:12px;padding:.25rem;">
