@@ -1041,11 +1041,11 @@ function renderMatchCard(m) {
       </button>
     </div>
     <div style="padding:0 .9rem .1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.3rem;">
-      <button onclick="event.stopPropagation();openJacks('${m.id}')"
+      ${ENABLE_BOOKMAKER_LINKS ? `<button onclick="event.stopPropagation();openJacks('${m.id}')"
         style="background:none;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;
         color:rgba(255,255,255,.95);cursor:pointer;text-decoration:underline;">
         🎰 Andere quotes gebruiken
-      </button>
+      </button>` : ''}
       ${sharpBadge}
     </div>
     <div style="padding:0 .9rem .5rem;">
@@ -2173,8 +2173,12 @@ function hideValueBanner() {
   if (b) b.style.display = 'none';
 }
 
-// ── Jacks.nl directe link ─────────────────────────────────
+// ── Bookmaker-uitlink (Jacks.nl) ──────────────────────────
+// v26.197: standaard UIT — verbergt de bookmaker-CTA voor de Play Store-build (Google verbiedt
+// gok-CTA's/links naar betting-sites). Zet op true voor een web-only build met affiliate-link.
+const ENABLE_BOOKMAKER_LINKS = false;
 function openJacks(matchId) {
+  if (!ENABLE_BOOKMAKER_LINKS) return; // guard: no-op wanneer uitgeschakeld
   const m = (state.matches||[]).find(x => String(x.id) === String(matchId));
   if (!m) { window.open('https://www.jacks.nl/sport/voetbal', '_blank'); return; }
   const homeSlug = encodeURIComponent(m.home.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
