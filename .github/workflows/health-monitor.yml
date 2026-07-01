@@ -1,0 +1,46 @@
+name: PMX health monitor
+
+# Externe waakhond voor de scan-cron. Draait los van Cloudflare, dus vangt ook een
+# volledig dode worker/cron. Faalt (→ GitHub mailt de repo-eigenaar) zodra /health
+# niet OK is, 'scan_verouderd' meldt, of de laatste scan >2u geleden is tijdens scan-uren.
+
+on:
+  schedule:
+    # UTC — kort ná scan-momenten binnen het actieve venster (cron draait 06 + 12-22 UTC)
+    - cron: '40 6,14,18,22 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check worker /health
+        run: |
+          curl -s --max-time 25 "https://api.promatchxi.app/health?_cb=$(date +%s)" -o health.json || true
+          echo "----- /health -----"
+          cat health.json || echo "(geen response)"
+          echo "-------------------"
+          python3 - <<'PY'
+          import json, sys
+          try:
+              d = json.load(open('health.json'))
+          except Exception as e:
+              print(f"::error::PMX ALARM — /health onbereikbaar of geen geldige JSON: {e}")
+              sys.exit(1)
+          ok    = bool(d.get('ok'))
+          warns = d.get('warnings') or []
+          age   = d.get('last_scan_min_ago')
+          ver   = d.get('worker_version')
+          print(f"ok={ok} version={ver} warnings={warns} last_scan_min_ago={age}")
+          problems = []
+          if not ok:
+              problems.append('health ok=false')
+          if 'scan_verouderd' in warns:
+              problems.append(f'scan_verouderd ({age} min geleden)')
+          if isinstance(age, (int, float)) and age > 120:
+              problems.append(f'laatste scan {age} min geleden (>120)')
+          if problems:
+              print('::error::PMX ALARM — ' + ' | '.join(problems))
+              sys.exit(1)
+          print('✅ PMX health OK — cron draait, scan vers.')
+          PY
