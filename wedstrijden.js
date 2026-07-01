@@ -1041,11 +1041,6 @@ function renderMatchCard(m) {
       </button>
     </div>
     <div style="padding:0 .9rem .1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.3rem;">
-      ${ENABLE_BOOKMAKER_LINKS ? `<button onclick="event.stopPropagation();openJacks('${m.id}')"
-        style="background:none;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;
-        color:rgba(255,255,255,.95);cursor:pointer;text-decoration:underline;">
-        🎰 Andere quotes gebruiken
-      </button>` : ''}
       ${sharpBadge}
     </div>
     <div style="padding:0 .9rem .5rem;">
@@ -2173,34 +2168,6 @@ function hideValueBanner() {
   if (b) b.style.display = 'none';
 }
 
-// ── Bookmaker-uitlink (Jacks.nl) ──────────────────────────
-// v26.197: standaard UIT — verbergt de bookmaker-CTA voor de Play Store-build (Google verbiedt
-// gok-CTA's/links naar betting-sites). Zet op true voor een web-only build met affiliate-link.
-const ENABLE_BOOKMAKER_LINKS = false;
-function openJacks(matchId) {
-  if (!ENABLE_BOOKMAKER_LINKS) return; // guard: no-op wanneer uitgeschakeld
-  const m = (state.matches||[]).find(x => String(x.id) === String(matchId));
-  if (!m) { window.open('https://www.jacks.nl/sport/voetbal', '_blank'); return; }
-  const homeSlug = encodeURIComponent(m.home.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
-  const awaySlug = encodeURIComponent(m.away.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
-  const compSlugMap = {
-    'Premier League':'premier-league','Eredivisie':'eredivisie','Bundesliga':'bundesliga',
-    'Ligue 1':'ligue-1','Serie A':'serie-a','La Liga':'la-liga',
-    'Champions League':'champions-league','Keuken Kampioen Divisie':'keuken-kampioen-divisie',
-    'Jupiler Pro League':'jupiler-pro-league','Championship':'championship',
-    '2. Bundesliga':'2-bundesliga','Süper Lig':'super-lig',
-    'Friendlies':'internationaal','FIFA World Cup':'wk-2026',
-  };
-  const comp = m.comp || '';
-  let compSlug = null;
-  for (const [name, slug] of Object.entries(compSlugMap)) {
-    if (comp.toLowerCase().includes(name.toLowerCase())) { compSlug = slug; break; }
-  }
-  const url = compSlug
-    ? `https://www.jacks.nl/sport/voetbal/${compSlug}/${homeSlug}-${awaySlug}`
-    : `https://www.jacks.nl/sport/zoeken?q=${encodeURIComponent(m.home + ' ' + m.away)}`;
-  window.open(url, '_blank');
-}
 
 
 // ── Competitie Info Modal ─────────────────────────────
