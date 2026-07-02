@@ -15,22 +15,24 @@ async function renderAnalyticsScreen() {
   screen.innerHTML = _analyticsLoadingHTML();
 
   // v26.114: KPI's uit de echte Supabase-picks (kwaliteit: value>=8, conf>=6)
-  let supabasePicks = null, workerData = null, aiAcc = null;
+  let supabasePicks = null, workerData = null, aiAcc = null, autoTune = null;
   try {
-    const [pr, ar, air] = await Promise.all([
+    const [pr, ar, air, atr] = await Promise.all([
       fetch(ANALYTICS_WORKER + '/picks'),
       fetch(ANALYTICS_WORKER + '/analytics'),
       fetch(ANALYTICS_WORKER + '/ai-accuracy'),
+      fetch(ANALYTICS_WORKER + '/autotune'),
     ]);
     if (pr.ok) { const pd = await pr.json(); supabasePicks = pd.picks || (Array.isArray(pd) ? pd : []); }
     if (ar.ok) workerData = await ar.json();
     if (air.ok) aiAcc = await air.json();
+    if (atr.ok) autoTune = await atr.json();
   } catch(e) {
     console.warn('[Analytics] Worker niet bereikbaar:', e.message);
   }
   const local = _calcLocalStats(supabasePicks || undefined);
 
-  screen.innerHTML = _analyticsHTML(local, workerData, aiAcc);
+  screen.innerHTML = _analyticsHTML(local, workerData, aiAcc, autoTune);
 }
 
 // v26.105: render de volledige analytics in een willekeurige container (bv. inline op Analyse)
@@ -39,19 +41,21 @@ async function renderAnalyticsInto(containerId) {
   if (!el) return;
   el.innerHTML = _analyticsLoadingHTML();
   // v26.114: KPI's uit de echte Supabase-picks (kwaliteit: value>=8, conf>=6)
-  let supabasePicks = null, workerData = null, aiAcc = null;
+  let supabasePicks = null, workerData = null, aiAcc = null, autoTune = null;
   try {
-    const [pr, ar, air] = await Promise.all([
+    const [pr, ar, air, atr] = await Promise.all([
       fetch(ANALYTICS_WORKER + '/picks'),
       fetch(ANALYTICS_WORKER + '/analytics'),
       fetch(ANALYTICS_WORKER + '/ai-accuracy'),
+      fetch(ANALYTICS_WORKER + '/autotune'),
     ]);
     if (pr.ok) { const pd = await pr.json(); supabasePicks = pd.picks || (Array.isArray(pd) ? pd : []); }
     if (ar.ok) workerData = await ar.json();
     if (air.ok) aiAcc = await air.json();
+    if (atr.ok) autoTune = await atr.json();
   } catch(e) { console.warn('[Analytics inline] worker niet bereikbaar:', e.message); }
   const local = _calcLocalStats(supabasePicks || undefined);
-  el.innerHTML = _analyticsHTML(local, workerData, aiAcc);
+  el.innerHTML = _analyticsHTML(local, workerData, aiAcc, autoTune);
 }
 
 // ── Lokale statistieken berekenen uit scanLog ────────
@@ -164,7 +168,7 @@ function _analyticsLoadingHTML() {
 }
 
 // ── Hoofd HTML builder ────────────────────────────────
-function _analyticsHTML(local, worker, aiAcc) {
+function _analyticsHTML(local, worker, aiAcc, autoTune) {
   let html = '';
 
   // ── Header ──
@@ -524,6 +528,34 @@ function _analyticsHTML(local, worker, aiAcc) {
         html += '<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:.15rem .3rem;color:rgba(255,255,255,.85);">';
         html += '<span>' + b.kans_band + ' (n=' + b.n_gesetteld + ')</span>';
         html += '<span style="color:' + col + ';">' + b.gem_model_kans + '% \u2192 ' + b.werkelijke_hitrate + '%</span>';
+        html += '</div>';
+      });
+    }
+    html += '</div>';
+  }
+
+  // v26.203: Auto-kalibratie-status (dry-run aanbevelingen / actief)
+  if (autoTune && autoTune.ok) {
+    var _apply = autoTune.apply_mode;
+    var _cur = autoTune.current || {};
+    var _log = Array.isArray(autoTune.log) ? autoTune.log : [];
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">\u{1F39B}\uFE0F ' + t('an.autotune','AUTO-KALIBRATIE') + '</div>';
+    var _stCol = _apply ? '#00BEC4' : 'rgba(255,255,255,.5)';
+    var _stBg  = _apply ? 'rgba(0,190,196,.14)' : 'rgba(255,255,255,.05)';
+    var _stTxt = _apply ? t('an.at_active','ACTIEF \u2014 stuurt bij') : t('an.at_dry','DRY-RUN \u2014 alleen loggen');
+    html += '<div style="display:inline-block;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:' + _stCol + ';background:' + _stBg + ';border:1px solid ' + _stCol + ';border-radius:999px;padding:2px 8px;margin-bottom:.5rem;">' + _stTxt + '</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.8);margin-bottom:.5rem;">' + t('an.at_current','Huidige shrink') + ' \u2014 00-20%: <b>' + (_cur.s1!=null?_cur.s1:'\u2014') + '</b> \u00b7 20-35%: <b>' + (_cur.s2!=null?_cur.s2:'\u2014') + '</b></div>';
+    if (!_log.length) {
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.55);">' + t('an.at_none','Nog geen aanbevelingen \u2014 start automatisch met clubdata na 20 juli.') + '</div>';
+    } else {
+      _log.slice(0,8).forEach(function(r){
+        var g = (r.gap==null?0:r.gap);
+        var gCol = Math.abs(g)<=3?'#00BEC4':(Math.abs(g)<=8?'#d97706':'#dc2626');
+        var chg = (r.old_value!=r.new_value) ? (r.old_value + '\u2192' + r.new_value) : ('=' + r.old_value);
+        html += '<div style="padding:.35rem .5rem;margin-bottom:.3rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;">';
+        html += '<div style="display:flex;justify-content:space-between;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;color:#fff;"><span>' + r.band + ' (n=' + r.n + ')</span><span style="color:' + gCol + ';">gap ' + (g>=0?'+':'') + g + '</span></div>';
+        html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.65);margin-top:.1rem;">model ' + r.model_kans + '% \u2192 ' + r.actual + '% ' + t('an.real','werkelijk') + ' \u00b7 ' + chg + (r.applied?' \u2713':' (dry-run)') + '</div>';
         html += '</div>';
       });
     }

@@ -328,6 +328,12 @@
       'clog.intro': 'Versiegeschiedenis van ProMatchXI — van v11.40 tot heden.'
     },
     en: {
+      // v26.203: auto-kalibratie
+      'an.autotune': 'AUTO-CALIBRATION',
+      'an.at_active': 'ACTIVE — adjusting',
+      'an.at_dry': 'DRY-RUN — logging only',
+      'an.at_current': 'Current shrink',
+      'an.at_none': 'No recommendations yet — starts automatically with club data after July 20.',
       // v26.200: AI-nauwkeurigheid
       'an.aiacc': 'AI ACCURACY',
       'an.aiacc_sub': 'Model probability vs actual result · n = settled tips',
