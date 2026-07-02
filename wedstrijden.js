@@ -1915,6 +1915,7 @@ async function loadTodayAllComps() {
       return kickoff > now - 30 * 60 * 1000 && kickoff < now + 48 * 60 * 60 * 1000;
     });
     const knownLeagueIdsSet = new Set(Object.values(COMP_IDS));
+    knownLeagueIdsSet.delete(667); // v26.199: globale friendlies (Karpaty etc.) niet in WK/vandaag-aggregatie — alleen via eigen Oefenduels NL-scherm
     const leagueMap = {};
     for (const f of fixtures) {
       const lid = f.league.id;
