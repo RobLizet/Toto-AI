@@ -509,13 +509,31 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
     html += '<div class="analytics-block">';
     html += '<div class="analytics-block-title">\u{1F916} ' + t('an.aiacc','AI-NAUWKEURIGHEID') + '</div>';
     html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.6);margin-bottom:.5rem;">' + t('an.aiacc_sub','Modelkans vs werkelijke uitslag \u00b7 n = afgerekende tips') + '</div>';
+    // v26.207: gemiddelde kalibratie-afwijking (gewogen naar n) — echte samenvatting i.p.v. mean-vs-mean
+    var _mace = null;
+    if (Array.isArray(aiAcc.by_band) && aiAcc.by_band.length) {
+      var _tn = 0, _sum = 0;
+      aiAcc.by_band.forEach(function(b){
+        if (b.n_gesetteld && b.gem_model_kans != null && b.werkelijke_hitrate != null) {
+          _tn += b.n_gesetteld; _sum += b.n_gesetteld * Math.abs(b.gem_model_kans - b.werkelijke_hitrate);
+        }
+      });
+      if (_tn > 0) _mace = _sum / _tn;
+    }
+    if (_mace != null) {
+      var _mCol = _mace <= 5 ? '#00BEC4' : (_mace <= 10 ? '#d97706' : '#dc2626');
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .6rem;margin-bottom:.5rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;">';
+      html += '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.8);">' + t('an.mace','Gem. afwijking model vs werkelijk') + '</span>';
+      html += '<span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.15rem;color:' + _mCol + ';">' + _mace.toFixed(1) + 'pp</span>';
+      html += '</div>';
+    }
     aiAcc.by_market.forEach(function(r){
       var roi = (r.roi==null?0:r.roi);
       var roiCol = roi>=0?'#00BEC4':'#dc2626';
       html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem .5rem;margin-bottom:.3rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;">';
       html += '<div style="flex:1;min-width:0;">';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#fff;">' + r.markt + '</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.7);margin-top:.05rem;">n=' + r.n + ' \u00b7 model ' + r.gem_model_kans + '% \u2192 ' + r.hitrate + '% ' + t('an.real','werkelijk') + '</div>';
+      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.7);margin-top:.05rem;">n=' + r.n + ' \u00b7 ' + t('an.hit','hitrate') + ' ' + r.hitrate + '%</div>';
       html += '</div>';
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:' + roiCol + ';">' + (roi>=0?'+':'') + roi + '%</div>';
       html += '</div>';

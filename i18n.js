@@ -328,6 +328,8 @@
       'clog.intro': 'Versiegeschiedenis van ProMatchXI — van v11.40 tot heden.'
     },
     en: {
+      'an.mace': 'Avg. deviation model vs actual', // v26.207
+      'an.hit': 'hitrate',
       'wed.market': 'MARKET', // v26.205
       // v26.203: auto-kalibratie
       'an.autotune': 'AUTO-CALIBRATION',
