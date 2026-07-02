@@ -328,6 +328,11 @@
       'clog.intro': 'Versiegeschiedenis van ProMatchXI — van v11.40 tot heden.'
     },
     en: {
+      // v26.200: AI-nauwkeurigheid
+      'an.aiacc': 'AI ACCURACY',
+      'an.aiacc_sub': 'Model probability vs actual result · n = settled tips',
+      'an.real': 'actual',
+      'an.calibration': 'CALIBRATION (1X2)',
       // ── v26.196: disclaimer + Analyse-kopjes ──
       'dash.onlyfor': 'Only for',
       'dash.playresp': 'Play responsibly',
