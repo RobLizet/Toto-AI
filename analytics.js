@@ -507,7 +507,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
   // ── v26.200: AI-nauwkeurigheid (model-tips getrackt tegen uitslagen) ──
   if (aiAcc && Array.isArray(aiAcc.by_market) && aiAcc.by_market.length) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">\u{1F916} ' + t('an.aiacc','AI-NAUWKEURIGHEID') + '</div>';
+    html += '<div class="analytics-block-title">\u{1F916} ' + t('an.aiacc','AI-NAUWKEURIGHEID') + ' <span onclick="showHelp(\'calibratie\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.6);margin-bottom:.5rem;">' + t('an.aiacc_sub','Modelkans vs werkelijke uitslag \u00b7 n = afgerekende tips') + '</div>';
     // v26.207: gemiddelde kalibratie-afwijking (gewogen naar n) — echte samenvatting i.p.v. mean-vs-mean
     var _mace = null;

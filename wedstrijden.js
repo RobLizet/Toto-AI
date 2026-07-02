@@ -1026,7 +1026,7 @@ function renderMatchCard(m) {
   const _tipLblTxt = _isMarket ? t('wed.market','MARKT') : t('wed.tip','TIP');
   const tipBadge = (_tipCode && !m.isDone) ? `
     <div style="position:absolute;top:6px;left:6px;z-index:3;text-align:center;
-      background:${_tipBg};border:1px solid ${_tipBd};border-radius:10px;padding:1px 7px 2px;">
+      background:${_tipBg};border:1px solid ${_tipBd};border-radius:10px;padding:1px 7px 2px;cursor:pointer;" onclick="event.stopPropagation();showHelp('tip')" title="Tik voor uitleg">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;
         color:${_tipLblCol};letter-spacing:.12em;line-height:1.3;">${_tipLblTxt}</div>
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${_tipCol};line-height:.95;">${_tipCode}</div>

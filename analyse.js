@@ -1475,7 +1475,7 @@ function openCardPopup(type, data) {
       </div>
       <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:.65rem .85rem;margin-bottom:.75rem;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
-          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:rgba(255,255,255,.95);">🎯 CONFIDENCE</span>
+          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:rgba(255,255,255,.95);">🎯 CONFIDENCE <span onclick="event.stopPropagation();showHelp('confidence')" style="cursor:pointer;opacity:.5;">ⓘ</span></span>
           <span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${confColor};">${s.confidence||'?'}/10</span>
         </div>
         <div style="background:rgba(0,0,0,.08);border-radius:999px;height:7px;overflow:hidden;">
@@ -1892,7 +1892,7 @@ KWALITEITSREGELS:
           ${_uitleg ? `<div style="font-size:.72rem;line-height:1.6;color:rgba(255,255,255,.95);margin-bottom:.6rem;padding:.55rem .7rem;background:rgba(0,190,196,.06);border-left:2px solid rgba(0,190,196,.5);border-radius:6px;"><b style="color:#00BEC4;">💡 Waarom value?</b><br>${_uitleg}</div>` : ''}
           <div style="margin-bottom:.6rem;">
             <div style="font-family:monospace;font-size:.52rem;color:#374151;margin-bottom:.3rem;display:flex;justify-content:space-between;">
-              <span>KANS</span><span style="color:${kleur};font-weight:700;">${tip.kans}%</span>
+              <span>KANS <span onclick="event.stopPropagation();showHelp('kans')" style="cursor:pointer;opacity:.5;">ⓘ</span></span><span style="color:${kleur};font-weight:700;">${tip.kans}%</span>
             </div>
             <div style="background:rgba(0,0,0,.07);border-radius:999px;height:10px;overflow:hidden;">
               <div style="background:${kleur};width:${Math.min(100,tip.kans)}%;height:100%;border-radius:999px;"></div>
