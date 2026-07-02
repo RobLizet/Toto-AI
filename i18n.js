@@ -328,6 +328,7 @@
       'clog.intro': 'Versiegeschiedenis van ProMatchXI — van v11.40 tot heden.'
     },
     en: {
+      'wed.market': 'MARKET', // v26.205
       // v26.203: auto-kalibratie
       'an.autotune': 'AUTO-CALIBRATION',
       'an.at_active': 'ACTIVE — adjusting',

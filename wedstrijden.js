@@ -1003,28 +1003,32 @@ function renderMatchCard(m) {
       border:1px solid ${_vp.value >= 15 ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)'};
       padding:2px 8px;border-radius:999px;z-index:2;">⚡ +${Math.round(_vp.value)}%</div>` : '';
 
-  // v26.202: TIP-hoekje — value-pick (fel) of model-favoriet (licht) op elke card
+  // v26.205: TIP-hoekje in 3 lagen — value (fel), AI-model-lean (licht), markt-favoriet (lichtst, eigen 'MARKT'-label)
   let _tipPick = _vp ? _vp.pick : '';
-  const _tipIsValue = !!_vp;
+  let _tipSource = _vp ? 'value' : '';
   if (!_tipPick && !m.isDone) {
     const _mt = (state._modelTips || []).find(x => String(x.fixture_id) === String(m.id));
-    if (_mt && _mt.pick) _tipPick = _mt.pick;
+    if (_mt && _mt.pick) { _tipPick = _mt.pick; _tipSource = 'model'; }
   }
-  // v26.204: markt-favoriet als lichtste terugval zolang de AI de match nog niet analyseerde
   if (!_tipPick && !m.isDone) {
     const _hp = parseFloat(m.homePct)||0, _dp = parseFloat(m.drawPct)||0, _ap = parseFloat(m.awayPct)||0;
-    if (_hp || _dp || _ap) _tipPick = (_hp >= _dp && _hp >= _ap) ? '1' : ((_ap >= _dp) ? '2' : 'X');
+    if (_hp || _dp || _ap) { _tipPick = (_hp >= _dp && _hp >= _ap) ? '1' : ((_ap >= _dp) ? '2' : 'X'); _tipSource = 'market'; }
   }
   const _tipCode = _tipPick === 'NOBTTS' ? 'NO BTTS' : (_tipPick || '');
-  const _tipCol  = _tipIsValue ? ((_vp.value >= 15) ? '#00BEC4' : '#f59e0b') : 'rgba(255,255,255,.5)';
-  const _tipBg   = _tipIsValue ? ((_vp.value >= 15) ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)') : 'rgba(255,255,255,.05)';
-  const _tipBd   = _tipIsValue ? ((_vp.value >= 15) ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)') : 'rgba(255,255,255,.14)';
-  const _tipLblCol = _tipIsValue ? 'rgba(255,255,255,.65)' : 'rgba(255,255,255,.4)';
+  const _isMarket = _tipSource === 'market';
+  const _tipCol  = _tipSource === 'value' ? ((_vp.value >= 15) ? '#00BEC4' : '#f59e0b')
+                 : _tipSource === 'model' ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.3)';
+  const _tipBg   = _tipSource === 'value' ? ((_vp.value >= 15) ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)')
+                 : _tipSource === 'model' ? 'rgba(255,255,255,.05)' : 'rgba(255,255,255,.025)';
+  const _tipBd   = _tipSource === 'value' ? ((_vp.value >= 15) ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)')
+                 : _tipSource === 'model' ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.07)';
+  const _tipLblCol = _tipSource === 'value' ? 'rgba(255,255,255,.65)' : _tipSource === 'model' ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.28)';
+  const _tipLblTxt = _isMarket ? t('wed.market','MARKT') : t('wed.tip','TIP');
   const tipBadge = (_tipCode && !m.isDone) ? `
     <div style="position:absolute;top:6px;left:6px;z-index:3;text-align:center;
       background:${_tipBg};border:1px solid ${_tipBd};border-radius:10px;padding:1px 7px 2px;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;
-        color:${_tipLblCol};letter-spacing:.12em;line-height:1.3;">${t('wed.tip','TIP')}</div>
+        color:${_tipLblCol};letter-spacing:.12em;line-height:1.3;">${_tipLblTxt}</div>
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${_tipCol};line-height:.95;">${_tipCode}</div>
     </div>` : '';
   const _tipPad = (_tipCode && !m.isDone) ? 'padding-left:2.9rem;' : '';
