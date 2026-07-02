@@ -1010,6 +1010,11 @@ function renderMatchCard(m) {
     const _mt = (state._modelTips || []).find(x => String(x.fixture_id) === String(m.id));
     if (_mt && _mt.pick) _tipPick = _mt.pick;
   }
+  // v26.204: markt-favoriet als lichtste terugval zolang de AI de match nog niet analyseerde
+  if (!_tipPick && !m.isDone) {
+    const _hp = parseFloat(m.homePct)||0, _dp = parseFloat(m.drawPct)||0, _ap = parseFloat(m.awayPct)||0;
+    if (_hp || _dp || _ap) _tipPick = (_hp >= _dp && _hp >= _ap) ? '1' : ((_ap >= _dp) ? '2' : 'X');
+  }
   const _tipCode = _tipPick === 'NOBTTS' ? 'NO BTTS' : (_tipPick || '');
   const _tipCol  = _tipIsValue ? ((_vp.value >= 15) ? '#00BEC4' : '#f59e0b') : 'rgba(255,255,255,.5)';
   const _tipBg   = _tipIsValue ? ((_vp.value >= 15) ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)') : 'rgba(255,255,255,.05)';
