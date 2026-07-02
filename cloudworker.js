@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v193'; // v193: /model-tips endpoint (model-favoriet 1X2 per aankomende wedstrijd) voor TIP-hoekje op value-loze cards // v192: goal-markt-tips (O/U + BTTS) ook getrackt op accuraatheid — modelrijen in model_market_comparison, settleModelTips rekent af via settleGoalMarket, view v_ai_tip_by_market + endpoint /ai-accuracy // v191: AI/model-tip-accuraatheids-tracking — settleModelTips rekent model-tips af (uitslag in model_market_comparison.won) zodat view v_ai_tip_accuracy continu kalibratie/hitrate/ROI per kans-band toont // v190: tier-gebaseerde bias-correctie op 1X2-value — extra market-shrinkage in het lage-kansgebied (aiKans<20% en 20-35%) waar de WK-backtest overschatting van longshots/draws aantoonde; conservatief + instelbaar (LOWPROB_EXTRA_SHRINK_1/2), hertunen op clubdata na 20-07 // v189: limieten opgehoogd na Workers Paid — app-analyses gedeelde key 5->25/gebruiker & 60->300 globaal (testfase), handmatige scan-cap 25->40, /health dagcap-warn 25->35. maxPerDay blijft ongebruikt (dode variabele, cron heeft geen dagcap) // v188: BUGFIX scanvenster — runScan scanTo stond op 18 UTC terwijl cron t/m 22 UTC vuurt en /health t/m 22 UTC monitort; avondscans (18-22 UTC = prime-time NL) werden stil overgeslagen. scanTo -> 23 zodat alle door de cron geplande volledige scans ook echt draaien // v187: scan-robuustheid voor 19-competitie-fase — AI-cap als tunable constante MAX_AI_ANALYSES_PER_SCAN (12), soonest-first sort laat fixtures zonder aftraptijd niet langer batch-slots afsnoepen, + deferral-log wanneer meer fixtures dan de cap in het venster zitten // v186: FASE 1 uitgebreid — WK + actieve zomercompetities (103 Eliteserien NO, 113 Allsvenskan SE) zodat de scanner tijdens de WK-tail doorbouwt aan het trackrecord; LEAGUE_FACTORS labels 113/103 rechtgezet (waren verwisseld, waarde ongewijzigd 0.88) // v185: LEAGUE_FACTORS rechtgetrokken + FASE 2 uitgebreid — 94 was fout 'Jupiler' gelabeld (is Portugal), 119 was 'Eredivisie playoffs' (is Denemarken); factoren toegevoegd voor 144/203/179/207/79/43/80/41 (stonden op default 0.92) // v184: FASE 2 league-fix — id 197 (Super League 1 Griekenland) was foutief gelabeld als Zwitserland; gecorrigeerd naar 207 (Super League Switzerland) conform bedoeling // v183: /health scan_verouderd-venster gelijkgetrokken met echte scan-uren (12-16 -> 12-22 UTC) — avond-aftrappen post-WK nu wel gemonitord // v182: dode prompt-caching opgeruimd in hoofdscan — system-blok (~30 tokens) lag onder de 1024-token cachedrempel en deed dus niets; beta-header + lege cache-markering verwijderd (geen kostenverschil) // v181: kosten van directe cron/systeem-Anthropic-calls (cron-scan, scan-test, daily-tip, oranje-nieuws) nu OOK in user_costs via trackAnthropicCost — in-app totaal benadert nu de echte Anthropic-rekening // v180: kosten-registratie gerepareerd — schreef naar niet-bestaande kolommen (month/ai_calls/total_cost); nu atomair ophogen via RPC increment_user_cost (calls/tokens_in/tokens_out/total_usd) // v179: gedeelde-key daglimiet verlaagd voor pre-launch — 5/gebruiker, 60 globaal (was 50/400); raakt alleen app-analyses, niet de cron-scans. Eigen-key-gebruikers onbeperkt // v178: eigen Anthropic-key support — frontend stuurt x-user-anthropic-key mee; worker gebruikt die i.p.v. env-key, slaat daglimiet + kostentracking over (gebruiker betaalt zelf) // v177: /health activeHours teruggebracht naar werkelijke scan-uren (06 + 12-16 UTC) — geen valse scan_verouderd-WARN meer 's avonds/'s nachts // v176: /goal-markets endpoint (serveert v_goal_market_performance incl. CLV) voor de app // v175: closing O/U + BTTS-odds meegeschreven in odds_snapshots (goal_odds jsonb) voor CLV op doelpunten-markten — zonder extra API-calls (hoofdscan haalt ze al op) // v174: doelpunten-markten LIVE in productie-cron (O/U 1.5/2.5/3.5 + BTTS als volwaardige picks, vlag ENABLE_GOAL_MARKETS) + afrekening voor alle goal-markten; consistency-check per marktgroep, longshot-guard alleen op 1X2 // v173: goal-markten in scan-test (?goals=1) — Poisson uit AI-goals, 2-weg de-vig // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v194'; // v194: auto-kalibratie (optie 1) — bias-shrink runtime-instelbaar via model_config, wekelijkse tuner op clubdata (DRY-RUN: AUTOTUNE_APPLY=false), volledig gelogd in calibration_tune_log, endpoint /autotune // v193: /model-tips endpoint (model-favoriet 1X2 per aankomende wedstrijd) voor TIP-hoekje op value-loze cards // v192: goal-markt-tips (O/U + BTTS) ook getrackt op accuraatheid — modelrijen in model_market_comparison, settleModelTips rekent af via settleGoalMarket, view v_ai_tip_by_market + endpoint /ai-accuracy // v191: AI/model-tip-accuraatheids-tracking — settleModelTips rekent model-tips af (uitslag in model_market_comparison.won) zodat view v_ai_tip_accuracy continu kalibratie/hitrate/ROI per kans-band toont // v190: tier-gebaseerde bias-correctie op 1X2-value — extra market-shrinkage in het lage-kansgebied (aiKans<20% en 20-35%) waar de WK-backtest overschatting van longshots/draws aantoonde; conservatief + instelbaar (LOWPROB_EXTRA_SHRINK_1/2), hertunen op clubdata na 20-07 // v189: limieten opgehoogd na Workers Paid — app-analyses gedeelde key 5->25/gebruiker & 60->300 globaal (testfase), handmatige scan-cap 25->40, /health dagcap-warn 25->35. maxPerDay blijft ongebruikt (dode variabele, cron heeft geen dagcap) // v188: BUGFIX scanvenster — runScan scanTo stond op 18 UTC terwijl cron t/m 22 UTC vuurt en /health t/m 22 UTC monitort; avondscans (18-22 UTC = prime-time NL) werden stil overgeslagen. scanTo -> 23 zodat alle door de cron geplande volledige scans ook echt draaien // v187: scan-robuustheid voor 19-competitie-fase — AI-cap als tunable constante MAX_AI_ANALYSES_PER_SCAN (12), soonest-first sort laat fixtures zonder aftraptijd niet langer batch-slots afsnoepen, + deferral-log wanneer meer fixtures dan de cap in het venster zitten // v186: FASE 1 uitgebreid — WK + actieve zomercompetities (103 Eliteserien NO, 113 Allsvenskan SE) zodat de scanner tijdens de WK-tail doorbouwt aan het trackrecord; LEAGUE_FACTORS labels 113/103 rechtgezet (waren verwisseld, waarde ongewijzigd 0.88) // v185: LEAGUE_FACTORS rechtgetrokken + FASE 2 uitgebreid — 94 was fout 'Jupiler' gelabeld (is Portugal), 119 was 'Eredivisie playoffs' (is Denemarken); factoren toegevoegd voor 144/203/179/207/79/43/80/41 (stonden op default 0.92) // v184: FASE 2 league-fix — id 197 (Super League 1 Griekenland) was foutief gelabeld als Zwitserland; gecorrigeerd naar 207 (Super League Switzerland) conform bedoeling // v183: /health scan_verouderd-venster gelijkgetrokken met echte scan-uren (12-16 -> 12-22 UTC) — avond-aftrappen post-WK nu wel gemonitord // v182: dode prompt-caching opgeruimd in hoofdscan — system-blok (~30 tokens) lag onder de 1024-token cachedrempel en deed dus niets; beta-header + lege cache-markering verwijderd (geen kostenverschil) // v181: kosten van directe cron/systeem-Anthropic-calls (cron-scan, scan-test, daily-tip, oranje-nieuws) nu OOK in user_costs via trackAnthropicCost — in-app totaal benadert nu de echte Anthropic-rekening // v180: kosten-registratie gerepareerd — schreef naar niet-bestaande kolommen (month/ai_calls/total_cost); nu atomair ophogen via RPC increment_user_cost (calls/tokens_in/tokens_out/total_usd) // v179: gedeelde-key daglimiet verlaagd voor pre-launch — 5/gebruiker, 60 globaal (was 50/400); raakt alleen app-analyses, niet de cron-scans. Eigen-key-gebruikers onbeperkt // v178: eigen Anthropic-key support — frontend stuurt x-user-anthropic-key mee; worker gebruikt die i.p.v. env-key, slaat daglimiet + kostentracking over (gebruiker betaalt zelf) // v177: /health activeHours teruggebracht naar werkelijke scan-uren (06 + 12-16 UTC) — geen valse scan_verouderd-WARN meer 's avonds/'s nachts // v176: /goal-markets endpoint (serveert v_goal_market_performance incl. CLV) voor de app // v175: closing O/U + BTTS-odds meegeschreven in odds_snapshots (goal_odds jsonb) voor CLV op doelpunten-markten — zonder extra API-calls (hoofdscan haalt ze al op) // v174: doelpunten-markten LIVE in productie-cron (O/U 1.5/2.5/3.5 + BTTS als volwaardige picks, vlag ENABLE_GOAL_MARKETS) + afrekening voor alle goal-markten; consistency-check per marktgroep, longshot-guard alleen op 1X2 // v173: goal-markten in scan-test (?goals=1) — Poisson uit AI-goals, 2-weg de-vig // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1438,8 +1438,17 @@ const MARKET_SHRINK_TOURNAMENT = 0.55; // v161: iets lichter (was 0.65) — toer
 // kansen overschat (13,4%→10,5% werkelijk; 26%→23%) en favorieten onderschat. Extra shrinkage
 // naar de markt in het lage-kansgebied dempt de valse "value" op overschatte longshots/draws.
 // Conservatief + instelbaar; hertunen op clubdata na 20-07 (zet op 0 om uit te schakelen).
-const LOWPROB_EXTRA_SHRINK_1 = 0.15; // aiKans < 20%
-const LOWPROB_EXTRA_SHRINK_2 = 0.08; // aiKans 20–35%
+const LOWPROB_EXTRA_SHRINK_1_DEFAULT = 0.15; // aiKans < 20%  (v194: default, runtime-overschrijfbaar)
+const LOWPROB_EXTRA_SHRINK_2_DEFAULT = 0.08; // aiKans 20–35% (v194: default, runtime-overschrijfbaar)
+let TUNE = { s1: LOWPROB_EXTRA_SHRINK_1_DEFAULT, s2: LOWPROB_EXTRA_SHRINK_2_DEFAULT }; // v194: geladen uit model_config bij scan-start (auto-kalibratie)
+// v194: auto-kalibratie — instelbaar, veilig, dry-run-first
+const AUTOTUNE_ENABLED  = true;          // analyse + logging aan
+const AUTOTUNE_APPLY    = false;         // DRY-RUN: logt aanbevelingen, past nog NIETS toe. Zet op true na inspectie op clubdata.
+const AUTOTUNE_MIN_N    = 40;            // min. afgerekende tips per band voordat er iets gebeurt
+const AUTOTUNE_TOL      = 3;             // tolerantie in procentpunten (binnen = geen aanpassing)
+const AUTOTUNE_STEP     = 0.02;          // stapgrootte per run (klein = stabiel)
+const AUTOTUNE_MAX      = 0.30;          // bovengrens extra-shrink
+const CLUB_ERA_START    = '2026-07-20';  // alleen clubdata (WK uitgesloten)
 const LONGSHOT_ODDS            = 3.5;  // odds >= dit = longshot
 const LONGSHOT_MIN_SHARP       = 55;   // longshot-value alleen toegestaan mét sharpScore >= dit
 const SHADOW_MIN_RAW_DIV       = 3;    // v172: schaduw-vangnet — min. RUWE divergentie (pp) om sub-3% kandidaat alsnog te loggen
@@ -1452,8 +1461,8 @@ function calculateValue(aiKans, fairImpliedPct, pick, marketShrink = 0) {
   // v190: tier-correctie alleen op 1X2 — extra shrink waar het model lage kansen overschat
   let extra = 0;
   if (pick === '1' || pick === 'X' || pick === '2') {
-    if (aiKans < 20)      extra = LOWPROB_EXTRA_SHRINK_1;
-    else if (aiKans < 35) extra = LOWPROB_EXTRA_SHRINK_2;
+    if (aiKans < 20)      extra = TUNE.s1;
+    else if (aiKans < 35) extra = TUNE.s2;
   }
   const w = Math.min(Math.max(marketShrink + extra, 0), 0.9);
   const modelProb = w * fairImpliedPct + (1 - w) * aiKans; // shrinkage naar markt-prior (v190: tier-versterkt)
@@ -1765,6 +1774,58 @@ async function settleShadowPicks(env) {
   } catch(e) { console.error('[Shadow] settle fout:', e.message); }
 }
 
+// v194: runtime bias-config laden uit model_config (overschrijft code-defaults)
+async function loadTuneConfig(env) {
+  try {
+    const rows = await sb(env, 'model_config', 'GET', null, '?select=config_key,config_value') || [];
+    const map = {}; rows.forEach(r => { map[r.config_key] = Number(r.config_value); });
+    if (map.lowprob_extra_shrink_1 != null && isFinite(map.lowprob_extra_shrink_1)) TUNE.s1 = map.lowprob_extra_shrink_1;
+    if (map.lowprob_extra_shrink_2 != null && isFinite(map.lowprob_extra_shrink_2)) TUNE.s2 = map.lowprob_extra_shrink_2;
+    console.log(`[Tune] config geladen: s1=${TUNE.s1} s2=${TUNE.s2}`);
+  } catch(e) { console.error('[Tune] config laden mislukt (defaults blijven):', e.message); }
+}
+
+// v194: auto-kalibratie — leest club-era 1X2-kalibratie, stelt de lage-kans shrink conservatief bij.
+// DRY-RUN tot AUTOTUNE_APPLY=true. Draait niets tot er >= AUTOTUNE_MIN_N clubtips per band zijn.
+async function autoTuneCalibration(env) {
+  if (!AUTOTUNE_ENABLED) return;
+  try {
+    await loadTuneConfig(env);
+    const rows = await sb(env, 'model_market_comparison', 'GET', null,
+      `?won=not.is.null&pick=in.(1,X,2)&match_date=gte.${CLUB_ERA_START}&select=poisson_win_pct,won&limit=5000`) || [];
+    if (!rows.length) { console.log('[Tune] geen clubdata — overslaan'); return; }
+    const bands = [
+      { key: 'lowprob_extra_shrink_1', label: '00-20%', lo: 0,  hi: 20, cur: TUNE.s1 },
+      { key: 'lowprob_extra_shrink_2', label: '20-35%', lo: 20, hi: 35, cur: TUNE.s2 },
+    ];
+    for (const b of bands) {
+      const inB = rows.filter(r => r.poisson_win_pct >= b.lo && r.poisson_win_pct < b.hi);
+      const n = inB.length;
+      if (n < AUTOTUNE_MIN_N) { console.log(`[Tune] ${b.label}: n=${n} < ${AUTOTUNE_MIN_N} — geen aanpassing`); continue; }
+      const modelKans = inB.reduce((a,r)=>a+Number(r.poisson_win_pct),0)/n;
+      const actual = 100*inB.reduce((a,r)=>a+(r.won?1:0),0)/n;
+      const gap = modelKans - actual; // + = overschatting
+      let newVal = b.cur, reason = 'binnen tolerantie';
+      if (gap > AUTOTUNE_TOL)      { newVal = Math.min(b.cur + AUTOTUNE_STEP, AUTOTUNE_MAX); reason = 'model overschat \u2192 shrink omhoog'; }
+      else if (gap < -AUTOTUNE_TOL) { newVal = Math.max(b.cur - AUTOTUNE_STEP, 0);           reason = 'model onderschat \u2192 shrink omlaag'; }
+      let applied = false;
+      if (newVal !== b.cur && AUTOTUNE_APPLY) {
+        await sb(env, 'model_config', 'POST',
+          { config_key: b.key, config_value: newVal, updated_at: new Date().toISOString(), note: reason },
+          '?on_conflict=config_key');
+        if (b.key.endsWith('_1')) TUNE.s1 = newVal; else TUNE.s2 = newVal;
+        applied = true;
+      }
+      await sb(env, 'calibration_tune_log', 'POST', {
+        band: b.label, n, model_kans: +modelKans.toFixed(1), actual: +actual.toFixed(1), gap: +gap.toFixed(1),
+        config_key: b.key, old_value: b.cur, new_value: newVal, applied,
+        reason: (AUTOTUNE_APPLY ? reason : '[DRY-RUN] ' + reason)
+      }, '');
+      console.log(`[Tune] ${b.label}: n=${n} model=${modelKans.toFixed(1)} actueel=${actual.toFixed(1)} gap=${gap.toFixed(1)} ${b.cur}\u2192${newVal} ${applied?'TOEGEPAST':'(dry-run)'}`);
+    }
+  } catch(e) { console.error('[Tune] autoTune fout:', e.message); }
+}
+
 // v191: AI/model-tip-afrekening — uitslag opslaan bij model_market_comparison voor
 // continue accuraatheids-meting (view v_ai_tip_accuracy). Gemodelleerd op settleShadowPicks.
 async function settleModelTips(env) {
@@ -1963,6 +2024,7 @@ async function runWeeklyCalibration(env) {
 // ── Scheduled value scan ─────────────────────────────────
 async function runScan(env, force = false) {
   const today = new Date().toISOString().split('T')[0];
+  await loadTuneConfig(env); // v194: runtime bias-config (auto-kalibratie) laden vóór de scan
   const now = new Date();
   // Zomertijd correctie: Nederland is UTC+2 (maart-oktober), UTC+1 (oktober-maart)
   const month = now.getUTCMonth() + 1; // 1-12
@@ -3319,6 +3381,17 @@ export default {
       }
     }
 
+    if (path === '/autotune') {
+      try {
+        await loadTuneConfig(env);
+        const config = await sb(env, 'model_config', 'GET', null, '?select=*') || [];
+        const log = await sb(env, 'calibration_tune_log', 'GET', null, '?select=*&order=run_at.desc&limit=30') || [];
+        return json({ ok: true, apply_mode: AUTOTUNE_APPLY, current: TUNE, config, log, worker_version: VERSION });
+      } catch(e) {
+        return json({ ok: false, error: e.message, worker_version: VERSION }, 500);
+      }
+    }
+
     if (path === '/model-tips') {
       // v193: model-favoriet (hoogste Poisson-kans, 1X2) per aankomende wedstrijd — voor het TIP-hoekje op cards zonder value
       try {
@@ -3572,6 +3645,7 @@ export default {
           if (hour === 6) await generateDailyTip(env);
           if (hour === 6) await keepSupabaseAlive(env);
           if (isSunday && hour === 6) await runWeeklyCalibration(env);
+          if (isSunday && hour === 6) await autoTuneCalibration(env); // v194: wekelijkse auto-kalibratie (dry-run tot AUTOTUNE_APPLY=true)
         } catch(e) { console.error('[Cron] dagtaken fout:', e.message); }
       } else {
         // v156: cron-gap (23-05 UTC) — alleen odds-snapshots voor late kickoffs (WK Amerika's)
