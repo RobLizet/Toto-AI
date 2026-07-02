@@ -1950,6 +1950,8 @@ async function loadTodayAllComps() {
     });
     const knownLeagueIdsSet = new Set(Object.values(COMP_IDS));
     knownLeagueIdsSet.delete(667); // v26.199: globale friendlies (Karpaty etc.) niet in WK/vandaag-aggregatie — alleen via eigen Oefenduels NL-scherm
+    knownLeagueIdsSet.delete(COMP_IDS['norway']); // v26.211: Scandinavische zomer-competities niet in de WK-aggregatie
+    knownLeagueIdsSet.delete(COMP_IDS['sweden']); // v26.211: Allsvenskan/Eliteserien alleen via hun eigen tegel
     const leagueMap = {};
     for (const f of fixtures) {
       const lid = f.league.id;
