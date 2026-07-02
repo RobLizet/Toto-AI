@@ -1675,6 +1675,24 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
   return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">${header}${body}${goalsHTML}</div>`;
 }
 
+// v26.206: AI-kalibratiebanden cachen + kans -> band mappen (voor de kalibratie-regel in de tip)
+async function ensureAiBands() {
+  if (state._aiBandsLoaded) return;
+  state._aiBandsLoaded = true;
+  try {
+    const r = await fetch('https://api.promatchxi.app/ai-accuracy');
+    if (r.ok) { const d = await r.json(); state._aiBands = (d && d.by_band) ? d.by_band : []; }
+  } catch(e) {}
+}
+function _bandForKans(kans) {
+  const bands = state._aiBands || [];
+  if (!bands.length || kans == null) return null;
+  const label = kans < 20 ? '00-20%' : kans < 35 ? '20-35%' : kans < 50 ? '35-50%' : kans < 65 ? '50-65%' : '65%+';
+  const b = bands.find(x => x.kans_band === label);
+  if (!b || b.n_gesetteld == null) return null;
+  return { label: label, actual: b.werkelijke_hitrate, n: b.n_gesetteld };
+}
+
 async function runAnalyse() {
   const m = state.selectedMatch;
   if (!m) { alert('Selecteer eerst een wedstrijd'); return; }
@@ -1691,6 +1709,7 @@ async function runAnalyse() {
     chipContainer.innerHTML = sections.map(s => `<span class="entity-chip" id="ec-${s}">⏳ ${s}</span>`).join('');
   }
 
+  ensureAiBands(); // v26.206: kalibratiebanden vast laden (klaar tegen de tijd dat de tip rendert)
   const fill = (id, html) => {
     const el = document.getElementById('rb-' + id);
     if (el) el.innerHTML = html || '';
@@ -1849,6 +1868,11 @@ KWALITEITSREGELS:
       const sterren = '⭐'.repeat(Math.min(tip.sterren||3, 5)) + '☆'.repeat(5 - Math.min(tip.sterren||3, 5));
       const _uitleg = (typeof valueUitleg === 'function') ? valueUitleg(tip.kans, tip.odds) : '';
       const _unit = (typeof unitAdvies === 'function') ? unitAdvies(conf, tv || 0) : { units: 1, eur: '' };
+      const _cal = _bandForKans(tip.kans);
+      const _calLine = (_cal && _cal.n >= 30) ? `
+          <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.7);margin:-.1rem 0 .6rem;padding:.45rem .6rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;line-height:1.5;">
+            \ud83d\udcca Tips met ~deze kans wonnen historisch <b style="color:#fff;">${_cal.actual}%</b> (n=${_cal.n}) <span style="opacity:.65;">\u00b7 voorlopig, WK-data</span>
+          </div>` : '';
 
       document.getElementById('rb-tip').innerHTML = `
         <div style="background:linear-gradient(135deg,rgba(0,190,196,.06),rgba(0,190,196,.06));
@@ -1874,6 +1898,7 @@ KWALITEITSREGELS:
               <div style="background:${kleur};width:${Math.min(100,tip.kans)}%;height:100%;border-radius:999px;"></div>
             </div>
           </div>
+${_calLine}
           <div style="font-size:.8rem;line-height:1.7;color:rgba(255,255,255,.95);margin-bottom:.6rem;padding:.6rem .7rem;
             background:rgba(255,255,255,.07);border-radius:8px;">${tip.redenering||'—'}</div>
           <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,0.09);border-radius:9px;padding:.6rem .7rem;margin-bottom:.6rem;">
