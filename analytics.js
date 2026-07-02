@@ -205,7 +205,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
   // ── ROI Trend ──
   if (local.roiTrend.length >= 2) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">ROI TREND</div>';
+    html += '<div class="analytics-block-title">ROI TREND <span onclick="showHelp(\'roi\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     html += _roiTrendChart(local.roiTrend);
     html += '</div>';
   }
@@ -213,7 +213,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
   // ── Per pick type ──
   if (local.settled > 0) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">' + t('an.resulttype','UITSLAG TYPE') + '</div>';
+    html += '<div class="analytics-block-title">' + t('an.resulttype','UITSLAG TYPE') + ' <span onclick="showHelp(\'result-type\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">';
     ['1','X','2'].forEach(pick => {
       const d = local.byPick[pick];
@@ -230,7 +230,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
   // ── Per odds bucket ──
   if (local.byBucket.length > 0) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">HITRATE PER ODDS</div>';
+    html += '<div class="analytics-block-title">HITRATE PER ODDS <span onclick="showHelp(\'hitrate\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     local.byBucket.forEach(([bucket, d]) => {
       const hr = d.total > 0 ? Math.round(d.wins / d.total * 100) : 0;
       const barW = Math.min(100, hr);
@@ -249,7 +249,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
   // ── Confidence correlatie ──
   if (local.settled >= 5) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">' + t('an.confvsresult','CONFIDENCE vs RESULTAAT') + '</div>';
+    html += '<div class="analytics-block-title">' + t('an.confvsresult','CONFIDENCE vs RESULTAAT') + ' <span onclick="showHelp(\'confidence\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     local.confBuckets.forEach(([label, d]) => {
       const hr = d.t > 0 ? Math.round(d.w / d.t * 100) : 0;
       html += '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">';
@@ -293,7 +293,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
     const avgTxt = avgN === null ? '—' : (avgN >= 0 ? '+' : '') + cs.avgCLV + '%';
     const avgCol = avgN === null ? '#ffffff' : (avgN >= 0 ? '#00BEC4' : '#ef4444');
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">via Supabase</span></div>';
+    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">via Supabase</span> <span onclick="showHelp(\'clv\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
     html += '<div style="background:rgba(0,190,196,.07);border:1px solid rgba(0,190,196,.22);border-radius:10px;padding:.6rem;text-align:center;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">GEM. CLV</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:1.05rem;font-weight:800;color:' + avgCol + ';">' + avgTxt + '</div></div>';
     html += '<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:.6rem;text-align:center;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">VERSLAAT CLOSE</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:1.05rem;font-weight:800;color:#ffffff;">' + (cs.pctBeatClose == null ? '—' : cs.pctBeatClose + '%') + '</div></div>';
@@ -315,7 +315,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
     html += '</div>';
   } else {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">via Supabase</span></div>';
+    html += '<div class="analytics-block-title">CLV — CLOSING LINE VALUE <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">via Supabase</span> <span onclick="showHelp(\'clv\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);text-align:center;padding:.6rem 0;line-height:1.45;">' + t('an.clvempty','CLV verschijnt zodra picks settelen.') + '<br>De engine bouwt nu oddshistorie op (worker v122+).</div>';
     html += '</div>';
   }
@@ -323,7 +323,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
   // ── CLV Trend (v124: v_clv_trend) ──
   if (worker && worker.clvTrend && worker.clvTrend.length >= 2) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">CLV TREND <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">' + t('an.cumavg','cumulatief gemiddelde') + '</span></div>';
+    html += '<div class="analytics-block-title">CLV TREND <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">' + t('an.cumavg','cumulatief gemiddelde') + '</span> <span onclick="showHelp(\'clv\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     html += _clvTrendChart(worker.clvTrend);
     html += '</div>';
   }
@@ -394,7 +394,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
     }
 
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">SHARP MONEY <span style="font-size:.42rem;font-weight:400;color:rgba(255,255,255,.95);">' + t('an.last7days','laatste 7 dagen') + '</span></div>';
+    html += '<div class="analytics-block-title">SHARP MONEY <span style="font-size:.42rem;font-weight:400;color:rgba(255,255,255,.95);">' + t('an.last7days','laatste 7 dagen') + '</span> <span onclick="showHelp(\'sharp\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
 
     if (sm.steamMovements7d === 0 && !sharpItems.length) {
       html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.95);text-align:center;padding:.5rem 0;">' + t('an.nosteam','Geen steam movements gedetecteerd') + '</div>';
@@ -457,7 +457,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
   // ── Pick Tier Performance Dashboard ─────────────────
   if (worker?.pickTierPerformance?.length) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">PICK TIER PERFORMANCE</div>';
+    html += '<div class="analytics-block-title">PICK TIER PERFORMANCE <span onclick="showHelp(\'pick-tier\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     const tierOrder = ['elite','triple','double','single'];
     const tierLabels = { elite:'⭐ Elite', triple:'🔒🔒🔒 Triple', double:'🔒🔒 Double', single:'🔒 Single' };
     const tierColors = { elite:'#f59e0b', triple:'#00BEC4', double:'#7c3aed', single:'#64748b' };
@@ -487,7 +487,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
   // ── League Tier Dashboard ─────────────────────────────
   if (worker?.leagueTiers?.length) {
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">LEAGUE RATINGS</div>';
+    html += '<div class="analytics-block-title">LEAGUE RATINGS <span onclick="showHelp(\'league-rating\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     const tierBg = { elite:'rgba(245,158,11,.12)', goed:'rgba(0,190,196,.08)', neutraal:'rgba(255,255,255,.04)', risico:'rgba(220,38,38,.08)', onbekend:'rgba(255,255,255,.03)' };
     const tierBorder = { elite:'rgba(245,158,11,.4)', goed:'rgba(0,190,196,.3)', neutraal:'rgba(255,255,255,.1)', risico:'rgba(220,38,38,.3)', onbekend:'rgba(255,255,255,.08)' };
     const tierIcon = { elite:'⭐', goed:'✅', neutraal:'〰', risico:'⚠️', onbekend:'❓' };
@@ -558,7 +558,7 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
     var _cur = autoTune.current || {};
     var _log = Array.isArray(autoTune.log) ? autoTune.log : [];
     html += '<div class="analytics-block">';
-    html += '<div class="analytics-block-title">\u{1F39B}\uFE0F ' + t('an.autotune','AUTO-KALIBRATIE') + '</div>';
+    html += '<div class="analytics-block-title">\u{1F39B}\uFE0F ' + t('an.autotune','AUTO-KALIBRATIE') + ' <span onclick="showHelp(\'auto-kalibratie\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
     var _stCol = _apply ? '#00BEC4' : 'rgba(255,255,255,.5)';
     var _stBg  = _apply ? 'rgba(0,190,196,.14)' : 'rgba(255,255,255,.05)';
     var _stTxt = _apply ? t('an.at_active','ACTIEF \u2014 stuurt bij') : t('an.at_dry','DRY-RUN \u2014 alleen loggen');
@@ -672,7 +672,7 @@ function _roiBlocks(recent, market) {
   const fmtPct = (v) => (v === null || v === undefined || v === '') ? '—' : (Number(v)>=0?'+':'') + Number(v).toFixed(1) + '%';
   const col = (v) => (v === null || v === undefined || v === '') ? '#ffffff' : (Number(v)>=0?'#00BEC4':'#ef4444');
   let html = '<div class="analytics-block">';
-  html += '<div class="analytics-block-title">' + t('an.roireturn','ROI & RENDEMENT') + ' <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">via Supabase</span></div>';
+  html += '<div class="analytics-block-title">' + t('an.roireturn','ROI & RENDEMENT') + ' <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">via Supabase</span> <span onclick="showHelp(\'roi\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
   if (recent.length) {
     html += '<div style="display:grid;grid-template-columns:repeat(' + Math.min(recent.length,2) + ',1fr);gap:.5rem;margin-bottom:.55rem;">';
     recent.forEach(r => {
@@ -703,7 +703,7 @@ function _roiBlocks(recent, market) {
 // ── Competitie-rating (' + t('an.reliability','betrouwbaarheid') + ' 0-100) ─────────
 function _leagueRatingBlock(ratings) {
   let html = '<div class="analytics-block">';
-  html += '<div class="analytics-block-title">' + t('an.comprating','COMPETITIE-RATING') + ' <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">betrouwbaarheid</span></div>';
+  html += '<div class="analytics-block-title">' + t('an.comprating','COMPETITIE-RATING') + ' <span style="font-size:.46rem;font-weight:400;color:rgba(255,255,255,.95);">betrouwbaarheid</span> <span onclick="showHelp(\'league-rating\')" style="cursor:pointer;opacity:.5;font-size:.7rem;">\u24d8</span></div>';
   ratings.forEach(r => {
     const rel = (r.reliability==null)?0:Number(r.reliability);
     const relCol = rel >= 70 ? '#00BEC4' : rel >= 45 ? '#d97706' : '#ef4444';

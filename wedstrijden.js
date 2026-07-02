@@ -1001,7 +1001,7 @@ function renderMatchCard(m) {
       color:${_vp.value >= 15 ? '#00BEC4' : '#f59e0b'};
       background:${_vp.value >= 15 ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)'};
       border:1px solid ${_vp.value >= 15 ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)'};
-      padding:2px 8px;border-radius:999px;z-index:2;">⚡ +${Math.round(_vp.value)}%</div>` : '';
+      padding:2px 8px;border-radius:999px;z-index:2;cursor:pointer;" onclick="event.stopPropagation();showHelp('value-badge')" title="Tik voor uitleg">⚡ +${Math.round(_vp.value)}%</div>` : '';
 
   // v26.205: TIP-hoekje in 3 lagen — value (fel), AI-model-lean (licht), markt-favoriet (lichtst, eigen 'MARKT'-label)
   let _tipPick = _vp ? _vp.pick : '';

@@ -1884,7 +1884,7 @@ KWALITEITSREGELS:
           <div style="display:flex;justify-content:space-between;align-items:center;background:${tv>=5?'rgba(0,190,196,.08)':'rgba(100,116,139,.05)'};
             border:1px solid ${tv>=5?'rgba(0,190,196,.2)':'var(--track-bg,rgba(0,0,0,.08))'};border-radius:9px;padding:.5rem .7rem;margin-bottom:.6rem;">
             <div>
-              <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);font-weight:700;">⚡ VALUE</div>
+              <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);font-weight:700;">⚡ VALUE <span onclick="event.stopPropagation();showHelp('value-badge')" style="cursor:pointer;opacity:.5;">ⓘ</span></div>
               <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${tip.kans}% × ${tip.odds}</div>
             </div>
             <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.8rem;color:${tvColor};">${tv>0?'+':''}${tv.toFixed(1)}%</div>
