@@ -1797,6 +1797,7 @@ Formaties: ${formationStr}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}`;
     const data = await anthropicFetchWithRetry(null, {
       model: 'claude-sonnet-4-6',
       max_tokens: 1800,
+      temperature: 0,
       system: `Je bent een scherpe, eerlijke voetbalanalist voor een bettingadvies app. JSON only, geen tekst buiten JSON.
 
 WERKWIJZE — WEES BESLIST MET WAT JE HEBT:
@@ -1823,6 +1824,7 @@ JSON STRUCTUUR:
 "tips":[{"pick":"O2.5","pickLabel":"Meer dan 2.5 goals","markt":"Doelpunten","odds":1.8,"kans":58,"reden":"concreet argument uit odds/model/vorm"},{"pick":"X","pickLabel":"Gelijkspel","markt":"Uitslag","odds":${m.drawOdds||3.5},"kans":26,"reden":"concreet argument uit de data"}]}}
 
 KWALITEITSREGELS:
+- VALUE-VERANKERING (belangrijkste regel): de hoofdtip (tip.pick) MOET de uitkomst zijn met de grootste POSITIEVE value = modelkans (Poisson/blend) MINUS marktimpliciete kans (na de-vig). Volg NOOIT blind de marktfavoriet. Schat het model een uitkomst hoger in dan de markt (bv. model 56% vs markt-impliciet 28%), dan is DAT de value-tip - ook al is het niet de laagste odd. Heeft GEEN enkele uitkomst positieve value, kies dan de hoogste modelkans en houd confidence MAX 5. Kies dus consequent op het model, niet op wie de favoriet is.
 - Noem teams altijd bij naam, nooit "thuisploeg"
 - Gebruik ALLEEN specifieke cijfers die in de context staan — NOOIT verzinnen
 - kans = gecombineerde schatting NA overround-correctie van de bookmaker
