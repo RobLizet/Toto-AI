@@ -1004,8 +1004,11 @@ function renderMatchCard(m) {
       padding:2px 8px;border-radius:999px;z-index:2;cursor:pointer;" onclick="event.stopPropagation();showHelp('value-badge')" title="Tik voor uitleg">⚡ +${Math.round(_vp.value)}%</div>` : '';
 
   // v26.205: TIP-hoekje in 3 lagen — value (fel), AI-model-lean (licht), markt-favoriet (lichtst, eigen 'MARKT'-label)
-  let _tipPick = _vp ? _vp.pick : '';
-  let _tipSource = _vp ? 'value' : '';
+  let _tipPick = '', _tipSource = '', _tipValue = 0;
+  if (_vp) { _tipPick = _vp.pick; _tipSource = 'value'; _tipValue = _vp.value || 0; }
+  // v26.214: eigen analyse (ANALYSE-knop) heeft voorrang — card toont meteen wat de analyse zei i.p.v. de MARKT-plaatshouder
+  const _man = (state._manualTips || {})[String(m.id)];
+  if (_man && _man.pick && !m.isDone) { _tipPick = _man.pick; _tipValue = _man.value || 0; _tipSource = (_man.value >= 5) ? 'value' : 'model'; }
   if (!_tipPick && !m.isDone) {
     const _mt = (state._modelTips || []).find(x => String(x.fixture_id) === String(m.id));
     if (_mt && _mt.pick) { _tipPick = _mt.pick; _tipSource = 'model'; }
@@ -1016,11 +1019,11 @@ function renderMatchCard(m) {
   }
   const _tipCode = _tipPick === 'NOBTTS' ? 'NO BTTS' : (_tipPick || '');
   const _isMarket = _tipSource === 'market';
-  const _tipCol  = _tipSource === 'value' ? ((_vp.value >= 15) ? '#00BEC4' : '#f59e0b')
+  const _tipCol  = _tipSource === 'value' ? ((_tipValue >= 15) ? '#00BEC4' : '#f59e0b')
                  : _tipSource === 'model' ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.3)';
-  const _tipBg   = _tipSource === 'value' ? ((_vp.value >= 15) ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)')
+  const _tipBg   = _tipSource === 'value' ? ((_tipValue >= 15) ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)')
                  : _tipSource === 'model' ? 'rgba(255,255,255,.05)' : 'rgba(255,255,255,.025)';
-  const _tipBd   = _tipSource === 'value' ? ((_vp.value >= 15) ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)')
+  const _tipBd   = _tipSource === 'value' ? ((_tipValue >= 15) ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)')
                  : _tipSource === 'model' ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.07)';
   const _tipLblCol = _tipSource === 'value' ? 'rgba(255,255,255,.65)' : _tipSource === 'model' ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.28)';
   const _tipLblTxt = _isMarket ? t('wed.market','MARKT') : t('wed.tip','TIP');
