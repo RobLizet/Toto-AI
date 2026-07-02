@@ -9,6 +9,7 @@ const HELP_TEXTS = {
   'competitie-tabs':    { title: 'Competities', text: 'Kies een competitie om wedstrijden te laden. De app haalt live odds en statistieken op via API-Football.' },
   'match-card':         { title: 'Wedstrijd kaart', text: 'Tik op een wedstrijd om die te selecteren voor analyse. De balkjes tonen de kans op thuiswinst, gelijkspel of uitwinst op basis van de odds.' },
   'odds-display':       { title: 'Odds (quote)', text: 'De odds geven de uitbetaling per €1 inzet. Lagere odds = grotere kans volgens de bookmaker. ProMatchXI vergelijkt dit met eigen berekeningen om value te vinden.' },
+  'sharp':              { title: '\ud83e\udd88 Sharp geld', text: 'Sharp geld is geld van professionele gokkers. Als zij groot inzetten, verschuift de bookmaker de odds. Dalende odds op een uitkomst (bijv. "Uit -9.1%") betekent dat geld daarheen stroomt \u2014 de scherpe spelers zien er waarde. Stijgende odds ("Odds stijgt") betekent dat geld er juist wegstroomt. ProMatchXI weegt dit mee als extra bevestiging bij een pick. Het is een richtingaanwijzer, geen garantie \u2014 een deel van de bewegingen is ruis.' },
   'value-badge':        { title: 'Value %', text: 'Value = het verschil tussen de AI-kans en de implied kans van de bookmaker. +10% betekent dat AI 10% hogere kans ziet dan de bookmaker inprijst. Positieve value = potentieel winstgevende bet.' },
 
   // Analyse

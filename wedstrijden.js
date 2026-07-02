@@ -496,15 +496,15 @@ function renderOddsMovementBadge(matchId) {
   if (isSharp) {
     return `<div style="display:inline-flex;align-items:center;gap:.2rem;font-family:\'IBM Plex Mono\',monospace;
       font-size:.44rem;font-weight:700;color:#00BEC4;background:rgba(0,190,196,.1);
-      border:1px solid rgba(0,190,196,.3);border-radius:999px;padding:2px 7px;margin-top:.25rem;">
-      🦈 Sharp geld · ${top.label} ${top.pct.toFixed(1)}%
+      border:1px solid rgba(0,190,196,.3);border-radius:999px;padding:2px 7px;margin-top:.25rem;cursor:pointer;" onclick="event.stopPropagation();showHelp('sharp')" title="Tik voor uitleg">
+      🦈 Sharp geld · ${top.label} ${top.pct.toFixed(1)}% ⓘ
     </div>`;
   }
   if (isRising) {
     return `<div style="display:inline-flex;align-items:center;gap:.2rem;font-family:\'IBM Plex Mono\',monospace;
       font-size:.44rem;font-weight:700;color:#dc2626;background:rgba(220,38,38,.08);
-      border:1px solid rgba(220,38,38,.2);border-radius:999px;padding:2px 7px;margin-top:.25rem;">
-      📈 Odds stijgt · ${top.label} +${top.pct.toFixed(1)}%
+      border:1px solid rgba(220,38,38,.2);border-radius:999px;padding:2px 7px;margin-top:.25rem;cursor:pointer;" onclick="event.stopPropagation();showHelp('sharp')" title="Tik voor uitleg">
+      📈 Odds stijgt · ${top.label} +${top.pct.toFixed(1)}% ⓘ
     </div>`;
   }
   return '';
