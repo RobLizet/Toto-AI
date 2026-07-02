@@ -947,8 +947,12 @@ async function ensureWorkerPicks(force) {
   if (!force && state._workerPicksLoaded) return;
   state._workerPicksLoading = true;
   try {
-    const r = await fetch('https://api.promatchxi.app/picks');
+    const [r, mt] = await Promise.all([
+      fetch('https://api.promatchxi.app/picks'),
+      fetch('https://api.promatchxi.app/model-tips'),
+    ]);
     if (r.ok) { const d = await r.json(); state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); }
+    if (mt.ok) { const md = await mt.json(); state._modelTips = md.tips || []; } // v26.202: model-favorieten voor TIP-hoekje
   } catch (e) {}
   state._workerPicksLoaded = true;
   state._workerPicksLoading = false;
@@ -999,19 +1003,26 @@ function renderMatchCard(m) {
       border:1px solid ${_vp.value >= 15 ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)'};
       padding:2px 8px;border-radius:999px;z-index:2;">⚡ +${Math.round(_vp.value)}%</div>` : '';
 
-  // v26.201: TIP-hoekje linksboven — pick-code (1/X/2/O2.5/BTTS) in een oogopslag
-  const _tipCode = _vp ? (_vp.pick === 'NOBTTS' ? 'NO BTTS' : (_vp.pick || '')) : '';
-  const _tipCol  = (_vp && _vp.value >= 15) ? '#00BEC4' : '#f59e0b';
-  const _tipBg   = (_vp && _vp.value >= 15) ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)';
-  const _tipBd   = (_vp && _vp.value >= 15) ? 'rgba(0,190,196,.4)'  : 'rgba(245,158,11,.35)';
-  const tipBadge = (_vp && !m.isDone && _tipCode) ? `
+  // v26.202: TIP-hoekje — value-pick (fel) of model-favoriet (licht) op elke card
+  let _tipPick = _vp ? _vp.pick : '';
+  const _tipIsValue = !!_vp;
+  if (!_tipPick && !m.isDone) {
+    const _mt = (state._modelTips || []).find(x => String(x.fixture_id) === String(m.id));
+    if (_mt && _mt.pick) _tipPick = _mt.pick;
+  }
+  const _tipCode = _tipPick === 'NOBTTS' ? 'NO BTTS' : (_tipPick || '');
+  const _tipCol  = _tipIsValue ? ((_vp.value >= 15) ? '#00BEC4' : '#f59e0b') : 'rgba(255,255,255,.5)';
+  const _tipBg   = _tipIsValue ? ((_vp.value >= 15) ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)') : 'rgba(255,255,255,.05)';
+  const _tipBd   = _tipIsValue ? ((_vp.value >= 15) ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)') : 'rgba(255,255,255,.14)';
+  const _tipLblCol = _tipIsValue ? 'rgba(255,255,255,.65)' : 'rgba(255,255,255,.4)';
+  const tipBadge = (_tipCode && !m.isDone) ? `
     <div style="position:absolute;top:6px;left:6px;z-index:3;text-align:center;
       background:${_tipBg};border:1px solid ${_tipBd};border-radius:10px;padding:1px 7px 2px;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;
-        color:rgba(255,255,255,.65);letter-spacing:.12em;line-height:1.3;">${t('wed.tip','TIP')}</div>
+        color:${_tipLblCol};letter-spacing:.12em;line-height:1.3;">${t('wed.tip','TIP')}</div>
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${_tipCol};line-height:.95;">${_tipCode}</div>
     </div>` : '';
-  const _tipPad = (_vp && !m.isDone && _tipCode) ? 'padding-left:2.9rem;' : '';
+  const _tipPad = (_tipCode && !m.isDone) ? 'padding-left:2.9rem;' : '';
   const statusTxt = m.isLive ? (m.liveMin ? m.liveMin + "'" : 'LIVE') : m.isDone ? 'FT' : m.time;
   const inCombi   = (state.combiBuilder||[]).some(l => String(l.matchId) === String(m.id));
   const hasOdds   = m.homeOdds !== '—' && parseFloat(m.homeOdds) > 1;
