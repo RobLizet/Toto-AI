@@ -930,14 +930,14 @@ function getMatchValuePick(m) {
   // 1) sessie-scan (vers na een handmatige scan)
   const sr = (state.lastScanResults || []).find(s => String(s.matchId) === String(m.id));
   if (sr && Number(sr.value) >= 5 && sr.pick !== 'X') {
-    return { value: Number(sr.value) || 0, label: sr.pickLabel || sr.pick || 'VALUE' };
+    return { value: Number(sr.value) || 0, label: sr.pickLabel || sr.pick || 'VALUE', pick: sr.pick || '' };
   }
   // 2) persistente worker-pick (zonder scannen, uit /picks) — alleen nog-openstaande picks
   const wp = (state._qualityPicks || []).find(p =>
     String(p.fixtureId) === String(m.id) &&
     (String(p.status || '').toLowerCase() === 'pending' || !p.status)
   );
-  if (wp) return { value: Number(wp.value) || 0, label: wp.pickLabel || wp.pick || 'VALUE' };
+  if (wp) return { value: Number(wp.value) || 0, label: wp.pickLabel || wp.pick || 'VALUE', pick: wp.pick || '' };
   return null;
 }
 
@@ -999,6 +999,19 @@ function renderMatchCard(m) {
       border:1px solid ${_vp.value >= 15 ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)'};
       padding:2px 8px;border-radius:999px;z-index:2;">⚡ +${Math.round(_vp.value)}%</div>` : '';
 
+  // v26.201: TIP-hoekje linksboven — pick-code (1/X/2/O2.5/BTTS) in een oogopslag
+  const _tipCode = _vp ? (_vp.pick === 'NOBTTS' ? 'NO BTTS' : (_vp.pick || '')) : '';
+  const _tipCol  = (_vp && _vp.value >= 15) ? '#00BEC4' : '#f59e0b';
+  const _tipBg   = (_vp && _vp.value >= 15) ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)';
+  const _tipBd   = (_vp && _vp.value >= 15) ? 'rgba(0,190,196,.4)'  : 'rgba(245,158,11,.35)';
+  const tipBadge = (_vp && !m.isDone && _tipCode) ? `
+    <div style="position:absolute;top:6px;left:6px;z-index:3;text-align:center;
+      background:${_tipBg};border:1px solid ${_tipBd};border-radius:10px;padding:1px 7px 2px;">
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.38rem;font-weight:700;
+        color:rgba(255,255,255,.65);letter-spacing:.12em;line-height:1.3;">${t('wed.tip','TIP')}</div>
+      <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${_tipCol};line-height:.95;">${_tipCode}</div>
+    </div>` : '';
+  const _tipPad = (_vp && !m.isDone && _tipCode) ? 'padding-left:2.9rem;' : '';
   const statusTxt = m.isLive ? (m.liveMin ? m.liveMin + "'" : 'LIVE') : m.isDone ? 'FT' : m.time;
   const inCombi   = (state.combiBuilder||[]).some(l => String(l.matchId) === String(m.id));
   const hasOdds   = m.homeOdds !== '—' && parseFloat(m.homeOdds) > 1;
@@ -1062,10 +1075,11 @@ function renderMatchCard(m) {
   card.innerHTML = `
     <div style="position:relative;">
       ${valueBadge}
+      ${tipBadge}
       <!-- Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;
         padding:.55rem .9rem .4rem;border-bottom:1px solid rgba(255,255,255,0.09);">
-        <div style="display:flex;align-items:center;gap:.4rem;">
+        <div style="display:flex;align-items:center;gap:.4rem;${_tipPad}">
           ${m.compLogo ? `<img src="${m.compLogo}" style="width:14px;height:14px;object-fit:contain;" onerror="this.style.display='none'">` : ''}
           <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:rgba(255,255,255,.95);font-weight:700;">
             ${m.comp || ''}
