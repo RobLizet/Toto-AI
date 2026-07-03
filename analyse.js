@@ -935,6 +935,27 @@ async function _scanValueAll_legacy(silent = false) {
 
           const poisson = calcPoissonKansen(homeGoalStats, awayGoalStats, m.leagueId || leagueId || 1.35, homeInjAdj, awayInjAdj);
           if (poisson.valid) conf = Math.min(10, conf + 1 + (poisson.hasXG ? 1 : 0));
+          // v26.218: KLASSE/SoS-CORRECTIE op de rauwe Poisson. De rauwe Poisson negeert tegenstander-sterkte
+          // (bv. een klein land met weinig tegendoelpunten tegen zwakke landen -> topland fout laag ingeschat).
+          // De markt vangt dat klasseverschil wel. We trekken de Poisson-kansen naar de de-vigde markt,
+          // sterker naarmate de afwijking groter is (>15pp). Gematigde afwijkingen (echte value) blijven grotendeels intact.
+          if (poisson.valid) {
+            const _oh = parseFloat(m.homeOdds)||0, _od = parseFloat(m.drawOdds)||0, _oa = parseFloat(m.awayOdds)||0;
+            if (_oh > 1 && _od > 1 && _oa > 1) {
+              const _inv = 1/_oh + 1/_od + 1/_oa;
+              const _mh = (1/_oh)/_inv*100, _mx = (1/_od)/_inv*100, _ma = (1/_oa)/_inv*100;
+              const _pull = (pp, mkt) => { const w = Math.min(0.7, Math.max(0, (Math.abs(pp-mkt)-15)/45)); return pp + (mkt-pp)*w; };
+              let _ch = _pull(poisson.k1, _mh), _cx = _pull(poisson.kX, _mx), _ca = _pull(poisson.k2, _ma);
+              const _sum = _ch + _cx + _ca;
+              if (_sum > 0) {
+                const _k1o = poisson.k1;
+                poisson.k1 = Math.round(_ch/_sum*100);
+                poisson.kX = Math.round(_cx/_sum*100);
+                poisson.k2 = Math.round(_ca/_sum*100);
+                poisson.sosCorrected = Math.abs(poisson.k1 - _k1o) >= 5; // markeer als de correctie merkbaar was
+              }
+            }
+          }
 
           const market = analyzeMarketMovement(m.id, parseFloat(m.homeOdds)||0, parseFloat(m.drawOdds)||0, parseFloat(m.awayOdds)||0);
           conf = Math.min(10, Math.max(1, conf + (market.confDelta||0)));
