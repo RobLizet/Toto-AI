@@ -1657,6 +1657,18 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     const krow = (label, odds, markt) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);">faire kans <b style="color:#c084fc;">${markt}%</b></span></div>`;
     const grow = (lab, o, u) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${lab}</span><span style="color:rgba(255,255,255,.88);">Over <b style="color:#c084fc;">${o}%</b> \u00b7 Under <b style="color:#c084fc;">${u}%</b></span></div>`;
     const lineMap = { '1.5': ['o15','u15'], '2.5': ['o25','u25'], '3.5': ['o35','u35'] };
+    // v26.218: KLASSE/SoS-correctie op de goal-markt-model kansen. De lambda's zijn SoS-blind
+    // (bv. topland fout laag doordat de tegenstander weinig incasseerde tegen zwakke landen -> Under opgeblazen).
+    // Trek de model-kans naar de de-vigde markt naarmate de afwijking groter is (>15pp). Echte value blijft grotendeels intact.
+    if (gm && goalOdds) {
+      const _pullG = (pp, mkt) => { if (mkt == null || !(mkt > 0)) return pp; const w = Math.min(0.7, Math.max(0, (Math.abs(pp-mkt)-15)/45)); return Math.round(pp + (mkt-pp)*w); };
+      for (const _ln of ['1.5','2.5','3.5']) {
+        const _o = goalOdds?.ou?.[_ln]; const [_ok,_uk] = lineMap[_ln];
+        if (_o) { gm[_ok] = _pullG(gm[_ok], _o.fairOver); gm[_uk] = _pullG(gm[_uk], _o.fairUnder); }
+      }
+      const _b = goalOdds?.btts;
+      if (_b) { gm.bttsY = _pullG(gm.bttsY, _b.fairYes); gm.bttsN = _pullG(gm.bttsN, _b.fairNo); }
+    }
     let goalRows = '';
     for (const line of ['1.5', '2.5', '3.5']) {
       const o = goalOdds?.ou?.[line]; const [ok, uk] = lineMap[line];
