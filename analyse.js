@@ -1825,6 +1825,7 @@ JSON STRUCTUUR:
 
 KWALITEITSREGELS:
 - VALUE-VERANKERING (belangrijkste regel): de hoofdtip (tip.pick) MOET de uitkomst zijn met de grootste POSITIEVE value = modelkans (Poisson/blend) MINUS marktimpliciete kans (na de-vig). Volg NOOIT blind de marktfavoriet. Schat het model een uitkomst hoger in dan de markt (bv. model 56% vs markt-impliciet 28%), dan is DAT de value-tip - ook al is het niet de laagste odd. Heeft GEEN enkele uitkomst positieve value, kies dan de hoogste modelkans en houd confidence MAX 5. Kies dus consequent op het model, niet op wie de favoriet is.
+- KANS-KALIBRATIE: anker je kans-schatting op het Poisson-model + de de-vigde marktkans. De API-Football-prediction is een AANVULLEND signaal, GEEN leidraad. Wijkt de API-prediction sterk af van zowel markt als Poisson (bv. API 10% terwijl markt en Poisson ~35% geven), weeg 'm dan LICHT en noem het conflict kort - laat je kans NIET ver van markt+Poisson wegtrekken. Je modelkans mag hooguit ~10pp van de de-vigde marktkans afwijken, tenzij het Poisson-model die afwijking sterk onderbouwt. Zo blijft de value realistisch en niet opgeblazen.
 - Noem teams altijd bij naam, nooit "thuisploeg"
 - Gebruik ALLEEN specifieke cijfers die in de context staan — NOOIT verzinnen
 - kans = gecombineerde schatting NA overround-correctie van de bookmaker
