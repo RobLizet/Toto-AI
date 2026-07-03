@@ -558,6 +558,7 @@ async function loadVandaagTab() {
     const d = await r.json();
     const knownLeagueIds = new Set(Object.values(COMP_IDS));
     knownLeagueIds.delete(667); // oefenduels (globaal) niet in Vandaag-tab — alleen via eigen chip
+    knownLeagueIds.delete(COMP_IDS['norway']); knownLeagueIds.delete(COMP_IDS['sweden']); // v26.217: Scandinavische zomer-competities niet in de aggregatie — alleen via eigen tegel
     const now = Date.now();
 
     const fixtures = (d.response || []).filter(f => {
@@ -796,6 +797,7 @@ async function refreshLiveScores() {
     const d = await r.json();
     const knownLeagueIds = new Set(Object.values(COMP_IDS));
     knownLeagueIds.delete(667); // oefenduels (globaal) niet in Vandaag-tab — alleen via eigen chip
+    knownLeagueIds.delete(COMP_IDS['norway']); knownLeagueIds.delete(COMP_IDS['sweden']); // v26.217: Scandinavische zomer-competities niet in de aggregatie — alleen via eigen tegel
 
     // hele dag-lijst herbekijken: nieuw gestart toevoegen, afgelopen markeren, lopende bijwerken
     (d.response || []).forEach(f => {
