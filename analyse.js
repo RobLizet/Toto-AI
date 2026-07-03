@@ -944,7 +944,7 @@ async function _scanValueAll_legacy(silent = false) {
             if (_oh > 1 && _od > 1 && _oa > 1) {
               const _inv = 1/_oh + 1/_od + 1/_oa;
               const _mh = (1/_oh)/_inv*100, _mx = (1/_od)/_inv*100, _ma = (1/_oa)/_inv*100;
-              const _pull = (pp, mkt) => { const w = Math.min(0.7, Math.max(0, (Math.abs(pp-mkt)-15)/45)); return pp + (mkt-pp)*w; };
+              const _pull = (pp, mkt) => { const w = Math.min(0.95, Math.pow(Math.max(0,(Math.abs(pp-mkt)-12)/30), 1.5)); return pp + (mkt-pp)*w; };
               let _ch = _pull(poisson.k1, _mh), _cx = _pull(poisson.kX, _mx), _ca = _pull(poisson.k2, _ma);
               const _sum = _ch + _cx + _ca;
               if (_sum > 0) {
@@ -1661,7 +1661,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     // (bv. topland fout laag doordat de tegenstander weinig incasseerde tegen zwakke landen -> Under opgeblazen).
     // Trek de model-kans naar de de-vigde markt naarmate de afwijking groter is (>15pp). Echte value blijft grotendeels intact.
     if (gm && goalOdds) {
-      const _pullG = (pp, mkt) => { if (mkt == null || !(mkt > 0)) return pp; const w = Math.min(0.7, Math.max(0, (Math.abs(pp-mkt)-15)/45)); return Math.round(pp + (mkt-pp)*w); };
+      const _pullG = (pp, mkt) => { if (mkt == null || !(mkt > 0)) return pp; const w = Math.min(0.95, Math.pow(Math.max(0,(Math.abs(pp-mkt)-12)/30), 1.5)); return Math.round(pp + (mkt-pp)*w); };
       for (const _ln of ['1.5','2.5','3.5']) {
         const _o = goalOdds?.ou?.[_ln]; const [_ok,_uk] = lineMap[_ln];
         if (_o) { gm[_ok] = _pullG(gm[_ok], _o.fairOver); gm[_uk] = _pullG(gm[_uk], _o.fairUnder); }
@@ -1777,6 +1777,30 @@ async function runAnalyse() {
     const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[]) : null;
     const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[]) : null;
     const poisson = calcPoissonKansen(homeGoalStats, awayGoalStats, leagueId || 1.35);
+    // v26.219: KLASSE/SoS-correctie op de rauwe Poisson in de losse analyse (popup). De rauwe Poisson negeert
+    // tegenstander-sterkte -> topland fout laag ingeschat (valkuil). Trek naar de de-vigde markt, superlineair:
+    // gematigde afwijking (echte value) blijft intact, extreme divergentie (de valkuil) wordt hard dichtgetrokken.
+    if (poisson && poisson.valid) {
+      const _oh = parseFloat(m.homeOdds)||0, _od = parseFloat(m.drawOdds)||0, _oa = parseFloat(m.awayOdds)||0;
+      if (_oh > 1 && _od > 1 && _oa > 1) {
+        const _inv = 1/_oh + 1/_od + 1/_oa;
+        const _mh = (1/_oh)/_inv*100, _mx = (1/_od)/_inv*100, _ma = (1/_oa)/_inv*100;
+        const _pull = (pp, mkt) => { const w = Math.min(0.95, Math.pow(Math.max(0,(Math.abs(pp-mkt)-12)/30), 1.5)); return pp + (mkt-pp)*w; };
+        let _ch = _pull(poisson.k1,_mh), _cx = _pull(poisson.kX,_mx), _ca = _pull(poisson.k2,_ma);
+        const _sum = _ch + _cx + _ca;
+        if (_sum > 0) { poisson.k1 = Math.round(_ch/_sum*100); poisson.kX = Math.round(_cx/_sum*100); poisson.k2 = Math.round(_ca/_sum*100); }
+        // lambda's ook mee-schuiven zodat de goal-markten kloppen: supremacie + totaal-vloer
+        if (poisson.lambdaHome && poisson.lambdaAway) {
+          const _tot = poisson.lambdaHome + poisson.lambdaAway;
+          if (_tot < 1.9) { const _f = 2.1/_tot; poisson.lambdaHome*=_f; poisson.lambdaAway*=_f; }
+          // supremacie richting markt (favoriet scoort meer): schaal op basis van 1X2-gap
+          const _homeFav = _mh - _ma; // + = thuis favoriet
+          const _shift = Math.max(-0.6, Math.min(0.6, _homeFav/100));
+          const _lh = poisson.lambdaHome * (1 + _shift*0.8), _la = poisson.lambdaAway * (1 - _shift*0.5);
+          poisson.lambdaHome = Math.max(0.15, _lh); poisson.lambdaAway = Math.max(0.15, _la);
+        }
+      }
+    }
 
     // v26.147: O/U + BTTS markt-odds ophalen voor model-vs-markt op doelpunten
     const goalOdds = await wt(typeof fetchGoalOdds === 'function' ? fetchGoalOdds(m.id) : Promise.resolve(null), 6000);
