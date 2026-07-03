@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v202'; // v202: Elo-fundament stap 1 — eloExpected/eloImplied1X2/marketToEloDiff helpers + updateEloForFixture, gehaakt in settleModelTips (draait op elke afrekening, dubbeltellings-beveiligd via elo_history-check). Zaait onbekende teams vanuit de markt (1X2-pick '1'/'2'), K=20 clubs/30 WK, homeAdv=65 (0 bij WK), World-Football-Elo doelsaldo-multiplier. Alleen opbouw — nog GEEN blend in het model (volgt na validatie, bouwplan stap 5/6) // v201: /model-tips filtert gelijkspel + extreme longshots eruit en geeft alleen positieve value — bij een klasse-mismatch (bv. Argentinie-Kaapverdie) geen nep-draw/longshot-tip meer op de card, valt netjes terug op MARKT-favoriet // v200: klasse/SoS-verankering in de scan-prompt (spiegelt v26.216 van de analyse) - marktodds als klasse-anker, geen model-kans die een duidelijke favoriet <65% zet op rauwe doelsaldi. Dicht de Poisson-valkuil (Argentinie 40% e.d.). Elo-tabel als fundament voor diepere SoS-fase // v199: edge-caching in de API-Football-proxy voor traag-veranderende data (vorm/stats/predictions/stand/h2h/blessures, 6u) — drastische besparing op de daglimiet bij herhaalde analyses; odds blijven vers // v198: /model-tips geeft nu de VALUE-pick (model - markt na de-vig) i.p.v. de model-favoriet — TIP-hoekje op de card komt zo overeen met de value-verankerde losse analyse (lost card-vs-analyse tegenspraak op) // v197: temperature:0 op ALLE scan-AI-calls (hoofdscan, test, daily-tip, nieuws) — cron-scan nu deterministisch zodat modelkansen/picks en het TIP-hoekje niet meer per run wisselen // v196: MAX_AI_ANALYSES_PER_SCAN 12->24 — meer vooruit scannen zodat verdere wedstrijden sneller een echte AI-tip krijgen i.p.v. de MARKT-plaatshouder // v195: auto-kalibratie op ACTIEF (AUTOTUNE_APPLY=true) — tuner past voortaan zelf bij, maar pas na 20-07 met >=40 clubtips/band; klein/begrensd/gelogd/omkeerbaar // v194: auto-kalibratie (optie 1) — bias-shrink runtime-instelbaar via model_config, wekelijkse tuner op clubdata (DRY-RUN: AUTOTUNE_APPLY=false), volledig gelogd in calibration_tune_log, endpoint /autotune // v193: /model-tips endpoint (model-favoriet 1X2 per aankomende wedstrijd) voor TIP-hoekje op value-loze cards // v192: goal-markt-tips (O/U + BTTS) ook getrackt op accuraatheid — modelrijen in model_market_comparison, settleModelTips rekent af via settleGoalMarket, view v_ai_tip_by_market + endpoint /ai-accuracy // v191: AI/model-tip-accuraatheids-tracking — settleModelTips rekent model-tips af (uitslag in model_market_comparison.won) zodat view v_ai_tip_accuracy continu kalibratie/hitrate/ROI per kans-band toont // v190: tier-gebaseerde bias-correctie op 1X2-value — extra market-shrinkage in het lage-kansgebied (aiKans<20% en 20-35%) waar de WK-backtest overschatting van longshots/draws aantoonde; conservatief + instelbaar (LOWPROB_EXTRA_SHRINK_1/2), hertunen op clubdata na 20-07 // v189: limieten opgehoogd na Workers Paid — app-analyses gedeelde key 5->25/gebruiker & 60->300 globaal (testfase), handmatige scan-cap 25->40, /health dagcap-warn 25->35. maxPerDay blijft ongebruikt (dode variabele, cron heeft geen dagcap) // v188: BUGFIX scanvenster — runScan scanTo stond op 18 UTC terwijl cron t/m 22 UTC vuurt en /health t/m 22 UTC monitort; avondscans (18-22 UTC = prime-time NL) werden stil overgeslagen. scanTo -> 23 zodat alle door de cron geplande volledige scans ook echt draaien // v187: scan-robuustheid voor 19-competitie-fase — AI-cap als tunable constante MAX_AI_ANALYSES_PER_SCAN (12), soonest-first sort laat fixtures zonder aftraptijd niet langer batch-slots afsnoepen, + deferral-log wanneer meer fixtures dan de cap in het venster zitten // v186: FASE 1 uitgebreid — WK + actieve zomercompetities (103 Eliteserien NO, 113 Allsvenskan SE) zodat de scanner tijdens de WK-tail doorbouwt aan het trackrecord; LEAGUE_FACTORS labels 113/103 rechtgezet (waren verwisseld, waarde ongewijzigd 0.88) // v185: LEAGUE_FACTORS rechtgetrokken + FASE 2 uitgebreid — 94 was fout 'Jupiler' gelabeld (is Portugal), 119 was 'Eredivisie playoffs' (is Denemarken); factoren toegevoegd voor 144/203/179/207/79/43/80/41 (stonden op default 0.92) // v184: FASE 2 league-fix — id 197 (Super League 1 Griekenland) was foutief gelabeld als Zwitserland; gecorrigeerd naar 207 (Super League Switzerland) conform bedoeling // v183: /health scan_verouderd-venster gelijkgetrokken met echte scan-uren (12-16 -> 12-22 UTC) — avond-aftrappen post-WK nu wel gemonitord // v182: dode prompt-caching opgeruimd in hoofdscan — system-blok (~30 tokens) lag onder de 1024-token cachedrempel en deed dus niets; beta-header + lege cache-markering verwijderd (geen kostenverschil) // v181: kosten van directe cron/systeem-Anthropic-calls (cron-scan, scan-test, daily-tip, oranje-nieuws) nu OOK in user_costs via trackAnthropicCost — in-app totaal benadert nu de echte Anthropic-rekening // v180: kosten-registratie gerepareerd — schreef naar niet-bestaande kolommen (month/ai_calls/total_cost); nu atomair ophogen via RPC increment_user_cost (calls/tokens_in/tokens_out/total_usd) // v179: gedeelde-key daglimiet verlaagd voor pre-launch — 5/gebruiker, 60 globaal (was 50/400); raakt alleen app-analyses, niet de cron-scans. Eigen-key-gebruikers onbeperkt // v178: eigen Anthropic-key support — frontend stuurt x-user-anthropic-key mee; worker gebruikt die i.p.v. env-key, slaat daglimiet + kostentracking over (gebruiker betaalt zelf) // v177: /health activeHours teruggebracht naar werkelijke scan-uren (06 + 12-16 UTC) — geen valse scan_verouderd-WARN meer 's avonds/'s nachts // v176: /goal-markets endpoint (serveert v_goal_market_performance incl. CLV) voor de app // v175: closing O/U + BTTS-odds meegeschreven in odds_snapshots (goal_odds jsonb) voor CLV op doelpunten-markten — zonder extra API-calls (hoofdscan haalt ze al op) // v174: doelpunten-markten LIVE in productie-cron (O/U 1.5/2.5/3.5 + BTTS als volwaardige picks, vlag ENABLE_GOAL_MARKETS) + afrekening voor alle goal-markten; consistency-check per marktgroep, longshot-guard alleen op 1X2 // v173: goal-markten in scan-test (?goals=1) — Poisson uit AI-goals, 2-weg de-vig // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
+const VERSION = 'v202'; // v202: Elo-fundament LIVE — updateEloForFixture werkt team-ratings bij na elke afgeronde wedstrijd (gewogen naar tegenstander-Elo = SoS). Nu alleen accumuleren; modelintegratie na 20 juli. Team-ID-koppeling via het fixture-object in de settlement // v201: /model-tips filtert gelijkspel + extreme longshots eruit en geeft alleen positieve value — bij een klasse-mismatch (bv. Argentinie-Kaapverdie) geen nep-draw/longshot-tip meer op de card, valt netjes terug op MARKT-favoriet // v200: klasse/SoS-verankering in de scan-prompt (spiegelt v26.216 van de analyse) - marktodds als klasse-anker, geen model-kans die een duidelijke favoriet <65% zet op rauwe doelsaldi. Dicht de Poisson-valkuil (Argentinie 40% e.d.). Elo-tabel als fundament voor diepere SoS-fase // v199: edge-caching in de API-Football-proxy voor traag-veranderende data (vorm/stats/predictions/stand/h2h/blessures, 6u) — drastische besparing op de daglimiet bij herhaalde analyses; odds blijven vers // v198: /model-tips geeft nu de VALUE-pick (model - markt na de-vig) i.p.v. de model-favoriet — TIP-hoekje op de card komt zo overeen met de value-verankerde losse analyse (lost card-vs-analyse tegenspraak op) // v197: temperature:0 op ALLE scan-AI-calls (hoofdscan, test, daily-tip, nieuws) — cron-scan nu deterministisch zodat modelkansen/picks en het TIP-hoekje niet meer per run wisselen // v196: MAX_AI_ANALYSES_PER_SCAN 12->24 — meer vooruit scannen zodat verdere wedstrijden sneller een echte AI-tip krijgen i.p.v. de MARKT-plaatshouder // v195: auto-kalibratie op ACTIEF (AUTOTUNE_APPLY=true) — tuner past voortaan zelf bij, maar pas na 20-07 met >=40 clubtips/band; klein/begrensd/gelogd/omkeerbaar // v194: auto-kalibratie (optie 1) — bias-shrink runtime-instelbaar via model_config, wekelijkse tuner op clubdata (DRY-RUN: AUTOTUNE_APPLY=false), volledig gelogd in calibration_tune_log, endpoint /autotune // v193: /model-tips endpoint (model-favoriet 1X2 per aankomende wedstrijd) voor TIP-hoekje op value-loze cards // v192: goal-markt-tips (O/U + BTTS) ook getrackt op accuraatheid — modelrijen in model_market_comparison, settleModelTips rekent af via settleGoalMarket, view v_ai_tip_by_market + endpoint /ai-accuracy // v191: AI/model-tip-accuraatheids-tracking — settleModelTips rekent model-tips af (uitslag in model_market_comparison.won) zodat view v_ai_tip_accuracy continu kalibratie/hitrate/ROI per kans-band toont // v190: tier-gebaseerde bias-correctie op 1X2-value — extra market-shrinkage in het lage-kansgebied (aiKans<20% en 20-35%) waar de WK-backtest overschatting van longshots/draws aantoonde; conservatief + instelbaar (LOWPROB_EXTRA_SHRINK_1/2), hertunen op clubdata na 20-07 // v189: limieten opgehoogd na Workers Paid — app-analyses gedeelde key 5->25/gebruiker & 60->300 globaal (testfase), handmatige scan-cap 25->40, /health dagcap-warn 25->35. maxPerDay blijft ongebruikt (dode variabele, cron heeft geen dagcap) // v188: BUGFIX scanvenster — runScan scanTo stond op 18 UTC terwijl cron t/m 22 UTC vuurt en /health t/m 22 UTC monitort; avondscans (18-22 UTC = prime-time NL) werden stil overgeslagen. scanTo -> 23 zodat alle door de cron geplande volledige scans ook echt draaien // v187: scan-robuustheid voor 19-competitie-fase — AI-cap als tunable constante MAX_AI_ANALYSES_PER_SCAN (12), soonest-first sort laat fixtures zonder aftraptijd niet langer batch-slots afsnoepen, + deferral-log wanneer meer fixtures dan de cap in het venster zitten // v186: FASE 1 uitgebreid — WK + actieve zomercompetities (103 Eliteserien NO, 113 Allsvenskan SE) zodat de scanner tijdens de WK-tail doorbouwt aan het trackrecord; LEAGUE_FACTORS labels 113/103 rechtgezet (waren verwisseld, waarde ongewijzigd 0.88) // v185: LEAGUE_FACTORS rechtgetrokken + FASE 2 uitgebreid — 94 was fout 'Jupiler' gelabeld (is Portugal), 119 was 'Eredivisie playoffs' (is Denemarken); factoren toegevoegd voor 144/203/179/207/79/43/80/41 (stonden op default 0.92) // v184: FASE 2 league-fix — id 197 (Super League 1 Griekenland) was foutief gelabeld als Zwitserland; gecorrigeerd naar 207 (Super League Switzerland) conform bedoeling // v183: /health scan_verouderd-venster gelijkgetrokken met echte scan-uren (12-16 -> 12-22 UTC) — avond-aftrappen post-WK nu wel gemonitord // v182: dode prompt-caching opgeruimd in hoofdscan — system-blok (~30 tokens) lag onder de 1024-token cachedrempel en deed dus niets; beta-header + lege cache-markering verwijderd (geen kostenverschil) // v181: kosten van directe cron/systeem-Anthropic-calls (cron-scan, scan-test, daily-tip, oranje-nieuws) nu OOK in user_costs via trackAnthropicCost — in-app totaal benadert nu de echte Anthropic-rekening // v180: kosten-registratie gerepareerd — schreef naar niet-bestaande kolommen (month/ai_calls/total_cost); nu atomair ophogen via RPC increment_user_cost (calls/tokens_in/tokens_out/total_usd) // v179: gedeelde-key daglimiet verlaagd voor pre-launch — 5/gebruiker, 60 globaal (was 50/400); raakt alleen app-analyses, niet de cron-scans. Eigen-key-gebruikers onbeperkt // v178: eigen Anthropic-key support — frontend stuurt x-user-anthropic-key mee; worker gebruikt die i.p.v. env-key, slaat daglimiet + kostentracking over (gebruiker betaalt zelf) // v177: /health activeHours teruggebracht naar werkelijke scan-uren (06 + 12-16 UTC) — geen valse scan_verouderd-WARN meer 's avonds/'s nachts // v176: /goal-markets endpoint (serveert v_goal_market_performance incl. CLV) voor de app // v175: closing O/U + BTTS-odds meegeschreven in odds_snapshots (goal_odds jsonb) voor CLV op doelpunten-markten — zonder extra API-calls (hoofdscan haalt ze al op) // v174: doelpunten-markten LIVE in productie-cron (O/U 1.5/2.5/3.5 + BTTS als volwaardige picks, vlag ENABLE_GOAL_MARKETS) + afrekening voor alle goal-markten; consistency-check per marktgroep, longshot-guard alleen op 1X2 // v173: goal-markten in scan-test (?goals=1) — Poisson uit AI-goals, 2-weg de-vig // v172: schaduw-vangnet — near-misses loggen op RUWE divergentie (>=3pp) onder de value<3-poort, voor volledigere draw-evaluatie (selectie ongewijzigd) // v171: schaduw-afrekening terug naar losse fixtures-calls (bewezen) i.p.v. gebatchte ?ids // v170: cron-stappen ontkoppeld (try/catch) zodat schaduw-afrekening altijd draait // v169: schaduw-afrekening robuuster — gebatchte fixtures-call + ook in cron-gap-uren // v168: schaduw-picks 1 per wedstrijd (sterkste bijna-misser) // v167: /shadow endpoint (schaduw-trackrecord voor app) // v166b: + settleShadowPicks (schaduw-picks afrekenen met uitslag) // v166: schaduw-trackrecord — bijna-value picks (longshot/draw/below_threshold) gelogd in shadow_picks // v165: aftraptijd (match_time) opgeslagen in model_market_comparison + doorgegeven aan sharp-data (verberg al-gespeelde wedstrijden) // v164: verouderd Sonnet 4 model vervangen door claude-sonnet-4-6 (daily tip + oranje nieuws) // v163: /health endpoint (versie, laatste scan, picks, CLV, snapshot-dichtheid + warnings) // v162: scans_today reset op nieuwe dag in hoofdpad (teller liep eindeloos op, blokkeerde /scan-now) // v161: filter licht versoepeld — shrink 0.45/0.55, draw-straf 0.88/0.90, draw-minValue lager, strong-draw guardrail-uitzondering // v160: /scan-now totaal-dagcap 25 (begrenst handmatige scan-kosten) // v159: /scan-now endpoint (handmatige scan vanuit app, cooldown 60s + daglimiet) // v158: handmatig scanpad — ondergrens aftraptijd (geen al-gespeelde wedstrijden) // v157: value-hardening — model-shrinkage naar markt (0.50 / toernooi 0.65) + favorite-longshot guardrail (odds>=3.5 vereist sharpScore>=55) // v156: snapshot-only cron-run 23-05 UTC voor late WK-kickoffs (verse slotkoers) // v155: CLV-fix — snapshot ALLE aankomende fixtures (opening->closing curve) + saveCLV valt terug op snapshot-slotkoers + niet meer bailen op lege live-CLV // v154: sharp-tier drempels in constanten (SHARP_TIERS) // v153: WK-only scan tijdens WK-zomer (FASE 1 = alleen league 1) // v152: cache-bust op odds fetch // v151: drempels terug naar productie // v151-TEST: drempels verlaagd voor test — TIJDELIJK // v150: steam 6%, sharp score ≥55, geen gelijkspel, geen gespeeld // v149: post-WK leagues — KKD + 2/3.Bundesliga + Championship + League One // v148: automatische seizoenswisseling — WK-zomer → Europees seizoen (20 jul) // v147: 24→11 actieve leagues + bulk odds fetch // v146: bulk datum odds fetch — 2 calls i.p.v. 24+ (rate limit fix) // v145: league tiers + pick tier performance + Monte Carlo // v144: AI invloed teruggebracht naar 10% — markt (fairImplied) domineert 40% // v143: prompt caching ingeschakeld — ~70% token besparing op scans // v142: scan analyses via Sonnet 4.6 ipv Haiku (betere kwaliteit) // v141: pick consistency lock + gelijkspel 2-scan bevestiging // v140: poissonMap doorgegeven aan detectSharpMoney — divergentie nu correct // v139: betere WK AI-prompt (FIFA/form), push timing 6u voor aftrap // v138: WK_ONLY_MODE uit + alle actieve leagues + WK drempel conf5/value6 + elite ook WK // v137: 1 pick per wedstrijd + strengere drempels (minValue 3→6, minConf 5→6) // v136: rate limits 15→50 user, 150→400 globaal // v135: elite sharp money engine — market_consensus + model_market_comparison + sharp_signal_results // v134: geen push bij lege scan // v133: scan-test default league 1 (WK)
 const FB_DB = 'https://toto-ai-397cb-default-rtdb.europe-west1.firebasedatabase.app';
 
 const CORS = {
@@ -1599,114 +1599,6 @@ function settleGoalMarket(pick, gh, ga) {
   return null;
 }
 
-// ── Elo / SoS-fundament (bouwplan Elo_SoS_bouwplan.md) ───────────────────
-// Start-fase: helpers + update-bij-afrekening. Blend in het model volgt pas na
-// validatie op clubdata (stap 5/6 van het bouwplan) — hier alleen opbouwen.
-const ELO_HOME_ADV   = 65;   // clubvoetbal; neutraal (WK/toernooi) = 0
-const ELO_K_CLUB     = 20;
-const ELO_K_NATIONAL = 30;   // landenteams spelen weinig -> hogere K, tragere convergentie geaccepteerd
-const ELO_WK_LEAGUE_ID = 1;  // API-Football league-id voor het WK (neutraal veld, nationale K)
-
-function eloExpected(eloA, eloB, homeAdv = 0) {
-  return 1 / (1 + Math.pow(10, (eloB - eloA - homeAdv) / 400));
-}
-
-// Verdeelt de verwachte thuiswinkans (uit Elo) over 1/X/2 met een eenvoudig draw-model.
-function eloImplied1X2(homeElo, awayElo, homeAdv = 0) {
-  const eHome = eloExpected(homeElo, awayElo, homeAdv);
-  let pDraw = 0.28 - 0.20 * Math.abs(eHome - 0.5);
-  pDraw = Math.max(0.10, Math.min(0.30, pDraw));
-  let pHome = eHome - 0.5 * pDraw;
-  let pAway = 1 - pHome - pDraw;
-  if (pHome < 0) { pAway += pHome; pHome = 0; }
-  if (pAway < 0) { pHome += pAway; pAway = 0; }
-  return { pHome, pDraw, pAway };
-}
-
-// Zet een markt-thuiswinkans (0-1, de-vigd) om naar een Elo-verschil, voor het zaaien van onbekende teams.
-function marketToEloDiff(marketEHome) {
-  const p = Math.max(0.02, Math.min(0.98, marketEHome));
-  return -400 * Math.log10(1 / p - 1);
-}
-
-// World-Football-Elo-stijl doelsaldo-multiplier.
-function eloGoalMultiplier(gd) {
-  const g = Math.abs(gd);
-  if (g <= 1) return 1;
-  if (g === 2) return 1.5;
-  return (11 + g) / 8;
-}
-
-async function getTeamRating(env, teamId) {
-  if (!teamId) return null;
-  const rows = await sb(env, 'team_ratings', 'GET', null, `?team_id=eq.${teamId}&select=*&limit=1`);
-  return (rows && rows[0]) || null;
-}
-
-// Elo bijwerken voor één afgeronde wedstrijd. Dubbeltellings-beveiliging: skip als deze
-// fixture+team combinatie al in elo_history staat (kan voorkomen omdat settleModelTips
-// meerdere marktrijen per fixture afrekent — 1X2 én goal-markten).
-async function updateEloForFixture(env, fixtureId, info, marketPHomeHint) {
-  try {
-    const { homeId, awayId, homeName, awayName, leagueId, home: gh, away: ga } = info;
-    if (!homeId || !awayId || gh == null || ga == null) return;
-
-    const already = await sb(env, 'elo_history', 'GET', null,
-      `?fixture_id=eq.${fixtureId}&team_id=eq.${homeId}&select=id&limit=1`);
-    if (already && already.length) return; // al verwerkt
-
-    const isWk = leagueId === ELO_WK_LEAGUE_ID;
-    const homeAdv = isWk ? 0 : ELO_HOME_ADV;
-    const K = isWk ? ELO_K_NATIONAL : ELO_K_CLUB;
-
-    let homeRow = await getTeamRating(env, homeId);
-    let awayRow = await getTeamRating(env, awayId);
-
-    let homeElo, awayElo, homeSeeded = false, awaySeeded = false;
-    if (homeRow) { homeElo = parseFloat(homeRow.elo); }
-    if (awayRow) { awayElo = parseFloat(awayRow.elo); }
-
-    if (homeElo == null || awayElo == null) {
-      // Zaaien vanuit de markt als we een schatting hebben, anders neutraal op 1500.
-      const diff = (marketPHomeHint != null) ? marketToEloDiff(marketPHomeHint) : 0;
-      if (homeElo == null) { homeElo = 1500 + diff / 2; homeSeeded = true; }
-      if (awayElo == null) { awayElo = 1500 - diff / 2; awaySeeded = true; }
-    }
-
-    const gd = gh - ga;
-    const G = eloGoalMultiplier(gd);
-    const expectedHome = eloExpected(homeElo, awayElo, homeAdv);
-    const actualHome = gh > ga ? 1 : gh < ga ? 0 : 0.5;
-    const deltaHome = K * G * (actualHome - expectedHome);
-
-    const newHomeElo = homeElo + deltaHome;
-    const newAwayElo = awayElo - deltaHome;
-    const result = gh > ga ? 'W' : gh < ga ? 'L' : 'D'; // vanuit thuisteam-perspectief
-    const now = new Date().toISOString();
-
-    await sb(env, 'elo_history', 'POST', [
-      { fixture_id: fixtureId, team_id: homeId, opponent_id: awayId,
-        elo_before: homeElo, elo_after: newHomeElo, delta: deltaHome, result, gd, run_at: now },
-      { fixture_id: fixtureId, team_id: awayId, opponent_id: homeId,
-        elo_before: awayElo, elo_after: newAwayElo, delta: -deltaHome,
-        result: result === 'W' ? 'L' : result === 'L' ? 'W' : 'D', gd: -gd, run_at: now },
-    ]);
-
-    await sb(env, 'team_ratings', 'POST', [
-      { team_id: homeId, team_name: homeName || homeRow?.team_name || null,
-        elo: newHomeElo, games: (homeRow?.games || 0) + 1, seeded: homeSeeded,
-        last_result_at: now, updated_at: now },
-      { team_id: awayId, team_name: awayName || awayRow?.team_name || null,
-        elo: newAwayElo, games: (awayRow?.games || 0) + 1, seeded: awaySeeded,
-        last_result_at: now, updated_at: now },
-    ], '?on_conflict=team_id');
-
-    console.log(`[Elo] fixture ${fixtureId}: ${homeName || homeId} ${homeElo.toFixed(0)}->${newHomeElo.toFixed(0)}, ${awayName || awayId} ${awayElo.toFixed(0)}->${newAwayElo.toFixed(0)}`);
-  } catch(e) {
-    console.error('[Elo] update fout:', e.message);
-  }
-}
-
 // Bouwt de goal-markt-kandidaten voor één wedstrijd (leeg als AI geen goals gaf of geen odds).
 function buildGoalCandidates(m, ai, odds) {
   const out = [];
@@ -1888,11 +1780,13 @@ async function settleShadowPicks(env) {
     const fixtureIds = [...new Set(rows.map(r => r.fixture_id).filter(Boolean))].slice(0, 15);
     const results = await Promise.all(fixtureIds.map(id => apif(`/fixtures?id=${id}`, env)));
     const resultMap = {};
+    const finishedFx = [];
     results.forEach((data, i) => {
       const fx = data?.[0]; if (!fx) return;
       const st = fx.fixture?.status?.short;
       if (!['FT','AET','PEN'].includes(st)) return;
       resultMap[String(fixtureIds[i])] = { home: fx.goals?.home ?? 0, away: fx.goals?.away ?? 0 };
+      finishedFx.push(fx);
     });
     let settled = 0;
     for (const r of rows) {
@@ -1961,6 +1855,46 @@ async function autoTuneCalibration(env) {
   } catch(e) { console.error('[Tune] autoTune fout:', e.message); }
 }
 
+// v202: Elo-rating bijwerken na een afgeronde wedstrijd (SoS-fundament). Weegt elk resultaat naar de
+// STERKTE van de tegenstander (via diens Elo) i.p.v. rauwe doelsaldi -> lost de klasse-valkuil structureel op.
+// Nu alleen accumuleren (rijpt met data); integratie in het model volgt na de clubswitch (20 juli).
+async function updateEloForFixture(env, fx) {
+  try {
+    const fid = fx.fixture?.id;
+    const hId = fx.teams?.home?.id, aId = fx.teams?.away?.id;
+    const hName = fx.teams?.home?.name, aName = fx.teams?.away?.name;
+    const hG = fx.goals?.home, aG = fx.goals?.away;
+    if (!fid || hId == null || aId == null || hG == null || aG == null) return;
+    // al verwerkt? (dubbeltelling voorkomen)
+    const dup = await sb(env, 'elo_history', 'GET', null, `?fixture_id=eq.${fid}&team_id=eq.${hId}&select=id&limit=1`);
+    if (dup && dup.length) return;
+    const rows = await sb(env, 'team_ratings', 'GET', null, `?team_id=in.(${hId},${aId})&select=team_id,elo,games`) || [];
+    const map = {}; rows.forEach(r => { map[r.team_id] = r; });
+    const hElo = map[hId] ? Number(map[hId].elo) : 1500;
+    const aElo = map[aId] ? Number(map[aId].elo) : 1500;
+    const hGames = map[hId] ? Number(map[hId].games) : 0;
+    const aGames = map[aId] ? Number(map[aId].games) : 0;
+    const homeAdv = 40; // bescheiden thuisvoordeel (0 zou zuiverder zijn bij neutraal terrein; verfijnen in fase 2)
+    const expH = 1 / (1 + Math.pow(10, (aElo - hElo - homeAdv) / 400));
+    const actH = hG > aG ? 1 : hG < aG ? 0 : 0.5;
+    const gd = Math.abs(hG - aG);
+    const G = gd <= 1 ? 1 : gd === 2 ? 1.5 : (11 + gd) / 8; // World-Football-Elo doelsaldo-multiplier
+    const kH = hGames < 8 ? 45 : 30; // snellere convergentie voor nieuwe teams
+    const kA = aGames < 8 ? 45 : 30;
+    const d = G * (actH - expH);
+    const newH = Math.round((hElo + kH * d) * 10) / 10;
+    const newA = Math.round((aElo - kA * d) * 10) / 10;
+    const resH = hG > aG ? 'W' : hG < aG ? 'L' : 'D';
+    const now = new Date().toISOString();
+    await sb(env, 'team_ratings', 'POST', { team_id: hId, team_name: hName, elo: newH, games: hGames + 1, seeded: false, last_result_at: now, updated_at: now }, '?on_conflict=team_id');
+    await sb(env, 'team_ratings', 'POST', { team_id: aId, team_name: aName, elo: newA, games: aGames + 1, seeded: false, last_result_at: now, updated_at: now }, '?on_conflict=team_id');
+    await sb(env, 'elo_history', 'POST', [
+      { fixture_id: fid, team_id: hId, opponent_id: aId, elo_before: hElo, elo_after: newH, delta: Math.round(kH * d * 10) / 10, result: resH, gd: hG - aG },
+      { fixture_id: fid, team_id: aId, opponent_id: hId, elo_before: aElo, elo_after: newA, delta: Math.round(-kA * d * 10) / 10, result: (resH === 'W' ? 'L' : resH === 'L' ? 'W' : 'D'), gd: aG - hG },
+    ], '');
+  } catch(e) { console.error('[Elo] update fout:', e.message); }
+}
+
 // v191: AI/model-tip-afrekening — uitslag opslaan bij model_market_comparison voor
 // continue accuraatheids-meting (view v_ai_tip_accuracy). Gemodelleerd op settleShadowPicks.
 async function settleModelTips(env) {
@@ -1971,7 +1905,7 @@ async function settleModelTips(env) {
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
     const rows = await sb(env, 'model_market_comparison', 'GET', null,
-      `?won=is.null&match_date=gte.${cutoffStr}&match_date=lt.${tomorrowStr}&select=fixture_id,pick,market_implied_pct&limit=60`);
+      `?won=is.null&match_date=gte.${cutoffStr}&match_date=lt.${tomorrowStr}&select=fixture_id,pick&limit=60`);
     if (!rows || !rows.length) { console.log('[AI-tips] geen onafgerekende tips'); return; }
     const fixtureIds = [...new Set(rows.map(r => r.fixture_id).filter(Boolean))].slice(0, 20);
     const results = await Promise.all(fixtureIds.map(id => apif(`/fixtures?id=${id}`, env)));
@@ -1980,20 +1914,7 @@ async function settleModelTips(env) {
       const fx = data?.[0]; if (!fx) return;
       const st = fx.fixture?.status?.short;
       if (!['FT','AET','PEN'].includes(st)) return;
-      resultMap[String(fixtureIds[i])] = {
-        home: fx.goals?.home ?? 0, away: fx.goals?.away ?? 0,
-        homeId: fx.teams?.home?.id, awayId: fx.teams?.away?.id,
-        homeName: fx.teams?.home?.name, awayName: fx.teams?.away?.name,
-        leagueId: fx.league?.id,
-      };
-    });
-    // Markt-hint per fixture voor Elo-zaaien: alleen bruikbaar bij een 1X2-pick op '1' of '2'
-    // (dan geeft market_implied_pct direct/indirect de thuiswinkans van de markt).
-    const marketHint = {};
-    rows.forEach(r => {
-      if (marketHint[r.fixture_id] !== undefined || r.market_implied_pct == null) return;
-      if (r.pick === '1') marketHint[r.fixture_id] = r.market_implied_pct / 100;
-      else if (r.pick === '2') marketHint[r.fixture_id] = 1 - r.market_implied_pct / 100;
+      resultMap[String(fixtureIds[i])] = { home: fx.goals?.home ?? 0, away: fx.goals?.away ?? 0 };
     });
     let settled = 0;
     for (const r of rows) {
@@ -2010,11 +1931,10 @@ async function settleModelTips(env) {
         { won, settled_at: new Date().toISOString() },
         `?fixture_id=eq.${r.fixture_id}&pick=eq.${encodeURIComponent(r.pick)}`);
       settled++;
-      // Elo-update (fundament voor SoS-fase) — dubbeltellings-beveiliging zit in updateEloForFixture zelf,
-      // dus veilig om aan te roepen ook al komt dezelfde fixture via meerdere marktrijen langs.
-      await updateEloForFixture(env, r.fixture_id, res, marketHint[r.fixture_id]);
     }
     console.log(`[AI-tips] ${settled} model-tips afgerekend (accuraatheids-tracking)`);
+    // v202: Elo-ratings bijwerken per afgeronde wedstrijd (SoS-fundament — accumuleert data voor fase 2)
+    for (const fx of finishedFx) { await updateEloForFixture(env, fx); }
   } catch(e) { console.error('[AI-tips] settle fout:', e.message); }
 }
 
