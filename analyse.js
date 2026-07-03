@@ -1661,7 +1661,12 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     // (bv. topland fout laag doordat de tegenstander weinig incasseerde tegen zwakke landen -> Under opgeblazen).
     // Trek de model-kans naar de de-vigde markt naarmate de afwijking groter is (>15pp). Echte value blijft grotendeels intact.
     if (gm && goalOdds) {
-      const _pullG = (pp, mkt) => { if (mkt == null || !(mkt > 0)) return pp; const w = Math.min(0.95, Math.pow(Math.max(0,(Math.abs(pp-mkt)-12)/30), 1.5)); return Math.round(pp + (mkt-pp)*w); };
+      // v26.220: mismatch-bewuste goal-markt-correctie. Bij een dominante favoriet (hoge top-1X2-kans)
+      // is de goal-markt (O/U, BTTS) efficient en is model-value bijna altijd de SoS-valkuil -> sterk anker.
+      // Bij een gelijk opgaand duel blijft echte value intact.
+      const _topP = Math.max(Number(poisson.k1)||0, Number(poisson.kX)||0, Number(poisson.k2)||0);
+      const _mismatch = Math.max(0, Math.min(1, (_topP - 55) / 30)); // 0 bij <=55%, 1 bij >=85%
+      const _pullG = (pp, mkt) => { if (mkt == null || !(mkt > 0)) return pp; const base = Math.max(0,(Math.abs(pp-mkt)-10)/35); const w = Math.min(0.95, base + _mismatch*0.9); return Math.round(pp + (mkt-pp)*w); };
       for (const _ln of ['1.5','2.5','3.5']) {
         const _o = goalOdds?.ou?.[_ln]; const [_ok,_uk] = lineMap[_ln];
         if (_o) { gm[_ok] = _pullG(gm[_ok], _o.fairOver); gm[_uk] = _pullG(gm[_uk], _o.fairUnder); }
