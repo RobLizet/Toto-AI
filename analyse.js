@@ -1848,12 +1848,16 @@ async function runAnalyse() {
 
     // v26.222: bereken ALLES in code (de-vigde markt + gecorrigeerde goal-markten + value) en geef de LLM
     // uitsluitend deze cijfers. Voorkomt dat de schrijflaag eigen percentages hallucineert (Gemini-bug).
-    let modelBlock = '';
+    let modelBlock = '', codeTip = null;
     try {
       const _oh=parseFloat(m.homeOdds)||0, _od=parseFloat(m.drawOdds)||0, _oa=parseFloat(m.awayOdds)||0;
       if (poisson.valid && _oh>1 && _od>1 && _oa>1) {
         const _inv=1/_oh+1/_od+1/_oa;
         const _mh=Math.round((1/_oh)/_inv*100), _mx=Math.round((1/_od)/_inv*100), _ma=Math.round((1/_oa)/_inv*100);
+        const _cands=[
+          {code:'1', label:`${m.home} wint`, odds:m.homeOdds, model:poisson.k1, mkt:_mh},
+          {code:'2', label:`${m.away} wint`, odds:m.awayOdds, model:poisson.k2, mkt:_ma},
+        ];
         let _gmStr='';
         if (typeof goalMarketProbs==='function' && poisson.lambdaHome && poisson.lambdaAway) {
           const _gm=goalMarketProbs(poisson.lambdaHome, poisson.lambdaAway);
@@ -1863,14 +1867,27 @@ async function runAnalyse() {
           const _go=goalOdds||{}; const _rows=[];
           for (const [ln,ok,uk] of [['1.5','o15','u15'],['2.5','o25','u25'],['3.5','o35','u35']]) {
             const _o=_go.ou&&_go.ou[ln]; let _mo=_gm[ok], _mu=_gm[uk];
-            if (_o){ _mo=_pg(_mo,_o.fairOver); _mu=_pg(_mu,_o.fairUnder); _rows.push(`O${ln}: model ${_mo}% / markt ${Math.round(_o.fairOver)}% | U${ln}: model ${_mu}% / markt ${Math.round(_o.fairUnder)}%`); }
-            else _rows.push(`O${ln}: model ${_mo}% | U${ln}: model ${_mu}% (geen markt-odds)`);
+            if (_o){ _mo=_pg(_mo,_o.fairOver); _mu=_pg(_mu,_o.fairUnder);
+              _rows.push(`O${ln}: model ${_mo}% / markt ${Math.round(_o.fairOver)}% | U${ln}: model ${_mu}% / markt ${Math.round(_o.fairUnder)}%`);
+              _cands.push({code:`O${ln}`, label:`meer dan ${ln} goals`, odds:_o.over, model:_mo, mkt:Math.round(_o.fairOver)});
+              _cands.push({code:`U${ln}`, label:`minder dan ${ln} goals`, odds:_o.under, model:_mu, mkt:Math.round(_o.fairUnder)});
+            } else _rows.push(`O${ln}: model ${_mo}% | U${ln}: model ${_mu}% (geen markt-odds)`);
           }
           const _b=_go.btts; let _by=_gm.bttsY, _bn=_gm.bttsN;
-          if (_b){ _by=_pg(_by,_b.fairYes); _bn=_pg(_bn,_b.fairNo); _rows.push(`BTTS-Ja: model ${_by}% / markt ${Math.round(_b.fairYes)}% | BTTS-Nee: model ${_bn}% / markt ${Math.round(_b.fairNo)}%`); }
+          if (_b){ _by=_pg(_by,_b.fairYes); _bn=_pg(_bn,_b.fairNo);
+            _rows.push(`BTTS-Ja: model ${_by}% / markt ${Math.round(_b.fairYes)}% | BTTS-Nee: model ${_bn}% / markt ${Math.round(_b.fairNo)}%`);
+            _cands.push({code:'BTTS_Y', label:'beide teams scoren', odds:_b.yes, model:_by, mkt:Math.round(_b.fairYes)});
+            _cands.push({code:'BTTS_N', label:'niet beide teams scoren', odds:_b.no, model:_bn, mkt:Math.round(_b.fairNo)});
+          }
           _gmStr = '\nDOELPUNTEN (model vs markt, reeds gecorrigeerd):\n' + _rows.join('\n');
         }
-        modelBlock = `\n\n=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===\n1X2 model: ${m.home} ${poisson.k1}% / gelijkspel ${poisson.kX}% / ${m.away} ${poisson.k2}%\n1X2 markt (na de-vig): ${m.home} ${_mh}% / gelijkspel ${_mx}% / ${m.away} ${_ma}%${_gmStr}\n=== EINDE GECORRIGEERDE KANSEN ===`;
+        // v26.223: BACKEND kiest de tip (hoogste positieve value, longshot-guard markt>=12%); anders de favoriet = eerlijke PASS
+        _cands.forEach(c=>c.value=Math.round((c.model-c.mkt)*10)/10);
+        const _elig=_cands.filter(c=>c.mkt>=12 && parseFloat(c.odds)>1);
+        _elig.sort((a,b)=>b.value-a.value);
+        codeTip = (_elig[0] && _elig[0].value>0) ? _elig[0] : _cands.slice().sort((a,b)=>b.model-a.model)[0];
+        const _tipLine = codeTip ? `\n\nDE GESELECTEERDE TIP (door de backend bepaald - schrijf de analyse hier OMHEEN, kies NOOIT zelf een andere uitkomst): ${codeTip.code} = ${codeTip.label} @ ${codeTip.odds} | modelkans ${codeTip.model}% | marktkans ${codeTip.mkt}% | value ${codeTip.value>=0?'+':''}${codeTip.value}pp${codeTip.value<=0?' -> GEEN VALUE: schrijf een eerlijke pass/overslaan-toelichting (markt is hier efficient)':''}` : '';
+        modelBlock = `\n\n=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===\n1X2 model: ${m.home} ${poisson.k1}% / gelijkspel ${poisson.kX}% / ${m.away} ${poisson.k2}%\n1X2 markt (na de-vig): ${m.home} ${_mh}% / gelijkspel ${_mx}% / ${m.away} ${_ma}%${_gmStr}${_tipLine}\n=== EINDE GECORRIGEERDE KANSEN ===`;
       }
     } catch(e) { console.warn('[analyse] modelblok', e.message); }
 
@@ -1897,7 +1914,7 @@ CIJFERBRON (ABSOLUTE REGEL, GAAT BOVEN ALLES):
 - Herbereken, schat of verzin NOOIT zelf percentages uit vorm, uitslagen, H2H of odds. Die data is ALLEEN voor kwalitatieve beschrijving (vorm, tactiek, risico) - nooit voor getallen.
 - Bereken de de-vigde marktkans NOOIT zelf uit de odds; gebruik de "markt (na de-vig)"-regel uit het blok.
 - Staat er "O2.5 model 48%", dan is de kans 48%. Je mag die NOOIT als hogere value (bv. 72%) presenteren, ook niet als de vorm/H2H veel goals suggereert.
-- De hoofdtip (tip.pick) MOET de uitkomst zijn met de grootste POSITIEVE (model - markt) uit het blok. Is er geen positieve value? Kies dan de hoogste modelkans, zet confidence MAX 5 en zeg eerlijk dat er geen value is. Kies NOOIT een tip die volgens het blok negatieve value heeft en presenteer die niet als value.
+- De hoofdtip is AL GEKOZEN door de backend en staat als "DE GESELECTEERDE TIP" in het blok. Schrijf je analyse (advies, kansen, risico) rondom PRECIES die tip; kies NOOIT zelf een andere uitkomst. Staat er "GEEN VALUE"? Schrijf dan een eerlijke pass/overslaan-toelichting (de markt is hier efficient), geen geforceerd koopadvies. Zet bij een pass de confidence MAX 5.
 
 WERKWIJZE — WEES BESLIST MET WAT JE HEBT:
 - Gebruik ALLE beschikbare ankers actief: recente uitslagen, odds (altijd aanwezig), Poisson-model, API predictions, H2H, standen.
@@ -1923,7 +1940,7 @@ JSON STRUCTUUR:
 "tips":[{"pick":"O2.5","pickLabel":"Meer dan 2.5 goals","markt":"Doelpunten","odds":1.8,"kans":58,"reden":"concreet argument uit odds/model/vorm"},{"pick":"X","pickLabel":"Gelijkspel","markt":"Uitslag","odds":${m.drawOdds||3.5},"kans":26,"reden":"concreet argument uit de data"}]}}
 
 KWALITEITSREGELS:
-- VALUE-VERANKERING (belangrijkste regel): de hoofdtip (tip.pick) MOET de uitkomst zijn met de grootste POSITIEVE value = modelkans (Poisson/blend) MINUS marktimpliciete kans (na de-vig). Volg NOOIT blind de marktfavoriet. Schat het model een uitkomst hoger in dan de markt (bv. model 56% vs markt-impliciet 28%), dan is DAT de value-tip - ook al is het niet de laagste odd. Heeft GEEN enkele uitkomst positieve value, kies dan de hoogste modelkans en houd confidence MAX 5. Kies dus consequent op het model, niet op wie de favoriet is.
+- De tip-selectie doet de backend (zie CIJFERBRON-regel). Jij kiest NIET; je beschrijft en onderbouwt de gegeven tip met de vorm-, H2H- en tactiek-data.
 - KANS-KALIBRATIE: anker je kans-schatting op het Poisson-model + de de-vigde marktkans. De API-Football-prediction is een AANVULLEND signaal, GEEN leidraad. Wijkt de API-prediction sterk af van zowel markt als Poisson (bv. API 10% terwijl markt en Poisson ~35% geven), weeg 'm dan LICHT en noem het conflict kort - laat je kans NIET ver van markt+Poisson wegtrekken. Je modelkans mag hooguit ~10pp van de de-vigde marktkans afwijken, tenzij het Poisson-model die afwijking sterk onderbouwt. Zo blijft de value realistisch en niet opgeblazen.
 - Noem teams altijd bij naam, nooit "thuisploeg"
 - Gebruik ALLEEN specifieke cijfers die in de context staan — NOOIT verzinnen
@@ -1959,7 +1976,8 @@ KWALITEITSREGELS:
     fill('advies',  sectionCard('💡', t('ana.advice','ADVIES'), result.advies || '—', '#00BEC4'));
 
     // Tip sectie
-    const tip = result.tip;
+    // v26.223: de tip komt van de BACKEND (codeTip), niet van de LLM — LLM levert alleen de analyse-tekst
+    const tip = codeTip ? { pick: codeTip.code, pickLabel: codeTip.label, kans: codeTip.model, odds: String(codeTip.odds) } : result.tip;
     if (tip && tip.pick) {
       state.lastAnalyseTip = { ...tip, matchId: m.id, home: m.home, away: m.away };
       const tv = calcValue(tip.kans, parseFloat(tip.odds));
