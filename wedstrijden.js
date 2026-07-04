@@ -844,18 +844,18 @@ async function renderLiveTab() {
     list.innerHTML = '<div style="display:flex;justify-content:center;padding:1.5rem;">'
       + '<div style="width:22px;height:22px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div></div>';
     try {
-      await loadTodayAllComps();
-      const live = (state.matches||[]).filter(m => m.isLive);
-      list.innerHTML = '';
-      if (!live.length) {
-        if (empty) empty.style.display = 'block';
-        return;
-      }
-      live.forEach(m => { const card = renderMatchCard(m); if(card) list.appendChild(card); });
-    } catch(e) {
-      if (empty) empty.style.display = 'block';
-      list.innerHTML = '';
-    }
+      // v26.226: harde 8s-timeout zodat de spinner NOOIT blijft hangen als de fetch traag/rate-limited is
+      await Promise.race([
+        loadTodayAllComps(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('live-timeout')), 8000))
+      ]);
+    } catch(e) { /* timeout of fout -> toon wat we hebben, anders de lege staat */ }
+    const live = (state.matches||[]).filter(m => m.isLive);
+    list.innerHTML = '';
+    if (!live.length) { if (empty) empty.style.display = 'block'; return; }
+    if (empty) empty.style.display = 'none';
+    live.forEach(m => { const card = renderMatchCard(m); if(card) list.appendChild(card); });
+    scheduleLiveAutoRefresh();
     return;
   }
 
