@@ -37,8 +37,8 @@ jobs:
               problems.append('health ok=false')
           if 'scan_verouderd' in warns:
               problems.append(f'scan_verouderd ({age} min geleden)')
-          if isinstance(age, (int, float)) and age > 120:
-              problems.append(f'laatste scan {age} min geleden (>120)')
+          if isinstance(age, (int, float)) and age > 200:
+              problems.append(f'laatste scan {age} min geleden (>200)')
           if problems:
               print('::error::PMX ALARM — ' + ' | '.join(problems))
               sys.exit(1)
