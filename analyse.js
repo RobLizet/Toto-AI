@@ -1986,7 +1986,7 @@ KWALITEITSREGELS:
 
     // Tip sectie
     // v26.223: de tip komt van de BACKEND (codeTip), niet van de LLM — LLM levert alleen de analyse-tekst
-    const tip = codeTip ? { pick: codeTip.code, pickLabel: codeTip.label, kans: codeTip.model, odds: String(codeTip.odds), markt: (/^[12X]$/.test(codeTip.code) ? 'Uitslag' : String(codeTip.code).startsWith('BTTS') ? 'Beide scoren' : 'Doelpunten') } : result.tip;
+    const tip = codeTip ? { ...(result.tip||{}), pick: codeTip.code, pickLabel: codeTip.label, kans: codeTip.model, odds: String(codeTip.odds), markt: (/^[12X]$/.test(codeTip.code) ? 'Uitslag' : String(codeTip.code).startsWith('BTTS') ? 'Beide scoren' : 'Doelpunten') } : result.tip;
     if (tip && tip.pick) {
       state.lastAnalyseTip = { ...tip, matchId: m.id, home: m.home, away: m.away };
       const tv = calcValue(tip.kans, parseFloat(tip.odds));
@@ -2015,6 +2015,25 @@ KWALITEITSREGELS:
             \ud83d\udcca Tips met ~deze kans wonnen historisch <b style="color:#fff;">${_cal.actual}%</b> (n=${_cal.n}) <span style="opacity:.65;">\u00b7 voorlopig, WK-data</span>
           </div>` : '';
 
+      // v26.226: HYBRIDE veiligheids-switch — bij lage confidence (<=5) een veiliger alternatief tonen (value-tip blijft de hoofdtip)
+      let _saferHtml = '';
+      try {
+        if ((conf||5) <= 5) {
+          const _dc = (a,b)=>{ const oa=parseFloat(a)||0, ob=parseFloat(b)||0; return (oa>1&&ob>1)?(1/(1/oa+1/ob)):null; };
+          const _go = goalOdds||{}; const _ou = (ln,side)=>{ const o=_go.ou&&_go.ou[ln]; return o&&o[side]?o[side]:null; };
+          const _alts = {
+            '1': ()=>{ const o=_dc(m.homeOdds,m.drawOdds); return o?{lbl:`Dubbele kans 1X (${m.home} of gelijk)`, od:Number(o).toFixed(2)}:null; },
+            '2': ()=>{ const o=_dc(m.awayOdds,m.drawOdds); return o?{lbl:`Dubbele kans X2 (gelijk of ${m.away})`, od:Number(o).toFixed(2)}:null; },
+            'U1.5': ()=>{ const o=_ou('2.5','under'); return o?{lbl:'Under 2.5', od:o}:null; },
+            'U2.5': ()=>{ const o=_ou('3.5','under'); return o?{lbl:'Under 3.5', od:o}:null; },
+            'O2.5': ()=>{ const o=_ou('1.5','over'); return o?{lbl:'Over 1.5', od:o}:null; },
+            'O3.5': ()=>{ const o=_ou('2.5','over'); return o?{lbl:'Over 2.5', od:o}:null; },
+          };
+          const _a = _alts[tip.pick] ? _alts[tip.pick]() : null;
+          if (_a) _saferHtml = `<div style="display:flex;align-items:flex-start;gap:.4rem;font-size:.66rem;line-height:1.5;color:rgba(255,255,255,.9);margin-bottom:.6rem;padding:.5rem .7rem;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.22);border-radius:8px;"><span>🛡</span><span><b style="color:#f59e0b;">Veiliger alternatief</b> (lage confidence): ${_a.lbl} @ ${_a.od} — lagere uitbetaling, meer marge.</span></div>`;
+        }
+      } catch(e) {}
+
       document.getElementById('rb-tip').innerHTML = `
         <div style="background:linear-gradient(135deg,rgba(0,190,196,.06),rgba(0,190,196,.06));
           border:1px solid rgba(0,190,196,.15);border-radius:14px;padding:.9rem;margin-bottom:.6rem;">
@@ -2031,6 +2050,7 @@ KWALITEITSREGELS:
             <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.8rem;color:${tvColor};">${tv>0?'+':''}${tv.toFixed(1)}%</div>
           </div>` : ''}
           ${_uitleg ? `<div style="font-size:.72rem;line-height:1.6;color:rgba(255,255,255,.95);margin-bottom:.6rem;padding:.55rem .7rem;background:rgba(0,190,196,.06);border-left:2px solid rgba(0,190,196,.5);border-radius:6px;"><b style="color:#00BEC4;">💡 Waarom value?</b><br>${_uitleg}</div>` : ''}
+          ${_saferHtml}
           <div style="margin-bottom:.6rem;">
             <div style="font-family:monospace;font-size:.52rem;color:#374151;margin-bottom:.3rem;display:flex;justify-content:space-between;">
               <span>KANS <span onclick="event.stopPropagation();showHelp('kans')" style="cursor:pointer;opacity:.5;">ⓘ</span></span><span style="color:${kleur};font-weight:700;">${tip.kans}%</span>
