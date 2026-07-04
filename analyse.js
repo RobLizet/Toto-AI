@@ -1790,7 +1790,9 @@ async function runAnalyse() {
       if (_oh > 1 && _od > 1 && _oa > 1) {
         const _inv = 1/_oh + 1/_od + 1/_oa;
         const _mh = (1/_oh)/_inv*100, _mx = (1/_od)/_inv*100, _ma = (1/_oa)/_inv*100;
-        const _pull = (pp, mkt) => { const w = Math.min(0.95, Math.pow(Math.max(0,(Math.abs(pp-mkt)-12)/30), 1.5)); return pp + (mkt-pp)*w; };
+        // v26.222: mismatch-bewust — bij een duidelijke marktfavoriet worden gelijkspel/underdog sterk naar de markt getrokken
+        const _mktTop = Math.max(_mh,_mx,_ma); const _mm1 = Math.max(0, Math.min(1,(_mktTop-55)/30));
+        const _pull = (pp, mkt) => { const base = Math.pow(Math.max(0,(Math.abs(pp-mkt)-12)/30), 1.5); const w = Math.min(0.95, base + _mm1*0.9); return pp + (mkt-pp)*w; };
         let _ch = _pull(poisson.k1,_mh), _cx = _pull(poisson.kX,_mx), _ca = _pull(poisson.k2,_ma);
         const _sum = _ch + _cx + _ca;
         if (_sum > 0) { poisson.k1 = Math.round(_ch/_sum*100); poisson.kX = Math.round(_cx/_sum*100); poisson.k2 = Math.round(_ca/_sum*100); }
@@ -1844,6 +1846,34 @@ async function runAnalyse() {
     // Predictions context
     const predStr = predictions ? formatPredictions(predictions, m.home, m.away) : '';
 
+    // v26.222: bereken ALLES in code (de-vigde markt + gecorrigeerde goal-markten + value) en geef de LLM
+    // uitsluitend deze cijfers. Voorkomt dat de schrijflaag eigen percentages hallucineert (Gemini-bug).
+    let modelBlock = '';
+    try {
+      const _oh=parseFloat(m.homeOdds)||0, _od=parseFloat(m.drawOdds)||0, _oa=parseFloat(m.awayOdds)||0;
+      if (poisson.valid && _oh>1 && _od>1 && _oa>1) {
+        const _inv=1/_oh+1/_od+1/_oa;
+        const _mh=Math.round((1/_oh)/_inv*100), _mx=Math.round((1/_od)/_inv*100), _ma=Math.round((1/_oa)/_inv*100);
+        let _gmStr='';
+        if (typeof goalMarketProbs==='function' && poisson.lambdaHome && poisson.lambdaAway) {
+          const _gm=goalMarketProbs(poisson.lambdaHome, poisson.lambdaAway);
+          const _topP=Math.max(poisson.k1,poisson.kX,poisson.k2);
+          const _mm=Math.max(0,Math.min(1,(_topP-55)/30));
+          const _pg=(pp,mkt)=>{ if(!(mkt>0))return pp; const base=Math.max(0,(Math.abs(pp-mkt)-10)/35); const w=Math.min(0.95, base+_mm*0.9); return Math.round(pp+(mkt-pp)*w); };
+          const _go=goalOdds||{}; const _rows=[];
+          for (const [ln,ok,uk] of [['1.5','o15','u15'],['2.5','o25','u25'],['3.5','o35','u35']]) {
+            const _o=_go.ou&&_go.ou[ln]; let _mo=_gm[ok], _mu=_gm[uk];
+            if (_o){ _mo=_pg(_mo,_o.fairOver); _mu=_pg(_mu,_o.fairUnder); _rows.push(`O${ln}: model ${_mo}% / markt ${Math.round(_o.fairOver)}% | U${ln}: model ${_mu}% / markt ${Math.round(_o.fairUnder)}%`); }
+            else _rows.push(`O${ln}: model ${_mo}% | U${ln}: model ${_mu}% (geen markt-odds)`);
+          }
+          const _b=_go.btts; let _by=_gm.bttsY, _bn=_gm.bttsN;
+          if (_b){ _by=_pg(_by,_b.fairYes); _bn=_pg(_bn,_b.fairNo); _rows.push(`BTTS-Ja: model ${_by}% / markt ${Math.round(_b.fairYes)}% | BTTS-Nee: model ${_bn}% / markt ${Math.round(_b.fairNo)}%`); }
+          _gmStr = '\nDOELPUNTEN (model vs markt, reeds gecorrigeerd):\n' + _rows.join('\n');
+        }
+        modelBlock = `\n\n=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===\n1X2 model: ${m.home} ${poisson.k1}% / gelijkspel ${poisson.kX}% / ${m.away} ${poisson.k2}%\n1X2 markt (na de-vig): ${m.home} ${_mh}% / gelijkspel ${_mx}% / ${m.away} ${_ma}%${_gmStr}\n=== EINDE GECORRIGEERDE KANSEN ===`;
+      }
+    } catch(e) { console.warn('[analyse] modelblok', e.message); }
+
     const context = `Wedstrijd: ${m.home} vs ${m.away}
 Competitie: ${m.comp} | ${m.date} ${m.time} | Fase: ${phase.label||'normaal'}
 Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}
@@ -1854,13 +1884,20 @@ H2H: ${h2hStr}
 ${h2hWStr}
 Standen: ${standStr}
 Blessures: ${injStr}
-Formaties: ${formationStr}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}`;
+Formaties: ${formationStr}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}${modelBlock}`;
 
     const data = await anthropicFetchWithRetry(null, {
       model: 'claude-sonnet-4-6',
       max_tokens: 1800,
       temperature: 0,
       system: `Je bent een scherpe, eerlijke voetbalanalist voor een bettingadvies app. JSON only, geen tekst buiten JSON.
+
+CIJFERBRON (ABSOLUTE REGEL, GAAT BOVEN ALLES):
+- Voor ELKE kans, percentage, marktkans en value in je JSON gebruik je UITSLUITEND de getallen uit het blok "=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===". Die zijn al de-vigd en klasse-gecorrigeerd.
+- Herbereken, schat of verzin NOOIT zelf percentages uit vorm, uitslagen, H2H of odds. Die data is ALLEEN voor kwalitatieve beschrijving (vorm, tactiek, risico) - nooit voor getallen.
+- Bereken de de-vigde marktkans NOOIT zelf uit de odds; gebruik de "markt (na de-vig)"-regel uit het blok.
+- Staat er "O2.5 model 48%", dan is de kans 48%. Je mag die NOOIT als hogere value (bv. 72%) presenteren, ook niet als de vorm/H2H veel goals suggereert.
+- De hoofdtip (tip.pick) MOET de uitkomst zijn met de grootste POSITIEVE (model - markt) uit het blok. Is er geen positieve value? Kies dan de hoogste modelkans, zet confidence MAX 5 en zeg eerlijk dat er geen value is. Kies NOOIT een tip die volgens het blok negatieve value heeft en presenteer die niet als value.
 
 WERKWIJZE — WEES BESLIST MET WAT JE HEBT:
 - Gebruik ALLE beschikbare ankers actief: recente uitslagen, odds (altijd aanwezig), Poisson-model, API predictions, H2H, standen.

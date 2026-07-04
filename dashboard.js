@@ -456,11 +456,7 @@ function renderDashboard() {
       ${_flagBtn('en', '🇬🇧', 'English', _dashLang === 'en')}
     </div>
 
-    <!-- Dashboard tabs -->
-    <div style="display:flex;gap:.4rem;margin-bottom:.75rem;background:rgba(15,23,42,.04);border-radius:12px;padding:.25rem;">
-      <button id="dashTabOverview" onclick="switchDashTab('overview')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:rgba(255,255,255,0.05);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1);">📊 ${t('dash.overview','OVERZICHT')}</button>
-      <button id="dashTabLive" onclick="switchDashTab('live')" style="flex:1;border:none;border-radius:9px;padding:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,.95);"><span id="liveDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#dc2626;margin-right:.3rem;vertical-align:middle;"></span>${t('dash.live','LIVE')}</button>
-    </div>
+    <!-- v26.222: dashboard-tabs (OVERZICHT/LIVE) verwijderd op verzoek — overzicht-inhoud staat direct getoond -->
 
     <div id="dashOverviewContent">
     ${laatsteScanCard}
