@@ -1019,7 +1019,9 @@ function renderMatchCard(m) {
     const _hp = parseFloat(m.homePct)||0, _dp = parseFloat(m.drawPct)||0, _ap = parseFloat(m.awayPct)||0;
     if (_hp || _dp || _ap) { _tipPick = (_hp >= _dp && _hp >= _ap) ? '1' : ((_ap >= _dp) ? '2' : 'X'); _tipSource = 'market'; }
   }
-  const _tipCode = _tipPick === 'NOBTTS' ? 'NO BTTS' : (_tipPick || '');
+  // v26.224: nette labels voor goal-markt-picks op de card (backend kan nu ook O/U + BTTS als tip kiezen)
+  const _tipCodeMap = { 'O1.5':'O 1.5','O2.5':'O 2.5','O3.5':'O 3.5','U1.5':'U 1.5','U2.5':'U 2.5','U3.5':'U 3.5','BTTS_Y':'GG','BTTS_N':'NG','NOBTTS':'NO BTTS' };
+  const _tipCode = _tipCodeMap[_tipPick] || (_tipPick || '');
   const _isMarket = _tipSource === 'market';
   const _tipCol  = _tipSource === 'value' ? ((_tipValue >= 15) ? '#00BEC4' : '#f59e0b')
                  : _tipSource === 'model' ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.3)';

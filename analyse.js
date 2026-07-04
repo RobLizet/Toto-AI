@@ -1977,7 +1977,7 @@ KWALITEITSREGELS:
 
     // Tip sectie
     // v26.223: de tip komt van de BACKEND (codeTip), niet van de LLM — LLM levert alleen de analyse-tekst
-    const tip = codeTip ? { pick: codeTip.code, pickLabel: codeTip.label, kans: codeTip.model, odds: String(codeTip.odds) } : result.tip;
+    const tip = codeTip ? { pick: codeTip.code, pickLabel: codeTip.label, kans: codeTip.model, odds: String(codeTip.odds), markt: (/^[12X]$/.test(codeTip.code) ? 'Uitslag' : String(codeTip.code).startsWith('BTTS') ? 'Beide scoren' : 'Doelpunten') } : result.tip;
     if (tip && tip.pick) {
       state.lastAnalyseTip = { ...tip, matchId: m.id, home: m.home, away: m.away };
       const tv = calcValue(tip.kans, parseFloat(tip.odds));
@@ -2010,7 +2010,7 @@ KWALITEITSREGELS:
         <div style="background:linear-gradient(135deg,rgba(0,190,196,.06),rgba(0,190,196,.06));
           border:1px solid rgba(0,190,196,.15);border-radius:14px;padding:.9rem;margin-bottom:.6rem;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;font-weight:700;letter-spacing:.05em;margin-bottom:.4rem;">🏆 ${t('ana.besttip','BESTE TIP')} · ${tMarket(tip.markt||'Uitslag')}</div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#ffffff;margin-bottom:.3rem;">${tip.pick} — ${tip.pickLabel}</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#ffffff;margin-bottom:.3rem;">${({'O1.5':'O 1.5','O2.5':'O 2.5','O3.5':'O 3.5','U1.5':'U 1.5','U2.5':'U 2.5','U3.5':'U 3.5','BTTS_Y':'GG','BTTS_N':'NG'})[tip.pick] || tip.pick} — ${tip.pickLabel}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;color:#374151;margin-bottom:.5rem;">Quote: <b>${tip.odds}</b> &nbsp;·&nbsp; ${sterren}</div>
           ${tv !== null ? `
           <div style="display:flex;justify-content:space-between;align-items:center;background:${tv>=5?'rgba(0,190,196,.08)':'rgba(100,116,139,.05)'};
