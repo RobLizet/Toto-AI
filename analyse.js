@@ -1927,7 +1927,17 @@ KWALITEITSREGELS:
       state.lastAnalyseTip = { ...tip, matchId: m.id, home: m.home, away: m.away };
       const tv = calcValue(tip.kans, parseFloat(tip.odds));
       // v26.214: analyse-resultaat cachen zodat de wedstrijd-card het TIP-hoekje meteen bijwerkt (voorrang op MARKT-plaatshouder)
-      try { state._manualTips = state._manualTips || {}; if (m && m.id != null) { state._manualTips[String(m.id)] = { pick: tip.pick, value: tv, kans: tip.kans }; if (typeof renderMatches === 'function' && (state.matches||[]).length) renderMatches(state.matches); } } catch(e) {}
+      try {
+        state._manualTips = state._manualTips || {};
+        if (m && m.id != null) {
+          state._manualTips[String(m.id)] = { pick: tip.pick, value: tv, kans: tip.kans };
+          // v26.221: de specifieke kaart in de DOM verversen (werkt in ELKE view, ook de WK/vandaag-aggregatie
+          // die z'n eigen container bouwt) i.p.v. alleen renderMatches(state.matches) dat een andere container tekent
+          const _el = document.getElementById('match-' + m.id);
+          if (_el && typeof renderMatchCard === 'function') { const _c = renderMatchCard(m); if (_c) _el.replaceWith(_c); }
+          else if (typeof renderMatches === 'function' && (state.matches||[]).length) renderMatches(state.matches);
+        }
+      } catch(e) {}
       const tvColor = tv >= 15 ? '#00BEC4' : tv >= 5 ? '#b45309' : '#64748b';
       const kleur = tip.kans >= 70 ? '#00BEC4' : tip.kans >= 55 ? '#d97706' : '#dc2626';
       const conf = tip.confidence || 5;
