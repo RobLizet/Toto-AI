@@ -1881,11 +1881,20 @@ async function runAnalyse() {
           }
           _gmStr = '\nDOELPUNTEN (model vs markt, reeds gecorrigeerd):\n' + _rows.join('\n');
         }
-        // v26.223: BACKEND kiest de tip (hoogste positieve value, longshot-guard markt>=12%); anders de favoriet = eerlijke PASS
-        _cands.forEach(c=>c.value=Math.round((c.model-c.mkt)*10)/10);
+        // v26.225: BACKEND kiest de tip. Value = model - markt. API-SCEPSIS: spreekt de API-prediction een positieve
+        // model-value tegen (API-kans lager dan de markt -> model is de enige uitschieter), dan dempen we die value
+        // licht (~20% van de model-vs-API-kloof). Zo verdwijnen zwakke 'model-only' underdog-tips onder de drempel.
+        const _apiPct = { '1': parseFloat(predictions?.percent?.home), '2': parseFloat(predictions?.percent?.away) };
+        _cands.forEach(c=>{
+          c.value = Math.round((c.model-c.mkt)*10)/10;
+          c.selValue = c.value;
+          const _api = _apiPct[c.code];
+          if (Number.isFinite(_api) && c.value>0 && _api < c.mkt) { c.selValue = Math.round((c.value - 0.2*(c.model-_api))*10)/10; }
+        });
         const _elig=_cands.filter(c=>c.mkt>=12 && parseFloat(c.odds)>1);
-        _elig.sort((a,b)=>b.value-a.value);
-        codeTip = (_elig[0] && _elig[0].value>0) ? _elig[0] : _cands.slice().sort((a,b)=>b.model-a.model)[0];
+        _elig.sort((a,b)=>b.selValue-a.selValue);
+        const _MINVAL = 3; // minimale (API-gecorrigeerde) value-rand om als echte value-tip te gelden; daaronder -> favoriet/pass
+        codeTip = (_elig[0] && _elig[0].selValue>=_MINVAL) ? _elig[0] : _cands.slice().sort((a,b)=>b.model-a.model)[0];
         const _tipLine = codeTip ? `\n\nDE GESELECTEERDE TIP (door de backend bepaald - schrijf de analyse hier OMHEEN, kies NOOIT zelf een andere uitkomst): ${codeTip.code} = ${codeTip.label} @ ${codeTip.odds} | modelkans ${codeTip.model}% | marktkans ${codeTip.mkt}% | value ${codeTip.value>=0?'+':''}${codeTip.value}pp${codeTip.value<=0?' -> GEEN VALUE: schrijf een eerlijke pass/overslaan-toelichting (markt is hier efficient)':''}` : '';
         modelBlock = `\n\n=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===\n1X2 model: ${m.home} ${poisson.k1}% / gelijkspel ${poisson.kX}% / ${m.away} ${poisson.k2}%\n1X2 markt (na de-vig): ${m.home} ${_mh}% / gelijkspel ${_mx}% / ${m.away} ${_ma}%${_gmStr}${_tipLine}\n=== EINDE GECORRIGEERDE KANSEN ===`;
       }
