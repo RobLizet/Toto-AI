@@ -967,6 +967,46 @@ function cycleTrackerStatus(id) {
   b.status = b.status==='pending'?'win':b.status==='win'?'lose':'pending';
   saveState(); renderTracker(); updateTrackerStats();
 }
+
+// v26.229: auto-check voor tracker-bets (geïmporteerde Jacks-weddenschappen) — Asian Handicap/totalen/BTTS/1X2
+async function checkTrackerBet(id) {
+  const b = (state.tracker.bets||[]).find(x => x.id===id);
+  if (!b || b.status!=='pending') return;
+  try { showToast('🔍 Uitslag ophalen...'); } catch(e){}
+  try {
+    const parts = String(b.match||'').split(/\s+vs\s+/i);
+    const homeName = parts[0], awayName = parts[1];
+    if (!homeName || !awayName) { showToast('⚠ Kan teams niet lezen — vink handmatig af'); return; }
+    const parseDate = x => { if(!x) return null; const p=String(x).split('-'); if(p.length===3){ return p[0].length===4 ? x : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; } return null; };
+    const date = parseDate(b.date);
+    const okStatus = f => ['FT','AET','PEN'].includes(f?.fixture?.status?.short);
+    let fix = null;
+    if (b.fixtureId) { try { const r=await apiFetch(`https://v3.football.api-sports.io/fixtures?id=${b.fixtureId}`,null); const d=await r.json(); fix=(d.response||[])[0]||null; } catch(e){} }
+    if ((!fix || !okStatus(fix)) && date) {
+      const r=await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${date}`,null); const d=await r.json(); const pool=d.response||[];
+      const norm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+      const words=x=>norm(x).split(' ').filter(w=>w.length>2);
+      const hw=words(homeName), aw=words(awayName);
+      fix=pool.find(f=>{ if(!okStatus(f))return false; const fh=norm(f.teams.home.name),fa=norm(f.teams.away.name); return hw.some(w=>fh.includes(w)) && aw.some(w=>fa.includes(w)); });
+    }
+    if (!fix || !okStatus(fix)) { showToast('⏳ Nog geen eindstand — probeer later of vink handmatig'); return; }
+    const hg=fix.goals.home??0, ag=fix.goals.away??0; b.score=`${hg}-${ag}`;
+    let res = settleAsianPick(b.pick, hg, ag, fix.teams.home.name, fix.teams.away.name, b.stake, b.odds);
+    if (!res) {
+      const p=String(b.pick||''); let won=null;
+      const _g=(typeof settleGoalPick==='function')?settleGoalPick(p,hg,ag):null;
+      if (_g!=null) won=(_g==='win');
+      else if(/^1$|thuis/i.test(p)) won=hg>ag;
+      else if(/^2$|\buit\b/i.test(p)) won=ag>hg;
+      else if(/^x$|gelijk/i.test(p)) won=hg===ag;
+      if (won!==null) res={ status: won?'win':'lose', payout: won?b.payout:0, label: won?'gewonnen':'verloren' };
+    }
+    if (!res) { showToast('⚠ Markt niet auto-herkend — vink handmatig af'); return; }
+    b.status=res.status; if(res.status==='win') b.payout=res.payout; b.resultLabel=res.label;
+    saveState(); renderTracker(); updateTrackerStats();
+    showToast(`✅ ${res.label} (${b.score})`);
+  } catch(e) { showToast('⚠ Fout bij ophalen — vink handmatig af'); }
+}
 function deleteTrackerBet(id) {
   if (!confirm(t('wal.deleteconfirm','Verwijderen?'))) return;
   state.tracker.bets = state.tracker.bets.filter(b => b.id!==id);
@@ -1014,6 +1054,7 @@ function renderTracker() {
       <div class="tracker-row-bottom">
         <span style="font-family:monospace;font-size:.58rem;color:rgba(255,255,255,.95);">€${b.stake} → €${b.payout}</span>
         ${b.note ? `<span style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);font-style:italic;">${b.note}</span>` : ''}
+        ${b.status==='pending' ? `<button onclick="event.stopPropagation();checkTrackerBet(${b.id})" style="font-family:monospace;font-size:.5rem;padding:.22rem .5rem;border-radius:7px;background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.28);color:#00BEC4;cursor:pointer;font-weight:700;">🔍 Check</button>` : ''}
         <div class="tracker-result ${b.status}" onclick="cycleTrackerStatus(${b.id})" style="color:${pnlColor};">${pnlText}</div>
       </div>
     </div>`;
