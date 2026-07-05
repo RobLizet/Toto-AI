@@ -411,6 +411,62 @@ function renderBetHistory() {
 
 // ── BET ACTIES ────────────────────────────────────────────
 
+// v26.228: Asian Handicap / Asian totalen / "meer-minder dan" / BTTS afrekenen (incl. kwart-lijnen: halve winst/verlies/push)
+function settleAsianPick(pick, hg, ag, homeName, awayName, stake, odds) {
+  try {
+    if (!pick) return null;
+    const s = String(pick).toLowerCase().trim();
+    const total = (hg||0) + (ag||0);
+    stake = parseFloat(stake)||0; odds = parseFloat(odds)||0;
+    if (stake<=0 || odds<=1) return null;
+    const norm = x => String(x||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+    const words = x => norm(x).split(' ').filter(w => w.length>2);
+    const toReturn = o => o>0 ? stake + o*stake*(odds-1) : o<0 ? stake*(1+o) : stake; // o: 1,.5,0,-.5,-1
+    const lbl = o => o>=1?'gewonnen':o>=0.5?'½ gewonnen':o>0?'':o===0?'push (inzet terug)':o<=-1?'verloren':'½ verloren';
+    const mk = o => { const R=Math.round(toReturn(o)*100)/100; return { status: R>0?'win':'lose', payout:R, label:lbl(o), partial:(o>-1&&o<1) }; };
+    const single = (margin, line) => { const d=margin+line; return d>0?1:d<0?-1:0; };
+    const ahLine = (margin, line) => {
+      const frac = Math.round((Math.abs(line)%1)*100)/100;
+      if (Math.abs(frac-0.25)<0.001 || Math.abs(frac-0.75)<0.001) return (single(margin,line-0.25)+single(margin,line+0.25))/2;
+      return single(margin, line);
+    };
+
+    // ── Asian Handicap: "[team] +2.0 asian handicap" ──
+    let m = s.match(/([+\-]\s*\d+(?:[.,]\d+)?)\s*asian\s*handicap/);
+    if (m) {
+      const line = parseFloat(m[1].replace(/\s/g,'').replace(',','.'));
+      const teamTxt = s.slice(0, m.index);
+      const tw = words(teamTxt), hw = words(homeName), aw = words(awayName);
+      const matchHome = tw.some(w => hw.some(h => h.includes(w)||w.includes(h)));
+      const matchAway = tw.some(w => aw.some(a => a.includes(w)||w.includes(a)));
+      let margin = null;
+      if (matchHome && !matchAway) margin = (hg-ag);
+      else if (matchAway && !matchHome) margin = (ag-hg);
+      if (margin===null) return null; // ploeg niet zeker -> laat handmatig
+      return mk(ahLine(margin, line));
+    }
+
+    // ── Asian totaal: "minder/meer dan 2.0,2.5" (asian/doelpunt/total) ──
+    m = s.match(/(minder|meer)\s*dan\s*([\d.,\s]+)/);
+    if (m && /asian|doelpunt|goal|total/.test(s)) {
+      const isOver = m[1]==='meer';
+      const lines = m[2].split(',').map(x=>parseFloat(String(x).trim().replace(',','.'))).filter(Number.isFinite);
+      if (!lines.length) return null;
+      const outc = lines.map(ln => { const d = isOver ? total-ln : ln-total; return d>0?1:d<0?-1:0; });
+      return mk(outc.reduce((a,b)=>a+b,0)/outc.length);
+    }
+
+    // ── BTTS / beide teams scoren ──
+    if (/beide\s*(teams?\s*)?scoren|both\s*teams|btts/.test(s)) {
+      const isNo = /\bnee\b|\bno\b|niet/.test(s);
+      const bttsYes = (hg>0 && ag>0);
+      return mk((isNo ? !bttsYes : bttsYes) ? 1 : -1);
+    }
+
+    return null; // geen Asian/BTTS-variant herkend
+  } catch(e) { return null; }
+}
+
 async function checkBetResult(betId) {
   const bet = state.wallet.bets.find(b => b.id === betId);
   if (!bet) return;
@@ -464,6 +520,11 @@ async function checkBetResult(betId) {
       if (!fix || !['FT','AET','PEN'].includes(fix?.fixture?.status?.short)) continue;
       const hg = fix.goals.home ?? 0, ag = fix.goals.away ?? 0;
       leg.score = `${hg}-${ag}`;
+      // v26.228: Asian Handicap / Asian totalen / BTTS eerst proberen
+      if (bet.type !== 'combi') {
+        const _asian = settleAsianPick(leg.pick, hg, ag, fix.teams.home.name, fix.teams.away.name, bet.amount||bet.stake, bet.odds);
+        if (_asian) { leg.asian = _asian; leg.legStatus = _asian.status; continue; }
+      }
       let won = false;
       const p = leg.pick;
       const _g = (typeof settleGoalPick === 'function') ? settleGoalPick(p, hg, ag) : null;
@@ -482,7 +543,12 @@ async function checkBetResult(betId) {
   } else {
     const leg = legs[0];
     bet.score = leg.score;
-    if (leg.legStatus==='win' && bet.status==='pending') { bet.status='win'; state.wallet.balance+=bet.payout; state.wallet.totalWon+=bet.payout; }
+    if (leg.asian && bet.status==='pending') {
+      bet.resultLabel = leg.asian.label;
+      if (leg.asian.status==='win') { bet.status='win'; bet.payout=leg.asian.payout; state.wallet.balance+=leg.asian.payout; state.wallet.totalWon+=leg.asian.payout; }
+      else { bet.status='lose'; }
+    }
+    else if (leg.legStatus==='win' && bet.status==='pending') { bet.status='win'; state.wallet.balance+=bet.payout; state.wallet.totalWon+=bet.payout; }
     else if (leg.legStatus==='lose' && bet.status==='pending') { bet.status='lose'; }
   }
   saveState(); updateWalletUI();
