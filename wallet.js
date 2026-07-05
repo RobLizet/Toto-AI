@@ -201,6 +201,8 @@ function renderWalletScreen() {
         <div style="display:flex;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap;">
           <button class="small-action-btn" style="background:rgba(255,140,0,.1);border-color:rgba(255,140,0,.3);color:#e67e00;font-weight:800;"
             onclick="openJacksPhotoImport()">${t('wal.importjacks','📸 Importeer van Jacks')}</button>
+          <button class="small-action-btn" style="background:rgba(0,190,196,.1);border-color:rgba(0,190,196,.3);color:#00BEC4;font-weight:800;"
+            onclick="checkAllTrackerBets()">🔍 Alles checken</button>
         </div>
         <div class="tracker-filter-row">
           <button id="tf-all"     class="tracker-filter active" onclick="setTrackerFilter('all')">${t('wal.all','Alles')}</button>
@@ -969,14 +971,14 @@ function cycleTrackerStatus(id) {
 }
 
 // v26.229: auto-check voor tracker-bets (geïmporteerde Jacks-weddenschappen) — Asian Handicap/totalen/BTTS/1X2
-async function checkTrackerBet(id) {
+async function checkTrackerBet(id, silent) {
   const b = (state.tracker.bets||[]).find(x => x.id===id);
   if (!b || b.status!=='pending') return;
-  try { showToast('🔍 Uitslag ophalen...'); } catch(e){}
+  if(!silent){ try { showToast('🔍 Uitslag ophalen...'); } catch(e){} }
   try {
     const parts = String(b.match||'').split(/\s+vs\s+/i);
     const homeName = parts[0], awayName = parts[1];
-    if (!homeName || !awayName) { showToast('⚠ Kan teams niet lezen — vink handmatig af'); return; }
+    if (!homeName || !awayName) { if(!silent) showToast('⚠ Kan teams niet lezen — vink handmatig af'); return; }
     const parseDate = x => { if(!x) return null; const p=String(x).split('-'); if(p.length===3){ return p[0].length===4 ? x : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; } return null; };
     const date = parseDate(b.date);
     const okStatus = f => ['FT','AET','PEN'].includes(f?.fixture?.status?.short);
@@ -989,7 +991,7 @@ async function checkTrackerBet(id) {
       const hw=words(homeName), aw=words(awayName);
       fix=pool.find(f=>{ if(!okStatus(f))return false; const fh=norm(f.teams.home.name),fa=norm(f.teams.away.name); return hw.some(w=>fh.includes(w)) && aw.some(w=>fa.includes(w)); });
     }
-    if (!fix || !okStatus(fix)) { showToast('⏳ Nog geen eindstand — probeer later of vink handmatig'); return; }
+    if (!fix || !okStatus(fix)) { if(!silent) showToast('⏳ Nog geen eindstand — probeer later of vink handmatig'); return; }
     const hg=fix.goals.home??0, ag=fix.goals.away??0; b.score=`${hg}-${ag}`;
     let res = settleAsianPick(b.pick, hg, ag, fix.teams.home.name, fix.teams.away.name, b.stake, b.odds);
     if (!res) {
@@ -1001,11 +1003,25 @@ async function checkTrackerBet(id) {
       else if(/^x$|gelijk/i.test(p)) won=hg===ag;
       if (won!==null) res={ status: won?'win':'lose', payout: won?b.payout:0, label: won?'gewonnen':'verloren' };
     }
-    if (!res) { showToast('⚠ Markt niet auto-herkend — vink handmatig af'); return; }
+    if (!res) { if(!silent) showToast('⚠ Markt niet auto-herkend — vink handmatig af'); return; }
     b.status=res.status; if(res.status==='win') b.payout=res.payout; b.resultLabel=res.label;
     saveState(); renderTracker(); updateTrackerStats();
-    showToast(`✅ ${res.label} (${b.score})`);
-  } catch(e) { showToast('⚠ Fout bij ophalen — vink handmatig af'); }
+    if(!silent) showToast(`✅ ${res.label} (${b.score})`);
+  } catch(e) { if(!silent) showToast('⚠ Fout bij ophalen — vink handmatig af'); }
+}
+
+// v26.230: alle open tracker-weddenschappen in één keer afrekenen (met spreiding tegen de API-minuutlimiet)
+async function checkAllTrackerBets() {
+  const pending = (state.tracker.bets||[]).filter(b => b.status==='pending');
+  if (!pending.length) { try{ showToast('Geen open weddenschappen'); }catch(e){} return; }
+  try{ showToast(`🔍 ${pending.length} open weddenschappen checken...`); }catch(e){}
+  let settled = 0;
+  for (const b of pending) {
+    try { await checkTrackerBet(b.id, true); } catch(e) {}
+    if (b.status !== 'pending') settled++;
+    await new Promise(r => setTimeout(r, 1200)); // spreiding; edge-cache vangt herhaalde datum-calls op
+  }
+  try{ showToast(`✅ ${settled}/${pending.length} afgerekend`); }catch(e){}
 }
 function deleteTrackerBet(id) {
   if (!confirm(t('wal.deleteconfirm','Verwijderen?'))) return;
