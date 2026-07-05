@@ -1856,6 +1856,7 @@ async function runAnalyse() {
         const _mh=Math.round((1/_oh)/_inv*100), _mx=Math.round((1/_od)/_inv*100), _ma=Math.round((1/_oa)/_inv*100);
         const _cands=[
           {code:'1', label:`${m.home} wint`, odds:m.homeOdds, model:poisson.k1, mkt:_mh},
+          {code:'X', label:'gelijkspel', odds:m.drawOdds, model:poisson.kX, mkt:_mx},
           {code:'2', label:`${m.away} wint`, odds:m.awayOdds, model:poisson.k2, mkt:_ma},
         ];
         let _gmStr='';
@@ -1884,7 +1885,7 @@ async function runAnalyse() {
         // v26.225: BACKEND kiest de tip. Value = model - markt. API-SCEPSIS: spreekt de API-prediction een positieve
         // model-value tegen (API-kans lager dan de markt -> model is de enige uitschieter), dan dempen we die value
         // licht (~20% van de model-vs-API-kloof). Zo verdwijnen zwakke 'model-only' underdog-tips onder de drempel.
-        const _apiPct = { '1': parseFloat(predictions?.percent?.home), '2': parseFloat(predictions?.percent?.away) };
+        const _apiPct = { '1': parseFloat(predictions?.percent?.home), 'X': parseFloat(predictions?.percent?.draw), '2': parseFloat(predictions?.percent?.away) };
         _cands.forEach(c=>{
           c.value = Math.round((c.model-c.mkt)*10)/10;
           c.selValue = c.value;
