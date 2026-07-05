@@ -414,6 +414,29 @@ function renderBetHistory() {
 // ── BET ACTIES ────────────────────────────────────────────
 
 // v26.228: Asian Handicap / Asian totalen / "meer-minder dan" / BTTS afrekenen (incl. kwart-lijnen: halve winst/verlies/push)
+// v26.231: NL->EN landennamen + fuzzy team-match (lost "Noorwegen" vs "Norway", "Brazilie" vs "Brazil" op)
+const NL_EN_LAND = {
+  'noorwegen':'norway','frankrijk':'france','brazilie':'brazil','duitsland':'germany','spanje':'spain',
+  'italie':'italy','engeland':'england','belgie':'belgium','zwitserland':'switzerland','kroatie':'croatia',
+  'denemarken':'denmark','zweden':'sweden','polen':'poland','tsjechie':'czech','griekenland':'greece',
+  'turkije':'turkey','oostenrijk':'austria','ierland':'ireland','schotland':'scotland','nederland':'netherlands',
+  'marokko':'morocco','egypte':'egypt','kaapverdie':'cape verde','ivoorkust':'ivory coast','zuidafrika':'south africa',
+  'verenigdestaten':'usa','argentinie':'argentina','japan':'japan','zuidkorea':'south korea','australie':'australia',
+  'saoediarabie':'saudi arabia','senegal':'senegal','ghana':'ghana','nigeria':'nigeria','kameroen':'cameroon',
+  'tunesie':'tunisia','paraguay':'paraguay','uruguay':'uruguay','chili':'chile','ecuador':'ecuador','servie':'serbia',
+  'hongarije':'hungary','roemenie':'romania','slowakije':'slovakia','oekraine':'ukraine','costarica':'costa rica'
+};
+function teamsMatch(nlName, apiName) {
+  const norm = x => String(x||'').toLowerCase().replace(/[^a-z]/g,'');
+  let a = norm(nlName); const b = norm(apiName);
+  if (NL_EN_LAND[a]) a = norm(NL_EN_LAND[a]);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (a.includes(b) || b.includes(a)) return true;
+  if (a.length>=4 && b.length>=4 && a.slice(0,4)===b.slice(0,4)) return true;
+  return false;
+}
+
 function settleAsianPick(pick, hg, ag, homeName, awayName, stake, odds) {
   try {
     if (!pick) return null;
@@ -438,9 +461,8 @@ function settleAsianPick(pick, hg, ag, homeName, awayName, stake, odds) {
     if (m) {
       const line = parseFloat(m[1].replace(/\s/g,'').replace(',','.'));
       const teamTxt = s.slice(0, m.index);
-      const tw = words(teamTxt), hw = words(homeName), aw = words(awayName);
-      const matchHome = tw.some(w => hw.some(h => h.includes(w)||w.includes(h)));
-      const matchAway = tw.some(w => aw.some(a => a.includes(w)||w.includes(a)));
+      const matchHome = teamsMatch(teamTxt, homeName);
+      const matchAway = teamsMatch(teamTxt, awayName);
       let margin = null;
       if (matchHome && !matchAway) margin = (hg-ag);
       else if (matchAway && !matchHome) margin = (ag-hg);
@@ -986,10 +1008,7 @@ async function checkTrackerBet(id, silent) {
     if (b.fixtureId) { try { const r=await apiFetch(`https://v3.football.api-sports.io/fixtures?id=${b.fixtureId}`,null); const d=await r.json(); fix=(d.response||[])[0]||null; } catch(e){} }
     if ((!fix || !okStatus(fix)) && date) {
       const r=await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${date}`,null); const d=await r.json(); const pool=d.response||[];
-      const norm=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
-      const words=x=>norm(x).split(' ').filter(w=>w.length>2);
-      const hw=words(homeName), aw=words(awayName);
-      fix=pool.find(f=>{ if(!okStatus(f))return false; const fh=norm(f.teams.home.name),fa=norm(f.teams.away.name); return hw.some(w=>fh.includes(w)) && aw.some(w=>fa.includes(w)); });
+      fix=pool.find(f=>{ if(!okStatus(f))return false; return teamsMatch(homeName, f.teams.home.name) && teamsMatch(awayName, f.teams.away.name); });
     }
     if (!fix || !okStatus(fix)) { if(!silent) showToast('⏳ Nog geen eindstand — probeer later of vink handmatig'); return; }
     const hg=fix.goals.home??0, ag=fix.goals.away??0; b.score=`${hg}-${ag}`;
