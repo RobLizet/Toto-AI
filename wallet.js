@@ -119,25 +119,6 @@ function renderWalletScreen() {
   try {
   el.innerHTML = `
     <div class="app">
-      <!-- SUB-TAB KNOPPEN — teal stijl, value picks verwijderd -->
-      <div style="display:flex;gap:.3rem;background:rgba(255,255,255,.04);border-radius:12px;padding:.25rem;margin-bottom:.75rem;border:1px solid rgba(255,255,255,.08);">
-        <button id="wsub-wallet" onclick="setWalletSubTab('wallet')"
-          style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.3rem;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h14v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
-          Wallet
-        </button>
-        <button id="wsub-tracker" onclick="setWalletSubTab('tracker')"
-          style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.3rem;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          Tracker
-        </button>
-        <button id="wsub-backtest" onclick="setWalletSubTab('backtest')"
-          style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.3rem;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          Resultaten
-        </button>
-      </div>
-
       <!-- WALLET TAB -->
       <div id="wsub-content-wallet" style="display:none;">
         <div style="background:linear-gradient(135deg,#061518,#04383F);border:1px solid rgba(0,190,196,.2);border-radius:18px;padding:1.1rem 1.2rem;margin-bottom:.75rem;box-shadow:0 4px 18px rgba(0,0,0,.35);">
@@ -284,7 +265,7 @@ function renderWalletScreen() {
       <!-- Modals staan in index.html en worden dynamisch toegevoegd -->
     </div>
   `;
-  setWalletSubTab('wallet');
+  setWalletSubTab('tracker'); // v26.238: saldo-wallet + resultaten verborgen, alleen tracker
   } catch(e) {
     el.innerHTML = '<div style="padding:1rem;font-family:monospace;font-size:.6rem;color:#dc2626;">⚠ Wallet fout: ' + e.message + '<br><small>' + e.stack?.split('\n')[1] + '</small></div>';
     console.error('renderWalletScreen fout:', e);
@@ -1639,7 +1620,7 @@ function quickBetFromBacktest(pickId) {
   const matchId = p.fixtureId || p.matchId;
   openBetModal(null, matchId, p.pick, p.pickLabel, p.odds);
   switchScreen('wallet');
-  setWalletSubTab('wallet');
+  setWalletSubTab('tracker'); // v26.238: saldo-wallet + resultaten verborgen, alleen tracker
 }
 
 // ── VALUE PICKS TAB ───────────────────────────────────────
