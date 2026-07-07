@@ -211,6 +211,30 @@ function goalMarketProbs(lambdaHome, lambdaAway, maxGoals = 8, useDixonColes = t
   return { o15: pc(o15), u15: pc(1-o15), o25: pc(o25), u25: pc(1-o25), o35: pc(o35), u35: pc(1-o35), bttsY: pc(btts), bttsN: pc(1-btts) };
 }
 
+// v26.233: Asian Handicap model-kansen uit dezelfde Poisson + Dixon-Coles matrix als 1X2/goals.
+// homeLine = handicap vanuit THUIS-perspectief (bv. -0.75). Kwartlijnen splitsen in twee halve lijnen (half win/verlies).
+// Geeft PUSH-CONDITIONELE faire kansen: home = pWin/(pWin+pLoss) — direct vergelijkbaar met de 2-weg de-vigde markt.
+function asianModelProbs(lambdaHome, lambdaAway, homeLine, maxGoals = 10) {
+  if (!(lambdaHome > 0 && lambdaAway > 0) || !isFinite(homeLine)) return null;
+  const grid = []; let tot = 0;
+  for (let h = 0; h <= maxGoals; h++) for (let a = 0; a <= maxGoals; a++) {
+    let p = poissonProb(lambdaHome, h) * poissonProb(lambdaAway, a);
+    p *= dixonColesTau(h, a, lambdaHome, lambdaAway);
+    grid.push([h, a, p]); tot += p;
+  }
+  if (tot <= 0) return null;
+  const q = Math.round(homeLine * 4);
+  const comps = (q % 2 === 0) ? [homeLine] : [homeLine - 0.25, homeLine + 0.25];
+  let pW = 0, pP = 0, pL = 0;
+  for (const c of comps) for (const [h, a, p0] of grid) {
+    const adj = (h - a) + c, p = p0 / tot;
+    if (adj > 0.001) pW += p; else if (adj < -0.001) pL += p; else pP += p;
+  }
+  pW /= comps.length; pP /= comps.length; pL /= comps.length;
+  if (pW + pL <= 0) return null;
+  return { home: +(pW / (pW + pL) * 100).toFixed(1), away: +(pL / (pW + pL) * 100).toFixed(1), push: +(pP * 100).toFixed(1) };
+}
+
 // v26.147: O/U + BTTS markt-odds per wedstrijd (via worker-proxy), consensus + 2-weg Shin de-vig.
 // Geeft { ou: { '2.5': {over,under,fairOver,fairUnder}, ... }, btts: {yes,no,fairYes,fairNo} } of null.
 async function fetchGoalOdds(fixtureId) {
@@ -223,18 +247,37 @@ async function fetchGoalOdds(fixtureId) {
     const med = arr => { const s = arr.filter(x => x > 1).sort((a, b) => a - b); if (!s.length) return 0; const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; };
     const ouRaw = { '1.5': { O: [], U: [] }, '2.5': { O: [], U: [] }, '3.5': { O: [], U: [] } };
     const bttsRaw = { Y: [], N: [] };
+    const ahRaw = {}; // v26.233: Asian Handicap (bet 4), genormaliseerd naar THUIS-handicap
+    const ahKey = ln => (Math.round(ln * 4) / 4).toFixed(2);
     for (const bm of books) for (const bet of (bm.bets || [])) {
       if (bet.id === 5) {
         for (const v of (bet.values || [])) { const mt = /^(Over|Under)\s+(\d+\.\d)$/.exec(v.value || ''); if (mt && ouRaw[mt[2]]) { const o = parseFloat(v.odd || 0); if (o > 1) ouRaw[mt[2]][mt[1] === 'Over' ? 'O' : 'U'].push(o); } }
       } else if (bet.id === 8) {
         for (const v of (bet.values || [])) { const o = parseFloat(v.odd || 0); if (o > 1) { if (/^yes$/i.test(v.value)) bttsRaw.Y.push(o); else if (/^no$/i.test(v.value)) bttsRaw.N.push(o); } }
+      } else if (bet.id === 4) {
+        // v26.233: Asian Handicap — "Home -1" / "Away +1" zijn twee kanten van dezelfde lijn (thuis-handicap -1)
+        for (const v of (bet.values || [])) {
+          const mt = /^(Home|Away)\s*([+-]?\d+(?:\.\d+)?)$/.exec(v.value || '');
+          if (!mt) continue;
+          const o = parseFloat(v.odd || 0); if (!(o > 1)) continue;
+          const raw = parseFloat(mt[2]);
+          const k = ahKey(mt[1] === 'Home' ? raw : -raw);
+          if (!ahRaw[k]) ahRaw[k] = { H: [], A: [] };
+          ahRaw[k][mt[1] === 'Home' ? 'H' : 'A'].push(o);
+        }
       }
     }
     const ou = {};
     for (const line of ['1.5', '2.5', '3.5']) { const O = med(ouRaw[line].O), U = med(ouRaw[line].U); if (O > 1 && U > 1) { const [fo, fu] = shinDevig([O, U]); ou[line] = { over: +O.toFixed(2), under: +U.toFixed(2), fairOver: +(fo*100).toFixed(1), fairUnder: +(fu*100).toFixed(1) }; } }
     let btts = null; const Y = med(bttsRaw.Y), N = med(bttsRaw.N); if (Y > 1 && N > 1) { const [fy, fn] = shinDevig([Y, N]); btts = { yes: +Y.toFixed(2), no: +N.toFixed(2), fairYes: +(fy*100).toFixed(1), fairNo: +(fn*100).toFixed(1) }; }
-    if (!Object.keys(ou).length && !btts) return null;
-    return { ou, btts };
+    const ah = {};
+    for (const k of Object.keys(ahRaw)) {
+      const Hm = med(ahRaw[k].H), Am = med(ahRaw[k].A);
+      if (Hm > 1 && Am > 1) { const [fh, fa] = shinDevig([Hm, Am]); ah[k] = { home: +Hm.toFixed(2), away: +Am.toFixed(2), fairHome: +(fh*100).toFixed(1), fairAway: +(fa*100).toFixed(1) }; }
+    }
+    const hasAh = Object.keys(ah).length > 0;
+    if (!Object.keys(ou).length && !btts && !hasAh) return null;
+    return { ou, btts, ah: hasAh ? ah : null };
   } catch (e) { return null; }
 }
 
