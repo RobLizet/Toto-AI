@@ -1583,9 +1583,7 @@ function openCardPopup(type, data) {
         }) : ''}
       </div>
       ${s.reason ? `<div style="background:rgba(255,255,255,.05);border-left:3px solid ${valColor};border-radius:0 12px 12px 0;padding:.65rem .85rem;margin-bottom:.75rem;font-size:.8rem;color:rgba(255,255,255,.95);line-height:1.7;">${s.reason}</div>` : ''}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
-        <button onclick="document.getElementById('cardPopupOverlay').remove();openBetModal(null,'${s.match?.id||s.id||''}','${s.pick||''}','${(s.pickLabel||'').replace(/'/g,"\\'")}',${s.odds||2})"
-          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">💶 SINGLE BET</button>
+      <div style="display:grid;grid-template-columns:1fr;gap:.5rem;">
         <button onclick="document.getElementById('cardPopupOverlay').remove();switchScreen('wedstrijden');setTimeout(()=>selectMatchAndAnalyse('${s.match?.id||s.id||''}'),100)"
           style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">🤖 ANALYSEER</button>
       </div>`;
@@ -1649,8 +1647,7 @@ function openCardPopup(type, data) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
         <button onclick="document.getElementById('cardPopupOverlay').remove();selectMatchAndAnalyse('${m.id}')"
           style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">🤖 ANALYSEER</button>
-        <button onclick="document.getElementById('cardPopupOverlay').remove();addValuePickToCombi('${m.id}','1','${(m.home||'').replace(/'/g,"\\'")} wint',${m.homeOdds||2},'${(m.home||'').replace(/'/g,"\\'")}','${(m.away||'').replace(/'/g,"\\'")}')"
-          style="padding:.7rem;border-radius:12px;background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;cursor:pointer;">➕ COMBI</button>
+        
       </div>`;
   }
 
@@ -2226,16 +2223,7 @@ ${_calLine}
               <span style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.8);"> unit${_unit.units===1?'':'s'}${_unit.eur}</span>
             </div>
           </div>
-          <div style="display:flex;gap:.4rem;">
-            <button onclick="openBetModal(null,'${m.id}','${tip.pick}','${(tip.pickLabel||'').replace(/'/g,"\\'")}',${tip.odds})"
-              style="flex:1;padding:.45rem;border-radius:10px;background:rgba(0,190,196,.12);
-              border:1px solid rgba(0,190,196,.3);font-family:monospace;font-size:.58rem;font-weight:700;
-              color:#00BEC4;cursor:pointer;">💶 SINGLE BET</button>
-            <button onclick="addValuePickToCombi('${m.id}','${tip.pick}','${(tip.pickLabel||'').replace(/'/g,"\\'")}',${tip.odds},'${(m.home||'').replace(/'/g,"\\'")}','${(m.away||'').replace(/'/g,"\\'")}')"
-              style="flex:1;padding:.45rem;border-radius:10px;background:rgba(0,190,196,.1);
-              border:1px solid rgba(0,190,196,.25);font-family:monospace;font-size:.58rem;font-weight:700;
-              color:#00a8ad;cursor:pointer;">➕ COMBI</button>
-          </div>
+          
         </div>`;
       const chip = document.getElementById('ec-tip');
       if (chip) chip.className = 'entity-chip done';
@@ -2739,25 +2727,7 @@ function openTipPopup(index) {
         <div style="font-size:.76rem;color:#7f1d1d;">${t.risico}</div>
       </div>` : ''}
 
-      <!-- Actie knoppen -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
-        <button onclick="document.getElementById('tipPopupOverlay').remove();
-          openBetModal(null,'${t.fixtureId||''}','${t.pick}','${(t.pickLabel||'').replace(/'/g,"\\'")}',${t.odds})"
-          style="padding:.7rem;border-radius:12px;
-          background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));
-          color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;
-          font-size:.62rem;font-weight:800;cursor:pointer;">
-          💶 SINGLE BET
-        </button>
-        <button onclick="document.getElementById('tipPopupOverlay').remove();
-          addValuePickToCombi('${t.fixtureId||''}','${t.pick}','${(t.pickLabel||'').replace(/'/g,"\\'")}',${t.odds},'${(t.match||'').replace(/'/g,"\\'")}','')"
-          style="padding:.7rem;border-radius:12px;
-          background:linear-gradient(135deg,rgba(0,190,196,.85),rgba(0,190,196,.6));
-          color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;
-          font-size:.62rem;font-weight:800;cursor:pointer;">
-          ➕ COMBI
-        </button>
-      </div>
+      
     </div>`;
 
   document.body.appendChild(overlay);
