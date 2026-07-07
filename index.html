@@ -61,10 +61,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="base.css?v=1783456345" />
-  <link rel="stylesheet" href="components.css?v=1783456345" />
-  <link rel="stylesheet" href="screens.css?v=1783456345" />
-  <link rel="stylesheet" href="new-theme.css?v=1783456345" />
+  <link rel="stylesheet" href="base.css?v=1783456810" />
+  <link rel="stylesheet" href="components.css?v=1783456810" />
+  <link rel="stylesheet" href="screens.css?v=1783456810" />
+  <link rel="stylesheet" href="new-theme.css?v=1783456810" />
 
   <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -73,6 +73,35 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script>
+  // v26.241: globale error-boundary — voorkomt dat één ongevangen JS-fout de hele UI sloopt.
+  (function(){
+    var shown = 0;
+    function report(kind, msg, src, line, col){
+      try {
+        console.error('[PMX ' + kind + ']', msg, src ? ('@' + src + ':' + line + ':' + col) : '');
+        if (shown) return; shown = 1;
+        var b = document.getElementById('pmx-error-bar');
+        if (!b) {
+          b = document.createElement('div');
+          b.id = 'pmx-error-bar';
+          b.style.cssText = 'position:fixed;left:8px;right:8px;bottom:76px;z-index:99999;background:rgba(30,10,10,.96);border:1px solid rgba(220,38,38,.4);border-radius:12px;padding:.6rem .8rem;font-family:monospace;font-size:.62rem;color:#fca5a5;box-shadow:0 6px 24px rgba(0,0,0,.5);display:flex;gap:.6rem;align-items:center;justify-content:space-between;';
+          (document.body || document.documentElement).appendChild(b);
+        }
+        b.innerHTML = '<span>\u26a0\ufe0f Er ging iets mis, maar de app blijft werken.</span>';
+        var btn = document.createElement('button');
+        btn.textContent = 'sluit';
+        btn.style.cssText = 'background:none;border:1px solid rgba(220,38,38,.4);color:#fca5a5;border-radius:8px;padding:.2rem .5rem;font-family:monospace;font-size:.6rem;cursor:pointer;flex-shrink:0;';
+        btn.onclick = function(){ b.remove(); shown = 0; };
+        b.appendChild(btn);
+        setTimeout(function(){ if (b && b.parentNode) { b.remove(); shown = 0; } }, 6000);
+      } catch(e) {}
+    }
+    window.addEventListener('error', function(e){ report('error', (e && e.message) || String(e && e.error || ''), e && e.filename, e && e.lineno, e && e.colno); });
+    window.addEventListener('unhandledrejection', function(e){ var r = e && e.reason; report('promise', (r && r.message) || String(r)); });
+  })();
+  </script>
+
   <script>
   // Voorkom Google Wachtwoordmanager popup bij tab wissel
   document.addEventListener('DOMContentLoaded', () => {
@@ -418,31 +447,31 @@
 ══════════════════════════════════════════ -->
 
 <!-- 1. State -->
-<script src="state.js?v=1783456345"></script>
-<script src="i18n.js?v=1783456345"></script>
+<script src="state.js?v=1783456810"></script>
+<script src="i18n.js?v=1783456810"></script>
 
 <!-- 2. API -->
-<script src="api.js?v=1783456345"></script>
+<script src="api.js?v=1783456810"></script>
 
 <!-- 3. Utils -->
-<script src="football.js?v=1783456345"></script>
-<script src="ui.js?v=1783456345"></script>
-<script src="notifications.js?v=1783456345"></script>
+<script src="football.js?v=1783456810"></script>
+<script src="ui.js?v=1783456810"></script>
+<script src="notifications.js?v=1783456810"></script>
 
 <!-- 4. Router -->
-<script src="router.js?v=1783456345"></script>
+<script src="router.js?v=1783456810"></script>
 
 <!-- 5. Auth -->
-<script src="auth.js?v=1783456345"></script>
+<script src="auth.js?v=1783456810"></script>
 
 <!-- 6. Screens -->
-<script src="dashboard.js?v=1783456345"></script>
-<script src="wedstrijden.js?v=1783456345"></script>
-<script src="analyse.js?v=1783456345"></script>
-<script src="wallet.js?v=1783456345"></script>
-<script src="instellingen.js?v=1783456345"></script>
-<script src="analytics.js?v=1783456345"></script>
-<script src="wk2026.js?v=1783456345"></script>
+<script src="dashboard.js?v=1783456810"></script>
+<script src="wedstrijden.js?v=1783456810"></script>
+<script src="analyse.js?v=1783456810"></script>
+<script src="wallet.js?v=1783456810"></script>
+<script src="instellingen.js?v=1783456810"></script>
+<script src="analytics.js?v=1783456810"></script>
+<script src="wk2026.js?v=1783456810"></script>
 
 <!-- 7. App Init -->
 <script>
@@ -648,6 +677,6 @@
   }
   </script>
 
-  <script src="consent.js?v=1783456345"></script>
+  <script src="consent.js?v=1783456810"></script>
   </body>
 </html>
