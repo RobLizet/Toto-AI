@@ -1138,7 +1138,8 @@ function updateTrackerStats() {
   const el = document.getElementById('trPnl');
   if (el) el.style.color = pnl>=0?'#00BEC4':'#dc2626';
   renderSmartStats();
-  renderTrackerChart();
+  // v26.239: renderTrackerChart bestond nooit (dode aanroep, chart-wrap is display:none) — veilig afvangen zodat de Tracker niet crasht
+  if (typeof renderTrackerChart === 'function') renderTrackerChart();
 }
 
 function renderSmartStats() {
