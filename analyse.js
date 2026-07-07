@@ -1832,7 +1832,13 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     }
   }
 
-  if (!body && !goalsHTML && !ahHTML) return '';
+  if (!body && !goalsHTML && !ahHTML) {
+    if (!odds1x2) return '';
+    // v26.236: model-vs-markt kon niet worden opgebouwd \u2014 dit gebeurt alleen als \u00e9\u00e9r geen geldig
+    // Poisson-model is (te weinig vormdata) \u00e9n de odds niet geladen konden worden (tijdelijke hapering).
+    // Neutrale melding met refresh-hint i.p.v. een lege plek.
+    return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);${F}font-size:.55rem;color:rgba(255,255,255,.5);line-height:1.6;">\ud83d\udcd0 MODEL vs MARKT \u00b7 \u26bd DOELPUNTEN \u00b7 \u2696\ufe0f ASIAN LINES<br>Even niet beschikbaar \u2014 de odds konden niet worden geladen of er is te weinig vormdata. Sluit de analyse en open \u2019m opnieuw om het nog eens te proberen.</div>`;
+  }
 
   // ── VALUE-INDEX: grootste model-vs-markt edge van de wedstrijd ──
   let header = '';
@@ -1947,7 +1953,7 @@ async function runAnalyse() {
     }
 
     // v26.147: O/U + BTTS markt-odds ophalen voor model-vs-markt op doelpunten
-    const goalOdds = await wt(typeof fetchGoalOdds === 'function' ? fetchGoalOdds(m.id) : Promise.resolve(null), 6000);
+    const goalOdds = await wt(typeof fetchGoalOdds === 'function' ? fetchGoalOdds(m.id) : Promise.resolve(null), 11000); // v26.236: ruimer timeout — grote odds-payload (239KB) mag niet stil afkappen
 
     if (btn) btn.textContent = '⟳ AI ANALYSE...';
 
