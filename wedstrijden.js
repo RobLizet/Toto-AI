@@ -908,7 +908,7 @@ async function toggleGoalOdds(matchId, btn) {
     box.innerHTML = '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;color:rgba(255,255,255,.55);text-align:center;padding:.45rem;background:rgba(255,255,255,.03);border-radius:8px;border:1px dashed rgba(255,255,255,.1);">Geen O/U-odds beschikbaar voor deze wedstrijd</div>';
     box.dataset.loaded = '1'; return;
   }
-  const oddsBtn = (pick, label, odds) => `<button onclick="event.stopPropagation();openBetModal(event,'${matchId}','${pick}','${String(label).replace(/'/g, "\\'")}',${odds})"
+  const oddsBtn = (pick, label, odds) => `<button 
     style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.22);border-radius:10px;padding:.4rem .3rem;cursor:pointer;text-align:center;">
     <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:#c084fc;letter-spacing:.04em;margin-bottom:.25rem;">${label}</div>
     <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.25rem;color:#c084fc;line-height:1;">${Number(odds).toFixed(2)}</div></button>`;
@@ -1058,21 +1058,21 @@ function renderMatchCard(m) {
 
   const oddsCards = (m.isLive || m.isDone) ? '' : hasOdds ? `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.45rem;padding:.1rem .9rem .5rem;">
-      <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','1','Thuis wint',${m.homeOdds})"
+      <button 
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;
           color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.3rem;">1 ${t('wed.home','THUIS')}</div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#00BEC4;line-height:1;">${m.homeOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.home, parseFloat(m.homeOdds))}</div>
       </button>
-      <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','X','Gelijkspel',${m.drawOdds})"
+      <button 
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;
           color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.3rem;">X ${t('wed.draw','GELIJK')}</div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.5rem;color:#d97706;line-height:1;">${m.drawOdds}${renderOddsArrow((state.openingOdds||{})[m.id]?.draw, parseFloat(m.drawOdds))}</div>
       </button>
-      <button onclick="event.stopPropagation();openBetModal(event,'${m.id}','2','Uit wint',${m.awayOdds})"
+      <button 
         style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
         padding:.55rem .3rem;cursor:pointer;text-align:center;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:700;
@@ -2125,11 +2125,7 @@ function renderMultiScanResults(picks, numComps) {
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${cls};line-height:.9;">${sign}${Math.round(s.value)}%</div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#00BEC4;">@${(s.odds||0).toFixed(2)}</div>
           ${s.ev!=null?`<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">EV ${s.ev>=0?'+':''}${Math.round(s.ev)}%</div>`:''}
-          <button onclick="addValuePickToCombi('${s.match?.id}','${s.pick}','${(s.pickLabel||'').replace(/'/g,"\\'")}',${s.odds||0},'${(s.match?.home||'').replace(/'/g,"\\'")}','${(s.match?.away||'').replace(/'/g,"\\'")}')"
-            style="font-family:monospace;font-size:.48rem;font-weight:800;padding:2px 7px;border-radius:999px;cursor:pointer;
-            border:1px solid ${inCombi?'rgba(0,190,196,.4)':'rgba(0,190,196,.35)'};
-            background:${inCombi?'rgba(0,190,196,.12)':'rgba(255,215,230,.4)'};
-            color:${inCombi?'#00BEC4':'#d63384'};">${inCombi ? '✓ IN COMBI' : '+ COMBI'}</button>
+          
         </div>
       </div>`;
     }).join('')}
