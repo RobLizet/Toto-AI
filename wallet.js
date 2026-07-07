@@ -729,6 +729,61 @@ function renderWalletChart() {
   ctx.fillText(chartView==='pnl' ? '0' : '€'+sb.toFixed(0), pad.left-3, zeroY+3);
 }
 
+// v26.240: Tracker equity-curve — cumulatief W/V van afgerekende tracker-bets op #trackerChart.
+// Zelfde canvas-stijl als de wallet-chart. Toont het (voorheen verborgen) chart-blok zodra er data is.
+function renderTrackerChart() {
+  const canvas = document.getElementById('trackerChart');
+  const wrap = document.getElementById('trackerChartWrap');
+  if (!canvas) return;
+  const settled = [...(state.tracker?.bets || [])].reverse().filter(b => b.status === 'win' || b.status === 'lose');
+  if (settled.length < 2) { if (wrap) wrap.style.display = 'none'; return; }
+  if (wrap) wrap.style.display = 'block';
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 360, H = canvas.height || 90;
+  canvas.width = W;
+  ctx.clearRect(0, 0, W, H);
+  const creme = document.body.classList.contains('creme');
+  // cumulatieve winst/verlies (start op 0)
+  let pnl = 0; const points = [0];
+  settled.forEach(b => { pnl += b.status === 'win' ? ((b.payout || 0) - (b.stake || 0)) : -(b.stake || 0); points.push(pnl); });
+  const minV = Math.min(...points, -1), maxV = Math.max(...points, 1);
+  const range = Math.max(maxV - minV, 0.01);
+  const pad = { top: 12, bottom: 14, left: 40, right: 8 };
+  const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
+  const xP = i => pad.left + (i / Math.max(points.length - 1, 1)) * cw;
+  const yP = v => pad.top + ch - ((v - minV) / range) * ch;
+  const zeroY = yP(0);
+  // nul-lijn
+  ctx.setLineDash([3, 3]); ctx.strokeStyle = creme ? 'rgba(139,90,43,.30)' : 'rgba(148,163,184,.5)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(pad.left + cw, zeroY); ctx.stroke();
+  ctx.setLineDash([]);
+  const lastVal = points[points.length - 1];
+  const isPos = lastVal >= 0;
+  const lineColor = isPos ? '#00BEC4' : '#dc2626';
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+  grad.addColorStop(0, isPos ? 'rgba(21,128,61,.2)' : 'rgba(220,38,38,.15)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  // vlak onder de lijn
+  ctx.beginPath(); ctx.moveTo(xP(0), yP(points[0]));
+  points.forEach((v, i) => { if (i > 0) ctx.lineTo(xP(i), yP(v)); });
+  ctx.lineTo(xP(points.length - 1), H - pad.bottom); ctx.lineTo(xP(0), H - pad.bottom);
+  ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+  // lijn
+  ctx.beginPath(); ctx.moveTo(xP(0), yP(points[0]));
+  points.forEach((v, i) => { if (i > 0) ctx.lineTo(xP(i), yP(v)); });
+  ctx.strokeStyle = lineColor; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+  // punten per bet (kleur = win/verlies)
+  settled.forEach((b, i) => {
+    ctx.beginPath(); ctx.arc(xP(i + 1), yP(points[i + 1]), 3, 0, Math.PI * 2);
+    ctx.fillStyle = b.status === 'win' ? '#00BEC4' : '#dc2626';
+    ctx.fill(); ctx.strokeStyle = creme ? '#fffaf2' : '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+  // labels
+  ctx.fillStyle = creme ? '#6a4a2c' : '#94a3b8'; ctx.font = '9px IBM Plex Mono, monospace'; ctx.textAlign = 'right';
+  ctx.fillText((lastVal >= 0 ? '+' : '') + lastVal.toFixed(0) + ' \u20ac', pad.left - 3, yP(lastVal) + 3);
+  ctx.fillText('0', pad.left - 3, zeroY + 3);
+}
+
 // ── LIVE SCORE POLLING ────────────────────────────────────
 
 function startLiveScorePolling() {
