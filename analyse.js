@@ -418,6 +418,18 @@ function renderAnalyseScreen() {
     <div id="goalmarkt-content" style="display:none;padding:0 1.1rem 1rem;"></div>
   </div>`;
 
+  // ── v26.234: ASIAN LINES — AH schaduw-trackrecord, standaard ingeklapt ──
+  html += `<div class="analyse-block" id="analyse-ah-block" style="padding:0;overflow:hidden;">
+    <div class="analyse-block-header" onclick="toggleAhBlock(this)" style="cursor:pointer;padding:1rem 1.1rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">⚖️ ${t('ana.asianlines','ASIAN LINES')}</div>
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.62);">${t('ana.ahshadow','schaduw-trackrecord')}</div>
+        <svg class="ah-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+    </div>
+    <div id="ah-content" style="display:none;padding:0 1.1rem 1rem;"></div>
+  </div>`;
+
   screen.innerHTML = html;
   if (typeof renderAnalyticsInto === 'function') renderAnalyticsInto('analyseAnalytics'); // v26.105: volledige analytics inline op Analyse
   } catch(e) {
@@ -609,6 +621,66 @@ async function renderShadowTrackrecord() {
     el.innerHTML = html;
   } catch(e) {
     el.innerHTML = `<div style="padding:.8rem;font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:#dc2626;">Kon schaduw-picks niet laden.</div>`;
+  }
+}
+
+// ── v26.234: ASIAN LINES schaduw-trackrecord (uit /ah-shadow) ──
+function toggleAhBlock(headerEl) {
+  const c = document.getElementById('ah-content');
+  if (!c) return;
+  const open = c.style.display !== 'none';
+  c.style.display = open ? 'none' : 'block';
+  const chev = headerEl.querySelector('.ah-chevron');
+  if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+  if (!open && typeof renderAhTrackrecord === 'function') renderAhTrackrecord();
+}
+
+async function renderAhTrackrecord() {
+  const el = document.getElementById('ah-content');
+  if (!el) return;
+  const mono = "font-family:'IBM Plex Mono',monospace;";
+  el.innerHTML = `<div style="padding:.8rem;${mono}font-size:.6rem;color:rgba(255,255,255,.62);">⟳ Laden...</div>`;
+  try {
+    const r = await fetch('https://api.promatchxi.app/ah-shadow?_cb=' + Date.now());
+    const d = await r.json();
+    const s = d.summary || {};
+    const picks = d.picks || [];
+    let html = `<div style="${mono}font-size:.56rem;color:rgba(255,255,255,.62);line-height:1.6;margin:.2rem 0 .7rem;">Elke scan logt de beste Asian-lijn per wedstrijd (model vs markt, valkuil-geankerd). Puur datacollectie — géén echte picks, telt niet mee in je trackrecord. Push = inzet terug, halve lijnen = half win/verlies.</div>`;
+    if (!s.n) {
+      html += `<div style="${mono}font-size:.6rem;color:rgba(255,255,255,.7);">Nog geen afgerekende AH-rijen — de teller start bij de eerstvolgende scans met AH-odds.</div>`;
+    } else {
+      const roi = s.roi_pct;
+      const roiKleur = roi == null ? 'rgba(255,255,255,.6)' : (roi >= 0 ? '#16c784' : '#dc2626');
+      html += `<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:.6rem .75rem;margin-bottom:.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;"><span style="${mono}font-size:.62rem;font-weight:700;color:#fff;">Afgerekend: ${s.n}</span><span style="${mono}font-size:.62rem;font-weight:800;color:${roiKleur};">ROI ${roi == null ? '–' : (roi>=0?'+':'') + roi + '%'}</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:.35rem .8rem;${mono}font-size:.54rem;color:rgba(255,255,255,.85);">
+          <span>✅ win <b>${s.win||0}</b></span>
+          <span>\ud83d\udfe2 half <b>${s.half_win||0}</b></span>
+          <span>⚪ push <b>${s.push||0}</b></span>
+          <span>\ud83d\udfe0 half-verlies <b>${s.half_loss||0}</b></span>
+          <span>❌ verlies <b>${s.lose||0}</b></span>
+          <span>Σ <b style="color:${(s.profit||0) >= 0 ? '#16c784' : '#dc2626'};">${(s.profit||0) >= 0 ? '+' : ''}${s.profit||0}</b> eenh.</span>
+        </div>
+      </div>`;
+    }
+    if (picks.length) {
+      html += `<div style="${mono}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.06em;margin:.6rem 0 .35rem;">RECENT</div>`;
+      const icons = { win:'✅', half_win:'\ud83d\udfe2', push:'⚪', half_loss:'\ud83d\udfe0', lose:'❌', pending:'⏳' };
+      picks.slice(0, 25).forEach(p => {
+        const val = Number(p.value_pct || 0);
+        const valKleur = val >= 3 ? '#16c784' : (val >= 0 ? '#d9a521' : '#dc2626');
+        html += `<div style="display:flex;align-items:center;gap:.5rem;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.06);">
+          <span style="font-size:.8rem;">${icons[p.status] || '⏳'}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="${mono}font-size:.56rem;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${p.home||''} vs ${p.away||''}</div>
+            <div style="${mono}font-size:.48rem;color:rgba(255,255,255,.62);">${p.pick_label||''} @ ${p.odds||'?'} · model ${p.model_pct||'?'}% vs markt ${p.market_pct||'?'}% · <span style="color:${valKleur};">${val>=0?'+':''}${val}pp</span>${p.score ? ' · ' + p.score : ''}</div>
+          </div>
+        </div>`;
+      });
+    }
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = `<div style="padding:.8rem;${mono}font-size:.58rem;color:#dc2626;">Kon AH-trackrecord niet laden.</div>`;
   }
 }
 
