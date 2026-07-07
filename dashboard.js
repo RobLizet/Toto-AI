@@ -347,9 +347,7 @@ function renderDashboard() {
               settled.filter(b => b.status === 'lose').reduce((s,b) => s + b.amount, 0);
   const hitrate = settled.length ? Math.round(won.length / settled.length * 100) : 0;
   const pnlPos = pnl >= 0;
-  const openBets = bets.filter(b => b.status === 'pending');
-  // v26.237: openstaande wallet-bets stil automatisch afrekenen (max 1x/15min, alleen afgelopen duels)
-  if (openBets.length && typeof settleAllWalletBets === 'function') { setTimeout(() => { try { settleAllWalletBets({ silent: true }); } catch(e){} }, 1500); }
+  const openBets = []; // v26.238: saldo-wallet verwijderd — geen open bets meer op Home
 
   // Scan log stats
   const scanLog = state.scanLog || [];
@@ -509,19 +507,6 @@ function renderDashboard() {
       </div>` : ''}
     </div>
 
-    <!-- Open bets -->
-    ${openBets.length ? `
-    <div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:14px;
-      padding:.7rem 1rem;margin-bottom:.75rem;cursor:pointer;" onclick="switchScreen('wallet')">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;font-weight:800;color:#00BEC4;">⏳ ${openBets.length} OPEN BET${openBets.length>1?'S':''}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);margin-top:.15rem;">${openBets.slice(0,2).map(b=>b.matchName||b.match||'?').join(' · ')}</div>
-        </div>
-        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00BEC4;">€${openBets.reduce((s,b)=>s+b.amount,0).toFixed(0)}</div>
-      </div>
-    </div>` : ''}
-
     <!-- Top value pick als beschikbaar -->
     ${topValuePick ? `
     <div style="background:linear-gradient(135deg,rgba(22,163,74,.08),rgba(5,150,105,.04));
@@ -591,9 +576,8 @@ function renderDashboard() {
             <circle cx="12" cy="12" r="8" stroke-dasharray="3 2"/><path d="M12 8v4l3 3"/>
           </svg>
         </div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">${t('dash.tile.wallet','WALLET')}</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">${t('dash.tile.wallet_sub','Bets, tracker, backtest en pick analyse')}</div>
-        <div style="margin-top:8px;"><span style="font-size:12px;font-weight:800;color:#C9A84C;">€${wallet.balance.toFixed(0)}</span></div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">${t('dash.tile.tracker','TRACKER')}</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">${t('dash.tile.tracker_sub','Volg je weddenschappen en resultaten')}</div>
       </div>
 
       <!-- COMPETITIES -->
