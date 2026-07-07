@@ -237,13 +237,15 @@ function asianModelProbs(lambdaHome, lambdaAway, homeLine, maxGoals = 10) {
 
 // v26.147: O/U + BTTS markt-odds per wedstrijd (via worker-proxy), consensus + 2-weg Shin de-vig.
 // Geeft { ou: { '2.5': {over,under,fairOver,fairUnder}, ... }, btts: {yes,no,fairYes,fairNo} } of null.
-async function fetchGoalOdds(fixtureId) {
+async function fetchGoalOdds(fixtureId, _retry = 0) {
   try {
-    const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}`, null, 7000);
+    const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}`, null, 11000);
     const data = await r.json();
     const resp = data?.response || [];
     const books = resp?.[0]?.bookmakers || [];
-    if (!books.length) return null;
+    // v26.236: 1 nette retry bij lege/mislukte respons — voorkomt dat een tijdelijke hapering
+    // stil de hele DOELPUNTEN- + ASIAN LINES-sectie wist (odds zijn er meestal wel).
+    if (!books.length) { if (_retry < 1) { await new Promise(r => setTimeout(r, 400)); return fetchGoalOdds(fixtureId, _retry + 1); } return null; }
     const med = arr => { const s = arr.filter(x => x > 1).sort((a, b) => a - b); if (!s.length) return 0; const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; };
     const ouRaw = { '1.5': { O: [], U: [] }, '2.5': { O: [], U: [] }, '3.5': { O: [], U: [] } };
     const bttsRaw = { Y: [], N: [] };
@@ -278,7 +280,10 @@ async function fetchGoalOdds(fixtureId) {
     const hasAh = Object.keys(ah).length > 0;
     if (!Object.keys(ou).length && !btts && !hasAh) return null;
     return { ou, btts, ah: hasAh ? ah : null };
-  } catch (e) { return null; }
+  } catch (e) {
+    if (_retry < 1) { await new Promise(r => setTimeout(r, 400)); return fetchGoalOdds(fixtureId, _retry + 1); }
+    return null;
+  }
 }
 
 function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null) {
