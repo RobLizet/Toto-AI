@@ -348,6 +348,8 @@ function renderDashboard() {
   const hitrate = settled.length ? Math.round(won.length / settled.length * 100) : 0;
   const pnlPos = pnl >= 0;
   const openBets = bets.filter(b => b.status === 'pending');
+  // v26.237: openstaande wallet-bets stil automatisch afrekenen (max 1x/15min, alleen afgelopen duels)
+  if (openBets.length && typeof settleAllWalletBets === 'function') { setTimeout(() => { try { settleAllWalletBets({ silent: true }); } catch(e){} }, 1500); }
 
   // Scan log stats
   const scanLog = state.scanLog || [];
