@@ -2,7 +2,8 @@ name: PMX health monitor
 
 # Externe waakhond voor de scan-cron. Draait los van Cloudflare, dus vangt ook een
 # volledig dode worker/cron. Faalt (→ GitHub mailt de repo-eigenaar) zodra /health
-# niet OK is, 'scan_verouderd' meldt, of de laatste scan >2u geleden is tijdens scan-uren.
+# niet OK is, 'scan_verouderd' meldt (rooster-bewust, uit de worker zelf), of de laatste
+# scan >400 min geleden is (dode-cron-vangnet; het normale cron-gat 06->12 UTC is 360 min).
 
 on:
   schedule:
@@ -37,8 +38,11 @@ jobs:
               problems.append('health ok=false')
           if 'scan_verouderd' in warns:
               problems.append(f'scan_verouderd ({age} min geleden)')
-          if isinstance(age, (int, float)) and age > 200:
-              problems.append(f'laatste scan {age} min geleden (>200)')
+          # >400 = dode-cron-vangnet. Was >200: vals alarm in het cron-gat 06->12 UTC
+          # (om 10:08 is 248 min sinds de 06:00-scan gewoon normaal). Rooster-bewuste
+          # controle zit al in de worker ('scan_verouderd' hierboven).
+          if isinstance(age, (int, float)) and age > 400:
+              problems.append(f'laatste scan {age} min geleden (>400, cron lijkt dood)')
           if problems:
               print('::error::PMX ALARM — ' + ' | '.join(problems))
               sys.exit(1)
