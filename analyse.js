@@ -1777,35 +1777,57 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     const _mmA = Math.max(0, Math.min(1, (_topA - 55) / 30));
     const _pullA = (pp, mkt) => { if (mkt == null || !(mkt > 0)) return pp; const base = Math.max(0,(Math.abs(pp-mkt)-10)/35); const w = Math.min(0.95, base + _mmA*0.9); return Math.round((pp + (mkt-pp)*w)*10)/10; };
     const _fmtL = v => { const r = Math.round(v*100)/100; return (r > 0 ? '+' : '') + r; };
-    const _arow = (label, odds, model, markt) => {
+    // v26.235: risicoprofiel-tag per lijn — 0 = DNB (inzet terug bij gelijkspel),
+    // hele lijnen = PUSH mogelijk, kwartlijnen = \u00bd (half win/verlies), halve lijnen = hard (geen tag)
+    const _tagA = ln => {
+      const q = Math.round(ln * 4);
+      if (q === 0) return `<span style="${F}font-size:.42rem;font-weight:700;color:#5eead4;background:rgba(94,234,212,.12);border:1px solid rgba(94,234,212,.35);border-radius:.3rem;padding:.02rem .22rem;margin-left:.25rem;vertical-align:middle;">DNB</span>`;
+      if (q % 4 === 0) return `<span style="${F}font-size:.42rem;font-weight:700;color:#c084fc;background:rgba(192,132,252,.12);border:1px solid rgba(192,132,252,.35);border-radius:.3rem;padding:.02rem .22rem;margin-left:.25rem;vertical-align:middle;">PUSH</span>`;
+      if (q % 2 !== 0) return `<span style="${F}font-size:.42rem;font-weight:700;color:#d9a521;background:rgba(217,165,33,.12);border:1px solid rgba(217,165,33,.35);border-radius:.3rem;padding:.02rem .22rem;margin-left:.25rem;vertical-align:middle;">\u00bd</span>`;
+      return '';
+    };
+    const _topBadge = `<span style="${F}font-size:.42rem;font-weight:800;color:#0b0b0b;background:#16c784;border-radius:.3rem;padding:.03rem .25rem;margin-left:.25rem;vertical-align:middle;letter-spacing:.03em;">TOP VALUE</span>`;
+    const _arow = (label, odds, model, markt, tag, top) => {
       const diff = model - markt, pos = diff >= 0;
       edges.push({ label: `${label} @${odds}`, edge: diff });
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
-      return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
+      const bg = top ? 'background:rgba(22,199,132,.07);border-radius:.35rem;padding:.2rem .25rem;margin:0 -.25rem;' : 'padding:.2rem 0;';
+      return `<div style="display:flex;justify-content:space-between;gap:.5rem;${bg}${F}font-size:.57rem;"><span style="color:#fff;">${label}${tag||''}${top?_topBadge:''} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
     };
-    const _krowA = (label, odds, markt) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);">faire kans <b style="color:#c084fc;">${markt}%</b></span></div>`;
+    const _krowA = (label, odds, markt, tag) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label}${tag||''} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);">faire kans <b style="color:#c084fc;">${markt}%</b></span></div>`;
     // max 4 lijnen, dichtst bij 50/50 (meest informatieve lijnen), daarna oplopend gesorteerd
     const _lns = Object.keys(ahOdds).map(Number)
       .sort((a,b) => Math.abs(ahOdds[a.toFixed(2)].fairHome - 50) - Math.abs(ahOdds[b.toFixed(2)].fairHome - 50))
       .slice(0, 4).sort((a,b) => a - b);
-    let ahRows = '';
+    // v26.235: twee passes — eerst alle regels berekenen, dan de beste value (>=3pp) badgen.
+    // Bewust geen hersortering: lijnen oplopend leest logischer; de badge wijst de top aan.
+    const _specs = [];
     for (const ln of _lns) {
       const o = ahOdds[ln.toFixed(2)];
       const mdl = canModel ? asianModelProbs(poisson.lambdaHome, poisson.lambdaAway, ln) : null;
       if (mdl) {
-        ahRows += _arow(`AH ${m.home} ${_fmtL(ln)}`, o.home, _pullA(mdl.home, o.fairHome), o.fairHome);
-        ahRows += _arow(`AH ${m.away} ${_fmtL(-ln)}`, o.away, _pullA(mdl.away, o.fairAway), o.fairAway);
+        const mh = _pullA(mdl.home, o.fairHome), ma = _pullA(mdl.away, o.fairAway);
+        _specs.push({ label: `AH ${m.home} ${_fmtL(ln)}`,  odds: o.home, model: mh, markt: o.fairHome, tag: _tagA(ln),  val: mh - o.fairHome });
+        _specs.push({ label: `AH ${m.away} ${_fmtL(-ln)}`, odds: o.away, model: ma, markt: o.fairAway, tag: _tagA(-ln), val: ma - o.fairAway });
       } else {
-        ahRows += _krowA(`AH ${m.home} ${_fmtL(ln)}`, o.home, o.fairHome);
-        ahRows += _krowA(`AH ${m.away} ${_fmtL(-ln)}`, o.away, o.fairAway);
+        _specs.push({ label: `AH ${m.home} ${_fmtL(ln)}`,  odds: o.home, markt: o.fairHome, tag: _tagA(ln) });
+        _specs.push({ label: `AH ${m.away} ${_fmtL(-ln)}`, odds: o.away, markt: o.fairAway, tag: _tagA(-ln) });
       }
     }
+    let _topIdx = -1, _topVal = 3; // badge alleen bij echte value (>=3pp)
+    _specs.forEach((sp, i) => { if (sp.val != null && sp.val >= _topVal) { _topVal = sp.val; _topIdx = i; } });
+    let ahRows = '';
+    _specs.forEach((sp, i) => {
+      ahRows += (sp.model != null)
+        ? _arow(sp.label, sp.odds, sp.model, sp.markt, sp.tag, i === _topIdx)
+        : _krowA(sp.label, sp.odds, sp.markt, sp.tag);
+    });
     if (ahRows) {
       const _sub = canModel ? 'model vs markt (vig eruit)' : 'markt (vig eruit) \u2014 model n.v.t.';
       ahHTML = `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">
       <div style="${F}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\u2696\ufe0f ASIAN LINES \u2014 ${_sub}</div>
       ${ahRows}
-      <div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.3rem;line-height:1.5;">Handicap vanuit thuisploeg \u00b7 kansen zijn push-gecorrigeerd (inzet-terug telt niet mee) \u00b7 kwartlijnen (.25/.75) = half win/verlies mogelijk</div>
+      <div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.3rem;line-height:1.5;">Handicap vanuit thuisploeg \u00b7 kansen zijn push-gecorrigeerd \u00b7 DNB = inzet terug bij gelijkspel \u00b7 PUSH = inzet terug bij exact verschil \u00b7 \u00bd = half win/verlies mogelijk</div>
     </div>`;
     }
   }
