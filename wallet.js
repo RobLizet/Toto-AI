@@ -365,7 +365,10 @@ function renderBetHistory() {
   if (!list) return;
   const bets = [...(state.wallet.bets||[])].reverse();
   if (!bets.length) { list.innerHTML = '<div class="empty-state">'+t('wal.nobets','Nog geen weddenschappen')+'</div>'; return; }
-  list.innerHTML = bets.map(b => {
+  // v26.237: handmatige "alles afrekenen" voor open wallet-bets (force = negeer throttle)
+  const _openN = bets.filter(b => b.status === 'pending').length;
+  const _settleAllBtn = _openN ? `<div style="margin-bottom:.6rem;"><button onclick="settleAllWalletBets({silent:false,force:true})" style="width:100%;padding:.55rem;border-radius:10px;background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);color:#00BEC4;font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;cursor:pointer;">\ud83d\udd0d ${_openN} open bet${_openN>1?'s':''} afrekenen</button></div>` : '';
+  list.innerHTML = _settleAllBtn + bets.map(b => {
     const isCombi = b.type === 'combi';
     const pnlText = b.status==='win' ? `+€${(b.payout-(b.amount||b.stake)).toFixed(2)}`
                   : b.status==='lose' ? `-€${(b.amount||b.stake).toFixed(2)}` : '⏳';
@@ -576,6 +579,36 @@ async function checkBetResult(betId) {
     else if (leg.legStatus==='lose' && bet.status==='pending') { bet.status='lose'; }
   }
   saveState(); updateWalletUI();
+}
+
+// v26.237: automatische afrekening van openstaande wallet-bets. checkBetResult settelt alleen
+// bij een echt afgelopen wedstrijd (FT/AET/PEN), dus dit is veilig voor nog-lopende duels.
+// Throttle: hooguit 1x per 15 min per sessie (persist via saveState), tenzij force. API-vriendelijk gespreid.
+let _autoSettleBusy = false;
+async function settleAllWalletBets(opts = {}) {
+  const { silent = true, force = false, max = 15 } = opts;
+  if (_autoSettleBusy) return 0;
+  const pending = (state.wallet && state.wallet.bets ? state.wallet.bets : []).filter(b => b.status === 'pending');
+  if (!pending.length) return 0;
+  const now = Date.now();
+  if (!force && state._lastWalletAutoSettle && (now - state._lastWalletAutoSettle) < 15 * 60 * 1000) return 0;
+  _autoSettleBusy = true;
+  state._lastWalletAutoSettle = now;
+  let settled = 0;
+  try {
+    if (!silent) { try { showToast(`\ud83d\udd0d ${pending.length} open bet(s) checken...`); } catch(e){} }
+    for (const b of pending.slice(0, max)) {
+      const before = b.status;
+      try { await checkBetResult(b.id); } catch(e){}
+      if (b.status !== before) settled++;
+      await new Promise(r => setTimeout(r, 1200)); // spreiding tegen de API-minuutlimiet
+    }
+    if (!silent) { try { showToast(`\u2705 ${settled}/${pending.length} afgerekend`); } catch(e){} }
+  } finally {
+    _autoSettleBusy = false;
+    if (settled) { try { saveState(); updateWalletUI(); if (typeof renderDashboard === 'function') renderDashboard(); } catch(e){} }
+  }
+  return settled;
 }
 
 function cycleCombiBetStatus(id) {
