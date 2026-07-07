@@ -1695,7 +1695,50 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     </div>`;
   }
 
-  if (!body && !goalsHTML) return '';
+  // ── v26.233: ASIAN LINES — model vs markt (bet 4), zelfde valkuil-bescherming als goals ──
+  let ahHTML = '';
+  const ahOdds = goalOdds?.ah;
+  if (ahOdds && Object.keys(ahOdds).length) {
+    const canModel = modelValid && typeof asianModelProbs === 'function' && poisson.lambdaHome > 0 && poisson.lambdaAway > 0;
+    // v26.233: mismatch-anker ook op AH — AH is de 1X2-mismatch in een ander jasje, dus de SoS-valkuil geldt hier 1-op-1
+    const _topA = canModel ? Math.max(Number(poisson.k1)||0, Number(poisson.kX)||0, Number(poisson.k2)||0) : 0;
+    const _mmA = Math.max(0, Math.min(1, (_topA - 55) / 30));
+    const _pullA = (pp, mkt) => { if (mkt == null || !(mkt > 0)) return pp; const base = Math.max(0,(Math.abs(pp-mkt)-10)/35); const w = Math.min(0.95, base + _mmA*0.9); return Math.round((pp + (mkt-pp)*w)*10)/10; };
+    const _fmtL = v => { const r = Math.round(v*100)/100; return (r > 0 ? '+' : '') + r; };
+    const _arow = (label, odds, model, markt) => {
+      const diff = model - markt, pos = diff >= 0;
+      edges.push({ label: `${label} @${odds}`, edge: diff });
+      const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
+      return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
+    };
+    const _krowA = (label, odds, markt) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);">faire kans <b style="color:#c084fc;">${markt}%</b></span></div>`;
+    // max 4 lijnen, dichtst bij 50/50 (meest informatieve lijnen), daarna oplopend gesorteerd
+    const _lns = Object.keys(ahOdds).map(Number)
+      .sort((a,b) => Math.abs(ahOdds[a.toFixed(2)].fairHome - 50) - Math.abs(ahOdds[b.toFixed(2)].fairHome - 50))
+      .slice(0, 4).sort((a,b) => a - b);
+    let ahRows = '';
+    for (const ln of _lns) {
+      const o = ahOdds[ln.toFixed(2)];
+      const mdl = canModel ? asianModelProbs(poisson.lambdaHome, poisson.lambdaAway, ln) : null;
+      if (mdl) {
+        ahRows += _arow(`AH ${m.home} ${_fmtL(ln)}`, o.home, _pullA(mdl.home, o.fairHome), o.fairHome);
+        ahRows += _arow(`AH ${m.away} ${_fmtL(-ln)}`, o.away, _pullA(mdl.away, o.fairAway), o.fairAway);
+      } else {
+        ahRows += _krowA(`AH ${m.home} ${_fmtL(ln)}`, o.home, o.fairHome);
+        ahRows += _krowA(`AH ${m.away} ${_fmtL(-ln)}`, o.away, o.fairAway);
+      }
+    }
+    if (ahRows) {
+      const _sub = canModel ? 'model vs markt (vig eruit)' : 'markt (vig eruit) \u2014 model n.v.t.';
+      ahHTML = `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">
+      <div style="${F}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\u2696\ufe0f ASIAN LINES \u2014 ${_sub}</div>
+      ${ahRows}
+      <div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.3rem;line-height:1.5;">Handicap vanuit thuisploeg \u00b7 kansen zijn push-gecorrigeerd (inzet-terug telt niet mee) \u00b7 kwartlijnen (.25/.75) = half win/verlies mogelijk</div>
+    </div>`;
+    }
+  }
+
+  if (!body && !goalsHTML && !ahHTML) return '';
 
   // ── VALUE-INDEX: grootste model-vs-markt edge van de wedstrijd ──
   let header = '';
@@ -1710,7 +1753,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     </div>`;
   }
 
-  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">${header}${body}${goalsHTML}</div>`;
+  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">${header}${body}${goalsHTML}${ahHTML}</div>`;
 }
 
 // v26.206: AI-kalibratiebanden cachen + kans -> band mappen (voor de kalibratie-regel in de tip)
