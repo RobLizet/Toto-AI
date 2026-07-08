@@ -1178,7 +1178,6 @@ function renderTracker() {
       <div class="tracker-row-bottom">
         <span style="font-family:monospace;font-size:.58rem;color:rgba(255,255,255,.95);">€${b.stake} → €${b.payout}</span>
         ${b.note ? `<span style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);font-style:italic;">${b.note}</span>` : ''}
-        ${b.status==='pending' ? `<button onclick="event.stopPropagation();checkTrackerBet(${b.id})" style="font-family:monospace;font-size:.5rem;padding:.22rem .5rem;border-radius:7px;background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.28);color:#00BEC4;cursor:pointer;font-weight:700;">🔍 Check</button>` : ''}
         <div class="tracker-result ${b.status}" onclick="cycleTrackerStatus(${b.id})" style="color:${pnlColor};">${pnlText}</div>
       </div>
     </div>`;
