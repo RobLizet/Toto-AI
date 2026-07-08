@@ -424,3 +424,17 @@ function formatPredictions(pred, home, away) {
 
   return lines.join('\n');
 }
+
+// v26.245: vorm-fallback uit predictions. Als de aparte fixtures-vormcall (team=&last=) time-out'te,
+// bevat het predictions-object (1 call, altijd beide teams) alsnog de recente vorm — zo krijgt de
+// uit-ploeg niet ten onrechte "geen vormdata". side = 'home' | 'away'.
+function formFromPred(pred, side) {
+  if (!pred) return '';
+  const f = (pred.form?.[side] || '').slice(-5);            // laatste 5, bv. "DWWWW"
+  const l5 = pred.raw?.teams?.[side]?.last_5?.goals;        // {for:{total}, against:{total}}
+  const gf = l5?.for?.total, ga = l5?.against?.total;
+  const parts = [];
+  if (f) parts.push(f);
+  if (gf != null && ga != null) parts.push(`${gf} voor / ${ga} tegen (laatste 5)`);
+  return parts.join(' \u00b7 ');
+}
