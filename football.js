@@ -264,24 +264,53 @@ function buildAsianLinesHtml(poisson, goalOdds, m) {
     const mono = "font-family:'IBM Plex Mono',monospace;";
     const sgn = x => (x > 0 ? '+' : '') + x;
     // v26.249: AH-model afgeleid van de SoS-gecorrigeerde 1X2 (poisson.k1/kX/k2) via matrix-herschaling.
-    // Zo is AH consistent met de getoonde 1X2 (AH -0.5 == P1, DNB == P1/(P1+P2)); de aparte markt-pull vervalt.
     const t1x2 = (poisson.k1 > 0 && poisson.kX > 0 && poisson.k2 > 0) ? { p1: poisson.k1, pX: poisson.kX, p2: poisson.k2 } : null;
+    // v26.250: rangschik op EV (met echte odds, push-correct), NIET op procentpunten. Het model-markt-verschil
+    // in pp groeit automatisch naarmate de lijn verder van de money-line ligt (staart-aanname van het Poisson),
+    // dus pp-ranking wijst systematisch naar de extreemste, minst betrouwbare lijn. Bovendien negeert pp de odds.
+    // De headline kijkt alleen naar lijnen binnen een betrouwbaarheidsband (markt 20-80%).
+    const BAND_LO = 20, BAND_HI = 80;
+    // v26.250: STAART-COHERENTIE. De AH-lijnen buiten de money-line hangen volledig aan de doelpuntenmarge-
+    // verdeling van het model. Die is alleen geloofwaardig als het model hetzelfde doelpuntentotaal verwacht
+    // als de markt. Leid het markt-impliciete totaal af uit de de-vigde Over 2.5 en vergelijk. Wijkt het
+    // materieel af, dan is elke "EV" op niet-money-lijnen een artefact van de staart -> geen advies tonen.
+    let tailOk = true, modelTot = lh + la, mktTot = null;
+    try {
+      const fo = goalOdds?.ou?.['2.5']?.fairOver;
+      if (fo > 0 && fo < 100) {
+        const share = lh / (lh + la);
+        const pOver = T => { let u = 0; for (let h = 0; h <= 10; h++) for (let a = 0; a <= 10; a++) { if (h + a <= 2) u += poissonProb(T * share, h) * poissonProb(T * (1 - share), a) * dixonColesTau(h, a, T * share, T * (1 - share)); } return (1 - u) * 100; };
+        let lo2 = 0.5, hi2 = 6;
+        for (let i = 0; i < 40; i++) { const mid = (lo2 + hi2) / 2; if (pOver(mid) < fo) lo2 = mid; else hi2 = mid; }
+        mktTot = (lo2 + hi2) / 2;
+        tailOk = Math.abs(modelTot - mktTot) <= 0.30; // > 0.3 goal verschil => staart niet te vertrouwen
+      }
+    } catch (e) { /* geen O/U-odds: check overslaan */ }
     let rows = '', best = null;
     for (const ln of lines) {
       const key = (Math.round(ln * 4) / 4).toFixed(2);
       const mk = ah[key]; if (!mk) continue;
       const mdl = asianModelProbs(lh, la, ln, 10, t1x2); if (!mdl) continue;
       const mH = mdl.home, mA = mdl.away;
-      const vH = +(mH - mk.fairHome).toFixed(1);            // home-side value; away = -vH
+      const vH = +(mH - mk.fairHome).toFixed(1);            // home-side value in pp; away = -vH
       const absV = Math.abs(vH);
       const side = vH >= 0 ? m.home : m.away;
       const sideLn = vH >= 0 ? sgn(ln) : sgn(-ln);
-      const col = absV >= 3 ? '#16c784' : (absV >= 1 ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.5)');
-      if (!best || absV > best.absV) best = { absV, txt: `${side} ${sideLn} (+${absV}pp)` };
+      // EV op de kant met value, met de echte odds en correcte push-afhandeling
+      const pP = (mdl.push || 0) / 100;
+      const pW = (mH / 100) * (1 - pP), pL = (mA / 100) * (1 - pP);
+      const oH = mk.home, oA = mk.away;
+      let ev = null;
+      if (vH >= 0 && oH > 1) ev = (pW * (oH - 1) - pL) * 100;
+      else if (vH < 0 && oA > 1) ev = (pL * (oA - 1) - pW) * 100;
+      const inBand = mk.fairHome >= BAND_LO && mk.fairHome <= BAND_HI;
+      if (inBand && ev != null && (!best || ev > best.ev)) best = { ev, txt: `${side} ${sideLn}`, odds: vH >= 0 ? oH : oA };
+      const col = !inBand ? 'rgba(255,255,255,.35)' : (absV >= 3 ? '#16c784' : (absV >= 1 ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.5)'));
+      const tail = inBand ? '' : `<span title="staartlijn" style="color:rgba(255,190,80,.75);font-size:.42rem;"> ⚠</span>`;
       rows += `<div style="display:grid;grid-template-columns:1fr 1.15fr 1.15fr 1.25fr;gap:.2rem;padding:.34rem .1rem;border-top:1px solid rgba(255,255,255,.06);${mono}font-size:.52rem;align-items:center;">
-        <span style="color:#fff;">${sgn(ln)}</span>
-        <span style="color:rgba(255,255,255,.72);">${mH}/${mA}</span>
-        <span style="color:rgba(255,255,255,.5);">${mk.fairHome}/${mk.fairAway}</span>
+        <span style="color:${inBand ? '#fff' : 'rgba(255,255,255,.45)'};">${sgn(ln)}${tail}</span>
+        <span style="color:rgba(255,255,255,${inBand ? '.72' : '.4'});">${mH}/${mA}</span>
+        <span style="color:rgba(255,255,255,${inBand ? '.5' : '.32'});">${mk.fairHome}/${mk.fairAway}</span>
         <span style="color:${col};font-weight:700;text-align:right;">${vH >= 0 ? '▲' : '▼'} ${absV}pp</span>
       </div>`;
     }
@@ -297,7 +326,14 @@ function buildAsianLinesHtml(poisson, goalOdds, m) {
         </div>
         ${rows}
       </div>
-      <div style="padding:.45rem 1rem .85rem;${mono}font-size:.5rem;color:rgba(255,255,255,.72);">Meeste value: <span style="color:#00BEC4;font-weight:700;">${best ? best.txt : '—'}</span>  <span style="color:rgba(255,255,255,.4);">· lijn vanuit thuisploeg · ▲ value op thuis, ▼ op uit</span></div>
+      <div style="padding:.45rem 1rem .85rem;${mono}font-size:.5rem;color:rgba(255,255,255,.72);">
+        ${!tailOk
+          ? `<span style="color:rgba(255,190,80,.95);font-weight:700;">Geen EV-advies</span> <span style="color:rgba(255,255,255,.6);">— model verwacht ${modelTot.toFixed(2)} goals, markt ${mktTot.toFixed(2)}. Bij zo'n verschil komt "value" op de handicap uit de doelpuntenmarge-aanname, niet uit een echte edge.</span>`
+          : (best && best.ev > 0
+            ? `Beste EV: <span style="color:#00BEC4;font-weight:700;">${best.txt} @${best.odds}</span> <span style="color:#16c784;font-weight:700;">${best.ev >= 0 ? '+' : ''}${best.ev.toFixed(1)}%</span>`
+            : `<span style="color:rgba(255,255,255,.6);">Geen positieve EV binnen de betrouwbare lijnen</span>`)}
+        <div style="color:rgba(255,255,255,.4);margin-top:.3rem;line-height:1.55;">Lijn vanuit thuisploeg · ▲ value op thuis, ▼ op uit · EV is gerangschikt met de échte odds (push meegerekend), niet met procentpunten.<br>⚠ = staartlijn (markt buiten 20–80%): daar meet je vooral de aanname van het model over de doelpuntenmarge, niet een echte edge. Buiten beschouwing gelaten voor de EV-keuze.</div>
+      </div>
     </div>`;
   } catch(e) { return ''; }
 }
