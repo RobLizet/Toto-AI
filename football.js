@@ -317,7 +317,10 @@ async function fetchGoalOdds(fixtureId, _retry = 0) {
           if (!mt) continue;
           const o = parseFloat(v.odd || 0); if (!(o > 1)) continue;
           const raw = parseFloat(mt[2]);
-          const k = ahKey(mt[1] === 'Home' ? raw : -raw);
+          // v26.247: API-Football geeft de AH-lijn ALTIJD vanuit thuis-perspectief; "Away +1.5" is de
+          // uit-kant van thuis-handicap +1.5 (niet -1.5). Home én Away met dezelfde waarde vormen het
+          // complementaire paar — dus NIET het teken van de away-lijn negeren (dat was de inversie-bug).
+          const k = ahKey(raw);
           if (!ahRaw[k]) ahRaw[k] = { H: [], A: [] };
           ahRaw[k][mt[1] === 'Home' ? 'H' : 'A'].push(o);
         }
