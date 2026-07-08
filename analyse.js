@@ -1952,6 +1952,12 @@ async function runAnalyse() {
     // v26.147: O/U + BTTS markt-odds ophalen voor model-vs-markt op doelpunten
     const goalOdds = await wt(typeof fetchGoalOdds === 'function' ? fetchGoalOdds(m.id) : Promise.resolve(null), 11000); // v26.236: ruimer timeout — grote odds-payload (239KB) mag niet stil afkappen
 
+    // v26.246: ASIAN LINES-tabel (meerdere lijnen, model vs. markt) deterministisch renderen — geen LLM
+    try {
+      const _ahEl = document.getElementById('rb-asian');
+      if (_ahEl && typeof buildAsianLinesHtml === 'function') _ahEl.innerHTML = buildAsianLinesHtml(poisson, goalOdds, m);
+    } catch(e) { /* AH-tabel mag de analyse nooit breken */ }
+
     if (btn) btn.textContent = '⟳ AI ANALYSE...';
 
     const h2hStr = h2h?.length ? formatH2HCompact(h2h.slice(0,5), m.home, m.away) : 'geen data';
