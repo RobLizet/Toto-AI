@@ -2416,6 +2416,7 @@ function openMatchAnalyseModalById(matchId) {
         <div id="rb-vorm"></div><div id="rb-stats"></div><div id="rb-tactiek"></div>
         <div id="rb-kans"></div><div id="rb-risico"></div><div id="rb-advies"></div>
         <div id="rb-tip"></div>
+        <div id="rb-asian"></div>
       </div>
       <button id="analyseBtn" style="display:none;"></button>
       <button onclick="openMatchAnalyseModalById('${m.id}')" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">${t('wed.newanalysis','↻ Nieuwe analyse')}</button>
