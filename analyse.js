@@ -1944,7 +1944,13 @@ async function runAnalyse() {
           // supremacie richting markt (favoriet scoort meer): schaal op basis van 1X2-gap
           const _homeFav = _mh - _ma; // + = thuis favoriet
           const _shift = Math.max(-0.6, Math.min(0.6, _homeFav/100));
-          const _lh = poisson.lambdaHome * (1 + _shift*0.8), _la = poisson.lambdaAway * (1 - _shift*0.5);
+          let _lh = poisson.lambdaHome * (1 + _shift*0.8), _la = poisson.lambdaAway * (1 - _shift*0.5);
+          // v26.250: TOTAAL-BEHOUDEND — de shift mag alleen de verhouding verschuiven, niet het verwachte
+          // doelpuntentotaal opblazen. Zonder dit kroop het totaal omhoog bij een favoriet, wat grote zeges
+          // kunstmatig waarschijnlijker maakte (dikke staart -> nep-value op extreme AH-lijnen) en de
+          // lambda's liet afwijken van het getoonde "verw. X goals".
+          const _t0 = poisson.lambdaHome + poisson.lambdaAway, _t1 = _lh + _la;
+          if (_t1 > 0) { const _r = _t0/_t1; _lh *= _r; _la *= _r; }
           poisson.lambdaHome = Math.max(0.15, _lh); poisson.lambdaAway = Math.max(0.15, _la);
         }
       }
