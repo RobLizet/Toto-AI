@@ -235,6 +235,60 @@ function asianModelProbs(lambdaHome, lambdaAway, homeLine, maxGoals = 10) {
   return { home: +(pW / (pW + pL) * 100).toFixed(1), away: +(pL / (pW + pL) * 100).toFixed(1), push: +(pP * 100).toFixed(1) };
 }
 
+// v26.246: deterministische ASIAN LINES-tabel voor de match-analyse (meerdere lijnen).
+// Vergelijkt de push-conditionele modelkans (asianModelProbs, zelfde Poisson+DC) met de 2-weg
+// de-vigde marktkans per lijn. Bij een 2-weg-lijn is away-value = -home-value, dus 1 value-getal
+// per lijn volstaat. Puur informatief + eerlijk gelabeld als experimenteel/shadow (nog niet gevalideerd).
+function buildAsianLinesHtml(poisson, goalOdds, m) {
+  try {
+    const ah = goalOdds && goalOdds.ah;
+    if (!ah || !poisson || !poisson.valid) return '';
+    const lh = poisson.lambdaHome, la = poisson.lambdaAway;
+    if (!(lh > 0 && la > 0)) return '';
+    const lines = Object.keys(ah).map(parseFloat).filter(x => isFinite(x) && Math.abs(x) <= 2).sort((a, b) => a - b);
+    if (!lines.length) return '';
+    const mono = "font-family:'IBM Plex Mono',monospace;";
+    const sgn = x => (x > 0 ? '+' : '') + x;
+    // v26.246: zelfde SoS-marktanker als de 1X2-analyse — trekt het AH-model superlineair naar de markt
+    // zodra ze >12pp uiteenlopen, zodat de rauwe-Poisson-valkuil geen nep-value op favorieten toont.
+    const pull = (pp, mkt) => { const base = Math.pow(Math.max(0, (Math.abs(pp - mkt) - 12) / 30), 1.5); return pp + (mkt - pp) * Math.min(0.9, base); };
+    let rows = '', best = null;
+    for (const ln of lines) {
+      const key = (Math.round(ln * 4) / 4).toFixed(2);
+      const mk = ah[key]; if (!mk) continue;
+      const raw = asianModelProbs(lh, la, ln); if (!raw) continue;
+      const mH = +pull(raw.home, mk.fairHome).toFixed(1);   // SoS-verankerde modelkans thuis
+      const mA = +(100 - mH).toFixed(1);
+      const vH = +(mH - mk.fairHome).toFixed(1);            // home-side value; away = -vH
+      const absV = Math.abs(vH);
+      const side = vH >= 0 ? m.home : m.away;
+      const sideLn = vH >= 0 ? sgn(ln) : sgn(-ln);
+      const col = absV >= 3 ? '#16c784' : (absV >= 1 ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.5)');
+      if (!best || absV > best.absV) best = { absV, txt: `${side} ${sideLn} (+${absV}pp)` };
+      rows += `<div style="display:grid;grid-template-columns:1fr 1.15fr 1.15fr 1.25fr;gap:.2rem;padding:.34rem .1rem;border-top:1px solid rgba(255,255,255,.06);${mono}font-size:.52rem;align-items:center;">
+        <span style="color:#fff;">${sgn(ln)}</span>
+        <span style="color:rgba(255,255,255,.72);">${mH}/${mA}</span>
+        <span style="color:rgba(255,255,255,.5);">${mk.fairHome}/${mk.fairAway}</span>
+        <span style="color:${col};font-weight:700;text-align:right;">${vH >= 0 ? '▲' : '▼'} ${absV}pp</span>
+      </div>`;
+    }
+    if (!rows) return '';
+    return `<div class="analyse-block" style="padding:0;overflow:hidden;margin:.6rem 0;">
+      <div style="padding:.85rem 1rem .45rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#fff;letter-spacing:.05em;">⚖️ ASIAN LINES</div>
+        <div style="${mono}font-size:.46rem;color:rgba(255,190,80,.92);margin-top:.15rem;">experimenteel · model vs. de-vigde markt · nog in validatie (shadow)</div>
+      </div>
+      <div style="padding:0 1rem .2rem;">
+        <div style="display:grid;grid-template-columns:1fr 1.15fr 1.15fr 1.25fr;gap:.2rem;${mono}font-size:.42rem;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.03em;padding:0 .1rem .15rem;">
+          <span>Lijn</span><span>Model H/U</span><span>Markt H/U</span><span style="text-align:right;">Value</span>
+        </div>
+        ${rows}
+      </div>
+      <div style="padding:.45rem 1rem .85rem;${mono}font-size:.5rem;color:rgba(255,255,255,.72);">Meeste value: <span style="color:#00BEC4;font-weight:700;">${best ? best.txt : '—'}</span>  <span style="color:rgba(255,255,255,.4);">· lijn vanuit thuisploeg · ▲ value op thuis, ▼ op uit</span></div>
+    </div>`;
+  } catch(e) { return ''; }
+}
+
 // v26.147: O/U + BTTS markt-odds per wedstrijd (via worker-proxy), consensus + 2-weg Shin de-vig.
 // Geeft { ou: { '2.5': {over,under,fairOver,fairUnder}, ... }, btts: {yes,no,fairYes,fairNo} } of null.
 async function fetchGoalOdds(fixtureId, _retry = 0) {
