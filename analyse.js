@@ -1799,11 +1799,12 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     // v26.235: twee passes — eerst alle regels berekenen, dan de beste value (>=3pp) badgen.
     // Bewust geen hersortering: lijnen oplopend leest logischer; de badge wijst de top aan.
     const _specs = [];
+    const _t1x2 = (canModel && poisson.k1 > 0 && poisson.kX > 0 && poisson.k2 > 0) ? { p1: poisson.k1, pX: poisson.kX, p2: poisson.k2 } : null; // v26.249: AH consistent met getoonde 1X2
     for (const ln of _lns) {
       const o = ahOdds[ln.toFixed(2)];
-      const mdl = canModel ? asianModelProbs(poisson.lambdaHome, poisson.lambdaAway, ln) : null;
+      const mdl = canModel ? asianModelProbs(poisson.lambdaHome, poisson.lambdaAway, ln, 10, _t1x2) : null;
       if (mdl) {
-        const mh = _pullA(mdl.home, o.fairHome), ma = _pullA(mdl.away, o.fairAway);
+        const mh = mdl.home, ma = mdl.away; // v26.249: model uit 1X2-gecorrigeerde matrix, geen aparte markt-pull meer
         _specs.push({ label: `AH ${m.home} ${_fmtL(ln)}`,  odds: o.home, model: mh, markt: o.fairHome, tag: _tagA(ln),  val: mh - o.fairHome });
         _specs.push({ label: `AH ${m.away} ${_fmtL(-ln)}`, odds: o.away, model: ma, markt: o.fairAway, tag: _tagA(-ln), val: ma - o.fairAway });
       } else {
@@ -2071,6 +2072,7 @@ CIJFERBRON (ABSOLUTE REGEL, GAAT BOVEN ALLES):
 - Bereken de de-vigde marktkans NOOIT zelf uit de odds; gebruik de "markt (na de-vig)"-regel uit het blok.
 - Staat er "O2.5 model 48%", dan is de kans 48%. Je mag die NOOIT als hogere value (bv. 72%) presenteren, ook niet als de vorm/H2H veel goals suggereert.
 - 1X2-FORMAT (VERPLICHT): noem je in de tekst (vooral in "stats" en "kans") de 1X2-kansen, gebruik dan ALTIJD alle drie de uitkomsten in exact deze vorm: "${m.home} X% / gelijkspel Y% / ${m.away} Z%", met X/Y/Z LETTERLIJK uit de "1X2 model"-regel van het blok. Vat een 3-weg-markt NOOIT samen tot twee getallen (dus NOOIT "${m.home} 65% vs ${m.away} 35%"). De drie kansen tellen samen op tot ~100%; de gelijkspel-kans weglaten of wegrekenen is een feitelijke fout.
+- MODEL EN MARKT NOOIT MENGEN: "1X2 model" en "1X2 markt (na de-vig)" zijn TWEE APARTE regels. Noem je de marktkansen, neem dan alle drie uit de MARKT-regel; noem je de modelkansen, alle drie uit de MODEL-regel. Pak nooit twee getallen uit de ene regel en het derde uit de andere. Controleer vóór je het opschrijft dat elk drietal optelt tot ongeveer 100%.
 - De hoofdtip is AL GEKOZEN door de backend en staat als "DE GESELECTEERDE TIP" in het blok. Schrijf je analyse (advies, kansen, risico) rondom PRECIES die tip; kies NOOIT zelf een andere uitkomst. Staat er "GEEN VALUE"? Schrijf dan een eerlijke pass/overslaan-toelichting (de markt is hier efficient), geen geforceerd koopadvies. Zet bij een pass de confidence MAX 5.
 
 WERKWIJZE — WEES BESLIST MET WAT JE HEBT:
