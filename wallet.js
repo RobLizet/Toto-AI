@@ -437,8 +437,9 @@ function settleAsianPick(pick, hg, ag, homeName, awayName, stake, odds) {
       return single(margin, line);
     };
 
-    // ── Asian Handicap: "[team] +2.0 asian handicap" ──
-    let m = s.match(/([+\-]\s*\d+(?:[.,]\d+)?)\s*asian\s*handicap/);
+    // ── Asian Handicap: "[team] +2.0 asian handicap" / "team 0.0 (asian handicap)" ──
+    // v26.242: teken optioneel (0.0 = level/DNB) + punctuatie/haakjes tussen lijn en "asian" toegestaan
+    let m = s.match(/([+\-]?\s*\d+(?:[.,]\d+)?)\s*[^a-z0-9]*asian\s*handicap/);
     if (m) {
       const line = parseFloat(m[1].replace(/\s/g,'').replace(',','.'));
       const teamTxt = s.slice(0, m.index);
@@ -451,9 +452,11 @@ function settleAsianPick(pick, hg, ag, homeName, awayName, stake, odds) {
       return mk(ahLine(margin, line));
     }
 
-    // ── Asian totaal: "minder/meer dan 2.0,2.5" (asian/doelpunt/total) ──
+    // ── (Asian) totaal / "meer-minder dan X.X": doelpunten O/U, ook zonder 'asian'-woord ──
+    // v26.242: 'asian|doelpunt'-eis vervangen door uitsluiting van kaarten/corners/schoten,
+    // zodat een kale "Meer dan 2.5" ook afrekent (goals). Kwart-/kommalijnen blijven werken.
     m = s.match(/(minder|meer)\s*dan\s*([\d.,\s]+)/);
-    if (m && /asian|doelpunt|goal|total/.test(s)) {
+    if (m && !/kaart|corner|hoekschop|card|schot|shot/.test(s)) {
       const isOver = m[1]==='meer';
       const lines = m[2].split(',').map(x=>parseFloat(String(x).trim().replace(',','.'))).filter(Number.isFinite);
       if (!lines.length) return null;
@@ -1034,17 +1037,29 @@ async function checkTrackerBet(id, silent) {
   if (!b || b.status!=='pending') return;
   if(!silent){ try { showToast('🔍 Uitslag ophalen...'); } catch(e){} }
   try {
-    const parts = String(b.match||'').split(/\s+vs\s+/i);
-    const homeName = parts[0], awayName = parts[1];
+    // v26.242: robuuste scheiding — " v ", " vs ", "vs.", " - " en dash-varianten (screenshot-import wisselt)
+    const parts = String(b.match||'').split(/\s+(?:vs?\.?|[-–—])\s+/i);
+    const homeName = (parts[0]||'').trim(), awayName = (parts[1]||'').trim();
     if (!homeName || !awayName) { if(!silent) showToast('⚠ Kan teams niet lezen — vink handmatig af'); return; }
     const parseDate = x => { if(!x) return null; const p=String(x).split('-'); if(p.length===3){ return p[0].length===4 ? x : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; } return null; };
     const date = parseDate(b.date);
     const okStatus = f => ['FT','AET','PEN'].includes(f?.fixture?.status?.short);
+    const matchesTeams = f => teamsMatch(homeName, f.teams.home.name) && teamsMatch(awayName, f.teams.away.name);
     let fix = null;
     if (b.fixtureId) { try { const r=await apiFetch(`https://v3.football.api-sports.io/fixtures?id=${b.fixtureId}`,null); const d=await r.json(); fix=(d.response||[])[0]||null; } catch(e){} }
     if ((!fix || !okStatus(fix)) && date) {
-      const r=await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${date}`,null); const d=await r.json(); const pool=d.response||[];
-      fix=pool.find(f=>{ if(!okStatus(f))return false; return teamsMatch(homeName, f.teams.home.name) && teamsMatch(awayName, f.teams.away.name); });
+      // v26.242: exacte datum + venster ±2 dagen — vangt een verkeerd geïmporteerde/OCR-datum op.
+      // teamsMatch eist beide teams, dus een vals-positieve match op een naburige dag is voor een
+      // vast duo (bv. twee landen) praktisch uitgesloten. Datum-calls zijn edge-gecachet in de proxy.
+      const shift = (iso, days) => { const d=new Date(iso+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+days); return d.toISOString().slice(0,10); };
+      const tryDates = [date, shift(date,1), shift(date,-1), shift(date,2), shift(date,-2)];
+      for (const dd of tryDates) {
+        try {
+          const r=await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${dd}`,null); const d=await r.json(); const pool=d.response||[];
+          const found=pool.find(f => okStatus(f) && matchesTeams(f));
+          if (found) { fix=found; break; }
+        } catch(e){}
+      }
     }
     if (!fix || !okStatus(fix)) { if(!silent) showToast('⏳ Nog geen eindstand — probeer later of vink handmatig'); return; }
     const hg=fix.goals.home??0, ag=fix.goals.away??0; b.score=`${hg}-${ag}`;
