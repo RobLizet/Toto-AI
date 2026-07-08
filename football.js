@@ -214,7 +214,10 @@ function goalMarketProbs(lambdaHome, lambdaAway, maxGoals = 8, useDixonColes = t
 // v26.233: Asian Handicap model-kansen uit dezelfde Poisson + Dixon-Coles matrix als 1X2/goals.
 // homeLine = handicap vanuit THUIS-perspectief (bv. -0.75). Kwartlijnen splitsen in twee halve lijnen (half win/verlies).
 // Geeft PUSH-CONDITIONELE faire kansen: home = pWin/(pWin+pLoss) — direct vergelijkbaar met de 2-weg de-vigde markt.
-function asianModelProbs(lambdaHome, lambdaAway, homeLine, maxGoals = 10) {
+// v26.249: optioneel t1x2 = {p1,pX,p2} (de SoS-gecorrigeerde 1X2 in %). Dan wordt de scorematrix zó herschaald
+// dat haar marginalen (thuiswinst/gelijk/uit) EXACT die 1X2 zijn — zodat AH consistent is met de getoonde 1X2
+// (bv. AH -0.5 == P(thuiswinst), DNB == P1/(P1+P2)). Zonder t1x2 = oud gedrag (rauwe Poisson).
+function asianModelProbs(lambdaHome, lambdaAway, homeLine, maxGoals = 10, t1x2 = null) {
   if (!(lambdaHome > 0 && lambdaAway > 0) || !isFinite(homeLine)) return null;
   const grid = []; let tot = 0;
   for (let h = 0; h <= maxGoals; h++) for (let a = 0; a <= maxGoals; a++) {
@@ -223,6 +226,17 @@ function asianModelProbs(lambdaHome, lambdaAway, homeLine, maxGoals = 10) {
     grid.push([h, a, p]); tot += p;
   }
   if (tot <= 0) return null;
+  // v26.249: herschaal de drie uitkomst-blokken naar de gecorrigeerde 1X2 (behoudt de marge-vorm binnen elk blok)
+  if (t1x2 && t1x2.p1 > 0 && t1x2.pX > 0 && t1x2.p2 > 0) {
+    let rawW = 0, rawD = 0, rawL = 0;
+    for (const [h, a, p] of grid) { if (h > a) rawW += p; else if (h === a) rawD += p; else rawL += p; }
+    if (rawW > 0 && rawD > 0 && rawL > 0) {
+      const T = t1x2.p1 + t1x2.pX + t1x2.p2;
+      const sW = (t1x2.p1 / T) / (rawW / tot), sD = (t1x2.pX / T) / (rawD / tot), sL = (t1x2.p2 / T) / (rawL / tot);
+      tot = 0;
+      for (const cell of grid) { const [h, a] = cell; cell[2] *= (h > a ? sW : h === a ? sD : sL); tot += cell[2]; }
+    }
+  }
   const q = Math.round(homeLine * 4);
   const comps = (q % 2 === 0) ? [homeLine] : [homeLine - 0.25, homeLine + 0.25];
   let pW = 0, pP = 0, pL = 0;
@@ -249,16 +263,15 @@ function buildAsianLinesHtml(poisson, goalOdds, m) {
     if (!lines.length) return '';
     const mono = "font-family:'IBM Plex Mono',monospace;";
     const sgn = x => (x > 0 ? '+' : '') + x;
-    // v26.246: zelfde SoS-marktanker als de 1X2-analyse — trekt het AH-model superlineair naar de markt
-    // zodra ze >12pp uiteenlopen, zodat de rauwe-Poisson-valkuil geen nep-value op favorieten toont.
-    const pull = (pp, mkt) => { const base = Math.pow(Math.max(0, (Math.abs(pp - mkt) - 12) / 30), 1.5); return pp + (mkt - pp) * Math.min(0.9, base); };
+    // v26.249: AH-model afgeleid van de SoS-gecorrigeerde 1X2 (poisson.k1/kX/k2) via matrix-herschaling.
+    // Zo is AH consistent met de getoonde 1X2 (AH -0.5 == P1, DNB == P1/(P1+P2)); de aparte markt-pull vervalt.
+    const t1x2 = (poisson.k1 > 0 && poisson.kX > 0 && poisson.k2 > 0) ? { p1: poisson.k1, pX: poisson.kX, p2: poisson.k2 } : null;
     let rows = '', best = null;
     for (const ln of lines) {
       const key = (Math.round(ln * 4) / 4).toFixed(2);
       const mk = ah[key]; if (!mk) continue;
-      const raw = asianModelProbs(lh, la, ln); if (!raw) continue;
-      const mH = +pull(raw.home, mk.fairHome).toFixed(1);   // SoS-verankerde modelkans thuis
-      const mA = +(100 - mH).toFixed(1);
+      const mdl = asianModelProbs(lh, la, ln, 10, t1x2); if (!mdl) continue;
+      const mH = mdl.home, mA = mdl.away;
       const vH = +(mH - mk.fairHome).toFixed(1);            // home-side value; away = -vH
       const absV = Math.abs(vH);
       const side = vH >= 0 ? m.home : m.away;
