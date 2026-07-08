@@ -1058,8 +1058,8 @@ async function _scanValueAll_legacy(silent = false) {
 
           matchDataMap[m.id] = {
             h2h:           h2hCount   ? formatH2HCompact(h2h.slice(0,5), m.home, m.away)        : '',
-            homeForm:      homeGames  ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home) : '',
-            awayForm:      awayGames  ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away) : '',
+            homeForm:      homeGames  ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home) : formFromPred(predictions,'home'), // v26.245: fallback bij timeout
+            awayForm:      awayGames  ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away) : formFromPred(predictions,'away'), // v26.245
             poisson, market,
             homeInjFactor, awayInjFactor, injuryContext,
             homeStanding, awayStanding, standingContext,
@@ -1955,8 +1955,8 @@ async function runAnalyse() {
     if (btn) btn.textContent = '⟳ AI ANALYSE...';
 
     const h2hStr = h2h?.length ? formatH2HCompact(h2h.slice(0,5), m.home, m.away) : 'geen data';
-    const homeFormStr = homeForm?.length ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home) : 'geen data';
-    const awayFormStr = awayForm?.length ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away) : 'geen data';
+    const homeFormStr = homeForm?.length ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home) : (formFromPred(predictions,'home') || 'geen data'); // v26.245: fallback op predictions bij timeout
+    const awayFormStr = awayForm?.length ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away) : (formFromPred(predictions,'away') || 'geen data'); // v26.245
     const poissonStr = poisson.valid ? `Poisson: 1=${poisson.k1}% X=${poisson.kX}% 2=${poisson.k2}%${poisson.injLabel||''}` : 'geen statdata';
     const formationStr = lineups?.length ? `${lineups[0]?.team?.name||m.home}: ${lineups[0]?.formation||'?'} vs ${lineups[1]?.team?.name||m.away}: ${lineups[1]?.formation||'?'}` : 'nog niet bekend';
 
