@@ -2002,6 +2002,14 @@ async function runAnalyse() {
     // v26.222: bereken ALLES in code (de-vigde markt + gecorrigeerde goal-markten + value) en geef de LLM
     // uitsluitend deze cijfers. Voorkomt dat de schrijflaag eigen percentages hallucineert (Gemini-bug).
     let modelBlock = '', codeTip = null;
+    // v26.251: backend-picks moeten geladen zijn vóór we de tip bepalen (popup kan vanuit elk scherm openen)
+    try {
+      if (!state._qualityPicks && typeof ensureWorkerPicks === 'function') await ensureWorkerPicks();
+      if (!state._qualityPicks) {
+        const _r = await fetch('https://api.promatchxi.app/picks');
+        if (_r.ok) { const _d = await _r.json(); state._qualityPicks = _d.picks || (Array.isArray(_d) ? _d : []); }
+      }
+    } catch (e) { /* zonder picks -> eerlijke pass, nooit een verzonnen tip */ }
     try {
       const _oh=parseFloat(m.homeOdds)||0, _od=parseFloat(m.drawOdds)||0, _oa=parseFloat(m.awayOdds)||0;
       if (poisson.valid && _oh>1 && _od>1 && _oa>1) {
@@ -2047,9 +2055,32 @@ async function runAnalyse() {
         });
         const _elig=_cands.filter(c=>c.mkt>=12 && parseFloat(c.odds)>1);
         _elig.sort((a,b)=>b.selValue-a.selValue);
-        const _MINVAL = 3; // minimale (API-gecorrigeerde) value-rand om als echte value-tip te gelden; daaronder -> favoriet/pass
-        codeTip = (_elig[0] && _elig[0].selValue>=_MINVAL) ? _elig[0] : _cands.slice().sort((a,b)=>b.model-a.model)[0];
-        const _tipLine = codeTip ? `\n\nDE GESELECTEERDE TIP (door de backend bepaald - schrijf de analyse hier OMHEEN, kies NOOIT zelf een andere uitkomst): ${codeTip.code} = ${codeTip.label} @ ${codeTip.odds} | modelkans ${codeTip.model}% | marktkans ${codeTip.mkt}% | value ${codeTip.value>=0?'+':''}${codeTip.value}pp${codeTip.value<=0?' -> GEEN VALUE: schrijf een eerlijke pass/overslaan-toelichting (markt is hier efficient)':''}` : '';
+        const _MINVAL = 3; // minimale (API-gecorrigeerde) value-rand om als echte value-tip te gelden
+        // v26.251: ÉÉN BRON VAN WAARHEID — de tip komt uit de backend-pick (/picks, state._qualityPicks).
+        // Dat is de enige pick die in picks/CLV/v_ai_tip_accuracy wordt gemeten. De popup herberekende 'm
+        // eerder zelf met verse odds + een ander codepad, waardoor kaart en analyse konden verschillen, en
+        // fabriceerde bij ontbrekende value alsnog de favoriet als "tip". Nu: geen backend-pick -> eerlijke pass.
+        const _wp = (state._qualityPicks || []).find(p =>
+          String(p.fixtureId) === String(m.id) &&
+          (String(p.status || '').toLowerCase() === 'pending' || !p.status)
+        );
+        codeTip = null;
+        if (_wp && _wp.pick) {
+          const _live = _cands.find(c => c.code === _wp.pick); // huidige model/markt voor dezelfde uitkomst
+          codeTip = {
+            code: _wp.pick,
+            label: _wp.pickLabel || (_live ? _live.label : _wp.pick),
+            odds: _wp.odds || (_live ? _live.odds : null),
+            model: (_wp.aiKans != null ? Math.round(parseFloat(_wp.aiKans)) : (_live ? _live.model : null)),
+            mkt: _live ? _live.mkt : null,
+            value: (_wp.value != null ? Math.round(parseFloat(_wp.value) * 10) / 10 : (_live ? _live.value : null)),
+            liveOdds: _live ? _live.odds : null,
+            fromBackend: true
+          };
+        }
+        const _tipLine = codeTip
+          ? `\n\nDE GESELECTEERDE TIP (door de backend bepaald - schrijf de analyse hier OMHEEN, kies NOOIT zelf een andere uitkomst): ${codeTip.code} = ${codeTip.label} @ ${codeTip.odds} | modelkans ${codeTip.model}% | marktkans ${codeTip.mkt}% | value ${codeTip.value>=0?'+':''}${codeTip.value}pp${codeTip.value<=0?' -> GEEN VALUE: schrijf een eerlijke pass/overslaan-toelichting (markt is hier efficient)':''}`
+          : `\n\nGEEN GESELECTEERDE TIP: de backend vond voor deze wedstrijd geen value-pick. Schrijf een eerlijke pass/overslaan-toelichting (de markt is hier efficient). Kies ZELF GEEN tip, ook niet de favoriet. Zet confidence MAX 5 en sterren MAX 2.`;
         modelBlock = `\n\n=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===\n1X2 model: ${m.home} ${poisson.k1}% / gelijkspel ${poisson.kX}% / ${m.away} ${poisson.k2}%\n1X2 markt (na de-vig): ${m.home} ${_mh}% / gelijkspel ${_mx}% / ${m.away} ${_ma}%${_gmStr}${_tipLine}\n=== EINDE GECORRIGEERDE KANSEN ===`;
       }
     } catch(e) { console.warn('[analyse] modelblok', e.message); }
@@ -2079,7 +2110,7 @@ CIJFERBRON (ABSOLUTE REGEL, GAAT BOVEN ALLES):
 - Staat er "O2.5 model 48%", dan is de kans 48%. Je mag die NOOIT als hogere value (bv. 72%) presenteren, ook niet als de vorm/H2H veel goals suggereert.
 - 1X2-FORMAT (VERPLICHT): noem je in de tekst (vooral in "stats" en "kans") de 1X2-kansen, gebruik dan ALTIJD alle drie de uitkomsten in exact deze vorm: "${m.home} X% / gelijkspel Y% / ${m.away} Z%", met X/Y/Z LETTERLIJK uit de "1X2 model"-regel van het blok. Vat een 3-weg-markt NOOIT samen tot twee getallen (dus NOOIT "${m.home} 65% vs ${m.away} 35%"). De drie kansen tellen samen op tot ~100%; de gelijkspel-kans weglaten of wegrekenen is een feitelijke fout.
 - MODEL EN MARKT NOOIT MENGEN: "1X2 model" en "1X2 markt (na de-vig)" zijn TWEE APARTE regels. Noem je de marktkansen, neem dan alle drie uit de MARKT-regel; noem je de modelkansen, alle drie uit de MODEL-regel. Pak nooit twee getallen uit de ene regel en het derde uit de andere. Controleer vóór je het opschrijft dat elk drietal optelt tot ongeveer 100%.
-- De hoofdtip is AL GEKOZEN door de backend en staat als "DE GESELECTEERDE TIP" in het blok. Schrijf je analyse (advies, kansen, risico) rondom PRECIES die tip; kies NOOIT zelf een andere uitkomst. Staat er "GEEN VALUE"? Schrijf dan een eerlijke pass/overslaan-toelichting (de markt is hier efficient), geen geforceerd koopadvies. Zet bij een pass de confidence MAX 5.
+- De hoofdtip is AL GEKOZEN door de backend en staat als "DE GESELECTEERDE TIP" in het blok. Schrijf je analyse (advies, kansen, risico) rondom PRECIES die tip; kies NOOIT zelf een andere uitkomst. Staat er "GEEN GESELECTEERDE TIP" of "GEEN VALUE"? Schrijf dan een eerlijke pass/overslaan-toelichting (de markt is hier efficient), noem GEEN alternatieve pick — ook niet de favoriet — en zet de confidence MAX 5.
 
 WERKWIJZE — WEES BESLIST MET WAT JE HEBT:
 - Gebruik ALLE beschikbare ankers actief: recente uitslagen, odds (altijd aanwezig), Poisson-model, API predictions, H2H, standen.
@@ -2141,8 +2172,9 @@ KWALITEITSREGELS:
     fill('advies',  sectionCard('💡', t('ana.advice','ADVIES'), result.advies || '—', '#00BEC4'));
 
     // Tip sectie
-    // v26.223: de tip komt van de BACKEND (codeTip), niet van de LLM — LLM levert alleen de analyse-tekst
-    const tip = codeTip ? { ...(result.tip||{}), pick: codeTip.code, pickLabel: codeTip.label, kans: codeTip.model, odds: String(codeTip.odds), markt: (/^[12X]$/.test(codeTip.code) ? 'Uitslag' : String(codeTip.code).startsWith('BTTS') ? 'Beide scoren' : 'Doelpunten') } : result.tip;
+    // v26.251: de tip komt UITSLUITEND uit de backend-pick (codeTip). Geen backend-pick = geen tip:
+    // niet terugvallen op result.tip (LLM) en niet zelf de favoriet kiezen. "Geen value" is een geldig antwoord.
+    const tip = codeTip ? { ...(result.tip||{}), pick: codeTip.code, pickLabel: codeTip.label, kans: codeTip.model, odds: String(codeTip.odds), markt: (/^[12X]$/.test(codeTip.code) ? 'Uitslag' : String(codeTip.code).startsWith('BTTS') ? 'Beide scoren' : 'Doelpunten') } : null;
     if (tip && tip.pick) {
       state.lastAnalyseTip = { ...tip, matchId: m.id, home: m.home, away: m.away };
       const tv = calcValue(tip.kans, parseFloat(tip.odds));
@@ -2248,6 +2280,18 @@ ${_calLine}
 
       state._lastAnalyseContext = context;
       state._lastAnalyseResult = result;
+    } else {
+      // v26.251: geen backend-pick -> eerlijke pass tonen i.p.v. een verzonnen tip
+      const _tipEl = document.getElementById('rb-tip');
+      if (_tipEl) _tipEl.innerHTML = `<div class="analyse-block" style="margin:.6rem 0;padding:.85rem 1rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.55);letter-spacing:.07em;margin-bottom:.35rem;">🚫 GEEN TIP</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:#fff;letter-spacing:.03em;">Geen value — overslaan</div>
+        <div style="font-size:.72rem;line-height:1.6;color:rgba(255,255,255,.75);margin-top:.4rem;">Het model vond voor deze wedstrijd geen prijs die beter is dan de kans rechtvaardigt. De markt is hier efficiënt. Niet spelen is dan de juiste zet — de analyse hierboven blijft de onderbouwing.</div>
+      </div>`;
+      state._lastAnalyseContext = context;
+      state._lastAnalyseResult = result;
+      const chatBtn2 = document.getElementById('analyse-chat-btn');
+      if (chatBtn2) chatBtn2.style.display = 'block';
     }
 
   } catch(e) {
