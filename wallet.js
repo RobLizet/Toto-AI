@@ -298,6 +298,7 @@ function setWalletSubTab(tab) {
   if (tab === 'tracker')  { 
     if (!state.tracker) state.tracker = {bets:[]};
     renderTracker(); updateTrackerStats(); 
+    autoSettleTracker(); // v26.243: stil afrekenen op de achtergrond (max 1x/15min, niet-blokkerend)
   }
   if (tab === 'backtest') { renderBacktest(); }
 }
@@ -1078,6 +1079,43 @@ async function checkTrackerBet(id, silent) {
     saveState(); renderTracker(); updateTrackerStats();
     if(!silent) showToast(`✅ ${res.label} (${b.score})`);
   } catch(e) { if(!silent) showToast('⚠ Fout bij ophalen — vink handmatig af'); }
+}
+
+// v26.243: automatische tracker-settlement — draait stil bij openen van de Tracker.
+// Max 1x/15 min (throttle in state.tracker._lastAutoCheck), alleen bets waarvan de aftrap
+// voorbij is, API-vriendelijk gespreid (1,2s), niet-blokkerend (fire-and-forget vanuit setWalletSubTab).
+// Vervangt de handmatige-alleen-flow zonder de "🔍 Check alle"-knop te verwijderen.
+let _trackerAutoBusy = false;
+async function autoSettleTracker() {
+  try {
+    if (_trackerAutoBusy) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return; // offline: niets proberen
+    if (!state.tracker) return;
+    const pending = (state.tracker.bets || []).filter(b => b.status === 'pending');
+    if (!pending.length) return;
+    const now = Date.now();
+    const last = state.tracker._lastAutoCheck || 0;
+    if (now - last < 15 * 60 * 1000) return; // throttle: hooguit 1x per 15 min
+    state.tracker._lastAutoCheck = now; saveState();
+    // alleen duels waarvan de bet-datum (aftrap) vandaag of eerder is — bespaart API-calls op toekomstige bets
+    const parseD = x => { if (!x) return null; const p = String(x).split('-'); if (p.length === 3) { return p[0].length === 4 ? x : `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`; } return null; };
+    const todayISO = new Date().toISOString().slice(0, 10);
+    const due = pending.filter(b => { const d = parseD(b.date); return !d || d <= todayISO; });
+    if (!due.length) return;
+    _trackerAutoBusy = true;
+    let settled = 0;
+    for (const b of due) {
+      if (b.status !== 'pending') continue;
+      try { await checkTrackerBet(b.id, true); } catch (e) {}
+      if (b.status !== 'pending') settled++;
+      await new Promise(r => setTimeout(r, 1200)); // spreiding tegen de API-minuutlimiet
+    }
+    if (settled > 0) {
+      try { showAutoCheckBar(`\u2705 ${settled} bet(s) automatisch afgerekend`); } catch (e) {}
+      try { renderTracker(); updateTrackerStats(); if (typeof renderTrackerChart === 'function') renderTrackerChart(); } catch (e) {}
+    }
+  } catch (e) { /* stil — auto-settle mag nooit de UI breken */ }
+  finally { _trackerAutoBusy = false; }
 }
 
 // v26.230: alle open tracker-weddenschappen in één keer afrekenen (met spreiding tegen de API-minuutlimiet)
