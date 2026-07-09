@@ -1991,15 +1991,41 @@ async function runAnalyse() {
         // v26.222: mismatch-bewust — bij een duidelijke marktfavoriet worden gelijkspel/underdog sterk naar de markt getrokken
         const _mktTop = Math.max(_mh,_mx,_ma); const _mm1 = Math.max(0, Math.min(1,(_mktTop-55)/30));
         const _pull = (pp, mkt) => { const base = Math.pow(Math.max(0,(Math.abs(pp-mkt)-12)/30), 1.5); const w = Math.min(0.95, base + _mm1*0.9); return pp + (mkt-pp)*w; };
+
+        // v26.257: ONTKOPPELING OPGEHEVEN. Voorheen werden k1/kX/k2 gepulld uit de RAUWE lambda's, en pas
+        // dáárna werden diezelfde lambda's door de vloer en de supremacie-shift geschaald. Bij
+        // Argentina-Switzerland kwam de 48% gelijkspel uit lambda-totaal 0.80, terwijl de doelpunten- en
+        // AH-markten uit lambda-totaal 2.10 kwamen: twee modellen in één analyse. Met geregulariseerde
+        // sterktes is de vloer overbodig; dan schuiven we eerst de lambda's en leiden we de 1X2 daaruit af.
+        const _applyLambdaShift = () => {
+          if (!(poisson.lambdaHome && poisson.lambdaAway)) return;
+          if (!poisson.shrunk) {
+            const _tot = poisson.lambdaHome + poisson.lambdaAway;
+            if (_tot < 1.9) { const _f = 2.1/_tot; poisson.lambdaHome*=_f; poisson.lambdaAway*=_f; } // vloer alleen nog nodig zonder regularisatie
+          }
+          const _homeFav = _mh - _ma; // + = thuis favoriet
+          const _shift = Math.max(-0.6, Math.min(0.6, _homeFav/100));
+          let _lh = poisson.lambdaHome * (1 + _shift*0.8), _la = poisson.lambdaAway * (1 - _shift*0.5);
+          const _t0 = poisson.lambdaHome + poisson.lambdaAway, _t1 = _lh + _la;
+          if (_t1 > 0) { const _r = _t0/_t1; _lh *= _r; _la *= _r; }
+          poisson.lambdaHome = Math.max(0.15, _lh); poisson.lambdaAway = Math.max(0.15, _la);
+        };
+
+        if (poisson.shrunk) {
+          _applyLambdaShift();                                  // 1. lambda's definitief maken
+          const _pm = poissonMatchProbs(poisson.lambdaHome, poisson.lambdaAway);
+          poisson.k1 = Math.round(_pm.p1*100); poisson.kX = Math.round(_pm.pX*100); poisson.k2 = Math.round(_pm.p2*100); // 2. 1X2 eruit afleiden
+        }
+
         let _ch = _pull(poisson.k1,_mh), _cx = _pull(poisson.kX,_mx), _ca = _pull(poisson.k2,_ma);
         const _sum = _ch + _cx + _ca;
         if (_sum > 0) { poisson.k1 = Math.round(_ch/_sum*100); poisson.kX = Math.round(_cx/_sum*100); poisson.k2 = Math.round(_ca/_sum*100); }
-        // lambda's ook mee-schuiven zodat de goal-markten kloppen: supremacie + totaal-vloer
-        if (poisson.lambdaHome && poisson.lambdaAway) {
+
+        // zonder regularisatie: oud pad — lambda's schuiven ná de pull (vloer + supremacie)
+        if (!poisson.shrunk && poisson.lambdaHome && poisson.lambdaAway) {
           const _tot = poisson.lambdaHome + poisson.lambdaAway;
-          if (_tot < 1.9) { const _f = 2.1/_tot; poisson.lambdaHome*=_f; poisson.lambdaAway*=_f; } // vloer draait vóór het anker; het anker corrigeert daarna alsnog naar de markt
-          // supremacie richting markt (favoriet scoort meer): schaal op basis van 1X2-gap
-          const _homeFav = _mh - _ma; // + = thuis favoriet
+          if (_tot < 1.9) { const _f = 2.1/_tot; poisson.lambdaHome*=_f; poisson.lambdaAway*=_f; }
+          const _homeFav = _mh - _ma;
           const _shift = Math.max(-0.6, Math.min(0.6, _homeFav/100));
           let _lh = poisson.lambdaHome * (1 + _shift*0.8), _la = poisson.lambdaAway * (1 - _shift*0.5);
           // v26.250: TOTAAL-BEHOUDEND — de shift mag alleen de verhouding verschuiven, niet het verwachte
