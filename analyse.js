@@ -1792,13 +1792,14 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
       if (q % 2 !== 0) return `<span style="${F}font-size:.42rem;font-weight:700;color:#d9a521;background:rgba(217,165,33,.12);border:1px solid rgba(217,165,33,.35);border-radius:.3rem;padding:.02rem .22rem;margin-left:.25rem;vertical-align:middle;">\u00bd</span>`;
       return '';
     };
-    const _topBadge = `<span style="${F}font-size:.42rem;font-weight:800;color:#0b0b0b;background:#16c784;border-radius:.3rem;padding:.03rem .25rem;margin-left:.25rem;vertical-align:middle;letter-spacing:.03em;">TOP VALUE</span>`;
+    // v26.256: twee varianten — vol groen bij een coherente staart, gedimd + ⚠ als het doelpuntentotaal afwijkt
+    const _mkBadge = dim => `<span style="${F}font-size:.42rem;font-weight:800;color:${dim ? 'rgba(11,11,11,.75)' : '#0b0b0b'};background:${dim ? 'rgba(22,199,132,.45)' : '#16c784'};border-radius:.3rem;padding:.03rem .25rem;margin-left:.25rem;vertical-align:middle;letter-spacing:.03em;">TOP VALUE${dim ? ' \u26a0' : ''}</span>`;
     const _arow = (label, odds, model, markt, tag, top) => {
       const diff = model - markt, pos = diff >= 0;
       edges.push({ label: `${label} @${odds}`, edge: diff });
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
       const bg = top ? 'background:rgba(22,199,132,.07);border-radius:.35rem;padding:.2rem .25rem;margin:0 -.25rem;' : 'padding:.2rem 0;';
-      return `<div style="display:flex;justify-content:space-between;gap:.5rem;${bg}${F}font-size:.57rem;"><span style="color:#fff;">${label}${tag||''}${top?_topBadge:''} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
+      return `<div style="display:flex;justify-content:space-between;gap:.5rem;${bg}${F}font-size:.57rem;"><span style="color:#fff;">${label}${tag||''}${top?_mkBadge(_tailBad):''} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
     };
     const _krowA = (label, odds, markt, tag) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label}${tag||''} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);">faire kans <b style="color:#c084fc;">${markt}%</b></span></div>`;
     // max 4 lijnen, dichtst bij 50/50 (meest informatieve lijnen), daarna oplopend gesorteerd
@@ -1821,11 +1822,11 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
         _specs.push({ label: `AH ${m.away} ${_fmtL(-ln)}`, odds: o.away, markt: o.fairAway, tag: _tagA(-ln) });
       }
     }
-    // v26.253: geen TOP VALUE-badge als het model-doelpuntentotaal niet strookt met de markt. De AH-\"value\"
-    // komt dan uit de doelpuntenmarge-aanname, niet uit een edge — precies wat de voetnoot eronder al zegt.
+    // v26.256: de badge wordt niet meer onderdrukt bij een afwijkend doelpuntentotaal — hij wordt gedimd
+    // en krijgt een waarschuwingsteken. Onderdrukken verbergt informatie; dimmen kadert haar.
     const _tailBad = !!(poisson.anchor && poisson.anchor.coherent === false && !poisson.anchor.applied);
     let _topIdx = -1, _topVal = 3; // badge alleen bij echte value (>=3pp)
-    if (!_tailBad) _specs.forEach((sp, i) => { if (sp.val != null && sp.val >= _topVal) { _topVal = sp.val; _topIdx = i; } });
+    _specs.forEach((sp, i) => { if (sp.val != null && sp.val >= _topVal) { _topVal = sp.val; _topIdx = i; } });
     let ahRows = '';
     _specs.forEach((sp, i) => {
       ahRows += (sp.model != null)
@@ -1882,15 +1883,13 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
 
   // v26.253: coherentie-waarschuwing. Staat het model-doelpuntentotaal ver van het markt-impliciete
   // totaal, dan zijn alle Under-regels + BTTS-Nee dezelfde scheve parameter, geen vier losse edges.
+  // v26.256: compact gehouden — één regel, geen blok dat de tabel domineert.
   let coherenceHTML = '';
   if (_incoherent && poisson.anchor.mktTot != null) {
     const a = poisson.anchor;
-    const richting = a.gap > 0 ? 'meer' : 'minder';
-    coherenceHTML = `<div style="margin-top:.5rem;padding:.45rem .6rem;background:rgba(255,190,80,.07);border:1px solid rgba(255,190,80,.28);border-radius:.45rem;${F}font-size:.5rem;line-height:1.6;color:rgba(255,255,255,.78);">
-      <span style="color:rgba(255,190,80,.95);font-weight:700;">Let op \u2014 doelpuntentotaal wijkt af</span><br>
-      Het model verwacht ${a.modelTot.toFixed(2)} goals, de markt ${a.mktTot.toFixed(2)} (${Math.abs(a.gap).toFixed(2)} ${richting}).
-      Daardoor lijken \u00e1lle ${a.gap < 0 ? 'Under' : 'Over'}-regels en \u00e9\u00e9n kant van Beide-scoren tegelijk value te hebben.
-      Dat is \u00e9\u00e9n scheve aanname die meerdere keren wordt geteld, geen losse edges.
+    const kant = a.gap < 0 ? 'Under' : 'Over';
+    coherenceHTML = `<div style="margin-top:.35rem;${F}font-size:.46rem;line-height:1.5;color:rgba(255,190,80,.72);">
+      \u26a0 model ${a.modelTot.toFixed(2)} goals vs markt ${a.mktTot.toFixed(2)} \u2014 \u00e1lle ${kant}-regels tonen daardoor tegelijk value: \u00e9\u00e9n scheve aanname, geen losse edges.
     </div>`;
   }
 
@@ -1981,11 +1980,6 @@ async function runAnalyse() {
     // v26.253: naar VOREN gehaald — het markt-anker heeft de O/U-odds nodig vóór de SoS-pull.
     const goalOdds = await wt(typeof fetchGoalOdds === 'function' ? fetchGoalOdds(m.id) : Promise.resolve(null), 11000); // v26.236: ruimer timeout — grote odds-payload (239KB) mag niet stil afkappen
 
-    // v26.253: MARKT-ANKER op het doelpuntentotaal. Moet vóór de SoS-pull, want die pull werkt op de
-    // 1X2-kansen die uit de lambda's volgen. Zet altijd poisson.anchor (diagnose); muteert alleen als
-    // het anker aanstaat (LAMBDA_ANCHOR_W > 0). Mag de analyse nooit breken.
-    try { if (typeof anchorLambdasToMarket === 'function') anchorLambdasToMarket(poisson, goalOdds); } catch(e) {}
-
     // v26.219: KLASSE/SoS-correctie op de rauwe Poisson in de losse analyse (popup). De rauwe Poisson negeert
     // tegenstander-sterkte -> topland fout laag ingeschat (valkuil). Trek naar de de-vigde markt, superlineair:
     // gematigde afwijking (echte value) blijft intact, extreme divergentie (de valkuil) wordt hard dichtgetrokken.
@@ -2003,8 +1997,7 @@ async function runAnalyse() {
         // lambda's ook mee-schuiven zodat de goal-markten kloppen: supremacie + totaal-vloer
         if (poisson.lambdaHome && poisson.lambdaAway) {
           const _tot = poisson.lambdaHome + poisson.lambdaAway;
-          // v26.253: de vloer mag een toegepast markt-anker niet overrulen (de markt weet het beter)
-          if (_tot < 1.9 && !poisson.anchor?.applied) { const _f = 2.1/_tot; poisson.lambdaHome*=_f; poisson.lambdaAway*=_f; }
+          if (_tot < 1.9) { const _f = 2.1/_tot; poisson.lambdaHome*=_f; poisson.lambdaAway*=_f; } // vloer draait vóór het anker; het anker corrigeert daarna alsnog naar de markt
           // supremacie richting markt (favoriet scoort meer): schaal op basis van 1X2-gap
           const _homeFav = _mh - _ma; // + = thuis favoriet
           const _shift = Math.max(-0.6, Math.min(0.6, _homeFav/100));
@@ -2019,6 +2012,14 @@ async function runAnalyse() {
         }
       }
     }
+
+    // v26.256: MARKT-ANKER op het doelpuntentotaal — NA het SoS-blok.
+    // In v26.253 stond dit ervóór, waardoor de anker-diagnose de RAUWE lambda's mat (bv. 0.80 goals)
+    // terwijl de vloer (1.9 -> 2.1) en de supremacie-shift daarna het werkelijke totaal op 2.10 zetten.
+    // De waarschuwing zei dan "model verwacht 0.80" naast een kop "verw. 2.1 goals" — twee getallen voor
+    // hetzelfde. Hier gemeten op precies de lambda's die gm/AH gebruiken.
+    // Let op: k1/kX/k2 worden hier NIET herberekend; die zijn hierboven al naar de 1X2-markt getrokken.
+    try { if (typeof anchorLambdasToMarket === 'function') anchorLambdasToMarket(poisson, goalOdds); } catch(e) {}
 
     // v26.246: ASIAN LINES-tabel (meerdere lijnen, model vs. markt) deterministisch renderen — geen LLM
     try {
