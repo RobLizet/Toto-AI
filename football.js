@@ -190,6 +190,85 @@ function poissonMatchProbs(lambdaHome, lambdaAway, maxGoals = 6, useDixonColes =
   return { p1: p1/total, pX: pX/total, p2: p2/total };
 }
 
+// ═══ v26.253: MARKT-ANKER OP HET DOELPUNTENTOTAAL ═══════════════════════════
+// De Poisson-lambda's zijn SoS-blind. Wijkt het model-totaal materieel af van het markt-impliciete
+// totaal, dan tonen Under 1.5/2.5/3.5 EN BTTS-Nee allemaal dezelfde "value" — vier keer dezelfde
+// scheve parameter, geen vier edges. Het anker trekt het TOTAAL naar de markt en laat de supremacie
+// (verhouding lambdaHome:lambdaAway) exact ongemoeid.
+// DORMANT: LAMBDA_ANCHOR_W = 0 -> de lambda's blijven byte-identiek, alleen de diagnose wordt gezet.
+// Test-override op één toestel: localStorage.setItem('pmx_lambda_anchor_w','0.7')
+const LAMBDA_ANCHOR_W_DEFAULT = 0;
+const LAMBDA_ANCHOR_DEADBAND  = 0.30; // < 0.30 goal verschil = ruis, niet corrigeren
+const LINE_ANCHOR_WEIGHTS     = { '1.5': 1, '2.5': 2, '3.5': 1 }; // 2.5 is het liquiedst -> zwaarder
+
+function getLambdaAnchorW() {
+  try {
+    const v = parseFloat(localStorage.getItem('pmx_lambda_anchor_w'));
+    if (isFinite(v)) return Math.min(Math.max(v, 0), 1);
+  } catch (e) {}
+  return LAMBDA_ANCHOR_W_DEFAULT;
+}
+
+// Lost het markt-impliciete doelpuntentotaal op uit één de-vigde Over-kans, met dezelfde
+// Poisson+Dixon-Coles-kern als het model en met behoud van de supremacie-verhouding.
+function solveMarketTotal(lh, la, line, fairOver) {
+  if (!(fairOver > 0 && fairOver < 100)) return null;
+  if (!(lh > 0) || !(la > 0) || !isFinite(line)) return null;
+  const share = lh / (lh + la), thr = Math.floor(line);
+  const pOver = T => {
+    const A = T * share, B = T * (1 - share);
+    let under = 0;
+    for (let h = 0; h <= 12; h++) for (let a = 0; a <= 12; a++) {
+      if (h + a <= thr) under += poissonProb(A, h) * poissonProb(B, a) * dixonColesTau(h, a, A, B);
+    }
+    return (1 - under) * 100;
+  };
+  let lo = 0.5, hi = 6;
+  for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (pOver(mid) < fairOver) lo = mid; else hi = mid; }
+  const t = (lo + hi) / 2;
+  return (t > 0.51 && t < 5.99) ? t : null; // bisectie tegen de rand geplakt = onbetrouwbaar
+}
+
+// Gewogen markt-totaal over alle beschikbare O/U-lijnen. Bewust NIET alleen 2.5: kalibreren op één
+// lijn zet die lijn per constructie op 0pp value, waardoor je hem nooit meer als pick kunt vinden.
+function marketTotalGoals(lh, la, goalOdds) {
+  let num = 0, den = 0;
+  for (const line of ['1.5', '2.5', '3.5']) {
+    const fo = goalOdds?.ou?.[line]?.fairOver;
+    const t = solveMarketTotal(lh, la, parseFloat(line), fo);
+    if (t != null) { const w = LINE_ANCHOR_WEIGHTS[line] || 1; num += t * w; den += w; }
+  }
+  return den > 0 ? num / den : null;
+}
+
+// Zet ALTIJD poisson.anchor (de diagnose), en muteert de lambda's + 1X2 alleen als het anker aanstaat.
+// Geeft het anchor-object terug, of null als er niets te meten viel.
+function anchorLambdasToMarket(poisson, goalOdds) {
+  if (!poisson || !poisson.valid) return null;
+  const lh = poisson.lambdaHome, la = poisson.lambdaAway;
+  if (!(lh > 0) || !(la > 0)) return null;
+  const w = getLambdaAnchorW();
+  const modelTot = lh + la;
+  const mktTot = marketTotalGoals(lh, la, goalOdds);
+  const anchor = { modelTot, mktTot, gap: null, coherent: true, applied: false, w };
+  if (mktTot == null) { poisson.anchor = anchor; return anchor; }
+  anchor.gap = modelTot - mktTot;
+  anchor.coherent = Math.abs(anchor.gap) <= LAMBDA_ANCHOR_DEADBAND;
+  if (!anchor.coherent && w > 0) {
+    const f = (modelTot + (mktTot - modelTot) * w) / modelTot;
+    poisson.lambdaHome = Math.max(0.05, lh * f);
+    poisson.lambdaAway = Math.max(0.05, la * f);
+    // rauwe 1X2 opnieuw afleiden uit de geankerde lambda's; de SoS-pull naar de 1X2-markt volgt hierna
+    const { p1, pX, p2 } = poissonMatchProbs(poisson.lambdaHome, poisson.lambdaAway);
+    poisson.k1 = Math.round(p1 * 100);
+    poisson.kX = Math.round(pX * 100);
+    poisson.k2 = Math.round(p2 * 100);
+    anchor.applied = true;
+  }
+  poisson.anchor = anchor;
+  return anchor;
+}
+
 // v26.146: model-kansen voor doelpunten-markten (O/U 1.5/2.5/3.5 + BTTS) uit lambdaHome/lambdaAway.
 // Zelfde Poisson + Dixon-Coles als poissonMatchProbs, zodat de getallen consistent zijn met 1X2.
 function goalMarketProbs(lambdaHome, lambdaAway, maxGoals = 8, useDixonColes = true) {
@@ -274,18 +353,13 @@ function buildAsianLinesHtml(poisson, goalOdds, m) {
     // verdeling van het model. Die is alleen geloofwaardig als het model hetzelfde doelpuntentotaal verwacht
     // als de markt. Leid het markt-impliciete totaal af uit de de-vigde Over 2.5 en vergelijk. Wijkt het
     // materieel af, dan is elke "EV" op niet-money-lijnen een artefact van de staart -> geen advies tonen.
-    let tailOk = true, modelTot = lh + la, mktTot = null;
-    try {
-      const fo = goalOdds?.ou?.['2.5']?.fairOver;
-      if (fo > 0 && fo < 100) {
-        const share = lh / (lh + la);
-        const pOver = T => { let u = 0; for (let h = 0; h <= 10; h++) for (let a = 0; a <= 10; a++) { if (h + a <= 2) u += poissonProb(T * share, h) * poissonProb(T * (1 - share), a) * dixonColesTau(h, a, T * share, T * (1 - share)); } return (1 - u) * 100; };
-        let lo2 = 0.5, hi2 = 6;
-        for (let i = 0; i < 40; i++) { const mid = (lo2 + hi2) / 2; if (pOver(mid) < fo) lo2 = mid; else hi2 = mid; }
-        mktTot = (lo2 + hi2) / 2;
-        tailOk = Math.abs(modelTot - mktTot) <= 0.30; // > 0.3 goal verschil => staart niet te vertrouwen
-      }
-    } catch (e) { /* geen O/U-odds: check overslaan */ }
+    // v26.253: één bron voor de coherentie — poisson.anchor (gezet door anchorLambdasToMarket).
+    // Staat het anker aan, dan zijn de lambda's al naar het markt-totaal getrokken en is de staart per
+    // constructie coherent; staat het uit, dan blijft dit de eerlijke "geen EV-advies"-rem.
+    const _an = poisson.anchor || {}; // gezet in de analyse-flow, vóór deze render
+    const modelTot = lh + la;             // reeds geankerd als het anker aanstond
+    const mktTot = (_an.mktTot != null) ? _an.mktTot : null;
+    const tailOk = _an.applied ? true : (_an.coherent !== false);
     let rows = '', best = null;
     for (const ln of lines) {
       const key = (Math.round(ln * 4) / 4).toFixed(2);
