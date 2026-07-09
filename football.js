@@ -258,11 +258,9 @@ function anchorLambdasToMarket(poisson, goalOdds) {
     const f = (modelTot + (mktTot - modelTot) * w) / modelTot;
     poisson.lambdaHome = Math.max(0.05, lh * f);
     poisson.lambdaAway = Math.max(0.05, la * f);
-    // rauwe 1X2 opnieuw afleiden uit de geankerde lambda's; de SoS-pull naar de 1X2-markt volgt hierna
-    const { p1, pX, p2 } = poissonMatchProbs(poisson.lambdaHome, poisson.lambdaAway);
-    poisson.k1 = Math.round(p1 * 100);
-    poisson.kX = Math.round(pX * 100);
-    poisson.k2 = Math.round(p2 * 100);
+    // v26.256: k1/kX/k2 bewust NIET herberekenen. Deze functie draait ná de SoS-pull, die de 1X2-kansen
+    // al naar de de-vigde markt heeft getrokken. Ze opnieuw uit de lambda's afleiden zou die pull wissen.
+    // Het anker corrigeert het doelpuntentotaal: dat raakt de goal-markten en de AH-staart, niet 1X2.
     anchor.applied = true;
   }
   poisson.anchor = anchor;
@@ -401,11 +399,11 @@ function buildAsianLinesHtml(poisson, goalOdds, m) {
         ${rows}
       </div>
       <div style="padding:.45rem 1rem .85rem;${mono}font-size:.5rem;color:rgba(255,255,255,.72);">
-        ${!tailOk
-          ? `<span style="color:rgba(255,190,80,.95);font-weight:700;">Geen EV-advies</span> <span style="color:rgba(255,255,255,.6);">— model verwacht ${modelTot.toFixed(2)} goals, markt ${mktTot.toFixed(2)}. Bij zo'n verschil komt "value" op de handicap uit de doelpuntenmarge-aanname, niet uit een echte edge.</span>`
-          : (best && best.ev > 0
-            ? `Beste EV: <span style="color:#00BEC4;font-weight:700;">${best.txt} @${best.odds}</span> <span style="color:#16c784;font-weight:700;">${best.ev >= 0 ? '+' : ''}${best.ev.toFixed(1)}%</span>`
-            : `<span style="color:rgba(255,255,255,.6);">Geen positieve EV binnen de betrouwbare lijnen</span>`)}
+        ${best && best.ev > 0
+          ? `Beste EV: <span style="color:${tailOk ? '#00BEC4' : 'rgba(0,190,196,.65)'};font-weight:700;">${best.txt} @${best.odds}</span> <span style="color:${tailOk ? '#16c784' : 'rgba(22,199,132,.65)'};font-weight:700;">${best.ev >= 0 ? '+' : ''}${best.ev.toFixed(1)}%</span>${
+              tailOk ? '' : ` <span style="color:rgba(255,190,80,.9);font-weight:700;">\u26a0 lage betrouwbaarheid</span>`}`
+          : `<span style="color:rgba(255,255,255,.6);">Geen positieve EV binnen de betrouwbare lijnen</span>`}
+        ${tailOk ? '' : `<div style="margin-top:.28rem;color:rgba(255,190,80,.7);line-height:1.5;">Doelpuntentotaal wijkt af: model ${modelTot.toFixed(2)}, markt ${mktTot.toFixed(2)}. Deze EV leunt deels op de doelpuntenmarge-aanname, niet puur op een edge.</div>`}
         <div style="color:rgba(255,255,255,.4);margin-top:.3rem;line-height:1.55;">Lijn vanuit thuisploeg · ▲ value op thuis, ▼ op uit · EV is gerangschikt met de échte odds (push meegerekend), niet met procentpunten.<br>⚠ = staartlijn (markt buiten 20–80%): daar meet je vooral de aanname van het model over de doelpuntenmarge, niet een echte edge. Buiten beschouwing gelaten voor de EV-keuze.</div>
       </div>
     </div>`;
