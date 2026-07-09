@@ -1687,7 +1687,7 @@ function openValueAnalysis(matchId) {
 }
 
 // ── AI diepte analyse ─────────────────────────────────────
-function buildModelVsMarktHTML(poisson, m, goalOdds) {
+function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
   const oH = parseFloat(m.homeOdds), oD = parseFloat(m.drawOdds), oA = parseFloat(m.awayOdds);
   const odds1x2 = (oH > 1 && oD > 1 && oA > 1);
   const modelValid = !!(poisson && poisson.valid);
@@ -1812,8 +1812,11 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
         _specs.push({ label: `AH ${m.away} ${_fmtL(-ln)}`, odds: o.away, markt: o.fairAway, tag: _tagA(-ln) });
       }
     }
+    // v26.253: geen TOP VALUE-badge als het model-doelpuntentotaal niet strookt met de markt. De AH-\"value\"
+    // komt dan uit de doelpuntenmarge-aanname, niet uit een edge — precies wat de voetnoot eronder al zegt.
+    const _tailBad = !!(poisson.anchor && poisson.anchor.coherent === false && !poisson.anchor.applied);
     let _topIdx = -1, _topVal = 3; // badge alleen bij echte value (>=3pp)
-    _specs.forEach((sp, i) => { if (sp.val != null && sp.val >= _topVal) { _topVal = sp.val; _topIdx = i; } });
+    if (!_tailBad) _specs.forEach((sp, i) => { if (sp.val != null && sp.val >= _topVal) { _topVal = sp.val; _topIdx = i; } });
     let ahRows = '';
     _specs.forEach((sp, i) => {
       ahRows += (sp.model != null)
@@ -1838,20 +1841,51 @@ function buildModelVsMarktHTML(poisson, m, goalOdds) {
     return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);${F}font-size:.55rem;color:rgba(255,255,255,.5);line-height:1.6;">\ud83d\udcd0 MODEL vs MARKT \u00b7 \u26bd DOELPUNTEN \u00b7 \u2696\ufe0f ASIAN LINES<br>Even niet beschikbaar \u2014 de odds konden niet worden geladen of er is te weinig vormdata. Sluit de analyse en open \u2019m opnieuw om het nog eens te proberen.</div>`;
   }
 
-  // ── VALUE-INDEX: grootste model-vs-markt edge van de wedstrijd ──
+  // ── VALUE-INDEX ──
+  // v26.253: ÉÉN VERHAAL. Vroeger toonde deze kaart altijd de grootste positieve afwijking als
+  // "sterke value" — óók wanneer de tipkaart drie blokken lager "GEEN VALUE — OVERSLAAN" zei.
+  // Dat is een tegenspraak: de tip komt uit de backend (die drempels, longshot-guard en API-scepsis
+  // toepast), de afwijking is slechts een rauw verschil. Nu volgt de kop de tipbeslissing:
+  //   backend-pick  -> VALUE-INDEX met die pick (de enige die ook in CLV/trackrecord meegemeten wordt)
+  //   geen pick     -> "GROOTSTE AFWIJKING", neutraal, expliciet "geen tip"
   let header = '';
-  if (edges.length) {
+  const _incoherent = !!(poisson.anchor && poisson.anchor.coherent === false && !poisson.anchor.applied);
+  if (codeTip && codeTip.code) {
+    const _hasV = (codeTip.model != null && codeTip.mkt != null);
+    const v = _hasV ? (codeTip.model - codeTip.mkt) : null;
+    const col = (v == null) ? '#16c784' : (v >= 0 ? '#16c784' : '#d9a521');
+    const tag = (v == null) ? 'backend-pick' : (v >= 5 ? 'sterke value' : (v >= 3 ? 'value' : 'krappe value'));
+    const lbl = `${codeTip.label}${codeTip.odds ? ` @${codeTip.odds}` : ''}`;
+    header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.5rem .7rem;margin-bottom:.55rem;background:rgba(255,255,255,.04);border:1px solid ${col}55;border-radius:.55rem;">
+      <div style="min-width:0;"><div style="${F}font-size:.46rem;color:rgba(255,255,255,.6);letter-spacing:.09em;">VALUE-INDEX \u00b7 DE TIP</div><div style="${F}font-size:.62rem;color:#fff;margin-top:.14rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${lbl}</div></div>
+      <div style="text-align:right;flex-shrink:0;"><div style="${F}font-weight:800;color:${col};line-height:1;font-size:1.25rem;">${v == null ? '\u2713' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}<span style="font-size:.6rem;font-weight:600;"> pp</span>`}</div><div style="${F}font-size:.45rem;color:${col};margin-top:.16rem;letter-spacing:.04em;">${tag}</div></div>
+    </div>`;
+  } else if (edges.length) {
     const best = edges.reduce((a, b) => b.edge > a.edge ? b : a);
     const v = best.edge;
-    const col = v >= 3 ? '#16c784' : (v >= 0 ? '#d9a521' : '#dc2626');
-    const tag = v >= 5 ? 'sterke value' : (v >= 3 ? 'value' : (v >= 0 ? 'nauwelijks value' : 'geen value'));
-    header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.5rem .7rem;margin-bottom:.55rem;background:rgba(255,255,255,.04);border:1px solid ${col}55;border-radius:.55rem;">
-      <div style="min-width:0;"><div style="${F}font-size:.46rem;color:rgba(255,255,255,.6);letter-spacing:.09em;">VALUE-INDEX</div><div style="${F}font-size:.62rem;color:#fff;margin-top:.14rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${best.label}</div></div>
-      <div style="text-align:right;flex-shrink:0;"><div style="${F}font-weight:800;color:${col};line-height:1;font-size:1.25rem;">${v >= 0 ? '+' : ''}${v.toFixed(1)}<span style="font-size:.6rem;font-weight:600;"> pp</span></div><div style="${F}font-size:.45rem;color:${col};margin-top:.16rem;letter-spacing:.04em;">${tag}</div></div>
+    const col = 'rgba(255,255,255,.45)';
+    const tag = _incoherent ? 'model wijkt af van markt' : 'geen tip \u2014 markt efficient';
+    header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.5rem .7rem;margin-bottom:.55rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);border-radius:.55rem;">
+      <div style="min-width:0;"><div style="${F}font-size:.46rem;color:rgba(255,255,255,.5);letter-spacing:.09em;">GROOTSTE AFWIJKING</div><div style="${F}font-size:.62rem;color:rgba(255,255,255,.75);margin-top:.14rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${best.label}</div></div>
+      <div style="text-align:right;flex-shrink:0;"><div style="${F}font-weight:800;color:${col};line-height:1;font-size:1.25rem;">${v >= 0 ? '+' : ''}${v.toFixed(1)}<span style="font-size:.6rem;font-weight:600;"> pp</span></div><div style="${F}font-size:.45rem;color:rgba(255,190,80,.8);margin-top:.16rem;letter-spacing:.04em;">${tag}</div></div>
     </div>`;
   }
 
-  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">${header}${body}${goalsHTML}${ahHTML}</div>`;
+  // v26.253: coherentie-waarschuwing. Staat het model-doelpuntentotaal ver van het markt-impliciete
+  // totaal, dan zijn alle Under-regels + BTTS-Nee dezelfde scheve parameter, geen vier losse edges.
+  let coherenceHTML = '';
+  if (_incoherent && poisson.anchor.mktTot != null) {
+    const a = poisson.anchor;
+    const richting = a.gap > 0 ? 'meer' : 'minder';
+    coherenceHTML = `<div style="margin-top:.5rem;padding:.45rem .6rem;background:rgba(255,190,80,.07);border:1px solid rgba(255,190,80,.28);border-radius:.45rem;${F}font-size:.5rem;line-height:1.6;color:rgba(255,255,255,.78);">
+      <span style="color:rgba(255,190,80,.95);font-weight:700;">Let op \u2014 doelpuntentotaal wijkt af</span><br>
+      Het model verwacht ${a.modelTot.toFixed(2)} goals, de markt ${a.mktTot.toFixed(2)} (${Math.abs(a.gap).toFixed(2)} ${richting}).
+      Daardoor lijken \u00e1lle ${a.gap < 0 ? 'Under' : 'Over'}-regels en \u00e9\u00e9n kant van Beide-scoren tegelijk value te hebben.
+      Dat is \u00e9\u00e9n scheve aanname die meerdere keren wordt geteld, geen losse edges.
+    </div>`;
+  }
+
+  return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">${header}${body}${goalsHTML}${coherenceHTML}${ahHTML}</div>`;
 }
 
 // v26.206: AI-kalibratiebanden cachen + kans -> band mappen (voor de kalibratie-regel in de tip)
@@ -1923,6 +1957,16 @@ async function runAnalyse() {
     const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[]) : null;
     const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[]) : null;
     const poisson = calcPoissonKansen(homeGoalStats, awayGoalStats, leagueId || 1.35);
+
+    // v26.147: O/U + BTTS markt-odds ophalen voor model-vs-markt op doelpunten
+    // v26.253: naar VOREN gehaald — het markt-anker heeft de O/U-odds nodig vóór de SoS-pull.
+    const goalOdds = await wt(typeof fetchGoalOdds === 'function' ? fetchGoalOdds(m.id) : Promise.resolve(null), 11000); // v26.236: ruimer timeout — grote odds-payload (239KB) mag niet stil afkappen
+
+    // v26.253: MARKT-ANKER op het doelpuntentotaal. Moet vóór de SoS-pull, want die pull werkt op de
+    // 1X2-kansen die uit de lambda's volgen. Zet altijd poisson.anchor (diagnose); muteert alleen als
+    // het anker aanstaat (LAMBDA_ANCHOR_W > 0). Mag de analyse nooit breken.
+    try { if (typeof anchorLambdasToMarket === 'function') anchorLambdasToMarket(poisson, goalOdds); } catch(e) {}
+
     // v26.219: KLASSE/SoS-correctie op de rauwe Poisson in de losse analyse (popup). De rauwe Poisson negeert
     // tegenstander-sterkte -> topland fout laag ingeschat (valkuil). Trek naar de de-vigde markt, superlineair:
     // gematigde afwijking (echte value) blijft intact, extreme divergentie (de valkuil) wordt hard dichtgetrokken.
@@ -1940,7 +1984,8 @@ async function runAnalyse() {
         // lambda's ook mee-schuiven zodat de goal-markten kloppen: supremacie + totaal-vloer
         if (poisson.lambdaHome && poisson.lambdaAway) {
           const _tot = poisson.lambdaHome + poisson.lambdaAway;
-          if (_tot < 1.9) { const _f = 2.1/_tot; poisson.lambdaHome*=_f; poisson.lambdaAway*=_f; }
+          // v26.253: de vloer mag een toegepast markt-anker niet overrulen (de markt weet het beter)
+          if (_tot < 1.9 && !poisson.anchor?.applied) { const _f = 2.1/_tot; poisson.lambdaHome*=_f; poisson.lambdaAway*=_f; }
           // supremacie richting markt (favoriet scoort meer): schaal op basis van 1X2-gap
           const _homeFav = _mh - _ma; // + = thuis favoriet
           const _shift = Math.max(-0.6, Math.min(0.6, _homeFav/100));
@@ -1955,9 +2000,6 @@ async function runAnalyse() {
         }
       }
     }
-
-    // v26.147: O/U + BTTS markt-odds ophalen voor model-vs-markt op doelpunten
-    const goalOdds = await wt(typeof fetchGoalOdds === 'function' ? fetchGoalOdds(m.id) : Promise.resolve(null), 11000); // v26.236: ruimer timeout — grote odds-payload (239KB) mag niet stil afkappen
 
     // v26.246: ASIAN LINES-tabel (meerdere lijnen, model vs. markt) deterministisch renderen — geen LLM
     try {
@@ -2166,7 +2208,7 @@ KWALITEITSREGELS:
       : '';
     fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', result.tactiek || '—', '#d97706'));
-    const _mvm = (typeof buildModelVsMarktHTML === 'function') ? buildModelVsMarktHTML(poisson, m, goalOdds) : '';
+    const _mvm = (typeof buildModelVsMarktHTML === 'function') ? buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) : ''; // v26.253: tip meegeven — VALUE-INDEX mag de tipkaart niet tegenspreken
     fill('kans',    sectionCard('🎯', t('ana.chances','KANSEN'), (result.kans || '—') + _mvm, '#00BEC4'));
     fill('risico',  sectionCard('⚠️', 'RISICO', result.risico || '—', '#dc2626'));
     fill('advies',  sectionCard('💡', t('ana.advice','ADVIES'), result.advies || '—', '#00BEC4'));
