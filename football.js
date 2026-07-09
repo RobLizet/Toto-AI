@@ -502,7 +502,7 @@ async function fetchGoalOdds(fixtureId, _retry = 0) {
   }
 }
 
-function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null) {
+function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null, teamId = null) {
   if (!stats?.goals) return null;
   const gf = stats.goals.for?.average;
   const ga = stats.goals.against?.average;
@@ -541,25 +541,37 @@ function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null
     playedHome,
     playedAway,
   };
-  if (recentFixtures?.length >= 3) {
-    const last5 = recentFixtures.slice(-5);
-    const last3 = recentFixtures.slice(-3);
+  // v26.261: BUGFIX. Dit las `f.goals.for` / `f.goals.against`, maar API-Football levert
+  // `f.goals = { home, away }`. Beide velden waren dus ALTIJD undefined -> `|| 0` -> recentGF=0, recentGA=0.
+  // Met RW=0.55 werd elke teamsterkte daardoor met 0.45 vermenigvuldigd: het model verwachtte 1.36 goals
+  // waar de markt 2.58 inprijst. De "recente vorm"-weging heeft dus nooit vorm gemeten, alleen gedempt.
+  // Per fixture moet je weten of het team thuis of uit stond; vandaar de nieuwe teamId-parameter.
+  const _played = (recentFixtures || []).filter(f => {
+    const st = f.fixture?.status?.short;
+    return (st === 'FT' || st === 'AET' || st === 'PEN') && f.goals && f.goals.home != null && f.goals.away != null;
+  });
+  const _gf = f => (teamId && f.teams?.away?.id === teamId) ? f.goals.away : f.goals.home;
+  const _ga = f => (teamId && f.teams?.away?.id === teamId) ? f.goals.home : f.goals.away;
+  if (teamId && _played.length >= 3) {
+    const last5 = _played.slice(-5);
+    const last3 = _played.slice(-3);
     // Weeg laatste 3 wedstrijden zwaarder dan laatste 5
-    const recentGF5 = last5.reduce((s,f) => s + (f.goals?.for  || 0), 0) / last5.length;
-    const recentGA5 = last5.reduce((s,f) => s + (f.goals?.against || 0), 0) / last5.length;
-    const recentGF3 = last3.reduce((s,f) => s + (f.goals?.for  || 0), 0) / last3.length;
-    const recentGA3 = last3.reduce((s,f) => s + (f.goals?.against || 0), 0) / last3.length;
+    const recentGF5 = last5.reduce((s,f) => s + _gf(f), 0) / last5.length;
+    const recentGA5 = last5.reduce((s,f) => s + _ga(f), 0) / last5.length;
+    const recentGF3 = last3.reduce((s,f) => s + _gf(f), 0) / last3.length;
+    const recentGA3 = last3.reduce((s,f) => s + _ga(f), 0) / last3.length;
     // Gewogen recente vorm: 60% laatste 3, 40% laatste 5
     const recentGF = 0.60 * recentGF3 + 0.40 * recentGF5;
     const recentGA = 0.60 * recentGA3 + 0.40 * recentGA5;
     // Verhoogde vormweging: 55% recent, 45% seizoen (was 40/60)
     const RW = 0.55, SW = 0.45;
-    if (base.avgScoredTotal) base.avgScoredTotal = SW * base.avgScoredTotal + RW * recentGF;
-    if (base.avgConcTotal)   base.avgConcTotal   = SW * base.avgConcTotal   + RW * recentGA;
-    if (base.avgScoredHome)  base.avgScoredHome  = SW * base.avgScoredHome  + RW * recentGF;
-    if (base.avgScoredAway)  base.avgScoredAway  = SW * base.avgScoredAway  + RW * recentGF;
-    if (base.avgConcHome)    base.avgConcHome    = SW * base.avgConcHome    + RW * recentGA;
-    if (base.avgConcAway)    base.avgConcAway    = SW * base.avgConcAway    + RW * recentGA;
+    // v26.261: `!= null` i.p.v. truthy — een gemeten 0 is data (zelfde bugfamilie als v26.260)
+    if (base.avgScoredTotal != null) base.avgScoredTotal = SW * base.avgScoredTotal + RW * recentGF;
+    if (base.avgConcTotal   != null) base.avgConcTotal   = SW * base.avgConcTotal   + RW * recentGA;
+    if (base.avgScoredHome  != null) base.avgScoredHome  = SW * base.avgScoredHome  + RW * recentGF;
+    if (base.avgScoredAway  != null) base.avgScoredAway  = SW * base.avgScoredAway  + RW * recentGF;
+    if (base.avgConcHome    != null) base.avgConcHome    = SW * base.avgConcHome    + RW * recentGA;
+    if (base.avgConcAway    != null) base.avgConcAway    = SW * base.avgConcAway    + RW * recentGA;
     base.recentFormUsed = true;
     base.recentGF = parseFloat(recentGF.toFixed(2));
     base.recentGA = parseFloat(recentGA.toFixed(2));
