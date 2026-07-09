@@ -1759,7 +1759,13 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     else if (gm)   { goalRows += `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">Beide teams scoren</span><span style="color:rgba(255,255,255,.88);">Ja <b style="color:#c084fc;">${gm.bttsY}%</b> \u00b7 Nee <b style="color:#c084fc;">${gm.bttsN}%</b></span></div>`; }
     const expG = gm ? ` \u00b7 verw. ${(Number(poisson.lambdaHome) + Number(poisson.lambdaAway)).toFixed(1)} goals` : '';
     const subtitle = (gm && hasMarket) ? `model vs markt${expG}` : (hasMarket ? 'markt (vig eruit) \u2014 model n.v.t.' : `model${expG}`);
-    const note = (gm && hasMarket) ? '+pp = model hoger dan markt (mogelijk value)' : (hasMarket ? 'Faire markt-kansen \u2014 model niet beschikbaar (te weinig vormdata voor dit team)' : 'Modelkans uit verwachte goals \u2014 O/U-odds nog niet gepost voor deze wedstrijd');
+    // v26.255: benoem de \u00e9chte reden dat het model ontbreekt
+    const _missTxt = {
+      fetch: 'Faire markt-kansen \u2014 de teamstatistieken konden niet worden geladen (API-limiet of trage respons). Tik op \u201cNieuwe analyse\u201d om het opnieuw te proberen.',
+      thin: 'Faire markt-kansen \u2014 model niet beschikbaar (te weinig gespeelde wedstrijden voor deze teams)',
+      onbruikbaar: 'Faire markt-kansen \u2014 model niet beschikbaar (statistieken onbruikbaar voor dit duel)',
+    };
+    const note = (gm && hasMarket) ? '+pp = model hoger dan markt (mogelijk value)' : (hasMarket ? (_missTxt[poisson.missReason] || _missTxt.thin) : 'Modelkans uit verwachte goals \u2014 O/U-odds nog niet gepost voor deze wedstrijd');
     goalsHTML = `<div style="${body ? 'margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);' : ''}">
       <div style="${F}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\u26bd DOELPUNTEN \u2014 ${subtitle}</div>
       ${goalRows}
@@ -1942,8 +1948,8 @@ async function runAnalyse() {
       wt(fetchH2H(m.homeId, m.awayId), 5000),
       wt(fetchTeamForm(m.homeId), 5000),
       wt(fetchTeamForm(m.awayId), 5000),
-      wt(fetchTeamStats(m.homeId, leagueId || 88), 5000),
-      wt(fetchTeamStats(m.awayId, leagueId || 88), 5000),
+      wt(fetchTeamStats(m.homeId, leagueId || 88), 9000), // v26.255: 5s was krapper dan de rate-limit-retry van apiFetch
+      wt(fetchTeamStats(m.awayId, leagueId || 88), 9000), // -> stille null -> poisson.valid=false -> 'model n.v.t.'
       wt(fetchLineups(m.id), 4000),
       wt(fetchInjuries(m.id), 3000),
       wt(fetchStandings(leagueId || m.leagueId, null), 4000),
@@ -1960,6 +1966,16 @@ async function runAnalyse() {
     const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[]) : null;
     const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[]) : null;
     const poisson = calcPoissonKansen(homeGoalStats, awayGoalStats, leagueId || 1.35);
+
+    // v26.255: EERLIJKE DIAGNOSE. Voorheen kreeg elk model-loos scenario dezelfde tekst
+    // ("te weinig vormdata voor dit team"), ook wanneer de statistics-call simpelweg was afgekapt
+    // door een rate-limit. Dat is de UI iets laten beweren wat de code niet weet.
+    if (!poisson.valid) {
+      const _played = t => Number(t?.fixtures?.played?.total) || 0;
+      poisson.missReason = (!hStats || !aStats) ? 'fetch'
+        : (_played(hStats) < 3 || _played(aStats) < 3) ? 'thin'
+        : 'onbruikbaar';
+    }
 
     // v26.147: O/U + BTTS markt-odds ophalen voor model-vs-markt op doelpunten
     // v26.253: naar VOREN gehaald — het markt-anker heeft de O/U-odds nodig vóór de SoS-pull.
