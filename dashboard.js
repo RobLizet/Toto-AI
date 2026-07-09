@@ -365,12 +365,8 @@ function renderDashboard() {
     return true;
   });
   // Alleen kwalitatieve picks voor de 100 teller
-  const DREMPEL = { minValue: 6, minConf: 5 }; // v26.116: 6/5
-  const kwaliPicks = allPicks.filter(p =>
-    !p.isSparseData &&
-    (p.value||0) >= DREMPEL.minValue &&
-    (p.confidence||0) >= DREMPEL.minConf
-  );
+  // v26.263: backend-picks niet nog eens filteren (zie pmxKwaliPicks in state.js)
+  const kwaliPicks = pmxKwaliPicks(allPicks, !!state._qualityPicks);
   const settledPicks = kwaliPicks.filter(p => p.status === 'win' || p.status === 'lose');
   const winPicks = settledPicks.filter(p => p.status === 'win');
   const scanHitrate = settledPicks.length ? Math.round(winPicks.length / settledPicks.length * 100) : null;
@@ -828,8 +824,8 @@ async function openPicksInsight() {
   // Verzamel alle statistieken
   const scanLog = state.scanLog || [];
   const allPicks = state._qualityPicks ? state._qualityPicks.slice() : scanLog.flatMap(s => s.picks || []); // v26.117: Supabase-picks
-  const DREMPEL = { minValue: 6, minConf: 5 }; // v26.116: 6/5
-  const kwali = allPicks.filter(p => !p.isSparseData && (p.value||0) >= DREMPEL.minValue && (p.confidence||0) >= DREMPEL.minConf);
+  // v26.263: backend-picks niet nog eens filteren
+  const kwali = pmxKwaliPicks(allPicks, !!state._qualityPicks);
   const settled = kwali.filter(p => p.status === 'win' || p.status === 'lose');
   const wins = settled.filter(p => p.status === 'win');
   const open = kwali.filter(p => !p.status || p.status === 'pending');
@@ -996,12 +992,8 @@ Geef een heldere analyse in het Nederlands.` }]
 function showPicksModal() {
   const scanLog = state.scanLog || [];
   const allPicks = state._qualityPicks ? state._qualityPicks.slice() : scanLog.flatMap(s => s.picks || []); // v26.117: Supabase-picks
-  const DREMPEL = { minValue: 6, minConf: 5 }; // v26.116: 6/5
-  const kwaliPicks = allPicks.filter(p =>
-    !p.isSparseData &&
-    (p.value||0) >= DREMPEL.minValue &&
-    (p.confidence||0) >= DREMPEL.minConf
-  );
+  // v26.263: backend-picks niet nog eens filteren (zie pmxKwaliPicks in state.js)
+  const kwaliPicks = pmxKwaliPicks(allPicks, !!state._qualityPicks);
 
   const settled   = kwaliPicks.filter(p => p.status === 'win' || p.status === 'lose');
   const open      = kwaliPicks.filter(p => !p.status || p.status === 'pending');

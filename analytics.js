@@ -61,14 +61,10 @@ async function renderAnalyticsInto(containerId) {
 // ── Lokale statistieken berekenen uit scanLog ────────
 function _calcLocalStats(allPicksOverride) {
   const scanLog = state.scanLog || [];
+  const _fromBackend = !!(allPicksOverride && allPicksOverride.length);
   const allPicks = allPicksOverride || scanLog.flatMap(s => s.picks || []);
-  const DREMPEL = { minValue: 6, minConf: 5 }; // v26.115: iets minder streng (was 8/6)
-
-  const kwali = allPicks.filter(p =>
-    !p.isSparseData &&
-    (p.value||0) >= DREMPEL.minValue &&
-    (p.confidence||0) >= DREMPEL.minConf
-  );
+  // v26.263: geen tweede drempel bovenop de backend-selectie (zie pmxKwaliPicks in state.js)
+  const kwali = pmxKwaliPicks(allPicks, _fromBackend);
   const settled = kwali.filter(p => p.status === 'win' || p.status === 'lose');
   const wins = settled.filter(p => p.status === 'win');
 
@@ -858,3 +854,4 @@ function showSharpPopup(dataId) {
   overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
   document.body.appendChild(overlay);
 }
+
