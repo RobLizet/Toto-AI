@@ -481,6 +481,10 @@ function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null
   }
 
   const gamesPlayed = stats.fixtures?.played?.total || null;
+  // v26.257: sample-size per split — de home-sterkte steunt alleen op thuiswedstrijden, de away-sterkte
+  // alleen op uitwedstrijden. Zonder dat kun je niet regulariseren met de juiste n.
+  const playedHome = stats.fixtures?.played?.home || null;
+  const playedAway = stats.fixtures?.played?.away || null;
   let base = {
     avgScoredHome:  parseFloat(gf.home)  || null,
     avgScoredAway:  parseFloat(gf.away)  || null,
@@ -491,6 +495,8 @@ function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null
     xgFor,
     xgAgainst,
     gamesPlayed,
+    playedHome,
+    playedAway,
   };
   if (recentFixtures?.length >= 3) {
     const last5 = recentFixtures.slice(-5);
@@ -518,8 +524,50 @@ function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null
   return base;
 }
 
+// ═══ v26.257: REGULARISATIE VAN DE TEAMSTERKTES (empirical-Bayes shrinkage) ═══════════════════
+// Het model schat lambda uit `aanval x verdediging / leagueAvg`. Op 5 wedstrijden zijn die ratio's
+// extreem: Morocco liet uit 0.5 goals toe -> lambda_away 0.50 -> 9% winstkans waar de markt 16% zegt.
+// Diezelfde onderschatting duwt het doelpuntentotaal omlaag, waarna de vloer (1.9 -> 2.1) het weer
+// kunstmatig optilt: 1X2 komt dan uit de rauwe lambda's, de goal-markten uit de opgetilde. Twee modellen
+// in één analyse.
+// De fix is niet corrigeren maar minder overtuigd zijn: trek elke sterkte-ratio naar 1.0 met gewicht
+// n/(n+K), waarbij K het aantal "pseudo-wedstrijden" van gemiddeldheid is. Bij n -> oneindig verdwijnt
+// het effect vanzelf, dus dit is zelf-uitschakelend zodra clubdata rijpt.
+// DORMANT: K = 0 -> geen shrinkage, lambda's byte-identiek.
+// Test op één toestel: localStorage.setItem('pmx_shrink_k','8')
+// Aanval en defensie zijn niet even ruizig. Op 3-5 wedstrijden zijn aanvalsgemiddelden nog plausibel
+// (2.14x gemiddeld), maar defensiegemiddelden ontsporen (0.21x = "laat 5x minder toe dan gemiddeld").
+// Daarom twee aparte K's. Grid-search op 4 WK-duels gaf Ka~5, Kd~3; dat is te weinig data om vast te
+// zetten, dus beide staan op 0 tot er clubdata is.
+const STRENGTH_SHRINK_K_ATT_DEFAULT = 0;
+const STRENGTH_SHRINK_K_DEF_DEFAULT = 0;
+function _lsNum(key, dflt) {
+  try {
+    const v = parseFloat(localStorage.getItem(key));
+    if (isFinite(v) && v >= 0 && v <= 40) return v;
+  } catch (e) {}
+  return dflt;
+}
+function getStrengthShrinkKAtt() { return _lsNum('pmx_shrink_k_att', STRENGTH_SHRINK_K_ATT_DEFAULT); }
+function getStrengthShrinkKDef() { return _lsNum('pmx_shrink_k_def', STRENGTH_SHRINK_K_DEF_DEFAULT); }
+
+// Trekt een absoluut goals-gemiddelde naar het competitiegemiddelde, gewogen naar sample-size.
+function shrinkStrength(val, n, leagueAvg, K) {
+  if (!(K > 0) || !(n > 0) || !(val > 0) || !(leagueAvg > 0)) return val;
+  const ratio = val / leagueAvg;
+  const shrunk = (n * ratio + K * 1.0) / (n + K);
+  return shrunk * leagueAvg;
+}
+
 function calcPoissonKansen(homeStats, awayStats, leagueAvgOrId = 1.35, homeInjFactor = null, awayInjFactor = null) {
-  const leagueAvg = typeof leagueAvgOrId === 'number' && leagueAvgOrId < 10
+  // v26.257: BUGFIX. De oude check was `typeof === 'number' && < 10` om een gemiddelde van een league-ID
+  // te onderscheiden. Maar ALLE toernooi-IDs zijn eencijferig: 1=WK, 2=Champions League, 3=Europa League,
+  // 4=EK, 5=Nations League, 6=Afrika Cup, 9=Copa America. Die werden dus als doelpuntgemiddelde gebruikt:
+  // het WK deelde door 1.0 i.p.v. 1.40, Copa America door 9.0. LEAGUE_AVG_GOALS bevat expliciet `1: 1.40`
+  // en `2: 1.45` — die regels waren onbereikbaar. Gevolg (gemeten op 4 WK-duels): lambda's tot 6.94,
+  // Norway-England kwam uit op 9.10 verwachte goals, en 2 van de 4 wedstrijden vielen buiten het geldige
+  // bereik -> valid:false -> "model n.v.t.". League-ID's zijn altijd gehele getallen, gemiddeldes niet.
+  const leagueAvg = (typeof leagueAvgOrId === 'number' && !Number.isInteger(leagueAvgOrId))
     ? leagueAvgOrId
     : getLeagueAvg(leagueAvgOrId);
   if (!homeStats || !awayStats) return { k1:null, kX:null, k2:null, valid:false };
@@ -535,6 +583,17 @@ function calcPoissonKansen(homeStats, awayStats, leagueAvgOrId = 1.35, homeInjFa
     homeDefenceBase = homeDefenceBase * 0.6 + (homeStats.xgAgainst / Math.max(homeStats.gamesPlayed||20,10)) * 0.4;
   if (awayStats.xgAgainst && awayStats.xgAgainst > 0)
     awayDefenceBase = awayDefenceBase * 0.6 + (awayStats.xgAgainst / Math.max(awayStats.gamesPlayed||20,10)) * 0.4;
+  // v26.257: regulariseer de vier sterktes met de sample-size van hún eigen split.
+  const _Ka = getStrengthShrinkKAtt(), _Kd = getStrengthShrinkKDef();
+  const _nH = homeStats.playedHome || homeStats.gamesPlayed || 0;
+  const _nA = awayStats.playedAway || awayStats.gamesPlayed || 0;
+  if (_Ka > 0 || _Kd > 0) {
+    homeAttackBase  = shrinkStrength(homeAttackBase,  _nH, leagueAvg, _Ka);
+    homeDefenceBase = shrinkStrength(homeDefenceBase, _nH, leagueAvg, _Kd);
+    awayAttackBase  = shrinkStrength(awayAttackBase,  _nA, leagueAvg, _Ka);
+    awayDefenceBase = shrinkStrength(awayDefenceBase, _nA, leagueAvg, _Kd);
+  }
+
   const homeAttack  = homeAttackBase  * (homeInjFactor?.attackFactor  ?? 1.0);
   const homeDefence = homeDefenceBase * (1 / (homeInjFactor?.defenseFactor ?? 1.0));
   const awayAttack  = awayAttackBase  * (awayInjFactor?.attackFactor  ?? 1.0);
@@ -558,6 +617,8 @@ function calcPoissonKansen(homeStats, awayStats, leagueAvgOrId = 1.35, homeInjFa
     lambdaAway: parseFloat(lambdaAway.toFixed(2)),
     injLabel,
     hasXG: !!(homeStats.xgFor || awayStats.xgFor),
+    shrunk: (_Ka > 0 || _Kd > 0), // v26.257: gezet als de sterktes geregulariseerd zijn -> de totaal-vloer mag uit
+    shrinkK: { att: _Ka, def: _Kd },
     valid: true
   };
 }
