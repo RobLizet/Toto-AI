@@ -996,8 +996,8 @@ async function _scanValueAll_legacy(silent = false) {
           const played = homeStanding?.played || 0;
           const compPhase = getCompetitionPhase(played);
 
-          const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[]) : null;
-          const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[])  : null;
+          const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[], m.homeId) : null; // v26.261: teamId nodig om thuis/uit-goals te bepalen
+          const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[], m.awayId)  : null;
 
           // Motivatie factor meenemen in Poisson
           const homeMotFactor = homeStanding?.motivatieFactor || 1.0;
@@ -1962,8 +1962,8 @@ async function runAnalyse() {
     ]);
 
     // Poisson met xG
-    const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[]) : null;
-    const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[]) : null;
+    const homeGoalStats = hStats ? extractTeamGoalStats(hStats, homeForm, homeXG||[], m.homeId) : null; // v26.261
+    const awayGoalStats = aStats ? extractTeamGoalStats(aStats, awayForm, awayXG||[], m.awayId) : null;
     const poisson = calcPoissonKansen(homeGoalStats, awayGoalStats, leagueId || 1.35);
 
     // v26.255: EERLIJKE DIAGNOSE. Voorheen kreeg elk model-loos scenario dezelfde tekst
