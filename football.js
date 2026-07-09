@@ -330,6 +330,43 @@ function asianModelProbs(lambdaHome, lambdaAway, homeLine, maxGoals = 10, t1x2 =
 // Vergelijkt de push-conditionele modelkans (asianModelProbs, zelfde Poisson+DC) met de 2-weg
 // de-vigde marktkans per lijn. Bij een 2-weg-lijn is away-value = -home-value, dus 1 value-getal
 // per lijn volstaat. Puur informatief + eerlijk gelabeld als experimenteel/shadow (nog niet gevalideerd).
+// v26.259: één bron voor de beste Asian-Handicap-EV. Wordt gebruikt door zowel de AH-tabel als de
+// tipkaart, zodat die twee elkaar nooit kunnen tegenspreken. Rangschikt op EV met de échte odds
+// (push-correct), alleen binnen de betrouwbaarheidsband (markt 20-80%).
+function bestAsianEV(poisson, goalOdds, m) {
+  try {
+    const ah = goalOdds && goalOdds.ah;
+    if (!ah || !poisson || !poisson.valid) return null;
+    const lh = poisson.lambdaHome, la = poisson.lambdaAway;
+    if (!(lh > 0 && la > 0)) return null;
+    const lines = Object.keys(ah).map(parseFloat).filter(x => isFinite(x) && Math.abs(x) <= 2).sort((a, b) => a - b);
+    if (!lines.length) return null;
+    const sgn = x => (x > 0 ? '+' : '') + x;
+    const t1x2 = (poisson.k1 > 0 && poisson.kX > 0 && poisson.k2 > 0) ? { p1: poisson.k1, pX: poisson.kX, p2: poisson.k2 } : null;
+    const BAND_LO = 20, BAND_HI = 80;
+    const _an = poisson.anchor || {};
+    const tailOk = _an.applied ? true : (_an.coherent !== false);
+    let best = null;
+    for (const ln of lines) {
+      const key = (Math.round(ln * 4) / 4).toFixed(2);
+      const mk = ah[key]; if (!mk) continue;
+      const mdl = asianModelProbs(lh, la, ln, 10, t1x2); if (!mdl) continue;
+      const vH = +(mdl.home - mk.fairHome).toFixed(1);
+      const pP = (mdl.push || 0) / 100;
+      const pW = (mdl.home / 100) * (1 - pP), pL = (mdl.away / 100) * (1 - pP);
+      const oH = mk.home, oA = mk.away;
+      let ev = null;
+      if (vH >= 0 && oH > 1) ev = (pW * (oH - 1) - pL) * 100;
+      else if (vH < 0 && oA > 1) ev = (pL * (oA - 1) - pW) * 100;
+      const inBand = mk.fairHome >= BAND_LO && mk.fairHome <= BAND_HI;
+      if (inBand && ev != null && (!best || ev > best.ev)) {
+        best = { ev, txt: `${vH >= 0 ? m.home : m.away} ${vH >= 0 ? sgn(ln) : sgn(-ln)}`, odds: vH >= 0 ? oH : oA, pp: Math.abs(vH), line: ln };
+      }
+    }
+    return best ? { ...best, tailOk } : null;
+  } catch (e) { return null; }
+}
+
 function buildAsianLinesHtml(poisson, goalOdds, m) {
   try {
     const ah = goalOdds && goalOdds.ah;
@@ -358,7 +395,8 @@ function buildAsianLinesHtml(poisson, goalOdds, m) {
     const modelTot = lh + la;             // reeds geankerd als het anker aanstond
     const mktTot = (_an.mktTot != null) ? _an.mktTot : null;
     const tailOk = _an.applied ? true : (_an.coherent !== false);
-    let rows = '', best = null;
+    let rows = '';
+    const best = bestAsianEV(poisson, goalOdds, m); // v26.259: één bron, tabel en tipkaart kunnen niet uiteenlopen
     for (const ln of lines) {
       const key = (Math.round(ln * 4) / 4).toFixed(2);
       const mk = ah[key]; if (!mk) continue;
@@ -376,7 +414,7 @@ function buildAsianLinesHtml(poisson, goalOdds, m) {
       if (vH >= 0 && oH > 1) ev = (pW * (oH - 1) - pL) * 100;
       else if (vH < 0 && oA > 1) ev = (pL * (oA - 1) - pW) * 100;
       const inBand = mk.fairHome >= BAND_LO && mk.fairHome <= BAND_HI;
-      if (inBand && ev != null && (!best || ev > best.ev)) best = { ev, txt: `${side} ${sideLn}`, odds: vH >= 0 ? oH : oA };
+      // (best komt uit bestAsianEV — zie onder de lus; hier alleen de rijen renderen)
       const col = !inBand ? 'rgba(255,255,255,.35)' : (absV >= 3 ? '#16c784' : (absV >= 1 ? 'rgba(255,255,255,.8)' : 'rgba(255,255,255,.5)'));
       const tail = inBand ? '' : `<span title="staartlijn" style="color:rgba(255,190,80,.75);font-size:.42rem;"> ⚠</span>`;
       rows += `<div style="display:grid;grid-template-columns:1fr 1.15fr 1.15fr 1.25fr;gap:.2rem;padding:.34rem .1rem;border-top:1px solid rgba(255,255,255,.06);${mono}font-size:.52rem;align-items:center;">
