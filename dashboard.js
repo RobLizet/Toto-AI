@@ -653,7 +653,7 @@ function renderDashboard() {
 
     <!-- Disclaimer -->
     <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid rgba(255,255,255,0.09);margin-top:.5rem;">
-      ⚠️ ${t('dash.onlyfor','Uitsluitend voor')} <b>${t('dash.disclaimer1','entertainment & educatie')}</b> · ${t('dash.disclaimer2','Geen echt gokadvies')}<br>
+      ⚠️ ${t('dash.onlyfor','Uitsluitend voor')} <b>${t('dash.disclaimer1','entertainment & educatie')}</b> · <a href="Disclaimer.html" target="_blank" rel="noopener" style="color:inherit;">${t('dash.disclaimer2','Geen echt gokadvies')}</a><br>
       ${t('dash.playresp','Speel verantwoord')} · 18+ · ${t('dash.helpline','Verslavingslijn')}: 0900-1090
     </div>
 
@@ -1305,5 +1305,6 @@ function liveCardHtml(pick, fx) {
     </div>
   </div>`;
 }
+
 
 
