@@ -2416,7 +2416,73 @@ function openMatchAnalyseModalById(matchId) {
       </div>
       <button id="analyseBtn" style="display:none;"></button>
       <button onclick="openMatchAnalyseModalById('${m.id}')" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">${t('wed.newanalysis','↻ Nieuwe analyse')}</button>
+      <!-- v26.262: AI-content meldweg (Google Play AI-Generated Content-policy) + disclaimer bereikbaar -->
+      <div style="display:flex;gap:.4rem;align-items:center;justify-content:center;margin-top:.6rem;flex-wrap:wrap;">
+        <button onclick="pmxReportAnalysis('${String(m.id).replace(/'/g,'')}', ${JSON.stringify((m.home||'?') + ' vs ' + (m.away||'?'))})" style="background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-decoration:underline;cursor:pointer;padding:.2rem;">${t('wed.report','⚠ Meld deze analyse')}</button>
+        <span style="color:var(--sub);font-size:.44rem;">·</span>
+        <a href="Disclaimer.html" target="_blank" rel="noopener" style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">${t('wed.disclaimer','Disclaimer · 18+')}</a>
+      </div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);text-align:center;margin-top:.35rem;line-height:1.5;">${t('wed.aidisclosure','Analyse deels door AI gegenereerd · informatief, geen garantie op winst')}</div>
     </div>`;
   document.body.appendChild(modal);
   if (typeof runAnalyse === 'function') runAnalyse();
 }
+
+// ── v26.262: in-app melding van AI-analyse ────────────────
+// Google Play eist dat aanstootgevende AI-output te rapporteren is zonder de app te verlaten.
+// Geen mailto (verlaat de app), geen extern formulier: POST naar de worker -> content_reports.
+function pmxReportAnalysis(fixtureId, matchName) {
+  const REASONS = [
+    ['onjuist',   'Feitelijk onjuist'],
+    ['aanstoot',  'Aanstootgevend of ongepast'],
+    ['misleidend','Misleidend / belooft winst'],
+    ['anders',    'Anders'],
+  ];
+  const old = document.getElementById('pmx-report-modal');
+  if (old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'pmx-report-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:10000;display:flex;align-items:flex-end;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:var(--bg,#0d1b2a);border-radius:18px 18px 0 0;width:100%;max-width:520px;padding:1.1rem 1rem 1.6rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ink,#fff);margin-bottom:.2rem;">${t('rep.title','Analyse melden')}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);margin-bottom:.8rem;">${matchName}</div>
+      <select id="pmx-report-reason" style="width:100%;padding:.55rem;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:var(--ink,#fff);font-size:.8rem;margin-bottom:.5rem;">
+        ${REASONS.map(r => `<option value="${r[0]}">${r[1]}</option>`).join('')}
+      </select>
+      <textarea id="pmx-report-details" rows="3" maxlength="2000" placeholder="${t('rep.details','Toelichting (optioneel)')}" style="width:100%;padding:.55rem;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:var(--ink,#fff);font-size:.78rem;resize:vertical;"></textarea>
+      <div id="pmx-report-status" style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);min-height:1rem;margin:.4rem 0;"></div>
+      <div style="display:flex;gap:.5rem;">
+        <button onclick="document.getElementById('pmx-report-modal').remove()" style="flex:1;padding:.6rem;border-radius:10px;background:transparent;border:1px solid var(--stroke);color:var(--sub);cursor:pointer;">${t('rep.cancel','Annuleren')}</button>
+        <button id="pmx-report-send" style="flex:1;padding:.6rem;border-radius:10px;background:#00BEC4;border:none;color:#fff;font-weight:700;cursor:pointer;">${t('rep.send','Versturen')}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  document.getElementById('pmx-report-send').onclick = async () => {
+    const btn = document.getElementById('pmx-report-send');
+    const st  = document.getElementById('pmx-report-status');
+    btn.disabled = true; st.textContent = t('rep.sending','Versturen…');
+    try {
+      const r = await fetch(`${WORKER}/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fixture_id: fixtureId,
+          match_name: matchName,
+          reason: document.getElementById('pmx-report-reason').value,
+          details: document.getElementById('pmx-report-details').value || null,
+          app_version: (typeof APP_VERSION !== 'undefined' ? APP_VERSION : null),
+        }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.ok) throw new Error(d.error || `HTTP ${r.status}`);
+      st.textContent = t('rep.thanks','Bedankt — je melding is ontvangen.');
+      setTimeout(() => { const el = document.getElementById('pmx-report-modal'); if (el) el.remove(); }, 1600);
+    } catch(e) {
+      st.textContent = t('rep.fail','Versturen mislukt: ') + e.message;
+      btn.disabled = false;
+    }
+  };
+}
+
