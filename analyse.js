@@ -2370,12 +2370,36 @@ ${_calLine}
       state._lastAnalyseResult = result;
     } else {
       // v26.251: geen backend-pick -> eerlijke pass tonen i.p.v. een verzonnen tip
+      // v26.259: de pass-melding compact; als de Asian lines wél een positieve EV vinden, tonen we die
+      // als alternatief. Expliciet gelabeld als experimenteel/shadow: AH telt NIET mee in het trackrecord
+      // en de handicap-EV leunt op de doelpuntenmarge-aanname van het model, niet op een gevalideerde edge.
       const _tipEl = document.getElementById('rb-tip');
-      if (_tipEl) _tipEl.innerHTML = `<div class="analyse-block" style="margin:.6rem 0;padding:.85rem 1rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.55);letter-spacing:.07em;margin-bottom:.35rem;">🚫 GEEN TIP</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:#fff;letter-spacing:.03em;">Geen value — overslaan</div>
-        <div style="font-size:.72rem;line-height:1.6;color:rgba(255,255,255,.75);margin-top:.4rem;">Het model vond voor deze wedstrijd geen prijs die beter is dan de kans rechtvaardigt. De markt is hier efficiënt. Niet spelen is dan de juiste zet — de analyse hierboven blijft de onderbouwing.</div>
+      let _ahTip = null;
+      try { if (typeof bestAsianEV === 'function') _ahTip = bestAsianEV(poisson, goalOdds, m); } catch(e) {}
+      const _F = "font-family:'IBM Plex Mono',monospace;";
+      const _pass = `<div style="${_F}font-size:.5rem;color:rgba(255,255,255,.5);letter-spacing:.05em;line-height:1.6;">
+        \u26d4 GEEN 1X2- OF DOELPUNTEN-VALUE \u2014 markt efficient. Niet spelen is hier de juiste zet; de analyse hierboven blijft de onderbouwing.
       </div>`;
+      if (_tipEl) {
+        if (_ahTip && _ahTip.ev > 0) {
+          const _dim = !_ahTip.tailOk;
+          _tipEl.innerHTML = `<div class="analyse-block" style="margin:.6rem 0;padding:.85rem 1rem;">
+            ${_pass}
+            <div style="height:1px;background:rgba(255,255,255,.08);margin:.6rem 0;"></div>
+            <div style="${_F}font-size:.5rem;color:rgba(0,190,196,.85);letter-spacing:.07em;margin-bottom:.3rem;">\u2696\ufe0f ASIAN LINES \u2014 EXPERIMENTEEL (shadow, telt niet mee in het trackrecord)</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:${_dim ? 'rgba(255,255,255,.72)' : '#fff'};letter-spacing:.03em;">${_ahTip.txt} @${_ahTip.odds}</div>
+            <div style="${_F}font-size:.56rem;margin-top:.2rem;color:${_dim ? 'rgba(22,199,132,.65)' : '#16c784'};font-weight:700;">EV ${_ahTip.ev >= 0 ? '+' : ''}${_ahTip.ev.toFixed(1)}%${_dim ? ' <span style="color:rgba(255,190,80,.9);">\u26a0 lage betrouwbaarheid</span>' : ''}</div>
+            <div style="font-size:.62rem;line-height:1.55;color:rgba(255,255,255,.55);margin-top:.4rem;">${_dim
+              ? 'Het doelpuntentotaal van het model wijkt af van de markt, dus deze EV leunt deels op de marge-aanname. Behandel als signaal, niet als pick.'
+              : 'De handicap-markt biedt hier wel een positieve verwachtingswaarde. Nog in validatie \u2014 gebruik op eigen inzicht.'}</div>
+          </div>`;
+        } else {
+          _tipEl.innerHTML = `<div class="analyse-block" style="margin:.6rem 0;padding:.85rem 1rem;">
+            ${_pass}
+            <div style="${_F}font-size:.5rem;color:rgba(255,255,255,.38);margin-top:.45rem;line-height:1.6;">Ook op de Asian lines geen positieve EV binnen de betrouwbare lijnen.</div>
+          </div>`;
+        }
+      }
       state._lastAnalyseContext = context;
       state._lastAnalyseResult = result;
       const chatBtn2 = document.getElementById('analyse-chat-btn');
