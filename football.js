@@ -524,12 +524,17 @@ function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null
   const playedHome = stats.fixtures?.played?.home || null;
   const playedAway = stats.fixtures?.played?.away || null;
   let base = {
-    avgScoredHome:  parseFloat(gf.home)  || null,
-    avgScoredAway:  parseFloat(gf.away)  || null,
-    avgScoredTotal: parseFloat(gf.total) || null,
-    avgConcHome:    parseFloat(ga.home)  || null,
-    avgConcAway:    parseFloat(ga.away)  || null,
-    avgConcTotal:   parseFloat(ga.total) || null,
+    // v26.260: `parseFloat(x) || null` maakte van een echte 0.0 een null, want 0 is falsy in JS. Een team
+    // dat nul tegendoelpunten toeliet viel daardoor terug op het competitiegemiddelde: Spain hield thuis
+    // de nul in alle 3 duels en werd als PRECIES GEMIDDELD verdedigend gemodelleerd (1.40) — vandaar
+    // Belgium 47% waar de markt 17% zegt. Zelfde bugfamilie als `!data.errors` op een lege array en
+    // `Array.isArray` op een object: een falsy waarde die inhoudelijk betekenisvol is.
+    avgScoredHome:  _num(gf.home),
+    avgScoredAway:  _num(gf.away),
+    avgScoredTotal: _num(gf.total),
+    avgConcHome:    _num(ga.home),
+    avgConcAway:    _num(ga.away),
+    avgConcTotal:   _num(ga.total),
     xgFor,
     xgAgainst,
     gamesPlayed,
@@ -561,6 +566,13 @@ function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null
   }
   return base;
 }
+
+// v26.260: 0 behouden, alleen echt ontbrekende/ongeldige waarden worden null.
+function _num(v) { const x = parseFloat(v); return Number.isFinite(x) ? x : null; }
+// eerste niet-null uit een reeks fallbacks (0 telt dus gewoon mee)
+function _firstNum(...vals) { for (const v of vals) if (v != null && Number.isFinite(v)) return v; return null; }
+// een sterkte van exact 0 mag lambda niet naar nul sturen (dan valt het hele model om)
+const MIN_STRENGTH = 0.10;
 
 // ═══ v26.257: REGULARISATIE VAN DE TEAMSTERKTES (empirical-Bayes shrinkage) ═══════════════════
 // Het model schat lambda uit `aanval x verdediging / leagueAvg`. Op 5 wedstrijden zijn die ratio's
@@ -598,7 +610,7 @@ function getStrengthShrinkKDef() { return _lsNum('pmx_shrink_k_def', STRENGTH_SH
 
 // Trekt een absoluut goals-gemiddelde naar het competitiegemiddelde, gewogen naar sample-size.
 function shrinkStrength(val, n, leagueAvg, K) {
-  if (!(K > 0) || !(n > 0) || !(val > 0) || !(leagueAvg > 0)) return val;
+  if (!(K > 0) || !(n > 0) || !(val >= 0) || !(leagueAvg > 0)) return val; // v26.260: val === 0 is geldig en moet juist geshrunkt worden
   const ratio = val / leagueAvg;
   const shrunk = (n * ratio + K * 1.0) / (n + K);
   return shrunk * leagueAvg;
@@ -616,10 +628,11 @@ function calcPoissonKansen(homeStats, awayStats, leagueAvgOrId = 1.35, homeInjFa
     ? leagueAvgOrId
     : getLeagueAvg(leagueAvgOrId);
   if (!homeStats || !awayStats) return { k1:null, kX:null, k2:null, valid:false };
-  let homeAttackBase  = homeStats.avgScoredHome  || homeStats.avgScoredTotal || leagueAvg;
-  let awayDefenceBase = awayStats.avgConcAway    || awayStats.avgConcTotal   || leagueAvg;
-  let awayAttackBase  = awayStats.avgScoredAway  || awayStats.avgScoredTotal || leagueAvg;
-  let homeDefenceBase = homeStats.avgConcHome    || homeStats.avgConcTotal   || leagueAvg;
+  // v26.260: _firstNum i.p.v. `||` — een gemeten 0 is data, geen ontbrekende waarde.
+  let homeAttackBase  = _firstNum(homeStats.avgScoredHome, homeStats.avgScoredTotal, leagueAvg);
+  let awayDefenceBase = _firstNum(awayStats.avgConcAway,   awayStats.avgConcTotal,   leagueAvg);
+  let awayAttackBase  = _firstNum(awayStats.avgScoredAway, awayStats.avgScoredTotal, leagueAvg);
+  let homeDefenceBase = _firstNum(homeStats.avgConcHome,   homeStats.avgConcTotal,   leagueAvg);
   if (homeStats.xgFor && homeStats.xgFor > 0)
     homeAttackBase  = homeAttackBase  * 0.6 + (homeStats.xgFor  / Math.max(homeStats.gamesPlayed||20,10)) * 0.4;
   if (awayStats.xgFor && awayStats.xgFor > 0)
@@ -638,6 +651,12 @@ function calcPoissonKansen(homeStats, awayStats, leagueAvgOrId = 1.35, homeInjFa
     awayAttackBase  = shrinkStrength(awayAttackBase,  _nA, leagueAvg, _Ka);
     awayDefenceBase = shrinkStrength(awayDefenceBase, _nA, leagueAvg, _Kd);
   }
+  // v26.260: vangnet. Met regularisatie wordt een gemeten 0 naar het gemiddelde getrokken en is dit dood
+  // hout; met de noodrem (K=0) zou een echte 0 anders lambda op 0 zetten -> valid:false -> geen model.
+  homeAttackBase  = Math.max(MIN_STRENGTH, homeAttackBase);
+  homeDefenceBase = Math.max(MIN_STRENGTH, homeDefenceBase);
+  awayAttackBase  = Math.max(MIN_STRENGTH, awayAttackBase);
+  awayDefenceBase = Math.max(MIN_STRENGTH, awayDefenceBase);
 
   const homeAttack  = homeAttackBase  * (homeInjFactor?.attackFactor  ?? 1.0);
   const homeDefence = homeDefenceBase * (1 / (homeInjFactor?.defenseFactor ?? 1.0));
