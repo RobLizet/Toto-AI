@@ -1734,7 +1734,10 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
       // is de goal-markt (O/U, BTTS) efficient en is model-value bijna altijd de SoS-valkuil -> sterk anker.
       // Bij een gelijk opgaand duel blijft echte value intact.
       const _topP = Math.max(Number(poisson.k1)||0, Number(poisson.kX)||0, Number(poisson.k2)||0);
-      const _mismatch = Math.max(0, Math.min(1, (_topP - 55) / 30)); // 0 bij <=55%, 1 bij >=85%
+      // v26.254: staat het markt-anker aan, dan is het doelpuntentotaal al naar de markt getrokken.
+      // De mismatch-term er dan NOG een keer overheen leggen is dubbeltellen -> over-shrinkage.
+      // De base-pull (>10pp divergentie) blijft wel staan als vangnet.
+      const _mismatch = poisson.anchor?.applied ? 0 : Math.max(0, Math.min(1, (_topP - 55) / 30)); // 0 bij <=55%, 1 bij >=85%
       const _pullG = (pp, mkt) => { if (mkt == null || !(mkt > 0)) return pp; const base = Math.max(0,(Math.abs(pp-mkt)-10)/35); const w = Math.min(0.95, base + _mismatch*0.9); return Math.round(pp + (mkt-pp)*w); };
       for (const _ln of ['1.5','2.5','3.5']) {
         const _o = goalOdds?.ou?.[_ln]; const [_ok,_uk] = lineMap[_ln];
@@ -1771,7 +1774,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     const canModel = modelValid && typeof asianModelProbs === 'function' && poisson.lambdaHome > 0 && poisson.lambdaAway > 0;
     // v26.233: mismatch-anker ook op AH — AH is de 1X2-mismatch in een ander jasje, dus de SoS-valkuil geldt hier 1-op-1
     const _topA = canModel ? Math.max(Number(poisson.k1)||0, Number(poisson.kX)||0, Number(poisson.k2)||0) : 0;
-    const _mmA = Math.max(0, Math.min(1, (_topA - 55) / 30));
+    const _mmA = poisson.anchor?.applied ? 0 : Math.max(0, Math.min(1, (_topA - 55) / 30)); // v26.254: geen dubbele shrink bovenop het anker
     const _pullA = (pp, mkt) => { if (mkt == null || !(mkt > 0)) return pp; const base = Math.max(0,(Math.abs(pp-mkt)-10)/35); const w = Math.min(0.95, base + _mmA*0.9); return Math.round((pp + (mkt-pp)*w)*10)/10; };
     const _fmtL = v => { const r = Math.round(v*100)/100; return (r > 0 ? '+' : '') + r; };
     // v26.235: risicoprofiel-tag per lijn — 0 = DNB (inzet terug bij gelijkspel),
@@ -2066,7 +2069,7 @@ async function runAnalyse() {
         if (typeof goalMarketProbs==='function' && poisson.lambdaHome && poisson.lambdaAway) {
           const _gm=goalMarketProbs(poisson.lambdaHome, poisson.lambdaAway);
           const _topP=Math.max(poisson.k1,poisson.kX,poisson.k2);
-          const _mm=Math.max(0,Math.min(1,(_topP-55)/30));
+          const _mm=poisson.anchor?.applied ? 0 : Math.max(0,Math.min(1,(_topP-55)/30)); // v26.254: geen dubbele shrink bovenop het anker
           const _pg=(pp,mkt)=>{ if(!(mkt>0))return pp; const base=Math.max(0,(Math.abs(pp-mkt)-10)/35); const w=Math.min(0.95, base+_mm*0.9); return Math.round(pp+(mkt-pp)*w); };
           const _go=goalOdds||{}; const _rows=[];
           for (const [ln,ok,uk] of [['1.5','o15','u15'],['2.5','o25','u25'],['3.5','o35','u35']]) {
