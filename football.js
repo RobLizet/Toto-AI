@@ -539,8 +539,15 @@ function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null
 // (2.14x gemiddeld), maar defensiegemiddelden ontsporen (0.21x = "laat 5x minder toe dan gemiddeld").
 // Daarom twee aparte K's. Grid-search op 4 WK-duels gaf Ka~5, Kd~3; dat is te weinig data om vast te
 // zetten, dus beide staan op 0 tot er clubdata is.
-const STRENGTH_SHRINK_K_ATT_DEFAULT = 0;
-const STRENGTH_SHRINK_K_DEF_DEFAULT = 0;
+// v26.258: AAN. Niet omdat de grid-search dat zegt (4 wedstrijden = geen validatie), maar omdat de
+// leagueAvg-bugfix uit v26.257 twee duels van "geen model" naar "kapot model" bracht: Norway-England
+// toonde 6.50 verwachte goals en gaf England 79% waar de markt 52% zegt. Regularisatie bij n=3-5 duels
+// is standaardpraktijk, geen gefit trucje. De K-WAARDEN zijn wel gefit, dus bewust de rand van het
+// plateau (Ka=5/Kd=3, MAE 7.18) i.p.v. het optimum (Ka=8/Kd=3, MAE 6.29).
+// Raakt geen picks: de worker berekent zijn eigen kansen en gebruikt calcPoissonKansen niet.
+// Hertunen op clubdata na 20 juli; n/(n+K) dooft zichzelf uit naarmate het seizoen vordert.
+const STRENGTH_SHRINK_K_ATT_DEFAULT = 5;
+const STRENGTH_SHRINK_K_DEF_DEFAULT = 3;
 function _lsNum(key, dflt) {
   try {
     const v = parseFloat(localStorage.getItem(key));
