@@ -949,12 +949,9 @@ async function ensureWorkerPicks(force) {
   if (!force && state._workerPicksLoaded) return;
   state._workerPicksLoading = true;
   try {
-    const [r, mt] = await Promise.all([
-      fetch('https://api.promatchxi.app/picks'),
-      fetch('https://api.promatchxi.app/model-tips'),
-    ]);
+    // v26.252: /model-tips niet meer opgehaald — die voedde het verwijderde "model-lean"-hoekje
+    const r = await fetch('https://api.promatchxi.app/picks');
     if (r.ok) { const d = await r.json(); state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); }
-    if (mt.ok) { const md = await mt.json(); state._modelTips = md.tips || []; } // v26.202: model-favorieten voor TIP-hoekje
   } catch (e) {}
   state._workerPicksLoaded = true;
   state._workerPicksLoading = false;
@@ -1005,16 +1002,15 @@ function renderMatchCard(m) {
       border:1px solid ${_vp.value >= 15 ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)'};
       padding:2px 8px;border-radius:999px;z-index:2;cursor:pointer;" onclick="event.stopPropagation();showHelp('value-badge')" title="Tik voor uitleg">⚡ +${Math.round(_vp.value)}%</div>` : '';
 
-  // v26.205: TIP-hoekje in 3 lagen — value (fel), AI-model-lean (licht), markt-favoriet (lichtst, eigen 'MARKT'-label)
+  // v26.252: TIP-hoekje in 2 lagen — value-pick (de échte, getrackte backend-pick) of MARKT-favoriet.
+  // De tussenlaag ("model-lean" uit /model-tips) is verwijderd: die kwam uit de scan-Poisson, haalde de
+  // pick-drempel juist NIET, en sprak de losse analyse tegen (bv. TIP 2 bij Morocco 19% terwijl de
+  // SoS-verankerde analyse ~10% geeft). Een tip tonen die de backend bewust niet koos, is misleidend.
   let _tipPick = '', _tipSource = '', _tipValue = 0;
   if (_vp) { _tipPick = _vp.pick; _tipSource = 'value'; _tipValue = _vp.value || 0; }
-  // v26.214: eigen analyse (ANALYSE-knop) heeft voorrang — card toont meteen wat de analyse zei i.p.v. de MARKT-plaatshouder
+  // v26.214: eigen analyse (ANALYSE-knop) heeft voorrang — die toont sinds v26.251 exact de backend-pick
   const _man = (state._manualTips || {})[String(m.id)];
   if (_man && _man.pick && !m.isDone) { _tipPick = _man.pick; _tipValue = _man.value || 0; _tipSource = (_man.value >= 5) ? 'value' : 'model'; }
-  if (!_tipPick && !m.isDone) {
-    const _mt = (state._modelTips || []).find(x => String(x.fixture_id) === String(m.id));
-    if (_mt && _mt.pick) { _tipPick = _mt.pick; _tipSource = 'model'; }
-  }
   if (!_tipPick && !m.isDone) {
     const _hp = parseFloat(m.homePct)||0, _dp = parseFloat(m.drawPct)||0, _ap = parseFloat(m.awayPct)||0;
     if (_hp || _dp || _ap) { _tipPick = (_hp >= _dp && _hp >= _ap) ? '1' : ((_ap >= _dp) ? '2' : 'X'); _tipSource = 'market'; }
