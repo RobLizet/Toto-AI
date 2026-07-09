@@ -94,7 +94,12 @@ async function apiFetch(url, _apiKey, timeoutMs = 10000) {
   // v26.98: rate-limit-aware retry. API-Football geeft een per-minuut overschrijding
   // terug als HTTP 200 met { errors: { rateLimit: "..." } } (soms als 429). Zonder
   // afvangen werd dat behandeld als "0 wedstrijden/odds" → valse lege schermen.
-  const backoffs = [2000, 4000, 6000]; // ms; 1e poging + 3 retries (vangt langere refresh-bursts)
+  // v26.255: de eerste backoff was 2000ms, terwijl callers deze fetch in een 5s-timeout wikkelen
+  // (wt(...)). Eén rate-limit-hit + één retry paste daardoor niet binnen het venster: de caller kreeg
+  // null en de UI concludeerde "te weinig data" terwijl de call simpelweg was afgekapt. Eerste retry
+  // nu snel (met jitter tegen thundering herd), latere retries blijven ruim voor echte minuut-limieten.
+  const backoffs = [700, 2200, 5000]; // ms; 1e poging + 3 retries
+  const jitter = () => Math.floor(Math.random() * 250);
   for (let attempt = 0; attempt <= backoffs.length; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -122,7 +127,7 @@ async function apiFetch(url, _apiKey, timeoutMs = 10000) {
 
     if (rateLimited && attempt < backoffs.length) {
       console.warn(`[apiFetch] rate-limit, retry ${attempt + 1} over ${backoffs[attempt]}ms — ${target}`);
-      await new Promise(res => setTimeout(res, backoffs[attempt]));
+      await new Promise(res => setTimeout(res, backoffs[attempt] + jitter()));
       continue;
     }
 
@@ -291,7 +296,7 @@ async function fetchTeamStats(teamId, leagueId) {
   if (!teamId) return null;
   try {
     const season = seasonForLeague(leagueId);
-    const r = await apiFetch(`https://v3.football.api-sports.io/teams/statistics?team=${teamId}&league=${leagueId}&season=${season}`, null);
+    const r = await apiFetch(`https://v3.football.api-sports.io/teams/statistics?team=${teamId}&league=${leagueId}&season=${season}`, null, 7000); // v26.255: expliciet, past binnen het ruimere wt-venster
     const d = await r.json();
     return d.response || null;
   } catch(e) { return null; }
