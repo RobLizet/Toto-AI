@@ -1818,7 +1818,10 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     const _tailBad = !!(poisson.anchor && poisson.anchor.coherent === false && !poisson.anchor.applied);
     const _arow = (label, odds, model, markt, tag, top) => { // top = EV% van de badge, of null
       const diff = model - markt, pos = diff >= 0;
-      edges.push({ label: `${label} @${odds}`, edge: diff });
+      // v26.272: AH-rijen NIET in de GROOTSTE AFWIJKING-ranking. 1X2 en doelpunten leveren sinds v26.271
+      // gecorrigeerde waarden, AH nog steeds ruwe -> AH won de ranking altijd (5.5pp vs max 4.1pp).
+      // AH heeft zijn eigen BESTE EV-badge; die rangschikt op EV met push, een andere grootheid.
+      // (was: edges.push({ label: `${label} @${odds}`, edge: diff });)
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
       const bg = top ? 'background:rgba(22,199,132,.07);border-radius:.35rem;padding:.2rem .25rem;margin:0 -.25rem;' : 'padding:.2rem 0;';
       return `<div style="display:flex;justify-content:space-between;gap:.5rem;${bg}${F}font-size:.57rem;"><span style="color:#fff;">${label}${tag||''}${top!=null?_mkBadge(_tailBad, top):''} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
@@ -2175,22 +2178,24 @@ async function runAnalyse() {
             const _o=_go.ou&&_go.ou[ln]; let _mo=_gm[ok], _mu=_gm[uk];
             if (_o){ _mo=_pg(_mo,_o.fairOver); _mu=_pg(_mu,_o.fairUnder);
               _rows.push(`O${ln}: model ${_mo}% / markt ${Math.round(_o.fairOver)}% | U${ln}: model ${_mu}% / markt ${Math.round(_o.fairUnder)}%`);
-              _cands.push({code:`O${ln}`, label:`meer dan ${ln} goals`, odds:_o.over, model:_mo, mkt:Math.round(_o.fairOver)});
-              _cands.push({code:`U${ln}`, label:`minder dan ${ln} goals`, odds:_o.under, model:_mu, mkt:Math.round(_o.fairUnder)});
+              _cands.push({code:`O${ln}`, label:`meer dan ${ln} goals`, odds:_o.over, model:_mo, mkt:Math.round(_o.fairOver), mktExact:_o.fairOver});
+              _cands.push({code:`U${ln}`, label:`minder dan ${ln} goals`, odds:_o.under, model:_mu, mkt:Math.round(_o.fairUnder), mktExact:_o.fairUnder});
             } else _rows.push(`O${ln}: model ${_mo}% | U${ln}: model ${_mu}% (geen markt-odds)`);
           }
           const _b=_go.btts; let _by=_gm.bttsY, _bn=_gm.bttsN;
           if (_b){ _by=_pg(_by,_b.fairYes); _bn=_pg(_bn,_b.fairNo);
             _rows.push(`BTTS-Ja: model ${_by}% / markt ${Math.round(_b.fairYes)}% | BTTS-Nee: model ${_bn}% / markt ${Math.round(_b.fairNo)}%`);
-            _cands.push({code:'BTTS_Y', label:'beide teams scoren', odds:_b.yes, model:_by, mkt:Math.round(_b.fairYes)});
-            _cands.push({code:'BTTS_N', label:'niet beide teams scoren', odds:_b.no, model:_bn, mkt:Math.round(_b.fairNo)});
+            _cands.push({code:'BTTS_Y', label:'beide teams scoren', odds:_b.yes, model:_by, mkt:Math.round(_b.fairYes), mktExact:_b.fairYes});
+            _cands.push({code:'BTTS_N', label:'niet beide teams scoren', odds:_b.no, model:_bn, mkt:Math.round(_b.fairNo), mktExact:_b.fairNo});
           }
           // v26.271: pp-waarden expliciet meeleveren, gecorrigeerd. Zonder deze regel rekende de LLM
           // ze zelf uit (en citeerde ~9pp ruw waar de tabel +4.1pp gecorrigeerd toont).
           const _gv = [];
           for (const c of _cands) {
             if (c.model == null || c.mkt == null) continue;
-            const _raw = c.model - c.mkt;
+            // v26.272: mktExact, niet de afgeronde mkt. Met 47 i.p.v. 46.8 werd raw 9.0 -> 4.05,
+            // en 4.05.toFixed(1) is in JS "4.0" (binair 4.0499...). De tabel rekent met 46.8 -> 4.1.
+            const _raw = c.model - (c.mktExact != null ? c.mktExact : c.mkt);
             const _adj = (typeof adjValue === 'function') ? adjValue(_raw, c.model, c.code, m.leagueId) : null;
             _gv.push(`  ${c.label}: ${_pp(_adj)} (ruw ${_pp(_raw)})`);
           }
