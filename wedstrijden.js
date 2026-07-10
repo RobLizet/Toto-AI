@@ -2415,7 +2415,7 @@ function openMatchAnalyseModalById(matchId) {
         <div id="rb-asian"></div>
       </div>
       <button id="analyseBtn" style="display:none;"></button>
-      <button onclick="pmxRerunAnalyse()" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">${t('wed.newanalysis','↻ Nieuwe analyse')}</button>
+      <button id="pmx-rerun-btn" onclick="pmxRerunAnalyse()" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">${t('wed.newanalysis','↻ Nieuwe analyse')}</button>
       <!-- v26.262: AI-content meldweg (Google Play AI-Generated Content-policy) + disclaimer bereikbaar -->
       <div style="display:flex;gap:.4rem;align-items:center;justify-content:center;margin-top:.6rem;flex-wrap:wrap;">
         <!-- v26.273: was JSON.stringify(...), dat dubbele quotes oplevert in een onclick-attribuut dat
@@ -2435,18 +2435,52 @@ function openMatchAnalyseModalById(matchId) {
 // Was: openMatchAnalyseModalById(id) -> existing.remove() + hele modal opnieuw opbouwen.
 // Dat gaf een zichtbare flits en gooide de scrollpositie weg. De modal hoeft niet weg;
 // alleen de rb-*-secties en de chips moeten terug naar hun beginstand.
-function pmxRerunAnalyse() {
+// v26.274: zonder terugkoppeling lijkt de knop niets te doen -- de secties zijn leeg en de
+// analyse duurt enkele seconden. Nu: knop uitgeschakeld met spinner-tekst, plus een banner
+// bovenin de modal. Beide verdwijnen zodra runAnalyse() klaar is (of faalt).
+let _pmxRerunBezig = false;
+async function pmxRerunAnalyse() {
   const modal = document.getElementById('match-analyse-modal');
   if (!modal || typeof runAnalyse !== 'function') return;
+  if (_pmxRerunBezig) return;            // dubbelklik negeren
+  _pmxRerunBezig = true;
+
+  const btn = document.getElementById('pmx-rerun-btn');
+  const btnTekst = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.style.opacity = '.55'; btn.style.cursor = 'wait';
+             btn.textContent = t('wed.rerunbusy', '\u27f3 Nieuwe analyse wordt gemaakt\u2026'); }
+
+  const oude = document.getElementById('pmx-rerun-banner');
+  if (oude) oude.remove();
+  const banner = document.createElement('div');
+  banner.id = 'pmx-rerun-banner';
+  banner.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:.5rem;text-align:center;padding:.45rem;margin-bottom:.6rem;border-radius:10px;background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.35);color:#5eead4;";
+  banner.textContent = t('wed.rerunbanner', '\u27f3 Nieuwe analyse\u2026 de vorige is gewist');
+
   ['vorm','stats','tactiek','kans','risico','advies','tip','asian'].forEach(id => {
     const el = document.getElementById('rb-' + id);
     if (el) el.innerHTML = '';
   });
   const chips = document.getElementById('entityChips');
-  if (chips) chips.innerHTML = '';
+  if (chips) { chips.innerHTML = ''; chips.parentNode.insertBefore(banner, chips); }
+
   const body = modal.firstElementChild;
   if (body && typeof body.scrollTo === 'function') body.scrollTo({ top: 0 });
-  runAnalyse();
+
+  try {
+    await runAnalyse();
+  } catch (e) {
+    banner.style.background = 'rgba(220,38,38,.12)';
+    banner.style.borderColor = 'rgba(220,38,38,.35)';
+    banner.style.color = '#fca5a5';
+    banner.textContent = t('wed.rerunfail', 'Analyse mislukt: ') + (e && e.message ? e.message : e);
+    banner.dataset.keep = '1';
+  } finally {
+    _pmxRerunBezig = false;
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = 'pointer';
+               btn.textContent = btnTekst || t('wed.newanalysis', '\u21bb Nieuwe analyse'); }
+    if (!banner.dataset.keep) setTimeout(() => banner.remove(), 900);
+  }
 }
 
 // ── v26.262: in-app melding van AI-analyse ────────────────
