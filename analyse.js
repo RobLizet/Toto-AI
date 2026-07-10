@@ -1854,7 +1854,9 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
       // v26.264: dezelfde coherentie-waarschuwing als boven het doelpuntenblok. Wijkt het model-totaal af
       // van het markt-totaal, dan is de HELE AH-curve dezelfde scheve parameter in vermomming: elke lijn
       // kantelt dan naar dezelfde kant. Die waarschuwing stond alleen bij de doelpunten, niet hier.
-      const _ahWarn = (_incoherent && poisson.anchor && poisson.anchor.mktTot != null)
+      // v26.265: was `_incoherent` -> die const staat 27 regels LATER (TDZ, ReferenceError bij elke
+      // analyse met AH-odds). _tailBad hierboven is exact dezelfde expressie en staat wel voor dit punt.
+      const _ahWarn = (_tailBad && poisson.anchor && poisson.anchor.mktTot != null)
         ? `<div style="${F}font-size:.45rem;line-height:1.5;color:rgba(255,190,80,.72);margin-bottom:.3rem;">\u26a0 doelpuntentotaal wijkt af (model ${poisson.anchor.modelTot.toFixed(2)} vs markt ${poisson.anchor.mktTot.toFixed(2)}) \u2014 de hele AH-curve kantelt daardoor naar \u00e9\u00e9n kant: \u00e9\u00e9n aanname, geen losse edges.</div>`
         : '';
       ahHTML = `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">
