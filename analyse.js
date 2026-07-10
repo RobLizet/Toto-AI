@@ -1722,7 +1722,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     const rowsHTML = rows.map(r => {
       const model = Number(r[2]), markt = Number(r[3]), diff = model - markt, pos = diff >= 0;
       const _diffTxt = _ppTxt(diff, model, r[0]);
-      edges.push({ label: `${r[0]} ${r[1]}`, edge: diff });
+      edges.push({ label: `${r[0]} ${r[1]}`, edge: _adj(diff, model, r[0]) ?? diff });
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
       return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.22rem 0;${F}font-size:.6rem;"><span style="color:#fff;">${r[0]} ${r[1]}</span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model.toFixed(0)}% \u00b7 markt ${markt.toFixed(0)}% \u00b7 <span style="color:${kleur};font-weight:700;">${_diffTxt}</span></span></div>`;
     }).join('');
@@ -1737,7 +1737,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     const mrow = (label, odds, model, markt) => {
       const diff = model - markt, pos = diff >= 0;
       const _diffTxt = _ppTxt(diff, model, label); // geen 1X2 -> geen tier-extra, geen draw-straf
-      edges.push({ label: `${label} @${odds}`, edge: diff });
+      edges.push({ label: `${label} @${odds}`, edge: _adj(diff, model, label) ?? diff });
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
       return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${_diffTxt}</span></span></div>`;
     };
@@ -2148,8 +2148,17 @@ async function runAnalyse() {
         // gelijkspel op +4.7pp staat). Elk getal dat hij AFLEIDT i.p.v. CITEERT is een foutkans.
         // Value hier exact berekenen uit de ONafgeronde marktkansen, net als de MODEL vs MARKT-tabel.
         const _mhx=(1/_oh)/_inv*100, _mxx=(1/_od)/_inv*100, _max=(1/_oa)/_inv*100;
-        const _pp = v => (v >= 0 ? '+' : '') + v.toFixed(1);
-        const _valLine = `\n1X2 value (model min markt, in pp): ${m.home} ${_pp(poisson.k1-_mhx)} | gelijkspel ${_pp(poisson.kX-_mxx)} | ${m.away} ${_pp(poisson.k2-_max)}`;
+        const _pp = v => (v == null ? '?' : (v >= 0 ? '+' : '') + v.toFixed(1));
+        // v26.271: het bronblok gaf de RUWE afwijking, terwijl de tabellen sinds v26.270 de gecorrigeerde
+        // tonen. De LLM citeerde dus +4.7 waar het scherm +1.5 liet zien. Bron = wat de backend gebruikt.
+        const _av = (raw, model, pick) => (typeof adjValue === 'function') ? adjValue(raw, model, pick, m.leagueId) : null;
+        const _mv1 = (typeof minValueFor === 'function') ? minValueFor('1', m.leagueId) : null;
+        const _mvX = (typeof minValueFor === 'function') ? minValueFor('X', m.leagueId) : null;
+        const _valLine = `\n1X2 value GECORRIGEERD (dit is waarop de backend selecteert; ruw model-markt tussen haakjes):`
+          + `\n  ${m.home}: ${_pp(_av(poisson.k1-_mhx, poisson.k1, '1'))} (ruw ${_pp(poisson.k1-_mhx)})`
+          + `\n  gelijkspel: ${_pp(_av(poisson.kX-_mxx, poisson.kX, 'X'))} (ruw ${_pp(poisson.kX-_mxx)})`
+          + `\n  ${m.away}: ${_pp(_av(poisson.k2-_max, poisson.k2, '2'))} (ruw ${_pp(poisson.k2-_max)})`
+          + `\nDrempels: 1 en 2 vanaf ${_mv1 ?? '?'}pp, gelijkspel vanaf ${_mvX ?? '?'}pp.`;
         const _cands=[
           {code:'1', label:`${m.home} wint`, odds:m.homeOdds, model:poisson.k1, mkt:_mh},
           {code:'X', label:'gelijkspel', odds:m.drawOdds, model:poisson.kX, mkt:_mx},
@@ -2176,7 +2185,17 @@ async function runAnalyse() {
             _cands.push({code:'BTTS_Y', label:'beide teams scoren', odds:_b.yes, model:_by, mkt:Math.round(_b.fairYes)});
             _cands.push({code:'BTTS_N', label:'niet beide teams scoren', odds:_b.no, model:_bn, mkt:Math.round(_b.fairNo)});
           }
-          _gmStr = '\nDOELPUNTEN (model vs markt, reeds gecorrigeerd):\n' + _rows.join('\n');
+          // v26.271: pp-waarden expliciet meeleveren, gecorrigeerd. Zonder deze regel rekende de LLM
+          // ze zelf uit (en citeerde ~9pp ruw waar de tabel +4.1pp gecorrigeerd toont).
+          const _gv = [];
+          for (const c of _cands) {
+            if (c.model == null || c.mkt == null) continue;
+            const _raw = c.model - c.mkt;
+            const _adj = (typeof adjValue === 'function') ? adjValue(_raw, c.model, c.code, m.leagueId) : null;
+            _gv.push(`  ${c.label}: ${_pp(_adj)} (ruw ${_pp(_raw)})`);
+          }
+          _gmStr = '\nDOELPUNTEN (model vs markt, reeds gecorrigeerd):\n' + _rows.join('\n')
+            + (_gv.length ? `\nDOELPUNTEN value GECORRIGEERD (drempel ${_mv1 ?? '?'}pp):\n` + _gv.join('\n') : '');
         }
         // v26.225: BACKEND kiest de tip. Value = model - markt. API-SCEPSIS: spreekt de API-prediction een positieve
         // model-value tegen (API-kans lager dan de markt -> model is de enige uitschieter), dan dempen we die value
@@ -2268,7 +2287,7 @@ GECORRELEERDE AFWIJKING (VERPLICHT ALS HET SPEELT):
 
 CIJFERBRON (ABSOLUTE REGEL, GAAT BOVEN ALLES):
 - Voor ELKE kans, percentage, marktkans en value in je JSON gebruik je UITSLUITEND de getallen uit het blok "=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===". Die zijn al de-vigd en klasse-gecorrigeerd.
-- JE REKENT NOOIT ZELF. Geen verschillen, geen afrondingen, geen samenvattende marges. Wil je zeggen hoe ver model en markt uiteenliggen, gebruik dan LETTERLIJK de waarden uit de regel "1X2 value (model min markt, in pp)". Schrijf dus nooit "binnen 3pp" of "3-5pp uit elkaar" op basis van je eigen hoofdrekenwerk; noem de grootste waarde uit die regel en welke uitkomst het betreft.
+- JE REKENT NOOIT ZELF. Geen verschillen, geen afrondingen, geen samenvattende marges. Wil je zeggen hoe ver model en markt uiteenliggen, gebruik dan LETTERLIJK de GECORRIGEERDE waarden uit de blokken "1X2 value GECORRIGEERD" en "DOELPUNTEN value GECORRIGEERD". Dat is wat de app toont en waarop de backend selecteert. Noem NOOIT het ruwe getal tussen haakjes als "de afwijking" - dat is het onbewerkte model-markt-verschil vóór shrinkage, en het staat er alleen zodat je kunt zien hoeveel de correctie eraf haalt. Schrijf dus nooit "binnen 3pp" of "3-5pp uit elkaar" op basis van eigen hoofdrekenwerk; noem de grootste gecorrigeerde waarde, welke uitkomst het betreft, en zet hem naast de drempel.
 - Herbereken, schat of verzin NOOIT zelf percentages uit vorm, uitslagen, H2H of odds. Die data is ALLEEN voor kwalitatieve beschrijving (vorm, tactiek, risico) - nooit voor getallen.
 - Bereken de de-vigde marktkans NOOIT zelf uit de odds; gebruik de "markt (na de-vig)"-regel uit het blok.
 - Staat er "O2.5 model 48%", dan is de kans 48%. Je mag die NOOIT als hogere value (bv. 72%) presenteren, ook niet als de vorm/H2H veel goals suggereert.
