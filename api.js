@@ -4,6 +4,50 @@
 
 const WORKER = 'https://api.promatchxi.app';
 
+// ── v26.270: gecorrigeerde value ────────────────────────────────────────────
+// De tabellen toonden het RUWE model-markt-verschil, terwijl de backend selecteert op
+// calculateValue() = (1-w) x ruw, met w = marketShrink + tier-extra, en x0.88 voor een gelijkspel.
+// Gemeten: Spain-Belgium draw 4.7pp ruw -> ~1.5pp gecorrigeerd, drempel 7pp (toernooi).
+// Constanten NIET dupliceren: ze komen uit /model-params, want autotune stelt s1/s2 bij.
+let MODEL_PARAMS = null;
+async function loadModelParams() {
+  if (MODEL_PARAMS) return MODEL_PARAMS;
+  try {
+    const r = await fetch(WORKER + '/model-params');
+    if (!r.ok) return null;
+    MODEL_PARAMS = await r.json();
+    return MODEL_PARAMS;
+  } catch (e) { console.warn('[model-params]', e.message); return null; }
+}
+
+// Geeft null terug als de parameters ontbreken -> de UI toont dan alleen het ruwe verschil,
+// liever geen getal dan een verkeerd getal.
+function adjValue(raw, aiKans, pick, leagueId) {
+  const P = MODEL_PARAMS;
+  if (!P || raw == null || aiKans == null) return null;
+  const isTournament = (P.tournamentLeagues || []).includes(Number(leagueId));
+  const base = isTournament ? P.shrink.tournament : P.shrink.base;
+  const is1x2 = (pick === '1' || pick === 'X' || pick === '2');
+  let extra = 0;
+  if (is1x2) {
+    if (aiKans < 20)      extra = P.tune.s1;
+    else if (aiKans < 35) extra = P.tune.s2;
+  }
+  const w = Math.min(Math.max(base + extra, 0), 0.9);
+  let v = raw * (1 - w);
+  if (pick === 'X') v = v * P.drawPenalty;
+  return parseFloat(v.toFixed(1));
+}
+
+// Drempel waar de backend deze pick aan moet voldoen (voor de uitleg onder de tabel).
+function minValueFor(pick, leagueId) {
+  const P = MODEL_PARAMS;
+  if (!P) return null;
+  const isTournament = (P.tournamentLeagues || []).includes(Number(leagueId));
+  const set = isTournament ? P.minValue.tournament : P.minValue.base;
+  return pick === 'X' ? set.X : set.other;
+}
+
 const COMP_IDS = {
   eredivisie: 88, kkd: 89, bundesliga: 78, premier: 39,
   oefennl: 667, // Friendlies Clubs (gefilterd op NL-clubs)

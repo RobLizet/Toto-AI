@@ -1699,6 +1699,16 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
   const modelValid = !!(poisson && poisson.valid);
   const F = "font-family:'IBM Plex Mono',monospace;";
   const edges = []; // verzamelt model-vs-markt edges voor de VALUE-INDEX
+  // v26.270: gecorrigeerde value tonen naast het ruwe verschil (zie adjValue in api.js).
+  // Ontbreken de parameters, dan valt de UI stil terug op alleen ruw -- nooit een verzonnen getal.
+  const _lid = m.leagueId;
+  const _adj = (raw, aiKans, pick) => (typeof adjValue === 'function') ? adjValue(raw, aiKans, pick, _lid) : null;
+  const _ppTxt = (raw, aiKans, pick) => {
+    const a = _adj(raw, aiKans, pick);
+    const r = (raw >= 0 ? '+' : '') + raw.toFixed(1);
+    if (a == null) return `${r}pp`;
+    return `${(a >= 0 ? '+' : '')}${a.toFixed(1)}pp <span style="opacity:.5;font-size:.85em;">(ruw ${r})</span>`;
+  };
 
   // ── 1X2 model vs markt (alleen als model én odds er zijn) ──
   let body = '';
@@ -1711,11 +1721,12 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     ];
     const rowsHTML = rows.map(r => {
       const model = Number(r[2]), markt = Number(r[3]), diff = model - markt, pos = diff >= 0;
+      const _diffTxt = _ppTxt(diff, model, r[0]);
       edges.push({ label: `${r[0]} ${r[1]}`, edge: diff });
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
-      return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.22rem 0;${F}font-size:.6rem;"><span style="color:#fff;">${r[0]} ${r[1]}</span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model.toFixed(0)}% \u00b7 markt ${markt.toFixed(0)}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
+      return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.22rem 0;${F}font-size:.6rem;"><span style="color:#fff;">${r[0]} ${r[1]}</span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model.toFixed(0)}% \u00b7 markt ${markt.toFixed(0)}% \u00b7 <span style="color:${kleur};font-weight:700;">${_diffTxt}</span></span></div>`;
     }).join('');
-    body = `<div style="${F}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\ud83d\udcd0 MODEL vs MARKT (vig eruit)</div>${rowsHTML}<div style="font-size:.55rem;color:rgba(255,255,255,.62);margin-top:.35rem;line-height:1.5;">+pp = model hoger dan markt (mogelijk value) \u00b7 \u2212pp = lager</div>`;
+    body = `<div style="${F}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\ud83d\udcd0 MODEL vs MARKT (vig eruit)</div>${rowsHTML}<div style="font-size:.55rem;color:rgba(255,255,255,.62);margin-top:.35rem;line-height:1.5;">+pp = model hoger dan markt (mogelijk value) \u00b7 \u2212pp = lager<br>${(typeof MODEL_PARAMS !== 'undefined' && MODEL_PARAMS) ? `Getoond is de <b>gecorrigeerde</b> afwijking: het model wordt eerst naar de markt geschrunken (en een gelijkspel krijgt een extra straf). De backend selecteert hierop \u2014 drempel ${(typeof minValueFor === 'function' && minValueFor('1', m.leagueId)) || '?'}pp, gelijkspel ${(typeof minValueFor === 'function' && minValueFor('X', m.leagueId)) || '?'}pp.` : ''}</div>`;
   }
 
   // ── Doelpunten-markten: toon zodra er O/U-odds zijn OF een model-lambda is ──
@@ -1725,9 +1736,10 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
   if (gm || hasMarket) {
     const mrow = (label, odds, model, markt) => {
       const diff = model - markt, pos = diff >= 0;
+      const _diffTxt = _ppTxt(diff, model, label); // geen 1X2 -> geen tier-extra, geen draw-straf
       edges.push({ label: `${label} @${odds}`, edge: diff });
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
-      return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
+      return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${_diffTxt}</span></span></div>`;
     };
     const krow = (label, odds, markt) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);">faire kans <b style="color:#c084fc;">${markt}%</b></span></div>`;
     const grow = (lab, o, u) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${lab}</span><span style="color:rgba(255,255,255,.88);">Over <b style="color:#c084fc;">${o}%</b> \u00b7 Under <b style="color:#c084fc;">${u}%</b></span></div>`;
@@ -1943,6 +1955,9 @@ function _bandForKans(kans) {
 async function runAnalyse() {
   const m = state.selectedMatch;
   if (!m) { alert('Selecteer eerst een wedstrijd'); return; }
+  // v26.270: shrink/tune-parameters ophalen voor de gecorrigeerde value. Faalt dit, dan tonen de
+  // tabellen alleen het ruwe verschil -- geen fallback-constanten, want die driften weg van de worker.
+  if (typeof loadModelParams === 'function') await loadModelParams().catch(() => null);
 
   const btn = document.getElementById('analyseBtn');
   const output = document.getElementById('analyseOutput');
