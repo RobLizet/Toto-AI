@@ -1054,7 +1054,13 @@ async function _scanValueAll_legacy(silent = false) {
 
           // Predictions verwerken — extra confidence als beschikbaar
           const predContext = predictions ? formatPredictions(predictions, m.home, m.away) : '';
-          if (predictions?.percent?.home !== null) conf = Math.min(10, conf + 1);
+          // v26.264: was `if (predictions?.percent?.home !== null)` — bij een timeout is predictions null,
+          // dan is `null?.percent?.home` undefined, en `undefined !== null` is TRUE. En bij succes is
+          // percent.home altijd een string ("45%"), dus nooit null. De conditie was ALTIJD waar: elke
+          // wedstrijd kreeg +1 confidence, ook zonder data. conf voedt unitAdvies() = het inzet-advies.
+          const _hasPred = !!(predictions && predictions.percent &&
+                              predictions.percent.home != null && String(predictions.percent.home).trim() !== '');
+          if (_hasPred) conf = Math.min(10, conf + 1);
 
           matchDataMap[m.id] = {
             h2h:           h2hCount   ? formatH2HCompact(h2h.slice(0,5), m.home, m.away)        : '',
@@ -1793,13 +1799,16 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
       return '';
     };
     // v26.256: twee varianten — vol groen bij een coherente staart, gedimd + ⚠ als het doelpuntentotaal afwijkt
-    const _mkBadge = dim => `<span style="${F}font-size:.42rem;font-weight:800;color:${dim ? 'rgba(11,11,11,.75)' : '#0b0b0b'};background:${dim ? 'rgba(22,199,132,.45)' : '#16c784'};border-radius:.3rem;padding:.03rem .25rem;margin-left:.25rem;vertical-align:middle;letter-spacing:.03em;">TOP VALUE${dim ? ' \u26a0' : ''}</span>`;
-    const _arow = (label, odds, model, markt, tag, top) => {
+    // v26.264: label rangschikt nu op EV (push meegerekend), niet op procentpunten. Die twee wijzen
+    // verschillende lijnen aan: op een hele lijn (-1) krijg je bij exact 1 goal verschil je inzet terug,
+    // en dat zit niet in de pp-afwijking. De shadow-kaart koos al op EV -> een analyse gaf twee adviezen.
+    const _mkBadge = (dim, ev) => `<span style="${F}font-size:.42rem;font-weight:800;color:${dim ? 'rgba(11,11,11,.75)' : '#0b0b0b'};background:${dim ? 'rgba(22,199,132,.45)' : '#16c784'};border-radius:.3rem;padding:.03rem .25rem;margin-left:.25rem;vertical-align:middle;letter-spacing:.03em;">BESTE EV ${ev >= 0 ? '+' : ''}${ev.toFixed(1)}%${dim ? ' \u26a0' : ''}</span>`;
+    const _arow = (label, odds, model, markt, tag, top) => { // top = EV% van de badge, of null
       const diff = model - markt, pos = diff >= 0;
       edges.push({ label: `${label} @${odds}`, edge: diff });
       const kleur = Math.abs(diff) >= 5 ? (pos ? '#16c784' : '#dc2626') : 'rgba(255,255,255,.7)';
       const bg = top ? 'background:rgba(22,199,132,.07);border-radius:.35rem;padding:.2rem .25rem;margin:0 -.25rem;' : 'padding:.2rem 0;';
-      return `<div style="display:flex;justify-content:space-between;gap:.5rem;${bg}${F}font-size:.57rem;"><span style="color:#fff;">${label}${tag||''}${top?_mkBadge(_tailBad):''} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
+      return `<div style="display:flex;justify-content:space-between;gap:.5rem;${bg}${F}font-size:.57rem;"><span style="color:#fff;">${label}${tag||''}${top!=null?_mkBadge(_tailBad, top):''} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);white-space:nowrap;">model ${model}% \u00b7 markt ${markt}% \u00b7 <span style="color:${kleur};font-weight:700;">${pos?'+':''}${diff.toFixed(1)}pp</span></span></div>`;
     };
     const _krowA = (label, odds, markt, tag) => `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.2rem 0;${F}font-size:.57rem;"><span style="color:#fff;">${label}${tag||''} <span style="color:#5eead4;font-weight:600;">@${odds}</span></span><span style="color:rgba(255,255,255,.88);">faire kans <b style="color:#c084fc;">${markt}%</b></span></div>`;
     // max 4 lijnen, dichtst bij 50/50 (meest informatieve lijnen), daarna oplopend gesorteerd
@@ -1815,8 +1824,14 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
       const mdl = canModel ? asianModelProbs(poisson.lambdaHome, poisson.lambdaAway, ln, 10, _t1x2) : null;
       if (mdl) {
         const mh = mdl.home, ma = mdl.away; // v26.249: model uit 1X2-gecorrigeerde matrix, geen aparte markt-pull meer
-        _specs.push({ label: `AH ${m.home} ${_fmtL(ln)}`,  odds: o.home, model: mh, markt: o.fairHome, tag: _tagA(ln),  val: mh - o.fairHome });
-        _specs.push({ label: `AH ${m.away} ${_fmtL(-ln)}`, odds: o.away, model: ma, markt: o.fairAway, tag: _tagA(-ln), val: ma - o.fairAway });
+        // v26.264: push-bewuste EV, identiek aan bestAsianEV() in football.js
+        const _pP = (mdl.push || 0) / 100;
+        const _pW = (mh / 100) * (1 - _pP), _pL = (ma / 100) * (1 - _pP);
+        const _evH = (o.home > 1) ? (_pW * (o.home - 1) - _pL) * 100 : null;
+        const _evA = (o.away > 1) ? (_pL * (o.away - 1) - _pW) * 100 : null;
+        const _band = o.fairHome >= 20 && o.fairHome <= 80; // staartlijnen tellen niet mee voor de badge
+        _specs.push({ label: `AH ${m.home} ${_fmtL(ln)}`,  odds: o.home, model: mh, markt: o.fairHome, tag: _tagA(ln),  val: mh - o.fairHome, ev: _evH, band: _band });
+        _specs.push({ label: `AH ${m.away} ${_fmtL(-ln)}`, odds: o.away, model: ma, markt: o.fairAway, tag: _tagA(-ln), val: ma - o.fairAway, ev: _evA, band: _band });
       } else {
         _specs.push({ label: `AH ${m.home} ${_fmtL(ln)}`,  odds: o.home, markt: o.fairHome, tag: _tagA(ln) });
         _specs.push({ label: `AH ${m.away} ${_fmtL(-ln)}`, odds: o.away, markt: o.fairAway, tag: _tagA(-ln) });
@@ -1825,19 +1840,26 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     // v26.256: de badge wordt niet meer onderdrukt bij een afwijkend doelpuntentotaal — hij wordt gedimd
     // en krijgt een waarschuwingsteken. Onderdrukken verbergt informatie; dimmen kadert haar.
     const _tailBad = !!(poisson.anchor && poisson.anchor.coherent === false && !poisson.anchor.applied);
-    let _topIdx = -1, _topVal = 3; // badge alleen bij echte value (>=3pp)
-    _specs.forEach((sp, i) => { if (sp.val != null && sp.val >= _topVal) { _topVal = sp.val; _topIdx = i; } });
+    // v26.264: badge op hoogste POSITIEVE EV binnen de 20-80%-band (was: hoogste pp >= 3)
+    let _topIdx = -1, _topEv = 0;
+    _specs.forEach((sp, i) => { if (sp.band && sp.ev != null && sp.ev > _topEv) { _topEv = sp.ev; _topIdx = i; } });
     let ahRows = '';
     _specs.forEach((sp, i) => {
       ahRows += (sp.model != null)
-        ? _arow(sp.label, sp.odds, sp.model, sp.markt, sp.tag, i === _topIdx)
+        ? _arow(sp.label, sp.odds, sp.model, sp.markt, sp.tag, i === _topIdx ? _topEv : null)
         : _krowA(sp.label, sp.odds, sp.markt, sp.tag);
     });
     if (ahRows) {
       const _sub = canModel ? 'model vs markt (vig eruit)' : 'markt (vig eruit) \u2014 model n.v.t.';
+      // v26.264: dezelfde coherentie-waarschuwing als boven het doelpuntenblok. Wijkt het model-totaal af
+      // van het markt-totaal, dan is de HELE AH-curve dezelfde scheve parameter in vermomming: elke lijn
+      // kantelt dan naar dezelfde kant. Die waarschuwing stond alleen bij de doelpunten, niet hier.
+      const _ahWarn = (_incoherent && poisson.anchor && poisson.anchor.mktTot != null)
+        ? `<div style="${F}font-size:.45rem;line-height:1.5;color:rgba(255,190,80,.72);margin-bottom:.3rem;">\u26a0 doelpuntentotaal wijkt af (model ${poisson.anchor.modelTot.toFixed(2)} vs markt ${poisson.anchor.mktTot.toFixed(2)}) \u2014 de hele AH-curve kantelt daardoor naar \u00e9\u00e9n kant: \u00e9\u00e9n aanname, geen losse edges.</div>`
+        : '';
       ahHTML = `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);">
       <div style="${F}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\u2696\ufe0f ASIAN LINES \u2014 ${_sub}</div>
-      ${ahRows}
+      ${_ahWarn}${ahRows}
       <div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.3rem;line-height:1.5;">Handicap vanuit thuisploeg \u00b7 kansen zijn push-gecorrigeerd \u00b7 DNB = inzet terug bij gelijkspel \u00b7 PUSH = inzet terug bij exact verschil \u00b7 \u00bd = half win/verlies mogelijk</div>
     </div>`;
     }
@@ -1874,7 +1896,9 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     const best = edges.reduce((a, b) => b.edge > a.edge ? b : a);
     const v = best.edge;
     const col = 'rgba(255,255,255,.45)';
-    const tag = _incoherent ? 'model wijkt af van markt' : 'geen tip \u2014 markt efficient';
+    // v26.264: scope erbij. De AH-markt kan wel EV bieden terwijl 1X2 + doelpunten efficient zijn;
+    // zonder scope leest 'geen tip - markt efficient' als tegenspraak met de AH-kaart eronder.
+    const tag = _incoherent ? 'model wijkt af van markt' : 'geen 1X2/doelpunten-tip \u2014 efficient';
     header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.5rem .7rem;margin-bottom:.55rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);border-radius:.55rem;">
       <div style="min-width:0;"><div style="${F}font-size:.46rem;color:rgba(255,255,255,.5);letter-spacing:.09em;">GROOTSTE AFWIJKING</div><div style="${F}font-size:.62rem;color:rgba(255,255,255,.75);margin-top:.14rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${best.label}</div></div>
       <div style="text-align:right;flex-shrink:0;"><div style="${F}font-weight:800;color:${col};line-height:1;font-size:1.25rem;">${v >= 0 ? '+' : ''}${v.toFixed(1)}<span style="font-size:.6rem;font-weight:600;"> pp</span></div><div style="${F}font-size:.45rem;color:rgba(255,190,80,.8);margin-top:.16rem;letter-spacing:.04em;">${tag}</div></div>
@@ -2191,6 +2215,15 @@ Formaties: ${formationStr}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}${
       temperature: 0,
       system: `Je bent een scherpe, eerlijke voetbalanalist voor een bettingadvies app. JSON only, geen tekst buiten JSON.
 
+GECORRELEERDE AFWIJKING (VERPLICHT ALS HET SPEELT):
+- Wijkt het doelpuntentotaal van het model af van dat van de markt, dan tonen ALLE Under-regels (of alle
+  Over-regels), BTTS en de hele Asian-Handicap-curve tegelijk value. Dat zijn GEEN losse edges: het is
+  EEN scheve parameter die overal doorwerkt.
+- Schrijf dan NOOIT "er is geen value-gap" (de gaten bestaan wel) en NOOIT "er zijn meerdere kansen"
+  (het is er een). Schrijf: de afwijking is er, en zij heeft een bron - het doelpuntentotaal.
+- Hetzelfde geldt voor 1X2: kantelt de hele AH-curve naar een kant, dan is dat dezelfde stelling als de
+  1X2-afwijking, anders verpakt. Benoem dat, in plaats van het als tweede kans te presenteren.
+
 CIJFERBRON (ABSOLUTE REGEL, GAAT BOVEN ALLES):
 - Voor ELKE kans, percentage, marktkans en value in je JSON gebruik je UITSLUITEND de getallen uit het blok "=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===". Die zijn al de-vigd en klasse-gecorrigeerd.
 - Herbereken, schat of verzin NOOIT zelf percentages uit vorm, uitslagen, H2H of odds. Die data is ALLEEN voor kwalitatieve beschrijving (vorm, tactiek, risico) - nooit voor getallen.
@@ -2210,7 +2243,11 @@ DATA-ANKERS (gebruik alleen wat aanwezig is):
 1. Recente uitslagen / vorm per team — leid hiermee als ze er zijn
 2. Odds (altijd) — de-vig en vergelijk met je inschatting
 3. Poisson-model (doelpuntengemiddelden + xG)
-4. API Predictions (onafhankelijk model van API-Football) — alleen indien aanwezig
+4. API Predictions — GEEN kansmodel. Gemeten op 16 fixtures (juli 2026): het gelijkspel-percentage
+   komt nooit onder 35% en is bijna altijd gelijk aan het hoogste team-percentage (45/45/10 negen keer,
+   50/50/0 vier keer, teams op letterlijk 0%). Het is een grofgeklikte vergelijkingsscore, geen verdeling.
+   Noem het NOOIT als "grootste risico", nooit als tegenwicht tegen model of markt, en presenteer het
+   nooit als kans. Hooguit één bijzin, en alleen als het iets kwalitatiefs toevoegt.
 5. H2H, standen, blessures, formaties — alleen indien aanwezig
 
 CONFIDENCE: 8-10 = meerdere ankers + rijke data; 6-7 = redelijke data; 4-5 = beperkt (bijv. één team zonder vorm) maar odds+model geven richting; 1-3 = vrijwel niets bruikbaar.
@@ -4605,4 +4642,5 @@ function runMonteCarloSim(hitrate, avgOdds, kellyFraction, nPicks, nSims) {
 
   document.body.appendChild(overlay);
 }
+
 
