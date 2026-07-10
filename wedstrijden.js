@@ -2415,10 +2415,13 @@ function openMatchAnalyseModalById(matchId) {
         <div id="rb-asian"></div>
       </div>
       <button id="analyseBtn" style="display:none;"></button>
-      <button onclick="openMatchAnalyseModalById('${m.id}')" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">${t('wed.newanalysis','↻ Nieuwe analyse')}</button>
+      <button onclick="pmxRerunAnalyse()" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">${t('wed.newanalysis','↻ Nieuwe analyse')}</button>
       <!-- v26.262: AI-content meldweg (Google Play AI-Generated Content-policy) + disclaimer bereikbaar -->
       <div style="display:flex;gap:.4rem;align-items:center;justify-content:center;margin-top:.6rem;flex-wrap:wrap;">
-        <button onclick="pmxReportAnalysis('${String(m.id).replace(/'/g,'')}', ${JSON.stringify((m.home||'?') + ' vs ' + (m.away||'?'))})" style="background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-decoration:underline;cursor:pointer;padding:.2rem;">${t('wed.report','⚠ Meld deze analyse')}</button>
+        <!-- v26.273: was JSON.stringify(...), dat dubbele quotes oplevert in een onclick-attribuut dat
+             zelf met dubbele quotes is afgebakend -> parser sloot het attribuut te vroeg, klikken gaf een
+             SyntaxError. Nu via data-attributen, zonder inline string. -->
+        <button data-mid="${String(m.id).replace(/"/g,'')}" data-mname="${((m.home||'?') + ' vs ' + (m.away||'?')).replace(/"/g,'&quot;')}" onclick="pmxReportAnalysis(this.dataset.mid, this.dataset.mname)" style="background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-decoration:underline;cursor:pointer;padding:.2rem;">${t('wed.report','⚠ Meld deze analyse')}</button>
         <span style="color:var(--sub);font-size:.44rem;">·</span>
         <a href="Disclaimer.html" target="_blank" rel="noopener" style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">${t('wed.disclaimer','Disclaimer · 18+')}</a>
       </div>
@@ -2426,6 +2429,24 @@ function openMatchAnalyseModalById(matchId) {
     </div>`;
   document.body.appendChild(modal);
   if (typeof runAnalyse === 'function') runAnalyse();
+}
+
+// ── v26.273: "Nieuwe analyse" draait de analyse opnieuw IN de bestaande modal ──────
+// Was: openMatchAnalyseModalById(id) -> existing.remove() + hele modal opnieuw opbouwen.
+// Dat gaf een zichtbare flits en gooide de scrollpositie weg. De modal hoeft niet weg;
+// alleen de rb-*-secties en de chips moeten terug naar hun beginstand.
+function pmxRerunAnalyse() {
+  const modal = document.getElementById('match-analyse-modal');
+  if (!modal || typeof runAnalyse !== 'function') return;
+  ['vorm','stats','tactiek','kans','risico','advies','tip','asian'].forEach(id => {
+    const el = document.getElementById('rb-' + id);
+    if (el) el.innerHTML = '';
+  });
+  const chips = document.getElementById('entityChips');
+  if (chips) chips.innerHTML = '';
+  const body = modal.firstElementChild;
+  if (body && typeof body.scrollTo === 'function') body.scrollTo({ top: 0 });
+  runAnalyse();
 }
 
 // ── v26.262: in-app melding van AI-analyse ────────────────
@@ -2485,4 +2506,5 @@ function pmxReportAnalysis(fixtureId, matchName) {
     }
   };
 }
+
 
