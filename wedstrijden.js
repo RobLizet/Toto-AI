@@ -2415,19 +2415,45 @@ function openMatchAnalyseModalById(matchId) {
         <div id="rb-asian"></div>
       </div>
       <button id="analyseBtn" style="display:none;"></button>
-      <button id="pmx-rerun-btn" onclick="pmxRerunAnalyse()" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">${t('wed.newanalysis','↻ Nieuwe analyse')}</button>
+      <button id="pmx-rerun-btn" style="width:100%;margin-top:.75rem;background:transparent;border:1px solid var(--stroke);border-radius:10px;padding:.45rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--sub);cursor:pointer;">${t('wed.newanalysis','↻ Nieuwe analyse')}</button>
       <!-- v26.262: AI-content meldweg (Google Play AI-Generated Content-policy) + disclaimer bereikbaar -->
       <div style="display:flex;gap:.4rem;align-items:center;justify-content:center;margin-top:.6rem;flex-wrap:wrap;">
         <!-- v26.273: was JSON.stringify(...), dat dubbele quotes oplevert in een onclick-attribuut dat
              zelf met dubbele quotes is afgebakend -> parser sloot het attribuut te vroeg, klikken gaf een
              SyntaxError. Nu via data-attributen, zonder inline string. -->
-        <button data-mid="${String(m.id).replace(/"/g,'')}" data-mname="${((m.home||'?') + ' vs ' + (m.away||'?')).replace(/"/g,'&quot;')}" onclick="pmxReportAnalysis(this.dataset.mid, this.dataset.mname)" style="background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-decoration:underline;cursor:pointer;padding:.2rem;">${t('wed.report','⚠ Meld deze analyse')}</button>
+        <button data-mid="${String(m.id).replace(/"/g,'')}" data-mname="${((m.home||'?') + ' vs ' + (m.away||'?')).replace(/"/g,'&quot;')}" id="pmx-report-btn" style="background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);text-decoration:underline;cursor:pointer;padding:.2rem;">${t('wed.report','⚠ Meld deze analyse')}</button>
         <span style="color:var(--sub);font-size:.44rem;">·</span>
         <a href="Disclaimer.html" target="_blank" rel="noopener" style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--sub);">${t('wed.disclaimer','Disclaimer · 18+')}</a>
       </div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--sub);text-align:center;margin-top:.35rem;line-height:1.5;">${t('wed.aidisclosure','Analyse deels door AI gegenereerd · informatief, geen garantie op winst')}</div>
     </div>`;
   document.body.appendChild(modal);
+
+  // v26.275: knoppen via addEventListener i.p.v. inline onclick. Een inline handler leunt op de
+  // globale scope; faalt dat (of gooit de handler), dan gebeurt er ZICHTBAAR niets en zie je geen
+  // fout. Nu koppelen we direct aan het element en tonen we elke fout in de modal.
+  const _toonFout = (msg) => {
+    const chips = document.getElementById('entityChips');
+    if (!chips) { alert(msg); return; }
+    const b = document.createElement('div');
+    b.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:.48rem;text-align:center;padding:.45rem;margin-bottom:.6rem;border-radius:10px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.35);color:#fca5a5;";
+    b.textContent = msg;
+    chips.parentNode.insertBefore(b, chips);
+  };
+  const _rerunBtn = modal.querySelector('#pmx-rerun-btn');
+  if (_rerunBtn) _rerunBtn.addEventListener('click', () => {
+    try {
+      if (typeof pmxRerunAnalyse !== 'function') { _toonFout('pmxRerunAnalyse ontbreekt \u2014 herlaad de app'); return; }
+      pmxRerunAnalyse();
+    } catch (e) { console.error('[rerun]', e); _toonFout('Herstart mislukt: ' + (e && e.message ? e.message : e)); }
+  });
+  const _repBtn = modal.querySelector('#pmx-report-btn');
+  if (_repBtn) _repBtn.addEventListener('click', () => {
+    try {
+      pmxReportAnalysis(_repBtn.dataset.mid, _repBtn.dataset.mname);
+    } catch (e) { console.error('[report]', e); _toonFout('Melden mislukt: ' + (e && e.message ? e.message : e)); }
+  });
+
   if (typeof runAnalyse === 'function') runAnalyse();
 }
 
