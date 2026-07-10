@@ -83,7 +83,7 @@ function renderInstellingen() {
         <div class="settings-field">
           <label class="settings-label">${t('set.lbl.bookmaker','Standaard bookmaker')}</label>
           <select class="settings-input" id="settDefaultBookmaker">
-            <option>Jacks</option>
+            <option>bookmaker</option>
             <option>Unibet</option>
             <option>BetCity</option>
             <option>Bet365</option>
@@ -924,3 +924,4 @@ async function runManualScan() {
     setTimeout(() => scanAllTodayValue('today'), 100);
   }, 80);
 }
+

@@ -181,7 +181,7 @@ function renderWalletScreen() {
         </div>
         <div style="display:flex;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap;">
           <button class="small-action-btn" style="background:rgba(255,140,0,.1);border-color:rgba(255,140,0,.3);color:#e67e00;font-weight:800;"
-            onclick="openJacksPhotoImport()">${t('wal.importjacks','📸 Importeer van Jacks')}</button>
+            onclick="openJacksPhotoImport()">${t('wal.importjacks','📸 Importeer van bookmaker')}</button>
           <button class="small-action-btn" style="background:rgba(0,190,196,.1);border-color:rgba(0,190,196,.3);color:#00BEC4;font-weight:800;"
             onclick="checkAllTrackerBets()">🔍 Alles checken</button>
         </div>
@@ -196,7 +196,7 @@ function renderWalletScreen() {
         <div style="display:flex;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap;">
           <button class="export-btn" onclick="exportTrackerCSV()">📥 Export CSV</button>
           <button class="small-action-btn" style="background:rgba(255,140,0,.1);border-color:rgba(255,140,0,.3);color:#e67e00;font-weight:800;"
-            onclick="openJacksImport()">${t('wal.importjacks2','🎰 Importeer van Jacks')}</button>
+            onclick="openJacksImport()">${t('wal.importjacks2','🎰 Importeer van bookmaker')}</button>
         </div>
         <div id="trackerList"></div>
       </div>
@@ -313,7 +313,7 @@ function updateWalletUI() {
   const fmt = v => '€' + v.toFixed(2).replace('.', ',');
   const pnl = (w.totalWon||0) - (w.totalStaked||0);
   const wins = w.bets.filter(b => b.status === 'win').length;
-  const settled = w.bets.filter(b => b.status !== 'pending').length;
+  const settled = w.bets.filter(pmxCountsForHit).length;  // v26.276: pushes tellen niet mee
   const hitRate = settled > 0
     ? Math.round(wins/settled*100) + '%' + (settled < 10 ? ` (${settled})` : '')
     : '—';
@@ -349,9 +349,14 @@ function renderBetHistory() {
   if (!bets.length) { list.innerHTML = '<div class="empty-state">'+t('wal.nobets','Nog geen weddenschappen')+'</div>'; return; }
   list.innerHTML = bets.map(b => {
     const isCombi = b.type === 'combi';
-    const pnlText = b.status==='win' ? `+€${(b.payout-(b.amount||b.stake)).toFixed(2)}`
-                  : b.status==='lose' ? `-€${(b.amount||b.stake).toFixed(2)}` : '⏳';
-    const pnlColor = b.status==='win'?'#00BEC4':b.status==='lose'?'#dc2626':'#475569';
+    // v26.276: één berekening voor alle uitkomsten (half verlies gaf voorheen "+€-5.00")
+    const _p = pmxProfit(b);
+    const pnlText = b.status === 'pending' ? '⏳'
+                  : pmxIsPush(b)           ? 'push €0,00'
+                  : `${_p >= 0 ? '+' : '-'}€${Math.abs(_p).toFixed(2)}`;
+    const pnlColor = b.status === 'pending' ? '#475569'
+                   : pmxIsPush(b)          ? '#b45309'
+                   : _p > 0 ? '#00BEC4' : _p < 0 ? '#dc2626' : '#94a3b8';
     const scoreTag = b.score ? ` [${b.score}]` : (b.liveScore ? ` ⚽${b.liveScore}${b.liveMinute?` ${b.liveMinute}'`:''}` : '');
     const srcBadge = b.source === 'value' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(0,190,196,.1);color:#00BEC4;padding:1px 6px;border-radius:4px;font-weight:700;">⚡ Value</span> ' : b.source === 'analyse' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(0,190,196,.1);color:#00a8ad;padding:1px 6px;border-radius:4px;font-weight:700;">🤖 AI</span> ' : '';
     const legsHtml = isCombi && b.legs ? b.legs.map((l,i) => `
@@ -395,6 +400,22 @@ function renderBetHistory() {
 
 // ── BET ACTIES ────────────────────────────────────────────
 
+// ── v26.276: één plek die bepaalt wat een bet heeft opgeleverd ────────────────
+// settleAsianPick() zette status op `payout > 0 ? 'win' : 'lose'`. Bij een kwartlijn is een
+// HALF VERLIES (payout = halve inzet) dus als 'win' geboekt, en een PUSH (payout = inzet) ook.
+// De P&L werd daarna berekend als `-amount` bij lose en `payout-amount` bij win -> een half
+// verlies van 5 euro verscheen als "+EUR -5.00" en telde in de hitrate als overwinning mee.
+function pmxStake(b) { const v = parseFloat(b.amount != null ? b.amount : b.stake); return isNaN(v) ? 0 : v; }
+function pmxProfit(b) {                       // netto resultaat, geldig voor elke uitkomst
+  if (!b || b.status === 'pending') return 0;
+  const p = parseFloat(b.payout);
+  return (isNaN(p) ? 0 : p) - pmxStake(b);
+}
+function pmxIsSettled(b)    { return !!(b && b.status && b.status !== 'pending'); }
+function pmxIsPush(b)       { return !!(b && b.status === 'push'); }
+function pmxCountsForHit(b) { return pmxIsSettled(b) && !pmxIsPush(b); } // push telt niet mee in hitrate
+function pmxBookmaker(b)    { return (b && b.bookmaker && b.bookmaker !== 'Jacks') ? b.bookmaker : 'bookmaker'; }
+
 // v26.228: Asian Handicap / Asian totalen / "meer-minder dan" / BTTS afrekenen (incl. kwart-lijnen: halve winst/verlies/push)
 // v26.231: NL->EN landennamen + fuzzy team-match (lost "Noorwegen" vs "Norway", "Brazilie" vs "Brazil" op)
 const NL_EN_LAND = {
@@ -430,7 +451,15 @@ function settleAsianPick(pick, hg, ag, homeName, awayName, stake, odds) {
     const words = x => norm(x).split(' ').filter(w => w.length>2);
     const toReturn = o => o>0 ? stake + o*stake*(odds-1) : o<0 ? stake*(1+o) : stake; // o: 1,.5,0,-.5,-1
     const lbl = o => o>=1?'gewonnen':o>=0.5?'½ gewonnen':o>0?'':o===0?'push (inzet terug)':o<=-1?'verloren':'½ verloren';
-    const mk = o => { const R=Math.round(toReturn(o)*100)/100; return { status: R>0?'win':'lose', payout:R, label:lbl(o), partial:(o>-1&&o<1) }; };
+    // v26.276: status vergelijkt payout met de INZET, niet met nul.
+    //   R > inzet  -> win  (ook halve winst)
+    //   R = inzet  -> push (inzet terug; telt niet mee in de hitrate)
+    //   R < inzet  -> lose (ook half verlies; P&L komt uit payout - inzet)
+    const mk = o => {
+      const R = Math.round(toReturn(o)*100)/100;
+      const st = R > stake + 0.005 ? 'win' : (Math.abs(R - stake) <= 0.005 ? 'push' : 'lose');
+      return { status: st, payout: R, label: lbl(o), partial: (o > -1 && o < 1) };
+    };
     const single = (margin, line) => { const d=margin+line; return d>0?1:d<0?-1:0; };
     const ahLine = (margin, line) => {
       const frac = Math.round((Math.abs(line)%1)*100)/100;
@@ -659,10 +688,10 @@ function renderWalletChart() {
   let points = [];
   if (chartView==='saldo') {
     let bal = sb; points = [bal];
-    settled.forEach(b => { bal += b.status==='win'?(b.payout-b.amount):-b.amount; points.push(bal); });
+    settled.forEach(b => { bal += pmxProfit(b); points.push(bal); });   // v26.276
   } else {
     let pnl = 0; points = [pnl];
-    settled.forEach(b => { pnl += b.status==='win'?(b.payout-b.amount):-b.amount; points.push(pnl); });
+    settled.forEach(b => { pnl += pmxProfit(b); points.push(pnl); });   // v26.276
   }
   const minV=Math.min(...points,chartView==='pnl'?-1:sb*0.5);
   const maxV=Math.max(...points,chartView==='pnl'?1:sb*1.1);
@@ -716,7 +745,7 @@ function renderTrackerChart() {
   const creme = document.body.classList.contains('creme');
   // cumulatieve winst/verlies (start op 0)
   let pnl = 0; const points = [0];
-  settled.forEach(b => { pnl += b.status === 'win' ? ((b.payout || 0) - (b.stake || 0)) : -(b.stake || 0); points.push(pnl); });
+  settled.forEach(b => { pnl += pmxProfit(b); points.push(pnl); });
   const minV = Math.min(...points, -1), maxV = Math.max(...points, 1);
   const range = Math.max(maxV - minV, 0.01);
   const pad = { top: 12, bottom: 14, left: 40, right: 8 };
@@ -1167,7 +1196,7 @@ function renderTracker() {
       <div class="tracker-row-top">
         <div>
           <div class="tracker-match">${b.match||''}${b.score ? ` [${b.score}]`:''}</div>
-          <div class="tracker-meta">${b.pick} @ ${b.odds} · ${b.date} · ${b.bookmaker||'?'}</div>
+          <div class="tracker-meta">${b.pick} @ ${b.odds} · ${b.date} · ${pmxBookmaker(b)}</div>
           ${isCombi ? `<div class="tracker-legs">${legsHtml}</div>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0;">
@@ -1580,7 +1609,9 @@ function renderBacktestChart(settled) {
   canvas.width=W; canvas.height=H;
   ctx.clearRect(0,0,W,H);
   const points=[0];
-  settled.forEach(p => { const last=points[points.length-1]; points.push(last+(p.status==='win'?(p.odds-1):-1)); });
+  // v26.276: units via profit/inzet -> push levert 0, half verlies -0.5 (was: altijd -1)
+  settled.forEach(p => { const last=points[points.length-1]; const _s=pmxStake(p);
+    points.push(last + (_s>0 ? pmxProfit(p)/_s : (p.status==='win'?(p.odds-1):-1))); });
   const minV=Math.min(...points,-0.5), maxV=Math.max(...points,0.5);
   const range=maxV-minV;
   const pad={top:12,bottom:14,left:36,right:8};
@@ -2027,7 +2058,7 @@ function parseJacksImport() {
   // Preview tonen
   const preview = document.getElementById('jacksImportPreview');
   if (!bets.length) {
-    if (preview) preview.innerHTML = '<div style="font-family:monospace;font-size:.55rem;color:#dc2626;">⚠ Geen bets herkend. Probeer de tekst te kopieren via lang indrukken → Alles selecteren op de Jacks betgeschiedenis pagina.</div>';
+    if (preview) preview.innerHTML = '<div style="font-family:monospace;font-size:.55rem;color:#dc2626;">⚠ Geen bets herkend. Probeer de tekst te kopieren via lang indrukken → Alles selecteren op de betgeschiedenis-pagina van je bookmaker.</div>';
     return;
   }
 
@@ -2080,8 +2111,8 @@ function parseJacksImport() {
       payout: b.payout,
       status: b.status,
       source: 'jacks',
-      bookmaker: 'Jacks',
-      note: 'Geïmporteerd van Jacks',
+      bookmaker: 'bookmaker',
+      note: 'Geïmporteerd van bookmaker',
       markt: '1X2',
       score: null
     });
@@ -2092,7 +2123,7 @@ function parseJacksImport() {
   closeJacksImport();
   renderTracker();
   updateTrackerStats();
-  showToast(`✅ ${imported} bets ${t('wal.importedfromjacks','geïmporteerd van Jacks')}`);
+  showToast(`✅ ${imported} bets ${t('wal.importedfromjacks','geïmporteerd van bookmaker')}`);
 }
 
 // Directe import zonder analyse (via knop)
@@ -2109,8 +2140,8 @@ function confirmJacksTextImport() {
       id: Date.now() + Math.random(),
       match: b.match, date: b.date, pick: b.pick, odds: b.odds,
       stake: b.stake, payout: b.payout, status: b.status,
-      source: 'jacks', bookmaker: 'Jacks',
-      note: 'Geïmporteerd van Jacks', markt: '1X2', score: null
+      source: 'jacks', bookmaker: 'bookmaker',
+      note: 'Geïmporteerd van bookmaker', markt: '1X2', score: null
     });
     imported++;
   });
@@ -2119,7 +2150,7 @@ function confirmJacksTextImport() {
   closeJacksImport();
   renderTracker();
   updateTrackerStats();
-  showToast(`✅ ${imported} bets geïmporteerd van Jacks`);
+  showToast(`✅ ${imported} bets geïmporteerd van bookmaker`);
 }
 
 // ── AI ANALYSE VAN GEÏMPORTEERDE JACKS BETS ──────────────
@@ -2181,7 +2212,7 @@ REGELS:
 - Max 300 woorden`,
         messages: [{
           role: 'user',
-          content: `Mijn geïmporteerde bets van Jacks:\n\n${betsCtx}\n\n${hitrate !== null ? `Statistieken: ${hitrate}% hitrate, ROI ${roi >= 0 ? '+' : ''}${roi}%, gem. odds ${avgOdds}` : `${bets.filter(b=>b.status==='pending').length} open bet(s), nog geen resultaten`}\n\nGeef een korte analyse in het Nederlands.`
+          content: `Mijn geïmporteerde bets van de bookmaker:\n\n${betsCtx}\n\n${hitrate !== null ? `Statistieken: ${hitrate}% hitrate, ROI ${roi >= 0 ? '+' : ''}${roi}%, gem. odds ${avgOdds}` : `${bets.filter(b=>b.status==='pending').length} open bet(s), nog geen resultaten`}\n\nGeef een korte analyse in het Nederlands.`
         }]
       })
     });
@@ -2236,11 +2267,11 @@ function openJacksPhotoImport() {
     modal.innerHTML = `
       <div class="modal-box" style="max-height:88vh;overflow-y:auto;width:100%;max-width:420px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;">
-          <h3 style="margin:0;font-size:1rem;">📸 Jacks Import</h3>
+          <h3 style="margin:0;font-size:1rem;">📸 Bookmaker Import</h3>
           <button onclick="closeJacksPhotoImport()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>
         </div>
         <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);margin-bottom:.75rem;line-height:1.7;">
-          Screenshot van je Jacks betgeschiedenis uploaden — AI leest de bets automatisch uit.
+          Screenshot van je bookmaker-betgeschiedenis uploaden — AI leest de bets automatisch uit.
         </div>
         <label style="display:block;width:100%;padding:.65rem;border-radius:12px;text-align:center;
           background:linear-gradient(135deg,rgba(255,140,0,.12),rgba(255,100,0,.08));
@@ -2460,7 +2491,7 @@ function confirmJacksPhotoImport() {
         payout,
         status,
         source: 'jacks',
-        bookmaker: 'Jacks',
+        bookmaker: 'bookmaker',
         note: 'Geïmporteerd via screenshot',
         markt: 'Combi',
         score: null
@@ -2488,7 +2519,7 @@ function confirmJacksPhotoImport() {
         payout,
         status,
         source:    'jacks',
-        bookmaker: 'Jacks',
+        bookmaker: 'bookmaker',
         note:      'Geïmporteerd via screenshot',
         markt:     '1X2',
         score:     null
@@ -2501,7 +2532,7 @@ function confirmJacksPhotoImport() {
   closeJacksPhotoImport();
   renderTracker();
   updateTrackerStats();
-  showToast(`✅ ${imported} bet${imported>1?'s':''} geïmporteerd van Jacks`);
+  showToast(`✅ ${imported} bet${imported>1?'s':''} geïmporteerd van bookmaker`);
   _jacksParsedBets = [];
 }
 
@@ -2768,3 +2799,4 @@ function showWalletPopup(type, data) {
     }, 80);
   }
 }
+
