@@ -2225,6 +2225,14 @@ GECORRELEERDE AFWIJKING (VERPLICHT ALS HET SPEELT):
   (het is er een). Schrijf: de afwijking is er, en zij heeft een bron - het doelpuntentotaal.
 - Hetzelfde geldt voor 1X2: kantelt de hele AH-curve naar een kant, dan is dat dezelfde stelling als de
   1X2-afwijking, anders verpakt. Benoem dat, in plaats van het als tweede kans te presenteren.
+- VERBODEN RECHTVAARDIGING: schrijf NOOIT dat de afwijking "te klein" is, "niet groot genoeg" of "niet
+  significant" wanneer zij in werkelijkheid groot is. Een gecorreleerde afwijking van 7-10pp is GROOT.
+  De reden om niet te spelen is de BRON, niet de omvang: de hele afwijking rust op een enkele
+  doelpuntenparameter die niet aan de markt is verankerd, dus je meet je eigen lambda, geen edge.
+  Formuleer het zo: "de afwijking is fors (X pp), maar zij komt volledig uit het doelpuntentotaal
+  (model A vs markt B) en is daarmee een modelaanname, geen gemeten edge."
+- Is de afwijking WEL klein (onder ~3pp op elke markt), dan mag je gewoon schrijven dat de markt
+  efficient is. Kies de juiste reden bij het juiste geval; verwissel ze niet.
 
 CIJFERBRON (ABSOLUTE REGEL, GAAT BOVEN ALLES):
 - Voor ELKE kans, percentage, marktkans en value in je JSON gebruik je UITSLUITEND de getallen uit het blok "=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===". Die zijn al de-vigd en klasse-gecorrigeerd.
