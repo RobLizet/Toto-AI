@@ -1803,6 +1803,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     // verschillende lijnen aan: op een hele lijn (-1) krijg je bij exact 1 goal verschil je inzet terug,
     // en dat zit niet in de pp-afwijking. De shadow-kaart koos al op EV -> een analyse gaf twee adviezen.
     const _mkBadge = (dim, ev) => `<span style="${F}font-size:.42rem;font-weight:800;color:${dim ? 'rgba(11,11,11,.75)' : '#0b0b0b'};background:${dim ? 'rgba(22,199,132,.45)' : '#16c784'};border-radius:.3rem;padding:.03rem .25rem;margin-left:.25rem;vertical-align:middle;letter-spacing:.03em;">BESTE EV ${ev >= 0 ? '+' : ''}${ev.toFixed(1)}%${dim ? ' \u26a0' : ''}</span>`;
+    const _tailBad = !!(poisson.anchor && poisson.anchor.coherent === false && !poisson.anchor.applied);
     const _arow = (label, odds, model, markt, tag, top) => { // top = EV% van de badge, of null
       const diff = model - markt, pos = diff >= 0;
       edges.push({ label: `${label} @${odds}`, edge: diff });
@@ -1839,7 +1840,6 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     }
     // v26.256: de badge wordt niet meer onderdrukt bij een afwijkend doelpuntentotaal — hij wordt gedimd
     // en krijgt een waarschuwingsteken. Onderdrukken verbergt informatie; dimmen kadert haar.
-    const _tailBad = !!(poisson.anchor && poisson.anchor.coherent === false && !poisson.anchor.applied);
     // v26.264: badge op hoogste POSITIEVE EV binnen de 20-80%-band (was: hoogste pp >= 3)
     let _topIdx = -1, _topEv = 0;
     _specs.forEach((sp, i) => { if (sp.band && sp.ev != null && sp.ev > _topEv) { _topEv = sp.ev; _topIdx = i; } });
@@ -2289,7 +2289,7 @@ KWALITEITSREGELS:
 
     fill('vorm',    sectionCard('⚡', t('ana.form','VORM'), result.vorm || '—', '#2563eb'));
     const predBadge = predictions?.advice
-      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API: ${predictions.advice}${predictions.percent?.home !== null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
+      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API: ${predictions.advice}${predictions.percent?.home != null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
       : '';
     fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', result.tactiek || '—', '#d97706'));

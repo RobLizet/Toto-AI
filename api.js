@@ -398,10 +398,13 @@ function formatPredictions(pred, home, away) {
 
   if (pred.advice) lines.push(`💡 API advies: "${pred.advice}"`);
 
-  if (pred.percent?.home !== null) {
-    const h = pred.percent.home || 0;
-    const d = pred.percent.draw || 0;
-    const a = pred.percent.away || 0;
+  // v26.266: `pred.percent?.home !== null` was ALTIJD waar (ontbreekt percent, dan is het undefined,
+  // en undefined !== null). De regels eronder dereferencen pred.percent zonder ?. -> TypeError.
+  // Bovendien gooide `|| 0` een legitieme 0% weg (API geeft die echt: 50/50/0).
+  if (pred.percent && pred.percent.home != null) {
+    const h = pred.percent.home ?? 0;
+    const d = pred.percent.draw ?? 0;
+    const a = pred.percent.away ?? 0;
     lines.push(`📊 API kansen: ${home} ${h}% / gelijk ${d}% / ${away} ${a}%`);
   }
 
@@ -443,3 +446,4 @@ function formFromPred(pred, side) {
   if (gf != null && ga != null) parts.push(`${gf} voor / ${ga} tegen (laatste 5)`);
   return parts.join(' \u00b7 ');
 }
+

@@ -1,0 +1,46 @@
+name: Lint
+
+# Blokkeert de merge naar main als een van de twee scherpe regels afgaat.
+# Bewust een aparte workflow: valt deze om, dan wil je weten dat het de LINT is
+# en niet de Pages- of Worker-deploy.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: ESLint installeren
+        run: npm install --no-save --no-fund --no-audit eslint@9
+
+      - name: Syntaxcheck (vangt geen scope of semantiek)
+        run: |
+          for f in *.js; do
+            case "$f" in OneSignalSDKWorker.js) continue ;; esac
+            node --check "$f" || exit 1
+          done
+
+      - name: Blokkerende regels
+        # 1. no-use-before-define      -> ving de TDZ in v26.265 (brak elke AH-analyse)
+        # 2. optional chaining !== null -> ving 3 gevallen waarin de guard altijd waar was,
+        #    waaronder een die het inzet-advies ophoogde en een die een TypeError veroorzaakte
+        run: npx eslint *.js
+
+      - name: Audit (niet-blokkerend, alleen ter info)
+        continue-on-error: true
+        run: npx eslint -c eslint.audit.mjs *.js || true
