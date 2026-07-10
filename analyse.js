@@ -2129,6 +2129,12 @@ async function runAnalyse() {
       if (poisson.valid && _oh>1 && _od>1 && _oa>1) {
         const _inv=1/_oh+1/_od+1/_oa;
         const _mh=Math.round((1/_oh)/_inv*100), _mx=Math.round((1/_od)/_inv*100), _ma=Math.round((1/_oa)/_inv*100);
+        // v26.269: de LLM rekende de 1X2-afwijking zelf uit en zat ernaast ("binnen 3pp", terwijl het
+        // gelijkspel op +4.7pp staat). Elk getal dat hij AFLEIDT i.p.v. CITEERT is een foutkans.
+        // Value hier exact berekenen uit de ONafgeronde marktkansen, net als de MODEL vs MARKT-tabel.
+        const _mhx=(1/_oh)/_inv*100, _mxx=(1/_od)/_inv*100, _max=(1/_oa)/_inv*100;
+        const _pp = v => (v >= 0 ? '+' : '') + v.toFixed(1);
+        const _valLine = `\n1X2 value (model min markt, in pp): ${m.home} ${_pp(poisson.k1-_mhx)} | gelijkspel ${_pp(poisson.kX-_mxx)} | ${m.away} ${_pp(poisson.k2-_max)}`;
         const _cands=[
           {code:'1', label:`${m.home} wint`, odds:m.homeOdds, model:poisson.k1, mkt:_mh},
           {code:'X', label:'gelijkspel', odds:m.drawOdds, model:poisson.kX, mkt:_mx},
@@ -2202,7 +2208,7 @@ async function runAnalyse() {
         const _tot = (poisson.anchor && poisson.anchor.modelTot != null && poisson.anchor.mktTot != null)
           ? `\nDoelpuntentotaal model: ${poisson.anchor.modelTot.toFixed(2)} | markt (na de-vig): ${poisson.anchor.mktTot.toFixed(2)} | gecorreleerde afwijking: ${poisson.anchor.coherent === false ? 'JA' : 'nee'}`
           : `\nDoelpuntentotaal: NIET BESCHIKBAAR - noem in je tekst GEEN enkel doelpuntentotaal.`;
-        modelBlock = `\n\n=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===\n1X2 model: ${m.home} ${poisson.k1}% / gelijkspel ${poisson.kX}% / ${m.away} ${poisson.k2}%\n1X2 markt (na de-vig): ${m.home} ${_mh}% / gelijkspel ${_mx}% / ${m.away} ${_ma}%${_tot}${_gmStr}${_tipLine}\n=== EINDE GECORRIGEERDE KANSEN ===`;
+        modelBlock = `\n\n=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===\n1X2 model: ${m.home} ${poisson.k1}% / gelijkspel ${poisson.kX}% / ${m.away} ${poisson.k2}%\n1X2 markt (na de-vig): ${m.home} ${_mh}% / gelijkspel ${_mx}% / ${m.away} ${_ma}%${_valLine}${_tot}${_gmStr}${_tipLine}\n=== EINDE GECORRIGEERDE KANSEN ===`;
       }
     } catch(e) { console.warn('[analyse] modelblok', e.message); }
 
@@ -2247,6 +2253,7 @@ GECORRELEERDE AFWIJKING (VERPLICHT ALS HET SPEELT):
 
 CIJFERBRON (ABSOLUTE REGEL, GAAT BOVEN ALLES):
 - Voor ELKE kans, percentage, marktkans en value in je JSON gebruik je UITSLUITEND de getallen uit het blok "=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===". Die zijn al de-vigd en klasse-gecorrigeerd.
+- JE REKENT NOOIT ZELF. Geen verschillen, geen afrondingen, geen samenvattende marges. Wil je zeggen hoe ver model en markt uiteenliggen, gebruik dan LETTERLIJK de waarden uit de regel "1X2 value (model min markt, in pp)". Schrijf dus nooit "binnen 3pp" of "3-5pp uit elkaar" op basis van je eigen hoofdrekenwerk; noem de grootste waarde uit die regel en welke uitkomst het betreft.
 - Herbereken, schat of verzin NOOIT zelf percentages uit vorm, uitslagen, H2H of odds. Die data is ALLEEN voor kwalitatieve beschrijving (vorm, tactiek, risico) - nooit voor getallen.
 - Bereken de de-vigde marktkans NOOIT zelf uit de odds; gebruik de "markt (na de-vig)"-regel uit het blok.
 - Staat er "O2.5 model 48%", dan is de kans 48%. Je mag die NOOIT als hogere value (bv. 72%) presenteren, ook niet als de vorm/H2H veel goals suggereert.
