@@ -2195,7 +2195,14 @@ async function runAnalyse() {
         const _tipLine = codeTip
           ? `\n\nDE GESELECTEERDE TIP (door de backend bepaald - schrijf de analyse hier OMHEEN, kies NOOIT zelf een andere uitkomst): ${codeTip.code} = ${codeTip.label} @ ${codeTip.odds} | modelkans ${codeTip.model}% | marktkans ${codeTip.mkt}% | value ${codeTip.value>=0?'+':''}${codeTip.value}pp${codeTip.value<=0?' -> GEEN VALUE: schrijf een eerlijke pass/overslaan-toelichting (markt is hier efficient)':''}`
           : `\n\nGEEN GESELECTEERDE TIP: de backend vond voor deze wedstrijd geen value-pick. Schrijf een eerlijke pass/overslaan-toelichting (de markt is hier efficient). Kies ZELF GEEN tip, ook niet de favoriet. Zet confidence MAX 5 en sterren MAX 2.`;
-        modelBlock = `\n\n=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===\n1X2 model: ${m.home} ${poisson.k1}% / gelijkspel ${poisson.kX}% / ${m.away} ${poisson.k2}%\n1X2 markt (na de-vig): ${m.home} ${_mh}% / gelijkspel ${_mx}% / ${m.away} ${_ma}%${_gmStr}${_tipLine}\n=== EINDE GECORRIGEERDE KANSEN ===`;
+        // v26.268: doelpuntentotalen ALS BRON. v26.267 schreef de LLM een zin voor met invulvakjes
+        // "(model A vs markt B)", maar die twee getallen stonden NIET in het verplichte bronblok.
+        // Gevolg: hij verzon ze (~1.9 vs ~2.4, terwijl het 2.42 vs 2.81 is) -- precies de hallucinatie
+        // die CIJFERBRON moet voorkomen. Een verplichte formulering vraagt om verplichte cijfers.
+        const _tot = (poisson.anchor && poisson.anchor.modelTot != null && poisson.anchor.mktTot != null)
+          ? `\nDoelpuntentotaal model: ${poisson.anchor.modelTot.toFixed(2)} | markt (na de-vig): ${poisson.anchor.mktTot.toFixed(2)} | gecorreleerde afwijking: ${poisson.anchor.coherent === false ? 'JA' : 'nee'}`
+          : `\nDoelpuntentotaal: NIET BESCHIKBAAR - noem in je tekst GEEN enkel doelpuntentotaal.`;
+        modelBlock = `\n\n=== GECORRIGEERDE KANSEN (VERPLICHTE BRON) ===\n1X2 model: ${m.home} ${poisson.k1}% / gelijkspel ${poisson.kX}% / ${m.away} ${poisson.k2}%\n1X2 markt (na de-vig): ${m.home} ${_mh}% / gelijkspel ${_mx}% / ${m.away} ${_ma}%${_tot}${_gmStr}${_tipLine}\n=== EINDE GECORRIGEERDE KANSEN ===`;
       }
     } catch(e) { console.warn('[analyse] modelblok', e.message); }
 
@@ -2231,6 +2238,10 @@ GECORRELEERDE AFWIJKING (VERPLICHT ALS HET SPEELT):
   doelpuntenparameter die niet aan de markt is verankerd, dus je meet je eigen lambda, geen edge.
   Formuleer het zo: "de afwijking is fors (X pp), maar zij komt volledig uit het doelpuntentotaal
   (model A vs markt B) en is daarmee een modelaanname, geen gemeten edge."
+  A en B zijn de EXACTE waarden uit de regel "Doelpuntentotaal model: ... | markt (na de-vig): ..." in
+  het verplichte bronblok. Rond ze NIET af, schat ze NIET, en gebruik NOOIT het getal achter
+  "verw. X goals" als marktwaarde - dat is het modeltotaal. Ontbreekt die regel, noem dan geen enkel
+  totaal en beschrijf de afwijking kwalitatief.
 - Is de afwijking WEL klein (onder ~3pp op elke markt), dan mag je gewoon schrijven dat de markt
   efficient is. Kies de juiste reden bij het juiste geval; verwissel ze niet.
 
