@@ -1062,6 +1062,52 @@ function cycleTrackerStatus(id) {
 }
 
 // v26.229: auto-check voor tracker-bets (geïmporteerde Jacks-weddenschappen) — Asian Handicap/totalen/BTTS/1X2
+// v26.277: pure settle-kern (geen API, geen DOM) — één bron voor checkTrackerBet én de migratie,
+// zodat de payout-berekening niet op twee plekken kan wegdriften. Payout = WERKELIJKE terugbetaling
+// (0 bij verlies, halve inzet bij half verlies, inzet bij push, bruto bij winst) — herberekend uit
+// inzet+quote, nooit uit een mogelijk-vervuild opgeslagen payout-veld.
+function pmxSettleFromScore(b, hg, ag, homeName, awayName) {
+  const stake = pmxStake(b), odds = parseFloat(b.odds)||0;
+  let res = settleAsianPick(b.pick, hg, ag, homeName, awayName, stake, odds);
+  if (!res) {
+    const p = String(b.pick||''); let won = null;
+    const _g = (typeof settleGoalPick === 'function') ? settleGoalPick(p, hg, ag) : null;
+    if (_g != null) won = (_g === 'win');
+    else if (/^1$|thuis/i.test(p)) won = hg > ag;
+    else if (/^2$|\buit\b/i.test(p)) won = ag > hg;
+    else if (/^x$|gelijk/i.test(p)) won = hg === ag;
+    if (won !== null) res = { status: won?'win':'lose', payout: won ? Math.round(stake*odds*100)/100 : 0, label: won?'gewonnen':'verloren' };
+  }
+  return res;
+}
+
+// v26.277: eenmalige correctie van reeds afgerekende tracker-bets. Onder oude code werd de payout bij
+// een verlies/half verlies/push NIET weggeschreven (alleen bij winst) -> b.payout bleef de BRUTO-winst
+// staan. Dat maakte de nieuwe pmxProfit-weergave fout (een verloren bet leek winst). Herberekent lokaal
+// op de opgeslagen eindstand — geen API-call. Draait 1x per apparaat.
+function pmxFixTrackerPayouts() {
+  try {
+    if (!state.tracker || state.tracker._payoutFixV277) return;
+    let changed = 0;
+    for (const b of (state.tracker.bets||[])) {
+      if (!pmxIsSettled(b) || !b.score) continue;
+      const sc = String(b.score).split('-');
+      const hg = parseInt(sc[0],10), ag = parseInt(sc[1],10);
+      if (!Number.isFinite(hg) || !Number.isFinite(ag)) continue;
+      const parts = String(b.match||'').split(/\s+(?:vs?\.?|[-–—])\s+/i);
+      const res = pmxSettleFromScore(b, hg, ag, (parts[0]||'').trim(), (parts[1]||'').trim());
+      if (res && res.payout != null) {
+        const newP = Math.round(res.payout*100)/100;
+        if (b.status !== res.status || Math.abs((parseFloat(b.payout)||0) - newP) > 0.005) {
+          b.status = res.status; b.payout = newP; if (res.label) b.resultLabel = res.label; changed++;
+        }
+      }
+    }
+    state.tracker._payoutFixV277 = true;
+    if (changed > 0) { saveState(); }
+  } catch(e) {}
+}
+
 async function checkTrackerBet(id, silent) {
   const b = (state.tracker.bets||[]).find(x => x.id===id);
   if (!b || b.status!=='pending') return;
@@ -1083,6 +1129,14 @@ async function checkTrackerBet(id, silent) {
       // vast duo (bv. twee landen) praktisch uitgesloten. Datum-calls zijn edge-gecachet in de proxy.
       const shift = (iso, days) => { const d=new Date(iso+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+days); return d.toISOString().slice(0,10); };
       const tryDates = [date, shift(date,1), shift(date,-1), shift(date,2), shift(date,-2)];
+      // v26.277: screenshot-import gokt soms het JAAR verkeerd (bv. 2025 i.p.v. 2026); een dag-venster
+      // van ±2 vangt dat niet. Voeg de zelfde dag/maand in het huidige en vorige jaar toe (±1 dag).
+      // teamsMatch eist BEIDE teams, dus een vals-positief op een ander jaar is praktisch uitgesloten.
+      const _yr = new Date().getUTCFullYear();
+      for (const _y of [_yr, _yr - 1]) {
+        const _yd = `${_y}${date.slice(4)}`;
+        for (const _c of [_yd, shift(_yd,1), shift(_yd,-1)]) if (!tryDates.includes(_c)) tryDates.push(_c);
+      }
       for (const dd of tryDates) {
         try {
           const r=await apiFetch(`https://v3.football.api-sports.io/fixtures?date=${dd}`,null); const d=await r.json(); const pool=d.response||[];
@@ -1093,18 +1147,11 @@ async function checkTrackerBet(id, silent) {
     }
     if (!fix || !okStatus(fix)) { if(!silent) showToast('⏳ Nog geen eindstand — probeer later of vink handmatig'); return; }
     const hg=fix.goals.home??0, ag=fix.goals.away??0; b.score=`${hg}-${ag}`;
-    let res = settleAsianPick(b.pick, hg, ag, fix.teams.home.name, fix.teams.away.name, b.stake, b.odds);
-    if (!res) {
-      const p=String(b.pick||''); let won=null;
-      const _g=(typeof settleGoalPick==='function')?settleGoalPick(p,hg,ag):null;
-      if (_g!=null) won=(_g==='win');
-      else if(/^1$|thuis/i.test(p)) won=hg>ag;
-      else if(/^2$|\buit\b/i.test(p)) won=ag>hg;
-      else if(/^x$|gelijk/i.test(p)) won=hg===ag;
-      if (won!==null) res={ status: won?'win':'lose', payout: won?b.payout:0, label: won?'gewonnen':'verloren' };
-    }
+    const res = pmxSettleFromScore(b, hg, ag, fix.teams.home.name, fix.teams.away.name);
     if (!res) { if(!silent) showToast('⚠ Markt niet auto-herkend — vink handmatig af'); return; }
-    b.status=res.status; if(res.status==='win') b.payout=res.payout; b.resultLabel=res.label;
+    // v26.277: payout = werkelijke terugbetaling, ALTIJD wegschrijven (was: alleen bij winst -> half
+    // verlies/push behield de bruto-payout en werd verkeerd weergegeven).
+    b.status=res.status; if (res.payout != null) b.payout=res.payout; b.resultLabel=res.label;
     saveState(); renderTracker(); updateTrackerStats();
     if(!silent) showToast(`✅ ${res.label} (${b.score})`);
   } catch(e) { if(!silent) showToast('⚠ Fout bij ophalen — vink handmatig af'); }
@@ -1172,6 +1219,7 @@ const sourceClass = {analyse:'src-analyse', combi:'src-combi', value:'src-value'
 function renderTracker() {
   const list = document.getElementById('trackerList');
   if (!list) return;
+  pmxFixTrackerPayouts(); // v26.277: eenmalig oude bruto-payouts corrigeren voor een correcte weergave
   let bets = state.tracker.bets||[];
   if (trackerFilter==='open')    bets = bets.filter(b => b.status==='pending');
   else if (trackerFilter==='win')  bets = bets.filter(b => b.status==='win');
@@ -1181,8 +1229,10 @@ function renderTracker() {
   if (typeof passesEliteFilter === 'function') bets = bets.filter(b => (b.source!=='value' && b.source!=='analyse') || passesEliteFilter(b)); // Elite/A+ alleen op scan-picks; eigen bets blijven
   if (!bets.length) { list.innerHTML='<div class="empty-state">Geen weddenschappen</div>'; return; }
   list.innerHTML = bets.map(b => {
-    const pnlText  = b.status==='win' ? `+€${(b.payout-b.stake).toFixed(2)}` : b.status==='lose' ? `-€${b.stake.toFixed(2)}` : '⏳ Open';
-    const pnlColor = b.status==='win'?'#00BEC4':b.status==='lose'?'#dc2626':'#475569';
+    // v26.277: half verlies/half winst/push correct via pmxProfit — zelfde bron als de wallet-lijst (v26.276)
+    const _pnl     = pmxProfit(b);
+    const pnlText  = b.status==='pending' ? '⏳ Open' : pmxIsPush(b) ? 'push €0,00' : `${_pnl>=0?'+':'-'}€${Math.abs(_pnl).toFixed(2)}`;
+    const pnlColor = b.status==='pending' ? '#475569' : pmxIsPush(b) ? '#b45309' : _pnl>0 ? '#00BEC4' : _pnl<0 ? '#dc2626' : '#94a3b8';
     const srcLbl   = sourceLabel[b.source||'eigen']||'✏️ Eigen';
     const srcCls   = sourceClass[b.source||'eigen']||'src-eigen';
     const isCombi  = b.type==='combi';
@@ -1229,9 +1279,8 @@ function renderTracker() {
 function updateTrackerStats() {
   const bets   = state.tracker.bets||[];
   const staked = bets.reduce((s,b) => s+(b.stake||0),0);
-  const won    = bets.filter(b=>b.status==='win').reduce((s,b)=>s+(b.payout-b.stake),0);
-  const lost   = bets.filter(b=>b.status==='lose').reduce((s,b)=>s+b.stake,0);
-  const pnl    = won-lost;
+  // v26.277: netto via pmxProfit -> half verlies/push/half winst tellen correct mee (was: volle inzet bij elke 'lose')
+  const pnl    = bets.filter(pmxIsSettled).reduce((s,b)=>s+pmxProfit(b),0);
   const roi    = staked>0 ? ((pnl/staked)*100).toFixed(1) : '—';
   const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
   set('trStaked', `€${staked.toFixed(0)}`);
@@ -2707,9 +2756,10 @@ function showWalletPopup(type, data) {
 
   } else if (type === 'tracker') {
     const b = data;
-    const pnlVal = b.status==='win' ? b.payout - b.stake : b.status==='lose' ? -b.stake : null;
-    const pnlText = pnlVal !== null ? (pnlVal>=0?'+':'')+'€'+pnlVal.toFixed(2) : '⏳ Open';
-    const pnlColor = b.status==='win'?'#00BEC4':b.status==='lose'?'#dc2626':'#d97706';
+    // v26.277: pmxProfit voor half verlies/push (consistent met de lijst)
+    const pnlVal = pmxIsSettled(b) ? pmxProfit(b) : null;
+    const pnlText = pnlVal !== null ? (pmxIsPush(b) ? 'push €0,00' : (pnlVal>=0?'+':'')+'€'+pnlVal.toFixed(2)) : '⏳ Open';
+    const pnlColor = b.status==='pending' ? '#d97706' : pmxIsPush(b) ? '#b45309' : pnlVal>0 ? '#00BEC4' : pnlVal<0 ? '#dc2626' : '#94a3b8';
     const icon = b.status==='win'?'✅':b.status==='lose'?'❌':'⏳';
     headerHtml = `<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${b.match||'Weddenschap'}</div>
       <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${b.date||''} · ${b.bookmaker||''}</div>`;
