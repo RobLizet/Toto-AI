@@ -4257,9 +4257,14 @@ export default {
     // v227: nieuwe registratie → gebruiker opslaan + admin-only push naar Rob
     if (path === '/register-notify' && request.method === 'POST') {
       try {
-        const body = await request.json().catch(() => ({}));
+        const rawBody = await request.text().catch(() => '');
+        let body = {};
+        try { body = JSON.parse(rawBody || '{}'); } catch(_) {}
         const uid   = (body.uid   || '').toString().trim();
         const email = (body.email || '').toString().trim().toLowerCase();
+        if (url.searchParams.get('debug') === '1') {
+          return json({ debug: true, rawLen: rawBody.length, rawBody: rawBody.slice(0,200), parsedUid: uid, parsedEmail: email, emailOk: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) });
+        }
         if (!uid || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
           return json({ ok: false, error: 'uid en geldig email vereist' }, 400);
         }
