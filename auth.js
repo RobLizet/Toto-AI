@@ -42,6 +42,20 @@ function initFirebaseAuth() {
         localStorage.removeItem('totoai_skip_login');
         hideLoginScreen();
 
+        // v26.273: gebruiker registreren/verversen bij backend.
+        // Eén keer per sessie; worker dedupt en stuurt alleen bij een nieuw
+        // account een admin-push. Non-blocking.
+        try {
+          if (!sessionStorage.getItem('pmx_reg_notified') && user.uid && user.email) {
+            sessionStorage.setItem('pmx_reg_notified', '1');
+            fetch('https://api.promatchxi.app/register-notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ uid: user.uid, email: user.email })
+            }).catch(() => {});
+          }
+        } catch(_) {}
+
         // Topbar bijwerken
         const topbarUser = document.getElementById('topbar-user');
         if (topbarUser) {
