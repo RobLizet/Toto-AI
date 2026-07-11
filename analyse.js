@@ -2113,6 +2113,38 @@ async function runAnalyse() {
       awayInj?.count  ? `${m.away} blessures: ${awayInj.players.join(', ')} (aanval -${Math.round((1-awayInj.attackFactor)*100)}%, verdediging -${Math.round((1-awayInj.defenseFactor)*100)}%)` : ''
     ].filter(Boolean).join('\n') || 'geen bekende blessures';
 
+    // v26.280: BEVESTIGDE OPSTELLINGEN. De startXI werd al opgehaald via fetchLineups, maar tot nu toe
+    // gebruikte de analyse alleen de formatie-vorm. Nu tonen we de echte opstelling + blessures en voeden
+    // we de spelers aan de LLM — uitsluitend als de data ER is (anders eerlijk 'nog niet bekend'), CIJFERBRON.
+    let lineupsHtml = '', lineupsPromptStr = '';
+    try {
+      const _lu = (id, idx) => (lineups || []).find(l => String(l?.team?.id) === String(id)) || (lineups && lineups[idx]) || null;
+      const _hl = _lu(m.homeId, 0), _al = _lu(m.awayId, 1);
+      const _xi = (l) => (l?.startXI || []).map(x => x.player).filter(Boolean)
+        .map(p => `${p.number != null ? p.number + '. ' : ''}${p.name || '?'}${p.pos ? ' <span style="opacity:.5;">' + p.pos + '</span>' : ''}`);
+      const _xiPlain = (l) => (l?.startXI || []).map(x => x.player?.name).filter(Boolean);
+      if (_hl?.startXI?.length && _al?.startXI?.length) {
+        const _injList = (inj) => (inj?.count && inj.players?.length) ? `<div style="font-size:.5rem;color:#e8737a;margin-top:.35rem;">\ud83c\udfe5 mist: ${inj.players.join(', ')}</div>` : '';
+        const _col = (l, fallback, inj) => `
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:#fff;margin-bottom:.3rem;">${l.team?.name || fallback}${l.formation ? ' \u00b7 ' + l.formation : ''}</div>
+            <div style="font-size:.6rem;line-height:1.6;color:rgba(255,255,255,.85);">${_xi(l).join('<br>')}</div>
+            ${_injList(inj)}
+          </div>`;
+        lineupsHtml = `
+          <div style="margin-bottom:.75rem;padding:.75rem .85rem;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:10px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:#00BEC4;letter-spacing:.06em;margin-bottom:.55rem;">\ud83d\udc65 BEVESTIGDE OPSTELLINGEN</div>
+            <div style="display:flex;gap:.9rem;">
+              ${_col(_hl, m.home, homeInj)}
+              ${_col(_al, m.away, awayInj)}
+            </div>
+          </div>`;
+        lineupsPromptStr = `${_hl.team?.name||m.home} (${_hl.formation||'?'}): ${_xiPlain(_hl).join(', ')}\n${_al.team?.name||m.away} (${_al.formation||'?'}): ${_xiPlain(_al).join(', ')}`;
+      } else {
+        lineupsHtml = `<div style="margin-bottom:.7rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.5);">\ud83d\udc65 Opstellingen nog niet bekend (verschijnen meestal 20-40 min voor aftrap)</div>`;
+      }
+    } catch(e) { lineupsHtml = ''; lineupsPromptStr = ''; }
+
     // Stand context
     const homeStand = standings ? extractStandingInfo(standings, m.homeId) : null;
     const awayStand  = standings ? extractStandingInfo(standings, m.awayId)  : null;
@@ -2261,7 +2293,7 @@ H2H: ${h2hStr}
 ${h2hWStr}
 Standen: ${standStr}
 Blessures: ${injStr}
-Formaties: ${formationStr}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}${modelBlock}`;
+Formaties: ${formationStr}${lineupsPromptStr ? '\nOPSTELLINGEN (bevestigd, alleen deze spelers noemen):\n' + lineupsPromptStr : ''}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}${modelBlock}`;
 
     const data = await anthropicFetchWithRetry(null, {
       model: 'claude-sonnet-4-6',
@@ -2322,7 +2354,7 @@ CONVERGENTIE: ankers wijzen dezelfde kant op → hogere confidence. DIVERGENTIE 
 PICK-VOORZICHTIGHEID: bij dunne data lagere confidence en MAX 2 sterren, maar geef wél een richting o.b.v. odds + model — niet "geen advies".
 
 JSON STRUCTUUR:
-{"vorm":"2-3 zinnen recente uitslagen van de teams die je WÉL hebt (ALLEEN cijfers uit de context). Ontbreekt één team: één korte bijzin, geen heel verhaal eromheen.","stats":"2-3 zinnen statistieken + Poisson-kansen in de VERPLICHTE 1X2-vorm (alle drie: thuis / gelijkspel / uit, nooit tot twee samenvatten) + API pred kansen indien beschikbaar","tactiek":"2 zinnen speelstijl en formaties — alleen indien bekend, anders kort","kans":"2 zinnen kansinschatting o.b.v. odds + model + beschikbare vorm","risico":"1 zin concrete risicofactoren; hier (en alleen hier) kort de databeperking noemen als die er is",
+{"vorm":"2-3 zinnen recente uitslagen van de teams die je WÉL hebt (ALLEEN cijfers uit de context). Ontbreekt één team: één korte bijzin, geen heel verhaal eromheen.","stats":"2-3 zinnen statistieken + Poisson-kansen in de VERPLICHTE 1X2-vorm (alle drie: thuis / gelijkspel / uit, nooit tot twee samenvatten) + API pred kansen indien beschikbaar","tactiek":"2 zinnen speelstijl en formaties — alleen indien bekend, anders kort. Noem NOOIT een formatie of speler die niet in de context staat; staat er bij Formaties 'nog niet bekend', zeg dat dan expliciet i.p.v. een opstelling te gokken","kans":"2 zinnen kansinschatting o.b.v. odds + model + beschikbare vorm","risico":"1 zin concrete risicofactoren; hier (en alleen hier) kort de databeperking noemen als die er is",
 "advies":"1-2 zinnen beslist advies o.b.v. odds + model + vorm; bij dunne data lagere confidence maar wél een richting",
 "tip":{"pick":"1","pickLabel":"${m.home} wint","markt":"Uitslag","odds":${m.homeOdds||2},"kans":55,"sterren":3,"confidence":6,"confidenceReden":"1 zin: eerlijke beoordeling data + signaalconsistentie","redenering":"3-4 zinnen onderbouwing met ALLEEN cijfers die in de context staan",
 "tips":[{"pick":"O2.5","pickLabel":"Meer dan 2.5 goals","markt":"Doelpunten","odds":1.8,"kans":58,"reden":"concreet argument uit odds/model/vorm"},{"pick":"X","pickLabel":"Gelijkspel","markt":"Uitslag","odds":${m.drawOdds||3.5},"kans":26,"reden":"concreet argument uit de data"}]}}
@@ -2370,7 +2402,7 @@ KWALITEITSREGELS:
       ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API: ${predictions.advice}${predictions.percent?.home != null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
       : '';
     fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
-    fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', result.tactiek || '—', '#d97706'));
+    fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', lineupsHtml + (result.tactiek || '—'), '#d97706'));
     const _mvm = (typeof buildModelVsMarktHTML === 'function') ? buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) : ''; // v26.253: tip meegeven — VALUE-INDEX mag de tipkaart niet tegenspreken
     fill('kans',    sectionCard('🎯', t('ana.chances','KANSEN'), (result.kans || '—') + _mvm, '#00BEC4'));
     fill('risico',  sectionCard('⚠️', 'RISICO', result.risico || '—', '#dc2626'));
