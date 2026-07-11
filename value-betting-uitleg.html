@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="nl" data-lang="nl">
+<head>
+  <!-- Google tag (gtag.js) — GA4 ProMatchXI -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DMER7ZGE21"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-DMER7ZGE21');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d1117" />
+  <title>Wat is value betting? Uitleg met voorbeeld — ProMatchXI</title>
+  <meta name="description" content="Value betting uitgelegd: modelkans vs. faire marktkans, edge, expected value (EV) en Kelly, met een concreet rekenvoorbeeld. Vind value in voetbalweddenschappen. 18+." />
+  <meta name="keywords" content="value betting uitleg, wat is value betting, expected value wedden, edge wedden, faire kans, value betting voetbal, EV weddenschap" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://promatchxi.app/value-betting-uitleg.html" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="ProMatchXI" />
+  <meta property="og:title" content="Wat is value betting? Uitleg met voorbeeld — ProMatchXI" />
+  <meta property="og:description" content="Value betting uitgelegd: modelkans vs. faire marktkans, edge, expected value (EV) en Kelly, met een concreet rekenvoorbeeld. Vind value in voetbalweddenschappen. 18+." />
+  <meta property="og:url" content="https://promatchxi.app/value-betting-uitleg.html" />
+  <meta property="og:image" content="https://promatchxi.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="nl_NL" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://promatchxi.app/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#0d1117; --bg2:#0f1623;
+      --card:rgba(255,255,255,.04); --stroke:rgba(255,255,255,.09);
+      --ink:#ffffff; --sub:rgba(255,255,255,.62);
+      --teal:#00BEC4; --teal-lite:#5eead4;
+      --amber:#d97706; --red:#dc2626; --purple:#c084fc;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      background:radial-gradient(120% 80% at 50% -10%, #11202f 0%, var(--bg) 55%);
+      color:var(--ink); font-family:'DM Sans',system-ui,sans-serif;
+      line-height:1.7; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    }
+    .wrap{max-width:820px;margin:0 auto;padding:0 1.25rem}
+    .mono{font-family:'IBM Plex Mono',monospace}
+    a{color:var(--teal-lite);text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+      background:rgba(13,17,23,.72);border-bottom:1px solid var(--stroke)}
+    .bar{display:flex;align-items:center;justify-content:space-between;height:60px;max-width:820px;margin:0 auto;padding:0 1.25rem}
+    .logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.04em;line-height:1;color:var(--ink)}
+    .logo b{color:var(--teal)}
+    .right{display:flex;align-items:center;gap:.7rem}
+    .age{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;color:var(--teal-lite);
+      border:1px solid rgba(0,190,196,.35);border-radius:999px;padding:.2rem .5rem}
+    .navlink{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em;color:var(--sub)}
+    main{padding:2.5rem 0 1rem}
+    .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:700;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--teal);margin-bottom:.9rem}
+    h1{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:clamp(2.3rem,6vw,3.4rem);
+      line-height:1.02;letter-spacing:.01em;margin-bottom:1rem}
+    h1 .accent{color:var(--teal)}
+    .lede{font-size:1.12rem;color:var(--sub);margin-bottom:2rem;max-width:60ch}
+    h2{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:clamp(1.6rem,4.5vw,2.1rem);
+      letter-spacing:.01em;margin:2.4rem 0 .9rem;color:var(--ink)}
+    h3{font-family:'DM Sans',sans-serif;font-size:1.05rem;font-weight:700;margin:1.4rem 0 .4rem}
+    p{margin-bottom:1rem;color:rgba(255,255,255,.86)}
+    ul,ol{margin:0 0 1.2rem 1.2rem;color:rgba(255,255,255,.86)}
+    li{margin-bottom:.5rem}
+    strong{color:var(--ink)}
+    .card{background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:1.2rem 1.3rem;margin:1.2rem 0}
+    .card.teal{border-color:rgba(0,190,196,.3);background:linear-gradient(165deg,rgba(0,190,196,.07),rgba(255,255,255,.02))}
+    table{width:100%;border-collapse:collapse;margin:1.2rem 0;font-size:.92rem}
+    th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--stroke);vertical-align:top}
+    th{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);font-weight:700}
+    .term{font-family:'IBM Plex Mono',monospace;color:var(--teal-lite);font-weight:600;white-space:nowrap}
+    .pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.1em;
+      color:var(--teal);border:1px solid rgba(0,190,196,.35);border-radius:999px;padding:.15rem .5rem;text-transform:uppercase}
+    .related{display:grid;grid-template-columns:1fr;gap:.7rem;margin:1.4rem 0}
+    @media(min-width:560px){.related{grid-template-columns:1fr 1fr}}
+    .rel{background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:1rem 1.1rem;display:block}
+    .rel:hover{border-color:var(--teal);text-decoration:none}
+    .rel .k{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:.3rem}
+    .rel .t{font-weight:700;color:var(--ink)}
+    .cta{display:inline-block;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:.82rem;letter-spacing:.03em;
+      background:var(--teal);color:#04222a;border-radius:12px;padding:.8rem 1.3rem;margin:.6rem 0;box-shadow:0 0 26px rgba(0,190,196,.28)}
+    .cta:hover{text-decoration:none;transform:translateY(-1px)}
+    .disc{font-size:.82rem;color:var(--sub);border-top:1px solid var(--stroke);padding-top:1rem;margin-top:2.5rem}
+    footer{border-top:1px solid var(--stroke);margin-top:2rem}
+    .foot{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:center;
+      font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--sub);padding:1.6rem 1.25rem;text-align:center}
+    .foot a{color:var(--sub)}
+
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"Wat is value betting?","acceptedAnswer":{"@type":"Answer","text":"Value betting betekent alleen weddenschappen aangaan waarbij je de kans op een uitslag hoger inschat dan de faire marktkans die in de odds verwerkt zit. Het verschil (de edge) is je statistische voordeel. Over veel picks heen levert dat voordeel rendement op."}},
+    {"@type":"Question","name":"Wat is een edge bij wedden?","acceptedAnswer":{"@type":"Answer","text":"De edge is je modelkans minus de faire marktkans, in procentpunten. Een edge van +8% betekent dat het model 8 procentpunt meer kans ziet dan de eerlijke, marge-vrije markt. De edge bepaalt of een pick goed genoeg is om mee te doen."}},
+    {"@type":"Question","name":"Wat is expected value (EV) bij wedden?","acceptedAnswer":{"@type":"Answer","text":"Expected value (EV%) is het verwachte rendement op je inzet, gebaseerd op de odds waarop je echt wordt uitbetaald. De edge bepaalt de selectie; EV en Kelly bepalen hoeveel je zou inzetten."}},
+    {"@type":"Question","name":"Is value betting een garantie op winst?","acceptedAnswer":{"@type":"Answer","text":"Nee. Value betting is een voordeel over veel weddenschappen heen, geen zekerheid per weddenschap. Op de lange termijn is Closing Line Value (CLV) het beste bewijs dat je echt voordeel hebt."}}
+  ]
+}
+  </script>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="logo" href="/">ProMatch<b>XI</b></a>
+      <div class="right">
+        <a class="navlink" href="welcome.html">Over</a>
+        <span class="age">18+</span>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="eyebrow">Uitleg</div>
+    <h1>Wat is <span class="accent">value betting</span>?</h1>
+    <p class="lede">Value betting draait niet om "winnen we deze ene weddenschap?", maar om structureel weddenschappen aangaan waar je een voordeel hebt. Deze uitleg laat stap voor stap zien wat value is, hoe je een edge berekent en hoe je de getallen leest — met een concreet voorbeeld.</p>
+
+    <h2>Value in één zin</h2>
+    <p>Value ontstaat wanneer je zelf inschat dat een uitslag vaker gebeurt dan de bookmakers "geloven". Denk je dat een team 24% kans heeft om te winnen, terwijl de faire markt op ~16% rekent, dan is er <strong>value</strong> — een statistisch voordeel. Het doel is niet één weddenschap winnen, maar over veel picks heen een voordeel pakken. Dat voordeel levert op de lange termijn rendement op.</p>
+
+    <h2>Modelkans vs. faire marktkans</h2>
+    <p>Om value te vinden vergelijk je twee kansen met elkaar:</p>
+    <ul>
+      <li><strong>Modelkans</strong> — de kans die je zelf schat. ProMatchXI gebruikt hiervoor een Poisson-model (op basis van doelpunten, vorm en onderlinge duels) plus een AI-analyse.</li>
+      <li><strong>Faire marktkans</strong> — de kans die in de odds zit, nádat de bookmaker-marge eruit is gehaald. Bookmakers bakken altijd een winstmarge in hun odds; die halen we eruit ("de-vig") om eerlijk te kunnen vergelijken.</li>
+    </ul>
+    <p>Belangrijk: je vergelijkt niet met één bookmaker, maar met de <strong>consensus</strong> van veel bookmakers. Dat is een stabielere maatstaf voor wat de markt echt denkt.</p>
+
+    <h2>Edge = het kerngetal</h2>
+    <div class="card teal">
+      <p style="margin:0"><strong>Edge = modelkans − faire marktkans</strong> (in procentpunten). Dit bepaalt of een pick goed genoeg is. Een edge van +8% betekent: het model schat 8 procentpunt meer kans dan de eerlijke markt.</p>
+    </div>
+    <p>De edge is het selectiegetal. Alleen picks met genoeg edge én genoeg betrouwbaarheid blijven over — dat zijn de picks die je uiteindelijk te zien krijgt.</p>
+
+    <h2>EV% en Kelly: hoeveel zet je in?</h2>
+    <p>De edge bepaalt óf een pick meedoet. Voor <em>hoeveel</em> je inzet kijk je naar twee andere getallen:</p>
+    <ul>
+      <li><strong>EV%</strong> — het verwachte rendement op je inzet, op basis van de odds waarop je echt wordt uitbetaald.</li>
+      <li><strong>Kelly</strong> — een rekenregel voor een verantwoorde inzetgrootte. ProMatchXI toont een <strong>halve Kelly</strong>, wat voorzichtiger is dan de volledige.</li>
+    </ul>
+
+    <h2>Een uitgewerkt voorbeeld</h2>
+    <p>Stel: Canada speelt thuis tegen Ierland en je ziet de pick "Ierland wint". Zo lees je de getallen:</p>
+    <table>
+      <thead><tr><th>Getal</th><th>Waarde</th><th>Wat het betekent</th></tr></thead>
+      <tbody>
+        <tr><td class="term">Kans</td><td>24%</td><td>Het model schat 24% kans dat Ierland wint.</td></tr>
+        <tr><td class="term">Faire marktkans</td><td>~16%</td><td>Odds 6.00, marge eruit → markt rekent op ~16%.</td></tr>
+        <tr><td class="term">Edge</td><td>+8%</td><td>24% − 16% = 8 procentpunt voordeel. Dit is de "value".</td></tr>
+        <tr><td class="term">Odds</td><td>@6.00</td><td>De prijs waarop je inzet wordt uitbetaald.</td></tr>
+        <tr><td class="term">Betrouwbaarheid</td><td>5/10</td><td>Weinig data over deze landen → onzekere schatting.</td></tr>
+      </tbody>
+    </table>
+    <p>Let op: de edge (+8%) en de betrouwbaarheid (5/10) zijn twee verschillende dingen. Er is voordeel, maar omdat de data dun is ("schaarse data"), is het een zwakkere pick. Een goede tool laat allebei zien, zodat je het zelf kunt afwegen.</p>
+    <p class="mono" style="font-size:.8rem;color:var(--sub)">Dit is een rekenvoorbeeld ter illustratie, geen echte pick of voorspelling.</p>
+
+    <h2>Value is geen garantie</h2>
+    <p>Value betting geeft je een <strong>voordeel over veel weddenschappen heen</strong> — geen zekerheid per stuk. Een enkele weddenschap kun je met value alsnog verliezen; dat hoort erbij. De winst zit in de herhaling: consequent picks nemen waar je een edge hebt.</p>
+
+    <h2>CLV: je echte scorebord</h2>
+    <p>Het beste bewijs dat je écht voordeel hebt, is <strong>Closing Line Value (CLV)</strong>: versloeg je inkoopkoers de eindkoers (de slotkoers vlak voor de aftrap)? Wie de slotkoers structureel verslaat, verslaat de markt — en dat zegt op de lange termijn meer dan de uitslag van één weddenschap.</p>
+
+    <div class="card">
+      <span class="pill">In het kort</span>
+      <p style="margin:.7rem 0 0">Value = jouw modelkans hoger dan de faire (marge-vrije) marktkans. Edge selecteert, EV en Kelly bepalen de inzet, en CLV bewijst op termijn of je gelijk had.</p>
+    </div>
+
+    <a class="cta" href="/">Bekijk de value picks in de app →</a>
+
+    <h2>Meer uitleg</h2>
+        <div class="related">
+      <a class="rel" href="begrippen.html"><span class="k">Woordenlijst</span><span class="t">Alle value betting begrippen uitgelegd →</span></a>
+      <a class="rel" href="hoe-werkt-promatchxi.html"><span class="k">Onder de motorkap</span><span class="t">Hoe ProMatchXI van wedstrijd naar pick komt →</span></a>
+    </div>    <p class="disc"><strong>Verantwoord spelen.</strong> ProMatchXI is een analyse- en informatietool voor entertainment, bedoeld voor 18+. Value is een statistisch voordeel over veel weddenschappen heen, geen garantie op winst per weddenschap. Wed nooit met geld dat je niet kunt missen. Zie ook het <a href="Disclaimer.html">disclaimer</a>.</p>
+  </main>
+  <footer>
+    <div class="foot">
+      <span>© 2026 ProMatchXI</span><span>·</span>
+      <a href="/">Open de app</a><span>·</span>
+      <a href="welcome.html">Over</a><span>·</span>
+      <a href="value-betting-uitleg.html">Value betting</a><span>·</span>
+      <a href="begrippen.html">Begrippen</a><span>·</span>
+      <a href="hoe-werkt-promatchxi.html">Hoe het werkt</a><span>·</span>
+      <a href="privacy.html">Privacy</a><span>·</span>
+      <a href="Disclaimer.html">Disclaimer</a><span>·</span>
+      <span>18+</span>
+    </div>
+  </footer>
+</body>
+</html>
