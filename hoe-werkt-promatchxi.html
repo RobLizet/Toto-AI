@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="nl" data-lang="nl">
+<head>
+  <!-- Google tag (gtag.js) — GA4 ProMatchXI -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DMER7ZGE21"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-DMER7ZGE21');
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0d1117" />
+  <title>Hoe werkt ProMatchXI? Van wedstrijd naar value pick</title>
+  <meta name="description" content="Hoe ProMatchXI value vindt: het vijfstappenproces van data en odds via Poisson + AI naar edge en value picks, plus wat je op elk scherm ziet. 18+." />
+  <meta name="keywords" content="hoe werkt ProMatchXI, AI voetbalanalyse, value picks voetbal, Poisson voetbal model, football value betting, wedtips voetbal AI" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://promatchxi.app/hoe-werkt-promatchxi.html" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="ProMatchXI" />
+  <meta property="og:title" content="Hoe werkt ProMatchXI? Van wedstrijd naar value pick" />
+  <meta property="og:description" content="Hoe ProMatchXI value vindt: het vijfstappenproces van data en odds via Poisson + AI naar edge en value picks, plus wat je op elk scherm ziet. 18+." />
+  <meta property="og:url" content="https://promatchxi.app/hoe-werkt-promatchxi.html" />
+  <meta property="og:image" content="https://promatchxi.app/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="nl_NL" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://promatchxi.app/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#0d1117; --bg2:#0f1623;
+      --card:rgba(255,255,255,.04); --stroke:rgba(255,255,255,.09);
+      --ink:#ffffff; --sub:rgba(255,255,255,.62);
+      --teal:#00BEC4; --teal-lite:#5eead4;
+      --amber:#d97706; --red:#dc2626; --purple:#c084fc;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      background:radial-gradient(120% 80% at 50% -10%, #11202f 0%, var(--bg) 55%);
+      color:var(--ink); font-family:'DM Sans',system-ui,sans-serif;
+      line-height:1.7; -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    }
+    .wrap{max-width:820px;margin:0 auto;padding:0 1.25rem}
+    .mono{font-family:'IBM Plex Mono',monospace}
+    a{color:var(--teal-lite);text-decoration:none}
+    a:hover{text-decoration:underline}
+    header{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+      background:rgba(13,17,23,.72);border-bottom:1px solid var(--stroke)}
+    .bar{display:flex;align-items:center;justify-content:space-between;height:60px;max-width:820px;margin:0 auto;padding:0 1.25rem}
+    .logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:.04em;line-height:1;color:var(--ink)}
+    .logo b{color:var(--teal)}
+    .right{display:flex;align-items:center;gap:.7rem}
+    .age{font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;color:var(--teal-lite);
+      border:1px solid rgba(0,190,196,.35);border-radius:999px;padding:.2rem .5rem}
+    .navlink{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em;color:var(--sub)}
+    main{padding:2.5rem 0 1rem}
+    .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:700;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--teal);margin-bottom:.9rem}
+    h1{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:clamp(2.3rem,6vw,3.4rem);
+      line-height:1.02;letter-spacing:.01em;margin-bottom:1rem}
+    h1 .accent{color:var(--teal)}
+    .lede{font-size:1.12rem;color:var(--sub);margin-bottom:2rem;max-width:60ch}
+    h2{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:clamp(1.6rem,4.5vw,2.1rem);
+      letter-spacing:.01em;margin:2.4rem 0 .9rem;color:var(--ink)}
+    h3{font-family:'DM Sans',sans-serif;font-size:1.05rem;font-weight:700;margin:1.4rem 0 .4rem}
+    p{margin-bottom:1rem;color:rgba(255,255,255,.86)}
+    ul,ol{margin:0 0 1.2rem 1.2rem;color:rgba(255,255,255,.86)}
+    li{margin-bottom:.5rem}
+    strong{color:var(--ink)}
+    .card{background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:1.2rem 1.3rem;margin:1.2rem 0}
+    .card.teal{border-color:rgba(0,190,196,.3);background:linear-gradient(165deg,rgba(0,190,196,.07),rgba(255,255,255,.02))}
+    table{width:100%;border-collapse:collapse;margin:1.2rem 0;font-size:.92rem}
+    th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--stroke);vertical-align:top}
+    th{font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);font-weight:700}
+    .term{font-family:'IBM Plex Mono',monospace;color:var(--teal-lite);font-weight:600;white-space:nowrap}
+    .pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.1em;
+      color:var(--teal);border:1px solid rgba(0,190,196,.35);border-radius:999px;padding:.15rem .5rem;text-transform:uppercase}
+    .related{display:grid;grid-template-columns:1fr;gap:.7rem;margin:1.4rem 0}
+    @media(min-width:560px){.related{grid-template-columns:1fr 1fr}}
+    .rel{background:var(--card);border:1px solid var(--stroke);border-radius:14px;padding:1rem 1.1rem;display:block}
+    .rel:hover{border-color:var(--teal);text-decoration:none}
+    .rel .k{font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:.3rem}
+    .rel .t{font-weight:700;color:var(--ink)}
+    .cta{display:inline-block;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:.82rem;letter-spacing:.03em;
+      background:var(--teal);color:#04222a;border-radius:12px;padding:.8rem 1.3rem;margin:.6rem 0;box-shadow:0 0 26px rgba(0,190,196,.28)}
+    .cta:hover{text-decoration:none;transform:translateY(-1px)}
+    .disc{font-size:.82rem;color:var(--sub);border-top:1px solid var(--stroke);padding-top:1rem;margin-top:2.5rem}
+    footer{border-top:1px solid var(--stroke);margin-top:2rem}
+    .foot{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:center;
+      font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--sub);padding:1.6rem 1.25rem;text-align:center}
+    .foot a{color:var(--sub)}
+
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Hoe ProMatchXI van wedstrijd naar value pick komt",
+  "description": "Het vijfstappenproces waarmee ProMatchXI value in voetbalweddenschappen vindt.",
+  "step": [
+    {"@type":"HowToStep","name":"Wedstrijden en odds ophalen","text":"Via API-Football haalt de app de wedstrijden op, plus de odds van alle bookmakers."},
+    {"@type":"HowToStep","name":"Modelkans bepalen","text":"Een Poisson-model en een AI-analyse schatten samen de kans op thuiswinst, gelijkspel en uitwinst."},
+    {"@type":"HowToStep","name":"Faire marktkans berekenen","text":"Uit de consensus van alle bookmakers wordt de bookmaker-marge gehaald (de-vig)."},
+    {"@type":"HowToStep","name":"Edge berekenen","text":"Edge = modelkans minus faire marktkans, in procentpunten."},
+    {"@type":"HowToStep","name":"Filteren op kwaliteit","text":"Alleen picks met genoeg edge en genoeg betrouwbaarheid blijven over."}
+  ]
+}
+  </script>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <a class="logo" href="/">ProMatch<b>XI</b></a>
+      <div class="right">
+        <a class="navlink" href="welcome.html">Over</a>
+        <span class="age">18+</span>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="eyebrow">Onder de motorkap</div>
+    <h1>Hoe werkt <span class="accent">ProMatchXI</span>?</h1>
+    <p class="lede">ProMatchXI zoekt value in voetbalweddenschappen: de app schat zelf hoe groot de kans op een uitslag is en vergelijkt die met wat de bookmakers aanbieden. Zit er een voordeel in, dan is er value. Zo ziet het proces eruit — van wedstrijd tot pick.</p>
+
+    <h2>Van wedstrijd naar pick: vijf stappen</h2>
+    <table>
+      <thead><tr><th>Stap</th><th>Wat er gebeurt</th></tr></thead>
+      <tbody>
+        <tr><td class="term">1 · Data ophalen</td><td>Via API-Football worden de wedstrijden opgehaald, plus de odds van álle bookmakers — niet één.</td></tr>
+        <tr><td class="term">2 · Modelkans</td><td>Een Poisson-model (doelpunten, vorm, onderlinge duels) en een AI-analyse schatten samen de kans op thuiswinst, gelijkspel en uitwinst.</td></tr>
+        <tr><td class="term">3 · Faire kans</td><td>Uit de consensus van alle bookmakers wordt de marge gehaald (de-vig). Wat overblijft is de eerlijke marktkans.</td></tr>
+        <tr><td class="term">4 · Edge</td><td>Edge = modelkans − faire marktkans. Het kerngetal: hoeveel procentpunt meer kans denkt het model te hebben dan de markt.</td></tr>
+        <tr><td class="term">5 · Filteren</td><td>Alleen picks met genoeg edge én genoeg betrouwbaarheid blijven over. Dat zijn de picks die je in de app ziet.</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Wat je op het scherm ziet</h2>
+    <h3>Dashboard — picks-overzicht</h3>
+    <p>Je picks met per pick een betrouwbaarheidsbalk en een tier (Elite, A+, A, B, C). Bovenaan zie je je hitrate en ROI, en je kunt filteren op alleen de sterkste tiers.</p>
+    <h3>Value-scanregel</h3>
+    <p>Elke gevonden pick toont vaste velden: links de pick met "Kans X%", rechts gelabeld EDGE, @odds en EV. De korte reden eronder bevat alleen het voetbal-argument (vorm, blessures, onderlinge duels) — geen losse odds, zodat het niet door elkaar loopt.</p>
+    <h3>Gewogen uitleg</h3>
+    <p>Balkjes laten zien waar het signaal vandaan komt: Poisson (modelkans), AI (vs. de markt), Value (de edge) en Markt (beweegt het geld mee of tegen). Zo zie je in één oogopslag waarop een pick rust.</p>
+    <h3>Analyse-scherm</h3>
+    <p>De CLV-trendgrafiek, ROI-blokken (laatste 30 dagen / laatste 100 / per markt) en een competitie-rating met betrouwbaarheid per competitie. Deze cijfers komen uit de database en groeien naarmate er meer picks settelen.</p>
+
+    <h2>Onder de motorkap</h2>
+    <ul>
+      <li><strong>Frontend</strong> — een installeerbare web-app (PWA) op je telefoon.</li>
+      <li><strong>Worker</strong> — een server bij Cloudflare die de scans draait, odds verwerkt en de value berekent.</li>
+      <li><strong>Database</strong> — Supabase bewaart odds-historie en CLV-resultaten; Firebase houdt de live picks bij.</li>
+      <li><strong>Databron</strong> — API-Football levert wedstrijden en odds (pro-abonnement).</li>
+      <li><strong>AI</strong> — een Claude-model helpt bij het samenvatten en het onder woorden brengen van de analyse. Alle kansen en value worden in code berekend; de AI verzint geen percentages.</li>
+    </ul>
+
+    <div class="card teal">
+      <span class="pill">Betrouwbaarheid voorop</span>
+      <p style="margin:.7rem 0 0">Er wordt geen datafeitje, vorm of onderling duel verzonnen. Kansen, edge en value worden gemeten en berekend uit echte odds en wedstrijddata — de AI schrijft alleen de toelichting.</p>
+    </div>
+
+    <h2>Belangrijk om te onthouden</h2>
+    <ul>
+      <li><strong>CLV is je echte scorebord.</strong> Of je structureel de eindkoers verslaat, zegt meer dan de uitslag van één weddenschap.</li>
+      <li><strong>Value is geen garantie.</strong> Het is een voordeel over veel weddenschappen heen, geen zekerheid per stuk.</li>
+      <li><strong>Betrouwbaarheid telt mee.</strong> Een hoge edge met lage betrouwbaarheid (schaarse data) is een zwakkere pick.</li>
+    </ul>
+
+    <a class="cta" href="/">Open de app →</a>
+
+    <h2>Meer uitleg</h2>
+        <div class="related">
+      <a class="rel" href="value-betting-uitleg.html"><span class="k">Uitleg</span><span class="t">Wat is value betting? Met voorbeeld →</span></a>
+      <a class="rel" href="begrippen.html"><span class="k">Woordenlijst</span><span class="t">Alle begrippen uitgelegd →</span></a>
+    </div>    <p class="disc"><strong>Verantwoord spelen.</strong> ProMatchXI is een analyse- en informatietool voor entertainment, bedoeld voor 18+. Value is een statistisch voordeel over veel weddenschappen heen, geen garantie op winst per weddenschap. Wed nooit met geld dat je niet kunt missen. Zie ook het <a href="Disclaimer.html">disclaimer</a>.</p>
+  </main>
+  <footer>
+    <div class="foot">
+      <span>© 2026 ProMatchXI</span><span>·</span>
+      <a href="/">Open de app</a><span>·</span>
+      <a href="welcome.html">Over</a><span>·</span>
+      <a href="value-betting-uitleg.html">Value betting</a><span>·</span>
+      <a href="begrippen.html">Begrippen</a><span>·</span>
+      <a href="hoe-werkt-promatchxi.html">Hoe het werkt</a><span>·</span>
+      <a href="privacy.html">Privacy</a><span>·</span>
+      <a href="Disclaimer.html">Disclaimer</a><span>·</span>
+      <span>18+</span>
+    </div>
+  </footer>
+</body>
+</html>
