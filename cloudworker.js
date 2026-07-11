@@ -4257,15 +4257,18 @@ export default {
     // v227: nieuwe registratie → gebruiker opslaan + admin-only push naar Rob
     if (path === '/register-notify' && request.method === 'POST') {
       try {
-        const rawBody = await request.text().catch(() => '');
-        let body = {};
-        try { body = JSON.parse(rawBody || '{}'); } catch(_) {}
+        const body = await request.json().catch(() => ({}));
         const uid   = (body.uid   || '').toString().trim();
         const email = (body.email || '').toString().trim().toLowerCase();
-        if (url.searchParams.get('debug') === '1') {
-          return json({ debug: true, rawLen: rawBody.length, rawBody: rawBody.slice(0,200), parsedUid: uid, parsedEmail: email, emailOk: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) });
-        }
-        if (!uid || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        // Backslash-vrije e-mailvalidatie (regex-escapes bleken onbetrouwbaar in de edit/push-keten):
+        const at  = email.indexOf('@');
+        const dot = email.lastIndexOf('.');
+        const emailOk = at > 0
+          && dot > at + 1
+          && dot < email.length - 1
+          && email.indexOf(' ') === -1
+          && email.indexOf('@', at + 1) === -1;
+        if (!uid || !emailOk) {
           return json({ ok: false, error: 'uid en geldig email vereist' }, 400);
         }
         const nowIso = new Date().toISOString();
