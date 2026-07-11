@@ -2345,6 +2345,19 @@ KWALITEITSREGELS:
     if (js < 0 || je < js) throw new Error('Geen JSON: ' + raw.substring(0,50));
     const result = JSON.parse(raw.substring(js, je + 1));
 
+    // v26.279: tijdstip bovenaan de analyse tonen. De analyse wordt elke run vers gegenereerd
+    // (runAnalyse re-fetcht data + roept de LLM opnieuw aan, geen full-cache), dus dit is
+    // ondubbelzinnig het moment dat DEZE analyse is gemaakt. Puur UI, geen data-cijfer (CIJFERBRON n.v.t.).
+    try {
+      const _out = document.getElementById('analyseOutput');
+      if (_out) {
+        let _ts = document.getElementById('rb-gemaakt');
+        if (!_ts) { _ts = document.createElement('div'); _ts.id = 'rb-gemaakt'; _out.insertBefore(_ts, _out.firstChild); }
+        _ts.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.55);letter-spacing:.02em;padding:.1rem .1rem .55rem;";
+        _ts.textContent = '\ud83d\udd52 Analyse gemaakt: ' + new Date().toLocaleString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+      }
+    } catch(e) {}
+
     const sectionCard = (icon, title, content, color) => `
       <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:.8rem .9rem;margin-bottom:.6rem;">
         <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;
