@@ -424,6 +424,14 @@ function pmxProfit(b) {                       // netto resultaat, geldig voor el
   const p = parseFloat(b.payout);
   return (isNaN(p) ? 0 : p) - pmxStake(b);
 }
+// v26.287: één bron voor de import-payout. Lost de falsy-zero-bug op: een verloren bet heeft payout 0,
+// maar `payout || stake*odds` maakte daar de brúto winst van -> opgeblazen +winst. Nu status-bewust.
+function pmxImportPayout(status, rawPayout, stake, odds) {
+  if (status === 'lose') return 0;                                   // verlies: geen uitbetaling (NIET stake*odds)
+  const p = parseFloat(rawPayout);
+  if (!isNaN(p) && p > 0) return parseFloat(p.toFixed(2));           // echte uitbetaling uit de import
+  return parseFloat(((parseFloat(stake)||0) * (parseFloat(odds)||0)).toFixed(2)); // win zonder payout / pending: bruto
+}
 function pmxIsSettled(b)    { return !!(b && b.status && b.status !== 'pending'); }
 function pmxIsPush(b)       { return !!(b && b.status === 'push'); }
 function pmxCountsForHit(b) { return pmxIsSettled(b) && !pmxIsPush(b); } // push telt niet mee in hitrate
@@ -2157,7 +2165,7 @@ function parseJacksImport() {
     if (statusRaw.includes('verlor') || statusRaw.includes('lose') || statusRaw.includes('verlies')) status = 'lose';
     if (statusRaw.includes('open') || statusRaw.includes('actief')) status = 'pending';
 
-    bets.push({ date, match, pick, odds, stake, payout: payout || parseFloat((stake * odds).toFixed(2)), status });
+    bets.push({ date, match, pick, odds, stake, payout: pmxImportPayout(status, payout, stake, odds), status });
   }
 
   // Preview tonen
@@ -2481,6 +2489,7 @@ async function handleJacksPhotoUpload(event) {
         max_tokens: 2000,
         system: `Je bent een assistent die betgeschiedenissen uit screenshots van een bookmaker-app (bijv. Bet365, Jacks) uittrekt.
 Geef ALLEEN geldige JSON terug, geen tekst daaromheen.
+De huidige datum is ${new Date().toLocaleDateString('nl-NL')}. Neem een zichtbaar jaartal EXACT over; ontbreekt het jaar of is het onleesbaar, gebruik dan het huidige jaar (nooit een vorig jaar zoals 2025 als het nu 2026 is).
 
 BELANGRIJK: Als meerdere wedstrijden samen 1 coupon vormen (combi/meervoudig/N-voud), geef ze dan als 1 bet met legs.
 ONTDUBBELEN: bij meerdere screenshots die deels dezelfde inhoud tonen, lijst elke weddenschap maar \u00c9\u00c9N keer (zelfde inzet + uitbetaling + teams = zelfde bet).
@@ -2569,7 +2578,7 @@ function confirmJacksPhotoImport() {
     if (b.type === 'combi' && b.legs?.length) {
       // Combi bet
       const totalOdds = parseFloat(b.totalOdds) || b.legs.reduce((a,l) => a * (parseFloat(l.odds)||1), 1);
-      const payout = parseFloat(b.payout) || parseFloat((stake * totalOdds).toFixed(2));
+      const payout = pmxImportPayout(status, b.payout, stake, totalOdds);
       const legs = b.legs.map(l => ({
         match: l.match || '?',
         pick: l.pick || '?',
@@ -2606,7 +2615,7 @@ function confirmJacksPhotoImport() {
       // Enkele bet
       const match  = b.match || '?';
       const odds   = parseFloat(b.odds) || 0;
-      const payout = parseFloat(b.payout) || parseFloat((stake * odds).toFixed(2));
+      const payout = pmxImportPayout(status, b.payout, stake, odds);
       if (!odds) return;
 
       const exists = state.tracker.bets.some(t =>
