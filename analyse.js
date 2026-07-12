@@ -2153,6 +2153,26 @@ async function runAnalyse() {
       awayStand  ? `${m.away}: pos ${awayStand.pos}/${awayStand.total}, ${awayStand.pts}pt, GD ${awayStand.gd>0?'+':''}${awayStand.gd}${awayStand.motivatieLabel?' ('+awayStand.motivatieLabel+')':''}` : ''
     ].filter(Boolean).join('\n') || 'stand niet beschikbaar';
 
+    // v26.281: RANGLIJST-context zichtbaar bovenaan de STATS-sectie. De stand werd al opgehaald en voedt
+    // zelfs het model (motivatieFactor -> Poisson), maar zat alleen verweven in de LLM-tekst. Nu een los,
+    // deterministisch blok — alleen als er een tabel is (clubcompetities); bij cups/WK-knockout: niets tonen.
+    let standingsHtml = '';
+    try {
+      if (homeStand || awayStand) {
+        const _srow = (name, s) => s ? `
+          <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.62rem;line-height:1.95;color:rgba(255,255,255,.88);">
+            <span style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.72);white-space:nowrap;">#${s.pos}/${s.total} \u00b7 ${s.pts}pt \u00b7 GD ${s.gd>0?'+':''}${s.gd}${s.motivatieLabel ? ' \u00b7 ' + s.motivatieLabel : ''}</span>
+          </div>` : '';
+        standingsHtml = `
+          <div style="margin-bottom:.7rem;padding:.65rem .8rem;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:10px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:#00BEC4;letter-spacing:.06em;margin-bottom:.4rem;">\ud83d\udccb STAND OP DE RANGLIJST</div>
+            ${_srow(m.home, homeStand)}
+            ${_srow(m.away, awayStand)}
+          </div>`;
+      }
+    } catch(e) { standingsHtml = ''; }
+
     // Gewogen H2H
     const h2hW = h2h?.length ? calcWeightedH2H(h2h, m.homeId, m.awayId) : null;
     const h2hWStr = h2hW ? `Gewogen H2H (${h2hW.count} duels): thuis ${h2hW.homeWinPct}% / gelijk ${h2hW.drawPct}% / uit ${h2hW.awayWinPct}%` : '';
@@ -2401,7 +2421,7 @@ KWALITEITSREGELS:
     const predBadge = predictions?.advice
       ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API: ${predictions.advice}${predictions.percent?.home != null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
       : '';
-    fill('stats',   sectionCard('📊', 'STATS', (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
+    fill('stats',   sectionCard('📊', 'STATS', standingsHtml + (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', lineupsHtml + (result.tactiek || '—'), '#d97706'));
     const _mvm = (typeof buildModelVsMarktHTML === 'function') ? buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) : ''; // v26.253: tip meegeven — VALUE-INDEX mag de tipkaart niet tegenspreken
     fill('kans',    sectionCard('🎯', t('ana.chances','KANSEN'), (result.kans || '—') + _mvm, '#00BEC4'));
