@@ -169,6 +169,20 @@ function renderWalletScreen() {
           <div class="section-header" style="margin-bottom:0;">📒 TRACKER</div>
           <button class="add-tracker-btn" onclick="openTrackerModal()">${t('wal.addbet','+ Bet toevoegen')}</button>
         </div>
+        <div class="wallet-strip" style="margin-bottom:.6rem;flex-direction:column;align-items:stretch;gap:.45rem;padding:.85rem;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="min-width:0;">
+              <div class="w-label" style="margin-bottom:.15rem;">HUIDIGE BANKROLL</div>
+              <div id="trSaldo" style="font-size:1.5rem;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#00BEC4;line-height:1;">€100,00</div>
+              <div id="trGroei" style="font-size:.55rem;font-family:monospace;margin-top:.3rem;color:rgba(255,255,255,.6);">—</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;flex-shrink:0;">
+              <button id="trUnitsBtn" class="small-action-btn" style="padding:.25rem .55rem;font-size:.55rem;" onclick="toggleTrackerUnits()">€ / units</button>
+              <button class="small-action-btn" style="padding:.25rem .55rem;font-size:.55rem;" onclick="setTrackerBankroll()">✏️ instellen</button>
+            </div>
+          </div>
+          <div id="trBankInfo" style="font-size:.48rem;font-family:monospace;color:rgba(255,255,255,.45);">Start €100 · 1 unit = €2,00 (2%)</div>
+        </div>
         <div class="wallet-strip" style="margin-bottom:.75rem;">
           <div class="w-item"><div class="w-label">${t('wal.staked','Ingezet')}</div><div class="val" id="trStaked">€0</div></div>
           <div class="w-item"><div class="w-label">W/V</div><div class="val" id="trPnl">€0,00</div></div>
@@ -743,22 +757,23 @@ function renderTrackerChart() {
   canvas.width = W;
   ctx.clearRect(0, 0, W, H);
   const creme = document.body.classList.contains('creme');
-  // cumulatieve winst/verlies (start op 0)
-  let pnl = 0; const points = [0];
-  settled.forEach(b => { pnl += pmxProfit(b); points.push(pnl); });
-  const minV = Math.min(...points, -1), maxV = Math.max(...points, 1);
+  // v26.283: saldo-gebaseerd (start op de bankroll i.p.v. 0) -> curve toont bankroll-ontwikkeling
+  const _start = trBankroll();
+  let bal = _start; const points = [_start];
+  settled.forEach(b => { bal += pmxProfit(b); points.push(bal); });
+  const minV = Math.min(...points, _start), maxV = Math.max(...points, _start);
   const range = Math.max(maxV - minV, 0.01);
   const pad = { top: 12, bottom: 14, left: 40, right: 8 };
   const cw = W - pad.left - pad.right, ch = H - pad.top - pad.bottom;
   const xP = i => pad.left + (i / Math.max(points.length - 1, 1)) * cw;
   const yP = v => pad.top + ch - ((v - minV) / range) * ch;
-  const zeroY = yP(0);
+  const zeroY = yP(_start);
   // nul-lijn
   ctx.setLineDash([3, 3]); ctx.strokeStyle = creme ? 'rgba(139,90,43,.30)' : 'rgba(148,163,184,.5)'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(pad.left + cw, zeroY); ctx.stroke();
   ctx.setLineDash([]);
   const lastVal = points[points.length - 1];
-  const isPos = lastVal >= 0;
+  const isPos = lastVal >= _start;
   const lineColor = isPos ? '#00BEC4' : '#dc2626';
   const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
   grad.addColorStop(0, isPos ? 'rgba(21,128,61,.2)' : 'rgba(220,38,38,.15)');
@@ -1276,15 +1291,48 @@ function renderTracker() {
   }
 }
 
+// v26.283: bankroll-helpers — instelbare startbankroll + unit-grootte + €/units-weergave
+function trBankroll() { return (state.tracker && +state.tracker.startBankroll) || 100; }
+function trUnitPct()  { return (state.tracker && +state.tracker.unitPct)  || 2; }
+function trUnitSize() { return trBankroll() * trUnitPct() / 100; }
+function trFmt(v) {
+  v = Number(v) || 0;
+  if (state.trackerUnits) { const u = trUnitSize() || 1; return (v/u).toFixed(2).replace('.', ',') + ' u'; }
+  return '€' + v.toFixed(2).replace('.', ',');
+}
+function toggleTrackerUnits() { state.trackerUnits = !state.trackerUnits; if (typeof saveState==='function') saveState(); updateTrackerStats(); }
+function setTrackerBankroll() {
+  if (!state.tracker) state.tracker = { bets: [] };
+  const v = prompt('Startbankroll in euro:', trBankroll());
+  if (v !== null) { const n = parseFloat(String(v).replace(',', '.')); if (!isNaN(n) && n > 0) state.tracker.startBankroll = n; }
+  const up = prompt('Unit-grootte in % van je bankroll (bijv. 2):', trUnitPct());
+  if (up !== null) { const u = parseFloat(String(up).replace(',', '.')); if (!isNaN(u) && u > 0 && u <= 100) state.tracker.unitPct = u; }
+  if (typeof saveState==='function') saveState();
+  updateTrackerStats();
+}
+
 function updateTrackerStats() {
   const bets   = state.tracker.bets||[];
   const staked = bets.reduce((s,b) => s+(b.stake||0),0);
   // v26.277: netto via pmxProfit -> half verlies/push/half winst tellen correct mee (was: volle inzet bij elke 'lose')
   const pnl    = bets.filter(pmxIsSettled).reduce((s,b)=>s+pmxProfit(b),0);
   const roi    = staked>0 ? ((pnl/staked)*100).toFixed(1) : '—';
+  // v26.283: bankroll-ontwikkeling — saldo, groei% en max drawdown over de saldo-curve
+  const start  = trBankroll();
+  const saldo  = start + pnl;
+  const groei  = start>0 ? (pnl/start*100) : 0;
+  const chrono = [...bets].reverse().filter(pmxIsSettled); // oudste eerst (bets staan nieuwste-eerst)
+  let bal=start, peak=start, maxDD=0;
+  chrono.forEach(b => { bal += pmxProfit(b); if (bal>peak) peak=bal; const dd = peak>0 ? (peak-bal)/peak : 0; if (dd>maxDD) maxDD=dd; });
   const set = (id,v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
-  set('trStaked', `€${staked.toFixed(0)}`);
-  set('trPnl',    `${pnl>=0?'+':''}€${pnl.toFixed(2)}`);
+  const setc= (id,c) => { const e=document.getElementById(id); if(e) e.style.color=c; };
+  set('trSaldo',  trFmt(saldo));
+  setc('trSaldo', saldo>=start ? '#00BEC4' : '#dc2626');
+  set('trGroei',  `${groei>=0?'+':''}${groei.toFixed(1)}%  ·  max drawdown ${(maxDD*100).toFixed(0)}%`);
+  set('trBankInfo', `Start €${start.toFixed(0)} · 1 unit = €${trUnitSize().toFixed(2).replace('.', ',')} (${trUnitPct()}%)`);
+  const ub = document.getElementById('trUnitsBtn'); if (ub) ub.textContent = state.trackerUnits ? 'units ✓' : '€ / units';
+  set('trStaked', trFmt(staked));
+  set('trPnl',    `${pnl>=0?'+':''}${trFmt(pnl)}`);
   set('trBets',   bets.length);
   set('trRoi',    roi!=='—'?roi+'%':'—');
   const el = document.getElementById('trPnl');
