@@ -169,18 +169,18 @@ function renderWalletScreen() {
           <div class="section-header" style="margin-bottom:0;">📒 TRACKER</div>
           <button class="add-tracker-btn" onclick="openTrackerModal()">${t('wal.addbet','+ Bet toevoegen')}</button>
         </div>
-        <div class="wallet-strip" style="margin-bottom:.6rem;flex-direction:column;align-items:stretch;gap:.4rem;padding:.85rem;">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;">
-            <div class="w-label" style="margin-bottom:0;">HUIDIGE BANKROLL</div>
-            <div style="display:flex;gap:.35rem;flex-shrink:0;">
-              <button id="trUnitsBtn" class="small-action-btn" style="padding:.22rem .5rem;font-size:.52rem;" onclick="toggleTrackerUnits()">€ / units</button>
-              <button class="small-action-btn" style="padding:.22rem .5rem;font-size:.52rem;" onclick="setTrackerBankroll()">✏️</button>
-              <button class="small-action-btn" style="padding:.22rem .5rem;font-size:.52rem;" onclick="resetTracker()">🗑️</button>
+        <div style="margin-bottom:.6rem;padding:.85rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.55rem;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.08em;">HUIDIGE BANKROLL</div>
+            <div style="display:flex;gap:.3rem;flex-shrink:0;">
+              <button id="trUnitsBtn" class="small-action-btn" style="padding:.22rem .45rem;font-size:.5rem;" onclick="toggleTrackerUnits()">€ / units</button>
+              <button class="small-action-btn" style="padding:.22rem .45rem;font-size:.5rem;" onclick="setTrackerBankroll()">✏️</button>
+              <button class="small-action-btn" style="padding:.22rem .45rem;font-size:.5rem;" onclick="resetTracker()">🗑️</button>
             </div>
           </div>
-          <div id="trSaldo" style="font-size:1.6rem;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#00BEC4;line-height:1;word-break:break-all;">€100,00</div>
-          <div id="trGroei" style="font-size:.55rem;font-family:monospace;color:rgba(255,255,255,.6);">—</div>
-          <div id="trBankInfo" style="font-size:.48rem;font-family:monospace;color:rgba(255,255,255,.45);">Start €100 · 1 unit = €2,00 (2%)</div>
+          <div id="trSaldo" style="font-size:1.55rem;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#00BEC4;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">€100,00</div>
+          <div id="trGroei" style="font-size:.55rem;font-family:monospace;color:rgba(255,255,255,.6);margin-top:.3rem;">—</div>
+          <div id="trBankInfo" style="font-size:.48rem;font-family:monospace;color:rgba(255,255,255,.45);margin-top:.2rem;">Start €100 · 1 unit = €2,00 (2%)</div>
         </div>
         <div class="wallet-strip" style="margin-bottom:.75rem;">
           <div class="w-item"><div class="w-label">${t('wal.staked','Ingezet')}</div><div class="val" id="trStaked">€0</div></div>
