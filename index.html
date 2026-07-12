@@ -367,41 +367,73 @@
         <button class="modal-close-btn" onclick="closeTrackerModal()">✕</button>
       </div>
       <div class="modal-body">
-        <div class="modal-field">
-          <label class="modal-label" data-i18n="modal.name">Naam / label</label>
-          <input id="tracker-name" type="text" class="modal-input" placeholder="bijv. Weekend combi" />
+        <div style="display:flex;gap:.5rem;margin-bottom:.7rem;">
+          <button id="trTypeSingle" class="modal-input" style="flex:1;cursor:pointer;font-weight:800;" onclick="setTrackerType('single')">Enkel</button>
+          <button id="trTypeCombi" class="modal-input" style="flex:1;cursor:pointer;font-weight:800;" onclick="setTrackerType('combi')">Combi</button>
         </div>
         <div class="modal-field">
-          <label class="modal-label" data-i18n="modal.stake">Inzet (€)</label>
-          <input id="tracker-stake" type="number" class="modal-input" placeholder="0.00" min="0" step="0.01" />
+          <label class="modal-label">Datum</label>
+          <input id="trDate" type="date" class="modal-input" />
         </div>
-        <div class="modal-field">
-          <label class="modal-label" data-i18n="modal.type">Type</label>
-          <select id="tracker-type-select" class="modal-input modal-select" onchange="setTrackerType(this.value)">
-            <option value="single" data-i18n="opt.single">Enkelvoudig</option>
-            <option value="combi" data-i18n="opt.combi">Combinatie</option>
-          </select>
-        </div>
-        <div id="tracker-single-fields">
+        <div id="trSingleSection">
           <div class="modal-field">
-            <label class="modal-label" data-i18n="modal.odds">Odds</label>
-            <input id="tracker-odds" type="number" class="modal-input" placeholder="1.00" min="1" step="0.01" />
+            <label class="modal-label">Wedstrijd</label>
+            <input id="trMatch" type="text" class="modal-input" placeholder="bijv. Ajax vs PSV" />
+          </div>
+          <div id="trPickSection" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+            <div class="modal-field">
+              <label class="modal-label">Pick</label>
+              <input id="trPick" type="text" class="modal-input" placeholder="bijv. Ajax" />
+            </div>
+            <div class="modal-field">
+              <label class="modal-label">Markt</label>
+              <select id="trMarkt" class="modal-input modal-select">
+                <option>1X2</option>
+                <option>Over/Under</option>
+                <option>BTTS</option>
+                <option>Asian Handicap</option>
+                <option>Anders</option>
+              </select>
+            </div>
+          </div>
+          <div id="trOddsSection" style="display:grid;grid-template-columns:1fr;gap:.5rem;">
+            <div class="modal-field">
+              <label class="modal-label">Odds</label>
+              <input id="trOdds" type="number" class="modal-input" placeholder="1.00" min="1" step="0.01" />
+            </div>
           </div>
         </div>
-        <div id="tracker-combi-fields" style="display:none">
-          <div class="tracker-legs-header">
-            <span class="modal-label" data-i18n="modal.legs">Legs</span>
-            <button class="add-leg-btn" onclick="addTrackerLeg()" data-i18n="modal.addleg">+ Leg toevoegen</button>
+        <div id="trCombiSection" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+            <span class="modal-label">Legs</span>
+            <button class="add-leg-btn" onclick="addTrackerLeg()">+ Leg</button>
           </div>
-          <div id="tracker-legs-container"></div>
-          <div class="modal-field">
-            <label class="modal-label" data-i18n="modal.totalodds">Totale odds (berekend)</label>
-            <input id="tracker-total-odds" type="text" class="modal-input" readonly placeholder="–" />
+          <div id="trLegsContainer"></div>
+          <div id="trCombiTotal" style="font-family:monospace;font-size:.72rem;color:#00BEC4;margin-top:.45rem;">Gecombineerde quote: —</div>
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Inzet (€)</label>
+          <input id="trStakeInput" type="number" class="modal-input" placeholder="0.00" min="0" step="0.01" />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Bookmaker (optioneel)</label>
+          <input id="trBookmaker" type="text" class="modal-input" placeholder="bijv. Bet365" />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Notitie (optioneel)</label>
+          <input id="trNote" type="text" class="modal-input" placeholder="" />
+        </div>
+        <div class="modal-field">
+          <label class="modal-label">Bron</label>
+          <div style="display:flex;gap:.35rem;">
+            <button id="trs-eigen" class="modal-input" style="flex:1;cursor:pointer;font-weight:900;" onclick="selectTrackerSource('eigen')">✏️ Eigen</button>
+            <button id="trs-analyse" class="modal-input" style="flex:1;cursor:pointer;opacity:.45;" onclick="selectTrackerSource('analyse')">🤖 AI</button>
+            <button id="trs-value" class="modal-input" style="flex:1;cursor:pointer;opacity:.45;" onclick="selectTrackerSource('value')">💎 Value</button>
           </div>
         </div>
         <div class="modal-actions">
-          <button class="modal-cancel-btn" onclick="closeTrackerModal()" data-i18n="common.cancel">Annuleren</button>
-          <button class="modal-confirm-btn" onclick="confirmTracker()" data-i18n="common.save">Opslaan</button>
+          <button class="modal-cancel-btn" onclick="closeTrackerModal()">Annuleren</button>
+          <button class="modal-confirm-btn" onclick="confirmTracker()">Opslaan</button>
         </div>
       </div>
     </div>
