@@ -68,6 +68,8 @@ function renderWedstrijdenScreen() {
   const activeKeys = new Set(getActiveCOMPLIST().map(c => c.key));
   state.favoriteComps = (state.favoriteComps || []).filter(k => activeKeys.has(k));
   const favs = state.favoriteComps || [];
+  // v26.282: favorieten bovenaan het competitie-grid; stabiele sort behoudt de COMP_LIST-volgorde binnen elke groep
+  const _sortedComps = [...COMP_LIST].sort((a, b) => (favs.includes(a.key) ? 0 : 1) - (favs.includes(b.key) ? 0 : 1));
 
   screen.innerHTML = `
     <!-- AutoCheck bar -->
@@ -127,7 +129,7 @@ function renderWedstrijdenScreen() {
     <!-- Competitie tiles - compact grid -->
     <div style="margin-bottom:.6rem;">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;" id="compGrid">
-        ${COMP_LIST.map(c => {
+        ${_sortedComps.map(c => {
           const isActive = state.activeComp === c.key;
           const isFav = favs.includes(c.key);
           const shortName = c.name.length > 10 ? c.name.split(' ').slice(0,2).join(' ') : c.name;
@@ -1232,6 +1234,22 @@ function selectComp(comp) {
   loadMatches(comp);
 }
 
+// v26.282: favorieten-tegels bovenaan het grid sorteren (canonieke COMP_LIST-volgorde binnen elke groep)
+function resortCompGrid() {
+  const grid = document.getElementById('compGrid');
+  if (!grid) return;
+  const favs = state.favoriteComps || [];
+  const order = COMP_LIST.map(c => c.key);
+  const chips = Array.from(grid.querySelectorAll('.comp-chip'));
+  chips.sort((a, b) => {
+    const ka = a.id.replace('comp-', ''), kb = b.id.replace('comp-', '');
+    const fa = favs.includes(ka) ? 0 : 1, fb = favs.includes(kb) ? 0 : 1;
+    if (fa !== fb) return fa - fb;
+    return order.indexOf(ka) - order.indexOf(kb);
+  });
+  chips.forEach(chip => grid.appendChild(chip));
+}
+
 function toggleFavComp(comp) {
   if (!state.favoriteComps) state.favoriteComps = [];
   const idx = state.favoriteComps.indexOf(comp);
@@ -1247,6 +1265,7 @@ function updateFavCompUI() {
     const comp = chip.id.replace('comp-', '');
     chip.classList.toggle('fav', favs.includes(comp));
   });
+  resortCompGrid(); // v26.282: favorieten meteen naar boven
   const bar = document.getElementById('multiScanBar');
   const compsLabel = document.getElementById('multiScanComps');
   if (bar) bar.style.display = favs.length >= 1 ? 'flex' : 'none';
