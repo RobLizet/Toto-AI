@@ -169,18 +169,17 @@ function renderWalletScreen() {
           <div class="section-header" style="margin-bottom:0;">📒 TRACKER</div>
           <button class="add-tracker-btn" onclick="openTrackerModal()">${t('wal.addbet','+ Bet toevoegen')}</button>
         </div>
-        <div class="wallet-strip" style="margin-bottom:.6rem;flex-direction:column;align-items:stretch;gap:.45rem;padding:.85rem;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div style="min-width:0;">
-              <div class="w-label" style="margin-bottom:.15rem;">HUIDIGE BANKROLL</div>
-              <div id="trSaldo" style="font-size:1.5rem;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#00BEC4;line-height:1;">€100,00</div>
-              <div id="trGroei" style="font-size:.55rem;font-family:monospace;margin-top:.3rem;color:rgba(255,255,255,.6);">—</div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;flex-shrink:0;">
-              <button id="trUnitsBtn" class="small-action-btn" style="padding:.25rem .55rem;font-size:.55rem;" onclick="toggleTrackerUnits()">€ / units</button>
-              <button class="small-action-btn" style="padding:.25rem .55rem;font-size:.55rem;" onclick="setTrackerBankroll()">✏️ instellen</button>
+        <div class="wallet-strip" style="margin-bottom:.6rem;flex-direction:column;align-items:stretch;gap:.4rem;padding:.85rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;">
+            <div class="w-label" style="margin-bottom:0;">HUIDIGE BANKROLL</div>
+            <div style="display:flex;gap:.35rem;flex-shrink:0;">
+              <button id="trUnitsBtn" class="small-action-btn" style="padding:.22rem .5rem;font-size:.52rem;" onclick="toggleTrackerUnits()">€ / units</button>
+              <button class="small-action-btn" style="padding:.22rem .5rem;font-size:.52rem;" onclick="setTrackerBankroll()">✏️</button>
+              <button class="small-action-btn" style="padding:.22rem .5rem;font-size:.52rem;" onclick="resetTracker()">🗑️</button>
             </div>
           </div>
+          <div id="trSaldo" style="font-size:1.6rem;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#00BEC4;line-height:1;word-break:break-all;">€100,00</div>
+          <div id="trGroei" style="font-size:.55rem;font-family:monospace;color:rgba(255,255,255,.6);">—</div>
           <div id="trBankInfo" style="font-size:.48rem;font-family:monospace;color:rgba(255,255,255,.45);">Start €100 · 1 unit = €2,00 (2%)</div>
         </div>
         <div class="wallet-strip" style="margin-bottom:.75rem;">
@@ -1301,6 +1300,15 @@ function trFmt(v) {
   return '€' + v.toFixed(2).replace('.', ',');
 }
 function toggleTrackerUnits() { state.trackerUnits = !state.trackerUnits; if (typeof saveState==='function') saveState(); updateTrackerStats(); }
+function resetTracker() {
+  const n = ((state.tracker && state.tracker.bets) || []).length;
+  if (!confirm('Alle ' + n + ' bet(s) uit de Tracker wissen en opnieuw op €' + trBankroll() + ' beginnen?\n\nDit kan niet ongedaan worden gemaakt.')) return;
+  if (!state.tracker) state.tracker = {};
+  state.tracker.bets = [];
+  if (typeof saveState==='function') saveState();
+  if (typeof renderTracker==='function') renderTracker();
+  updateTrackerStats();
+}
 function setTrackerBankroll() {
   if (!state.tracker) state.tracker = { bets: [] };
   const v = prompt('Startbankroll in euro:', trBankroll());
