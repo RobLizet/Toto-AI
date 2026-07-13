@@ -331,6 +331,20 @@ async function anthropicFetchWithRetry(apiKey, body, retries = 3) {
 }
 
 // ── Analyse screen render ─────────────────────────────────
+// v26.290: hele Analyse-tab als één PDF. Klapt tijdelijk alle ingeklapte blokken open zodat
+// scan-log/shadow/goalmarkt/AH ook meekomen, vangt de tekst, herstelt de weergave.
+function printAnalyseTab() {
+  const screen = document.getElementById('screen-analyse');
+  if (!screen || !screen.innerText.trim()) { if (typeof showToast === 'function') showToast('Analyse-tab nog niet geladen.'); return; }
+  try { if (typeof renderScanLog === 'function') renderScanLog(); } catch(e) {}
+  const hidden = Array.from(screen.querySelectorAll('*')).filter(el => el.style && el.style.display === 'none');
+  hidden.forEach(el => { el.style.display = ''; });
+  const bodyText = screen.innerText.replace(/\n{3,}/g, '\n\n').trim();
+  hidden.forEach(el => { el.style.display = 'none'; });
+  const d = new Date().toLocaleString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  if (typeof pmxOpenPrint === 'function') pmxOpenPrint('ProMatchXI \u2014 Analyse', 'Analyse-overzicht \u00b7 ' + d, bodyText, null);
+}
+
 function renderAnalyseScreen() {
   const screen = document.getElementById('screen-analyse');
   if (!screen) return;
@@ -365,6 +379,8 @@ function renderAnalyseScreen() {
   let html = '';
 
   // v26.104: SCAN VANDAAG/MORGEN-knoppen verwijderd (dubbel met SCAN VALUE op Matches + MULTI-SCAN)
+
+  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:.55rem;"><button onclick="printAnalyseTab()" title="Print / opslaan als PDF" style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);border-radius:8px;padding:.3rem .6rem;color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;">\ud83d\udcc4 PDF</button></div>';
 
   // ── STATISTIEKEN — volledige analytics inline (v26.105) ──
   html += '<div id="analyseAnalytics"></div>';
