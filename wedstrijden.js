@@ -2432,6 +2432,74 @@ function pmxOpenPrint(title, subtitle, bodyText, imgDataUrl) {
   setTimeout(function(){ try { w.print(); } catch(e){} }, imgDataUrl ? 700 : 400);
 }
 
+// v26.291: directe PDF-download via jsPDF (lazy geladen -> geen extra opstartlast).
+function pmxEnsureJsPDF() {
+  return new Promise(function(resolve, reject) {
+    if (window.jspdf && window.jspdf.jsPDF) return resolve(window.jspdf.jsPDF);
+    var ex = document.getElementById('pmx-jspdf');
+    if (ex) { ex.addEventListener('load', function(){ resolve(window.jspdf && window.jspdf.jsPDF); }); ex.addEventListener('error', function(){ reject(new Error('load')); }); return; }
+    var s = document.createElement('script');
+    s.id = 'pmx-jspdf';
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload = function(){ resolve(window.jspdf && window.jspdf.jsPDF); };
+    s.onerror = function(){ reject(new Error('load')); };
+    document.head.appendChild(s);
+  });
+}
+// jsPDF-standaardfont kan geen emoji's/breed-unicode -> saneren zodat de tekst leesbaar blijft.
+function pmxPdfSafe(s) {
+  return String(s == null ? '' : s)
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{1F1E6}-\u{1F1FF}\u{2000}-\u{206F}]/gu, function(ch){
+      // interpunctie-blok bevat ook - en . die we willen houden -> die vervangen we hieronder gericht
+      return '';
+    })
+    .replace(/\u20ac/g, 'EUR ')
+    .replace(/[\u2014\u2013]/g, '-')
+    .replace(/\u00b7/g, '- ')
+    .replace(/\u00bd/g, '1/2')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/^[ \t]+/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+async function pmxDownloadPdf(filename, title, subtitle, bodyText, imgDataUrl) {
+  var jsPDF;
+  try { jsPDF = await pmxEnsureJsPDF(); } catch(e) { if (typeof showToast==='function') showToast('PDF-tool laden mislukt - check je verbinding.'); return; }
+  if (!jsPDF) { if (typeof showToast==='function') showToast('PDF-tool niet beschikbaar.'); return; }
+  try {
+    var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    var M = 15, W = 210, Hh = 297, maxW = W - 2*M, y = M;
+    doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(17,17,17);
+    doc.text(pmxPdfSafe(title), M, y); y += 6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(90,90,90);
+    doc.text(pmxPdfSafe(subtitle||''), M, y); y += 2;
+    doc.setDrawColor(0,190,196); doc.setLineWidth(0.6); doc.line(M, y, W-M, y); y += 5;
+    if (imgDataUrl) {
+      try { var p = doc.getImageProperties(imgDataUrl); var iw = maxW, ih = p.height*(iw/p.width); doc.addImage(imgDataUrl,'PNG',M,y,iw,ih); y += ih + 4; } catch(e) {}
+    }
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(17,17,17);
+    var lines = doc.splitTextToSize(pmxPdfSafe(bodyText||''), maxW), lh = 4.7;
+    for (var i=0; i<lines.length; i++) {
+      if (y > Hh - M - 8) { doc.addPage(); y = M; }
+      doc.text(lines[i], M, y); y += lh;
+    }
+    doc.setFontSize(7); doc.setTextColor(140,140,140);
+    doc.text('Gegenereerd door ProMatchXI - promatchxi.app - analyses zijn geen garantie - 18+', M, Hh - 8);
+    doc.save(filename);
+  } catch(e) { if (typeof showToast==='function') showToast('PDF maken mislukt: ' + (e && e.message || e)); }
+}
+function _slug(s){ return String(s||'analyse').replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,50) || 'analyse'; }
+
+function downloadAnalyse() {
+  var out = document.getElementById('analyseOutput');
+  if (!out || out.style.display === 'none' || !out.innerText.trim()) { if (typeof showToast==='function') showToast('Analyse nog niet klaar - even wachten.'); return; }
+  var m = state.selectedMatch || {};
+  var titleTxt = (m.home || '?') + ' vs ' + (m.away || '?');
+  var oddsTxt = (m.homeOdds && m.homeOdds !== '\u2014' && m.drawOdds && m.awayOdds) ? '1: ' + m.homeOdds + '  \u00b7  X: ' + m.drawOdds + '  \u00b7  2: ' + m.awayOdds : '';
+  var bodyText = out.innerText.replace(/\n{3,}/g, '\n\n').trim();
+  pmxDownloadPdf('ProMatchXI-' + _slug(titleTxt) + '.pdf', titleTxt, 'ProMatchXI-analyse' + (oddsTxt ? '  \u00b7  ' + oddsTxt : ''), bodyText, null);
+}
+
 function printAnalyse() {
   const out = document.getElementById('analyseOutput');
   if (!out || out.style.display === 'none' || !out.innerText.trim()) {
@@ -2485,8 +2553,9 @@ function openMatchAnalyseModalById(matchId) {
     <div style="background:var(--bg,#0d1b2a);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:1.1rem 1rem 2.5rem;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;gap:.5rem;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--ink,#fff);line-height:1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.home || '?'} vs ${m.away || '?'}</div>
-        <div style="display:flex;gap:.4rem;flex-shrink:0;">
-          <button onclick="printAnalyse()" title="Print / opslaan als PDF" style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);border-radius:8px;padding:.3rem .55rem;color:#00BEC4;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;">📄 PDF</button>
+        <div style="display:flex;gap:.35rem;flex-shrink:0;">
+          <button onclick="downloadAnalyse()" title="Download als PDF" style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);border-radius:8px;padding:.3rem .5rem;color:#00BEC4;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;">⬇ PDF</button>
+          <button onclick="printAnalyse()" title="Print" style="background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.25);border-radius:8px;padding:.3rem .5rem;color:#00BEC4;font-size:.7rem;cursor:pointer;">🖨</button>
           <button onclick="document.getElementById('match-analyse-modal').remove()" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:.3rem .65rem;color:var(--sub);font-size:.95rem;cursor:pointer;">✕</button>
         </div>
       </div>
