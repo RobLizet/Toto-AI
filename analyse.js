@@ -1945,13 +1945,13 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
   } else if (edges.length) {
     const best = edges.reduce((a, b) => b.edge > a.edge ? b : a);
     const v = best.edge;
-    const col = 'rgba(255,255,255,.45)';
+    const col = 'rgba(255,255,255,.82)';
     // v26.264: scope erbij. De AH-markt kan wel EV bieden terwijl 1X2 + doelpunten efficient zijn;
     // zonder scope leest 'geen tip - markt efficient' als tegenspraak met de AH-kaart eronder.
     const tag = _incoherent ? 'model wijkt af van markt' : 'geen 1X2/doelpunten-tip \u2014 efficient';
     header = `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.5rem .7rem;margin-bottom:.55rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.12);border-radius:.55rem;">
-      <div style="min-width:0;"><div style="${F}font-size:.46rem;color:rgba(255,255,255,.5);letter-spacing:.09em;">GROOTSTE AFWIJKING</div><div style="${F}font-size:.62rem;color:rgba(255,255,255,.75);margin-top:.14rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${best.label}</div></div>
-      <div style="text-align:right;flex-shrink:0;"><div style="${F}font-weight:800;color:${col};line-height:1;font-size:1.25rem;">${v >= 0 ? '+' : ''}${v.toFixed(1)}<span style="font-size:.6rem;font-weight:600;"> pp</span></div><div style="${F}font-size:.45rem;color:rgba(255,190,80,.8);margin-top:.16rem;letter-spacing:.04em;">${tag}</div></div>
+      <div style="min-width:0;"><div style="${F}font-size:.46rem;color:rgba(255,255,255,.7);letter-spacing:.09em;">GROOTSTE AFWIJKING</div><div style="${F}font-size:.62rem;color:rgba(255,255,255,.95);margin-top:.14rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${best.label}</div></div>
+      <div style="text-align:right;flex-shrink:0;"><div style="${F}font-weight:800;color:${col};line-height:1;font-size:1.25rem;">${v >= 0 ? '+' : ''}${v.toFixed(1)}<span style="font-size:.6rem;font-weight:600;"> pp</span></div><div style="${F}font-size:.45rem;color:rgba(255,200,90,1);margin-top:.16rem;letter-spacing:.04em;">${tag}</div></div>
     </div>`;
   }
 
