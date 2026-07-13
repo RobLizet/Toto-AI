@@ -168,7 +168,8 @@ function renderWalletScreen() {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
           <div class="section-header" style="margin-bottom:0;">📒 TRACKER</div>
           <button class="add-tracker-btn" onclick="openTrackerModal()">${t('wal.addbet','+ Bet toevoegen')}</button>
-          <button class="add-tracker-btn" onclick="printTracker()" style="margin-left:.4rem;">📄 PDF</button>
+          <button class="add-tracker-btn" onclick="downloadTracker()" style="margin-left:.4rem;">⬇ PDF</button>
+          <button class="add-tracker-btn" onclick="printTracker()" style="margin-left:.35rem;">🖨</button>
         </div>
         <div style="margin-bottom:.6rem;padding:.85rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.55rem;">
@@ -1308,6 +1309,36 @@ function trFmt(v) {
   if (state.trackerUnits) { const u = trUnitSize() || 1; return (v/u).toFixed(2).replace('.', ',') + ' u'; }
   return '€' + v.toFixed(2).replace('.', ',');
 }
+// v26.291: Tracker als directe PDF-download (jsPDF), incl. de equity-curve.
+function downloadTracker() {
+  const bets  = (state.tracker && state.tracker.bets) || [];
+  const start = trBankroll();
+  const pnl   = bets.filter(pmxIsSettled).reduce((s,b) => s + pmxProfit(b), 0);
+  const staked= bets.reduce((s,b) => s + (b.stake || 0), 0);
+  const saldo = start + pnl;
+  const roi   = staked > 0 ? (pnl / staked * 100).toFixed(1) + '%' : '\u2014';
+  const eur = v => '\u20ac' + Number(v || 0).toFixed(2).replace('.', ',');
+  const L = [];
+  L.push('BANKROLL');
+  L.push('  Start:    ' + eur(start));
+  L.push('  Huidig:   ' + eur(saldo));
+  L.push('  Groei:    ' + (pnl >= 0 ? '+' : '') + (start > 0 ? (pnl / start * 100).toFixed(1) : '0') + '%');
+  L.push('  Ingezet:  ' + eur(staked));
+  L.push('  W/V:      ' + (pnl >= 0 ? '+' : '') + eur(pnl));
+  L.push('  ROI:      ' + roi);
+  L.push('  Bets:     ' + bets.length);
+  L.push('');
+  L.push('WEDDENSCHAPPEN (' + bets.length + ')');
+  bets.forEach(b => {
+    const st = b.status === 'win' ? 'WIN' : b.status === 'lose' ? 'VERLIES' : b.status === 'pending' ? 'OPEN' : String(b.status || '').toUpperCase();
+    L.push('  ' + (b.date || '') + '  ' + (b.match || '?') + ' \u2014 ' + (b.pick || '') + ' @' + (b.odds || '') + '  ' + eur(b.stake) + '  [' + st + ']');
+  });
+  let img = null;
+  try { const c = document.getElementById('trackerChart'); if (c && c.width && bets.filter(pmxIsSettled).length >= 2) img = c.toDataURL('image/png'); } catch(e) {}
+  const d = new Date().toLocaleString('nl-NL', { day: 'numeric', month: 'short' });
+  if (typeof pmxDownloadPdf === 'function') pmxDownloadPdf('ProMatchXI-Tracker.pdf', 'ProMatchXI \u2014 Tracker', 'Bankroll-overzicht \u00b7 ' + d, L.join('\n'), img);
+}
+
 // v26.290: Tracker als PDF, inclusief de equity-curve (canvas -> PNG).
 function printTracker() {
   const bets  = (state.tracker && state.tracker.bets) || [];
