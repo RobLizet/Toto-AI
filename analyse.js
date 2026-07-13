@@ -339,10 +339,13 @@ function downloadAnalyseTab() {
   try { if (typeof renderScanLog === 'function') renderScanLog(); } catch(e) {}
   const hidden = Array.from(screen.querySelectorAll('*')).filter(el => el.style && el.style.display === 'none');
   hidden.forEach(el => { el.style.display = ''; });
-  const bodyText = screen.innerText.replace(/\n{3,}/g, '\n\n').trim();
+  const defs = [['analyseAnalytics','Prestaties & calibratie'],['claude-insight-block','Claude insight'],['analyse-scanlog-block','Scan-log'],['analyse-shadow-block','Shadow-picks'],['analyse-goalmarkt-block','Doelpuntenmarkt'],['analyse-ah-block','Asian lines']];
+  const sections = [];
+  defs.forEach(function(d){ const el = document.getElementById(d[0]); if (!el) return; const tx = el.innerText.trim(); if (!tx) return; sections.push({ header: d[1], body: tx }); });
   hidden.forEach(el => { el.style.display = 'none'; });
-  const d = new Date().toLocaleString('nl-NL', { day: 'numeric', month: 'short' });
-  if (typeof pmxDownloadPdf === 'function') pmxDownloadPdf('ProMatchXI-Analyse.pdf', 'ProMatchXI \u2014 Analyse', 'Analyse-overzicht \u00b7 ' + d, bodyText, null);
+  if (!sections.length) sections.push({ header: '', body: screen.innerText.trim() });
+  const dt = new Date().toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  if (typeof pmxDownloadPdf === 'function') pmxDownloadPdf('ProMatchXI-Analyse.pdf', 'ProMatchXI \u2014 Analyse', 'Analyse-overzicht \u00b7 ' + dt, sections, null);
 }
 
 function printAnalyseTab() {
