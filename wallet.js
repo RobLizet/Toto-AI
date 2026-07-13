@@ -1318,25 +1318,24 @@ function downloadTracker() {
   const saldo = start + pnl;
   const roi   = staked > 0 ? (pnl / staked * 100).toFixed(1) + '%' : '\u2014';
   const eur = v => '\u20ac' + Number(v || 0).toFixed(2).replace('.', ',');
-  const L = [];
-  L.push('BANKROLL');
-  L.push('  Start:    ' + eur(start));
-  L.push('  Huidig:   ' + eur(saldo));
-  L.push('  Groei:    ' + (pnl >= 0 ? '+' : '') + (start > 0 ? (pnl / start * 100).toFixed(1) : '0') + '%');
-  L.push('  Ingezet:  ' + eur(staked));
-  L.push('  W/V:      ' + (pnl >= 0 ? '+' : '') + eur(pnl));
-  L.push('  ROI:      ' + roi);
-  L.push('  Bets:     ' + bets.length);
-  L.push('');
-  L.push('WEDDENSCHAPPEN (' + bets.length + ')');
-  bets.forEach(b => {
+  const bankroll = [
+    'Start:     ' + eur(start),
+    'Huidig:    ' + eur(saldo),
+    'Groei:     ' + (pnl >= 0 ? '+' : '') + (start > 0 ? (pnl / start * 100).toFixed(1) : '0') + '%',
+    'Ingezet:   ' + eur(staked),
+    'W/V:       ' + (pnl >= 0 ? '+' : '') + eur(pnl),
+    'ROI:       ' + roi,
+    'Bets:      ' + bets.length
+  ].join('\n');
+  const betList = bets.map(function(b){
     const st = b.status === 'win' ? 'WIN' : b.status === 'lose' ? 'VERLIES' : b.status === 'pending' ? 'OPEN' : String(b.status || '').toUpperCase();
-    L.push('  ' + (b.date || '') + '  ' + (b.match || '?') + ' \u2014 ' + (b.pick || '') + ' @' + (b.odds || '') + '  ' + eur(b.stake) + '  [' + st + ']');
-  });
+    return (b.date || '') + '  ' + (b.match || '?') + ' \u2014 ' + (b.pick || '') + ' @' + (b.odds || '') + '  ' + eur(b.stake) + '  [' + st + ']';
+  }).join('\n') || 'Nog geen weddenschappen gelogd.';
   let img = null;
   try { const c = document.getElementById('trackerChart'); if (c && c.width && bets.filter(pmxIsSettled).length >= 2) img = c.toDataURL('image/png'); } catch(e) {}
-  const d = new Date().toLocaleString('nl-NL', { day: 'numeric', month: 'short' });
-  if (typeof pmxDownloadPdf === 'function') pmxDownloadPdf('ProMatchXI-Tracker.pdf', 'ProMatchXI \u2014 Tracker', 'Bankroll-overzicht \u00b7 ' + d, L.join('\n'), img);
+  const d = new Date().toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const sections = [ { header: 'Bankroll', body: bankroll }, { header: 'Weddenschappen (' + bets.length + ')', body: betList } ];
+  if (typeof pmxDownloadPdf === 'function') pmxDownloadPdf('ProMatchXI-Tracker.pdf', 'ProMatchXI \u2014 Tracker', 'Bankroll-overzicht \u00b7 ' + d, sections, img);
 }
 
 // v26.290: Tracker als PDF, inclusief de equity-curve (canvas -> PNG).
