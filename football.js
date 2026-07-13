@@ -452,12 +452,19 @@ function buildAsianLinesHtml(poisson, goalOdds, m) {
 // Geeft { ou: { '2.5': {over,under,fairOver,fairUnder}, ... }, btts: {yes,no,fairYes,fairNo} } of null.
 async function fetchGoalOdds(fixtureId, _retry = 0) {
   try {
-    const r = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}`, null, 11000);
-    const data = await r.json();
-    const resp = data?.response || [];
-    const books = resp?.[0]?.bookmakers || [];
-    // v26.236: 1 nette retry bij lege/mislukte respons — voorkomt dat een tijdelijke hapering
-    // stil de hele DOELPUNTEN- + ASIAN LINES-sectie wist (odds zijn er meestal wel).
+    // v26.288: het volledige /odds-blok is ~232KB (150+ markten) en haalt op mobiel vaak de timeout niet
+    // -> stille "geen O/U-odds beschikbaar" terwijl de odds er wel zijn. Nu 3 gefilterde, piepkleine calls
+    // (bet 4=Asian Handicap, 5=Goals Over/Under, 8=Both Teams Score); de parse-loop hieronder blijft gelijk.
+    const fetchBet = async (bet) => {
+      try {
+        const rr = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}&bet=${bet}`, null, 8000);
+        const dd = await rr.json();
+        return dd?.response?.[0]?.bookmakers || [];
+      } catch (e) { return []; }
+    };
+    const [b4, b5, b8] = await Promise.all([fetchBet(4), fetchBet(5), fetchBet(8)]);
+    const books = [...b4, ...b5, ...b8];
+    // 1 nette retry bij lege respons — voorkomt dat een tijdelijke hapering stil de sectie wist.
     if (!books.length) { if (_retry < 1) { await new Promise(r => setTimeout(r, 400)); return fetchGoalOdds(fixtureId, _retry + 1); } return null; }
     const med = arr => { const s = arr.filter(x => x > 1).sort((a, b) => a - b); if (!s.length) return 0; const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; };
     const ouRaw = { '1.5': { O: [], U: [] }, '2.5': { O: [], U: [] }, '3.5': { O: [], U: [] } };
