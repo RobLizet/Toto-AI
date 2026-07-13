@@ -2405,6 +2405,33 @@ async function loadCompWedstrijden(leagueId) {
 // v26.289: print/PDF-knop voor de analyse. Opent een schone print-weergave (witte pagina, leesbare tekst
 // uit alle secties incl. het 'gemaakt'-tijdstip) zodat de browser 'opslaan als PDF' kan doen. Mobiel + desktop,
 // geen extra library. Gebruikt innerText -> altijd leesbaar, geen donkere-thema-kleuren op wit.
+// v26.290: gedeelde print-helper — schone A4-print-weergave (browser -> opslaan als PDF).
+// imgDataUrl optioneel (bijv. de tracker equity-curve als PNG).
+function pmxOpenPrint(title, subtitle, bodyText, imgDataUrl) {
+  const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const img = imgDataUrl ? '<img src="' + imgDataUrl + '" style="width:100%;max-width:540px;display:block;margin:8px 0 16px;border:1px solid #ddd;border-radius:6px;">' : '';
+  const doc = '<!doctype html><html lang="nl"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>' + esc(title) + '</title><style>'
+    + '@page{margin:15mm;}'
+    + 'body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111;line-height:1.55;font-size:12px;padding:4px;}'
+    + 'h1{font-size:21px;margin:0 0 3px;}'
+    + '.meta{color:#555;font-size:11px;margin-bottom:14px;border-bottom:2px solid #00BEC4;padding-bottom:8px;}'
+    + 'pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:12px;margin:0;}'
+    + '.foot{margin-top:20px;padding-top:8px;border-top:1px solid #ddd;color:#888;font-size:10px;}'
+    + '</style></head><body>'
+    + '<h1>' + esc(title) + '</h1>'
+    + '<div class="meta">' + esc(subtitle) + '</div>'
+    + img
+    + '<pre>' + esc(bodyText) + '</pre>'
+    + '<div class="foot">Gegenereerd door ProMatchXI \u00b7 promatchxi.app \u00b7 analyses zijn geen garantie \u00b7 speel bewust \u00b7 18+</div>'
+    + '</body></html>';
+  const w = window.open('', '_blank');
+  if (!w) { if (typeof showToast === 'function') showToast('Sta pop-ups toe om te printen/op te slaan als PDF.'); return; }
+  w.document.open(); w.document.write(doc); w.document.close(); w.focus();
+  setTimeout(function(){ try { w.print(); } catch(e){} }, imgDataUrl ? 700 : 400);
+}
+
 function printAnalyse() {
   const out = document.getElementById('analyseOutput');
   if (!out || out.style.display === 'none' || !out.innerText.trim()) {
