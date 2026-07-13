@@ -365,8 +365,8 @@
 }
 .tracker-row-top    { display:flex;gap:.5rem;justify-content:space-between;margin-bottom:.4rem; }
 .tracker-row-bottom { display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.3rem; }
-.tracker-match { font-size:.9rem;font-weight:700;color:#0f172a;margin-bottom:.2rem; }
-.tracker-meta  { font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:#475569;display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.4rem; }
+.tracker-match { font-size:.9rem;font-weight:700;color:#ffffff;margin-bottom:.2rem; }
+.tracker-meta  { font-family:'IBM Plex Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.72);display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.4rem; }
 .tracker-result        { font-family:'Bebas Neue',sans-serif;font-size:1rem;cursor:pointer; }
 .tracker-result.win    { color:#16a34a; }
 .tracker-result.lose   { color:#dc2626; }
