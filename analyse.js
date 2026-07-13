@@ -2452,7 +2452,7 @@ KWALITEITSREGELS:
 
     fill('vorm',    sectionCard('⚡', t('ana.form','VORM'), result.vorm || '—', '#2563eb'));
     const predBadge = predictions?.advice
-      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API: ${predictions.advice}${predictions.percent?.home != null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
+      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API-Football (referentie): ${predictions.advice}${predictions.percent?.home != null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
       : '';
     fill('stats',   sectionCard('📊', 'STATS', standingsHtml + (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', lineupsHtml + (result.tactiek || '—'), '#d97706'));
