@@ -2462,29 +2462,48 @@ function pmxPdfSafe(s) {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
-async function pmxDownloadPdf(filename, title, subtitle, bodyText, imgDataUrl) {
+async function pmxDownloadPdf(filename, title, subtitle, sections, imgDataUrl) {
   var jsPDF;
   try { jsPDF = await pmxEnsureJsPDF(); } catch(e) { if (typeof showToast==='function') showToast('PDF-tool laden mislukt - check je verbinding.'); return; }
   if (!jsPDF) { if (typeof showToast==='function') showToast('PDF-tool niet beschikbaar.'); return; }
   try {
     var doc = new jsPDF({ unit: 'mm', format: 'a4' });
     var M = 15, W = 210, Hh = 297, maxW = W - 2*M, y = M;
-    doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(17,17,17);
-    doc.text(pmxPdfSafe(title), M, y); y += 6;
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(90,90,90);
-    doc.text(pmxPdfSafe(subtitle||''), M, y); y += 2;
-    doc.setDrawColor(0,190,196); doc.setLineWidth(0.6); doc.line(M, y, W-M, y); y += 5;
+    var TEAL = [0,190,196], INK = [22,22,22], SUB = [95,95,95];
+    // titelblok: lichte balk + teal onderlijn
+    doc.setFillColor(240, 251, 251); doc.rect(0, 0, W, 27, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(INK[0],INK[1],INK[2]);
+    doc.text(pmxPdfSafe(title), M, 13);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(SUB[0],SUB[1],SUB[2]);
+    doc.text(doc.splitTextToSize(pmxPdfSafe(subtitle||''), maxW), M, 19);
+    doc.setDrawColor(TEAL[0],TEAL[1],TEAL[2]); doc.setLineWidth(0.9); doc.line(0, 27, W, 27);
+    y = 35;
+    var ensure = function(need){ if (y + need > Hh - 13) { doc.addPage(); y = M; } };
     if (imgDataUrl) {
-      try { var p = doc.getImageProperties(imgDataUrl); var iw = maxW, ih = p.height*(iw/p.width); doc.addImage(imgDataUrl,'PNG',M,y,iw,ih); y += ih + 4; } catch(e) {}
+      try { var p = doc.getImageProperties(imgDataUrl); var iw = maxW, ih = p.height*(iw/p.width); ensure(ih+4); doc.addImage(imgDataUrl,'PNG',M,y,iw,ih); y += ih + 6; } catch(e) {}
     }
-    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(17,17,17);
-    var lines = doc.splitTextToSize(pmxPdfSafe(bodyText||''), maxW), lh = 4.7;
-    for (var i=0; i<lines.length; i++) {
-      if (y > Hh - M - 8) { doc.addPage(); y = M; }
-      doc.text(lines[i], M, y); y += lh;
+    (sections||[]).forEach(function(sec){
+      var header = pmxPdfSafe(sec.header||'').toUpperCase().trim();
+      var body = pmxPdfSafe(sec.body||'').trim();
+      if (!header && !body) return;
+      if (header) {
+        ensure(11);
+        doc.setFillColor(234, 250, 250); doc.rect(M, y-3.6, maxW, 6.2, 'F');
+        doc.setFillColor(TEAL[0],TEAL[1],TEAL[2]); doc.rect(M, y-3.6, 1.4, 6.2, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(TEAL[0],TEAL[1],TEAL[2]);
+        doc.text(header, M+3, y+0.6); y += 8.5;
+      }
+      doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(INK[0],INK[1],INK[2]);
+      var lines = doc.splitTextToSize(body, maxW), lh = 4.6;
+      for (var i=0;i<lines.length;i++){ ensure(lh); doc.text(lines[i], M, y); y += lh; }
+      y += 4.5;
+    });
+    var pc = doc.internal.getNumberOfPages();
+    for (var pg=1; pg<=pc; pg++){ doc.setPage(pg);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(150,150,150);
+      doc.text('ProMatchXI - promatchxi.app - analyses zijn geen garantie - 18+', M, Hh-8);
+      doc.text(pg + ' / ' + pc, W-M, Hh-8, { align: 'right' });
     }
-    doc.setFontSize(7); doc.setTextColor(140,140,140);
-    doc.text('Gegenereerd door ProMatchXI - promatchxi.app - analyses zijn geen garantie - 18+', M, Hh - 8);
     doc.save(filename);
   } catch(e) { if (typeof showToast==='function') showToast('PDF maken mislukt: ' + (e && e.message || e)); }
 }
@@ -2495,9 +2514,17 @@ function downloadAnalyse() {
   if (!out || out.style.display === 'none' || !out.innerText.trim()) { if (typeof showToast==='function') showToast('Analyse nog niet klaar - even wachten.'); return; }
   var m = state.selectedMatch || {};
   var titleTxt = (m.home || '?') + ' vs ' + (m.away || '?');
-  var oddsTxt = (m.homeOdds && m.homeOdds !== '\u2014' && m.drawOdds && m.awayOdds) ? '1: ' + m.homeOdds + '  \u00b7  X: ' + m.drawOdds + '  \u00b7  2: ' + m.awayOdds : '';
-  var bodyText = out.innerText.replace(/\n{3,}/g, '\n\n').trim();
-  pmxDownloadPdf('ProMatchXI-' + _slug(titleTxt) + '.pdf', titleTxt, 'ProMatchXI-analyse' + (oddsTxt ? '  \u00b7  ' + oddsTxt : ''), bodyText, null);
+  var oddsTxt = (m.homeOdds && m.homeOdds !== '\u2014' && m.drawOdds && m.awayOdds) ? '1: ' + m.homeOdds + '   X: ' + m.drawOdds + '   2: ' + m.awayOdds : '';
+  var made = ((document.getElementById('rb-gemaakt') || {}).innerText || '').trim();
+  var sections = [];
+  ['rb-vorm','rb-stats','rb-tactiek','rb-kans','rb-risico','rb-advies','rb-tip','rb-asian'].forEach(function(id){
+    var el = document.getElementById(id); if (!el) return;
+    var tx = el.innerText.trim(); if (!tx) return;
+    var nl = tx.indexOf('\n');
+    sections.push({ header: nl > 0 ? tx.slice(0, nl) : tx, body: nl > 0 ? tx.slice(nl) : '' });
+  });
+  var subtitle = 'ProMatchXI-analyse' + (oddsTxt ? '   ' + oddsTxt : '') + (made ? '   ' + made : '');
+  pmxDownloadPdf('ProMatchXI-' + _slug(titleTxt) + '.pdf', titleTxt, subtitle, sections, null);
 }
 
 function printAnalyse() {
