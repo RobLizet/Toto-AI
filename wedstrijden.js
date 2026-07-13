@@ -2402,6 +2402,42 @@ async function loadCompWedstrijden(leagueId) {
 // ── v26.162: Wedstrijd-analyse modal — host voor de RIJKE analyse (runAnalyse).
 // runAnalyse rendert in #rb-* / #entityChips / #analyseOutput; die bestonden nergens,
 // waardoor de rijke analyse nooit toonde. Deze modal levert die containers + draait runAnalyse.
+// v26.289: print/PDF-knop voor de analyse. Opent een schone print-weergave (witte pagina, leesbare tekst
+// uit alle secties incl. het 'gemaakt'-tijdstip) zodat de browser 'opslaan als PDF' kan doen. Mobiel + desktop,
+// geen extra library. Gebruikt innerText -> altijd leesbaar, geen donkere-thema-kleuren op wit.
+function printAnalyse() {
+  const out = document.getElementById('analyseOutput');
+  if (!out || out.style.display === 'none' || !out.innerText.trim()) {
+    if (typeof showToast === 'function') showToast('Analyse nog niet klaar — even wachten.');
+    return;
+  }
+  const m = state.selectedMatch || {};
+  const titleTxt = (m.home || '?') + ' vs ' + (m.away || '?');
+  const oddsTxt = (m.homeOdds && m.homeOdds !== '\u2014' && m.drawOdds && m.awayOdds)
+    ? '1: ' + m.homeOdds + '  \u00b7  X: ' + m.drawOdds + '  \u00b7  2: ' + m.awayOdds : '';
+  const bodyText = out.innerText.replace(/\n{3,}/g, '\n\n').trim();
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const doc = '<!doctype html><html lang="nl"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>ProMatchXI \u2014 ' + esc(titleTxt) + '</title><style>'
+    + '@page{margin:15mm;}'
+    + 'body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111;line-height:1.55;font-size:12px;padding:4px;}'
+    + 'h1{font-size:21px;margin:0 0 3px;}'
+    + '.meta{color:#555;font-size:11px;margin-bottom:14px;border-bottom:2px solid #00BEC4;padding-bottom:8px;}'
+    + 'pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:12px;margin:0;}'
+    + '.foot{margin-top:20px;padding-top:8px;border-top:1px solid #ddd;color:#888;font-size:10px;}'
+    + '</style></head><body>'
+    + '<h1>' + esc(titleTxt) + '</h1>'
+    + '<div class="meta">ProMatchXI-analyse' + (oddsTxt ? ' &nbsp;\u00b7&nbsp; ' + esc(oddsTxt) : '') + '</div>'
+    + '<pre>' + esc(bodyText) + '</pre>'
+    + '<div class="foot">Gegenereerd door ProMatchXI \u00b7 promatchxi.app \u00b7 analyses zijn geen garantie \u00b7 speel bewust \u00b7 18+</div>'
+    + '</body></html>';
+  const w = window.open('', '_blank');
+  if (!w) { if (typeof showToast === 'function') showToast('Sta pop-ups toe om te printen/op te slaan als PDF.'); return; }
+  w.document.open(); w.document.write(doc); w.document.close(); w.focus();
+  setTimeout(function(){ try { w.print(); } catch(e){} }, 400);
+}
+
 function openMatchAnalyseModalById(matchId) {
   const m = (state.matches || []).find(x => String(x.id) === String(matchId));
   if (!m) { console.warn('Match niet gevonden:', matchId); return; }
@@ -2420,9 +2456,12 @@ function openMatchAnalyseModalById(matchId) {
     </div>` : '';
   modal.innerHTML = `
     <div style="background:var(--bg,#0d1b2a);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;padding:1.1rem 1rem 2.5rem;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--ink,#fff);line-height:1;">${m.home || '?'} vs ${m.away || '?'}</div>
-        <button onclick="document.getElementById('match-analyse-modal').remove()" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:.3rem .65rem;color:var(--sub);font-size:.95rem;cursor:pointer;">✕</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem;gap:.5rem;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--ink,#fff);line-height:1;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.home || '?'} vs ${m.away || '?'}</div>
+        <div style="display:flex;gap:.4rem;flex-shrink:0;">
+          <button onclick="printAnalyse()" title="Print / opslaan als PDF" style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);border-radius:8px;padding:.3rem .55rem;color:#00BEC4;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;cursor:pointer;">📄 PDF</button>
+          <button onclick="document.getElementById('match-analyse-modal').remove()" style="background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:.3rem .65rem;color:var(--sub);font-size:.95rem;cursor:pointer;">✕</button>
+        </div>
       </div>
       ${oddsRow}
       <div style="text-align:center;padding:.3rem 0 .7rem;"><div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:var(--sub);">${t('wed.analysing','⚽ Claude analyseert…')}</div></div>
