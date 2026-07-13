@@ -163,6 +163,106 @@ function _analyticsLoadingHTML() {
     '</div>';
 }
 
+// ── v26.293: Deterministische bevindingen bovenaan Analyse ──
+// CIJFERBRON: leest UITSLUITEND de al-berekende cijfers (local + clvSummary) en
+// vertaalt ze via vaste drempels naar tekst. Geen LLM, niets verzonnen.
+function _analyticsFindings(local, worker) {
+  const cs = worker && worker.clvSummary;
+  const clvN = (cs && cs.picks != null) ? Number(cs.picks) : 0;
+  const clv = (cs && cs.avgCLV != null && cs.avgCLV !== '') ? Number(cs.avgCLV) : null;
+  const N = local.settled;
+
+  const wrap = (inner) =>
+    '<div class="analytics-block">' +
+    '<div class="analytics-block-title">\ud83d\udccb ' + t('an.findings', 'BEVINDINGEN') +
+    ' <span style="font-size:.44rem;font-weight:400;color:rgba(255,255,255,.5);">' + t('an.findings_sub', 'automatisch uit de cijfers') + '</span></div>' +
+    inner + '</div>';
+
+  // Lege staat: niets afgerond én geen CLV
+  if (N === 0 && clvN === 0) {
+    return wrap('<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:rgba(255,255,255,.75);line-height:1.5;">' +
+      t('an.findings_empty', 'Nog geen afgeronde picks. Zodra de eerste picks settelen verschijnt hier een korte duiding van de cijfers.') + '</div>');
+  }
+
+  const f = []; // {dot, txt}
+
+  // 1) Steekproefgrootte — bepaalt hoe hard al het andere is
+  if (N < 30) {
+    f.push({ dot: '#f59e0b', txt: 'Zeer vroege fase — ' + N + ' picks afgerond. De cijfers hieronder zijn nog ruis; pas vanaf ~100 settled picks worden ze betrouwbaar. Trek nu geen conclusies.' });
+  } else if (N < 100) {
+    f.push({ dot: '#f59e0b', txt: 'Opbouwfase — ' + N + '/100 afgerond. Trends zijn indicatief, nog niet statistisch hard. Richtpunt: 100–200 settled picks.' });
+  } else if (N < 200) {
+    f.push({ dot: '#00BEC4', txt: 'Voldoende basis — ' + N + ' afgerond. Eerste voorzichtige conclusies zijn mogelijk; boven 200 worden ze robuust.' });
+  } else {
+    f.push({ dot: '#00BEC4', txt: 'Robuuste steekproef — ' + N + ' afgerond. De cijfers hieronder zijn betekenisvol.' });
+  }
+
+  // 2) CLV — de leidende metriek
+  if (clvN > 0 && clv !== null) {
+    const beat = (cs.pctBeatClose != null) ? ', ' + cs.pctBeatClose + '% verslaat de close' : '';
+    let d, txt;
+    if (clv >= 3)       { d = '#00BEC4'; txt = 'CLV +' + cs.avgCLV + '%' + beat + ' — je koopt structureel scherper dan de slotkoers. Sterkste indicatie van echte edge.'; }
+    else if (clv >= 1)  { d = '#00BEC4'; txt = 'CLV +' + cs.avgCLV + '%' + beat + ' — in de gezonde +1–3% band. Dit is het belangrijkste positieve signaal.'; }
+    else if (clv > 0)   { d = '#00BEC4'; txt = 'CLV +' + cs.avgCLV + '%' + beat + ' — licht positief; je verslaat de markt nipt. Doel is structureel +1–3%.'; }
+    else if (clv === 0) { d = '#f59e0b'; txt = 'CLV 0% — je koopt gemiddeld op de slotkoers; nog geen aantoonbare edge.'; }
+    else                { d = '#ef4444'; txt = 'CLV ' + cs.avgCLV + '%' + beat + ' — je koopt gemiddeld ónder de slotkoers. Dit verdient als eerste aandacht.'; }
+    f.push({ dot: d, txt: txt });
+  }
+
+  // 3) ROI + hitrate t.o.v. break-even (winst hangt van beide af)
+  if (N > 0 && local.roi != null) {
+    const be = (local.avgOdds != null && local.avgOdds > 0) ? Math.round(100 / local.avgOdds) : null;
+    let beCtx = '';
+    if (be != null && local.hitrate != null) {
+      beCtx = ' Hitrate ' + local.hitrate + '% vs break-even ~' + be + '% (gem. odds ' + local.avgOdds + ') → ' + (local.hitrate >= be ? 'boven' : 'onder') + ' break-even.';
+    }
+    let d, txt;
+    if (local.roi >= 2)       { d = '#00BEC4'; txt = 'ROI +' + local.roi + '% — in of boven de +2–5% langetermijndoelstelling.' + beCtx; }
+    else if (local.roi > 0)   { d = '#00BEC4'; txt = 'ROI +' + local.roi + '% — positief, maar onder het +2–5% doel.' + beCtx; }
+    else if (local.roi === 0) { d = '#f59e0b'; txt = 'ROI 0% — precies break-even.' + beCtx; }
+    else                      { d = '#ef4444'; txt = 'ROI ' + local.roi + '% — negatief.' + (N < 100 ? ' Bij deze lage N nog grotendeels ruis.' : '') + beCtx; }
+    f.push({ dot: d, txt: txt });
+  }
+
+  // 4) Opvallende competitie (alleen bij >=5 CLV-picks per competitie, anders te dun)
+  const cbl = (worker && worker.clvByLeague) ? worker.clvByLeague.filter(l => Number(l.picks) >= 5 && l.avgCLV != null) : [];
+  if (cbl.length) {
+    const sorted = cbl.slice().sort((a, b) => Number(a.avgCLV) - Number(b.avgCLV));
+    const worst = sorted[0], best = sorted[sorted.length - 1];
+    if (Number(worst.avgCLV) < -1) {
+      f.push({ dot: '#ef4444', txt: _leagueLabel(worst.leagueId) + ' valt negatief op (CLV ' + worst.avgCLV + '% over ' + worst.picks + ' picks) — hier lekt de meeste waarde weg.' });
+    } else if (best !== worst && Number(best.avgCLV) >= 2) {
+      f.push({ dot: '#00BEC4', txt: _leagueLabel(best.leagueId) + ' presteert het best (CLV +' + best.avgCLV + '% over ' + best.picks + ' picks).' });
+    }
+  }
+
+  // Slotregel — één zin, leidend op CLV, begrensd door N
+  let verdict;
+  if (N < 30) {
+    verdict = 'Kortom: de pijplijn draait, maar het is te vroeg om op deze cijfers te sturen — focus op volume.';
+  } else if (clv !== null && clvN > 0) {
+    if (clv >= 1)      verdict = 'Kortom: op koers. CLV is de leidende indicator en die is gezond.';
+    else if (clv > 0)  verdict = 'Kortom: voorzichtig positief; de CLV mag structureel omhoog.';
+    else               verdict = 'Kortom: eerst de CLV boven 0 krijgen — ROI volgt daaruit.';
+  } else if (local.roi != null) {
+    verdict = local.roi > 0 ? 'Kortom: licht positief, maar CLV is nodig om dit te bevestigen.' : 'Kortom: nog geen edge zichtbaar; blijf meten.';
+  } else {
+    verdict = '';
+  }
+
+  let inner = '';
+  f.forEach(x => {
+    inner += '<div style="display:flex;gap:.45rem;align-items:flex-start;padding:.28rem 0;">' +
+      '<div style="flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:' + x.dot + ';margin-top:.34rem;"></div>' +
+      '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.9);line-height:1.5;">' + x.txt + '</div>' +
+      '</div>';
+  });
+  if (verdict) {
+    inner += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.55);margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.08);line-height:1.5;">' + verdict + '</div>';
+  }
+  return wrap(inner);
+}
+
 // ── Hoofd HTML builder ────────────────────────────────
 function _analyticsHTML(local, worker, aiAcc, autoTune) {
   let html = '';
@@ -172,6 +272,9 @@ function _analyticsHTML(local, worker, aiAcc, autoTune) {
   html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;">📊 STATS & ANALYTICS</div>';
   html += '<button onclick="renderAnalyticsScreen()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:rgba(255,255,255,.95);cursor:pointer;">↻ ' + t('an.refresh','Vernieuwen') + '</button>';
   html += '</div>';
+
+  // ── v26.293: Bevindingen (deterministische duiding, bovenaan) ──
+  html += _analyticsFindings(local, worker);
 
   // ── KPI row ──
   html += '<div class="analytics-block">';
