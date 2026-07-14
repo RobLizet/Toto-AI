@@ -56,6 +56,8 @@ const COMP_IDS = {
   // Extra voor scan coverage
   portugal: 94,        // Primeira Liga Portugal
   scotland: 179,       // Scottish Premiership
+  liga3: 80,           // 3. Liga Duitsland
+  leagueone: 41,       // League One Engeland
   netherlands_cup: 90, // KNVB Beker (alias)
   austria: 218,        // Österreichische Bundesliga
   switzerland: 207,    // Super League Zwitserland
@@ -92,6 +94,7 @@ const COMP_NAMES = {
   bundesliga2: '🇩🇪 2. Bundesliga', superlig: '🇹🇷 Süper Lig', wk2026: '🏆 WK 2026',
   norway: '🇳🇴 Eliteserien', sweden: '🇸🇪 Allsvenskan',
   portugal: '🇵🇹 Primeira Liga', scotland: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scottish Prem', denmark: '🇩🇰 Superliga DK',
+  liga3: '🇩🇪 3. Liga', leagueone: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 League One',
   poland: '🇵🇱 Ekstraklasa', austria: '🇦🇹 Bundesliga AT', switzerland: '🇨🇭 Super League CH',
   greece: '🇬🇷 Super League GR', czech: '🇨🇿 Czech Liga', championship: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 Championship',
   europa: '🟠 Europa League', conference: '🟢 Conference League',
