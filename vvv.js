@@ -328,7 +328,7 @@ function _vvvRenderHistorie() {
     '</div>';
 }
 
-// ── Nieuws (echte koppen via worker /vvv-news → Google News RSS) ────────
+// ── Nieuws (echte koppen via worker /vvv-news → vvv-venlo.nl + Venlonaren.net RSS) ──
 async function _vvvLoadNieuws() {
   _vvvLoading('Nieuws laden...');
   try {
@@ -352,6 +352,6 @@ async function _vvvLoadNieuws() {
         (meta ? '<div style="font-family:IBM Plex Mono,monospace;font-size:.44rem;color:' + VVV_GEEL + ';margin-top:.25rem;">' + meta + '</div>' : '') +
       '</a>';
     }).join('') +
-    '<div style="font-family:IBM Plex Mono,monospace;font-size:.42rem;color:rgba(255,255,255,.4);margin-top:.8rem;text-align:center;line-height:1.5;">Koppen via Google News. Tik om het volledige artikel bij de bron te lezen.</div>';
+    '<div style="font-family:IBM Plex Mono,monospace;font-size:.42rem;color:rgba(255,255,255,.4);margin-top:.8rem;text-align:center;line-height:1.5;">Koppen van vvv-venlo.nl en Venlonaren.net. Tik om het volledige artikel bij de bron te lezen.</div>';
   } catch (e) { _vvvFout(e); }
 }
