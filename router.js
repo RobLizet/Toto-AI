@@ -6,6 +6,8 @@
 
 // switchScreen is de nieuwe naam, switchTab is de alias (legacy)
 function switchScreen(name) {
+  // v26.296: WK-sectie weg vanaf 20-07 — verwijzingen naar wk2026 omleiden
+  if (name === 'wk2026' && new Date() >= new Date('2026-07-20')) name = 'dashboard';
   // Verberg alle screens
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
@@ -88,6 +90,11 @@ function initBottomNav() {
   // Behoud bestaande HTML (Lucide SVG iconen uit index.html)
   // Alleen active state instellen op juiste knop
   nav.style.display = 'flex';
+  // v26.296: WK-navknop verbergen vanaf 20-07 (FASE 2)
+  if (new Date() >= new Date('2026-07-20')) {
+    const _wk = nav.querySelector('.bnav-btn[data-screen="wk2026"]');
+    if (_wk) _wk.style.display = 'none';
+  }
   nav.querySelectorAll('.bnav-btn').forEach(btn => {
     const screen = btn.dataset.screen;
     if (screen) {
