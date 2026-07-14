@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.259'; // v26.303: testbets tellen niet mee in de Tracker-statistieken
+const SW_VERSION = '36.260'; // v26.304: dode import-knop weg + Jacks-labels gecorrigeerd
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
