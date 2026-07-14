@@ -434,6 +434,11 @@ function pmxImportPayout(status, rawPayout, stake, odds) {
   if (!isNaN(p) && p > 0) return parseFloat(p.toFixed(2));           // echte uitbetaling uit de import
   return parseFloat(((parseFloat(stake)||0) * (parseFloat(odds)||0)).toFixed(2)); // win zonder payout / pending: bruto
 }
+// v26.303: TESTBETS — een bet die alleen bedoeld is om de app te testen mag het trackrecord niet vervuilen.
+// isTest=true -> bet blijft zichtbaar in de lijst (met badge), maar telt NIET mee in saldo/ROI/W/V/hitrate/drawdown/curve/export-cijfers.
+// Falsy-nul-veilig irrelevant (boolean), maar bewust !! zodat undefined (oude bets) altijd false is.
+function pmxIsTest(b)      { return !!(b && b.isTest); }
+function pmxRealBets(list) { return (list||[]).filter(b => !pmxIsTest(b)); }
 function pmxIsSettled(b)    { return !!(b && b.status && b.status !== 'pending'); }
 function pmxIsPush(b)       { return !!(b && b.status === 'push'); }
 function pmxCountsForHit(b) { return pmxIsSettled(b) && !pmxIsPush(b); } // push telt niet mee in hitrate
@@ -758,7 +763,7 @@ function renderTrackerChart() {
   const canvas = document.getElementById('trackerChart');
   const wrap = document.getElementById('trackerChartWrap');
   if (!canvas) return;
-  const settled = [...(state.tracker?.bets || [])].reverse().filter(b => b.status === 'win' || b.status === 'lose');
+  const settled = pmxRealBets([...(state.tracker?.bets || [])].reverse()).filter(b => b.status === 'win' || b.status === 'lose'); // v26.303: testbets tellen niet mee
   if (settled.length < 2) { if (wrap) wrap.style.display = 'none'; return; }
   if (wrap) wrap.style.display = 'block';
   const ctx = canvas.getContext('2d');
@@ -854,8 +859,8 @@ function exportWalletCSV() {
 function exportTrackerCSV() {
   const bets = state.tracker?.bets||[];
   if (!bets.length) { alert(t('wal.notrackerbets','Geen tracker bets')); return; }
-  const headers = ['Datum','Wedstrijd','Pick','Quote','Inzet','Uitbetaling','Status','Score','Bron','Bookmaker','Note'];
-  const rows = bets.map(b => [b.date,b.match||'',b.pick,b.odds,b.stake,b.payout,b.status,b.score||'',(b.source||'eigen'),b.bookmaker||'',(b.note||'').replace(/,/g,' ')].join(','));
+  const headers = ['Datum','Wedstrijd','Pick','Quote','Inzet','Uitbetaling','Status','Score','Bron','Bookmaker','Test','Note'];
+  const rows = bets.map(b => [b.date,b.match||'',b.pick,b.odds,b.stake,b.payout,b.status,b.score||'',(b.source||'eigen'),b.bookmaker||'',(pmxIsTest(b)?'test':''),(b.note||'').replace(/,/g,' ')].join(','));
   downloadFile([headers.join(','),...rows].join('\n'), 'totoai-tracker-'+new Date().toLocaleDateString('nl-NL').replace(/\//g,'-')+'.csv', 'text/csv');
 }
 
@@ -1031,6 +1036,7 @@ function openTrackerModal() {
   if (trStake) trStake.value = state.settings.defaultBet||10;
   ['trBookmaker','trPick','trOdds','trNote'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   selectTrackerSource('eigen');
+  const tt = document.getElementById('trIsTest'); if (tt) tt.checked = false; // v26.303: testvlag niet plakken tussen bets
   const tm = document.getElementById('tracker-modal') || document.getElementById('trackerModal'); if(tm) { tm.style.display='flex'; }
 }
 function selectTrackerSource(src) {
@@ -1046,6 +1052,7 @@ function confirmTracker() {
   const bookmaker= document.getElementById('trBookmaker').value.trim();
   const note     = document.getElementById('trNote').value.trim();
   if (!stake) { alert(t('wal.fillstake2','Vul een inzet in')); return; }
+  const isTest = !!(document.getElementById('trIsTest') && document.getElementById('trIsTest').checked); // v26.303
   let bet;
   if (trackerType==='combi') {
     const validLegs = trackerLegs.filter(l => l.match&&l.pick&&parseFloat(l.odds)>1);
@@ -1056,7 +1063,7 @@ function confirmTracker() {
       type:'combi', legs:validLegs.map(l=>({match:l.match,pick:l.pick,odds:parseFloat(l.odds),status:'pending'})),
       date, bookmaker, pick:validLegs.map(l=>l.pick).join(' + '), markt:'Combi',
       odds:parseFloat(combiOdds.toFixed(2)), stake, payout:parseFloat((stake*combiOdds).toFixed(2)),
-      source:trackerSource, note, status:'pending', score:null
+      source:trackerSource, note, status:'pending', score:null, isTest
     };
   } else {
     const match = document.getElementById('trMatch').value.trim();
@@ -1065,7 +1072,7 @@ function confirmTracker() {
     if (!match||!pick||!odds) { alert(t('wal.fillall','Vul alle velden in')); return; }
     bet = {
       id:Date.now(), match, date, bookmaker, pick, markt:document.getElementById('trMarkt').value,
-      odds, stake, payout:parseFloat((stake*odds).toFixed(2)), source:trackerSource, note, status:'pending', score:null
+      odds, stake, payout:parseFloat((stake*odds).toFixed(2)), source:trackerSource, note, status:'pending', score:null, isTest
     };
   }
   state.tracker.bets.unshift(bet);
@@ -1231,6 +1238,17 @@ async function checkAllTrackerBets() {
   }
   try{ showToast(`✅ ${settled}/${pending.length} afgerekend`); }catch(e){}
 }
+// v26.303: bestaande bet alsnog als test markeren (of terugzetten) — bv. na een import of een per ongeluk gelogde testinzet.
+function toggleTrackerTest(id) {
+  const b = (state.tracker.bets||[]).find(x => x.id===id);
+  if (!b) return;
+  b.isTest = !b.isTest;
+  if (typeof saveState==='function') saveState();
+  const ov = document.getElementById('walletPopupOverlay'); if (ov) ov.remove();
+  renderTracker(); updateTrackerStats();
+  if (typeof showToast==='function') showToast(b.isTest ? '🧪 Gemarkeerd als testbet — telt niet mee in de statistieken' : '✅ Testmarkering verwijderd — telt weer mee');
+}
+
 function deleteTrackerBet(id) {
   if (!confirm(t('wal.deleteconfirm','Verwijderen?'))) return;
   state.tracker.bets = state.tracker.bets.filter(b => b.id!==id);
@@ -1257,6 +1275,7 @@ function renderTracker() {
     const _pnl     = pmxProfit(b);
     const pnlText  = b.status==='pending' ? '⏳ Open' : pmxIsPush(b) ? 'push €0,00' : `${_pnl>=0?'+':'-'}€${Math.abs(_pnl).toFixed(2)}`;
     const pnlColor = b.status==='pending' ? '#475569' : pmxIsPush(b) ? '#b45309' : _pnl>0 ? '#00BEC4' : _pnl<0 ? '#dc2626' : '#94a3b8';
+    const testBadge = pmxIsTest(b) ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;background:rgba(217,119,6,.18);color:#f59e0b;border:1px solid rgba(217,119,6,.45);border-radius:6px;padding:.05rem .3rem;margin-right:.25rem;white-space:nowrap;">🧪 TEST</span>` : '';
     const srcLbl   = sourceLabel[b.source||'eigen']||'✏️ Eigen';
     const srcCls   = sourceClass[b.source||'eigen']||'src-eigen';
     const isCombi  = b.type==='combi';
@@ -1274,7 +1293,7 @@ function renderTracker() {
           ${isCombi ? `<div class="tracker-legs">${legsHtml}</div>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0;">
-          <span class="tracker-src-badge ${srcCls}">${srcLbl}</span><br>
+          ${testBadge}<span class="tracker-src-badge ${srcCls}">${srcLbl}</span><br>
           <button class="del-btn" onclick="deleteTrackerBet(${b.id})" style="margin-top:.3rem;">✕</button>
         </div>
       </div>
@@ -1311,7 +1330,8 @@ function trFmt(v) {
 }
 // v26.291: Tracker als directe PDF-download (jsPDF), incl. de equity-curve.
 function downloadTracker() {
-  const bets  = (state.tracker && state.tracker.bets) || [];
+  const allBets = (state.tracker && state.tracker.bets) || [];
+  const bets  = pmxRealBets(allBets); // v26.303: testbets tellen niet mee in de bankroll-cijfers
   const start = trBankroll();
   const pnl   = bets.filter(pmxIsSettled).reduce((s,b) => s + pmxProfit(b), 0);
   const staked= bets.reduce((s,b) => s + (b.stake || 0), 0);
@@ -1325,22 +1345,23 @@ function downloadTracker() {
     'Ingezet:   ' + eur(staked),
     'W/V:       ' + (pnl >= 0 ? '+' : '') + eur(pnl),
     'ROI:       ' + roi,
-    'Bets:      ' + bets.length
+    'Bets:      ' + bets.length + (allBets.length > bets.length ? '  (+ ' + (allBets.length - bets.length) + ' testbet(s), niet meegeteld)' : '')
   ].join('\n');
-  const betList = bets.map(function(b){
+  const betList = allBets.map(function(b){
     const st = b.status === 'win' ? 'WIN' : b.status === 'lose' ? 'VERLIES' : b.status === 'pending' ? 'OPEN' : String(b.status || '').toUpperCase();
-    return (b.date || '') + '  ' + (b.match || '?') + ' \u2014 ' + (b.pick || '') + ' @' + (b.odds || '') + '  ' + eur(b.stake) + '  [' + st + ']';
+    return (b.date || '') + '  ' + (b.match || '?') + ' \u2014 ' + (b.pick || '') + ' @' + (b.odds || '') + '  ' + eur(b.stake) + '  [' + st + ']' + (pmxIsTest(b) ? '  [TEST - telt niet mee]' : '');
   }).join('\n') || 'Nog geen weddenschappen gelogd.';
   let img = null;
   try { const c = document.getElementById('trackerChart'); if (c && c.width && bets.filter(pmxIsSettled).length >= 2) img = c.toDataURL('image/png'); } catch(e) {}
   const d = new Date().toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  const sections = [ { header: 'Bankroll', body: bankroll }, { header: 'Weddenschappen (' + bets.length + ')', body: betList } ];
+  const sections = [ { header: 'Bankroll', body: bankroll }, { header: 'Weddenschappen (' + allBets.length + ')', body: betList } ];
   if (typeof pmxDownloadPdf === 'function') pmxDownloadPdf('ProMatchXI-Tracker.pdf', 'ProMatchXI \u2014 Tracker', 'Bankroll-overzicht \u00b7 ' + d, sections, img);
 }
 
 // v26.290: Tracker als PDF, inclusief de equity-curve (canvas -> PNG).
 function printTracker() {
-  const bets  = (state.tracker && state.tracker.bets) || [];
+  const allBets = (state.tracker && state.tracker.bets) || [];
+  const bets  = pmxRealBets(allBets); // v26.303: testbets tellen niet mee in de bankroll-cijfers
   const start = trBankroll();
   const pnl   = bets.filter(pmxIsSettled).reduce((s,b) => s + pmxProfit(b), 0);
   const staked= bets.reduce((s,b) => s + (b.stake || 0), 0);
@@ -1355,12 +1376,12 @@ function printTracker() {
   L.push('  Ingezet:  ' + eur(staked));
   L.push('  W/V:      ' + (pnl >= 0 ? '+' : '') + eur(pnl));
   L.push('  ROI:      ' + roi);
-  L.push('  Bets:     ' + bets.length);
+  L.push('  Bets:     ' + bets.length + (allBets.length > bets.length ? '  (+ ' + (allBets.length - bets.length) + ' testbet(s), niet meegeteld)' : ''));
   L.push('');
-  L.push('WEDDENSCHAPPEN (' + bets.length + ')');
-  bets.forEach(b => {
+  L.push('WEDDENSCHAPPEN (' + allBets.length + ')');
+  allBets.forEach(b => {
     const st = b.status === 'win' ? 'WIN' : b.status === 'lose' ? 'VERLIES' : b.status === 'pending' ? 'OPEN' : String(b.status || '').toUpperCase();
-    L.push('  ' + (b.date || '') + '  ' + (b.match || '?') + ' \u2014 ' + (b.pick || '') + ' @' + (b.odds || '') + '  ' + eur(b.stake) + '  [' + st + ']');
+    L.push('  ' + (b.date || '') + '  ' + (b.match || '?') + ' \u2014 ' + (b.pick || '') + ' @' + (b.odds || '') + '  ' + eur(b.stake) + '  [' + st + ']' + (pmxIsTest(b) ? '  [TEST - telt niet mee]' : ''));
   });
   let img = null;
   try {
@@ -1392,7 +1413,10 @@ function setTrackerBankroll() {
 }
 
 function updateTrackerStats() {
-  const bets   = state.tracker.bets||[];
+  const allBets = state.tracker.bets||[];
+  // v26.303: testbets volledig buiten elke statistiek houden — ze staan wel in de lijst, maar sturen geen enkel cijfer.
+  const bets    = pmxRealBets(allBets);
+  const nTest   = allBets.length - bets.length;
   const staked = bets.reduce((s,b) => s+(b.stake||0),0);
   // v26.277: netto via pmxProfit -> half verlies/push/half winst tellen correct mee (was: volle inzet bij elke 'lose')
   const pnl    = bets.filter(pmxIsSettled).reduce((s,b)=>s+pmxProfit(b),0);
@@ -1409,7 +1433,7 @@ function updateTrackerStats() {
   set('trSaldo',  trFmt(saldo));
   setc('trSaldo', saldo>=start ? '#00BEC4' : '#dc2626');
   set('trGroei',  `${groei>=0?'+':''}${groei.toFixed(1)}%  ·  max drawdown ${(maxDD*100).toFixed(0)}%`);
-  set('trBankInfo', `Start €${start.toFixed(0)} · 1 unit = €${trUnitSize().toFixed(2).replace('.', ',')} (${trUnitPct()}%)`);
+  set('trBankInfo', `Start €${start.toFixed(0)} · 1 unit = €${trUnitSize().toFixed(2).replace('.', ',')} (${trUnitPct()}%)` + (nTest ? ` · 🧪 ${nTest} testbet${nTest>1?'s':''} niet meegeteld` : ''));
   const ub = document.getElementById('trUnitsBtn'); if (ub) ub.textContent = state.trackerUnits ? 'units ✓' : '€ / units';
   set('trStaked', trFmt(staked));
   set('trPnl',    `${pnl>=0?'+':''}${trFmt(pnl)}`);
@@ -1425,7 +1449,7 @@ function updateTrackerStats() {
 function renderSmartStats() {
   const wrap = document.getElementById('smartStatsWrap');
   if (!wrap) return;
-  const bets    = state.tracker.bets||[];
+  const bets    = pmxRealBets(state.tracker.bets||[]); // v26.303: testbets tellen niet mee in de hitrate
   const settled = bets.filter(b => b.status!=='pending');
   if (settled.length < 5) { wrap.innerHTML=''; return; }
   const bySource = {};
@@ -2901,7 +2925,10 @@ function showWalletPopup(type, data) {
       ['Bron', b.source||'eigen', null],
       ['Score', b.score||'—', null],
       ['Notitie', b.note||'—', null],
+      ['Testbet', pmxIsTest(b) ? '🧪 ja — telt niet mee' : '—', pmxIsTest(b) ? '#f59e0b' : null],
     ]);
+    // v26.303: markeer/ontmarkeer als testbet
+    bodyHtml += `<button onclick="toggleTrackerTest(${b.id})" style="width:100%;margin-top:.7rem;background:${pmxIsTest(b)?'rgba(0,190,196,.12)':'rgba(217,119,6,.12)'};border:1px solid ${pmxIsTest(b)?'rgba(0,190,196,.45)':'rgba(217,119,6,.45)'};color:${pmxIsTest(b)?'#00BEC4':'#f59e0b'};border-radius:10px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;cursor:pointer;">${pmxIsTest(b)?'✅ Testmarkering weghalen (telt weer mee)':'🧪 Markeer als testbet (telt niet mee)'}</button>`;
     if (b.legs && b.legs.length) {
       bodyHtml += `<div style="font-family:monospace;font-size:.48rem;font-weight:700;color:rgba(255,255,255,.95);margin:.7rem 0 .3rem;">COMBI LEGS</div>`;
       b.legs.forEach((l,i) => {
