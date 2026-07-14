@@ -111,8 +111,8 @@ const LEAGUE_TRUST = {
   98: 'medium', 292: 'medium', 128: 'medium', 239: 'medium',
   // v26.106: WK + overige actieve scan-competities (voorheen ten onrechte 'Onbekende competitie')
   1: 'top',                                   // FIFA World Cup
-  119: 'good', 144: 'good', 43: 'good', 79: 'good',   // Denemarken, België, KKD, 2.Bundesliga
-  129: 'medium', 169: 'medium', 179: 'medium', 197: 'medium', 203: 'medium', 80: 'medium', // Finland, Argentinië, Schotland, Zwitserland, Turkije, 3.Liga
+  119: 'good', 144: 'good', 89: 'good', 79: 'good',   // Denemarken, België, KKD (89, VVV-Venlo), 2.Bundesliga — v26.299: was 43 (=Eng. National League, fout als KKD gelabeld)
+  129: 'medium', 169: 'medium', 179: 'medium', 207: 'medium', 203: 'medium', 80: 'medium', 41: 'medium', // Finland, Argentinië, Schotland, Zwitserland (207), Turkije, 3.Liga, League One (41) — v26.299: was 197 (=Griekenland, fout als Zwitserland gelabeld)
   // Onbekend = default medium
 };
 
