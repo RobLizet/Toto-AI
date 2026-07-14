@@ -196,7 +196,7 @@ function renderWalletScreen() {
         </div>
         <div style="display:flex;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap;">
           <button class="small-action-btn" style="background:rgba(255,140,0,.1);border-color:rgba(255,140,0,.3);color:#e67e00;font-weight:800;"
-            onclick="openJacksPhotoImport()">${t('wal.importjacks','📸 Importeer van bookmaker')}</button>
+            onclick="openJacksPhotoImport()">${t('wal.importjacks','📸 Import via screenshot')}</button>
           <button class="small-action-btn" style="background:rgba(0,190,196,.1);border-color:rgba(0,190,196,.3);color:#00BEC4;font-weight:800;"
             onclick="checkAllTrackerBets()">🔍 Alles checken</button>
         </div>
@@ -210,8 +210,6 @@ function renderWalletScreen() {
         </div>
         <div style="display:flex;gap:.4rem;margin-bottom:.5rem;flex-wrap:wrap;">
           <button class="export-btn" onclick="exportTrackerCSV()">📥 Export CSV</button>
-          <button class="small-action-btn" style="background:rgba(255,140,0,.1);border-color:rgba(255,140,0,.3);color:#e67e00;font-weight:800;"
-            onclick="openJacksImport()">${t('wal.importjacks2','🎰 Importeer van bookmaker')}</button>
         </div>
         <div id="trackerList"></div>
       </div>
@@ -2189,6 +2187,12 @@ function placeCombiFromOverlay() {
 
 // ── JACKS IMPORT ─────────────────────────────────────────
 
+// v26.304: DODE CODE — bereikbaar via geen enkele knop. openJacksImport() zoekt #jacksImportModal,
+// maar dat element bestaat nergens in de repo en heeft nooit bestaan (40 index.html-commits gecontroleerd).
+// De `if (modal)`-guard maakte dat de knop STIL niets deed. Knop verwijderd; deze keten
+// (openJacksImport/closeJacksImport/parseJacksImport/analyseJacksBets/confirmJacksTextImport) blijft
+// voorlopig staan i.p.v. hem te slopen — Rob beslist of de tekst-import alsnog gebouwd wordt of weg mag.
+// NIET aanroepen zonder eerst de modal-HTML te bouwen.
 function openJacksImport() {
   const modal = document.getElementById('jacksImportModal');
   if (modal) modal.style.display = 'flex';
