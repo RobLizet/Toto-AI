@@ -496,6 +496,11 @@ function renderDashboard() {
         <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${scanROI !== null && scanROI >= 0 ? '#00BEC4' : '#ef4444'};line-height:1;">${scanROI !== null ? (scanROI>=0?'+':'')+scanROI.toFixed(1)+'%' : '—'}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
         <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${winStreak >= 3 ? '#00BEC4' : winStreak >= 1 ? '#d97706' : '#ffffff'};line-height:1;">${winStreak > 0 ? '🔥'+winStreak : winPicks.length+'/'+settledPicks.length}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">${winStreak > 0 ? 'STREAK' : 'W/L'}</div></div>
       </div>
+      <!-- v26.297: AI-calibratie-chip (samengevoegd uit oude TRACKRECORD-kaart); teller = calibMeta.settledBets (correcte gate), niet settledPicks.length -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">🤖 ${isCalibrated?t('dash.aicalib','AI GECALIB.'):t('dash.ailearn','AI LEERT')}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${isCalibrated?'#00BEC4':'#d97706'};">${isCalibrated?'✓':`${(calibMeta.settledBets||0)}/10`}</span>
+      </div>
       ${state._clvSummary && Number(state._clvSummary.picks) >= 20 ? `<div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">\u{1F4C8} GEM. CLV</span>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${Number(state._clvSummary.avgCLV)>=0?'#00BEC4':'#ef4444'};">${Number(state._clvSummary.avgCLV)>=0?'+':''}${state._clvSummary.avgCLV}%</span>
@@ -621,31 +626,7 @@ function renderDashboard() {
       </div>
     </div>` : ''}
 
-    <!-- Confidence engine status -->
-    ${scanROI !== null ? `
-    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.95);">📊 ${t('dash.trackrecord','TRACKRECORD')}</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">${settledPicks.length}/100 picks</div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;">
-        <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${scanHitrate>=50?'#00BEC4':'#dc2626'};">${scanHitrate}%</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">HITRATE</div>
-        </div>
-        <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${scanROI>=0?'#00BEC4':'#dc2626'};">${scanROI>=0?'+':''}${scanROI.toFixed(1)}%</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">ROI</div>
-        </div>
-        <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${isCalibrated?'#00BEC4':'#d97706'};">${isCalibrated?'✓':`${settledPicks.length}/10`}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">${isCalibrated?t('dash.aicalib','AI GECALIB.'):t('dash.ailearn','AI LEERT')}</div>
-        </div>
-      </div>
-      <div style="background:rgba(15,23,42,.06);border-radius:999px;height:5px;overflow:hidden;margin-top:.5rem;">
-        <div style="background:linear-gradient(90deg,#00BEC4,#00a8ad);height:100%;border-radius:999px;width:${Math.min(100,settledPicks.length)}%;transition:width .4s;"></div>
-      </div>
-    </div>` : ''}
+    <!-- v26.297: TRACKRECORD-kaart samengevoegd in de bovenste VOORTGANG-kaart (hitrate/ROI waren 1-op-1 dubbel; AI-calibratie zit nu als chip in die kaart) -->
 
     <!-- Disclaimer -->
     <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid rgba(255,255,255,0.09);margin-top:.5rem;">
