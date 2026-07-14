@@ -662,8 +662,8 @@ function calcPoissonKansen(homeStats, awayStats, leagueAvgOrId = 1.35, homeInjFa
     awayDefenceBase = awayDefenceBase * 0.6 + (awayStats.xgAgainst / Math.max(awayStats.gamesPlayed||20,10)) * 0.4;
   // v26.257: regulariseer de vier sterktes met de sample-size van hún eigen split.
   const _Ka = getStrengthShrinkKAtt(), _Kd = getStrengthShrinkKDef();
-  const _nH = homeStats.playedHome || homeStats.gamesPlayed || 0;
-  const _nA = awayStats.playedAway || awayStats.gamesPlayed || 0;
+  const _nH = _firstNum(homeStats.playedHome, homeStats.gamesPlayed, 0); // v26.300: _firstNum i.p.v. `||` — 0 gespeelde thuisduels is data (n=0 -> volledige shrink naar leagueAvg), geen ontbrekende waarde
+  const _nA = _firstNum(awayStats.playedAway, awayStats.gamesPlayed, 0); // v26.300: idem uit-split
   if (_Ka > 0 || _Kd > 0) {
     homeAttackBase  = shrinkStrength(homeAttackBase,  _nH, leagueAvg, _Ka);
     homeDefenceBase = shrinkStrength(homeDefenceBase, _nH, leagueAvg, _Kd);
