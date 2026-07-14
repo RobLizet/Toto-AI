@@ -2450,9 +2450,9 @@ KWALITEITSREGELS:
         <div style="font-size:.82rem;line-height:1.7;color:#ffffff;">${content}</div>
       </div>`;
 
-    fill('vorm',    sectionCard('⚡', t('ana.form','VORM'), result.vorm || '—', '#2563eb'));
+    fill('vorm',    sectionCard('⚡', t('ana.form','VORM'), result.vorm || '—', '#60a5fa'));
     const predBadge = predictions?.advice
-      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#2563eb;">💡 API-Football (referentie): ${predictions.advice}${predictions.percent?.home != null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
+      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#60a5fa;">💡 API-Football (referentie): ${predictions.advice}${predictions.percent?.home != null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
       : '';
     fill('stats',   sectionCard('📊', 'STATS', standingsHtml + (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', lineupsHtml + (result.tactiek || '—'), '#d97706'));
