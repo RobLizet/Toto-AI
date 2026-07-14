@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.260'; // v26.304: dode import-knop weg + Jacks-labels gecorrigeerd
+const SW_VERSION = '36.261'; // v26.305: dode tekst-import gesloopt
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
