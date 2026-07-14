@@ -6,8 +6,9 @@
 
 // switchScreen is de nieuwe naam, switchTab is de alias (legacy)
 function switchScreen(name) {
-  // v26.296: WK-sectie weg vanaf 20-07 — verwijzingen naar wk2026 omleiden
-  if (name === 'wk2026' && new Date() >= new Date('2026-07-20')) name = 'dashboard';
+  // v26.301: WK 2026-tabblad vervangen door VVV-Venlo. Alle oude wk2026-verwijzingen
+  // (dashboard-tegels e.d.) worden omgeleid naar het dashboard zodat er niets crasht.
+  if (name === 'wk2026') name = 'dashboard';
   // Verberg alle screens
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
@@ -22,7 +23,7 @@ function switchScreen(name) {
 
   // Update header back knop (toon alleen op sub-screens)
   const backBtn = document.getElementById('backBtn');
-  const mainScreens = ['dashboard','wedstrijden','analyse','wallet','instellingen','analytics','wk2026'];
+  const mainScreens = ['dashboard','wedstrijden','analyse','wallet','instellingen','analytics','vvv'];
   if (backBtn) backBtn.classList.toggle('visible', !mainScreens.includes(name));
 
   // Render logica per screen
@@ -59,7 +60,11 @@ function switchScreen(name) {
     case 'analytics':
       if (typeof renderAnalyticsScreen === 'function') renderAnalyticsScreen();
       break;
+    case 'vvv':
+      if (typeof renderVVVScreen === 'function') renderVVVScreen();
+      break;
     case 'wk2026':
+      // v26.301: onbereikbaar (route omgeleid naar dashboard); behouden als vangnet.
       if (typeof renderWK2026Screen === 'function') renderWK2026Screen();
       break;
     case 'oefennl':
@@ -90,11 +95,7 @@ function initBottomNav() {
   // Behoud bestaande HTML (Lucide SVG iconen uit index.html)
   // Alleen active state instellen op juiste knop
   nav.style.display = 'flex';
-  // v26.296: WK-navknop verbergen vanaf 20-07 (FASE 2)
-  if (new Date() >= new Date('2026-07-20')) {
-    const _wk = nav.querySelector('.bnav-btn[data-screen="wk2026"]');
-    if (_wk) _wk.style.display = 'none';
-  }
+  // v26.301: WK-navknop is vervangen door VVV-Venlo (geen datum-verberglogica meer nodig).
   nav.querySelectorAll('.bnav-btn').forEach(btn => {
     const screen = btn.dataset.screen;
     if (screen) {
