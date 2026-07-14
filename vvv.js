@@ -58,14 +58,14 @@ async function _vvvApi(pad, timeout) {
 function renderVVVScreen() {
   const el = document.getElementById('screen-vvv');
   if (!el) return;
-  const actief = state._vvvTab || 'programma';
+  const actief = state._vvvTab || 'nieuws';
   const tabs = [
+    ['nieuws', '📰', 'Nieuws'],
     ['programma', '📅', 'Programma'],
     ['uitslagen', '✅', 'Uitslagen'],
     ['stand', '📊', 'Stand'],
     ['info', 'ℹ️', 'Info'],
     ['historie', '📜', 'Historie'],
-    ['nieuws', '📰', 'Nieuws'],
   ];
   el.innerHTML =
     '<div style="padding:1rem .9rem 5rem;">' +
