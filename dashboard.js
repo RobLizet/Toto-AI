@@ -789,8 +789,8 @@ function openCompKeuze() {
   } else if (_isPreEuroEnd) {
     COMPS = [...EURO_COMPS, ...ZOMER_COMPS, ...WK_COMP];
   } else {
-    // 1 jun – 10 jun en post-WK
-    COMPS = [...WK_COMP, ...ZOMER_COMPS, ...EURO_COMPS];
+    // v26.296: post-WK (vanaf 20-07) — spiegel de 19 clubcompetities uit de Matches-grid, geen WK
+    COMPS = (typeof getActiveCOMPLIST === 'function') ? getActiveCOMPLIST() : [...EURO_COMPS, ...ZOMER_COMPS];
   }
 
   const grid = document.createElement('div');
