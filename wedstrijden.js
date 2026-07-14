@@ -47,8 +47,33 @@ function getActiveCOMPLIST() {
     { key:'asiancup',       flag:'🌏',  name:'Asian Cup' },
   ];
 
+  // v26.296: FASE 2 (vanaf 20-07) — exact de 19 clubcompetities die de worker scant (incl. CL/EL/ECL)
+  const CLUB19 = [
+    { key:'eredivisie',  flag:'🇳🇱', name:'Eredivisie' },
+    { key:'kkd',         flag:'🇳🇱', name:'Keuken Kampioen' },
+    { key:'premier',     flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Premier League' },
+    { key:'laliga',      flag:'🇪🇸', name:'La Liga' },
+    { key:'bundesliga',  flag:'🇩🇪', name:'Bundesliga' },
+    { key:'seriea',      flag:'🇮🇹', name:'Serie A' },
+    { key:'ligue1',      flag:'🇫🇷', name:'Ligue 1' },
+    { key:'portugal',    flag:'🇵🇹', name:'Primeira Liga' },
+    { key:'jupiler',     flag:'🇧🇪', name:'Jupiler Pro League' },
+    { key:'scotland',    flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', name:'Scottish Prem' },
+    { key:'switzerland', flag:'🇨🇭', name:'Super League CH' },
+    { key:'superlig',    flag:'🇹🇷', name:'Süper Lig' },
+    { key:'champions',   flag:'⭐', name:'Champions League' },
+    { key:'europa',      flag:'🟠', name:'Europa League' },
+    { key:'conference',  flag:'🟢', name:'Conference League' },
+    { key:'bundesliga2', flag:'🇩🇪', name:'2. Bundesliga' },
+    { key:'liga3',       flag:'🇩🇪', name:'3. Liga' },
+    { key:'championship',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' },
+    { key:'leagueone',   flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'League One' },
+  ];
+  const postWK = now >= wkEnd; // WK-sectie weg vanaf 20-07
+
   if (typeof WK_ONLY_MODE !== 'undefined' && WK_ONLY_MODE) return [...WK, ...OEFEN]; // tijdelijk: WK 2026 + NL-oefenduels
   if (isWK)          return [...WK, ...OEFEN, ...INTERNATIONAAL, ...SCANDI, ...EXTRA, ...OVERIG];
+  if (postWK)        return [...CLUB19]; // FASE 2: alleen de 19 clubcompetities, geen WK
   if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...EXTRA, ...OVERIG];
   return              [...EUROPEES, ...SCANDI, ...EXTRA, ...WK, ...INTERNATIONAAL, ...OVERIG];
 }
