@@ -397,15 +397,19 @@ async function fetchPredictions(fixtureId) {
     const d = await r.json();
     const pred = d.response?.[0];
     if (!pred) return null;
+    // v26.299: 0-behoudende int-parse. parseInt("0%")||null gooide een echte 0% weg (0 is falsy) ->
+    // percent.away werd null bij een 50/50/0-predictie, en de STATS-referentieregel toonde "50%/50%/null%".
+    // Bug-familie v26.266, maar dat fixte de CONSUMENT (formatPredictions); de 0 verdween al hier, bij de BRON.
+    const _pctInt = (v) => { const n = parseInt(v, 10); return Number.isNaN(n) ? null : n; };
     // Verwerk naar bruikbaar object
     return {
       winner:       pred.predictions?.winner?.name || null,
       winnerComment: pred.predictions?.winner?.comment || null,
       advice:       pred.predictions?.advice || null,
       percent: {
-        home: parseInt(pred.predictions?.percent?.home) || null,
-        draw: parseInt(pred.predictions?.percent?.draw) || null,
-        away: parseInt(pred.predictions?.percent?.away) || null,
+        home: _pctInt(pred.predictions?.percent?.home),
+        draw: _pctInt(pred.predictions?.percent?.draw),
+        away: _pctInt(pred.predictions?.percent?.away),
       },
       goalsHome:    pred.predictions?.goals?.home || null,
       goalsAway:    pred.predictions?.goals?.away || null,
