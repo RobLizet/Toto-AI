@@ -370,6 +370,18 @@ function bestAsianEV(poisson, goalOdds, m) {
 function buildAsianLinesHtml(poisson, goalOdds, m) {
   try {
     const ah = goalOdds && goalOdds.ah;
+    // v26.310: NIET MEER STIL VERDWIJNEN. Geen AH-lijnen kan drie dingen betekenen: de odds-call is
+    // geweigerd (technisch), de bookmakers posten geen AH voor dit duel, of er is geen model. Voorheen
+    // gaven alle drie `return ''` -- een lege plek waar de gebruiker geen enkele verklaring voor had, en
+    // die niet te onderscheiden was van 'deze markt bestaat niet'. Alleen de eerste is een fout van ons.
+    const _mono = "font-family:'IBM Plex Mono',monospace;";
+    const _melding = (tekst) => `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);${_mono}font-size:.55rem;color:rgba(255,255,255,.5);line-height:1.6;">\u2696\ufe0f ASIAN LINES<br>${tekst}</div>`;
+    if (goalOdds && goalOdds._faalde && goalOdds._faalde.ah && !ah) {
+      return _melding('De handicap-odds konden niet worden opgehaald (API-limiet of trage respons). Dit zegt niets over deze wedstrijd \u2014 de markt bestaat wel. Tik op \u201cNieuwe analyse\u201d om het opnieuw te proberen.');
+    }
+    if (!ah && poisson && poisson.valid) {
+      return _melding('Geen Asian-Handicap-odds gepost voor deze wedstrijd.');
+    }
     if (!ah || !poisson || !poisson.valid) return '';
     const lh = poisson.lambdaHome, la = poisson.lambdaAway;
     if (!(lh > 0 && la > 0)) return '';
@@ -455,14 +467,23 @@ async function fetchGoalOdds(fixtureId, _retry = 0) {
     // v26.288: het volledige /odds-blok is ~232KB (150+ markten) en haalt op mobiel vaak de timeout niet
     // -> stille "geen O/U-odds beschikbaar" terwijl de odds er wel zijn. Nu 3 gefilterde, piepkleine calls
     // (bet 4=Asian Handicap, 5=Goals Over/Under, 8=Both Teams Score); de parse-loop hieronder blijft gelijk.
+    // v26.310: EEN GEWEIGERDE ODDS-CALL IS GEEN 'GEEN ODDS'. Voorheen gaf fetchBet bij zowel een
+    // rate-limit als bij een fixture zonder odds een lege array -- niet te onderscheiden. Gevolg: faalt
+    // alleen bet=4 (Asian Handicap) en slaagt bet=5, dan is `books` niet leeg (dus geen retry), maar
+    // ahRaw blijft leeg en buildAsianLinesHtml doet `return ''` -> de ASIAN LINES-sectie verdween ZONDER
+    // ENIGE MELDING. Dat is precies wat Rob meldde ('geen Asian lines'), en de stilste variant van deze
+    // bugfamilie: bij vorm/H2H stond tenminste nog een (onware) zin, hier stond niets.
     const fetchBet = async (bet) => {
       try {
         const rr = await apiFetch(`https://v3.football.api-sports.io/odds?fixture=${fixtureId}&bet=${bet}`, null, 8000);
         const dd = await rr.json();
-        return dd?.response?.[0]?.bookmakers || [];
-      } catch (e) { return []; }
+        if (dd && dd.errors && dd.errors.rateLimit) return { books: [], faalde: true };
+        return { books: (dd && dd.response && dd.response[0] && dd.response[0].bookmakers) || [], faalde: false };
+      } catch (e) { return { books: [], faalde: true }; }
     };
-    const [b4, b5, b8] = await Promise.all([fetchBet(4), fetchBet(5), fetchBet(8)]);
+    const [r4, r5, r8] = await Promise.all([fetchBet(4), fetchBet(5), fetchBet(8)]);
+    const b4 = r4.books, b5 = r5.books, b8 = r8.books;
+    const _faalde = { ah: r4.faalde, ou: r5.faalde, btts: r8.faalde };
     const books = [...b4, ...b5, ...b8];
     // 1 nette retry bij lege respons — voorkomt dat een tijdelijke hapering stil de sectie wist.
     if (!books.length) { if (_retry < 1) { await new Promise(r => setTimeout(r, 400)); return fetchGoalOdds(fixtureId, _retry + 1); } return null; }
@@ -502,7 +523,7 @@ async function fetchGoalOdds(fixtureId, _retry = 0) {
     }
     const hasAh = Object.keys(ah).length > 0;
     if (!Object.keys(ou).length && !btts && !hasAh) return null;
-    return { ou, btts, ah: hasAh ? ah : null };
+    return { ou, btts, ah: hasAh ? ah : null, _faalde };
   } catch (e) {
     if (_retry < 1) { await new Promise(r => setTimeout(r, 400)); return fetchGoalOdds(fixtureId, _retry + 1); }
     return null;
