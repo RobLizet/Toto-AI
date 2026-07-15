@@ -116,6 +116,19 @@ const FD_CODES = {
 // per-minuut rate-limit verzadigen via een burst. Reservering is synchroon → race-vrij.
 const API_MIN_GAP = 120; // ms tussen opeenvolgende calls
 let _apiNextSlot = 0;
+
+// v26.309: EEN GEWEIGERDE CALL IS GEEN 'GEEN DATA'. Elke fetcher hieronder (fetchTeamStats,
+// fetchTeamForm, fetchH2H) geeft `null` terug bij zowel een lege respons als een afgekapte/
+// geweigerde call -- die twee zijn voor de aanroeper niet te onderscheiden. Gevolg: de
+// analyse-prompt zette letterlijk 'geen data' in de context en de LLM schreef braaf op dat er
+// geen vormdata BESTAAT, terwijl API-Football die gewoon heeft (gemeten op England/Argentina
+// 15-07: form WDWWWW resp. WWWWWW, allebei 6 duels). De LLM loog niet; de prompt loog tegen de
+// LLM. Zelfde bugfamilie als worker v245 (`if (!r?.length) break` op een geweigerde call), nu
+// aan de frontend-kant. Deze teller is bewust een losse diagnose i.p.v. een sentinel-returnwaarde:
+// een leeg object zou truthy zijn en door extractTeamGoalStats heen glippen.
+let _apifDiag = { calls: 0, rateLimited: 0 };
+function apifDiagReset() { _apifDiag = { calls: 0, rateLimited: 0 }; }
+function apifDiagGet() { return { calls: _apifDiag.calls, rateLimited: _apifDiag.rateLimited }; }
 function _apiThrottle() {
   const now = Date.now();
   const start = Math.max(now, _apiNextSlot);
@@ -145,8 +158,17 @@ async function apiFetch(url, _apiKey, timeoutMs = 10000) {
   // (wt(...)). Eén rate-limit-hit + één retry paste daardoor niet binnen het venster: de caller kreeg
   // null en de UI concludeerde "te weinig data" terwijl de call simpelweg was afgekapt. Eerste retry
   // nu snel (met jitter tegen thundering herd), latere retries blijven ruim voor echte minuut-limieten.
-  const backoffs = [700, 2200, 5000]; // ms; 1e poging + 3 retries
+  // v26.309: DE DERDE RETRY KON NOOIT LANDEN. v26.255 verruimde het wt-venster 5000->9000ms en
+  // verhoogde tegelijk de backoff-som, waardoor de som opnieuw BUITEN het venster viel -- dezelfde
+  // fout die v26.255 zelf beschreef, één ronde later. Rekensom met de oude waarden:
+  //   throttle (call #5 x 120ms) 600 + 4 fetches à ~250 = 1000 + backoffs 7900 + jitter ≤750 = 10.250ms
+  // tegen een wt-venster van 9000ms -> retry 3 kwam per definitie te laat, wt gaf null, hStats null,
+  // poisson.valid=false. Nu 700+1800+3200 = 5700 -> totaal ≤8050ms, past met marge.
+  // WIE DIT AANPAST: som van backoffs + jitter + throttle + (n+1) x fetch-latency moet ONDER het
+  // wt-venster van de aanroeper blijven (analyse.js gebruikt 9000 voor de statistics-calls).
+  const backoffs = [700, 1800, 3200]; // ms; 1e poging + 3 retries. Som bewust < wt-venster.
   const jitter = () => Math.floor(Math.random() * 250);
+  _apifDiag.calls++;
   for (let attempt = 0; attempt <= backoffs.length; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -177,6 +199,11 @@ async function apiFetch(url, _apiKey, timeoutMs = 10000) {
       await new Promise(res => setTimeout(res, backoffs[attempt] + jitter()));
       continue;
     }
+
+    // v26.309: retries op -> de call is DEFINITIEF geweigerd. Vastleggen, want hieronder gaat de
+    // rate-limit-informatie verloren: de caller ziet straks alleen een lege `response` en kan dat
+    // niet onderscheiden van een wedstrijd zonder data.
+    if (rateLimited) _apifDiag.rateLimited++;
 
     // Verse Response teruggeven zodat caller .json()/.text() kan doen
     return new Response(text, {
