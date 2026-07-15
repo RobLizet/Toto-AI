@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.263'; // v26.307: saldo = echt geld, methode-cijfers apart
+const SW_VERSION = '36.264'; // v26.308: bankrollblok leesbaarder + minteken gefixt
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
