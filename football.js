@@ -376,7 +376,17 @@ function buildAsianLinesHtml(poisson, goalOdds, m) {
     // die niet te onderscheiden was van 'deze markt bestaat niet'. Alleen de eerste is een fout van ons.
     const _mono = "font-family:'IBM Plex Mono',monospace;";
     const _melding = (tekst) => `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);${_mono}font-size:.55rem;color:rgba(255,255,255,.5);line-height:1.6;">\u2696\ufe0f ASIAN LINES<br>${tekst}</div>`;
-    if (goalOdds && goalOdds._faalde && goalOdds._faalde.ah && !ah) {
+    // v26.311: goalOdds === null betekent ONBEKEND, niet 'geen odds'. fetchGoalOdds doet 3 calls met elk
+    // een apifFetch-retryketen (~6,5s) PLUS een eigen retry-ronde -> tot ~16s, tegen een wt-venster van
+    // 11s in analyse.js -> wt geeft null -> er is geen _faalde-object meer om op te kijken, en de tak
+    // hieronder beweerde vrolijk 'geen AH gepost'. Gemeten op fixture 1586077 op het moment dat de app dat
+    // toonde: bet=4 gaf 11 bookmakers, 20 lijnen, 169/170 values door de parser. De bewering was onwaar.
+    // Exact dezelfde fout als v26.309 bij de statistics (retryketen buiten het eigen venster) en dezelfde
+    // les: de bugfamilie zit in het PATROON rond elke fetch, niet in een veld. Daarom is de rate-limit-
+    // teller uit api.js hier het vangnet: alleen 'niet gepost' zeggen als de call aantoonbaar slaagde.
+    const _d = (typeof apifDiagGet === 'function') ? apifDiagGet() : { rateLimited: 0 };
+    const _ahGeweigerd = (goalOdds && goalOdds._faalde && goalOdds._faalde.ah) || !goalOdds || _d.rateLimited > 0;
+    if (!ah && _ahGeweigerd) {
       return _melding('De handicap-odds konden niet worden opgehaald (API-limiet of trage respons). Dit zegt niets over deze wedstrijd \u2014 de markt bestaat wel. Tik op \u201cNieuwe analyse\u201d om het opnieuw te proberen.');
     }
     if (!ah && poisson && poisson.valid) {
@@ -486,7 +496,11 @@ async function fetchGoalOdds(fixtureId, _retry = 0) {
     const _faalde = { ah: r4.faalde, ou: r5.faalde, btts: r8.faalde };
     const books = [...b4, ...b5, ...b8];
     // 1 nette retry bij lege respons — voorkomt dat een tijdelijke hapering stil de sectie wist.
-    if (!books.length) { if (_retry < 1) { await new Promise(r => setTimeout(r, 400)); return fetchGoalOdds(fixtureId, _retry + 1); } return null; }
+    // v26.311: alleen opnieuw proberen bij een ECHT lege respons. Is de call geweigerd, dan heeft
+    // apiFetch al 3x geretryd met backoff; nog een ronde kost ~8s extra en duwt fetchGoalOdds juist
+    // over het wt-venster van 11s heen -> null -> geen diagnose meer. Retry die de fout verergert.
+    const _ietsGeweigerd = _faalde.ah || _faalde.ou || _faalde.btts;
+    if (!books.length) { if (!_ietsGeweigerd && _retry < 1) { await new Promise(r => setTimeout(r, 400)); return fetchGoalOdds(fixtureId, _retry + 1); } return null; }
     const med = arr => { const s = arr.filter(x => x > 1).sort((a, b) => a - b); if (!s.length) return 0; const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; };
     const ouRaw = { '1.5': { O: [], U: [] }, '2.5': { O: [], U: [] }, '3.5': { O: [], U: [] } };
     const bttsRaw = { Y: [], N: [] };
