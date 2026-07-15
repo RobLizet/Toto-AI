@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.264'; // v26.308: bankrollblok leesbaarder + minteken gefixt
+const SW_VERSION = '36.265'; // v26.309: analyse beweerde 'geen vormdata' terwijl die er wel was
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
