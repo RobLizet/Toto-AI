@@ -1920,7 +1920,17 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
     // v26.236: model-vs-markt kon niet worden opgebouwd \u2014 dit gebeurt alleen als \u00e9\u00e9r geen geldig
     // Poisson-model is (te weinig vormdata) \u00e9n de odds niet geladen konden worden (tijdelijke hapering).
     // Neutrale melding met refresh-hint i.p.v. een lege plek.
-    return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);${F}font-size:.55rem;color:rgba(255,255,255,.5);line-height:1.6;">\ud83d\udcd0 MODEL vs MARKT \u00b7 \u26bd DOELPUNTEN \u00b7 \u2696\ufe0f ASIAN LINES<br>Even niet beschikbaar \u2014 de odds konden niet worden geladen of er is te weinig vormdata. Sluit de analyse en open \u2019m opnieuw om het nog eens te proberen.</div>`;
+    // v26.309: missReason (v26.255) wist al of dit een FETCH-fout was of echt te weinig data, maar deze
+    // fallback negeerde hem en gokte hardop met "of" — precies de onzekerheid die de code niet heeft.
+    const _mr = poisson && poisson.missReason;
+    const _uitleg = _mr === 'fetch'
+      ? 'De teamstatistieken konden niet worden opgehaald (API-limiet of trage respons). Dit zegt niets over de teams — de data bestaat wel. Tik op “Nieuwe analyse” om het opnieuw te proberen.'
+      : _mr === 'thin'
+      ? 'Nog te weinig gespeelde wedstrijden voor een model bij deze teams.'
+      : _mr === 'onbruikbaar'
+      ? 'De statistieken zijn onbruikbaar voor dit duel.'
+      : 'De odds konden niet worden geladen. Sluit de analyse en open ’m opnieuw om het nog eens te proberen.';
+    return `<div style="margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);${F}font-size:.55rem;color:rgba(255,255,255,.5);line-height:1.6;">\ud83d\udcd0 MODEL vs MARKT \u00b7 \u26bd DOELPUNTEN \u00b7 \u2696\ufe0f ASIAN LINES<br>${_uitleg}</div>`;
   }
 
   // ── VALUE-INDEX ──
@@ -2019,6 +2029,9 @@ async function runAnalyse() {
     if (btn) btn.textContent = '⟳ DATA OPHALEN...';
     const leagueId = m.leagueId || COMP_IDS[state.activeComp];
     const wt = (p, ms=5000) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
+    // v26.309: teller op nul, anders telt een geweigerde call uit een vorige analyse hier nog mee
+    // en zou een compleet gevulde analyse alsnog "niet opgehaald" gaan melden.
+    if (typeof apifDiagReset === 'function') apifDiagReset();
 
     const [h2h, homeForm, awayForm, hStats, aStats, lineups, injuries, standings, predictions] = await Promise.all([
       wt(fetchH2H(m.homeId, m.awayId), 5000),
@@ -2132,10 +2145,33 @@ async function runAnalyse() {
 
     if (btn) btn.textContent = '⟳ AI ANALYSE...';
 
-    const h2hStr = h2h?.length ? formatH2HCompact(h2h.slice(0,5), m.home, m.away) : 'geen data';
-    const homeFormStr = homeForm?.length ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home) : (formFromPred(predictions,'home') || 'geen data'); // v26.245: fallback op predictions bij timeout
-    const awayFormStr = awayForm?.length ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away) : (formFromPred(predictions,'away') || 'geen data'); // v26.245
-    const poissonStr = poisson.valid ? `Poisson: 1=${poisson.k1}% X=${poisson.kX}% 2=${poisson.k2}%${poisson.injLabel||''}` : 'geen statdata';
+    // v26.309: EEN AFGEKAPTE CALL IS GEEN 'GEEN DATA'. Voorheen kregen null (fetch mislukt/afgekapt)
+    // en [] (echt niets in de API) allebei de string 'geen data' -> de LLM las dat en schreef
+    // "van beide teams is geen recente vormdata beschikbaar", terwijl de data gewoon bestond
+    // (gemeten op England-Argentina: form WDWWWW resp. WWWWWW, 6 duels elk). Dat is geen ontbrekende
+    // data maar een ONWARE BEWERING, en daarmee een CIJFERBRON-schending in de tekst zelf.
+    // Achtste instantie van de falsy-familie; hier voor het eerst rechtstreeks zichtbaar voor de gebruiker.
+    const NIET_OPGEHAALD = 'NIET OPGEHAALD (technische fout — geen enkele uitspraak over doen)';
+    // Een null-check alleen is NIET genoeg: fetchTeamForm/fetchH2H doen `d.response || []` en vangen
+    // fouten af met `return []`, dus een geweigerde call komt hier als LEGE ARRAY binnen -- niet als null.
+    // Daarom leest dit de rate-limit-teller uit api.js (v26.309). Bewust conservatief: is er tijdens deze
+    // analyse ook maar één call definitief geweigerd, dan gelden lege velden als ONBEKEND i.p.v. als leeg.
+    // Liever "kon niet worden opgehaald" bij een echt leeg H2H, dan één keer beweren dat data niet bestaat.
+    const _diag = (typeof apifDiagGet === 'function') ? apifDiagGet() : { calls: 0, rateLimited: 0 };
+    const _fetchFaalde = v => v === null || v === undefined
+      || (Array.isArray(v) && v.length === 0 && _diag.rateLimited > 0);
+    const h2hStr = h2h?.length ? formatH2HCompact(h2h.slice(0,5), m.home, m.away)
+      : (_fetchFaalde(h2h) ? NIET_OPGEHAALD : 'geen onderling duel bekend');
+    const homeFormStr = homeForm?.length ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home)
+      : (formFromPred(predictions,'home') || (_fetchFaalde(homeForm) ? NIET_OPGEHAALD : 'geen gespeelde wedstrijden')); // v26.245: fallback op predictions bij timeout
+    const awayFormStr = awayForm?.length ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away)
+      : (formFromPred(predictions,'away') || (_fetchFaalde(awayForm) ? NIET_OPGEHAALD : 'geen gespeelde wedstrijden')); // v26.245
+    // v26.309: poisson.missReason (v26.255) wist het antwoord al, maar bereikte de prompt nooit.
+    const _poissonMiss = { fetch: 'Poisson: NIET OPGEHAALD (teamstatistieken niet geladen — technische fout, geen uitspraak over doen)',
+      thin: 'Poisson: geen model (te weinig gespeelde wedstrijden)',
+      onbruikbaar: 'Poisson: geen model (statistieken onbruikbaar voor dit duel)' };
+    const poissonStr = poisson.valid ? `Poisson: 1=${poisson.k1}% X=${poisson.kX}% 2=${poisson.k2}%${poisson.injLabel||''}`
+      : (_poissonMiss[poisson.missReason] || _poissonMiss.thin);
     const formationStr = lineups?.length ? `${lineups[0]?.team?.name||m.home}: ${lineups[0]?.formation||'?'} vs ${lineups[1]?.team?.name||m.away}: ${lineups[1]?.formation||'?'}` : 'nog niet bekend';
 
     // Blessure context
@@ -2353,6 +2389,15 @@ Formaties: ${formationStr}${lineupsPromptStr ? '\nOPSTELLINGEN (bevestigd, allee
       max_tokens: 1800,
       temperature: 0,
       system: `Je bent een scherpe, eerlijke voetbalanalist voor een bettingadvies app. JSON only, geen tekst buiten JSON.
+
+ONTBREKENDE DATA vs NIET-OPGEHAALDE DATA (VERPLICHT):
+- Staat er "NIET OPGEHAALD" bij een veld, dan is de call technisch mislukt (API-limiet/timeout). Wij weten
+  dan NIETS over dat veld - niet dat het leeg is, en niet dat het gevuld is.
+- Schrijf in dat geval NOOIT "er is geen vormdata/H2H/statdata beschikbaar" of woorden van die strekking.
+  Dat is een bewering over de WERKELIJKHEID die je niet kunt doen; de data bestaat vrijwel zeker wel.
+  Schrijf: "deze gegevens konden niet worden opgehaald" - een bewering over ONZE fetch, en die is waar.
+- Baseer je analyse dan op wat er WEL staat, en zeg eerlijk dat de onderbouwing daardoor beperkt is.
+- "geen gespeelde wedstrijden" / "geen onderling duel bekend" betekenen wel echt leeg: dat mag je zo noemen.
 
 GECORRELEERDE AFWIJKING (VERPLICHT ALS HET SPEELT):
 - Wijkt het doelpuntentotaal van het model af van dat van de markt, dan tonen ALLE Under-regels (of alle
