@@ -181,8 +181,9 @@ function renderWalletScreen() {
             </div>
           </div>
           <div id="trSaldo" style="font-size:1.55rem;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#00BEC4;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">€100,00</div>
-          <div id="trGroei" style="font-size:.55rem;font-family:monospace;color:rgba(255,255,255,.6);margin-top:.3rem;">—</div>
-          <div id="trBankInfo" style="font-size:.48rem;font-family:monospace;color:rgba(255,255,255,.45);margin-top:.2rem;">Start €100 · 1 unit = €2,00 (2%)</div>
+          <div id="trGroei" style="font-size:.62rem;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.8);margin-top:.35rem;">—</div>
+          <div id="trBankInfo" style="font-size:.56rem;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.62);margin-top:.25rem;">Start €100 · 1 unit = €2,00 (2%)</div>
+          <div id="trTestInfo" style="display:none;font-size:.56rem;font-family:'IBM Plex Mono',monospace;color:#f59e0b;margin-top:.3rem;padding-top:.3rem;border-top:1px solid rgba(255,255,255,.08);line-height:1.45;"></div>
         </div>
         <div class="wallet-strip" style="margin-bottom:.75rem;">
           <div class="w-item"><div class="w-label">${t('wal.staked','Ingezet')}</div><div class="val" id="trStaked">€0</div></div>
@@ -1322,9 +1323,13 @@ function trBankroll() { return (state.tracker && +state.tracker.startBankroll) |
 function trUnitPct()  { return (state.tracker && +state.tracker.unitPct)  || 2; }
 function trUnitSize() { return trBankroll() * trUnitPct() / 100; }
 function trFmt(v) {
+  // v26.308: teken VOOR de eenheid. Voorheen gaf trFmt(-2) de string '€-2,00' — het minteken kwam
+  // achter het euroteken en dat leest niet. Gold overal: W/V, saldo, de testbet-noot. Nu '-€2,00'.
   v = Number(v) || 0;
-  if (state.trackerUnits) { const u = trUnitSize() || 1; return (v/u).toFixed(2).replace('.', ',') + ' u'; }
-  return '€' + v.toFixed(2).replace('.', ',');
+  const teken = v < 0 ? '-' : '';
+  const a = Math.abs(v);
+  if (state.trackerUnits) { const u = trUnitSize() || 1; return teken + (a/u).toFixed(2).replace('.', ',') + ' u'; }
+  return teken + '€' + a.toFixed(2).replace('.', ',');
 }
 // v26.291: Tracker als directe PDF-download (jsPDF), incl. de equity-curve.
 function downloadTracker() {
@@ -1449,12 +1454,23 @@ function updateTrackerStats() {
   setc('trSaldo', saldo>=start ? '#00BEC4' : '#dc2626');
   // v26.307: groei/drawdown zijn methode-cijfers; label dat zodra ze van het echte saldo afwijken.
   set('trGroei',  `${groei>=0?'+':''}${groei.toFixed(1)}%${Math.abs(pnlTest) >= 0.005 ? ' methode' : ''}  ·  max drawdown ${(maxDD*100).toFixed(0)}%`);
-  // v26.307: benoem het verschil tussen echt saldo en methode-saldo zodra testbets zijn afgerekend.
-  const testNoot = !nTest ? ''
-    : (Math.abs(pnlTest) >= 0.005
-        ? ` · 🧪 ${nTest} testbet${nTest>1?'s':''} (${pnlTest>=0?'+':''}${trFmt(pnlTest)}) · volgens methode ${trFmt(saldoMet)}`
-        : ` · 🧪 ${nTest} testbet${nTest>1?'s':''} telt niet mee in ROI/hitrate`);
-  set('trBankInfo', `Start €${start.toFixed(0)} · 1 unit = €${trUnitSize().toFixed(2).replace('.', ',')} (${trUnitPct()}%)` + testNoot);
+  set('trBankInfo', `Start €${start.toFixed(0)} · 1 unit = €${trUnitSize().toFixed(2).replace('.', ',')} (${trUnitPct()}%)`);
+  // v26.308: de testbet-noot stond achter de bankroll-regel geplakt -> één lange zin die afbrak op .48rem
+  // en 45% dekking: onleesbaar (door Rob gemeld, omcirkeld). Nu een EIGEN regel, amber zoals de TEST-badge
+  // op de bet-rij, met een scheidslijntje. Zo hoort het ook: het is een uitzondering op je saldo, geen voetnoot.
+  const tEl = document.getElementById('trTestInfo');
+  if (tEl) {
+    if (!nTest) { tEl.style.display = 'none'; tEl.textContent = ''; }
+    else if (Math.abs(pnlTest) >= 0.005) {
+      tEl.style.display = '';
+      tEl.textContent = `🧪 ${nTest} testbet${nTest>1?'s':''}: ${trFmt(pnlTest)} — zit wél in je saldo, niet in ROI/hitrate\nZonder testbets zou je bankroll ${trFmt(saldoMet)} zijn`;
+      tEl.style.whiteSpace = 'pre-line';
+    } else {
+      tEl.style.display = '';
+      tEl.style.whiteSpace = 'normal';
+      tEl.textContent = `🧪 ${nTest} testbet${nTest>1?'s':''} — telt niet mee in ROI/hitrate`;
+    }
+  }
   const ub = document.getElementById('trUnitsBtn'); if (ub) ub.textContent = state.trackerUnits ? 'units ✓' : '€ / units';
   set('trStaked', trFmt(staked));
   set('trPnl',    `${pnl>=0?'+':''}${trFmt(pnl)}`);
