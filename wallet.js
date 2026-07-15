@@ -1333,13 +1333,17 @@ function downloadTracker() {
   const start = trBankroll();
   const pnl   = bets.filter(pmxIsSettled).reduce((s,b) => s + pmxProfit(b), 0);
   const staked= bets.reduce((s,b) => s + (b.stake || 0), 0);
-  const saldo = start + pnl;
+  // v26.307: saldo = ECHT geld (incl. testbets); de methode-cijfers eronder negeren ze — zie updateTrackerStats
+  const pnlAll   = allBets.filter(pmxIsSettled).reduce((s,b) => s + pmxProfit(b), 0);
+  const pnlTest  = pnlAll - pnl;
+  const saldo    = start + pnlAll;
+  const saldoMet = start + pnl;
   const roi   = staked > 0 ? (pnl / staked * 100).toFixed(1) + '%' : '\u2014';
   const eur = v => '\u20ac' + Number(v || 0).toFixed(2).replace('.', ',');
   const bankroll = [
     'Start:     ' + eur(start),
-    'Huidig:    ' + eur(saldo),
-    'Groei:     ' + (pnl >= 0 ? '+' : '') + (start > 0 ? (pnl / start * 100).toFixed(1) : '0') + '%',
+    'Huidig:    ' + eur(saldo) + (Math.abs(pnlTest) >= 0.005 ? '   (volgens methode ' + eur(saldoMet) + ', testinzet ' + (pnlTest >= 0 ? '+' : '') + eur(pnlTest) + ')' : ''),
+    'Groei:     ' + (pnl >= 0 ? '+' : '') + (start > 0 ? (pnl / start * 100).toFixed(1) : '0') + '%' + (Math.abs(pnlTest) >= 0.005 ? ' (methode)' : ''),
     'Ingezet:   ' + eur(staked),
     'W/V:       ' + (pnl >= 0 ? '+' : '') + eur(pnl),
     'ROI:       ' + roi,
@@ -1363,14 +1367,18 @@ function printTracker() {
   const start = trBankroll();
   const pnl   = bets.filter(pmxIsSettled).reduce((s,b) => s + pmxProfit(b), 0);
   const staked= bets.reduce((s,b) => s + (b.stake || 0), 0);
-  const saldo = start + pnl;
+  // v26.307: saldo = ECHT geld (incl. testbets); de methode-cijfers eronder negeren ze — zie updateTrackerStats
+  const pnlAll   = allBets.filter(pmxIsSettled).reduce((s,b) => s + pmxProfit(b), 0);
+  const pnlTest  = pnlAll - pnl;
+  const saldo    = start + pnlAll;
+  const saldoMet = start + pnl;
   const roi   = staked > 0 ? (pnl / staked * 100).toFixed(1) + '%' : '\u2014';
   const eur = v => '\u20ac' + Number(v || 0).toFixed(2).replace('.', ',');
   const L = [];
   L.push('BANKROLL');
   L.push('  Start:    ' + eur(start));
-  L.push('  Huidig:   ' + eur(saldo));
-  L.push('  Groei:    ' + (pnl >= 0 ? '+' : '') + (start > 0 ? (pnl / start * 100).toFixed(1) : '0') + '%');
+  L.push('  Huidig:   ' + eur(saldo) + (Math.abs(pnlTest) >= 0.005 ? '   (volgens methode ' + eur(saldoMet) + ', testinzet ' + (pnlTest >= 0 ? '+' : '') + eur(pnlTest) + ')' : ''));
+  L.push('  Groei:    ' + (pnl >= 0 ? '+' : '') + (start > 0 ? (pnl / start * 100).toFixed(1) : '0') + '%' + (Math.abs(pnlTest) >= 0.005 ? ' (methode)' : ''));
   L.push('  Ingezet:  ' + eur(staked));
   L.push('  W/V:      ' + (pnl >= 0 ? '+' : '') + eur(pnl));
   L.push('  ROI:      ' + roi);
@@ -1421,7 +1429,16 @@ function updateTrackerStats() {
   const roi    = staked>0 ? ((pnl/staked)*100).toFixed(1) : '—';
   // v26.283: bankroll-ontwikkeling — saldo, groei% en max drawdown over de saldo-curve
   const start  = trBankroll();
-  const saldo  = start + pnl;
+  // v26.307: SALDO IS ECHT GELD, GEEN PRESTATIEMETRIEK. v26.303 hield testbets buiten ALLES, dus ook buiten
+  // het saldo — maar een testbet is wel degelijk met echte euro's bij de bookmaker ingelegd. Verlies je 'm,
+  // dan zegt je portemonnee €98 en de app €100. Prestatiemetriek en kasboek door elkaar gehaald.
+  // Nu gescheiden: saldo telt ELKE settled bet (ook test), want dat is je bankroll; ROI/W-V/BETS/groei/
+  // drawdown/curve blijven testbets negeren, want die gaan over de kwaliteit van de methode.
+  // Het verschil wordt expliciet benoemd in trBankInfo — anders lijkt saldo != start + W/V een bug.
+  const pnlAll   = allBets.filter(pmxIsSettled).reduce((s,b)=>s+pmxProfit(b),0);
+  const pnlTest  = pnlAll - pnl;              // netto bijdrage van de testbets
+  const saldo    = start + pnlAll;            // ECHT geld
+  const saldoMet = start + pnl;               // wat de methode alleen zou hebben opgeleverd
   const groei  = start>0 ? (pnl/start*100) : 0;
   const chrono = [...bets].reverse().filter(pmxIsSettled); // oudste eerst (bets staan nieuwste-eerst)
   let bal=start, peak=start, maxDD=0;
@@ -1430,8 +1447,14 @@ function updateTrackerStats() {
   const setc= (id,c) => { const e=document.getElementById(id); if(e) e.style.color=c; };
   set('trSaldo',  trFmt(saldo));
   setc('trSaldo', saldo>=start ? '#00BEC4' : '#dc2626');
-  set('trGroei',  `${groei>=0?'+':''}${groei.toFixed(1)}%  ·  max drawdown ${(maxDD*100).toFixed(0)}%`);
-  set('trBankInfo', `Start €${start.toFixed(0)} · 1 unit = €${trUnitSize().toFixed(2).replace('.', ',')} (${trUnitPct()}%)` + (nTest ? ` · 🧪 ${nTest} testbet${nTest>1?'s':''} niet meegeteld` : ''));
+  // v26.307: groei/drawdown zijn methode-cijfers; label dat zodra ze van het echte saldo afwijken.
+  set('trGroei',  `${groei>=0?'+':''}${groei.toFixed(1)}%${Math.abs(pnlTest) >= 0.005 ? ' methode' : ''}  ·  max drawdown ${(maxDD*100).toFixed(0)}%`);
+  // v26.307: benoem het verschil tussen echt saldo en methode-saldo zodra testbets zijn afgerekend.
+  const testNoot = !nTest ? ''
+    : (Math.abs(pnlTest) >= 0.005
+        ? ` · 🧪 ${nTest} testbet${nTest>1?'s':''} (${pnlTest>=0?'+':''}${trFmt(pnlTest)}) · volgens methode ${trFmt(saldoMet)}`
+        : ` · 🧪 ${nTest} testbet${nTest>1?'s':''} telt niet mee in ROI/hitrate`);
+  set('trBankInfo', `Start €${start.toFixed(0)} · 1 unit = €${trUnitSize().toFixed(2).replace('.', ',')} (${trUnitPct()}%)` + testNoot);
   const ub = document.getElementById('trUnitsBtn'); if (ub) ub.textContent = state.trackerUnits ? 'units ✓' : '€ / units';
   set('trStaked', trFmt(staked));
   set('trPnl',    `${pnl>=0?'+':''}${trFmt(pnl)}`);
