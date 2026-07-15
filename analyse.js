@@ -1816,7 +1816,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
       thin: 'Faire markt-kansen \u2014 model niet beschikbaar (te weinig gespeelde wedstrijden voor deze teams)',
       onbruikbaar: 'Faire markt-kansen \u2014 model niet beschikbaar (statistieken onbruikbaar voor dit duel)',
     };
-    const note = (gm && hasMarket) ? '+pp = model hoger dan markt (mogelijk value)' : (hasMarket ? (_missTxt[poisson.missReason] || _missTxt.thin) : 'Modelkans uit verwachte goals \u2014 O/U-odds nog niet gepost voor deze wedstrijd');
+    const note = (gm && hasMarket) ? '+pp = model hoger dan markt (mogelijk value)' : (hasMarket ? (_missTxt[poisson.missReason] || _missTxt.thin) : ((goalOdds && goalOdds._faalde && goalOdds._faalde.ou) ? 'Modelkans uit verwachte goals \u2014 de O/U-odds konden niet worden opgehaald (technische fout); ze bestaan wel' : 'Modelkans uit verwachte goals \u2014 O/U-odds nog niet gepost voor deze wedstrijd'));
     goalsHTML = `<div style="${body ? 'margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);' : ''}">
       <div style="${F}font-size:.5rem;color:rgba(255,255,255,.62);letter-spacing:.07em;margin-bottom:.3rem;">\u26bd DOELPUNTEN \u2014 ${subtitle}</div>
       ${goalRows}
