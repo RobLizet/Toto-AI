@@ -78,7 +78,10 @@ function getActiveCOMPLIST() {
   return              [...EUROPEES, ...SCANDI, ...EXTRA, ...WK, ...INTERNATIONAAL, ...OVERIG];
 }
 
-const COMP_LIST = getActiveCOMPLIST();
+// v26.312: COMP_LIST verwijderd. Hij werd EEN keer gezet bij het laden van het script en was daarna
+// bevroren; renderWedstrijdenScreen filterde de favorieten intussen tegen een VERSE getActiveCOMPLIST().
+// Twee bronnen in dezelfde functie. Beide aanroepers roepen nu getActiveCOMPLIST() zelf aan (goedkoop:
+// een paar array-literals). Nergens anders gebruikt — geverifieerd over alle js-bestanden + index.html.
 
 let _scanCompFilter = new Set();
 let scanCompFilter = new Set();
@@ -93,8 +96,9 @@ function renderWedstrijdenScreen() {
   const activeKeys = new Set(getActiveCOMPLIST().map(c => c.key));
   state.favoriteComps = (state.favoriteComps || []).filter(k => activeKeys.has(k));
   const favs = state.favoriteComps || [];
-  // v26.282: favorieten bovenaan het competitie-grid; stabiele sort behoudt de COMP_LIST-volgorde binnen elke groep
-  const _sortedComps = [...COMP_LIST].sort((a, b) => (favs.includes(a.key) ? 0 : 1) - (favs.includes(b.key) ? 0 : 1));
+  // v26.312: verse lijst i.p.v. de module-load-bevroren COMP_LIST — activeKeys hierboven is wel vers
+  // v26.282: favorieten bovenaan het competitie-grid; stabiele sort behoudt de canonieke volgorde binnen elke groep
+  const _sortedComps = [...getActiveCOMPLIST()].sort((a, b) => (favs.includes(a.key) ? 0 : 1) - (favs.includes(b.key) ? 0 : 1));
 
   screen.innerHTML = `
     <!-- AutoCheck bar -->
@@ -1264,7 +1268,7 @@ function resortCompGrid() {
   const grid = document.getElementById('compGrid');
   if (!grid) return;
   const favs = state.favoriteComps || [];
-  const order = COMP_LIST.map(c => c.key);
+  const order = getActiveCOMPLIST().map(c => c.key); // v26.312: vers, niet de bevroren COMP_LIST
   const chips = Array.from(grid.querySelectorAll('.comp-chip'));
   chips.sort((a, b) => {
     const ka = a.id.replace('comp-', ''), kb = b.id.replace('comp-', '');
