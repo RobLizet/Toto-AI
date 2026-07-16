@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.267'; // v26.311: 'geen AH-odds gepost' was zelf ook een onware bewering
+const SW_VERSION = '36.268'; // v26.312: COMP_LIST bevroren bij script-load naast een verse getActiveCOMPLIST()
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
