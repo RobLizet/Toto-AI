@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v261'; // v261: TWEE OPERATOR-PUSHES GINGEN NAAR ALLE ABONNEES, op verzoek van Rob admin-only gemaakt. (1) runScan r3742: '⚠️ scan zonder AI-analyse — check ANTHROPIC_KEY / limiet' is een instructie aan de beheerder en stond in de notificatiebalk van elke gebruiker; dezelfde regel stuurde ook '⏱ scan klaar · geen nieuwe picks' bij ELKE scan zonder picks -- 12 cron-scans/dag = tot 12 lege pushes per dag per gebruiker. (2) runWeeklyCalibration r2868: '📊 Wekelijkse calibratie klaar · X% hitrate · N leagues bijgewerkt' -- interne onderhoudsmelding. Pick-meldingen (r3709/3722/3732) blijven naar iedereen: dat is het product. GEMETEN RISICO, EXPLICIET OPEN: de tag role=admin wordt door GEEN ENKELE regel frontend gezet -- nul sendTag-aanroepen in de hele repo. Als die tag niet handmatig in het OneSignal-dashboard staat, gaan deze twee (en de scan_test-push van v260) nu naar NIEMAND. Dat is de spam oplossen door de melding stil te laten verdwijnen, precies de falsy-familie. Ik kan OneSignal niet bevragen (REST-key in Cloudflare env). Rob moet bevestigen dat hij VVV-nieuwspushes (v253, zelfde tag) binnenkrijgt; zo niet is de tag er niet en moet er eerst een sendTag('role','admin') achter de _isAdmin-check komen. Rollback is 1 regel per push.
+const VERSION = 'v262'; // v262: DIAGNOSE, geen gedragswijziging. Rob meldde dat hij geen VVV-push heeft gehad. Dat is GEEN bewijs dat de tag role=admin ontbreekt -- er kan net zo goed geen VVV-nieuws zijn geweest. Precies het verschil waar de CIJFERBRON-regel over gaat, dus meten. runScanTest kende _pushResult toe en gaf hem nooit terug: een dode variabele terwijl OneSignal's antwoord `recipients` bevat = het aantal toestellen dat de filter raakte. Bij adminOnly is dat het aantal toestellen met tag role=admin. Nu teruggegeven als pushRecipients/pushId/pushErrors op het 0-wedstrijden-pad. Meetplan: /scan-test?league=39 (Premier League begint 21-08, dus gegarandeerd 0 fixtures op 17/18-07) -> 0 wedstrijden -> admin-only push -> lees recipients. 0 = tag bestaat niet en v260/v261 sturen naar niemand; >=1 = tag bestaat en die versies kloppen. `?? null` bewust, niet `|| null`: 0 recipients is de meetwaarde 'niemand', geen ontbrekende data. Deze push is adminOnly, dus de meting zelf kan geen gebruiker bereiken.
 
 // v225: omhoog verplaatst. snapshotOddsOnly (r157) las hem, terwijl de declaratie op r1617 stond.
 // Runtime veilig (de cron draait na module-init), maar dezelfde vorm als de TDZ-bug van v26.265 --
@@ -3869,6 +3869,14 @@ async function runScanTest(env, leagueIds = [1, 113, 103], enableGoals = false, 
         ? `⛔ ONBRUIKBAAR — ${_tRl}/2 date-calls GEWEIGERD (rate-limit). Dit zegt NIETS over het aanbod; opnieuw draaien met een rustige API.`
         : '⚠️ Geen wedstrijden gevonden — push verstuurd naar owner',
       note: '✅ TEST — push verstuurd',
+      // v262: _pushResult werd toegekend en nooit gelezen — een dode variabele terwijl er precies in
+      // stond wat we moeten weten. OneSignal meldt `recipients`: het aantal toestellen dat de filter
+      // raakte. Bij adminOnly is dat het aantal toestellen met tag role=admin. 0 = de tag bestaat niet
+      // en de melding is stilletjes nergens geland. `?? null` en niet `|| null`: 0 recipients is een
+      // MEETWAARDE (namelijk: niemand), geen ontbrekende data.
+      pushRecipients: _pushResult?.recipients ?? null,
+      pushId: _pushResult?.id ?? null,
+      pushErrors: _pushResult?.errors ?? null,
       pushResult: _pushResult
     };
   }
