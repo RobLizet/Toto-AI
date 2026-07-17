@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v264'; // v264: api-sports loopt nu via onze eigen proxy (apif.promatchxi.app, Hetzner, vast IP 138.201.189.10) ZODRA env.PROXY_SECRET bestaat; zonder dat secret verandert er niets en gaat alles rechtstreeks -- dat is meteen het rollback-pad. AANLEIDING: api-sports support (Kevin, 17-07-2026) bevestigde dat hun anti-abuse op het UITGAANDE IP telt, niet op de key. Cloudflare Workers delen hun egress-IP's met vreemden, dus werden onze calls geweigerd op 2,1% van de daglimiet (gemeten 17-07 13:00: 4 van 8 parallelle calls geweigerd met dezelfde key). Verhoging van API_MIN_GAP hielp aantoonbaar niet -- het was nooit ons volume. Eén helper apiSportsHost() voor beide aanroepplekken (apif + handleAPIFootball), zodat ze niet uit elkaar kunnen lopen. Nieuw: header X-APIF-Via (proxy|direct) -- bewust naast X-APIF-Host i.p.v. die te wijzigen, want daar kan iets op lezen. /health toont apif_proxy met een SHA-256-vingerafdruk (8 tekens) van het secret, zodat te meten is of beide kanten dezelfde waarde hebben zonder het secret ergens te tonen. De proxy kent de api-key NIET: die gaat mee in de header en wordt ongewijzigd doorgezet; het X-Proxy-Secret wordt eraf gehaald voor het naar api-sports gaat. Foutstatussen gaan ongewijzigd door (429 blijft 429 incl. Retry-After) -- geen fout die als 200-met-tekst aankomt. RapidAPI-fallback ONGEMOEID (buiten scope; die werkt nog steeds niet, apart abonnement nodig). // // v263: /push STOND WAGENWIJD OPEN. Gemeten live 17-07: POST /push met een leeg body gaf HTTP 400 ('title en body verplicht') en geen 401 -- de route verwerkte dus een anonieme POST en weigerde die alleen op ontbrekende velden. Met titel+tekst erin kon iedereen op internet een melding met vrije tekst op het toestel van ELKE gebruiker zetten. Nu requireAdmin. Gevonden terwijl ik een simpele vraag beantwoordde ('welke knop moet ik testen?'); de derde open/misgerichte push op rij, na /scan-now (v259) en de scan-test-push (v260). TWEEDE HELFT, in de frontend (v26.314): sendOneSignalValuePush() is weg. Die werd aangeroepen vanuit de LOKALE analyse van elke gebruiker en POSTte naar /push, dat naar included_segments ['Total Subscriptions'] stuurt -- dus vond een willekeurige gebruiker een value-pick, dan kreeg het hele gebruikersbestand daar een melding van. De meegestuurde player_id las handlePush niet eens uit. Bovendien dubbelop: de lus erboven stuurde al sendValueNotification() voor ELKE sterke pick. En het commentaar 'ook als app dicht' klopte niet -- die code draait alleen mét de app open, dus een lokale notificatie volstaat. Dat is nu het enige pad: service worker, alleen dit toestel, geen server. De else-tak wees naar toto-ai.zweetzakken.workers.dev (gemeten: HTTP 404, dood). Owner-only i.p.v. de route slopen: even veilig, omkeerbaar, en ik kan niet uitsluiten dat er een oude client op zit. NOG DOOD, niet aangeraakt (buiten scope): notifications.js roept /push/subscribe en /push/send aan -- die routes bestaan niet in de worker.
+const VERSION = 'v265'; // v265: WEIGERINGEN WORDEN NU GETELD. Tot nu toe stonden de api-sports-weigeringen alleen als console.warn in de worker-logs: achteraf onleesbaar en dus niet te vergelijken voor/na de proxy. Precies dezelfde blinde vlek als bij odds_dekking, dat maandenlang wel werd weggeschreven maar door niemand bekeken werd. scan_status krijgt last_refused / last_api_calls / last_via; /health toont ze onder apif_proxy.laatste_scan. Kolommen bewust NULLABLE ZONDER DEFAULT: NULL = 'deze scan heeft niet geteld' (scans van voor v265), 0 = 'geteld, niets geweigerd'. Een default 0 zou over oude scans beweren dat er niets geweigerd was -- een stille onwaarheid over de buitenwereld. sbUpdateScanStatus leest de tellers ZELF uit i.p.v. via het meegegeven object, want er zijn twee aanroepplekken (r3160 en r3719) en die mogen niet uit elkaar lopen. resetApifTellers() staat als eerste regel van runScan: isolates worden hergebruikt, dus zonder reset tellen de cijfers van de vorige scan mee. GEMETEN 17-07 21:01 (eerste scan onder v264, via de proxy): 6 wedstrijden, 8/8 odds, 0 zonder odds, 2 picks, geen warnings -- maar of er weigeringen waren was NIET vast te stellen, en dat gat dicht deze versie. // // v264: api-sports loopt nu via onze eigen proxy (apif.promatchxi.app, Hetzner, vast IP 138.201.189.10) ZODRA env.PROXY_SECRET bestaat; zonder dat secret verandert er niets en gaat alles rechtstreeks -- dat is meteen het rollback-pad. AANLEIDING: api-sports support (Kevin, 17-07-2026) bevestigde dat hun anti-abuse op het UITGAANDE IP telt, niet op de key. Cloudflare Workers delen hun egress-IP's met vreemden, dus werden onze calls geweigerd op 2,1% van de daglimiet (gemeten 17-07 13:00: 4 van 8 parallelle calls geweigerd met dezelfde key). Verhoging van API_MIN_GAP hielp aantoonbaar niet -- het was nooit ons volume. Eén helper apiSportsHost() voor beide aanroepplekken (apif + handleAPIFootball), zodat ze niet uit elkaar kunnen lopen. Nieuw: header X-APIF-Via (proxy|direct) -- bewust naast X-APIF-Host i.p.v. die te wijzigen, want daar kan iets op lezen. /health toont apif_proxy met een SHA-256-vingerafdruk (8 tekens) van het secret, zodat te meten is of beide kanten dezelfde waarde hebben zonder het secret ergens te tonen. De proxy kent de api-key NIET: die gaat mee in de header en wordt ongewijzigd doorgezet; het X-Proxy-Secret wordt eraf gehaald voor het naar api-sports gaat. Foutstatussen gaan ongewijzigd door (429 blijft 429 incl. Retry-After) -- geen fout die als 200-met-tekst aankomt. RapidAPI-fallback ONGEMOEID (buiten scope; die werkt nog steeds niet, apart abonnement nodig). // // v263: /push STOND WAGENWIJD OPEN. Gemeten live 17-07: POST /push met een leeg body gaf HTTP 400 ('title en body verplicht') en geen 401 -- de route verwerkte dus een anonieme POST en weigerde die alleen op ontbrekende velden. Met titel+tekst erin kon iedereen op internet een melding met vrije tekst op het toestel van ELKE gebruiker zetten. Nu requireAdmin. Gevonden terwijl ik een simpele vraag beantwoordde ('welke knop moet ik testen?'); de derde open/misgerichte push op rij, na /scan-now (v259) en de scan-test-push (v260). TWEEDE HELFT, in de frontend (v26.314): sendOneSignalValuePush() is weg. Die werd aangeroepen vanuit de LOKALE analyse van elke gebruiker en POSTte naar /push, dat naar included_segments ['Total Subscriptions'] stuurt -- dus vond een willekeurige gebruiker een value-pick, dan kreeg het hele gebruikersbestand daar een melding van. De meegestuurde player_id las handlePush niet eens uit. Bovendien dubbelop: de lus erboven stuurde al sendValueNotification() voor ELKE sterke pick. En het commentaar 'ook als app dicht' klopte niet -- die code draait alleen mét de app open, dus een lokale notificatie volstaat. Dat is nu het enige pad: service worker, alleen dit toestel, geen server. De else-tak wees naar toto-ai.zweetzakken.workers.dev (gemeten: HTTP 404, dood). Owner-only i.p.v. de route slopen: even veilig, omkeerbaar, en ik kan niet uitsluiten dat er een oude client op zit. NOG DOOD, niet aangeraakt (buiten scope): notifications.js roept /push/subscribe en /push/send aan -- die routes bestaan niet in de worker.
 
 // v225: omhoog verplaatst. snapshotOddsOnly (r157) las hem, terwijl de declaratie op r1617 stond.
 // Runtime veilig (de cron draait na module-init), maar dezelfde vorm als de TDZ-bug van v26.265 --
@@ -389,6 +389,12 @@ async function sbUpdateScanStatus(data, env) {
     last_without_odds: data.lastWithoutOdds || 0,
     scans_today: data.scansToday || 0,
     version: data.version || VERSION,
+    // v265: uit de tellers zelf, niet via het meegegeven object -- er zijn twee
+    // aanroepplekken en die mogen niet uit elkaar lopen.
+    // NULL als er niet gemeten is; 0 betekent 'gemeten, niets geweigerd'.
+    last_refused: _apifGemeten ? _apifWeigeringen : null,
+    last_api_calls: _apifGemeten ? _apifCalls : null,
+    last_via: _apifVia,
     updated_at: new Date().toISOString(),
   }], '?on_conflict=id');
 }
@@ -1160,6 +1166,25 @@ async function fetchWithRetry(url, options, retries = 2) {
   }
 }
 
+// v265: TELLERS voor wat api-sports met ons doet binnen één scan.
+// Waarom modulescope: één scan draait in één worker-invocatie, dus deze tellers
+// overspannen precies die scan. resetApifTellers() MOET aan het begin van elke
+// scan draaien -- een isolate wordt hergebruikt en zou anders de cijfers van de
+// vorige scan meetellen.
+// NULL vs 0: `_apifGemeten` blijft false tot er geteld is. 0 weigeringen is een
+// meting; "niet gemeten" is dat niet. Die twee mogen nooit hetzelfde lijken.
+let _apifWeigeringen = 0;   // elke geweigerde poging (3 per call mogelijk)
+let _apifCalls = 0;         // aantal api-sports-calls
+let _apifVia = null;        // 'proxy' | 'direct'
+let _apifGemeten = false;
+
+function resetApifTellers() {
+  _apifWeigeringen = 0;
+  _apifCalls = 0;
+  _apifVia = null;
+  _apifGemeten = true;
+}
+
 // ── Route naar api-sports: rechtstreeks of via onze eigen proxy ──────────
 // WAAROM: api-sports weigert bursts op grond van het UITGAANDE IP, niet op de
 // key. Bevestigd door hun support (Kevin, 17-07-2026). Cloudflare Workers delen
@@ -1196,7 +1221,25 @@ async function apifProxyStatus(env) {
   if (!aan) return { ingeschakeld: false, reden: 'PROXY_SECRET niet ingesteld -> rechtstreeks naar api-sports' };
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret));
   const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
-  return { ingeschakeld: true, host: 'apif.promatchxi.app', secret_vingerafdruk: hex.slice(0, 8), secret_lengte: secret.length };
+  const uit = { ingeschakeld: true, host: 'apif.promatchxi.app', secret_vingerafdruk: hex.slice(0, 8), secret_lengte: secret.length };
+  // v265: wat api-sports bij de LAATSTE scan werkelijk deed. Dit is de meting
+  // waarmee de proxy zich moet bewijzen op 23-07 en 07-08.
+  try {
+    const sc = await sb(env, 'scan_status', 'GET', null, '?id=eq.current&select=last_refused,last_api_calls,last_via&limit=1');
+    const r = sc?.[0];
+    if (r) {
+      // Bewust === null: 0 weigeringen is een METING, geen ontbrekende waarde.
+      uit.laatste_scan = {
+        via: r.last_via === null ? 'niet gemeten' : r.last_via,
+        calls: r.last_api_calls === null ? 'niet gemeten' : r.last_api_calls,
+        geweigerd: r.last_refused === null ? 'niet gemeten' : r.last_refused
+      };
+    }
+  } catch (e) {
+    // Geen stille [] : zeg dat de meting mislukte, niet dat er niets geweigerd is.
+    uit.laatste_scan = { fout: 'scan_status niet leesbaar: ' + (e && e.message ? e.message.slice(0, 80) : 'onbekend') };
+  }
+  return uit;
 }
 
 // ── API-Football helper ──────────────────────────────────
@@ -1223,6 +1266,8 @@ async function apif(path, env) {
   ];
   let _rateLimited = false; // v245
   let _rlHost = null;       // v254: WELKE host weigerde — niet afleiden, vastleggen op het moment zelf
+  _apifCalls++;             // v265
+  _apifVia = hosts[0].viaProxy === true ? 'proxy' : 'direct'; // v265: hosts[0] = api-sports
   for (const host of hosts) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -1245,6 +1290,7 @@ async function apif(path, env) {
           // slopen. Elke poging apart loggen is bewust: staan de headers/teksten bij poging 1, 2 en 3 exact
           // gelijk, dan verandert de backoff niets en is 4,5s wachten kansloos. Dit citaat gaat naar
           // api-sports support -- vandaar hun letterlijke tekst en niet mijn samenvatting.
+          if (host.name === 'api-sports') _apifWeigeringen++; // v265: elke geweigerde poging telt
           const _rl = String(data.errors.rateLimit).slice(0, 160);
           const _h = (n) => { const v = res.headers.get(n); return v === null ? '-' : v; };
           // v257: HONOREER RETRY-AFTER. Gemeten 17-07 05:01 UTC (nachtelijke snapshot-cron, geen ruis van
@@ -2914,6 +2960,7 @@ async function runWeeklyCalibration(env) {
 
 // ── Scheduled value scan ─────────────────────────────────
 async function runScan(env, force = false) {
+  resetApifTellers(); // v265: MOET hier -- isolates worden hergebruikt
   const today = new Date().toISOString().split('T')[0];
   await loadTuneConfig(env); // v194: runtime bias-config (auto-kalibratie) laden vóór de scan
   const now = new Date();
