@@ -54,37 +54,10 @@ async function initOneSignalPlayerId() {
   }
 }
 
-// ── OneSignal push via Cloudflare Worker sturen ──────────
-async function sendOneSignalValuePush(scan) {
-  const pid = state.oneSignalPlayerId || state.settings?.notifPlayerId;
-  if (!pid) {
-    console.warn('[Push] Geen OneSignal Player ID — gebruik lokale notificatie');
-    return false;
-  }
-  try {
-    const sign = scan.value > 0 ? '+' : '';
-    const title = `⚡ ${sign}${Math.round(scan.value)}% VALUE — ${scan.pickLabel}`;
-    const body = `${scan.match?.home || ''} vs ${scan.match?.away || ''} · @${(scan.odds||0).toFixed(2)} · conf ${scan.confidence||'?'}/10`;
-    const res = await fetch(`${WORKER}/push`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title,
-        body,
-        data: {
-          type: 'value_alert',
-          matchId: String(scan.match?.id || ''),
-          pick: scan.pick,
-          value: scan.value,
-        }
-      })
-    });
-    return res.ok;
-  } catch(e) {
-    console.warn('[Push] OneSignal push mislukt:', e.message);
-    return false;
-  }
-}
+// v26.314: sendOneSignalValuePush() verwijderd. Hij POSTte naar /push, en dat endpoint stuurt naar
+// ALLE abonnees — niet naar de aanroeper. sendValueNotification() hieronder doet wat bedoeld was:
+// een lokale notificatie via de service worker, alleen op dit toestel, zonder server en zonder
+// endpoint dat misbruikt kan worden. /push is sinds worker v263 owner-only.
 
 // ── Push notificaties ────────────────────────────────────
 function sendPickNotification(title, body, tag, matchId, comp) {
