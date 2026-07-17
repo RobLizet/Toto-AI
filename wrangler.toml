@@ -4,10 +4,16 @@ compatibility_date = "2024-01-01"
 account_id = "08735b0b6c1df0b90041c2e1356f757d"
 
 # Scheduled triggers (NL zomertijd = UTC+2)
-# 08:00 NL = 06:00 UTC — ochtendscan + settlement + dagelijkse tip
-# 14:00-24:00 NL = 12:00-22:00 UTC — elk uur voor optimale steam detectie
+# 08:00-24:00 NL = 06:00-22:00 UTC — elk uur fullScan (steam detectie + picks)
+#   v266: was "0 6" + "0 12-22", met een gat van 07:00-11:00 UTC waarin niets draaide.
+#   Het vaste Eredivisie/KKD-blok van zondag 12:15 NL ligt op 10:00 UTC en viel daar
+#   middenin: laatste scan 4 uur eerder, volgende pas tijdens de wedstrijd. Dat gaf een
+#   CLV-"closing" van 4 uur oud voor die wedstrijden.
+#   LET OP: dit venster MOET gelijk blijven aan `fullScan` in scheduled() in cloudworker.js.
+#   Alleen hier verruimen laat 07-11 UTC als odds-only snapshots draaien: lijkt gefixt, is het niet.
+# 01:00-07:00 NL = 23:00-05:00 UTC — alleen odds-snapshots voor CLV-closing
 [triggers]
-crons = ["0 6 * * *", "0 12-22 * * *", "0 23 * * *", "0 0-5 * * *"]
+crons = ["0 6-22 * * *", "0 23 * * *", "0 0-5 * * *"]
 
 # Secrets (stel in via: wrangler secret put NAAM)
 # ANTHROPIC_KEY    — Anthropic API key
