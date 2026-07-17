@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v258'; // v258: TWEE REFERENCE-ERRORS UIT SCOPE-FOUTEN, gevonden met eslint no-undef tegen de echte bron uit RobLizet/Toto-AI@main (niet tegen een geplakte kopie). Het waren de ENIGE twee niet-runtime undefined variabelen in 5086 regels -- die twee zijn dus allebei echt. (1) r2980 `_fxRl`: v251 declareerde hem met `const` BINNEN het try-blok van de fixture-fetch, maar leest hem op het `if (!allMatches.length)`-pad DAARBUITEN. const is block-scoped, dus dat is een ReferenceError -- en wel op exact de dag waarvoor v251 hem schreef: nul wedstrijden. De regel die moest melden 'dit is geen rustige dag maar een mislukte fetch' liet de scan in plaats daarvan omvallen. Ironie genoteerd. Nu `let _fxRl = 0;` boven het try-blok; 0 is de gemeten waarde (geen weigering vastgesteld), geen falsy-fallback. (2) r3884 `existingPicks` in runScanTest: de v140b-gelijkspelregel is uit runScan gekopieerd zonder de declaratie (runScan haalt hem op r3200). Elke X-kandidaat die door minConf/minValue kwam liet de scan-test vallen; onopgemerkt omdat WK/Allsvenskan/Eliteserien er weinig produceren. Opgelost met dezelfde bron als productie (sbGetPicks), want een scan-test die productie niet reproduceert meet niets. RETRACTIE uit het geheugen: '_fxRl2' bestaat niet en heeft nooit bestaan -- die naam kwam uit een geplakte kopie, niet uit de repo. De onderliggende zorg klopte wel, alleen om een andere reden dan gedacht. TWEEDE RETRACTIE: 'leagueConfig spreekt SEASON_2026 in runScanTest tegen, scan-test test mogelijk het verkeerde seizoen' -- v250 heeft die set al weggehaald en vastgesteld dat het sowieso cosmetisch was (getSeason zat in geen enkele API-call). Niet meer openstaand. GEEN frontend-bump: dit raakt uitsluitend de worker, en APP_VERSION/SW_VERSION ophogen zou elke gebruiker een lege re-download bezorgen. node --check OK, eslint no-undef schoon op beide.
+const VERSION = 'v259'; // v259: /scan-now WAS EEN OPEN ENDPOINT. Gemeten in de bron 17-07: nul auth-treffers in het blok en geen globale poort ervoor -- geen token, geen secret, geen header. Wie de URL kende kon scans afvuren: Anthropic-tokens, API-Football-calls en een push naar ALLE abonnees, tot de dagcap van 40. Die cap maakte het begrensd, niet gesloten. NIET live geverifieerd, want dat kost een echte betaalde scan; de bron is eenduidig. Nu dicht via requireAdmin(). NIEUW PAD: Firebase ID-token (RS256) tegen Google's JWKS, met iss/aud/exp/iat/sub-controle en OWNER_UIDS. Waarom naast HMAC en niet ertegenover: een HMAC-token is afgeleid van SCAN_SECRET, dus elke client die mag scannen moet die secret kennen -- in een frontend betekent dat: publiek. dashboard.js deed dat ook (r234). RETRACTIE uit het geheugen: dat werd als lek gemeld, en dat is het NIET. Gemeten: die constante geeft 401 op /app-users, de env-waarde geeft 200. De secret is ooit geroteerd en dashboard.js nooit bijgewerkt -- een dode secret, en drie dode knoppen (triggerWorkerScan/Settle/ScanTest gaven sinds die rotatie 401). HMAC blijft als tweede pad voor handmatige curl; allowSecret alleen op /scan-test, waar het al kon -- geen surface erbij. JWKS-fetch die faalt geeft 503, geen 401: een storing bij ons mag geen uitspraak over de gebruiker worden. alg wordt vastgepind op RS256 (alg=none en HS256-confusion getest en geweigerd). max-age uit Google's cache-control via ternair op de match, niet `|| 3600` -- max-age=0 is geldig. GETEST: 15/15 op code geextraheerd uit dit bestand, met echte RSA-handtekeningen: geldig owner-token, verlopen, verkeerde aud/iss, iat in de toekomst, geen sub, alg=none, alg=HS256, onbekende kid, geen JWT, geknoeid payload, niet-owner, en de requireAdmin-poort. Bronnen live geverifieerd: openid-configuration (iss + RS256) en JWKS (4 sleutels, max-age=19945). Frontend v26.313 haalt de secret weg en stuurt het ID-token.
 
 // v225: omhoog verplaatst. snapshotOddsOnly (r157) las hem, terwijl de declaratie op r1617 stond.
 // Runtime veilig (de cron draait na module-init), maar dezelfde vorm als de TDZ-bug van v26.265 --
@@ -57,6 +57,114 @@ async function verifyHMAC(token, secret) {
     if (token === expected) return true;
   }
   return false;
+}
+
+// ── Firebase ID-token verificatie (v259) ──────────────────
+// Waarom naast HMAC en niet in plaats daarvan: een HMAC-token is afgeleid van SCAN_SECRET, dus
+// alles wat mag scannen moet die secret kennen. In een frontend betekent dat: de secret in publieke
+// JS zetten. Precies dat deed dashboard.js r234, en het sneuvelde stil toen de secret geroteerd
+// werd — de knoppen geven sindsdien 401. Gemeten 17-07: de constante in dashboard.js geeft 401 op
+// /app-users, de waarde uit Cloudflare env geeft 200. De publieke constante is dus een DODE secret,
+// geen lek — maar ook geen werkende knop. Een Firebase ID-token heeft dat probleem niet: door
+// Google ondertekend, kortlevend, en de frontend hoeft geen enkel geheim te kennen.
+//
+// Live geverifieerd bij de bron vóór dit geschreven werd (17-07):
+//   /toto-ai-397cb/.well-known/openid-configuration -> iss = https://securetoken.google.com/toto-ai-397cb,
+//   id_token_signing_alg_values_supported = ['RS256'], jwks_uri = onderstaande FB_JWK_URL
+//   FB_JWK_URL -> 4 sleutels, alle RS256/RSA/use=sig, cache-control max-age=19945
+//
+// OWNER_UIDS staat bewust als constante, niet in env: een Firebase-UID is een identifier, geen
+// credential. Wie hem kent kan er niets mee — het token is door Google ondertekend, niet door ons.
+// Hij staat trouwens al publiek in dashboard.js (ADMIN_UIDS). Scheelt een env-wijziging.
+const FB_PROJECT_ID = 'toto-ai-397cb';
+const FB_JWK_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
+const OWNER_UIDS = new Set(['NpbaXO16xwha4Dm4Jgn9RqTM9Fq1']);
+let _jwkCache = { keys: null, exp: 0 };
+
+async function fbAuthJwks() {
+  const now = Date.now();
+  if (_jwkCache.keys && now < _jwkCache.exp) return _jwkCache.keys;
+  const res = await fetch(FB_JWK_URL);
+  if (!res.ok) throw new Error(`JWKS ophalen mislukt: HTTP ${res.status}`); // v259: GEEN lege array/false hier.
+  // Een mislukte JWKS-fetch is geen "token ongeldig" — dat zou een fetch-fout vermommen als een
+  // uitspraak over de gebruiker. Dit gooit, de aanroeper vertaalt het naar 503, niet naar 401.
+  const data = await res.json();
+  if (!Array.isArray(data?.keys) || !data.keys.length) throw new Error('JWKS leeg');
+  const cc = res.headers.get('cache-control') ?? '';
+  const m = /max-age=(\d+)/.exec(cc);
+  const maxAge = m ? parseInt(m[1], 10) : 3600; // ternair op de match, niet `maxAge || 3600`: max-age=0 is geldig
+  _jwkCache = { keys: data.keys, exp: now + maxAge * 1000 };
+  return data.keys;
+}
+
+function _b64urlBytes(s) {
+  const b64 = s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (s.length % 4)) % 4);
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function verifyFirebaseIdToken(idToken) {
+  if (!idToken) return { ok: false, reason: 'geen token' };
+  const parts = idToken.split('.');
+  if (parts.length !== 3) return { ok: false, reason: 'geen JWT' };
+
+  let header, payload;
+  try {
+    header  = JSON.parse(new TextDecoder().decode(_b64urlBytes(parts[0])));
+    payload = JSON.parse(new TextDecoder().decode(_b64urlBytes(parts[1])));
+  } catch { return { ok: false, reason: 'header/payload onleesbaar' }; }
+
+  // alg vastpinnen: anders is 'none' of HS256-met-de-publieke-sleutel een klassieke bypass.
+  if (header.alg !== 'RS256') return { ok: false, reason: `alg=${header.alg}, RS256 verwacht` };
+  if (!header.kid) return { ok: false, reason: 'geen kid' };
+
+  const jwk = (await fbAuthJwks()).find(k => k.kid === header.kid);
+  if (!jwk) return { ok: false, reason: 'kid onbekend bij Google' };
+
+  const key = await crypto.subtle.importKey('jwk', jwk,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+  const ok = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key,
+    _b64urlBytes(parts[2]), new TextEncoder().encode(`${parts[0]}.${parts[1]}`));
+  if (!ok) return { ok: false, reason: 'handtekening ongeldig' };
+
+  // Claims pas NA de handtekening: op een onondertekend payload is elke claim waardeloos.
+  const now = Math.floor(Date.now() / 1000);
+  const SKEW = 60;
+  if (typeof payload.exp !== 'number' || payload.exp + SKEW < now) return { ok: false, reason: 'verlopen' };
+  if (typeof payload.iat !== 'number' || payload.iat - SKEW > now) return { ok: false, reason: 'iat in de toekomst' };
+  if (payload.aud !== FB_PROJECT_ID) return { ok: false, reason: 'aud klopt niet' };
+  if (payload.iss !== `https://securetoken.google.com/${FB_PROJECT_ID}`) return { ok: false, reason: 'iss klopt niet' };
+  if (!payload.sub) return { ok: false, reason: 'geen sub' };
+
+  return { ok: true, uid: payload.sub, email: payload.email ?? null };
+}
+
+// v259: één poort voor de beheer-endpoints. Twee paden, want ze lossen verschillende dingen op:
+// HMAC/secret = handmatige curl met de waarde uit Cloudflare env; Firebase = de knoppen in de app,
+// zónder enig geheim in de frontend. Volgorde is bewust: HMAC is lokaal en kost niets, de
+// owner-check kan een JWKS-fetch kosten (gecached op Google's eigen max-age).
+// allowSecret alleen waar de route dat al accepteerde (/scan-test) — geen surface erbij.
+async function requireAdmin(request, env, url, allowSecret) {
+  const token = url.searchParams.get('token');
+  if (token && await verifyHMAC(token, env.SCAN_SECRET)) return { ok: true, via: 'hmac' };
+  if (allowSecret) {
+    const secret = url.searchParams.get('secret');
+    if (secret && secret === env.SCAN_SECRET) return { ok: true, via: 'secret' };
+  }
+  const h = request.headers.get('Authorization') ?? '';
+  if (!h.startsWith('Bearer ')) return { ok: false, reason: 'geen geldige token en geen Bearer-header' };
+  let r;
+  try {
+    r = await verifyFirebaseIdToken(h.slice(7).trim());
+  } catch (e) {
+    // JWKS onbereikbaar: dat is ONZE storing, niet "jij mag niet". 503, geen 401.
+    return { ok: false, reason: `tokencontrole niet uitvoerbaar: ${e.message}`, status: 503 };
+  }
+  if (!r.ok) return { ok: false, reason: r.reason };
+  if (!OWNER_UIDS.has(r.uid)) return { ok: false, reason: 'geen owner' };
+  return { ok: true, via: 'firebase', uid: r.uid };
 }
 
 async function fb(env, path, method = 'GET', body = null) {
@@ -4500,10 +4608,8 @@ export default {
     }
 
     if (path === '/settle') {
-      const token = url.searchParams.get('token');
-      if (!await verifyHMAC(token, env.SCAN_SECRET)) {
-        return json({ error: 'Unauthorized' }, 401);
-      }
+      const _a = await requireAdmin(request, env, url, false); // v259: HMAC OF owner-ID-token
+      if (!_a.ok) return json({ error: 'Unauthorized', reason: _a.reason }, _a.status ?? 401);
       // v230: sweep EERST — de automatische /settle deed zoveel settle-werk dat de Elo-sweep (voorheen
       // laatste stap) door de Cloudflare CPU-tijdlimiet werd afgekapt vóór markEloSweep: marker bevroor
       // zonder JS-fout (worker beëindigd, geen catch). Handmatig werkte 't wel (weinig te settelen). Nu
@@ -4790,10 +4896,8 @@ export default {
     }
 
     if (path === '/scan') {
-      const token = url.searchParams.get('token');
-      if (!await verifyHMAC(token, env.SCAN_SECRET)) {
-        return json({ error: 'Unauthorized' }, 401);
-      }
+      const _a = await requireAdmin(request, env, url, false); // v259: HMAC OF owner-ID-token
+      if (!_a.ok) return json({ error: 'Unauthorized', reason: _a.reason }, _a.status ?? 401);
       await runScan(env, true);
       return json({ status: 'scan klaar', version: VERSION });
     }
@@ -4801,6 +4905,12 @@ export default {
     // v159: handmatige scan vanuit de app — geen HMAC, maar cooldown (60s) + bestaande daglimiet (8/dag)
     // begrenzen de kosten. Triggert dezelfde runScan als de cron, daarna leest de app /picks.
     if (path === '/scan-now') {
+      // v259: hier stond NIETS. Geen token, geen secret, geen header — gemeten in de bron op 17-07:
+      // nul auth-treffers in dit blok en geen globale poort ervoor. Iedereen die de URL kende kon
+      // scans afvuren: Anthropic-tokens, API-Football-calls, en een push naar ALLE abonnees, tot de
+      // dagcap van 40. Dat de cap er staat maakte het begrensd, niet gesloten.
+      const _a = await requireAdmin(request, env, url, false);
+      if (!_a.ok) return json({ error: 'Unauthorized', reason: _a.reason }, _a.status ?? 401);
       try {
         const today = new Date().toISOString().split('T')[0];
         const st = await sb(env, 'scan_status', 'GET', null, '?id=eq.current&select=last_run,scans_today,scan_date&limit=1');
@@ -5024,11 +5134,10 @@ export default {
 
   if (path === '/scan-test') {
       // Accepteer zowel HMAC token als simpel secret wachtwoord
-      const token  = url.searchParams.get('token');
-      const secret = url.searchParams.get('secret');
-      const validHMAC   = token  && await verifyHMAC(token, env.SCAN_SECRET);
-      const validSecret = secret && secret === env.SCAN_SECRET;
-      if (!validHMAC && !validSecret) return json({ error: 'Unauthorized' }, 401);
+      // v259: HMAC OF secret (zoals hiervoor) OF owner-ID-token — allowSecret=true houdt het
+      // bestaande secret-pad in stand; geen surface erbij.
+      const _a = await requireAdmin(request, env, url, true);
+      if (!_a.ok) return json({ error: 'Unauthorized', reason: _a.reason }, _a.status ?? 401);
       const leagueParam = url.searchParams.get('league') || '1,113,103'; // 1=WK 2026
       const leagueIds = leagueParam.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
       const enableGoals = url.searchParams.get('goals') === '1'; // v173: O/U + BTTS testen
