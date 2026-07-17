@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v256'; // v256: vastleggen WAT api-sports zelf zegt bij een weigering. Diagnostisch, geen gedrag. Aanleiding: v254's log bewees dat de tweede host een fantoom is -- 'host api-sports gaf rate-limit na 3 pogingen; host rapidapi antwoordde met 0 items. http=403 msg=You are not subscribed to this API.' Het abonnement is API-FOOTBALL Pro RECHTSTREEKS bij api-sports.io (dashboard 16-07: v3.football.api-sports.io Active, 7500/dag, tot 18-08); RapidAPI is een aparte marktplaats met eigen abonnementen, dus die host kan per definitie niets leveren en heeft dat ook nooit gedaan -- een restant uit de begintijd. Zijn enige effect: een nutteloze roundtrip per weigering EN het vertalen van een rate-limit naar een kale [] ('geen wedstrijden'), waardoor dit maandenlang onzichtbaar bleef. HET ECHTE PROBLEEM: api-sports weigerde met errors.rateLimit terwijl het dagverbruik op 94 van 7500 stond = 1,25%. Dagquotum uitgesloten; 450/min haal je met twee parallelle calls niet. Er wordt dus geweigerd om iets dat NIET aan de key hangt. Vermoeden: telling per IP, en Workers gaan uit via gedeelde Cloudflare-egress -- dat past op alles wat gemeten is (intermitterend ~1-op-3 op 16-07, 3 retries in 4,5s helpen niet, verbruik verwaarloosbaar) en er is geen concurrerende verklaring meer over. HYPOTHESE, geen feit: deze regel bevestigt of sloopt hem. Gelogd per poging (1/3, 2/3, 3/3) zodat zichtbaar wordt of de backoff iets verandert; identieke headers over drie pogingen = 4,5s wachten is kansloos. Gelogd: hun letterlijke rateLimit-tekst, http-status, dag- en minuutteller uit de headers, retry-after en cf-ray -- letterlijk, want dit citaat gaat naar api-sports support en daar hoort geen samenvatting van mij tussen. v245 noteerde al dat die weigeringen GEEN rate-limit-headers dragen; nu wordt dat meetbaar i.p.v. herinnerd. NIET GEDAAN, bewust: rapidapi-host schrappen, backoff verlengen, calls serialiseren, egress wijzigen. Eerst hun antwoord, dan pas kiezen -- 16-07 leverde vijf fouten op door precies die volgorde (hour was NL-tijd [v254]; mmc.pick varchar(1) [v254]; apif's melder op de dode uitgang [v254]; finishedFx sinds v202 [v255]; de fantoom-fallback [gemeten, nog open]). Vier van die vijf zaten in code die 'geen data' meldde terwijl er iets stuk was -- op 20-07 gaan er 19 competities doorheen en dekt het next=-vangnet dat niet meer af.
+const VERSION = 'v257'; // v257: RETRY-AFTER HONOREREN. v256's meter leverde meteen twee dingen op, en het eerste is een retractie: ik hield vol dat api-sports GEEN 429 geeft maar HTTP 200 met de fout in de body. Fout. Gemeten 17-07 05:01:09 UTC (nachtelijke 0 0-5-cron, snapshotOddsOnly, geen ruis van Rob of mij): http=429. Ik redeneerde uit hoe api-sports normaal antwoordt i.p.v. te meten -- precies de fout waarvoor deze regel bestaat. TWEEDE EN ECHTE VONDST: er zit een Retry-After header op (retry-after=6) en v245 gooide die weg voor een blinde 1500/3000ms backoff. Tijdlijn van /odds?date=2026-07-17&bet=1&page=1: poging 1 op :09.669 -> mag pas weer om :15.669; poging 2 op :11.194 = 4,2s te vroeg; poging 3 op :14.221 = 1,4s te vroeg; opgegeven op :17.481 = 1,8s VOORDAT het weer mocht. Alle drie de pogingen vielen binnen het venster dat api-sports zelf aangaf. 'Retries met backoff helpen niet' was dus nooit waar -- we gaven te vroeg op. Nu: wacht wat zij zeggen (+500ms marge), gecapt op 10,5s omdat 80 weigerende odds-calls de scan anders minutenlang laten hangen. Expliciet geen `_ra || fallback`: een Retry-After van 0 is geldig en mag geen fallback triggeren. De logregel meldt nu of er op hun header of op eigen backoff gewacht wordt. OOK GEMETEN, nog niet verklaard: (a) dag=-/- en min=-/- -- de 429 draagt GEEN rate-limit-headers, terwijl een normale respons die wel heeft. v245 vermoedde dat al; nu is het meetbaar. Met cf-ray=...-FRA en de eigen docs van api-sports ('blocked by our firewall without prior notice') wijst dat op een laag VOOR hun applicatie. (b) Twee verschillende teksten: /status gaf 'exceeded the limit of requests per minute of your subscription', /odds geeft 'exceeded the maximum number of requests allowed' -- mogelijk twee limieten. De IP-hypothese (gedeelde Cloudflare-egress) is NIET bewezen en blijft open; deze fix staat er los van en is sowieso juist -- een meegestuurde Retry-After negeren is fout, ongeacht de oorzaak. Toets bij de volgende weigering: als 6s wachten wel data oplevert, is het een tijdvenster en geen harde blokkade, en wordt de IP-hypothese zwakker. Context: 106/7500 dagverbruik (1,4%), plan=Pro active=true, piek 3 calls/sec bij 5 toegestaan.
 
 // v225: omhoog verplaatst. snapshotOddsOnly (r157) las hem, terwijl de declaratie op r1617 stond.
 // Runtime veilig (de cron draait na module-init), maar dezelfde vorm als de TDZ-bug van v26.265 --
@@ -1104,12 +1104,27 @@ async function apif(path, env) {
           // api-sports support -- vandaar hun letterlijke tekst en niet mijn samenvatting.
           const _rl = String(data.errors.rateLimit).slice(0, 160);
           const _h = (n) => { const v = res.headers.get(n); return v === null ? '-' : v; };
+          // v257: HONOREER RETRY-AFTER. Gemeten 17-07 05:01 UTC (nachtelijke snapshot-cron, geen ruis van
+          // ons): http=429, rateLimit="Too many requests. You have exceeded the maximum number of requests
+          // allowed.", dag=-/- min=-/- retry-after=6 cf-ray=...-FRA. Api-sports zégt hoelang we moeten
+          // wachten en v245 gooide dat weg voor een blinde 1500/3000ms. Uitkomst: poging 1 om 07:01:09.669
+          // (mag pas weer om :15.669), poging 2 om :11.194 (4,2s te vroeg), poging 3 om :14.221 (1,4s te
+          // vroeg), opgegeven om :17.481 — 1,8s VOORDAT het weer mocht. Alle drie de pogingen vielen binnen
+          // het venster dat zij zelf aangaven. Daarom hielpen 'retries met backoff' nooit: niet kansloos,
+          // maar te vroeg. Cap op 10,5s: bij 80 odds-calls die allemaal weigeren zou honoreren zonder cap
+          // de scan minutenlang laten hangen. Geen `_ra || fallback` — een Retry-After van 0 is een
+          // geldige waarde en mag geen fallback triggeren.
+          const _raRuw = res.headers.get('retry-after');
+          const _ra = _raRuw === null ? null : Number(_raRuw);
+          const _raBruikbaar = _ra !== null && Number.isFinite(_ra) && _ra > 0;
+          const _wachtMs = _raBruikbaar ? Math.min(_ra * 1000 + 500, 10500) : 1500 * (attempt + 1);
           console.warn(`[apif] api-sports WEIGERT (poging ${attempt + 1}/3) pad=${cleanPath.slice(0, 60)} `
             + `http=${res.status} rateLimit="${_rl}" `
             + `dag=${_h('x-ratelimit-requests-remaining')}/${_h('x-ratelimit-requests-limit')} `
             + `min=${_h('X-RateLimit-Remaining')}/${_h('X-RateLimit-Limit')} `
-            + `retry-after=${_h('retry-after')} cf-ray=${_h('cf-ray')}`);
-          if (attempt < 2) { await new Promise(r => setTimeout(r, 1500 * (attempt + 1))); continue; }
+            + `retry-after=${_h('retry-after')} cf-ray=${_h('cf-ray')} `
+            + `→ ${attempt < 2 ? `wacht ${_wachtMs}ms (${_raBruikbaar ? 'hun Retry-After' : 'eigen backoff, geen header'})` : 'geen poging meer over'}`);
+          if (attempt < 2) { await new Promise(r => setTimeout(r, _wachtMs)); continue; }
           _rateLimited = true; // onthouden: hieronder mag dit géén schone [] worden
           _rlHost = host.name; // v254
           break;
