@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v257'; // v257: RETRY-AFTER HONOREREN. v256's meter leverde meteen twee dingen op, en het eerste is een retractie: ik hield vol dat api-sports GEEN 429 geeft maar HTTP 200 met de fout in de body. Fout. Gemeten 17-07 05:01:09 UTC (nachtelijke 0 0-5-cron, snapshotOddsOnly, geen ruis van Rob of mij): http=429. Ik redeneerde uit hoe api-sports normaal antwoordt i.p.v. te meten -- precies de fout waarvoor deze regel bestaat. TWEEDE EN ECHTE VONDST: er zit een Retry-After header op (retry-after=6) en v245 gooide die weg voor een blinde 1500/3000ms backoff. Tijdlijn van /odds?date=2026-07-17&bet=1&page=1: poging 1 op :09.669 -> mag pas weer om :15.669; poging 2 op :11.194 = 4,2s te vroeg; poging 3 op :14.221 = 1,4s te vroeg; opgegeven op :17.481 = 1,8s VOORDAT het weer mocht. Alle drie de pogingen vielen binnen het venster dat api-sports zelf aangaf. 'Retries met backoff helpen niet' was dus nooit waar -- we gaven te vroeg op. Nu: wacht wat zij zeggen (+500ms marge), gecapt op 10,5s omdat 80 weigerende odds-calls de scan anders minutenlang laten hangen. Expliciet geen `_ra || fallback`: een Retry-After van 0 is geldig en mag geen fallback triggeren. De logregel meldt nu of er op hun header of op eigen backoff gewacht wordt. OOK GEMETEN, nog niet verklaard: (a) dag=-/- en min=-/- -- de 429 draagt GEEN rate-limit-headers, terwijl een normale respons die wel heeft. v245 vermoedde dat al; nu is het meetbaar. Met cf-ray=...-FRA en de eigen docs van api-sports ('blocked by our firewall without prior notice') wijst dat op een laag VOOR hun applicatie. (b) Twee verschillende teksten: /status gaf 'exceeded the limit of requests per minute of your subscription', /odds geeft 'exceeded the maximum number of requests allowed' -- mogelijk twee limieten. De IP-hypothese (gedeelde Cloudflare-egress) is NIET bewezen en blijft open; deze fix staat er los van en is sowieso juist -- een meegestuurde Retry-After negeren is fout, ongeacht de oorzaak. Toets bij de volgende weigering: als 6s wachten wel data oplevert, is het een tijdvenster en geen harde blokkade, en wordt de IP-hypothese zwakker. Context: 106/7500 dagverbruik (1,4%), plan=Pro active=true, piek 3 calls/sec bij 5 toegestaan.
+const VERSION = 'v258'; // v258: TWEE REFERENCE-ERRORS UIT SCOPE-FOUTEN, gevonden met eslint no-undef tegen de echte bron uit RobLizet/Toto-AI@main (niet tegen een geplakte kopie). Het waren de ENIGE twee niet-runtime undefined variabelen in 5086 regels -- die twee zijn dus allebei echt. (1) r2980 `_fxRl`: v251 declareerde hem met `const` BINNEN het try-blok van de fixture-fetch, maar leest hem op het `if (!allMatches.length)`-pad DAARBUITEN. const is block-scoped, dus dat is een ReferenceError -- en wel op exact de dag waarvoor v251 hem schreef: nul wedstrijden. De regel die moest melden 'dit is geen rustige dag maar een mislukte fetch' liet de scan in plaats daarvan omvallen. Ironie genoteerd. Nu `let _fxRl = 0;` boven het try-blok; 0 is de gemeten waarde (geen weigering vastgesteld), geen falsy-fallback. (2) r3884 `existingPicks` in runScanTest: de v140b-gelijkspelregel is uit runScan gekopieerd zonder de declaratie (runScan haalt hem op r3200). Elke X-kandidaat die door minConf/minValue kwam liet de scan-test vallen; onopgemerkt omdat WK/Allsvenskan/Eliteserien er weinig produceren. Opgelost met dezelfde bron als productie (sbGetPicks), want een scan-test die productie niet reproduceert meet niets. RETRACTIE uit het geheugen: '_fxRl2' bestaat niet en heeft nooit bestaan -- die naam kwam uit een geplakte kopie, niet uit de repo. De onderliggende zorg klopte wel, alleen om een andere reden dan gedacht. TWEEDE RETRACTIE: 'leagueConfig spreekt SEASON_2026 in runScanTest tegen, scan-test test mogelijk het verkeerde seizoen' -- v250 heeft die set al weggehaald en vastgesteld dat het sowieso cosmetisch was (getSeason zat in geen enkele API-call). Niet meer openstaand. GEEN frontend-bump: dit raakt uitsluitend de worker, en APP_VERSION/SW_VERSION ophogen zou elke gebruiker een lege re-download bezorgen. node --check OK, eslint no-undef schoon op beide.
 
 // v225: omhoog verplaatst. snapshotOddsOnly (r157) las hem, terwijl de declaratie op r1617 stond.
 // Runtime veilig (de cron draait na module-init), maar dezelfde vorm als de TDZ-bug van v26.265 --
@@ -2893,6 +2893,16 @@ async function runScan(env, force = false) {
   const SCAN_LEAGUES = leagueConfig.map(l => l.id);
   const SCAN_LEAGUE_SET = new Set(SCAN_LEAGUES);
 
+  // v258: _fxRl stond met `const` BINNEN het try-blok hieronder, maar wordt ook gelezen op het
+  // `if (!allMatches.length)`-pad DAARBUITEN (r~2985). const is block-scoped -> ReferenceError,
+  // en wel op precies de dag waarvoor v251 hem bouwde: 0 wedstrijden. De check die moest melden
+  // "dit is geen rustige dag maar een mislukte fetch" liet de scan in plaats daarvan crashen.
+  // Node --check ziet dit niet (scope, geen syntax); eslint no-undef wel — gemeten, 2 treffers in
+  // 5086 regels. Init op 0 is de gemeten waarde ("nul date-calls geweigerd"), geen fallback:
+  // als de try faalt vóór de toewijzing is er inderdaad geen weigering vastgesteld, en dan is de
+  // catch-log de plek waar dat blijkt.
+  let _fxRl = 0;
+
   try {
     // v114: 2 globale date-calls i.p.v. ~28 per-league calls.
     // Fixt API-Football per-seconde burst-limiet (28 parallelle calls > ~5/sec op Pro)
@@ -2908,7 +2918,7 @@ async function runScan(env, force = false) {
     // Raakt ook de geschiedenis: v238 concludeerde dat de avondscans van 20/21/22 UTC 'geen wedstrijden
     // vonden' en noemde dat normaal omdat het WK voorbij was. Die conclusie steunt op exact deze blinde
     // !allMatches.length en is dus nooit hard geweest. Vanaf nu is het verschil zichtbaar.
-    const _fxRl = (fxToday && fxToday.rateLimited ? 1 : 0) + (fxTomorrow && fxTomorrow.rateLimited ? 1 : 0);
+    _fxRl = (fxToday && fxToday.rateLimited ? 1 : 0) + (fxTomorrow && fxTomorrow.rateLimited ? 1 : 0); // v258: was `const` — zie hoisting-comment boven het try-blok
     if (_fxRl) console.error(`[Scan] ⚠️ FIXTURES GEWEIGERD: ${_fxRl} van 2 date-calls rate-limited — dit is GEEN rustige dag, de data is niet opgehaald. Scan levert onvermijdelijk te weinig wedstrijden.`);
     const fixtures = [...fxToday, ...fxTomorrow].filter(f => SCAN_LEAGUE_SET.has(f.league?.id));
 
@@ -3648,6 +3658,15 @@ async function runScanTest(env, leagueIds = [1, 113, 103], enableGoals = false, 
   // 19 FASE 2-competities.
 
   const log = [`[ScanTest] Start — leagues: ${leagueIds.join(', ')}, datum: ${today} + ${tomorrowStr}`];
+
+  // v258: de v140b-gelijkspelregel ("X pas na 2 opeenvolgende bevestigingen") is uit runScan
+  // hierheen gekopieerd ZONDER deze declaratie mee te nemen — runScan haalt hem op r~3200.
+  // Gevolg: elke gelijkspel-kandidaat die door minConf/minValue kwam, gooide een ReferenceError
+  // en liet de scan-test vallen. Onopgemerkt omdat X-kandidaten zeldzaam zijn en de test-leagues
+  // (WK/Allsvenskan/Eliteserien) er weinig produceerden. Gevonden met eslint no-undef.
+  // Bewust dezelfde bron als productie: de scan-test is waardeloos als hij niet exact hetzelfde
+  // gedrag reproduceert. Kost 1 Supabase-call per test-run, geen API-Football-budget.
+  const existingPicks = await sbGetPicks(env);
 
   // ── Stap 1: Fixtures ophalen (vandaag + morgen) ──
   const allFixtures = [];
