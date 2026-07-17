@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v268'; // v268: PUSHBERICHTEN NOEMDEN PICKS DIE NIET BESTONDEN. GEMETEN 17-07 21:00 op France vs England (fixture 1591865): de push zei 'Minder dan 2.5 goals @ 2.75 · +7% edge', maar in `picks` stond U3.5 @ 1.73 en in `shadow_picks` NOBTTS @ 2.75 -- het gepushte label bestond in GEEN van beide. Oorzaak: alle push-takken en newCount lazen uit `newPicks` (ALLE kandidaten), terwijl sbSavePicks alleen `deduplicatedNew` wegschrijft (r3720: max 1 pick per wedstrijd). Erger: de push sorteerde op `value` alleen, de opslag op `confidenceFinal × value` -- twee criteria, dus twee verschillende winnaars. U2.5 won op value (gepusht), U3.5 op conf×value (opgeslagen). De gebruiker kreeg een markt en quotering te zien die het model bewust had VERWORPEN: een bewering over de buitenwereld zonder bron, dus een CIJFERBRON-schending. Tweede gevolg: newCount telde verworpen kandidaten mee ('2 picks toegevoegd' bij 1 opgeslagen) en ging via lastPickCount de database in -- scan_status.last_pick_count stond structureel te hoog, en daarmee elke afgeleide telling. Beide sets bestonden al sinds v136; alleen de verkeerde werd geconsumeerd, en dat is nooit opgevallen omdat het pas zichtbaar wordt als één wedstrijd meerdere kandidaten oplevert -- wat door de varchar(1)-bug (tot v254) bij goal-markten nooit gebeurde. Alle publicatie leest nu uit `opgeslagenNieuw` = deduplicatedNew. // // v267: TWEE REPARATIES. (1) v266 kwam nooit live: ik pushte wrangler.toml en cloudworker.js 1,5s na elkaar, wat TWEE deploys gaf. De deploy van de wrangler-commit bevatte nog de OUDE cloudworker (v265), startte eerder maar eindigde 9s later, en overschreef v266. Live stond daardoor de nieuwe cron (06-22) MET de oude code (fullScan = 6 || 12-22): de uren 07-11 UTC vuurden wel maar vielen in de else-tak en draaiden als odds-only snapshots -- precies het 'lijkt gefixt maar is het niet' dat in de v266-changelog als risico stond. LES: meerdere bestanden nooit als losse commits pushen als ze samen moeten deployen; gebruik één commit (Git Trees API) of zet concurrency op de workflow. (2) Lint faalde sinds v265: de api-tellers stonden onder apiSportsHost (r~1200) maar worden al op r~395 gebruikt door sbUpdateScanStatus (no-use-before-define). Werkt op runtime, maar de workflow brak erop en dat had ik moeten zien. Tellers staan nu boven hun eerste gebruiker. Inhoudelijk identiek aan v266: fullScan = hour >= 6 && hour <= 22. // // v266: SCANGAT 07:00-11:00 UTC GEDICHT. De cron draaide 06:00 en 12:00-22:00 UTC; tussen 07:00 en 11:00 UTC (09:00-13:00 NL) gebeurde er niets. GEMETEN 17-07 op echte fixtures van het openingsweekend: het VASTE Eredivisie/KKD-blok van zondag 12:15 NL ligt op 10:00 UTC, dus middenin dat gat (Sparta-Feyenoord, MVV-Jong Utrecht op 09-08). Laatste scan ervoor was 06:00 UTC -- ruim 4 uur eerder -- en de volgende kwam pas toen de wedstrijd al liep. Twee gevolgen: late waarde werd gemist EN de CLV-closing voor die wedstrijden was een lijn van 4 uur oud, wat geen closing line is en juist het beoordelingscijfer van het model vervuilt. Elk weekend opnieuw, want dat 12:15-slot is vast. Nu fullScan = hour >= 6 && hour <= 22 (17 scans/dag, was 12) + wrangler crons '0 6-22 * * *'. CRON EN CODE MOETEN SAMEN: alleen de cron verruimen zou 07-11 UTC als odds-only snapshots laten draaien -- dat lijkt gefixt maar is het niet. Ook het /health-venster (activeHours) gelijkgetrokken, anders meldt health 'scan te laat' op uren die niet bestaan. Kosten: ~+125 calls/dag op een verbruik van ~250 van 7500. Bijvangst: één doorlopend bereik haalt de 'twee betekenissen van dezelfde variabele'-val weg waar de v254-bug uit voortkwam. // // v265: WEIGERINGEN WORDEN NU GETELD. Tot nu toe stonden de api-sports-weigeringen alleen als console.warn in de worker-logs: achteraf onleesbaar en dus niet te vergelijken voor/na de proxy. Precies dezelfde blinde vlek als bij odds_dekking, dat maandenlang wel werd weggeschreven maar door niemand bekeken werd. scan_status krijgt last_refused / last_api_calls / last_via; /health toont ze onder apif_proxy.laatste_scan. Kolommen bewust NULLABLE ZONDER DEFAULT: NULL = 'deze scan heeft niet geteld' (scans van voor v265), 0 = 'geteld, niets geweigerd'. Een default 0 zou over oude scans beweren dat er niets geweigerd was -- een stille onwaarheid over de buitenwereld. sbUpdateScanStatus leest de tellers ZELF uit i.p.v. via het meegegeven object, want er zijn twee aanroepplekken (r3160 en r3719) en die mogen niet uit elkaar lopen. resetApifTellers() staat als eerste regel van runScan: isolates worden hergebruikt, dus zonder reset tellen de cijfers van de vorige scan mee. GEMETEN 17-07 21:01 (eerste scan onder v264, via de proxy): 6 wedstrijden, 8/8 odds, 0 zonder odds, 2 picks, geen warnings -- maar of er weigeringen waren was NIET vast te stellen, en dat gat dicht deze versie. // // v264: api-sports loopt nu via onze eigen proxy (apif.promatchxi.app, Hetzner, vast IP 138.201.189.10) ZODRA env.PROXY_SECRET bestaat; zonder dat secret verandert er niets en gaat alles rechtstreeks -- dat is meteen het rollback-pad. AANLEIDING: api-sports support (Kevin, 17-07-2026) bevestigde dat hun anti-abuse op het UITGAANDE IP telt, niet op de key. Cloudflare Workers delen hun egress-IP's met vreemden, dus werden onze calls geweigerd op 2,1% van de daglimiet (gemeten 17-07 13:00: 4 van 8 parallelle calls geweigerd met dezelfde key). Verhoging van API_MIN_GAP hielp aantoonbaar niet -- het was nooit ons volume. Eén helper apiSportsHost() voor beide aanroepplekken (apif + handleAPIFootball), zodat ze niet uit elkaar kunnen lopen. Nieuw: header X-APIF-Via (proxy|direct) -- bewust naast X-APIF-Host i.p.v. die te wijzigen, want daar kan iets op lezen. /health toont apif_proxy met een SHA-256-vingerafdruk (8 tekens) van het secret, zodat te meten is of beide kanten dezelfde waarde hebben zonder het secret ergens te tonen. De proxy kent de api-key NIET: die gaat mee in de header en wordt ongewijzigd doorgezet; het X-Proxy-Secret wordt eraf gehaald voor het naar api-sports gaat. Foutstatussen gaan ongewijzigd door (429 blijft 429 incl. Retry-After) -- geen fout die als 200-met-tekst aankomt. RapidAPI-fallback ONGEMOEID (buiten scope; die werkt nog steeds niet, apart abonnement nodig). // // v263: /push STOND WAGENWIJD OPEN. Gemeten live 17-07: POST /push met een leeg body gaf HTTP 400 ('title en body verplicht') en geen 401 -- de route verwerkte dus een anonieme POST en weigerde die alleen op ontbrekende velden. Met titel+tekst erin kon iedereen op internet een melding met vrije tekst op het toestel van ELKE gebruiker zetten. Nu requireAdmin. Gevonden terwijl ik een simpele vraag beantwoordde ('welke knop moet ik testen?'); de derde open/misgerichte push op rij, na /scan-now (v259) en de scan-test-push (v260). TWEEDE HELFT, in de frontend (v26.314): sendOneSignalValuePush() is weg. Die werd aangeroepen vanuit de LOKALE analyse van elke gebruiker en POSTte naar /push, dat naar included_segments ['Total Subscriptions'] stuurt -- dus vond een willekeurige gebruiker een value-pick, dan kreeg het hele gebruikersbestand daar een melding van. De meegestuurde player_id las handlePush niet eens uit. Bovendien dubbelop: de lus erboven stuurde al sendValueNotification() voor ELKE sterke pick. En het commentaar 'ook als app dicht' klopte niet -- die code draait alleen mét de app open, dus een lokale notificatie volstaat. Dat is nu het enige pad: service worker, alleen dit toestel, geen server. De else-tak wees naar toto-ai.zweetzakken.workers.dev (gemeten: HTTP 404, dood). Owner-only i.p.v. de route slopen: even veilig, omkeerbaar, en ik kan niet uitsluiten dat er een oude client op zit. NOG DOOD, niet aangeraakt (buiten scope): notifications.js roept /push/subscribe en /push/send aan -- die routes bestaan niet in de worker.
+const VERSION = 'v269'; // v269: SCAN-TELEMETRIE BEWAARD. scan_status is 1 rij die elke scan wordt overschreven, dus 'is het rate-limitprobleem weg?' en 'zakt de odds-dekking op zaterdagmiddag?' waren alleen met giswerk te beantwoorden -- precies wat er in de wekelijkse doorlichting onder 'niet kunnen controleren' bleef staan terwijl het meetbaar had gekund. Nieuwe tabel scan_runs: 1 rij per scan met wedstrijden, odds-dekking, opgeslagen picks, VERWORPEN kandidaten, api-calls, weigeringen, route en duur. candidates_removed is het getal dat de v268-bug onthulde en daarna in een ongelezen logregel verdween -- dezelfde blinde vlek als odds_dekking, nu de derde keer. Wegschrijven gebeurt IN sbUpdateScanStatus, niet op de twee aanroepplekken apart: die mogen niet uit elkaar lopen (les van v265). Alle kolommen nullable zonder default: NULL = niet gemeten, 0 = gemeten. In het geen-wedstrijden-pad zijn de nullen GEMETEN en dus 0, niet NULL. Ontkoppelde catch met console.error: telemetrie mag een scan nooit laten mislukken, maar moet wel luid falen -- een stille catch maakt 'geen data' en 'schrijffout' ononderscheidbaar. RLS aan, geen policies: alleen de worker komt erbij, de app leest gewoon scan_status. Observability, geen modelwinst. // // v268: PUSHBERICHTEN NOEMDEN PICKS DIE NIET BESTONDEN. GEMETEN 17-07 21:00 op France vs England (fixture 1591865): de push zei 'Minder dan 2.5 goals @ 2.75 · +7% edge', maar in `picks` stond U3.5 @ 1.73 en in `shadow_picks` NOBTTS @ 2.75 -- het gepushte label bestond in GEEN van beide. Oorzaak: alle push-takken en newCount lazen uit `newPicks` (ALLE kandidaten), terwijl sbSavePicks alleen `deduplicatedNew` wegschrijft (r3720: max 1 pick per wedstrijd). Erger: de push sorteerde op `value` alleen, de opslag op `confidenceFinal × value` -- twee criteria, dus twee verschillende winnaars. U2.5 won op value (gepusht), U3.5 op conf×value (opgeslagen). De gebruiker kreeg een markt en quotering te zien die het model bewust had VERWORPEN: een bewering over de buitenwereld zonder bron, dus een CIJFERBRON-schending. Tweede gevolg: newCount telde verworpen kandidaten mee ('2 picks toegevoegd' bij 1 opgeslagen) en ging via lastPickCount de database in -- scan_status.last_pick_count stond structureel te hoog, en daarmee elke afgeleide telling. Beide sets bestonden al sinds v136; alleen de verkeerde werd geconsumeerd, en dat is nooit opgevallen omdat het pas zichtbaar wordt als één wedstrijd meerdere kandidaten oplevert -- wat door de varchar(1)-bug (tot v254) bij goal-markten nooit gebeurde. Alle publicatie leest nu uit `opgeslagenNieuw` = deduplicatedNew. // // v267: TWEE REPARATIES. (1) v266 kwam nooit live: ik pushte wrangler.toml en cloudworker.js 1,5s na elkaar, wat TWEE deploys gaf. De deploy van de wrangler-commit bevatte nog de OUDE cloudworker (v265), startte eerder maar eindigde 9s later, en overschreef v266. Live stond daardoor de nieuwe cron (06-22) MET de oude code (fullScan = 6 || 12-22): de uren 07-11 UTC vuurden wel maar vielen in de else-tak en draaiden als odds-only snapshots -- precies het 'lijkt gefixt maar is het niet' dat in de v266-changelog als risico stond. LES: meerdere bestanden nooit als losse commits pushen als ze samen moeten deployen; gebruik één commit (Git Trees API) of zet concurrency op de workflow. (2) Lint faalde sinds v265: de api-tellers stonden onder apiSportsHost (r~1200) maar worden al op r~395 gebruikt door sbUpdateScanStatus (no-use-before-define). Werkt op runtime, maar de workflow brak erop en dat had ik moeten zien. Tellers staan nu boven hun eerste gebruiker. Inhoudelijk identiek aan v266: fullScan = hour >= 6 && hour <= 22. // // v266: SCANGAT 07:00-11:00 UTC GEDICHT. De cron draaide 06:00 en 12:00-22:00 UTC; tussen 07:00 en 11:00 UTC (09:00-13:00 NL) gebeurde er niets. GEMETEN 17-07 op echte fixtures van het openingsweekend: het VASTE Eredivisie/KKD-blok van zondag 12:15 NL ligt op 10:00 UTC, dus middenin dat gat (Sparta-Feyenoord, MVV-Jong Utrecht op 09-08). Laatste scan ervoor was 06:00 UTC -- ruim 4 uur eerder -- en de volgende kwam pas toen de wedstrijd al liep. Twee gevolgen: late waarde werd gemist EN de CLV-closing voor die wedstrijden was een lijn van 4 uur oud, wat geen closing line is en juist het beoordelingscijfer van het model vervuilt. Elk weekend opnieuw, want dat 12:15-slot is vast. Nu fullScan = hour >= 6 && hour <= 22 (17 scans/dag, was 12) + wrangler crons '0 6-22 * * *'. CRON EN CODE MOETEN SAMEN: alleen de cron verruimen zou 07-11 UTC als odds-only snapshots laten draaien -- dat lijkt gefixt maar is het niet. Ook het /health-venster (activeHours) gelijkgetrokken, anders meldt health 'scan te laat' op uren die niet bestaan. Kosten: ~+125 calls/dag op een verbruik van ~250 van 7500. Bijvangst: één doorlopend bereik haalt de 'twee betekenissen van dezelfde variabele'-val weg waar de v254-bug uit voortkwam. // // v265: WEIGERINGEN WORDEN NU GETELD. Tot nu toe stonden de api-sports-weigeringen alleen als console.warn in de worker-logs: achteraf onleesbaar en dus niet te vergelijken voor/na de proxy. Precies dezelfde blinde vlek als bij odds_dekking, dat maandenlang wel werd weggeschreven maar door niemand bekeken werd. scan_status krijgt last_refused / last_api_calls / last_via; /health toont ze onder apif_proxy.laatste_scan. Kolommen bewust NULLABLE ZONDER DEFAULT: NULL = 'deze scan heeft niet geteld' (scans van voor v265), 0 = 'geteld, niets geweigerd'. Een default 0 zou over oude scans beweren dat er niets geweigerd was -- een stille onwaarheid over de buitenwereld. sbUpdateScanStatus leest de tellers ZELF uit i.p.v. via het meegegeven object, want er zijn twee aanroepplekken (r3160 en r3719) en die mogen niet uit elkaar lopen. resetApifTellers() staat als eerste regel van runScan: isolates worden hergebruikt, dus zonder reset tellen de cijfers van de vorige scan mee. GEMETEN 17-07 21:01 (eerste scan onder v264, via de proxy): 6 wedstrijden, 8/8 odds, 0 zonder odds, 2 picks, geen warnings -- maar of er weigeringen waren was NIET vast te stellen, en dat gat dicht deze versie. // // v264: api-sports loopt nu via onze eigen proxy (apif.promatchxi.app, Hetzner, vast IP 138.201.189.10) ZODRA env.PROXY_SECRET bestaat; zonder dat secret verandert er niets en gaat alles rechtstreeks -- dat is meteen het rollback-pad. AANLEIDING: api-sports support (Kevin, 17-07-2026) bevestigde dat hun anti-abuse op het UITGAANDE IP telt, niet op de key. Cloudflare Workers delen hun egress-IP's met vreemden, dus werden onze calls geweigerd op 2,1% van de daglimiet (gemeten 17-07 13:00: 4 van 8 parallelle calls geweigerd met dezelfde key). Verhoging van API_MIN_GAP hielp aantoonbaar niet -- het was nooit ons volume. Eén helper apiSportsHost() voor beide aanroepplekken (apif + handleAPIFootball), zodat ze niet uit elkaar kunnen lopen. Nieuw: header X-APIF-Via (proxy|direct) -- bewust naast X-APIF-Host i.p.v. die te wijzigen, want daar kan iets op lezen. /health toont apif_proxy met een SHA-256-vingerafdruk (8 tekens) van het secret, zodat te meten is of beide kanten dezelfde waarde hebben zonder het secret ergens te tonen. De proxy kent de api-key NIET: die gaat mee in de header en wordt ongewijzigd doorgezet; het X-Proxy-Secret wordt eraf gehaald voor het naar api-sports gaat. Foutstatussen gaan ongewijzigd door (429 blijft 429 incl. Retry-After) -- geen fout die als 200-met-tekst aankomt. RapidAPI-fallback ONGEMOEID (buiten scope; die werkt nog steeds niet, apart abonnement nodig). // // v263: /push STOND WAGENWIJD OPEN. Gemeten live 17-07: POST /push met een leeg body gaf HTTP 400 ('title en body verplicht') en geen 401 -- de route verwerkte dus een anonieme POST en weigerde die alleen op ontbrekende velden. Met titel+tekst erin kon iedereen op internet een melding met vrije tekst op het toestel van ELKE gebruiker zetten. Nu requireAdmin. Gevonden terwijl ik een simpele vraag beantwoordde ('welke knop moet ik testen?'); de derde open/misgerichte push op rij, na /scan-now (v259) en de scan-test-push (v260). TWEEDE HELFT, in de frontend (v26.314): sendOneSignalValuePush() is weg. Die werd aangeroepen vanuit de LOKALE analyse van elke gebruiker en POSTte naar /push, dat naar included_segments ['Total Subscriptions'] stuurt -- dus vond een willekeurige gebruiker een value-pick, dan kreeg het hele gebruikersbestand daar een melding van. De meegestuurde player_id las handlePush niet eens uit. Bovendien dubbelop: de lus erboven stuurde al sendValueNotification() voor ELKE sterke pick. En het commentaar 'ook als app dicht' klopte niet -- die code draait alleen mét de app open, dus een lokale notificatie volstaat. Dat is nu het enige pad: service worker, alleen dit toestel, geen server. De else-tak wees naar toto-ai.zweetzakken.workers.dev (gemeten: HTTP 404, dood). Owner-only i.p.v. de route slopen: even veilig, omkeerbaar, en ik kan niet uitsluiten dat er een oude client op zit. NOG DOOD, niet aangeraakt (buiten scope): notifications.js roept /push/subscribe en /push/send aan -- die routes bestaan niet in de worker.
 
 // v225: omhoog verplaatst. snapshotOddsOnly (r157) las hem, terwijl de declaratie op r1617 stond.
 // Runtime veilig (de cron draait na module-init), maar dezelfde vorm als de TDZ-bug van v26.265 --
@@ -392,12 +392,26 @@ let _apifWeigeringen = 0;   // elke geweigerde poging (3 per call mogelijk)
 let _apifCalls = 0;         // aantal api-sports-calls
 let _apifVia = null;        // 'proxy' | 'direct'
 let _apifGemeten = false;
+let _scanStart = null;      // v269: voor duration_ms in scan_runs
 
 function resetApifTellers() {
   _apifWeigeringen = 0;
   _apifCalls = 0;
   _apifVia = null;
   _apifGemeten = true;
+  _scanStart = Date.now();
+}
+
+// v269: bewaartermijn scan_runs. Zonder dit groeit de tabel eeuwig door (17 scans/dag
+// ~ 6.200 rijen/jaar -- klein, maar ongelimiteerd groeien is geen ontwerp).
+// 90 dagen dekt de doorlichting, de proxy-bewijsvoering (23-07, 07-08) en de
+// draw-evaluatie van eind augustus ruimschoots.
+async function opruimenScanRuns(env) {
+  const grens = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+  const ok = await sb(env, 'scan_runs', 'DELETE', null, `?run_at=lt.${grens}`);
+  // sb() geeft null terug bij een fout: dat expliciet melden, niet stil doorgaan.
+  if (ok === null) console.error('[ScanRuns] opruimen mislukt');
+  else console.log(`[ScanRuns] rijen ouder dan ${grens.slice(0, 10)} opgeruimd`);
 }
 
 // ── Supabase: scan_status updaten ────────────────────────
@@ -420,6 +434,35 @@ async function sbUpdateScanStatus(data, env) {
     last_via: _apifVia,
     updated_at: new Date().toISOString(),
   }], '?on_conflict=id');
+
+  // v269: BEWAAR ELKE SCAN. scan_status is 1 rij die elk uur wordt overschreven, dus elke vraag
+  // over een patroon ("is het rate-limitprobleem echt weg?", "zakt de odds-dekking op zaterdag-
+  // middag?") was alleen met giswerk te beantwoorden. Hier ingebouwd en niet op de twee
+  // aanroepplekken apart, want die mogen niet uit elkaar lopen -- dezelfde les als v265.
+  // Ontkoppelde catch: telemetrie mag een scan nooit laten mislukken. Maar wel luid falen:
+  // een stille catch zou "geen data" en "schrijffout" ononderscheidbaar maken.
+  try {
+    // Overal expliciet Number.isFinite i.p.v. `|| null`: een gemeten 0 is een meting.
+    const g = (v) => (Number.isFinite(v) ? v : null);
+    await sb(env, 'scan_runs', 'POST', [{
+      run_at: data.lastRun || new Date().toISOString(),
+      worker_version: data.version || VERSION,
+      matches_total: g(data.matchesTotal),
+      matches_analysed: g(data.lastMatchCount),
+      with_odds: g(data.lastWithOdds),
+      without_odds: g(data.lastWithoutOdds),
+      picks_saved: g(data.lastPickCount),
+      candidates_removed: g(data.removedCount),
+      shadow_saved: g(data.shadowSaved),
+      api_calls: _apifGemeten ? _apifCalls : null,
+      api_refused: _apifGemeten ? _apifWeigeringen : null,
+      api_via: _apifVia,
+      duration_ms: _scanStart === null ? null : (Date.now() - _scanStart),
+      fout: data.fout || null,
+    }]);
+  } catch (e) {
+    console.error('[ScanRuns] telemetrie niet weggeschreven:', e.message);
+  }
 }
 
 // ── Supabase: scan_status lezen (R1-fase2: bron = Supabase i.p.v. Firebase) ──
@@ -3207,7 +3250,9 @@ async function runScan(env, force = false) {
     // scan niets vond blijkt uit lastMatchCount=0, niet uit een ontbrekende regel.
     const scanData0 = { lastRun: new Date().toISOString(), lastMatchCount: 0,
       lastPickCount: 0, lastWithOdds: 0, lastWithoutOdds: 0,
-      scanDate: today, version: VERSION, scansToday: scansToday0 };
+      scanDate: today, version: VERSION, scansToday: scansToday0,
+      // v269: deze nullen zijn GEMETEN (scan zag geen wedstrijden), niet onbekend.
+      matchesTotal: 0, removedCount: 0, shadowSaved: 0 };
     await sbUpdateScanStatus(scanData0, env);
     // v134: geen push bij lege scan — alleen pushen bij echte picks
     console.log('[Scan] Geen wedstrijden in tijdvenster — stil afsluiten (geen push)');
@@ -3685,6 +3730,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
   }
 
   // v166: schaduw-trackrecord — bijna-value picks wegschrijven (upsert op fixture_id,pick)
+  let shadowOpgeslagen = 0; // v269: telemetrie -- moet buiten het if-blok leven
   if (shadowRows.length) {
     // v168: 1 schaduw-pick per wedstrijd — houd de sterkste bijna-misser (hoogste value)
     const bestPerFixture = {};
@@ -3694,6 +3740,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     });
     const dedupedShadow = Object.values(bestPerFixture);
     await sb(env, 'shadow_picks', 'POST', dedupedShadow, '?on_conflict=fixture_id');
+    shadowOpgeslagen = dedupedShadow.length; // v269
     console.log(`[Scan] ${dedupedShadow.length} schaduw-picks gelogd (1 per wedstrijd)`);
   }
 
@@ -3781,7 +3828,9 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
   const scanData1 = { lastRun: new Date().toISOString(), scanDate: today,
     lastPickCount: newCount, lastMatchCount: analyseBatch.length,
     lastWithOdds: withOdds.length, lastWithoutOdds: withoutOdds.length,
-    scansToday: scansToday1, version: VERSION };
+    scansToday: scansToday1, version: VERSION,
+    // v269: alleen voor scan_runs; scan_status negeert deze velden.
+    matchesTotal: allMatches.length, removedCount, shadowSaved: shadowOpgeslagen };
   await sbUpdateScanStatus(scanData1, env);
 
   const elitePicks = Object.values(opgeslagenNieuw).filter(p => p.elite); // v268
@@ -5324,6 +5373,7 @@ export default {
         try {
           if (hour === 6) await generateDailyTip(env);
           if (hour === 6) await keepSupabaseAlive(env);
+          if (hour === 6) await opruimenScanRuns(env); // v269: bewaartermijn 90 dagen
           if (isSunday && hour === 6) await runWeeklyCalibration(env);
           if (isSunday && hour === 6) await autoTuneCalibration(env); // v194: wekelijkse auto-kalibratie (dry-run tot AUTOTUNE_APPLY=true)
         } catch(e) { console.error('[Cron] dagtaken fout:', e.message); }
