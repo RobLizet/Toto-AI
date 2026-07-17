@@ -1388,25 +1388,14 @@ SCHAARSE DATA:
           });
         }
 
-        // OneSignal push (ook als app dicht) — beste pick sturen
-        const top = strong[0];
-        if (typeof sendOneSignalValuePush === 'function') {
-          sendOneSignalValuePush(top);
-        } else if (state.settings.notifPlayerId || state.oneSignalPlayerId) {
-          // Fallback: stuur via Cloudflare Worker
-          const pid = state.settings.notifPlayerId || state.oneSignalPlayerId;
-          const body = `${top.match?.home||''} vs ${top.match?.away||''} · ${top.pickLabel} · odds ${(top.odds||0).toFixed(2)} · +${Math.round(top.value||0)}% value`;
-          fetch('https://toto-ai.zweetzakken.workers.dev/push', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              player_id: pid,
-              title: `⚡ ${strong.length} value pick${strong.length > 1 ? 's' : ''} gevonden`,
-              body,
-              data: { matchId: String(top.match?.id || ''), value: top.value }
-            })
-          }).catch(() => {});
-        }
+        // v26.314: hier stond een OneSignal-push van de beste pick via de worker (/push). Weg, om
+        // twee redenen. (1) Dubbelop: de lus hierboven stuurt al sendValueNotification() voor ELKE
+        // sterke pick — de gebruiker had de melding dus al. (2) Erger: /push stuurt naar
+        // included_segments ['Total Subscriptions'], dus naar ALLE abonnees. Elke gebruiker die
+        // lokaal een value-pick vond, pushte die naar het hele gebruikersbestand. De player_id die
+        // hieronder werd meegestuurd las handlePush niet eens uit. Het commentaar 'ook als app dicht'
+        // klopte niet: deze code draait alleen mét de app open, dus een lokale notificatie volstaat.
+        // De else-tak ging naar toto-ai.zweetzakken.workers.dev — gemeten 17-07: HTTP 404, dood.
       }
     }
 
