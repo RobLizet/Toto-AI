@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v260'; // v260: SCAN-TEST PUSHTE NAAR ALLE ABONNEES. Gevonden bij het beantwoorden van een simpele vraag ('welke knop moet ik testen?') -- runScanTest roept op het 0-wedstrijden-pad sendPushNotification aan met alleen { type: 'scan_test' } en GEEN opts. Gemeten in sendPushNotification: zonder opts.adminOnly is de targeting included_segments ['Total Subscriptions'], dus iedereen. Rob had op de Scan Test-knop gedrukt en elke gebruiker had '🧪 Test OK · Worker actief' gekregen. Nu adminOnly:true. Vuurde alleen als er geen wedstrijden zijn in de test-leagues, vandaar dat het nooit opviel. NOG OPEN, bewust niet aangeraakt want het is een productbeslissing en geen bug: r3742 pusht '⚠️ scan zonder AI-analyse — check ANTHROPIC_KEY / limiet' naar ALLE abonnees (operator-tekst aan eindgebruikers) en ook '⏱ scan klaar · geen nieuwe picks' bij elke scan zonder picks -- bij 12 scans/dag is dat tot 12 pushes per dag per gebruiker. r2868 pusht '📊 Wekelijkse calibratie klaar · X% hitrate' naar iedereen. Pick-meldingen (r3709/3722/3732) gaan terecht naar iedereen en blijven zoals ze zijn.
+const VERSION = 'v261'; // v261: TWEE OPERATOR-PUSHES GINGEN NAAR ALLE ABONNEES, op verzoek van Rob admin-only gemaakt. (1) runScan r3742: '⚠️ scan zonder AI-analyse — check ANTHROPIC_KEY / limiet' is een instructie aan de beheerder en stond in de notificatiebalk van elke gebruiker; dezelfde regel stuurde ook '⏱ scan klaar · geen nieuwe picks' bij ELKE scan zonder picks -- 12 cron-scans/dag = tot 12 lege pushes per dag per gebruiker. (2) runWeeklyCalibration r2868: '📊 Wekelijkse calibratie klaar · X% hitrate · N leagues bijgewerkt' -- interne onderhoudsmelding. Pick-meldingen (r3709/3722/3732) blijven naar iedereen: dat is het product. GEMETEN RISICO, EXPLICIET OPEN: de tag role=admin wordt door GEEN ENKELE regel frontend gezet -- nul sendTag-aanroepen in de hele repo. Als die tag niet handmatig in het OneSignal-dashboard staat, gaan deze twee (en de scan_test-push van v260) nu naar NIEMAND. Dat is de spam oplossen door de melding stil te laten verdwijnen, precies de falsy-familie. Ik kan OneSignal niet bevragen (REST-key in Cloudflare env). Rob moet bevestigen dat hij VVV-nieuwspushes (v253, zelfde tag) binnenkrijgt; zo niet is de tag er niet en moet er eerst een sendTag('role','admin') achter de _isAdmin-check komen. Rollback is 1 regel per push.
 
 // v225: omhoog verplaatst. snapshotOddsOnly (r157) las hem, terwijl de declaratie op r1617 stond.
 // Runtime veilig (de cron draait na module-init), maar dezelfde vorm als de TDZ-bug van v26.265 --
@@ -2865,9 +2865,12 @@ async function runWeeklyCalibration(env) {
     const totalPicks = Object.values(picks).filter(p => p.status !== 'pending').length;
     const wins = Object.values(picks).filter(p => p.status === 'win').length;
     const hitrate = totalPicks > 0 ? Math.round(wins / totalPicks * 100) : 0;
+    // v261: ging naar ALLE abonnees. Interne onderhoudsmelding — een gebruiker heeft niets aan
+    // 'leagues bijgewerkt'.
     await sendPushNotification(env,
       `📊 Wekelijkse calibratie klaar`,
-      `${totalPicks} picks · ${hitrate}% hitrate · ${Object.keys(leagueStats).length} leagues bijgewerkt`
+      `${totalPicks} picks · ${hitrate}% hitrate · ${Object.keys(leagueStats).length} leagues bijgewerkt`,
+      { type: 'calibration' }, { adminOnly: true }
     );
   } catch(e) {
     console.error('[WeeklyCalib] Fout:', e.message);
@@ -3739,7 +3742,11 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     const body = aiFailed
       ? `${analyseBatch.length} wedstr mét odds, maar AI gaf geen analyse — check ANTHROPIC_KEY / limiet`
       : `${allMatches.length} wedstr gescand · geen nieuwe picks`;
-    await sendPushNotification(env, title, body, { type: aiFailed ? 'ai_error' : 'scan_done' });
+    // v261: ging naar ALLE abonnees. Beide takken zijn operator-tekst: 'check ANTHROPIC_KEY / limiet'
+    // is een instructie aan mij, en '⏱ scan klaar · geen nieuwe picks' vuurde bij ELKE scan zonder
+    // picks — bij 12 cron-scans per dag tot 12 pushes per dag per gebruiker, met nul inhoud voor hen.
+    // De pick-meldingen hierboven blijven bewust wel naar iedereen gaan: dat is het product.
+    await sendPushNotification(env, title, body, { type: aiFailed ? 'ai_error' : 'scan_done' }, { adminOnly: true });
   }
 }
 
