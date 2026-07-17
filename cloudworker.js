@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v263'; // v263: /push STOND WAGENWIJD OPEN. Gemeten live 17-07: POST /push met een leeg body gaf HTTP 400 ('title en body verplicht') en geen 401 -- de route verwerkte dus een anonieme POST en weigerde die alleen op ontbrekende velden. Met titel+tekst erin kon iedereen op internet een melding met vrije tekst op het toestel van ELKE gebruiker zetten. Nu requireAdmin. Gevonden terwijl ik een simpele vraag beantwoordde ('welke knop moet ik testen?'); de derde open/misgerichte push op rij, na /scan-now (v259) en de scan-test-push (v260). TWEEDE HELFT, in de frontend (v26.314): sendOneSignalValuePush() is weg. Die werd aangeroepen vanuit de LOKALE analyse van elke gebruiker en POSTte naar /push, dat naar included_segments ['Total Subscriptions'] stuurt -- dus vond een willekeurige gebruiker een value-pick, dan kreeg het hele gebruikersbestand daar een melding van. De meegestuurde player_id las handlePush niet eens uit. Bovendien dubbelop: de lus erboven stuurde al sendValueNotification() voor ELKE sterke pick. En het commentaar 'ook als app dicht' klopte niet -- die code draait alleen mét de app open, dus een lokale notificatie volstaat. Dat is nu het enige pad: service worker, alleen dit toestel, geen server. De else-tak wees naar toto-ai.zweetzakken.workers.dev (gemeten: HTTP 404, dood). Owner-only i.p.v. de route slopen: even veilig, omkeerbaar, en ik kan niet uitsluiten dat er een oude client op zit. NOG DOOD, niet aangeraakt (buiten scope): notifications.js roept /push/subscribe en /push/send aan -- die routes bestaan niet in de worker.
+const VERSION = 'v264'; // v264: api-sports loopt nu via onze eigen proxy (apif.promatchxi.app, Hetzner, vast IP 138.201.189.10) ZODRA env.PROXY_SECRET bestaat; zonder dat secret verandert er niets en gaat alles rechtstreeks -- dat is meteen het rollback-pad. AANLEIDING: api-sports support (Kevin, 17-07-2026) bevestigde dat hun anti-abuse op het UITGAANDE IP telt, niet op de key. Cloudflare Workers delen hun egress-IP's met vreemden, dus werden onze calls geweigerd op 2,1% van de daglimiet (gemeten 17-07 13:00: 4 van 8 parallelle calls geweigerd met dezelfde key). Verhoging van API_MIN_GAP hielp aantoonbaar niet -- het was nooit ons volume. Eén helper apiSportsHost() voor beide aanroepplekken (apif + handleAPIFootball), zodat ze niet uit elkaar kunnen lopen. Nieuw: header X-APIF-Via (proxy|direct) -- bewust naast X-APIF-Host i.p.v. die te wijzigen, want daar kan iets op lezen. /health toont apif_proxy met een SHA-256-vingerafdruk (8 tekens) van het secret, zodat te meten is of beide kanten dezelfde waarde hebben zonder het secret ergens te tonen. De proxy kent de api-key NIET: die gaat mee in de header en wordt ongewijzigd doorgezet; het X-Proxy-Secret wordt eraf gehaald voor het naar api-sports gaat. Foutstatussen gaan ongewijzigd door (429 blijft 429 incl. Retry-After) -- geen fout die als 200-met-tekst aankomt. RapidAPI-fallback ONGEMOEID (buiten scope; die werkt nog steeds niet, apart abonnement nodig). // // v263: /push STOND WAGENWIJD OPEN. Gemeten live 17-07: POST /push met een leeg body gaf HTTP 400 ('title en body verplicht') en geen 401 -- de route verwerkte dus een anonieme POST en weigerde die alleen op ontbrekende velden. Met titel+tekst erin kon iedereen op internet een melding met vrije tekst op het toestel van ELKE gebruiker zetten. Nu requireAdmin. Gevonden terwijl ik een simpele vraag beantwoordde ('welke knop moet ik testen?'); de derde open/misgerichte push op rij, na /scan-now (v259) en de scan-test-push (v260). TWEEDE HELFT, in de frontend (v26.314): sendOneSignalValuePush() is weg. Die werd aangeroepen vanuit de LOKALE analyse van elke gebruiker en POSTte naar /push, dat naar included_segments ['Total Subscriptions'] stuurt -- dus vond een willekeurige gebruiker een value-pick, dan kreeg het hele gebruikersbestand daar een melding van. De meegestuurde player_id las handlePush niet eens uit. Bovendien dubbelop: de lus erboven stuurde al sendValueNotification() voor ELKE sterke pick. En het commentaar 'ook als app dicht' klopte niet -- die code draait alleen mét de app open, dus een lokale notificatie volstaat. Dat is nu het enige pad: service worker, alleen dit toestel, geen server. De else-tak wees naar toto-ai.zweetzakken.workers.dev (gemeten: HTTP 404, dood). Owner-only i.p.v. de route slopen: even veilig, omkeerbaar, en ik kan niet uitsluiten dat er een oude client op zit. NOG DOOD, niet aangeraakt (buiten scope): notifications.js roept /push/subscribe en /push/send aan -- die routes bestaan niet in de worker.
 
 // v225: omhoog verplaatst. snapshotOddsOnly (r157) las hem, terwijl de declaratie op r1617 stond.
 // Runtime veilig (de cron draait na module-init), maar dezelfde vorm als de TDZ-bug van v26.265 --
@@ -1160,6 +1160,45 @@ async function fetchWithRetry(url, options, retries = 2) {
   }
 }
 
+// ── Route naar api-sports: rechtstreeks of via onze eigen proxy ──────────
+// WAAROM: api-sports weigert bursts op grond van het UITGAANDE IP, niet op de
+// key. Bevestigd door hun support (Kevin, 17-07-2026). Cloudflare Workers delen
+// hun egress-IP's met vreemden, dus werden onze calls geweigerd terwijl we op
+// 2,1% van de daglimiet zaten (gemeten 17-07 13:00: 4 van 8 parallelle calls).
+// apif.promatchxi.app is een eigen server (Hetzner, vast IP 138.201.189.10) die
+// het verzoek ongewijzigd doorzet. De proxy kent onze key niet: die gaat gewoon
+// mee in de header en wordt doorgegeven.
+// Zonder PROXY_SECRET verandert er niets — dan blijft alles rechtstreeks gaan.
+// Dat is meteen het rollback-pad: secret weghalen = oude gedrag terug.
+function apiSportsHost(cleanPath, env) {
+  const key = env.FOOTBALL_KEY || '';
+  const secret = env.PROXY_SECRET;
+  // Bewust geen `secret || ...`: een lege string is 'niet ingesteld', maar de
+  // check moet expliciet zijn en niet op toevallige falsy-heid leunen.
+  const viaProxy = typeof secret === 'string' && secret.length > 0;
+  return {
+    name: 'api-sports',
+    viaProxy,
+    url: (viaProxy ? 'https://apif.promatchxi.app/v3' : 'https://v3.football.api-sports.io') + cleanPath,
+    headers: viaProxy
+      ? { 'x-apisports-key': key, 'X-Proxy-Secret': secret }
+      : { 'x-apisports-key': key }
+  };
+}
+
+// v264: /health moet kunnen laten zien OF de proxy aanstaat en of het secret
+// aan beide kanten hetzelfde is. Daarom een vingerafdruk: de eerste 8 tekens van
+// de SHA-256 van het secret. Genoeg om te vergelijken, onbruikbaar om mee in te
+// loggen. Het secret zelf komt nooit in een respons of een log terecht.
+async function apifProxyStatus(env) {
+  const secret = env.PROXY_SECRET;
+  const aan = typeof secret === 'string' && secret.length > 0;
+  if (!aan) return { ingeschakeld: false, reden: 'PROXY_SECRET niet ingesteld -> rechtstreeks naar api-sports' };
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret));
+  const hex = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  return { ingeschakeld: true, host: 'apif.promatchxi.app', secret_vingerafdruk: hex.slice(0, 8), secret_lengte: secret.length };
+}
+
 // ── API-Football helper ──────────────────────────────────
 async function apif(path, env) {
   const key = env.FOOTBALL_KEY || '';
@@ -1175,11 +1214,7 @@ async function apif(path, env) {
   const cleanPath = path.replace(/[&?]_cb=[^&]*/g, '').replace(/\?&/, '?');
   const isDateFixtures = /^\/fixtures\?date=/.test(cleanPath); // alleen hier pagineren
   const hosts = [
-    {
-      name: 'api-sports',
-      url: 'https://v3.football.api-sports.io' + cleanPath,
-      headers: { 'x-apisports-key': key }
-    },
+    apiSportsHost(cleanPath, env),
     {
       name: 'rapidapi',
       url: 'https://api-football-v1.p.rapidapi.com/v3' + cleanPath,
@@ -1381,10 +1416,7 @@ async function handleAPIFootball(path, env, bypassCache = false) {
   }
 
   const hosts = [
-    {
-      url: 'https://v3.football.api-sports.io' + cleanPath,
-      headers: { 'x-apisports-key': key }
-    },
+    apiSportsHost(cleanPath, env),
     {
       url: 'https://api-football-v1.p.rapidapi.com/v3' + cleanPath,
       headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': 'api-football-v1.p.rapidapi.com' }
@@ -1427,6 +1459,9 @@ async function handleAPIFootball(path, env, bypassCache = false) {
       responseHeaders['X-APIF-Minuut'] = `${_rlMinL ?? '?'}/${_rlMin ?? '?'}`;
       responseHeaders['X-APIF-Dag']    = `${_rlDayL ?? '?'}/${_rlDay ?? '?'}`;
       responseHeaders['X-APIF-Host']   = host.url.includes('rapidapi') ? 'rapidapi' : 'api-sports';
+      // v264: aparte header, want X-APIF-Host bestond al en er kan iets op lezen.
+      // Zegt of deze call langs de eigen proxy ging (vast IP) of rechtstreeks.
+      responseHeaders['X-APIF-Via']    = host.viaProxy === true ? 'proxy' : 'direct';
       if (bypassCache) {
         responseHeaders['Cache-Control'] = 'no-store, no-cache, must-revalidate';
         responseHeaders['X-Cache-Bypass'] = '1';
@@ -4816,7 +4851,7 @@ export default {
         } catch(e) { /* health niet laten falen op een diagnoseveld */ }
 
         return json({ ok: warnings.length === 0, status: warnings.length ? 'WARN' : 'OK',
-          warnings, versie_info: versieInfo, worker_version: VERSION, ...h, odds_dekking: oddsDek, clv_gaps: clvGaps, elo_blend: eloBlend, checked_at: new Date().toISOString() });
+          warnings, versie_info: versieInfo, worker_version: VERSION, ...h, odds_dekking: oddsDek, clv_gaps: clvGaps, elo_blend: eloBlend, apif_proxy: await apifProxyStatus(env), checked_at: new Date().toISOString() });
       } catch(e) {
         return json({ ok: false, status: 'ERROR', error: e.message, worker_version: VERSION }, 500);
       }
