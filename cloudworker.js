@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v262'; // v262: DIAGNOSE, geen gedragswijziging. Rob meldde dat hij geen VVV-push heeft gehad. Dat is GEEN bewijs dat de tag role=admin ontbreekt -- er kan net zo goed geen VVV-nieuws zijn geweest. Precies het verschil waar de CIJFERBRON-regel over gaat, dus meten. runScanTest kende _pushResult toe en gaf hem nooit terug: een dode variabele terwijl OneSignal's antwoord `recipients` bevat = het aantal toestellen dat de filter raakte. Bij adminOnly is dat het aantal toestellen met tag role=admin. Nu teruggegeven als pushRecipients/pushId/pushErrors op het 0-wedstrijden-pad. Meetplan: /scan-test?league=39 (Premier League begint 21-08, dus gegarandeerd 0 fixtures op 17/18-07) -> 0 wedstrijden -> admin-only push -> lees recipients. 0 = tag bestaat niet en v260/v261 sturen naar niemand; >=1 = tag bestaat en die versies kloppen. `?? null` bewust, niet `|| null`: 0 recipients is de meetwaarde 'niemand', geen ontbrekende data. Deze push is adminOnly, dus de meting zelf kan geen gebruiker bereiken.
+const VERSION = 'v263'; // v263: /push STOND WAGENWIJD OPEN. Gemeten live 17-07: POST /push met een leeg body gaf HTTP 400 ('title en body verplicht') en geen 401 -- de route verwerkte dus een anonieme POST en weigerde die alleen op ontbrekende velden. Met titel+tekst erin kon iedereen op internet een melding met vrije tekst op het toestel van ELKE gebruiker zetten. Nu requireAdmin. Gevonden terwijl ik een simpele vraag beantwoordde ('welke knop moet ik testen?'); de derde open/misgerichte push op rij, na /scan-now (v259) en de scan-test-push (v260). TWEEDE HELFT, in de frontend (v26.314): sendOneSignalValuePush() is weg. Die werd aangeroepen vanuit de LOKALE analyse van elke gebruiker en POSTte naar /push, dat naar included_segments ['Total Subscriptions'] stuurt -- dus vond een willekeurige gebruiker een value-pick, dan kreeg het hele gebruikersbestand daar een melding van. De meegestuurde player_id las handlePush niet eens uit. Bovendien dubbelop: de lus erboven stuurde al sendValueNotification() voor ELKE sterke pick. En het commentaar 'ook als app dicht' klopte niet -- die code draait alleen mét de app open, dus een lokale notificatie volstaat. Dat is nu het enige pad: service worker, alleen dit toestel, geen server. De else-tak wees naar toto-ai.zweetzakken.workers.dev (gemeten: HTTP 404, dood). Owner-only i.p.v. de route slopen: even veilig, omkeerbaar, en ik kan niet uitsluiten dat er een oude client op zit. NOG DOOD, niet aangeraakt (buiten scope): notifications.js roept /push/subscribe en /push/send aan -- die routes bestaan niet in de worker.
 
 // v225: omhoog verplaatst. snapshotOddsOnly (r157) las hem, terwijl de declaratie op r1617 stond.
 // Runtime veilig (de cron draait na module-init), maar dezelfde vorm als de TDZ-bug van v26.265 --
@@ -5091,6 +5091,15 @@ export default {
     }
 
     if (path === '/push') {
+      // v263: stond WAGENWIJD open. Gemeten 17-07: POST /push met een leeg body gaf 400 ('title en
+      // body verplicht'), niet 401 — de route verwerkte dus een anonieme POST en weigerde hem alleen
+      // op ontbrekende velden. Met titel en tekst erin had iedereen op internet een melding met vrije
+      // tekst op het toestel van ELKE gebruiker kunnen zetten. De worker heeft dit endpoint zelf niet
+      // nodig (interne pushes roepen sendPushNotification rechtstreeks aan) en de app gebruikt het
+      // sinds v26.314 niet meer. Owner-only i.p.v. verwijderd: sluiten is even veilig en omkeerbaar,
+      // en ik weet niet zeker of er geen enkele oude client meer op zit.
+      const _a = await requireAdmin(request, env, url, false);
+      if (!_a.ok) return json({ error: 'Unauthorized', reason: _a.reason }, _a.status ?? 401);
       return handlePush(request, env);
     }
 
