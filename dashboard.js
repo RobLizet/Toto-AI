@@ -230,8 +230,6 @@ function renderPickWeighting(p) {
   return html;
 }
 
-// Token = HMAC-SHA256(SCAN_SECRET + timestamp_minute)
-const SCAN_SECRET = 'totoai2026'; // Zelfde als SCAN_SECRET in Cloudflare env
 // Admin UIDs — voeg jouw Firebase UID toe
 const ADMIN_UIDS = ['NpbaXO16xwha4Dm4Jgn9RqTM9Fq1'];
 
@@ -246,52 +244,55 @@ function checkAdminStatus() {
 }
 const WORKER_URL  = 'https://api.promatchxi.app';
 
-async function generateScanToken() {
-  const encoder = new TextEncoder();
-  const nowMinute = Math.floor(Date.now() / 60000);
-  const keyData = encoder.encode(SCAN_SECRET);
-  const msgData = encoder.encode(String(nowMinute));
-  const key = await crypto.subtle.importKey(
-    'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, msgData);
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+// v26.313: geen enkel geheim meer in publieke JS. De worker accepteert sinds v259 een Firebase
+// ID-token op /scan, /settle, /scan-now en /scan-test: Google ondertekent het, de worker
+// controleert de RS256-handtekening tegen Google's JWKS en of de UID owner is.
+// De oude opzet zette SCAN_SECRET hier in de frontend om er een HMAC mee te rekenen. Dat is
+// principieel fout (wie de pagina opent heeft de secret) en het was bovendien al dood: gemeten
+// 17-07 gaf die constante 401 op de worker, dus deze drie knoppen deden sinds de rotatie niets.
+async function getOwnerIdToken() {
+  const cu = (typeof _firebaseAuth !== 'undefined' && _firebaseAuth && _firebaseAuth.currentUser)
+    || (window.firebase && window.firebase.auth && window.firebase.auth().currentUser)
+    || null;
+  if (!cu) return null;
+  try {
+    return await cu.getIdToken();
+  } catch (e) {
+    console.error('[Auth] getIdToken faalde:', e);
+    return null; // null = "kon geen token maken". De aanroeper meldt dat als zodanig en
+  }               // doet GEEN uitspraak over of je wel of niet owner bent — dat weet alleen de worker.
+}
+
+async function adminFetch(path) {
+  const idToken = await getOwnerIdToken();
+  if (!idToken) return { error: 'Niet ingelogd — log in met je owner-account.' };
+  try {
+    const res = await fetch(WORKER_URL + path, { headers: { Authorization: 'Bearer ' + idToken } });
+    const txt = await res.text();
+    try {
+      return JSON.parse(txt);
+    } catch (e) {
+      return { error: 'Onleesbaar antwoord (HTTP ' + res.status + '): ' + txt.slice(0, 200) };
+    }
+  } catch (e) {
+    return { error: 'Netwerkfout: ' + e.message };
+  }
 }
 
 async function triggerWorkerScan() {
-  try {
-    const token = await generateScanToken();
-    const res = await fetch(`${WORKER_URL}/scan?token=${token}`);
-    const data = await res.json();
-    return data;
-  } catch(e) {
-    console.error('[Scan] Worker scan fout:', e);
-    return { error: e.message };
-  }
+  return await adminFetch('/scan');
 }
 
 async function triggerWorkerSettle() {
-  try {
-    const token = await generateScanToken();
-    const res = await fetch(`${WORKER_URL}/settle?token=${token}`);
-    const data = await res.json();
-    return data;
-  } catch(e) {
-    console.error('[Settle] Fout:', e);
-    return { error: e.message };
-  }
+  return await adminFetch('/settle');
 }
 
 async function triggerScanTest() {
   const btn = document.getElementById('adminScanTestBtn');
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Testen...'; }
   try {
-    const token = await generateScanToken();
-    const res = await fetch(WORKER_URL + '/scan-test?token=' + token + '&league=253,103,71');
-    const txt = await res.text();
-    let d;
-    try { d = JSON.parse(txt); } catch(e) { alert('Parse fout: ' + txt.slice(0, 300)); return; }
-    if (d.error) { alert('Worker fout: ' + d.error); return; }
+    const d = await adminFetch('/scan-test?league=253,103,71');
+    if (d.error) { alert('Worker fout: ' + d.error + (d.reason ? ' (' + d.reason + ')' : '')); return; }
     const picks = (d.picks || []).slice(0, 5)
       .map(p => (p.matchName || p.match || '?') + ' → ' + (p.pickLabel || p.pick) + ' @' + (p.odds || '?') + ' conf:' + (p.confidence || '?'))
       .join('\n');
@@ -306,7 +307,7 @@ async function triggerScanTest() {
 }
 
 
-// DASHBOARD.JS — v30.3 HMAC scan tokens, admin scan knop
+// DASHBOARD.JS — v26.313: Firebase ID-token i.p.v. HMAC met ingebakken secret
 // ═══════════════════════════════════════════════════════
 
 async function fetchDailyTip() {
