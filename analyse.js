@@ -832,7 +832,10 @@ function showAnalyseSubTab(tab) {
 function workerPickToScan(p) {
   const odds = parseFloat(p.odds) || 0;
   const kans = (typeof p.aiKans === 'number') ? p.aiKans : (parseFloat(p.aiKans) || 0);
-  const kelly = (typeof calcKelly === 'function' && kans && odds) ? calcKelly(kans, odds) : 0;
+  const _pv = (typeof p.value === 'number') ? p.value : (p.value == null ? null : parseFloat(p.value));
+  const _stakeKans = (typeof stakeProbFromPick === 'function') ? stakeProbFromPick(kans, _pv, p.pick, p.leagueId) : null;
+  const _kellyKans = (_stakeKans != null) ? _stakeKans : kans;   // fallback ruw als MODEL_PARAMS ontbreekt
+  const kelly = (typeof calcKelly === 'function' && _kellyKans && odds) ? calcKelly(_kellyKans, odds) : 0;
   return {
     id: p.fixtureId, matchId: p.fixtureId, fixtureId: p.fixtureId,
     match: { id: p.fixtureId, home: p.home, away: p.away, comp: p.leagueName || '',
@@ -878,6 +881,7 @@ async function refreshValueScansFromWorker(silent = false) {
       if (r.ok) { const d = await r.json(); state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); }
     } catch(e) { console.warn('[ValueScan] /picks niet bereikbaar:', e.message); }
 
+    if (typeof loadModelParams === 'function') await loadModelParams().catch(() => null);
     const picks = (state._qualityPicks || [])
       .filter(p => (!p.status || p.status === 'pending'))
       .map(workerPickToScan)

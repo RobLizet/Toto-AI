@@ -39,6 +39,32 @@ function adjValue(raw, aiKans, pick, leagueId) {
   return parseFloat(v.toFixed(1));
 }
 
+// v26.319: geschrunkte modelkans voor STAKING. calcKelly kreeg de ruwe aiKans, terwijl de
+// backend op de naar-de-markt-geschrunkte modelkans selecteert -> de getoonde half-Kelly stond
+// structureel te hoog. Reconstrueert modelProb uit de opgeslagen (geschrunkte) value + aiKans met
+// EXACT dezelfde w als adjValue. Geen fout getal: ontbreekt MODEL_PARAMS of faalt de reconstructie,
+// dan null -> de caller valt terug op de ruwe kans.
+function stakeProbFromPick(aiKans, value, pick, leagueId) {
+  const P = MODEL_PARAMS;
+  if (!P || aiKans == null) return null;
+  if (value == null) return aiKans;                          // geen edge-info -> ruwe kans
+  const isTournament = (P.tournamentLeagues || []).includes(Number(leagueId));
+  const base = isTournament ? P.shrink.tournament : P.shrink.base;
+  const is1x2 = (pick === '1' || pick === 'X' || pick === '2');
+  let extra = 0;
+  if (is1x2) {
+    if (aiKans < 20)      extra = P.tune.s1;
+    else if (aiKans < 35) extra = P.tune.s2;
+  }
+  const w = Math.min(Math.max(base + extra, 0), 0.9);
+  const pen = (pick === 'X') ? P.drawPenalty : 1;
+  if (!(w > 0) || w >= 1 || !(pen > 0)) return aiKans;       // niets te de-shrinken
+  const rawEdge = value / ((1 - w) * pen);                   // value = geschrunkte pp-edge
+  const mp = aiKans - w * rawEdge;                           // modelProb = aiKans getrokken naar markt
+  if (!(mp > 0)) return null;                                // reconstructie onbruikbaar
+  return Math.max(1, Math.min(99, parseFloat(mp.toFixed(1))));
+}
+
 // Drempel waar de backend deze pick aan moet voldoen (voor de uitleg onder de tabel).
 function minValueFor(pick, leagueId) {
   const P = MODEL_PARAMS;
