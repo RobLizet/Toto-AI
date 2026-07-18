@@ -158,8 +158,12 @@ function _calcLocalStats(allPicksOverride) {
 
 // ── Loading HTML ──────────────────────────────────────
 function _analyticsLoadingHTML() {
-  return '<div style="padding:2rem;text-align:center;">' +
-    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.95);">📊 ' + t('an.loading','Analytics laden...') + '</div>' +
+  // v26.317: was een piepklein '.6rem'-regeltje dat bij een snelle refresh als flikkering voorbijging
+  // en aanvoelde alsof de Vernieuwen-knop niets deed. Nu een duidelijk draaiend icoon + leesbare tekst.
+  return '<div style="padding:2.5rem 2rem;text-align:center;">' +
+    '<div style="display:inline-block;width:22px;height:22px;border:2px solid rgba(255,255,255,.15);border-top-color:#00BEC4;border-radius:50%;animation:pmxSpin .7s linear infinite;margin-bottom:.6rem;"></div>' +
+    '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;color:rgba(255,255,255,.85);">📊 ' + t('an.loading','Analytics laden...') + '</div>' +
+    '<style>@keyframes pmxSpin{to{transform:rotate(360deg)}}</style>' +
     '</div>';
 }
 
