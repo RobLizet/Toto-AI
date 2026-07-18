@@ -3966,7 +3966,7 @@ function renderScanLog() {
         html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.95);margin-top:.1rem;">'
           + '<span style="color:rgba(255,255,255,.8);">' + (p.pickLabel||p.pick) + '</span>'
           + ' <span style="color:rgba(255,255,255,.88);">@</span> <span style="color:#fff;font-weight:700;">' + p.odds + '</span>'
-          + ' · <span style="color:' + vColor + ';font-weight:700;">' + (p.value||0).toFixed(1) + '% value</span>'
+          + ' · <span style="color:' + vColor + ';font-weight:700;">' + (p.value||0).toFixed(1) + 'pp value</span>'
           + ' · conf ' + p.confidence + '/10'
           + ' · <span style="color:#00BEC4;font-weight:700;">📊 ' + _u.units + 'u' + _u.eur + '</span>'
           + '</div>';
@@ -4123,7 +4123,7 @@ function showScanPopup(scanIdx) {
       <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.35rem;">
         <span style="background:rgba(0,190,196,.1);color:#6d28d9;border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;padding:2px 7px;border-radius:4px;">${p.pickLabel||p.pick}</span>
         <span style="background:var(--card-bg,rgba(0,0,0,.06));color:var(--ink,#0f172a);border:1px solid rgba(15,23,42,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">@ ${p.odds}</span>
-        <span style="background:rgba(0,190,196,.08);color:#1d4ed8;border:1px solid rgba(0,190,196,.18);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">${(p.value||0).toFixed(1)}% value</span>
+        <span style="background:rgba(0,190,196,.08);color:#1d4ed8;border:1px solid rgba(0,190,196,.18);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">${(p.value||0).toFixed(1)}pp value</span>
         <span style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.1);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">conf ${p.confidence}/10</span>
         <span style="background:rgba(0,190,196,.12);color:#00BEC4;border:1px solid rgba(0,190,196,.25);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;padding:2px 7px;border-radius:4px;">📊 ${_u.units}u${_u.eur}</span>
         ${p.confidenceFinal ? `<span style="background:rgba(0,190,196,.08);color:#00BEC4;border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:2px 7px;border-radius:4px;">CI ${p.confidenceFinal}</span>` : ''}

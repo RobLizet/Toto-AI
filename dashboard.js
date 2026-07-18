@@ -1048,7 +1048,7 @@ function showPicksModal() {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div style="flex:1;min-width:0;">
               <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.7rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
-              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.95);">${tPick(p.pickLabel||p.pick||'?')} · @${parseFloat(p.odds||2).toFixed(2)} · +${Math.round(p.value||0)}% value</div>
+              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.95);">${tPick(p.pickLabel||p.pick||'?')} · @${parseFloat(p.odds||2).toFixed(2)} · +${Math.round(p.value||0)}pp value</div>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
               <div style="font-size:1rem;">${statusIcon(p.status)}</div>
@@ -1274,7 +1274,7 @@ function liveCardHtml(pick, fx) {
       <div style="flex:1;text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:${pick.pick==='2'?'700':'400'};">${awayTeam}</div>
     </div>
     <div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.95);margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.09);">
-      ${(function(){var mk=pickMarket(pick.pick);return (mk.group!=='1X2'&&mk.label)?`<span style="background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);color:#c084fc;border-radius:4px;padding:.05rem .3rem;font-weight:700;margin-right:.3rem;">${tMarket(mk.label.toUpperCase())}</span>`:'';})()}🎯 ${tPick(pick.pickLabel||pick.pick)} @ ${pick.odds} · +${pick.value||0}% value
+      ${(function(){var mk=pickMarket(pick.pick);return (mk.group!=='1X2'&&mk.label)?`<span style="background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);color:#c084fc;border-radius:4px;padding:.05rem .3rem;font-weight:700;margin-right:.3rem;">${tMarket(mk.label.toUpperCase())}</span>`:'';})()}🎯 ${tPick(pick.pickLabel||pick.pick)} @ ${pick.odds} · +${pick.value||0}pp value
       ${kickoffStr ? `<br>📅 ${kickoffStr}` : ''}
     </div>
   </div>`;
