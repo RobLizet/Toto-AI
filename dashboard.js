@@ -567,7 +567,7 @@ function renderDashboard() {
       </div>
 
       <!-- WALLET -->
-      <div onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('wallet'),100)"
+      <div onclick="switchScreen('wallet');setTimeout(()=>setWalletSubTab('tracker'),100)"
         style="background:linear-gradient(135deg,rgba(0,60,50,.6),rgba(0,40,30,.4));border:1px solid rgba(201,168,76,.2);border-radius:16px;padding:16px;cursor:pointer;min-height:140px;display:flex;flex-direction:column;position:relative;overflow:hidden;"
         ontouchstart="this.style.transform=\'scale(.97)\'" ontouchend="this.style.transform=\'scale(1)\'">
         <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;">
