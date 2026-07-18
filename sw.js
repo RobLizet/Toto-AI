@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.271'; // v26.312: COMP_LIST bevroren bij script-load naast een verse getActiveCOMPLIST()
+const SW_VERSION = '36.272'; // v26.312: COMP_LIST bevroren bij script-load naast een verse getActiveCOMPLIST()
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });

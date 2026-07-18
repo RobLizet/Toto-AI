@@ -55,7 +55,7 @@ async function renderAnalyticsInto(containerId) {
     if (atr.ok) autoTune = await atr.json();
   } catch(e) { console.warn('[Analytics inline] worker niet bereikbaar:', e.message); }
   const local = _calcLocalStats(supabasePicks || undefined);
-  el.innerHTML = _analyticsHTML(local, workerData, aiAcc, autoTune);
+  el.innerHTML = _analyticsHTML(local, workerData, aiAcc, autoTune, `renderAnalyticsInto('${containerId}')`);
 }
 
 // ── Lokale statistieken berekenen uit scanLog ────────
@@ -264,13 +264,20 @@ function _analyticsFindings(local, worker) {
 }
 
 // ── Hoofd HTML builder ────────────────────────────────
-function _analyticsHTML(local, worker, aiAcc, autoTune) {
+function _analyticsHTML(local, worker, aiAcc, autoTune, refreshFn) {
   let html = '';
 
   // ── Header ──
+  // v26.316: de Vernieuwen-knop riep HARDGECODEERD renderAnalyticsScreen() aan, die alleen de
+  // container 'screen-analytics' vult (`if (!screen) return`). Op het Analyse-tabblad staat dit
+  // blok echter in 'analyseAnalytics' (renderAnalyticsInto, v26.105) -- daar bestaat screen-analytics
+  // niet, dus de klik viel stil en er gebeurde niets (door Rob gemeld met screenshot). De knop wist
+  // niet in welke container hij stond. Nu krijgt hij de juiste refresh-functie mee; default blijft
+  // renderAnalyticsScreen zodat het losse Analytics-scherm ongewijzigd werkt.
+  const _refresh = (refreshFn && String(refreshFn).length) ? refreshFn : 'renderAnalyticsScreen()';
   html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">';
   html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;">📊 STATS & ANALYTICS</div>';
-  html += '<button onclick="renderAnalyticsScreen()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:rgba(255,255,255,.95);cursor:pointer;">↻ ' + t('an.refresh','Vernieuwen') + '</button>';
+  html += '<button onclick="' + _refresh + '" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:rgba(255,255,255,.95);cursor:pointer;">↻ ' + t('an.refresh','Vernieuwen') + '</button>';
   html += '</div>';
 
   // ── v26.293: Bevindingen (deterministische duiding, bovenaan) ──
