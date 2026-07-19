@@ -42,11 +42,9 @@ function renderInstellingen() {
 
         <div class="settings-field">
           <label class="settings-label">${t('set.lbl.football','API-Football Key')}</label>
-          <div style="display:flex;gap:.4rem;">
-            <input class="settings-input" id="settFootballKey" type="password" placeholder="${t('set.ph.football','Optioneel (server heeft eigen key)')}">
-            <button class="key-vis-btn" onclick="toggleKeyVisibility('settFootballKey',this)">👁</button>
+          <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.7);line-height:1.55;padding:.15rem 0 .1rem;">
+            ${t('set.info.football','Niet nodig — de server gebruikt zijn eigen API-Football-key. Hier hoef je niets in te vullen.')}
           </div>
-          <div style="font-family:monospace;font-size:.47rem;color:rgba(255,255,255,.95);margin-top:2px;">${t('set.hint.football','Jouw eigen Football API key (rapidapi.com)')}</div>
         </div>
 
         <div class="settings-field">
@@ -398,7 +396,6 @@ function saveSettings() {
   const _rawAnthropicKey = document.getElementById('settAnthropicKey')?.value || '';
   const _mAnthropicKey = _rawAnthropicKey.match(/sk-ant-[A-Za-z0-9_-]+/);
   state.settings.anthropicKey    = _mAnthropicKey ? _mAnthropicKey[0] : _rawAnthropicKey.trim();
-  state.settings.footballKey     = document.getElementById('settFootballKey')?.value.trim()||'';
   state.settings.fdKey           = document.getElementById('settFdKey')?.value.trim()||'';
   state.settings.defaultComp     = document.getElementById('settDefaultComp')?.value||'eredivisie';
   state.settings.startBalance    = parseInt(document.getElementById('settStartBalance')?.value)||500;
@@ -412,7 +409,6 @@ function saveSettings() {
   state.settings.vapidPublicKey  = document.getElementById('vapidPublicKey')?.value.trim()||'';
 
   if (state.settings.anthropicKey) localStorage.setItem('totoai_key_anthropic', state.settings.anthropicKey);
-  if (state.settings.footballKey)  localStorage.setItem('totoai_key_football',  state.settings.footballKey);
 
   saveState(); updateNotifUI();
   showFirebaseStatus('✅ Opgeslagen!','#00BEC4');
@@ -429,7 +425,8 @@ function saveSettings() {
 function applySettings() {
   const _s = (id,val) => { const el=document.getElementById(id); if(el) el.value=val; };
   _s('settAnthropicKey', state.settings.anthropicKey||'');
-  _s('settFootballKey',  state.settings.footballKey||'');
+  // v26.321: football-key-veld verwijderd (server gebruikt zijn eigen key); oude opslag eenmalig opruimen.
+  localStorage.removeItem('totoai_key_football'); state.settings.footballKey = '';
   _s('settFdKey',        state.settings.fdKey||'');
   _s('settDefaultComp',  state.settings.defaultComp||'eredivisie');
   _s('settStartBalance', state.settings.startBalance||500);
@@ -542,7 +539,6 @@ async function saveToFirebase() {
 
   const payload = {
     anthropicKey:state.settings.anthropicKey||'',
-    footballKey:state.settings.footballKey||'',
     fdKey:state.settings.fdKey||'',
     defaultComp:state.settings.defaultComp||'eredivisie',
     defaultBet:state.settings.defaultBet||10,
@@ -608,7 +604,6 @@ async function loadFromFirebase() {
     const d = await resp.json();
     if (!d) return false;
     if (d.anthropicKey) state.settings.anthropicKey = d.anthropicKey;
-    if (d.footballKey)  state.settings.footballKey  = d.footballKey;
     if (d.fdKey)        state.settings.fdKey        = d.fdKey;
     if (d.defaultComp)  state.settings.defaultComp  = d.defaultComp;
     if (d.defaultBet)   state.settings.defaultBet   = d.defaultBet;
@@ -618,7 +613,6 @@ async function loadFromFirebase() {
     if (d.tripleMinOdds)  state.settings.tripleMinOdds=d.tripleMinOdds;
     if (d.autoDark!==undefined) state.settings.autoDark=d.autoDark;
     if (state.settings.anthropicKey) localStorage.setItem('totoai_key_anthropic', state.settings.anthropicKey);
-    if (state.settings.footballKey)  localStorage.setItem('totoai_key_football',  state.settings.footballKey);
     if (d.vapidPublicKey) state.settings.vapidPublicKey=d.vapidPublicKey;
 
     // Laad ook kosten uit Firebase
