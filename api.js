@@ -299,6 +299,7 @@ function parseAPIMatch(f) {
     comp: compName,
     compLogo: f.league?.logo || '',
     leagueId: f.league?.id,
+    season: f.league?.season, // v26.323: seizoen uit de fixture zelf -> odds-fetch hoeft niet op de driftende seasonForLeague-lijst te leunen
     time: timeStr,
     date: dateStr,
     dateISO: fix.date ? fix.date.split('T')[0] : '',
