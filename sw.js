@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.277'; // v26.321: API-Football-key-veld uit instellingen verwijderd (deed niets, server regelt de key)
+const SW_VERSION = '36.278'; // v26.322: WK_ONLY_MODE false -> 19 CLUB19-competities terug in KIES COMPETITIE + wit-op-wit tegelnaam gefixt
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
