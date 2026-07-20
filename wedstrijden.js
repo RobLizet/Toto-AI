@@ -1623,10 +1623,12 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
   if (!leagueId) return;
   // v26.97: via worker proxy met cache-bust (niet direct API-Sports — Cloudflare cache bypass)
   const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
-  const season = seasonForLeague(leagueId);
   // v26.97: ALLE unieke datums van deze league pakken (niet alleen de eerste match).
   // Anders kreeg b.v. het WK met matches op meerdere dagen alleen odds voor 1 datum.
   const leagueMatches = (state.matches || []).filter(m => String(m.leagueId) === String(leagueId));
+  // v26.323: seizoen uit de fixture zelf (league.season), niet uit de driftende seasonForLeague-lijst.
+  // Nullish (?? niet ||): een gemeten seizoen 0 bestaat niet, maar undefined -> terugval op de helper.
+  const season = leagueMatches.find(m => m.season != null)?.season ?? seasonForLeague(leagueId);
   let dates = [...new Set(leagueMatches.map(m => m.dateISO).filter(Boolean))];
   if (!dates.length) dates = [new Date().toISOString().split('T')[0]];
   const cb = Date.now();
@@ -1692,7 +1694,8 @@ async function fetchOddsForAllMatches(matches, _apiKey) {
     // v26.99: throttle — kleine pauze tussen league-calls zodat de per-minuut
     // rate-limit niet verzadigt bij het in één keer laden van veel competities.
     if (_leagueIdx++ > 0) await new Promise(r => setTimeout(r, 220));
-    const season = seasonForLeague(leagueId);
+    // v26.323: seizoen uit de fixture zelf (league.season), niet uit de driftende seasonForLeague-lijst.
+    const season = (byLeague[leagueId] || []).find(m => m.season != null)?.season ?? seasonForLeague(leagueId);
     // v26.97: per league ALLE unieke datums ophalen i.p.v. alleen de eerste match.
     // Hierdoor kregen WK-matches op 14 juni geen odds als er ook een match op 13 juni stond.
     const dates = [...new Set((byLeague[leagueId] || []).map(m => m.dateISO).filter(Boolean))];
