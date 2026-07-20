@@ -6,49 +6,12 @@
 
 // ── Competitie definities ────────────────────────────────
 // ── Datum-gebaseerde competitie lijst ────────────────────
+// v26.324: seizoensscaffolding opgeruimd. WK 2026 is voorbij; de app zit permanent in FASE 2.
+// De oude datum-takken (WK_ONLY_MODE / isWK / pre-euro-end / postWK) waren na 20-07 onbereikbaar --
+// `now` schuift alleen vooruit, dus postWK was voortaan altijd waar -- en de WK-override liet zich per
+// ongeluk aanzetten (bron van de v26.322-bug). Terug naar EEN bron: de 19 CLUB19-competities.
 function getActiveCOMPLIST() {
-  const now = new Date();
-  const wkStart = new Date('2026-06-11');
-  const wkEnd   = new Date('2026-07-20');
-  const euroEnd = new Date('2026-06-01');
-  const isWK    = now >= wkStart && now < wkEnd;
-  const isPreEuroEnd = now < euroEnd;
-
-  const WK       = [{ key:'wk2026',    flag:'🏆', name:'WK 2026' }];
-  const OEFEN    = []; // v26.190: NL-oefenduels verhuisd naar eigen scherm (screen-oefennl)
-  const SCANDI   = [
-    { key:'norway',   flag:'🇳🇴', name:'Eliteserien' },
-    { key:'sweden',   flag:'🇸🇪', name:'Allsvenskan' },
-  ];
-  // Klaar voor seizoen (verborgen tot augustus 2026)
-  // Premier, Bundesliga, LaLiga, SerieA, Ligue1, Champions, Europa, Conference, Eredivisie, Jupiler
-  const EUROPEES = [
-    { key:'superlig',   flag:'🇹🇷', name:'Süper Lig' },  // loopt door tot juni
-  ];
-  const OVERIG = [
-    // KNVB Beker klaar — verbergen tot nieuw seizoen
-  ];
-  const EXTRA = [
-    { key:'portugal',    flag:'🇵🇹', name:'Primeira Liga' },
-    { key:'denmark',     flag:'🇩🇰', name:'Superliga DK' },
-    { key:'poland',      flag:'🇵🇱', name:'Ekstraklasa' },
-    { key:'austria',     flag:'🇦🇹', name:'Bundesliga AT' },
-    { key:'greece',      flag:'🇬🇷', name:'Super League GR' },
-  ];
-  const INTERNATIONAAL = [
-    { key:'nations',        flag:'🏴',  name:'Nations League' },
-    { key:'intvriendsch',   flag:'🤝',  name:'Int. Vriendsch.' },
-    { key:'wk_kwal_europa', flag:'🇪🇺', name:'WK Kwal. Europa' },
-    { key:'wk_kwal_latam',  flag:'🌎',  name:'WK Kwal. CONMEBOL' },
-    { key:'wk_kwal_azie',   flag:'🌏',  name:'WK Kwal. Azië' },
-    { key:'copaamerica',    flag:'🏆',  name:'Copa América' },
-    { key:'goldcup',        flag:'🥇',  name:'Gold Cup' },
-    { key:'africup',        flag:'🌍',  name:'Africa Cup' },
-    { key:'asiancup',       flag:'🌏',  name:'Asian Cup' },
-  ];
-
-  // v26.296: FASE 2 (vanaf 20-07) — exact de 19 clubcompetities die de worker scant (incl. CL/EL/ECL)
-  const CLUB19 = [
+  return [
     { key:'eredivisie',  flag:'🇳🇱', name:'Eredivisie' },
     { key:'kkd',         flag:'🇳🇱', name:'Keuken Kampioen' },
     { key:'premier',     flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Premier League' },
@@ -69,13 +32,6 @@ function getActiveCOMPLIST() {
     { key:'championship',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' },
     { key:'leagueone',   flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'League One' },
   ];
-  const postWK = now >= wkEnd; // WK-sectie weg vanaf 20-07
-
-  if (typeof WK_ONLY_MODE !== 'undefined' && WK_ONLY_MODE) return [...WK, ...OEFEN]; // tijdelijk: WK 2026 + NL-oefenduels
-  if (isWK)          return [...WK, ...OEFEN, ...INTERNATIONAAL, ...SCANDI, ...EXTRA, ...OVERIG];
-  if (postWK)        return [...CLUB19]; // FASE 2: alleen de 19 clubcompetities, geen WK
-  if (!isPreEuroEnd) return [...WK, ...INTERNATIONAAL, ...SCANDI, ...EUROPEES, ...EXTRA, ...OVERIG];
-  return              [...EUROPEES, ...SCANDI, ...EXTRA, ...WK, ...INTERNATIONAAL, ...OVERIG];
 }
 
 // v26.312: COMP_LIST verwijderd. Hij werd EEN keer gezet bij het laden van het script en was daarna
