@@ -781,7 +781,7 @@ function openCompKeuze() {
   COMPS.forEach(c => {
     const tile = document.createElement('div');
     tile.style.cssText = 'background:rgba(255,255,255,.8);border:1.5px solid rgba(15,23,42,.08);border-radius:14px;padding:.7rem .4rem;text-align:center;cursor:pointer;';
-    tile.innerHTML = `<div style="font-size:1.4rem;">${c.flag}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:rgba(255,255,255,.95);margin-top:.2rem;">${c.name}</div>`;
+    tile.innerHTML = `<div style="font-size:1.4rem;">${c.flag}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:#1e293b;margin-top:.2rem;">${c.name}</div>`;
     tile.onclick = () => {
       overlay.remove();
       if (typeof openCompDetail === 'function') openCompDetail(c.key);
