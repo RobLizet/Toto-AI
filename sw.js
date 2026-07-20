@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.278'; // v26.322: WK_ONLY_MODE false -> 19 CLUB19-competities terug in KIES COMPETITIE + wit-op-wit tegelnaam gefixt
+const SW_VERSION = '36.279'; // v26.323: odds-fetch pakt seizoen uit de fixture zelf (Liga I e.a. geen valse 'geen odds' meer) // v26.322: WK_ONLY_MODE false -> 19 CLUB19-competities terug in KIES COMPETITIE + wit-op-wit tegelnaam gefixt
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
