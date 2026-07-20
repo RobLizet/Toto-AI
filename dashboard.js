@@ -739,41 +739,8 @@ function openCompKeuze() {
   sheet.appendChild(hdr);
 
   // Competitie grid
-  // Dynamische competitie lijst op basis van huidige datum
-  const _now = new Date();
-  const _wkStart = new Date('2026-06-11');
-  const _wkEnd   = new Date('2026-07-20');
-  const _euroEnd  = new Date('2026-06-01');
-  const _isWKActive = _now >= _wkStart && _now < _wkEnd;
-  const _isPreEuroEnd = _now < _euroEnd;
-
-  const EURO_COMPS = [
-    {key:'premier',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',name:'Premier League'},
-    {key:'laliga',flag:'🇪🇸',name:'La Liga'},
-    {key:'seriea',flag:'🇮🇹',name:'Serie A'},
-    {key:'bundesliga',flag:'🇩🇪',name:'Bundesliga'},
-    {key:'ligue1',flag:'🇫🇷',name:'Ligue 1'},
-    {key:'champions',flag:'⭐',name:'Champions League'},
-    {key:'eredivisie',flag:'🇳🇱',name:'Eredivisie'},
-  ];
-  const ZOMER_COMPS = [
-    {key:'brasileirao',flag:'🇧🇷',name:'Brasileirão'},
-    {key:'argentina',flag:'🇦🇷',name:'Liga Argentina'},
-    {key:'mls',flag:'🇺🇸',name:'MLS'},
-  ];
-  const WK_COMP = [{key:'wk2026',flag:'🏆',name:'WK 2026'}];
-
-  let COMPS;
-  if (typeof WK_ONLY_MODE !== 'undefined' && WK_ONLY_MODE) {
-    COMPS = [...WK_COMP]; // tijdelijk: alleen WK 2026
-  } else if (_isWKActive) {
-    COMPS = [...WK_COMP, ...ZOMER_COMPS];
-  } else if (_isPreEuroEnd) {
-    COMPS = [...EURO_COMPS, ...ZOMER_COMPS, ...WK_COMP];
-  } else {
-    // v26.296: post-WK (vanaf 20-07) — spiegel de 19 clubcompetities uit de Matches-grid, geen WK
-    COMPS = (typeof getActiveCOMPLIST === 'function') ? getActiveCOMPLIST() : [...EURO_COMPS, ...ZOMER_COMPS];
-  }
+  // v26.324: seizoensscaffolding opgeruimd -> COMPS komt uit de ene bron getActiveCOMPLIST (19 CLUB19).
+  const COMPS = (typeof getActiveCOMPLIST === 'function') ? getActiveCOMPLIST() : [];
 
   const grid = document.createElement('div');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;';
