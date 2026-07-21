@@ -684,6 +684,8 @@ async function renderWedValuePicks() {
   }
 
   function pickCard(p) {
+    const fid = p.fixtureId || p.fixture_id || '';
+    const pc  = (p.pick || '').replace(/[^A-Za-z0-9.]/g, '');
     const vc = p.value >= 20 ? '#00BEC4' : p.value >= 12 ? '#f59e0b' : '#d97706';
     const cc = p.confidence >= 8 ? '#00BEC4' : p.confidence >= 6 ? '#f59e0b' : 'rgba(255,255,255,.5)';
     const sharpT  = p.sharpTier || p.sharp_tier || '';
@@ -710,6 +712,7 @@ async function renderWedValuePicks() {
           <div style="${mono};font-size:.46rem;color:${cc};">conf ${p.confidence||0}/10</div>
         </div>
       </div>
+      ${fid ? `<div onclick="event.stopPropagation();pmxToggleBooks(event,this,${fid},'${pc}')" style="${mono};font-size:.44rem;color:#00BEC4;margin-top:.4rem;cursor:pointer;">📊 vergelijk 13 boeken ▾</div><div class="pmx-books-panel" style="display:none;margin-top:.3rem;"></div>` : ''}
     </div>`;
   }
 
@@ -757,6 +760,70 @@ function openValuePickPopup(i) {
     s.away = parts.slice(1).join(' vs ') || '?';
   }
   if (typeof openCardPopup === 'function') openCardPopup('scan', s);
+}
+
+// v26.325: ODDSVERGELIJKER A — per pick alle boeken (live, per markt). CIJFERBRON: alleen echt
+// opgehaalde boeken; faalt de call -> "kon niet ophalen" (uitspraak over ONZE fetch), nooit "geen odds".
+function pmxBetForPick(pick) {
+  const p = String(pick || '').toUpperCase().trim();
+  if (p === '1') return { bet: 1, sel: 'Home' };
+  if (p === '2') return { bet: 1, sel: 'Away' };
+  if (p === 'X') return { bet: 1, sel: 'Draw' };
+  const m = /^([OU])(\d+(?:\.\d)?)$/.exec(p);
+  if (m) return { bet: 5, sel: (m[1] === 'O' ? 'Over ' : 'Under ') + m[2] };
+  if (p === 'BTTS' || p === 'GG') return { bet: 8, sel: 'Yes' };
+  if (p === 'NOBTTS' || p === 'BTTSN' || p === 'NG') return { bet: 8, sel: 'No' };
+  return null;
+}
+
+async function pmxToggleBooks(event, toggleEl, fixtureId, pickCode) {
+  if (event) event.stopPropagation();
+  const panel = toggleEl.nextElementSibling;
+  if (!panel) return;
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; toggleEl.innerHTML = toggleEl.innerHTML.replace('▴', '▾'); return; }
+  panel.style.display = 'block';
+  toggleEl.innerHTML = toggleEl.innerHTML.replace('▾', '▴');
+  if (panel.dataset.loaded === '1') return;
+
+  const map = pmxBetForPick(pickCode);
+  if (!map) { panel.innerHTML = `<div style="font-size:.44rem;color:rgba(255,255,255,.5);">Boekvergelijking (nog) niet beschikbaar voor deze markt.</div>`; panel.dataset.loaded = '1'; return; }
+  panel.innerHTML = `<div style="font-size:.44rem;color:rgba(255,255,255,.5);">⏳ boeken laden…</div>`;
+
+  const WORKER = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app');
+  const cacheKey = `books_${fixtureId}_${map.bet}_${map.sel}`;
+  let books = (typeof _cacheGet === 'function' ? _cacheGet(cacheKey) : null);
+  if (!books) {
+    try {
+      const r = await apiFetch(`${WORKER}/apif/odds?fixture=${fixtureId}&bet=${map.bet}&_cb=${Date.now()}`, null, 10000);
+      const d = await r.json();
+      const bms = d?.response?.[0]?.bookmakers || [];
+      const out = [];
+      for (const bm of bms) {
+        const bet = bm.bets?.find(b => b.id === map.bet);
+        const v = bet?.values?.find(x => String(x.value).toLowerCase() === map.sel.toLowerCase());
+        const od = v ? parseFloat(v.odd) : NaN;
+        if (bm.name && od > 1) out.push({ name: bm.name, odd: od });
+      }
+      books = out;
+      if (books.length && typeof _cacheSet === 'function') _cacheSet(cacheKey, books, 300);
+    } catch (e) {
+      // GEEN 'geen odds': dat is een bewering over de bookmakers terwijl juist ONZE fetch faalde.
+      panel.innerHTML = `<div style="font-size:.44rem;color:#f59e0b;">Kon de boeken niet ophalen — probeer opnieuw.</div>`;
+      return;
+    }
+  }
+  panel.dataset.loaded = '1';
+  if (!books.length) { panel.innerHTML = `<div style="font-size:.44rem;color:rgba(255,255,255,.5);">Geen enkel boek biedt deze markt (nog) aan.</div>`; return; }
+
+  books.sort((a, b) => b.odd - a.odd);
+  const best = books[0];
+  const rows = books.map((b, i) => `
+    <div style="display:flex;justify-content:space-between;padding:.14rem .3rem;${i === 0 ? 'background:rgba(0,190,196,.14);border-radius:.25rem;' : ''}">
+      <span style="font-size:.46rem;color:${i === 0 ? '#00BEC4' : 'rgba(255,255,255,.82)'};">${i === 0 ? '⭐ ' : ''}${b.name}</span>
+      <span style="font-size:.46rem;font-weight:700;color:${i === 0 ? '#00BEC4' : '#fff'};">${b.odd.toFixed(2)}</span>
+    </div>`).join('');
+  panel.innerHTML =
+    `<div style="font-size:.42rem;color:rgba(255,255,255,.5);margin:.1rem 0 .2rem;">${books.length} boeken · beste <b style="color:#00BEC4;">${best.odd.toFixed(2)}</b> @ ${best.name}</div>${rows}`;
 }
 
 // ── LIVE AUTO-REFRESH (elke 90s; alleen bij live-wedstrijden + zichtbaar scherm + voorgrond) ──
