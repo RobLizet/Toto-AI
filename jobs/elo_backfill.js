@@ -72,16 +72,11 @@ async function apif(pathQ) {
 }
 
 async function fetchSeason(league, season) {
-  const out = [];
-  let page = 1, total = 1;
-  do {
-    const data = await apif(`/fixtures?league=${league}&season=${season}&page=${page}`);
-    out.push(...data.response);
-    total = data.paging && Number(data.paging.total) ? Number(data.paging.total) : 1;
-    page++;
-    await sleep(API_GAP_MS);
-  } while (page <= total);
-  return out;
+  // api-sports /fixtures is NIET gepagineerd voor league+season: alles komt in één response.
+  // De page-param gaf "The Page field do not exist." -> ABORT (v1-bug, gefixt 21-07).
+  const data = await apif(`/fixtures?league=${league}&season=${season}`);
+  await sleep(API_GAP_MS);
+  return data.response;
 }
 
 // ── Supabase REST ────────────────────────────────────────────────────────────
