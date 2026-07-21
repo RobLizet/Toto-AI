@@ -712,7 +712,7 @@ async function renderWedValuePicks() {
           <div style="${mono};font-size:.46rem;color:${cc};">conf ${p.confidence||0}/10</div>
         </div>
       </div>
-      ${fid ? `<div onclick="event.stopPropagation();pmxToggleBooks(event,this,${fid},'${pc}')" style="${mono};font-size:.44rem;color:#00BEC4;margin-top:.4rem;cursor:pointer;">📊 vergelijk 13 boeken ▾</div><div class="pmx-books-panel" style="display:none;margin-top:.3rem;"></div>` : ''}
+      ${fid ? `<div onclick="event.stopPropagation();pmxToggleBooks(event,this,${fid},'${pc}')" style="${mono};font-size:.44rem;color:#00BEC4;margin-top:.4rem;cursor:pointer;">📊 vergelijk bookmakers ▾</div><div class="pmx-books-panel" style="display:none;margin-top:.3rem;"></div>` : ''}
     </div>`;
   }
 
