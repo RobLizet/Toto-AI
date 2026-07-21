@@ -457,7 +457,7 @@ const NL_EN_LAND = {
   'hongarije':'hungary','roemenie':'romania','slowakije':'slovakia','oekraine':'ukraine','costarica':'costa rica'
 };
 function teamsMatch(nlName, apiName) {
-  const norm = x => String(x||'').toLowerCase().replace(/[^a-z]/g,'');
+  const norm = x => String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'');
   let a = norm(nlName); const b = norm(apiName);
   if (NL_EN_LAND[a]) a = norm(NL_EN_LAND[a]);
   if (!a || !b) return false;
