@@ -13,7 +13,7 @@
 // - 0 fixtures voor een afgerond 2025-seizoen is per definitie verdacht => ABORT.
 // - Rollback: team_ratings_backup_20260721 / elo_history_backup_20260721 (aangemaakt 21-07 via MCP).
 //
-// Vereist /opt/pmx-jobs/.env met: SUPABASE_URL, SUPABASE_KEY (service_role), APIF_KEY (api-sports).
+// Vereist /opt/pmx-jobs/.env met: SUPABASE_URL, SUPABASE_KEY of SUPABASE_SERVICE_KEY (service_role), APIF_KEY (api-sports).
 // Draaien: node elo_backfill.js        (eenmalig; her-draaien = volledige herbouw, idempotent)
 
 'use strict';
@@ -30,10 +30,10 @@ if (fs.existsSync(envPath)) {
   }
 }
 const SB_URL   = process.env.SUPABASE_URL || 'https://gtmzznlknmpjcwuyupjv.supabase.co';
-const SB_KEY   = process.env.SUPABASE_KEY;
+const SB_KEY   = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY;
 const APIF_KEY = process.env.APIF_KEY;
 const missing = [];
-if (!SB_KEY) missing.push('SUPABASE_KEY');
+if (!SB_KEY) missing.push('SUPABASE_KEY of SUPABASE_SERVICE_KEY');
 if (!APIF_KEY) missing.push('APIF_KEY');
 if (missing.length) { console.error(`[Backfill] ABORT — ontbrekend in .env: ${missing.join(', ')}`); process.exit(1); }
 
