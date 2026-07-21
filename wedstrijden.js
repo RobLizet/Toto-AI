@@ -700,7 +700,7 @@ async function renderWedValuePicks() {
       isSteam && badge('🔴 ' + parseFloat(p.sharpMove).toFixed(1) + '%', '#dc2626'),
     ].filter(Boolean).join(' ');
 
-    return `<div class="worker-pick-row" onclick="openValuePickPopup(${allPicks.indexOf(p)})" style="cursor:pointer;margin-bottom:.4rem;">
+    return `<div class="worker-pick-row" onclick="openValuePickPopup(${allPicks.indexOf(p)})" style="cursor:pointer;margin-bottom:.4rem;display:flex;flex-direction:column;align-items:stretch;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;">
         <div style="flex:1;min-width:0;">
           <div style="${sans};font-size:.7rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||'?'}</div>
@@ -712,7 +712,7 @@ async function renderWedValuePicks() {
           <div style="${mono};font-size:.46rem;color:${cc};">conf ${p.confidence||0}/10</div>
         </div>
       </div>
-      ${fid ? `<div onclick="event.stopPropagation();pmxToggleBooks(event,this,${fid},'${pc}')" style="${mono};font-size:.44rem;color:#00BEC4;margin-top:.4rem;cursor:pointer;">📊 vergelijk bookmakers ▾</div><div class="pmx-books-panel" style="display:none;margin-top:.3rem;"></div>` : ''}
+      ${fid ? `<div onclick="event.stopPropagation();pmxToggleBooks(event,this,${fid},'${pc}')" style="${mono};font-size:.44rem;color:#00BEC4;margin-top:.4rem;cursor:pointer;">📊 vergelijk bookmakers ▾</div><div class="pmx-books-panel" style="display:none;margin-top:.35rem;background:rgba(255,255,255,.05);border-radius:.5rem;padding:.4rem .15rem;"></div>` : ''}
     </div>`;
   }
 
@@ -818,12 +818,12 @@ async function pmxToggleBooks(event, toggleEl, fixtureId, pickCode) {
   books.sort((a, b) => b.odd - a.odd);
   const best = books[0];
   const rows = books.map((b, i) => `
-    <div style="display:flex;justify-content:space-between;padding:.14rem .3rem;${i === 0 ? 'background:rgba(0,190,196,.14);border-radius:.25rem;' : ''}">
-      <span style="font-size:.46rem;color:${i === 0 ? '#00BEC4' : 'rgba(255,255,255,.82)'};">${i === 0 ? '⭐ ' : ''}${b.name}</span>
-      <span style="font-size:.46rem;font-weight:700;color:${i === 0 ? '#00BEC4' : '#fff'};">${b.odd.toFixed(2)}</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.28rem .5rem;${i === 0 ? 'background:rgba(0,190,196,.16);border-radius:.35rem;' : ''}">
+      <span style="font-size:.6rem;color:${i === 0 ? '#00BEC4' : 'rgba(255,255,255,.85)'};">${i === 0 ? '⭐ ' : ''}${b.name}</span>
+      <span style="font-size:.78rem;font-weight:800;color:${i === 0 ? '#00BEC4' : '#fff'};min-width:2.7rem;text-align:right;">${b.odd.toFixed(2)}</span>
     </div>`).join('');
   panel.innerHTML =
-    `<div style="font-size:.42rem;color:rgba(255,255,255,.5);margin:.1rem 0 .2rem;">${books.length} boeken · beste <b style="color:#00BEC4;">${best.odd.toFixed(2)}</b> @ ${best.name}</div>${rows}`;
+    `<div style="font-size:.52rem;color:rgba(255,255,255,.6);margin:.05rem 0 .3rem;padding:0 .5rem;">${books.length} boeken · beste <b style="color:#00BEC4;font-size:.62rem;">${best.odd.toFixed(2)}</b> @ ${best.name}</div>${rows}`;
 }
 
 // ── LIVE AUTO-REFRESH (elke 90s; alleen bij live-wedstrijden + zichtbaar scherm + voorgrond) ──
