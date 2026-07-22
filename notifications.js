@@ -198,19 +198,15 @@ async function subscribeToPush() {
   }
 }
 
-async function sendRealPush(title, body, options = {}) {
-  if (!_pushSubscription) return false;
-  try {
-    const r = await fetch(`${WORKER}/push/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subscription: _pushSubscription.toJSON(),
-        payload: { title, body, ...options }
-      })
-    });
-    return r.ok;
-  } catch(e) { return false; }
+// v26.332 DOOD PAD, body verwijderd. sendRealPush POSTte naar /push/send — die route
+// bestaat niet in de worker. Onbekende paden geven daar HTTP 200 met de routelijst terug,
+// dus `r.ok` was altijd true en de functie meldde succes zonder ooit iets te versturen.
+// Dat maakte de testknop in Instellingen een knop die liegt. Functie blijft bestaan met
+// dezelfde signature (ik kan een andere aanroeper niet uitsluiten), maar geeft nu eerlijk
+// false terug en zegt in de console waarom.
+async function sendRealPush() {
+  console.warn('[Push] sendRealPush is een dood pad: /push/send bestaat niet in de worker — niets verstuurd');
+  return false;
 }
 
 async function testNotification() {
@@ -229,16 +225,45 @@ async function testNotification() {
     await new Promise(r => setTimeout(r, 1000));
   }
   setResult('⏳ Versturen...', '#2563eb');
+  // v26.332: deze knop meldde ALTIJD '✅ Melding verstuurd!'. Twee redenen waarom dat
+  // onwaar was. (1) sendRealPush POSTte naar /push/send — die route bestaat niet; de
+  // worker vangt onbekende paden af met HTTP 200 + de routelijst, en r.ok was dus true.
+  // (2) De melding die je zag kwam van reg.showNotification() en is puur LOKAAL: die
+  // bewijst alleen dat dit toestel meldingen toelaat, niets over server-pushes.
+  // Wie deze knop indrukte om te controleren of meldingen werkten, kreeg dus valse
+  // zekerheid — precies de tak die 22-07 stilletjes stuk bleek. Nu worden de twee
+  // dingen apart gemeten en apart gemeld, en wordt er niets beweerd dat niet getest is.
   try {
-    await sendRealPush('🔔 ProMatchXI Test', 'Notificaties werken! 🏆 Triple Lock · 🔑 Double Lock · ✅ Bet resultaten', { tag: 'test-notif' });
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification('🔔 ProMatchXI Test', {
       body: 'Notificaties werken! 🏆 Triple Lock · 🔑 Double Lock · ✅ Bet resultaten',
       icon: '/icon-192.png', badge: '/icon-192.png',
       vibrate: [200, 100, 200, 100, 200], tag: 'test-notif', renotify: true
     });
-    setResult('✅ Melding verstuurd!', '#16a34a');
-    setTimeout(() => { if (resultEl) { resultEl.textContent = 'Stuur een testmelding naar je telefoon'; resultEl.style.color = ''; } }, 5000);
+
+    // Server-tak: meet of dit toestel bij OneSignal geabonneerd is. We beweren NIET
+    // dat een push aankomt — dat kan de app niet zelf vaststellen.
+    let serverRegel = '· server-meldingen: niet vast te stellen';
+    try {
+      const OS = window.__pmxOS;
+      if (!OS) {
+        serverRegel = '· server-meldingen: OneSignal niet geladen';
+      } else {
+        const sub = OS.User && OS.User.PushSubscription;
+        const id  = sub && sub.id;
+        const aan = sub && sub.optedIn;
+        if (id && aan !== false) {
+          serverRegel = '· server-meldingen: aangemeld (' + String(id).substring(0, 8) + '…)';
+          const t = window.__pmxTagStatus;
+          if (t && t.gezet === 'admin') serverRegel += ' · admin-tag actief';
+        } else {
+          serverRegel = '· server-meldingen: NIET aangemeld bij OneSignal';
+        }
+      }
+    } catch (e) { serverRegel = '· server-meldingen: check mislukt (' + e.message + ')'; }
+
+    setResult('✅ Melding op dit toestel verstuurd ' + serverRegel, '#16a34a');
+    setTimeout(() => { if (resultEl) { resultEl.textContent = 'Stuur een testmelding naar je telefoon'; resultEl.style.color = ''; } }, 12000);
   } catch(e) {
     setResult('⚠ Fout: ' + e.message, '#dc2626');
   }

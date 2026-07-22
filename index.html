@@ -61,10 +61,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="base.css?v=1784697692" />
-  <link rel="stylesheet" href="components.css?v=1784697692" />
-  <link rel="stylesheet" href="screens.css?v=1784697692" />
-  <link rel="stylesheet" href="new-theme.css?v=1784697692" />
+  <link rel="stylesheet" href="base.css?v=1784708272" />
+  <link rel="stylesheet" href="components.css?v=1784708272" />
+  <link rel="stylesheet" href="screens.css?v=1784708272" />
+  <link rel="stylesheet" href="new-theme.css?v=1784708272" />
 
   <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -662,32 +662,32 @@
 ══════════════════════════════════════════ -->
 
 <!-- 1. State -->
-<script src="state.js?v=1784697692"></script>
-<script src="i18n.js?v=1784697692"></script>
+<script src="state.js?v=1784708272"></script>
+<script src="i18n.js?v=1784708272"></script>
 
 <!-- 2. API -->
-<script src="api.js?v=1784697692"></script>
+<script src="api.js?v=1784708272"></script>
 
 <!-- 3. Utils -->
-<script src="football.js?v=1784697692"></script>
-<script src="ui.js?v=1784697692"></script>
-<script src="notifications.js?v=1784697692"></script>
+<script src="football.js?v=1784708272"></script>
+<script src="ui.js?v=1784708272"></script>
+<script src="notifications.js?v=1784708272"></script>
 
 <!-- 4. Router -->
-<script src="router.js?v=1784697692"></script>
+<script src="router.js?v=1784708272"></script>
 
 <!-- 5. Auth -->
-<script src="auth.js?v=1784697692"></script>
+<script src="auth.js?v=1784708272"></script>
 
 <!-- 6. Screens -->
-<script src="dashboard.js?v=1784697692"></script>
-<script src="wedstrijden.js?v=1784697692"></script>
-<script src="analyse.js?v=1784697692"></script>
-<script src="wallet.js?v=1784697692"></script>
-<script src="instellingen.js?v=1784697692"></script>
-<script src="analytics.js?v=1784697692"></script>
-<script src="vvv.js?v=1784697692"></script>
-<script src="wk2026.js?v=1784697692"></script>
+<script src="dashboard.js?v=1784708272"></script>
+<script src="wedstrijden.js?v=1784708272"></script>
+<script src="analyse.js?v=1784708272"></script>
+<script src="wallet.js?v=1784708272"></script>
+<script src="instellingen.js?v=1784708272"></script>
+<script src="analytics.js?v=1784708272"></script>
+<script src="vvv.js?v=1784708272"></script>
+<script src="wk2026.js?v=1784708272"></script>
 
 <!-- 7. App Init -->
 <script>
@@ -730,10 +730,63 @@
       serviceWorkerPath: '/OneSignalSDKWorker.js',
       notifyButton: { enable: false },
     });
+    // v26.332: pas NA de init beschikbaar maken. Tags die voor de init worden gezet
+    // komen niet bij OneSignal aan (bekend gedrag van de v16 SDK).
+    window.__pmxOS = OneSignal;
+    pmxSyncAdminTag('na-init');
   });
+
+  // ── Admin-tag synchroniseren ──────────────────────────────
+  // De tag role=admin bepaalt of dit toestel de operator-meldingen krijgt
+  // ('scan klaar', 'AI-fout'). Die tag stond ooit met de hand in het OneSignal-
+  // dashboard en verdween bij een herinstallatie; sindsdien landden die meldingen
+  // stil in het niets. De app zet hem nu zelf, op gezag van de worker.
+  window.__pmxTagStatus = { gemeten: false, admin: null, gezet: null, fout: null };
+  async function pmxSyncAdminTag(bron) {
+    const st = window.__pmxTagStatus;
+    try {
+      const OS = window.__pmxOS;
+      if (!OS) return;                                   // SDK nog niet klaar
+      const u = (typeof firebase !== 'undefined') && firebase.auth && firebase.auth().currentUser;
+      if (!u) return;                                    // nog niet ingelogd
+      const tok = await u.getIdToken();
+      const r = await fetch('https://api.promatchxi.app/am-i-admin', {
+        headers: { 'Authorization': 'Bearer ' + tok }
+      });
+      if (r.status === 503) {
+        // Tokencontrole niet uitvoerbaar. Dat is GEEN 'je bent geen admin' —
+        // de tag blijft staan zoals hij is.
+        st.fout = 'controle niet uitvoerbaar (503)';
+        console.warn('[AdminTag] worker kon niet controleren, tag ongemoeid gelaten');
+        return;
+      }
+      const d = await r.json();
+      st.gemeten = true; st.admin = d.admin; st.fout = null;
+      if (d.admin === true) {
+        OS.User.addTag('role', 'admin');
+        st.gezet = 'admin';
+        console.log('[AdminTag] role=admin gezet (' + bron + ')');
+      } else if (d.admin === false) {
+        OS.User.removeTag('role');
+        st.gezet = 'verwijderd';
+      }
+    } catch (e) {
+      st.fout = e.message;
+      console.warn('[AdminTag] mislukt:', e.message);
+    }
+  }
+  window.pmxSyncAdminTag = pmxSyncAdminTag;
 
   // ── Firebase Auth init (bepaalt welk scherm getoond wordt) ──
   initFirebaseAuth();
+
+  // v26.332: bij elke inlogwissel de admin-tag opnieuw bepalen. Zonder dit blijft
+  // de tag staan wanneer iemand anders op hetzelfde toestel inlogt.
+  try {
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+      firebase.auth().onAuthStateChanged(function () { pmxSyncAdminTag('auth-wissel'); });
+    }
+  } catch (e) { console.warn('[AdminTag] auth-listener niet gezet:', e.message); }
 
   // ── Bottom nav init ──
   initBottomNav();
@@ -893,7 +946,7 @@
   }
   </script>
 
-  <script src="consent.js?v=1784697692"></script>
+  <script src="consent.js?v=1784708272"></script>
   </body>
 </html>
 
