@@ -10,12 +10,17 @@ echo "     node $(node -v 2>/dev/null || echo '?'), git $(git --version 2>/dev/n
 
 echo "[2/4] Repo klaarzetten in $DIR ..."
 if [ -d "$DIR/.git" ]; then
-  git -C "$DIR" pull --ff-only --quiet 2>/dev/null || true
-  echo "     repo bijgewerkt"
+  if git -C "$DIR" fetch --depth 1 origin main && git -C "$DIR" reset --hard FETCH_HEAD >/dev/null; then
+    echo "     repo bijgewerkt naar $(git -C "$DIR" rev-parse --short HEAD)"
+  else
+    echo "[FOUT] repo bijwerken mislukt"; exit 1
+  fi
 else
   git clone --depth 1 https://github.com/RobLizet/Toto-AI.git "$DIR" >/dev/null 2>&1 && echo "     repo gekloond" || { echo "[FOUT] clonen mislukt"; exit 1; }
 fi
-chmod +x "$DIR/jobs/run.sh" 2>/dev/null || true
+# GEEN chmod +x op jobs/run.sh: git volgt het rechten-bitje, dat gaf een
+# permanente "lokale wijziging" die pulls blokkeerde. systemd start het script
+# via /usr/bin/bash, dus het uitvoerbaar-bitje is niet nodig.
 
 echo "[3/4] .env klaarzetten ..."
 if [ ! -f "$DIR/.env" ]; then
@@ -35,7 +40,7 @@ fi
 echo "[4/4] systemd service + timer plaatsen (timer nog UIT) ..."
 cat > /etc/systemd/system/pmx-jobs.service <<EOF
 [Unit]
-Description=ProMatchXI job runner (git pull + node)
+Description=ProMatchXI job runner (repo-sync + node)
 After=network-online.target
 Wants=network-online.target
 
