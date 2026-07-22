@@ -2,6 +2,13 @@
 // Leest v_elo_blend_backtest (model vs blend: Brier/hitrate/ROI) en logt een
 // snapshot in elo_blend_backtest_log — MAAR alleen als er echte data is (n_duels>0)
 // en de meting veranderd is t.o.v. de vorige. Pure Node, geen npm-deps.
+//
+// v2 (22-07-2026): schrijft op ELK uitgangspad een rij naar job_heartbeat.
+// Reden: v1 schreef alleen bij een nieuwe snapshot, waardoor "job draait prima
+// maar heeft niets te melden" niet te onderscheiden was van "job draait niet".
+const JOB_VERSION = 'jobv2';
+const JOB_NAME = 'elo_backtest';
+
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
@@ -29,6 +36,11 @@ if (!sbUrl || !sbKey || sbKey.indexOf('VUL_HIER') !== -1) {
   process.exit(1);
 }
 const host = sbUrl.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+
+// Code-herkomst: door run.sh meegegeven. Ontbreekt hij, dan zeggen we dat ook zo
+// (geen verzonnen waarde) — CIJFERBRON-regel.
+const gitSha = (typeof env.PMX_GIT_SHA === 'string' && env.PMX_GIT_SHA.length > 0) ? env.PMX_GIT_SHA : 'sha?';
+const gitPull = (typeof env.PMX_GIT_PULL === 'string' && env.PMX_GIT_PULL.length > 0) ? env.PMX_GIT_PULL : 'pull?';
 
 function sb(method, urlPath, bodyObj) {
   return new Promise((resolve, reject) => {
@@ -61,12 +73,35 @@ function sb(method, urlPath, bodyObj) {
   });
 }
 
+// Levensteken. Faalt dit, dan zeggen we dat hardop; het mag het echte
+// resultaat van de job niet maskeren.
+async function heartbeat(ok, note) {
+  const regel = `${JOB_VERSION} ${gitSha} ${gitPull} | ${note}`.slice(0, 280);
+  try {
+    await sb('POST', '/rest/v1/job_heartbeat', [{
+      job_name: JOB_NAME,
+      ran_at: new Date().toISOString(),
+      host: os.hostname(),
+      ok: ok,
+      note: regel
+    }]);
+    console.log(`[hb] ${ok ? 'ok' : 'FOUT'} — ${regel}`);
+  } catch (e) {
+    console.error('[hb-FOUT] levensteken niet weggeschreven:', e.message);
+  }
+}
+
+async function klaar(code, ok, note) {
+  await heartbeat(ok, note);
+  process.exit(code);
+}
+
 (async () => {
   const stamp = new Date().toISOString();
   try {
     const rows = await sb('GET', '/rest/v1/v_elo_blend_backtest?select=*');
     const bt = Array.isArray(rows) ? rows[0] : null;
-    if (!bt) { console.error('[FOUT] view gaf geen rij terug'); process.exit(1); }
+    if (!bt) { console.error('[FOUT] view gaf geen rij terug'); await klaar(1, false, 'v_elo_blend_backtest gaf 0 rijen terug'); return; }
 
     const n = (bt.n_duels === null || bt.n_duels === undefined) ? 0 : Number(bt.n_duels);
     console.log(`[elo_backtest] ${stamp} n_duels=${n} brier_model=${bt.brier_model} brier_blend=${bt.brier_blend}`);
@@ -74,19 +109,21 @@ function sb(method, urlPath, bodyObj) {
     // Nog geen echte data -> alleen alive-signaal, niets wegschrijven
     if (n === 0) {
       console.log('[ok] n_duels=0 — nog geen gematurede duels, niets te loggen (blend rijpt met het seizoen).');
-      process.exit(0);
+      await klaar(0, true, 'n_duels=0 — nog geen gematurede duels, geen snapshot');
+      return;
     }
 
     // Vorige snapshot ophalen om dubbele rijen te vermijden
     const last = await sb('GET', '/rest/v1/elo_blend_backtest_log?select=n_duels&order=id.desc&limit=1');
-    const lastN = (Array.isArray(last) && last[0] && last[0].n_duels !== null) ? Number(last[0].n_duels) : null;
+    const lastN = (Array.isArray(last) && last[0] && last[0].n_duels !== null && last[0].n_duels !== undefined) ? Number(last[0].n_duels) : null;
     if (lastN === n) {
       console.log(`[ok] n_duels ongewijzigd (${n}) — geen nieuwe snapshot.`);
-      process.exit(0);
+      await klaar(0, true, `n_duels ongewijzigd (${n}) — geen nieuwe snapshot`);
+      return;
     }
 
     const bm = bt.brier_model, bb = bt.brier_blend;
-    const blendBetter = (bm !== null && bb !== null) ? (Number(bb) < Number(bm)) : null;
+    const blendBetter = (bm !== null && bb !== null && bm !== undefined && bb !== undefined) ? (Number(bb) < Number(bm)) : null;
 
     const written = await sb('POST', '/rest/v1/elo_blend_backtest_log', [{
       n_duels: n,
@@ -97,9 +134,9 @@ function sb(method, urlPath, bodyObj) {
       host: os.hostname()
     }]);
     console.log('[OK] snapshot geschreven:', JSON.stringify(written).slice(0, 220));
-    process.exit(0);
+    await klaar(0, true, `snapshot geschreven: n_duels ${lastN === null ? 'geen' : lastN} -> ${n}, brier model=${bm} blend=${bb}, blend_beter=${blendBetter}`);
   } catch (e) {
     console.error('[FOUT]', e.message);
-    process.exit(1);
+    await klaar(1, false, ('ABORT: ' + e.message).slice(0, 240));
   }
 })();
