@@ -61,10 +61,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="base.css?v=1784697481" />
-  <link rel="stylesheet" href="components.css?v=1784697481" />
-  <link rel="stylesheet" href="screens.css?v=1784697481" />
-  <link rel="stylesheet" href="new-theme.css?v=1784697481" />
+  <link rel="stylesheet" href="base.css?v=1784697692" />
+  <link rel="stylesheet" href="components.css?v=1784697692" />
+  <link rel="stylesheet" href="screens.css?v=1784697692" />
+  <link rel="stylesheet" href="new-theme.css?v=1784697692" />
 
   <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -156,7 +156,7 @@
     padding:24px;padding-bottom:calc(24px + env(safe-area-inset-bottom));
     font-family:'DM Sans',system-ui,sans-serif;
     /* FAIL-SAFE: verdwijnt ook zonder JS */
-    animation:pmxSplashUit .6s ease 3.40s forwards;
+    animation:pmxSplashUit .7s ease 4.60s forwards;
   }
   html.pmx-warm #pmx-splash{display:none}
   @keyframes pmxSplashUit{to{opacity:0;visibility:hidden;pointer-events:none}}
@@ -172,14 +172,14 @@
   #pmx-splash .pmx-kol{
     display:flex;flex-direction:column;gap:7px;
     opacity:0;color:rgba(232,237,245,.10);
-    animation:pmxKolIn .65s ease forwards;
+    animation:pmxKolIn .8s ease forwards;
   }
-  #pmx-splash .pmx-kol span{transition:color .6s ease}
-  #pmx-splash .pmx-kol:nth-child(1){animation-delay:.06s}
-  #pmx-splash .pmx-kol:nth-child(2){animation-delay:.17s}
-  #pmx-splash .pmx-kol:nth-child(3){animation-delay:.28s}
-  #pmx-splash .pmx-kol:nth-child(4){animation-delay:.39s}
-  #pmx-splash .pmx-kol:nth-child(5){animation-delay:.50s}
+  #pmx-splash .pmx-kol span{transition:color .75s ease}
+  #pmx-splash .pmx-kol:nth-child(1){animation-delay:.08s}
+  #pmx-splash .pmx-kol:nth-child(2){animation-delay:.22s}
+  #pmx-splash .pmx-kol:nth-child(3){animation-delay:.36s}
+  #pmx-splash .pmx-kol:nth-child(4){animation-delay:.50s}
+  #pmx-splash .pmx-kol:nth-child(5){animation-delay:.64s}
   @keyframes pmxKolIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
   #pmx-splash.gekozen .pmx-kol{opacity:.22}
   #pmx-splash.gekozen .pmx-kol.pick{opacity:1}
@@ -187,14 +187,14 @@
   #pmx-splash.gekozen .pmx-kol.pick span.raak{color:#00BEC4;text-shadow:0 0 18px rgba(0,190,196,.35)}
 
   #pmx-splash .pmx-lijn{width:min(300px,78vw);opacity:0;transform:translateY(8px);
-    transition:opacity .65s ease,transform .65s ease}
+    transition:opacity .8s ease,transform .8s ease}
   #pmx-splash.lijnop .pmx-lijn{opacity:1;transform:none}
   #pmx-splash .pmx-spoor{position:relative;height:1px;background:rgba(232,237,245,.14);margin:0 0 16px}
   #pmx-splash .pmx-spoor::after{content:'';position:absolute;left:0;top:0;height:1px;width:0;
-    background:linear-gradient(90deg,transparent,#00BEC4);transition:width 1.35s cubic-bezier(.4,0,.2,1)}
+    background:linear-gradient(90deg,transparent,#00BEC4);transition:width 1.75s cubic-bezier(.4,0,.2,1)}
   #pmx-splash.lijnop .pmx-spoor::after{width:100%}
   #pmx-splash .pmx-punt{position:absolute;top:50%;left:0;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;
-    border-radius:50%;background:#00BEC4;transition:left 1.35s cubic-bezier(.4,0,.2,1)}
+    border-radius:50%;background:#00BEC4;transition:left 1.75s cubic-bezier(.4,0,.2,1)}
   #pmx-splash.lijnop .pmx-punt{left:100%}
   #pmx-splash .pmx-eind{display:flex;justify-content:space-between;
     font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.06em;
@@ -209,12 +209,12 @@
   #pmx-splash .pmx-delta small{display:block;font-weight:400;font-size:10px;
     color:rgba(232,237,245,.32);letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
 
-  #pmx-splash .pmx-merk{margin-top:44px;text-align:center;opacity:0;transition:opacity .7s ease}
+  #pmx-splash .pmx-merk{margin-top:44px;text-align:center;opacity:0;transition:opacity .85s ease}
   #pmx-splash.merkop .pmx-merk{opacity:1}
   #pmx-splash .pmx-merk h1{font-family:'Bebas Neue',Impact,sans-serif;
     font-size:clamp(38px,12vw,58px);font-weight:400;line-height:.9;
     letter-spacing:.42em;text-indent:.42em;color:#e8edf5;margin:0;
-    transition:letter-spacing 1.5s cubic-bezier(.2,0,.1,1),text-indent 1.5s cubic-bezier(.2,0,.1,1)}
+    transition:letter-spacing 1.9s cubic-bezier(.2,0,.1,1),text-indent 1.9s cubic-bezier(.2,0,.1,1)}
   #pmx-splash.merkop .pmx-merk h1{letter-spacing:.13em;text-indent:.13em}
   #pmx-splash .pmx-merk h1 i{font-style:normal;color:#00BEC4}
   #pmx-splash .pmx-merk p{margin:12px 0 0;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
@@ -294,18 +294,18 @@
     return;
   }
 
-  setTimeout(function(){ el.classList.add('gekozen'); }, 950);
+  setTimeout(function(){ el.classList.add('gekozen'); }, 1250);
   setTimeout(function(){
     el.classList.add('lijnop');
     var d = document.getElementById('pmx-delta'), t0 = Date.now();
     (function tel(){
-      var p = Math.min((Date.now()-t0)/1250, 1), s = 1-Math.pow(1-p,3);
+      var p = Math.min((Date.now()-t0)/1700, 1), s = 1-Math.pow(1-p,3);
       if (d) d.textContent = '+' + (6.8*s).toFixed(1) + '%';
       if (p < 1) requestAnimationFrame(tel);
     })();
-  }, 1500);
-  setTimeout(function(){ el.classList.add('merkop'); }, 2350);
-  setTimeout(sluit, 3400);                       // gelijk aan de CSS-fail-safe
+  }, 2050);
+  setTimeout(function(){ el.classList.add('merkop'); }, 3200);
+  setTimeout(sluit, 4600);                       // gelijk aan de CSS-fail-safe
 })();
 </script>
 
@@ -662,32 +662,32 @@
 ══════════════════════════════════════════ -->
 
 <!-- 1. State -->
-<script src="state.js?v=1784697481"></script>
-<script src="i18n.js?v=1784697481"></script>
+<script src="state.js?v=1784697692"></script>
+<script src="i18n.js?v=1784697692"></script>
 
 <!-- 2. API -->
-<script src="api.js?v=1784697481"></script>
+<script src="api.js?v=1784697692"></script>
 
 <!-- 3. Utils -->
-<script src="football.js?v=1784697481"></script>
-<script src="ui.js?v=1784697481"></script>
-<script src="notifications.js?v=1784697481"></script>
+<script src="football.js?v=1784697692"></script>
+<script src="ui.js?v=1784697692"></script>
+<script src="notifications.js?v=1784697692"></script>
 
 <!-- 4. Router -->
-<script src="router.js?v=1784697481"></script>
+<script src="router.js?v=1784697692"></script>
 
 <!-- 5. Auth -->
-<script src="auth.js?v=1784697481"></script>
+<script src="auth.js?v=1784697692"></script>
 
 <!-- 6. Screens -->
-<script src="dashboard.js?v=1784697481"></script>
-<script src="wedstrijden.js?v=1784697481"></script>
-<script src="analyse.js?v=1784697481"></script>
-<script src="wallet.js?v=1784697481"></script>
-<script src="instellingen.js?v=1784697481"></script>
-<script src="analytics.js?v=1784697481"></script>
-<script src="vvv.js?v=1784697481"></script>
-<script src="wk2026.js?v=1784697481"></script>
+<script src="dashboard.js?v=1784697692"></script>
+<script src="wedstrijden.js?v=1784697692"></script>
+<script src="analyse.js?v=1784697692"></script>
+<script src="wallet.js?v=1784697692"></script>
+<script src="instellingen.js?v=1784697692"></script>
+<script src="analytics.js?v=1784697692"></script>
+<script src="vvv.js?v=1784697692"></script>
+<script src="wk2026.js?v=1784697692"></script>
 
 <!-- 7. App Init -->
 <script>
@@ -893,7 +893,7 @@
   }
   </script>
 
-  <script src="consent.js?v=1784697481"></script>
+  <script src="consent.js?v=1784697692"></script>
   </body>
 </html>
 
