@@ -61,10 +61,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="base.css?v=1784677431" />
-  <link rel="stylesheet" href="components.css?v=1784677431" />
-  <link rel="stylesheet" href="screens.css?v=1784677431" />
-  <link rel="stylesheet" href="new-theme.css?v=1784677431" />
+  <link rel="stylesheet" href="base.css?v=1784697246" />
+  <link rel="stylesheet" href="components.css?v=1784697246" />
+  <link rel="stylesheet" href="screens.css?v=1784697246" />
+  <link rel="stylesheet" href="new-theme.css?v=1784697246" />
 
   <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -135,8 +135,180 @@
     "publisher": { "@type": "Organization", "name": "AppsMadeByRobB" }
   }
   </script>
+
+<!-- ═══ OPENINGSSCÈNE (v26.329) ═══════════════════════════
+     Speelt alleen bij een KOUDE start. CSS-fail-safe: de scène
+     fade hoe dan ook weg na 2,45s, ook als de JS eronder faalt.
+════════════════════════════════════════════════════════ -->
+<script>
+  // Vóór de eerste paint: bij een warme start meteen verbergen (geen flits).
+  try{
+    if (sessionStorage.getItem('pmx_splash_gezien') === '1')
+      document.documentElement.className += ' pmx-warm';
+  }catch(e){}
+</script>
+<style>
+  #pmx-splash{
+    position:fixed;inset:0;z-index:99999;
+    background:#0f1520;color:#e8edf5;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:24px;padding-bottom:calc(24px + env(safe-area-inset-bottom));
+    font-family:'DM Sans',system-ui,sans-serif;
+    /* FAIL-SAFE: verdwijnt ook zonder JS */
+    animation:pmxSplashUit .5s ease 2.45s forwards;
+  }
+  html.pmx-warm #pmx-splash{display:none}
+  @keyframes pmxSplashUit{to{opacity:0;visibility:hidden;pointer-events:none}}
+  #pmx-splash.pmx-uit{opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .35s ease,visibility .35s ease;animation:none}
+
+  #pmx-splash .pmx-markt{
+    display:flex;gap:clamp(14px,5vw,26px);
+    font-family:'IBM Plex Mono',ui-monospace,monospace;
+    font-size:clamp(11px,3.2vw,14px);
+    margin-bottom:34px;height:96px;
+  }
+  #pmx-splash .pmx-kol{
+    display:flex;flex-direction:column;gap:7px;
+    opacity:0;color:rgba(232,237,245,.10);
+    animation:pmxKolIn .5s ease forwards;
+  }
+  #pmx-splash .pmx-kol span{transition:color .45s ease}
+  #pmx-splash .pmx-kol:nth-child(1){animation-delay:.05s}
+  #pmx-splash .pmx-kol:nth-child(2){animation-delay:.13s}
+  #pmx-splash .pmx-kol:nth-child(3){animation-delay:.21s}
+  #pmx-splash .pmx-kol:nth-child(4){animation-delay:.29s}
+  #pmx-splash .pmx-kol:nth-child(5){animation-delay:.37s}
+  @keyframes pmxKolIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+  #pmx-splash.gekozen .pmx-kol{opacity:.22}
+  #pmx-splash.gekozen .pmx-kol.pick{opacity:1}
+  #pmx-splash.gekozen .pmx-kol.pick span{color:rgba(232,237,245,.45)}
+  #pmx-splash.gekozen .pmx-kol.pick span.raak{color:#00BEC4;text-shadow:0 0 18px rgba(0,190,196,.35)}
+
+  #pmx-splash .pmx-lijn{width:min(300px,78vw);opacity:0;transform:translateY(8px);
+    transition:opacity .5s ease,transform .5s ease}
+  #pmx-splash.lijnop .pmx-lijn{opacity:1;transform:none}
+  #pmx-splash .pmx-spoor{position:relative;height:1px;background:rgba(232,237,245,.14);margin:0 0 16px}
+  #pmx-splash .pmx-spoor::after{content:'';position:absolute;left:0;top:0;height:1px;width:0;
+    background:linear-gradient(90deg,transparent,#00BEC4);transition:width 1.05s cubic-bezier(.4,0,.2,1)}
+  #pmx-splash.lijnop .pmx-spoor::after{width:100%}
+  #pmx-splash .pmx-punt{position:absolute;top:50%;left:0;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;
+    border-radius:50%;background:#00BEC4;transition:left 1.05s cubic-bezier(.4,0,.2,1)}
+  #pmx-splash.lijnop .pmx-punt{left:100%}
+  #pmx-splash .pmx-eind{display:flex;justify-content:space-between;
+    font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:11px;letter-spacing:.06em;
+    color:rgba(232,237,245,.34);text-transform:uppercase}
+  #pmx-splash .pmx-eind b{display:block;font-weight:500;font-size:19px;letter-spacing:0;
+    color:#e8edf5;margin-top:5px;text-transform:none}
+  #pmx-splash .pmx-eind .r{text-align:right}
+  #pmx-splash .pmx-delta{margin-top:20px;text-align:center;
+    font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:13px;font-weight:600;
+    color:#25d48a;opacity:0;transition:opacity .4s ease .15s;letter-spacing:.04em}
+  #pmx-splash.lijnop .pmx-delta{opacity:1}
+  #pmx-splash .pmx-delta small{display:block;font-weight:400;font-size:10px;
+    color:rgba(232,237,245,.32);letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
+
+  #pmx-splash .pmx-merk{margin-top:44px;text-align:center;opacity:0;transition:opacity .55s ease}
+  #pmx-splash.merkop .pmx-merk{opacity:1}
+  #pmx-splash .pmx-merk h1{font-family:'Bebas Neue',Impact,sans-serif;
+    font-size:clamp(38px,12vw,58px);font-weight:400;line-height:.9;
+    letter-spacing:.42em;text-indent:.42em;color:#e8edf5;margin:0;
+    transition:letter-spacing 1.1s cubic-bezier(.2,0,.1,1),text-indent 1.1s cubic-bezier(.2,0,.1,1)}
+  #pmx-splash.merkop .pmx-merk h1{letter-spacing:.13em;text-indent:.13em}
+  #pmx-splash .pmx-merk h1 i{font-style:normal;color:#00BEC4}
+  #pmx-splash .pmx-merk p{margin:12px 0 0;font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    color:rgba(232,237,245,.34);opacity:0;transition:opacity .5s ease .45s}
+  #pmx-splash.merkop .pmx-merk p{opacity:1}
+
+  @media (prefers-reduced-motion:reduce){
+    #pmx-splash,#pmx-splash *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+    #pmx-splash{animation:pmxSplashUit .01ms ease 1.1s forwards}
+    #pmx-splash .pmx-spoor::after{width:100%}
+  }
+</style>
 </head>
 <body>
+
+<!-- ═══ OPENINGSSCÈNE ═══ -->
+<div id="pmx-splash" role="presentation" aria-hidden="true">
+  <div class="pmx-markt" id="pmx-markt"></div>
+  <div class="pmx-lijn">
+    <div class="pmx-spoor"><span class="pmx-punt"></span></div>
+    <div class="pmx-eind">
+      <div>instap<b>2.35</b></div>
+      <div class="r">aftrap<b>2.20</b></div>
+    </div>
+    <div class="pmx-delta"><span id="pmx-delta">+0.0%</span>
+      <small>de lijn kwam onze kant op</small></div>
+  </div>
+  <div class="pmx-merk">
+    <h1>PROMATCH<i>XI</i></h1>
+    <p>value voor de aftrap</p>
+  </div>
+</div>
+<script>
+(function(){
+  var el = document.getElementById('pmx-splash');
+  if (!el) return;
+  try{ if (sessionStorage.getItem('pmx_splash_gezien') === '1'){ el.remove(); return; } }catch(e){}
+  try{ sessionStorage.setItem('pmx_splash_gezien','1'); }catch(e){}
+
+  var KOL = [
+    ['1.94','1.96','1.95','1.97','1.95','1.96'],
+    ['2.28','2.31','2.29','2.30','2.27','2.29'],
+    ['2.29','2.31','2.35','2.28','2.24','2.20'],
+    ['3.05','3.10','3.08','3.12','3.09','3.11'],
+    ['1.71','1.70','1.72','1.69','1.71','1.70']
+  ], PICK = 2;
+
+  var markt = document.getElementById('pmx-markt');
+  if (markt){
+    for (var i=0;i<KOL.length;i++){
+      var k = document.createElement('div');
+      k.className = 'pmx-kol' + (i===PICK ? ' pick' : '');
+      for (var r=0;r<KOL[i].length;r++){
+        var s = document.createElement('span');
+        s.textContent = KOL[i][r];
+        if (i===PICK && (r===2 || r===5)) s.className = 'raak';
+        k.appendChild(s);
+      }
+      markt.appendChild(k);
+    }
+  }
+
+  var weg = false;
+  function sluit(){
+    if (weg) return; weg = true;
+    el.classList.add('pmx-uit');
+    setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+  }
+  el.addEventListener('click', sluit);          // tik = overslaan
+  el.addEventListener('touchstart', sluit, {passive:true});
+
+  var rustig = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (rustig){
+    el.className = 'gekozen lijnop merkop';
+    var d0 = document.getElementById('pmx-delta'); if (d0) d0.textContent = '+6.8%';
+    setTimeout(sluit, 1100);
+    return;
+  }
+
+  setTimeout(function(){ el.classList.add('gekozen'); }, 700);
+  setTimeout(function(){
+    el.classList.add('lijnop');
+    var d = document.getElementById('pmx-delta'), t0 = Date.now();
+    (function tel(){
+      var p = Math.min((Date.now()-t0)/900, 1), s = 1-Math.pow(1-p,3);
+      if (d) d.textContent = '+' + (6.8*s).toFixed(1) + '%';
+      if (p < 1) requestAnimationFrame(tel);
+    })();
+  }, 1100);
+  setTimeout(function(){ el.classList.add('merkop'); }, 1750);
+  setTimeout(sluit, 2450);                       // gelijk aan de CSS-fail-safe
+})();
+</script>
+
 
 <!-- ═══════════════════════════════════════════
      APP WRAPPER
@@ -490,32 +662,32 @@
 ══════════════════════════════════════════ -->
 
 <!-- 1. State -->
-<script src="state.js?v=1784677431"></script>
-<script src="i18n.js?v=1784677431"></script>
+<script src="state.js?v=1784697246"></script>
+<script src="i18n.js?v=1784697246"></script>
 
 <!-- 2. API -->
-<script src="api.js?v=1784677431"></script>
+<script src="api.js?v=1784697246"></script>
 
 <!-- 3. Utils -->
-<script src="football.js?v=1784677431"></script>
-<script src="ui.js?v=1784677431"></script>
-<script src="notifications.js?v=1784677431"></script>
+<script src="football.js?v=1784697246"></script>
+<script src="ui.js?v=1784697246"></script>
+<script src="notifications.js?v=1784697246"></script>
 
 <!-- 4. Router -->
-<script src="router.js?v=1784677431"></script>
+<script src="router.js?v=1784697246"></script>
 
 <!-- 5. Auth -->
-<script src="auth.js?v=1784677431"></script>
+<script src="auth.js?v=1784697246"></script>
 
 <!-- 6. Screens -->
-<script src="dashboard.js?v=1784677431"></script>
-<script src="wedstrijden.js?v=1784677431"></script>
-<script src="analyse.js?v=1784677431"></script>
-<script src="wallet.js?v=1784677431"></script>
-<script src="instellingen.js?v=1784677431"></script>
-<script src="analytics.js?v=1784677431"></script>
-<script src="vvv.js?v=1784677431"></script>
-<script src="wk2026.js?v=1784677431"></script>
+<script src="dashboard.js?v=1784697246"></script>
+<script src="wedstrijden.js?v=1784697246"></script>
+<script src="analyse.js?v=1784697246"></script>
+<script src="wallet.js?v=1784697246"></script>
+<script src="instellingen.js?v=1784697246"></script>
+<script src="analytics.js?v=1784697246"></script>
+<script src="vvv.js?v=1784697246"></script>
+<script src="wk2026.js?v=1784697246"></script>
 
 <!-- 7. App Init -->
 <script>
@@ -721,7 +893,7 @@
   }
   </script>
 
-  <script src="consent.js?v=1784677431"></script>
+  <script src="consent.js?v=1784697246"></script>
   </body>
 </html>
 
