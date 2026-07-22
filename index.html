@@ -61,10 +61,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="base.css?v=1784708272" />
-  <link rel="stylesheet" href="components.css?v=1784708272" />
-  <link rel="stylesheet" href="screens.css?v=1784708272" />
-  <link rel="stylesheet" href="new-theme.css?v=1784708272" />
+  <link rel="stylesheet" href="base.css?v=1784710451" />
+  <link rel="stylesheet" href="components.css?v=1784710451" />
+  <link rel="stylesheet" href="screens.css?v=1784710451" />
+  <link rel="stylesheet" href="new-theme.css?v=1784710451" />
 
   <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -662,32 +662,32 @@
 ══════════════════════════════════════════ -->
 
 <!-- 1. State -->
-<script src="state.js?v=1784708272"></script>
-<script src="i18n.js?v=1784708272"></script>
+<script src="state.js?v=1784710451"></script>
+<script src="i18n.js?v=1784710451"></script>
 
 <!-- 2. API -->
-<script src="api.js?v=1784708272"></script>
+<script src="api.js?v=1784710451"></script>
 
 <!-- 3. Utils -->
-<script src="football.js?v=1784708272"></script>
-<script src="ui.js?v=1784708272"></script>
-<script src="notifications.js?v=1784708272"></script>
+<script src="football.js?v=1784710451"></script>
+<script src="ui.js?v=1784710451"></script>
+<script src="notifications.js?v=1784710451"></script>
 
 <!-- 4. Router -->
-<script src="router.js?v=1784708272"></script>
+<script src="router.js?v=1784710451"></script>
 
 <!-- 5. Auth -->
-<script src="auth.js?v=1784708272"></script>
+<script src="auth.js?v=1784710451"></script>
 
 <!-- 6. Screens -->
-<script src="dashboard.js?v=1784708272"></script>
-<script src="wedstrijden.js?v=1784708272"></script>
-<script src="analyse.js?v=1784708272"></script>
-<script src="wallet.js?v=1784708272"></script>
-<script src="instellingen.js?v=1784708272"></script>
-<script src="analytics.js?v=1784708272"></script>
-<script src="vvv.js?v=1784708272"></script>
-<script src="wk2026.js?v=1784708272"></script>
+<script src="dashboard.js?v=1784710451"></script>
+<script src="wedstrijden.js?v=1784710451"></script>
+<script src="analyse.js?v=1784710451"></script>
+<script src="wallet.js?v=1784710451"></script>
+<script src="instellingen.js?v=1784710451"></script>
+<script src="analytics.js?v=1784710451"></script>
+<script src="vvv.js?v=1784710451"></script>
+<script src="wk2026.js?v=1784710451"></script>
 
 <!-- 7. App Init -->
 <script>
@@ -727,7 +727,15 @@
   OneSignalDeferred.push(async function(OneSignal) {
     await OneSignal.init({
       appId: '7efd1d2e-630e-48b3-bc32-2704e1a5dc2f',
-      serviceWorkerPath: '/OneSignalSDKWorker.js',
+      // v26.333: OneSignal krijgt een EIGEN scope. Stond op '/OneSignalSDKWorker.js'
+      // = scope '/', precies waar sw.js ook zit, en die doet skipWaiting()+claim() bij
+      // elke deploy. Een browser houdt per scope EEN service worker en het push-abonnement
+      // hangt aan die worker, dus elke frontend-deploy verdreef de OneSignal-worker en
+      // daarmee het abonnement. Gemeten 22-07 bij OneSignal: 181 van de 185 subscriptions
+      // hebben een dood pushtoken, en een push rechtstreeks naar het enige nog geldige
+      // token faalde ook (bezorgd 0 / mislukt 1).
+      serviceWorkerPath: 'onesignal/OneSignalSDKWorker.js',
+      serviceWorkerParam: { scope: '/onesignal/' },
       notifyButton: { enable: false },
     });
     // v26.332: pas NA de init beschikbaar maken. Tags die voor de init worden gezet
@@ -946,7 +954,7 @@
   }
   </script>
 
-  <script src="consent.js?v=1784708272"></script>
+  <script src="consent.js?v=1784710451"></script>
   </body>
 </html>
 
