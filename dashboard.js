@@ -446,6 +446,15 @@ function renderDashboard() {
   // tonen dat ook zo -- een globale teller zou iets anders beweren dan het model doet.
   // null = nog niet opgehaald of call mislukt: dan claimt de chip NIETS.
   const calib = state._calibStatus || null;
+  // v26.339: validatiestand van het CLUBTIJDPERK (worker v299). Het blok hierboven telt
+  // COMPETITIES, dit telt de PICKS waarop de Play Store-beslissing rust. gemeten !== true
+  // (call mislukt of veld ontbreekt) -> cv blijft null en er wordt niets getoond; een 0/100
+  // zou als meting lezen terwijl er niets gemeten is.
+  const cv = (calib && calib.club_validatie && calib.club_validatie.gemeten === true)
+    ? calib.club_validatie : null;
+  // === null i.p.v. falsy: een ROI of CLV van precies 0 is een meting, geen ontbrekende waarde.
+  const _cvNum = (v, suffix, plus) => (v === null || v === undefined)
+    ? '\u2014' : ((plus && v >= 0 ? '+' : '') + v + (suffix || ''));
 
   const _dashLang = (typeof pmxLang === 'function' ? pmxLang() : 'nl');
   const _flagBtn = (code, flag, label, on) =>
@@ -515,6 +524,23 @@ function renderDashboard() {
           + (calib.dichtstbij ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);width:100%;text-align:center;margin-top:.2rem;">${calib.dichtstbij.naam}: ${t('dash.nog','nog')} ${calib.dichtstbij.nog} ${t('dash.picks','picks')}</span>` : '')
           : `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);">${t('dash.nietgemeten','niet gemeten')}</span>`}
       </div>
+      <!-- v26.339: CLUBTIJDPERK-teller. De teller erboven telt ALLES (incl. WK en Primera Nacional
+           van voor 20-07); de Play Store-beslissing rust op clubdata en dat getal stond nergens.
+           Niet gemeten = geen blok, nooit een 0/100 die als meting leest. -->
+      ${cv ? `<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
+        <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;flex-wrap:wrap;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">\u26bd ${t('dash.clubera','CLUBTIJDPERK')}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:#00BEC4;">${cv.settled}/${cv.doel}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);">${t('dash.nog','nog')} ${cv.nog}</span>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:.35rem;overflow:hidden;">
+          <div style="height:100%;width:${Math.max(0, Math.min(100, Number(cv.pct) || 0))}%;background:#00BEC4;border-radius:3px;"></div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);text-align:center;margin-top:.3rem;">
+          hitrate ${_cvNum(cv.hitrate_pct,'%')} \u00b7 ROI ${_cvNum(cv.roi_pct,'%',true)} \u00b7 CLV ${_cvNum(cv.avg_clv,'',true)} (n=${cv.met_clv})
+        </div>
+        ${cv.settled < 30 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);text-align:center;margin-top:.15rem;opacity:.85;">${t('dash.teweinig','te weinig picks voor conclusies')}</div>` : ''}
+      </div>` : ''}
       ${state._clvSummary && Number(state._clvSummary.picks) >= 20 ? `<div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">\u{1F4C8} GEM. CLV</span>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${Number(state._clvSummary.avgCLV)>=0?'#00BEC4':'#ef4444'};">${Number(state._clvSummary.avgCLV)>=0?'+':''}${state._clvSummary.avgCLV}%</span>
