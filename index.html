@@ -61,10 +61,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
 
   <!-- CSS -->
-  <link rel="stylesheet" href="base.css?v=1784782363" />
-  <link rel="stylesheet" href="components.css?v=1784782363" />
-  <link rel="stylesheet" href="screens.css?v=1784782363" />
-  <link rel="stylesheet" href="new-theme.css?v=1784782363" />
+  <link rel="stylesheet" href="base.css?v=1784783597" />
+  <link rel="stylesheet" href="components.css?v=1784783597" />
+  <link rel="stylesheet" href="screens.css?v=1784783597" />
+  <link rel="stylesheet" href="new-theme.css?v=1784783597" />
 
   <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -156,12 +156,23 @@
     padding:24px;padding-bottom:calc(24px + env(safe-area-inset-bottom));
     font-family:'DM Sans',system-ui,sans-serif;
     /* FAIL-SAFE: verdwijnt ook zonder JS */
-    animation:pmxSplashUit .7s ease 4.60s forwards;
+    animation:pmxSplashUit 1s ease 5.00s forwards;
   }
   html.pmx-warm #pmx-splash{display:none}
   @keyframes pmxSplashUit{to{opacity:0;visibility:hidden;pointer-events:none}}
+  /* v26.336: uitgang van .35s naar .9s met een minieme lift (scale 1.015).
+     De splash-achtergrond is #0f1520 = exact --bg van body.dark, dus tijdens de
+     fade ligt het dashboard er al identiek onder: geen kleursprong, alleen de
+     inhoud die oplost. De verwijder-timer hieronder MOET langer zijn dan deze
+     transitie, anders knipt het element er alsnog uit. */
+  #pmx-splash{transition:opacity .9s cubic-bezier(.4,0,.2,1),transform .9s cubic-bezier(.4,0,.2,1),visibility .9s}
   #pmx-splash.pmx-uit{opacity:0;visibility:hidden;pointer-events:none;
-    transition:opacity .35s ease,visibility .35s ease;animation:none}
+    transform:scale(1.015);animation:none}
+  /* Rustige weergave: geen beweging en een korte fade. */
+  @media (prefers-reduced-motion: reduce){
+    #pmx-splash{transition:opacity .3s ease,visibility .3s ease}
+    #pmx-splash.pmx-uit{transform:none}
+  }
 
   #pmx-splash .pmx-markt{
     display:flex;gap:clamp(14px,5vw,26px);
@@ -281,7 +292,7 @@
   function sluit(){
     if (weg) return; weg = true;
     el.classList.add('pmx-uit');
-    setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+    setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 1000); // v26.336: > de .9s fade, anders knipt hij er alsnog uit
   }
   el.addEventListener('click', sluit);          // tik = overslaan
   el.addEventListener('touchstart', sluit, {passive:true});
@@ -304,8 +315,8 @@
       if (p < 1) requestAnimationFrame(tel);
     })();
   }, 2050);
-  setTimeout(function(){ el.classList.add('merkop'); }, 3200);
-  setTimeout(sluit, 4600);                       // gelijk aan de CSS-fail-safe
+  setTimeout(function(){ el.classList.add('merkop'); }, 3400);
+  setTimeout(sluit, 5000);                       // MOET gelijk zijn aan de CSS-fail-safe hierboven (5.00s)
 })();
 </script>
 
@@ -662,32 +673,32 @@
 ══════════════════════════════════════════ -->
 
 <!-- 1. State -->
-<script src="state.js?v=1784782363"></script>
-<script src="i18n.js?v=1784782363"></script>
+<script src="state.js?v=1784783597"></script>
+<script src="i18n.js?v=1784783597"></script>
 
 <!-- 2. API -->
-<script src="api.js?v=1784782363"></script>
+<script src="api.js?v=1784783597"></script>
 
 <!-- 3. Utils -->
-<script src="football.js?v=1784782363"></script>
-<script src="ui.js?v=1784782363"></script>
-<script src="notifications.js?v=1784782363"></script>
+<script src="football.js?v=1784783597"></script>
+<script src="ui.js?v=1784783597"></script>
+<script src="notifications.js?v=1784783597"></script>
 
 <!-- 4. Router -->
-<script src="router.js?v=1784782363"></script>
+<script src="router.js?v=1784783597"></script>
 
 <!-- 5. Auth -->
-<script src="auth.js?v=1784782363"></script>
+<script src="auth.js?v=1784783597"></script>
 
 <!-- 6. Screens -->
-<script src="dashboard.js?v=1784782363"></script>
-<script src="wedstrijden.js?v=1784782363"></script>
-<script src="analyse.js?v=1784782363"></script>
-<script src="wallet.js?v=1784782363"></script>
-<script src="instellingen.js?v=1784782363"></script>
-<script src="analytics.js?v=1784782363"></script>
-<script src="vvv.js?v=1784782363"></script>
-<script src="wk2026.js?v=1784782363"></script>
+<script src="dashboard.js?v=1784783597"></script>
+<script src="wedstrijden.js?v=1784783597"></script>
+<script src="analyse.js?v=1784783597"></script>
+<script src="wallet.js?v=1784783597"></script>
+<script src="instellingen.js?v=1784783597"></script>
+<script src="analytics.js?v=1784783597"></script>
+<script src="vvv.js?v=1784783597"></script>
+<script src="wk2026.js?v=1784783597"></script>
 
 <!-- 7. App Init -->
 <script>
@@ -954,7 +965,7 @@
   }
   </script>
 
-  <script src="consent.js?v=1784782363"></script>
+  <script src="consent.js?v=1784783597"></script>
   </body>
 </html>
 
