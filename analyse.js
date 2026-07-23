@@ -2934,6 +2934,61 @@ function openScanLog(arg) {
   }, 250);
 }
 
+// v26.334b: EEN BRON voor het hele TRACKRECORD-blok. renderScanLog, de ROI-grafiek,
+// de filters, de statistiek-popup en de CSV-export lazen allemaal state.scanLog --
+// een lijst die sinds 15-06 bevroren is (zie v26.334). Deze bouwer levert dezelfde
+// VORM ({id,timestamp,date,time,picks:[]}) uit de echte backend-picks, zodat al die
+// lezers ongewijzigd blijven werken en niet uit elkaar kunnen lopen (les van v265).
+// Een "scan" is hier een SPEELDAG: dat is de eenheid waarin een gebruiker denkt.
+function pmxBackendScanLog() {
+  var bron = (typeof pmxKwaliPicks === 'function')
+    ? pmxKwaliPicks(state._qualityPicks || [], true)
+    : (state._qualityPicks || []);
+  var perDag = {};
+  bron.forEach(function(p) {
+    var d = p.matchDate || p.match_date || null;
+    var k = d ? String(d).slice(0, 10) : 'onbekend';
+    // Normaliseren naar de velden die de bestaande lezers verwachten. Falsy-nul
+    // vermeden: 0.0 odds/value/confidence is een meting, geen ontbrekende waarde.
+    (perDag[k] = perDag[k] || []).push({
+      id:          p.id,
+      fixtureId:   p.fixtureId || p.fixture_id || null,
+      match:       p.match || ((p.home || '') + ' vs ' + (p.away || '')),
+      comp:        p.comp || p.leagueName || p.league_name || '',
+      pick:        p.pick || '',
+      pickLabel:   p.pickLabel || p.pick_label || '',
+      odds:        (p.odds === null || p.odds === undefined) ? null : Number(p.odds),
+      value:       (p.value === null || p.value === undefined) ? null : Number(p.value),
+      confidence:  (p.confidence === null || p.confidence === undefined) ? null : Number(p.confidence),
+      confidenceFinal: (p.confidenceFinal === null || p.confidenceFinal === undefined) ? null : Number(p.confidenceFinal),
+      elite:       p.elite === true,
+      status:      p.status || 'pending',
+      score:       (p.score === null || p.score === undefined || p.score === '') ? null : String(p.score),
+      matchDate:   d,
+      matchTime:   p.matchTime || p.match_time || null,
+      sharpTier:   p.sharpTier || p.sharp_tier || null
+    });
+  });
+  // 'onbekend' sorteert alfabetisch NA de jaartallen en zou bij reverse bovenaan
+  // eindigen. Een pick zonder datum hoort niet de lijst aan te voeren -> achteraan.
+  return Object.keys(perDag).sort(function(a, b) {
+    if (a === 'onbekend') return 1;
+    if (b === 'onbekend') return -1;
+    return a < b ? 1 : (a > b ? -1 : 0);
+  }).map(function(dag) {
+    var t = (dag === 'onbekend') ? null : Date.parse(dag + 'T12:00:00');
+    return {
+      id: 'dag-' + dag,
+      timestamp: (t === null || !isFinite(t)) ? 0 : t,
+      date: (dag === 'onbekend') ? 'onbekend'
+            : (function(){ var q = dag.split('-'); return String(Number(q[2])) + '-' + String(Number(q[1])) + '-' + q[0]; })(),
+      dagISO: dag,
+      time: '',
+      picks: perDag[dag]
+    };
+  });
+}
+
 function renderScanLog() {
   const el = document.getElementById('scan-log-content');
   if (!el) return;
@@ -2945,7 +3000,7 @@ function renderScanLog() {
     }
   }).catch(() => {});
 
-  const log       = state.scanLog || [];
+  const log       = pmxBackendScanLog(); // v26.334b: backend-picks, niet meer de bevroren state.scanLog
 
   // ── Zoek/filter state ──────────────────────────────
   if (!window._scanFilter) window._scanFilter = { q:'', conf:'', pick:'', comp:'', status:'', odds:'', sort:'newest', sharp:false };
@@ -3086,7 +3141,10 @@ function renderScanLog() {
     + '<button class="small-action-btn" onclick="verifyScanLog().then(n=>{showToast(n>0?n+\' picks geverifieerd\':\'Geen nieuwe resultaten\');renderScanLog();}).catch(e=>showToast(\'⚠ \'+e.message))">🔄 Verificeer</button>'
     + '<button class="small-action-btn" onclick="showScanLogStatsPopup()">📊 Stats</button>'
     + '<button class="small-action-btn" onclick="exportScanLogCSV()">📥 CSV</button>'
-    + '<button class="small-action-btn" style="color:#dc2626;" onclick="if(confirm(\'Scan log wissen?\')){\'state.scanLog=[];saveState();renderScanLog();}">🗑</button>'
+    /* v26.334b: wisknop verwijderd. Hij wiste state.scanLog (nu niet meer de bron) en
+       bevatte bovendien een syntaxfout in het onclick-attribuut (losse quote na de
+       accolade), waardoor hij vermoedelijk nooit heeft gewerkt. Backend-picks horen
+       niet vanuit de app gewist te worden -- die zijn het trackrecord. */
     + '</div></div>';
 
   // ── Zoek & Filter bar ─────────────────────────────
@@ -3326,19 +3384,16 @@ function renderScanLog() {
     // bevroor daardoor op 15-06 en toonde 49 handmatige WK-scans, terwijl de backend
     // sindsdien honderden scans draaide. Een kop 'SCANS 49' die iets anders telt dan
     // wat de gebruiker denkt, is een bewering zonder bron.
-    var _tPicks = (typeof pmxKwaliPicks === 'function')
-      ? pmxKwaliPicks(state._qualityPicks || [], true)
-      : (state._qualityPicks || []);
-
-    // Per speeldag groeperen. matchDate is de dag waarop gespeeld is; ontbreekt hij,
-    // dan valt de pick onder 'datum onbekend' i.p.v. stilzwijgend onder vandaag.
+    // v26.334b: op de GEFILTERDE set, zodat de zoek-/filterbalk erboven ook echt
+    // op dit blok werkt. filteredLog komt uit pmxBackendScanLog() (backend-picks).
+    var _tPicks = allPicks;
     var _perDag = {};
-    _tPicks.forEach(function(p) {
-      var d = p.matchDate || p.match_date || null;
-      var k = d ? String(d).slice(0, 10) : 'onbekend';
-      (_perDag[k] = _perDag[k] || []).push(p);
+    var _dagen = [];
+    filteredLog.forEach(function(sc) {
+      if (!sc.picks || !sc.picks.length) return;
+      _perDag[sc.dagISO || sc.date] = sc.picks;
+      _dagen.push(sc.dagISO || sc.date);
     });
-    var _dagen = Object.keys(_perDag).sort().reverse();
 
     var _tW = _tPicks.filter(function(p){ return p.status === 'win'; }).length;
     var _tL = _tPicks.filter(function(p){ return p.status === 'lose'; }).length;
@@ -3376,9 +3431,9 @@ function renderScanLog() {
         var dw = rij.filter(function(p){ return p.status === 'win'; }).length;
         var dl = rij.filter(function(p){ return p.status === 'lose'; }).length;
         var dp = rij.filter(function(p){ return p.status === 'pending'; }).length;
-        var dagLabel = (dag === 'onbekend')
+        var dagLabel = (dag === 'onbekend' || dag.indexOf('-') === -1)
           ? 'datum onbekend'
-          : (function(){ var t = dag.split('-'); return t[2] + '-' + t[1] + '-' + t[0]; })();
+          : (function(){ var t = dag.split('-'); return (t[0].length === 4) ? (t[2] + '-' + t[1] + '-' + t[0]) : dag; })();
         var gezicht = (!dw && !dl) ? '⏳' : (dw > dl ? '😄' : (dl > dw ? '😢' : '😐'));
 
         html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.6rem .7rem;margin-bottom:.5rem;">';
@@ -3515,7 +3570,7 @@ function renderScanLog() {
 
 
 function showScanPopup(scanIdx) {
-  const log = state.scanLog || [];
+  const log = pmxBackendScanLog(); // v26.334b
   const scan = log[scanIdx];
   if (!scan) return;
 
@@ -3606,7 +3661,7 @@ function showScanPopup(scanIdx) {
 
 
 function showScanLogStatsPopup() {
-  const log = state.scanLog || [];
+  const log = pmxBackendScanLog(); // v26.334b
   const allPicks = log.flatMap(s => s.picks);
   const settled  = allPicks.filter(p => p.status === 'win' || p.status === 'lose');
   const wins     = settled.filter(p => p.status === 'win');
@@ -3755,7 +3810,7 @@ function showScanLogStatsPopup() {
 }
 
 function exportScanLogCSV() {
-  const log = state.scanLog || [];
+  const log = pmxBackendScanLog(); // v26.334b
   if (!log.length) { showToast('Geen scan data'); return; }
   const rows = [['Scan#','Datum','Tijd','Wedstrijd','Competitie','Pick','Odds','Value%','Confidence','Status','Score']];
   log.forEach(function(scan, si) {
