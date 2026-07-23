@@ -26,7 +26,8 @@ async function loadClaudeInsight(force) {
     } catch(e) {}
   }
   el.innerHTML = '<div style="padding:1rem;text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.88);">\u29d7 Claude analyseert je data...</div>';
-  const sl = state.scanLog || [];
+  // v26.338: ook deze las de bevroren state.scanLog -> Claude kreeg 0 picks te zien.
+  const sl = (typeof pmxBackendScanLog === 'function') ? pmxBackendScanLog() : (state.scanLog || []);
   const ap = sl.flatMap(s => s.picks || []);
   const st = ap.filter(p => p.status==='win'||p.status==='lose');
   const w  = st.filter(p => p.status==='win');
@@ -369,7 +370,8 @@ function renderAnalyseScreen() {
     || (state.valueScans||[]).length > 0
     || (state.lastScanResults||[]).length > 0;
 
-  const scanLog = state.scanLog || [];
+  // v26.338: zelfde bevroren bron; nu de echte backend-picks.
+  const scanLog = (typeof pmxBackendScanLog === 'function') ? pmxBackendScanLog() : (state.scanLog || []);
   const allPicks = scanLog.flatMap(s => s.picks || []);
   const DREMPEL = { minValue: 8, minConf: 6 };
   const kwaliPicks = allPicks.filter(p =>
@@ -419,9 +421,14 @@ function renderAnalyseScreen() {
   // ── SCAN LOG — standaard ingeklapt ───────────────────
   html += '<div class="analyse-block" id="analyse-scanlog-block" style="padding:0;overflow:hidden;">';
   html += '<div class="analyse-block-header" onclick="(function(el){var c=document.getElementById(\'scan-log-content\');var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'block\';el.querySelector(\'.sl-chevron\').style.transform=open?\'rotate(0deg)\':\'rotate(180deg)\';if(!open&&typeof renderScanLog===\'function\')renderScanLog();}).call(null,this.closest(\'.analyse-block\'))" style="cursor:pointer;padding:1rem 1.1rem;">';
-  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">📋 SCAN HISTORY</div>';
+  html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#fff;letter-spacing:.05em;">📋 TRACKRECORD</div>';
   html += '<div style="display:flex;align-items:center;gap:.5rem;">';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.88);">' + (state.scanLog||[]).length + ' scans</div>';
+  // v26.338: kop las nog state.scanLog (bevroren sinds 15-06) en toonde daardoor '0 scans'
+  // naast een blok vol echte picks. Nu dezelfde bron als de inhoud eronder.
+  var _kopN = (typeof pmxBackendScanLog === 'function')
+    ? pmxBackendScanLog().reduce(function(n, d){ return n + (d.picks ? d.picks.length : 0); }, 0)
+    : 0;
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.88);">' + _kopN + ' pick' + (_kopN === 1 ? '' : 's') + '</div>';
   html += '<svg class="sl-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>';
   html += '</div></div>';
   html += '<div id="scan-log-content" style="display:none;"></div>';

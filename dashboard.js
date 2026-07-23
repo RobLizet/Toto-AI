@@ -323,12 +323,17 @@ async function loadQualityPicks() {
   if (state._qualityPicksLoading) return;
   state._qualityPicksLoading = true;
   try {
-    const [pr, ar] = await Promise.all([
+    // v26.338: calibratie meegehaald in dezelfde ronde -- geen extra laadmoment.
+    const [pr, ar, cr] = await Promise.all([
       fetch('https://api.promatchxi.app/picks'),
       fetch('https://api.promatchxi.app/analytics'),
+      fetch('https://api.promatchxi.app/calibration-status').catch(() => null),
     ]);
     if (pr.ok) { const d = await pr.json(); state._qualityPicks = d.picks || (Array.isArray(d) ? d : []); }
     if (ar.ok) { const a = await ar.json(); state._clvSummary = a.clvSummary || null; } // v26.120: CLV op home
+    // Mislukte call laat _calibStatus op null: de chip zegt dan 'niet gemeten' i.p.v.
+    // een 0 te tonen die als meting zou lezen (worker geeft 503 met gemeten:false).
+    if (cr && cr.ok) { const c = await cr.json(); state._calibStatus = (c && c.gemeten === true) ? c : null; }
     if (typeof renderDashboard === 'function') renderDashboard();
   } catch(e) { console.warn('[Dashboard] kwaliteitspicks niet bereikbaar:', e.message); }
   finally { state._qualityPicksLoading = false; }
@@ -433,9 +438,14 @@ function renderDashboard() {
   const wkEnd = new Date('2026-07-20T00:00:00');
   const wkEndDiff = wkEnd - now;
 
-  // Calibratie status
-  const calibMeta = window._calibrationCache?.meta || {};
-  const isCalibrated = (calibMeta.settledBets || 0) >= 10;
+  // Calibratie status -- v26.338: uit /calibration-status (worker v294).
+  // GEMETEN 23-07: window._calibrationCache werd NERGENS gezet (1 treffer in alle 20
+  // js-bestanden = de leesregel zelf), dus stond de chip permanent op 'AI LEERT 0/10'
+  // terwijl league_calibration 29 afgerekende picks over 6 competities bevatte.
+  // De gate is PER COMPETITIE (calculateConfidenceV20 mengt per league_id), dus we
+  // tonen dat ook zo -- een globale teller zou iets anders beweren dan het model doet.
+  // null = nog niet opgehaald of call mislukt: dan claimt de chip NIETS.
+  const calib = state._calibStatus || null;
 
   const _dashLang = (typeof pmxLang === 'function' ? pmxLang() : 'nl');
   const _flagBtn = (code, flag, label, on) =>
@@ -497,10 +507,13 @@ function renderDashboard() {
         <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${scanROI !== null && scanROI >= 0 ? '#00BEC4' : '#ef4444'};line-height:1;">${scanROI !== null ? (scanROI>=0?'+':'')+scanROI.toFixed(1)+'%' : '—'}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
         <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${winStreak >= 3 ? '#00BEC4' : winStreak >= 1 ? '#d97706' : '#ffffff'};line-height:1;">${winStreak > 0 ? '🔥'+winStreak : winPicks.length+'/'+settledPicks.length}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">${winStreak > 0 ? 'STREAK' : 'W/L'}</div></div>
       </div>
-      <!-- v26.297: AI-calibratie-chip (samengevoegd uit oude TRACKRECORD-kaart); teller = calibMeta.settledBets (correcte gate), niet settledPicks.length -->
-      <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">🤖 ${isCalibrated?t('dash.aicalib','AI GECALIB.'):t('dash.ailearn','AI LEERT')}</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${isCalibrated?'#00BEC4':'#d97706'};">${isCalibrated?'✓':`${(calibMeta.settledBets||0)}/10`}</span>
+      <!-- v26.338: AI-calibratie per competitie uit /calibration-status. Niet gemeten = geen bewering. -->
+      <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">🤖 ${t('dash.aicalib2','AI GEKALIBREERD')}</span>
+        ${(calib && calib.gemeten === true)
+          ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${calib.competities_gekalibreerd > 0 ? '#00BEC4' : '#d97706'};">${calib.competities_gekalibreerd}/${calib.competities_met_picks} ${t('dash.comps','comp.')}</span>`
+          + (calib.dichtstbij ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);width:100%;text-align:center;margin-top:.2rem;">${calib.dichtstbij.naam}: ${t('dash.nog','nog')} ${calib.dichtstbij.nog} ${t('dash.picks','picks')}</span>` : '')
+          : `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);">${t('dash.nietgemeten','niet gemeten')}</span>`}
       </div>
       ${state._clvSummary && Number(state._clvSummary.picks) >= 20 ? `<div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">\u{1F4C8} GEM. CLV</span>
