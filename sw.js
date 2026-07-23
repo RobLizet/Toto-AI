@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.289'; // v26.333: OneSignal-worker naar eigen scope /onesignal/ -- sw.js claimde scope / en sloopte bij elke deploy het pushabonnement // v26.325: oddsvergelijker A (vergelijk 13 boeken per pick) // v26.324: WK-scaffolding opgeruimd -> 19 CLUB19-competities terug in KIES COMPETITIE + wit-op-wit tegelnaam gefixt
+const SW_VERSION = '36.290'; // v26.334: SCANS-blok -> TRACKRECORD uit backend-picks; dode logScanResult verwijderd // v26.333: OneSignal-worker naar eigen scope /onesignal/ -- sw.js claimde scope / en sloopte bij elke deploy het pushabonnement // v26.325: oddsvergelijker A (vergelijk 13 boeken per pick) // v26.324: WK-scaffolding opgeruimd -> 19 CLUB19-competities terug in KIES COMPETITIE + wit-op-wit tegelnaam gefixt
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });

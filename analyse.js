@@ -2679,79 +2679,14 @@ function loadAICombiIntoBuilder() {
 // ═══════════════════════════════════════════════════════
 // SCAN LOG — 100 scans trackrecord voor Play Store
 // ═══════════════════════════════════════════════════════
-
-function logScanResult(picks) {
-  if (!picks || !picks.length) return;
-  const today = new Date().toLocaleDateString('nl-NL');
-  const todayISO = new Date().toISOString().split('T')[0];
-  const filtered = picks; // Alle picks opslaan, ook onder drempel
-  if (!filtered.length) return;
-
-  const log = state.scanLog || [];
-  const todayIds = new Set();
-  log.forEach(scan => {
-    if (scan.date === today) {
-      scan.picks.forEach(p => { if (p.fixtureId) todayIds.add(String(p.fixtureId) + '_' + p.pick); });
-    }
-  });
-
-  const newPicks = filtered.map(p => {
-    const home = p.match && p.match.home ? p.match.home : (p.home || '');
-    const away = p.match && p.match.away ? p.match.away : (p.away || '');
-    const fixtureId = (p.match && p.match.id) ? p.match.id : (p.fixtureId || p.id);
-    return {
-      id:          p.id,
-      fixtureId:   fixtureId,
-      match:       home + ' vs ' + away,
-      comp:        (p.match && p.match.comp) || p.comp || p.compName || '',
-      pick:        p.pick || '1',
-      pickLabel:   p.pickLabel || p.label || '',
-      odds:        parseFloat(p.odds || 2),
-      value:       parseFloat(p.value || 0),
-      confidence:  parseInt(p.confidence || 7),
-      aiKans:      p.kans || 0,
-      kelly:       parseFloat((p.kelly || 0).toFixed(1)),
-      reason:      p.reason || '',
-      poissonUsed: p.poissonUsed || false,
-      poissonK1:   p.poissonK1,
-      poissonKX:   p.poissonKX,
-      poissonK2:   p.poissonK2,
-      marketSignal: (typeof marketSignalFromMarket === 'function') ? marketSignalFromMarket(p.market, p.pick || '1') : null,
-      matchTime:   (p.match && p.match.date) || p.matchTime || p.kickoff || null,
-      matchDate:   (p.match && p.match.dateStr) || p.matchDate || null,
-      status:      'pending',
-      score:       null,
-      verifiedAt:  null
-    };
-  }).map(p => {
-    // Bereken confidenceFinal en elite via v20 Confidence Engine
-    const leagueId = p.leagueId || (p.match && p.match.leagueId) || (p.match && p.match.comp) || null;
-    const cv = calculateConfidenceV20(p, leagueId, null);
-    p.confidenceFinal = cv.confidenceFinal;
-    p.elite = cv.elite;
-    return p;
-  }).filter(p => {
-    const key = String(p.fixtureId) + '_' + p.pick;
-    if (todayIds.has(key)) return false;
-    todayIds.add(key);
-    return true;
-  });
-
-  if (!newPicks.length) return;
-
-  log.unshift({
-    id: Date.now(),
-    timestamp: Date.now(),
-    date: today,
-    time: new Date().toLocaleTimeString('nl-NL', {hour:'2-digit', minute:'2-digit'}),
-    picks: newPicks
-  });
-  state.scanLog = log.slice(0, 100);
-  saveState();
-
-  // Sync naar Firebase picks/ zodat worker picks en app picks samenkomen
-  syncPicksToFirebase(newPicks);
-}
+// SCAN LOG — VERWIJDERD in v26.334 (optie A)
+// logScanResult() schreef state.scanLog, maar werd NERGENS aangeroepen (gemeten
+// 23-07: 0 treffers in alle 20 js-bestanden + index.html). De lijst bevroor op
+// 15-06 en toonde daarna handmatige WK-scans onder de kop 'SCANS'. Het scherm
+// leest nu de echte backend-picks; zie het TRACKRECORD-blok in renderScanLog.
+// state.scanLog blijft in localStorage staan -- niets weggegooid, alleen niet
+// meer getoond. De lezers hieronder (grafiek, filters) zijn onaangeroerd.
+// ═══════════════════════════════════════════════════════
 
 // Converteert "22-5-2026" naar "2026-05-22" voor Firebase settlement
 function normalizeDateISO(dateStr, fallback) {
@@ -3385,118 +3320,108 @@ function renderScanLog() {
       + '</div>';
   }
 
+    // v26.334 (optie C): TRACKRECORD uit de BACKEND-picks i.p.v. state.scanLog.
+    // Gemeten 23-07: logScanResult() -- de enige schrijver van state.scanLog -- wordt
+    // NERGENS aangeroepen (0 treffers in alle 20 js-bestanden + index.html). De lijst
+    // bevroor daardoor op 15-06 en toonde 49 handmatige WK-scans, terwijl de backend
+    // sindsdien honderden scans draaide. Een kop 'SCANS 49' die iets anders telt dan
+    // wat de gebruiker denkt, is een bewering zonder bron.
+    var _tPicks = (typeof pmxKwaliPicks === 'function')
+      ? pmxKwaliPicks(state._qualityPicks || [], true)
+      : (state._qualityPicks || []);
+
+    // Per speeldag groeperen. matchDate is de dag waarop gespeeld is; ontbreekt hij,
+    // dan valt de pick onder 'datum onbekend' i.p.v. stilzwijgend onder vandaag.
+    var _perDag = {};
+    _tPicks.forEach(function(p) {
+      var d = p.matchDate || p.match_date || null;
+      var k = d ? String(d).slice(0, 10) : 'onbekend';
+      (_perDag[k] = _perDag[k] || []).push(p);
+    });
+    var _dagen = Object.keys(_perDag).sort().reverse();
+
+    var _tW = _tPicks.filter(function(p){ return p.status === 'win'; }).length;
+    var _tL = _tPicks.filter(function(p){ return p.status === 'lose'; }).length;
+    var _tP = _tPicks.filter(function(p){ return p.status === 'pending'; }).length;
+    var _tHr = (_tW + _tL) ? Math.round(_tW / (_tW + _tL) * 100) : null;
+
     html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem;">'
       + '<div style="width:3px;height:1.1rem;background:#c9a84c;border-radius:2px;flex-shrink:0;"></div>'
-      + '<div style="font-family:\'Bebas Neue\',\'DM Sans\',sans-serif;font-size:1.4rem;letter-spacing:.04em;color:#ffffff;">SCANS</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;font-weight:700;color:#c9a84c;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:99px;padding:.1rem .5rem;">' + log.length + '</div>'
+      + '<div style="font-family:\'Bebas Neue\',\'DM Sans\',sans-serif;font-size:1.4rem;letter-spacing:.04em;color:#ffffff;">TRACKRECORD</div>'
+      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;font-weight:700;color:#c9a84c;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:99px;padding:.1rem .5rem;">' + _tPicks.length + '</div>'
       + '</div>';
 
-  if (!log.length) {
-    html += '<div style="text-align:center;padding:2.5rem 1rem;background:rgba(255,255,255,.05);border-radius:16px;border:1px dashed rgba(201,168,76,.4);">'
-      + '<div style="font-size:2rem;margin-bottom:.5rem;">🎯</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;color:#ffffff;font-weight:700;">Nog geen scans</div>'
-      + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;color:rgba(255,255,255,.95);margin-top:.3rem;">Voer een value scan uit via de Scan &amp; Analyse tab</div>'
-      + '</div>';
-  } else {
-  // Compacte weergave: max 20 zichtbaar
-  window._scanLogPage = window._scanLogPage || 1;
-  var PAGE_SIZE = 20;
-  var visibleLog = filteredLog.slice(0, window._scanLogPage * PAGE_SIZE);
-  
-  visibleLog.forEach(function(scan, si) {
-      var sw = scan.picks.filter(p=>p.status==='win').length;
-      var sl = scan.picks.filter(p=>p.status==='lose').length;
-      var sp = scan.picks.filter(p=>p.status==='pending').length;
-      var scanId = String(scan.id||si);
-      var collapseId = 'scan-collapse-' + scanId;
-      var hrPct = (sw+sl) ? Math.round(sw/(sw+sl)*100) : null;
-      var hrColor = hrPct===null?'#94a3b8':hrPct>=60?'#00BEC4':hrPct>=40?'#d97706':'#dc2626';
-      var scanFace = (function() {
-        if (!sw && !sl) return '😶';
-        if (hrPct >= 70) return '😄';
-        if (hrPct >= 50) return '🙂';
-        if (hrPct >= 35) return '😐';
-        if (hrPct >= 20) return '😕';
-        return '😢';
-      })();
+    if (!_tPicks.length) {
+      html += '<div style="text-align:center;padding:2.5rem 1rem;background:rgba(255,255,255,.05);border-radius:16px;border:1px dashed rgba(201,168,76,.4);">'
+        + '<div style="font-size:2rem;margin-bottom:.5rem;">🎯</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;color:#ffffff;font-weight:700;">Nog geen picks</div>'
+        + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;color:rgba(255,255,255,.95);margin-top:.3rem;">Het systeem scant elk uur; zodra er value is verschijnt de pick hier.</div>'
+        + '</div>';
+    } else {
+      // Samenvattingsregel. Hitrate alleen tonen als er echt iets is afgerekend --
+      // 0 van 0 zou als '0%' lezen en dat is een uitspraak zonder meting.
+      html += '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;">'
+        + '<span style="padding:.25rem .55rem;border-radius:99px;background:rgba(0,190,196,.14);border:1px solid rgba(0,190,196,.3);color:#00BEC4;font-weight:700;">' + _tW + 'W</span>'
+        + '<span style="padding:.25rem .55rem;border-radius:99px;background:rgba(220,38,38,.14);border:1px solid rgba(220,38,38,.3);color:#f87171;font-weight:700;">' + _tL + 'V</span>'
+        + (_tP ? '<span style="padding:.25rem .55rem;border-radius:99px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.85);font-weight:700;">' + _tP + ' open</span>' : '')
+        + (_tHr === null ? '' : '<span style="padding:.25rem .55rem;border-radius:99px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);color:#c9a84c;font-weight:700;">' + _tHr + '% hitrate</span>')
+        + '</div>';
 
-      // Scan card header — zelfde stijl als match-card
-      html += '<div class="match-card" style="margin-bottom:.6rem;padding:0;background:var(--card);">';
-      
-      // Header — klikbaar voor inklapbaar
-      html += '<div onclick="(function(el){var c=document.getElementById(\'' + collapseId + '\');if(!c)return;var open=c.style.display!==\'none\';c.style.display=open?\'none\':\'block\';el.querySelector(\'.scan-chevron\').style.transform=open?\'rotate(0deg)\':\'rotate(180deg)\';}).call(null,this.closest(\'.match-card\'))" '
-        + 'style="display:flex;align-items:center;justify-content:space-between;padding:.7rem .9rem;cursor:pointer;border-bottom:1px solid var(--stroke);">';
-      
-      // Links: nummer + datum
-      html += '<div style="display:flex;align-items:center;gap:.5rem;">';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;color:#C9A84C;">#' + (log.length-si) + '</div>';
-      html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:rgba(255,255,255,.95);">';
-      html += (function() {
-          var times = scan.picks.filter(function(p){return !!p.matchTime;}).map(function(p){return new Date(p.matchTime).getTime();}).filter(function(t){return !isNaN(t) && new Date(t).getFullYear()>=2024 && new Date(t).getFullYear()<=2031;});
-          if (!times.length) return scan.date||'';
-          times.sort(function(a,b){return a-b;});
-          var earliest = new Date(times[0]);
-          var latest = new Date(times[times.length-1]);
-          var fmt = function(d){return d.getDate()+'-'+(d.getMonth()+1)+'-'+d.getFullYear();};
-          if (times.length===1||earliest.toDateString()===latest.toDateString()) return fmt(earliest);
-          return fmt(earliest)+' t/m '+fmt(latest);
-        })();
-      html += '</div></div>';
-      
-      // Rechts: badges + smiley + chevron
-      html += '<div style="display:flex;align-items:center;gap:.35rem;">';
-      if (sw) html += '<span style="background:rgba(0,190,196,.15);color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sw + 'W</span>';
-      if (sl) html += '<span style="background:rgba(220,38,38,.12);color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sl + 'V</span>';
-      if (sp) html += '<span style="background:rgba(201,168,76,.12);color:#C9A84C;font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;border-radius:8px;padding:.1rem .4rem;">' + sp + '⏳</span>';
-      html += '<span style="font-size:.9rem;">' + scanFace + '</span>';
-      html += '<button class="delete-scan-btn" data-scan="' + scanId + '" style="background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.2);color:#dc2626;border-radius:8px;padding:.15rem .35rem;font-size:.62rem;cursor:pointer;">🗑</button>';
-      html += '<svg class="scan-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.5" style="transition:transform .2s;flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>';
-      html += '</div>';
-      html += '</div>'; // einde header
-      
-      // Picks — standaard ingeklapt
-      html += '<div id="' + collapseId + '" style="display:none;">';
-      
-      scan.picks.forEach(function(p) {
-        var icon = p.status==='win' ? '✅' : p.status==='lose' ? '❌' : p.status==='void' ? '⬜' : '⏳';
-        var pickId = String(p.fixtureId || p.id || '');
-        var pickType = String(p.pick || '');
-        var manualBtn = p.status === 'pending'
-          ? '<button class="manual-verify-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" data-match="' + (p.match||'').replace(/"/g,'') + '" style="font-family:monospace;font-size:.54rem;padding:2px 6px;border-radius:6px;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.25);color:#00BEC4;cursor:pointer;flex-shrink:0;">✏ Score</button>'
-          : '';
-        var deletePickBtn = '<button class="delete-pick-btn" data-scan="' + scanId + '" data-pick="' + pickId + '" data-type="' + pickType + '" style="font-family:monospace;font-size:.54rem;padding:2px 5px;border-radius:6px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.15);color:#dc2626;cursor:pointer;flex-shrink:0;">🗑</button>';
-        var vColor = (p.value||0) >= 20 ? '#00BEC4' : (p.value||0) >= 10 ? '#d97706' : 'rgba(255,255,255,.4)';
-        var _u = (typeof unitAdvies === 'function') ? unitAdvies(p.confidence, p.value) : { units: 1, eur: '' };
-        var sharpBadge = p.sharp ? '<span style="font-size:.36rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;font-family:\'IBM Plex Mono\',monospace;font-weight:700;">🔥 SHARP</span>' : '';
-        
-        html += '<div style="display:flex;align-items:flex-start;gap:.5rem;padding:.55rem .9rem;border-top:1px solid rgba(255,255,255,.05);">';
-        html += '<div style="font-size:.85rem;flex-shrink:0;margin-top:.05rem;">' + icon + '</div>';
-        html += '<div style="flex:1;min-width:0;">';
-        html += '<div style="font-family:\'DM Sans\',sans-serif;font-size:.72rem;font-weight:700;color:#ffffff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">' + p.match + (sharpBadge?' '+sharpBadge:'') + '</div>';
-        html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.95);margin-top:.1rem;">'
-          + '<span style="color:rgba(255,255,255,.8);">' + (p.pickLabel||p.pick) + '</span>'
-          + ' <span style="color:rgba(255,255,255,.88);">@</span> <span style="color:#fff;font-weight:700;">' + p.odds + '</span>'
-          + ' · <span style="color:' + vColor + ';font-weight:700;">' + (p.value||0).toFixed(1) + 'pp value</span>'
-          + ' · conf ' + p.confidence + '/10'
-          + ' · <span style="color:#00BEC4;font-weight:700;">📊 ' + _u.units + 'u' + _u.eur + '</span>'
+      window._scanLogPage = window._scanLogPage || 1;
+      var PAGE_SIZE = 10;
+      var zichtbareDagen = _dagen.slice(0, window._scanLogPage * PAGE_SIZE);
+
+      zichtbareDagen.forEach(function(dag) {
+        var rij = _perDag[dag];
+        var dw = rij.filter(function(p){ return p.status === 'win'; }).length;
+        var dl = rij.filter(function(p){ return p.status === 'lose'; }).length;
+        var dp = rij.filter(function(p){ return p.status === 'pending'; }).length;
+        var dagLabel = (dag === 'onbekend')
+          ? 'datum onbekend'
+          : (function(){ var t = dag.split('-'); return t[2] + '-' + t[1] + '-' + t[0]; })();
+        var gezicht = (!dw && !dl) ? '⏳' : (dw > dl ? '😄' : (dl > dw ? '😢' : '😐'));
+
+        html += '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:.6rem .7rem;margin-bottom:.5rem;">';
+        html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;">'
+          + '<span style="color:#c9a84c;font-weight:700;">' + dagLabel + '</span>'
+          + '<span style="color:rgba(255,255,255,.55);">' + rij.length + ' pick' + (rij.length === 1 ? '' : 's') + '</span>'
+          + '<span style="margin-left:auto;">' + gezicht + '</span>'
+          + (dw ? '<span style="color:#00BEC4;font-weight:700;">' + dw + 'W</span>' : '')
+          + (dl ? '<span style="color:#f87171;font-weight:700;">' + dl + 'V</span>' : '')
+          + (dp ? '<span style="color:rgba(255,255,255,.6);">' + dp + ' open</span>' : '')
           + '</div>';
-        html += '</div>';
-        if (p.score) html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#fff;background:rgba(255,255,255,.08);border-radius:8px;padding:.15rem .4rem;flex-shrink:0;">' + p.score + '</div>';
-        html += manualBtn + deletePickBtn;
+
+        rij.forEach(function(p) {
+          var st = p.status;
+          var icoon = st === 'win' ? '✅' : (st === 'lose' ? '❌' : '⏳');
+          var naam = p.match || ((p.home || '') + ' vs ' + (p.away || '')) || p.matchName || 'onbekende wedstrijd';
+          var label = p.pickLabel || p.pick || '';
+          // Falsy-nul: 0.0 odds/value is data, geen ontbrekende waarde.
+          var odds = (p.odds === null || p.odds === undefined) ? null : Number(p.odds);
+          var val  = (p.value === null || p.value === undefined) ? null : Number(p.value);
+          var score = (p.score === null || p.score === undefined || p.score === '') ? null : String(p.score);
+
+          html += '<div style="display:flex;align-items:flex-start;gap:.45rem;padding:.35rem 0;border-top:1px solid rgba(255,255,255,.06);">'
+            + '<span style="flex-shrink:0;">' + icoon + '</span>'
+            + '<div style="flex:1;min-width:0;">'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.66rem;color:#ffffff;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + naam + '</div>'
+            + '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.75);margin-top:.1rem;">'
+            + label
+            + (odds === null || !isFinite(odds) ? '' : ' @ <span style="color:#c9a84c;font-weight:700;">' + odds.toFixed(2) + '</span>')
+            + (val === null || !isFinite(val) ? '' : ' · <span style="color:#00BEC4;">' + val.toFixed(1) + 'pp value</span>')
+            + '</div>'
+            + '</div>'
+            + (score === null ? '' : '<span style="flex-shrink:0;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;color:rgba(255,255,255,.7);background:rgba(255,255,255,.07);border-radius:8px;padding:.1rem .4rem;">' + score + '</span>')
+            + '</div>';
+        });
+
         html += '</div>';
       });
-      
-      html += '</div>'; // einde collapse
-      html += '</div>'; // einde match-card
-    });
 
-  // Toon meer knop als er meer dan 20 zijn
-  if (filteredLog.length > visibleLog.length) {
-    var remaining = filteredLog.length - visibleLog.length;
-    html += '<button onclick="window._scanLogPage=(window._scanLogPage||1)+1;renderScanLog()" style="width:100%;margin-top:.4rem;padding:.6rem;border-radius:12px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);font-family:monospace;font-size:.62rem;font-weight:700;color:#C9A84C;cursor:pointer;">▼ Toon ' + remaining + ' oudere scans</button>';
-  }
-  
-  // Reset pagina bij nieuwe filter
+      if (_dagen.length > zichtbareDagen.length) {
+        var over = _dagen.length - zichtbareDagen.length;
+        html += '<button onclick="window._scanLogPage=(window._scanLogPage||1)+1;renderScanLog()" style="width:100%;margin-top:.4rem;padding:.6rem;border-radius:12px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);font-family:monospace;font-size:.62rem;font-weight:700;color:#C9A84C;cursor:pointer;">▼ Toon ' + over + ' oudere dag' + (over === 1 ? '' : 'en') + '</button>';
+      }
   if (!window._scanLogPage) window._scanLogPage = 1;
   }
 
