@@ -795,7 +795,39 @@
       'help.nav9': '📡 Data',
       'help.nav10': '🤖 AI Chat',
       'help.nav11': '🧠 Intelligence',
-      'help.pdf': '📄 Save as PDF'
+      'help.pdf': '📄 Save as PDF',
+
+      // v26.348: EN-vertalingen voor sleutels die tot nu toe op de NEDERLANDSE fallback
+      // terugvielen. t() zoekt lang -> nl -> inline fallback, dus een ontbrekende EN-sleutel
+      // gaf geen fout maar gewoon Nederlandse tekst in de Engelse app.
+      'an.findings': 'FINDINGS',
+      'an.findings_empty': 'No settled picks yet. As soon as the first picks settle, a short reading of the figures appears here.',
+      'an.findings_sub': 'generated from the figures',
+      'ana.ahshadow': 'shadow track record',
+      'ana.asianlines': 'ASIAN LINES',
+      'dash.clubera': 'CLUB ERA',
+      'dash.onspeelbaar': 'picks excluded (created after kick-off)',
+      'dash.teweinig': 'too few picks to draw conclusions',
+      'dash.tile.tracker': 'TRACKER',
+      'dash.tile.tracker_sub': 'Track your bets and results',
+      'rep.title': 'Report analysis',
+      'rep.details': 'Details (optional)',
+      'rep.send': 'Send',
+      'rep.sending': 'Sending…',
+      'rep.cancel': 'Cancel',
+      'rep.thanks': 'Thanks — your report has been received.',
+      'rep.fail': 'Sending failed:',
+      'set.info.football': 'Not needed — the server uses its own API-Football key. You don\'t have to enter anything here.',
+      'wed.aidisclosure': 'Analysis partly AI-generated · informational, no guarantee of profit',
+      'wed.browsenote': 'This list is broader than what the model scans. Matches marked NOT SCANNED are there to browse only: the app makes no picks on them, there is no calibration and nothing counts towards CLV.',
+      'wed.browseonly': 'NOT SCANNED',
+      'wed.browseonly_help': 'This competition is not scanned: no picks, no calibration, no CLV. For browsing only.',
+      'wed.disclaimer': 'Disclaimer · 18+',
+      'wed.report': '⚠ Report this analysis',
+      'wed.rerunbanner': '⟳ New analysis… the previous one has been cleared',
+      'wed.rerunbusy': '⟳ Generating new analysis…',
+      'wed.rerunfail': 'Analysis failed:',
+      'wed.tip': 'TIP'
     }
   };
 
