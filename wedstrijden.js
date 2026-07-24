@@ -40,6 +40,34 @@ function getActiveCOMPLIST() {
   ];
 }
 
+// v26.344: WELKE COMPETITIES SCANT DE WORKER ECHT? De Vandaag-tab toont bewust breder
+// (COMP_IDS, 44 competities) zodat je kunt bladeren, maar voor de competities daarbuiten
+// maakt de backend geen picks, is er geen kalibratie en telt niets mee in de CLV. Dat
+// verschil was op het scherm onzichtbaar: een Russische of Roemeense wedstrijd zag er
+// precies zo uit als een Eredivisie-duel, ANALYSE-knop en al.
+// De set wordt AFGELEID uit getActiveCOMPLIST() + COMP_IDS, niet apart opgeschreven --
+// anders staat er weer een vierde lijst die kan gaan driften, en dat is precies wat er
+// vandaag drie keer misging.
+function getGescandeLeagueIds() {
+  const uit = new Set();
+  if (typeof COMP_IDS === 'undefined') return uit; // niets beweren zonder bron
+  for (const c of getActiveCOMPLIST()) {
+    const id = COMP_IDS[c.key];
+    if (typeof id === 'number') uit.add(id);
+  }
+  return uit;
+}
+
+// null = we WETEN het niet (geen league-id op de wedstrijd). Dan tonen we ook niets:
+// 'buiten de scan' is een bewering over de buitenwereld en die doen we alleen als we
+// hem kunnen onderbouwen. true = gescand, false = aantoonbaar buiten de scan.
+function isGescandeWedstrijd(leagueId) {
+  if (leagueId === null || leagueId === undefined) return null;
+  const n = Number(leagueId);
+  if (!Number.isFinite(n)) return null;
+  return getGescandeLeagueIds().has(n);
+}
+
 // v26.312: COMP_LIST verwijderd. Hij werd EEN keer gezet bij het laden van het script en was daarna
 // bevroren; renderWedstrijdenScreen filterde de favorieten intussen tegen een VERSE getActiveCOMPLIST().
 // Twee bronnen in dezelfde functie. Beide aanroepers roepen nu getActiveCOMPLIST() zelf aan (goedkoop:
@@ -278,6 +306,13 @@ function renderWedstrijdenScreen() {
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.65rem;display:flex;align-items:center;gap:.4rem;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         ALLE WEDSTRIJDEN VANDAAG
+      </div>
+      <!-- v26.344: uitleg bij de NIET GESCAND-markering. Op een telefoon bestaat 'hover'
+           niet, dus de title-tekst op de badge alleen is niet genoeg. Een zin die je een
+           keer leest is beter dan een markering die je moet raden. -->
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;line-height:1.5;
+        color:rgba(255,255,255,.55);padding:0 .2rem .7rem;">
+        ${t('wed.browsenote','Deze lijst is breder dan wat het model scant. Wedstrijden met NIET GESCAND zijn er alleen om te bladeren: daar maakt de app geen picks, is er geen kalibratie en telt niets mee in de CLV.')}
       </div>
       <div id="allCompsLoadingVandaag" style="display:none;flex-direction:column;align-items:center;padding:2rem;gap:.6rem;">
         <div style="width:24px;height:24px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div>
@@ -1155,18 +1190,30 @@ function renderMatchCard(m) {
       </div>
     </div>`;
 
+  // v26.344: alleen tonen als aantoonbaar BUITEN de scan. Bij true (gescand) hoort er
+  // geen ruis op de kaart, en bij null weten we het niet en zeggen we niets.
+  const _gescand = (typeof isGescandeWedstrijd === 'function') ? isGescandeWedstrijd(m.leagueId) : null;
+  const _buitenScan = (_gescand === false) ? `
+    <span title="${t('wed.browseonly_help','Deze competitie wordt niet gescand: geen picks, geen kalibratie, geen CLV. Alleen om te bladeren.')}"
+      style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:800;white-space:nowrap;
+      padding:1px 6px;border-radius:999px;background:rgba(148,163,184,.14);
+      color:rgba(255,255,255,.62);border:1px solid rgba(148,163,184,.22);">
+      ${t('wed.browseonly','NIET GESCAND')}
+    </span>` : '';
+
   card.innerHTML = `
     <div style="position:relative;">
       ${valueBadge}
       ${tipBadge}
       <!-- Header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.4rem;flex-wrap:wrap;
         padding:.55rem .9rem .4rem;border-bottom:1px solid rgba(255,255,255,0.09);">
-        <div style="display:flex;align-items:center;gap:.4rem;${_tipPad}">
+        <div style="display:flex;align-items:center;gap:.4rem;min-width:0;flex-wrap:wrap;${_tipPad}">
           ${m.compLogo ? `<img src="${m.compLogo}" style="width:14px;height:14px;object-fit:contain;" onerror="this.style.display='none'">` : ''}
           <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:rgba(255,255,255,.95);font-weight:700;">
             ${m.comp || ''}
           </span>
+          ${_buitenScan}
         </div>
         <div style="display:flex;align-items:center;gap:.5rem;">
           <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:#00BEC4;font-weight:700;">
