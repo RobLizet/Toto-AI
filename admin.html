@@ -368,6 +368,18 @@
   }
 
   function renderUsers(d) {
+    // v26.346: /app-users geeft sinds v306 `gemeten` mee. Was dat vals, dan is de tabel NIET
+    // leeg maar onbekend -- en 'Nog geen gebruikers' zou dan een bewering zijn over de
+    // buitenwereld die nergens op steunt. Dat gebeurde echt: tijdens de sleutelstoring van
+    // 24-07 meldde de route ok:true met nul gebruikers terwijl er een in de tabel stond.
+    if (d && d.gemeten === false) {
+      document.getElementById('userCount').innerHTML = '<span class="muted">–</span>';
+      document.getElementById('userRows').innerHTML =
+        '<tr><td colspan="3">' + badge('err', 'niet gemeten') +
+        '<div class="note">' + esc(d.reden || 'de worker kon de gebruikerstabel niet lezen') +
+        '</div></td></tr>';
+      return;
+    }
     document.getElementById('userCount').textContent =
       (typeof d.count === 'number') ? d.count : '–';
     var rows = (d.users || []).map(function (u) {
