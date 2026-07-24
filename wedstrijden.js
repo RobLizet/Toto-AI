@@ -5,67 +5,122 @@
 // ═══════════════════════════════════════════════════════
 
 // ── Competitie definities ────────────────────────────────
-// ── Datum-gebaseerde competitie lijst ────────────────────
-// v26.324: seizoensscaffolding opgeruimd. WK 2026 is voorbij; de app zit permanent in FASE 2.
-// De oude datum-takken (WK_ONLY_MODE / isWK / pre-euro-end / postWK) waren na 20-07 onbereikbaar --
-// `now` schuift alleen vooruit, dus postWK was voortaan altijd waar -- en de WK-override liet zich per
-// ongeluk aanzetten (bron van de v26.322-bug). Terug naar EEN bron: de 19 CLUB19-competities.
-function getActiveCOMPLIST() {
-  return [
-    { key:'eredivisie',  flag:'🇳🇱', name:'Eredivisie' },
-    { key:'kkd',         flag:'🇳🇱', name:'Keuken Kampioen' },
-    { key:'premier',     flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Premier League' },
-    { key:'laliga',      flag:'🇪🇸', name:'La Liga' },
-    { key:'bundesliga',  flag:'🇩🇪', name:'Bundesliga' },
-    { key:'seriea',      flag:'🇮🇹', name:'Serie A' },
-    { key:'ligue1',      flag:'🇫🇷', name:'Ligue 1' },
-    { key:'portugal',    flag:'🇵🇹', name:'Primeira Liga' },
-    { key:'jupiler',     flag:'🇧🇪', name:'Jupiler Pro League' },
-    { key:'scotland',    flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', name:'Scottish Prem' },
-    { key:'switzerland', flag:'🇨🇭', name:'Super League CH' },
-    { key:'superlig',    flag:'🇹🇷', name:'Süper Lig' },
-    { key:'champions',   flag:'⭐', name:'Champions League' },
-    { key:'europa',      flag:'🟠', name:'Europa League' },
-    { key:'conference',  flag:'🟢', name:'Conference League' },
-    { key:'bundesliga2', flag:'🇩🇪', name:'2. Bundesliga' },
-    { key:'liga3',       flag:'🇩🇪', name:'3. Liga' },
-    { key:'championship',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' },
-    { key:'leagueone',   flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'League One' },
-    // v26.343: gelijkgetrokken met de worker (FASE2_LEAGUES, 21). Deze twee zijn in v303
-    // aan de scan toegevoegd omdat hun seizoen apr-nov loopt; zonder tegel EN zonder plek
-    // in de Vandaag-aggregatie zou een pick uit deze competities nergens in de app terug
-    // te vinden zijn -- wel een melding, geen wedstrijd om bij te kijken.
-    { key:'norway',      flag:'🇳🇴', name:'Eliteserien' },
-    { key:'sweden',      flag:'🇸🇪', name:'Allsvenskan' },
-  ];
+// v26.345: DE WORKER IS DE BRON (optie C, door Rob gekozen na optie B in v26.344).
+// Deze lijst stond op vier plekken en liep op 24-07 drie keer op een dag uit elkaar:
+// v303 voegde Eliteserien/Allsvenskan toe aan de scan maar niet aan de Elo-sweep,
+// v26.343 moest de tegels en drie aggregaties nadragen, v26.344 moest de set nog een
+// keer afleiden. Vier kopieen van een lijst is geen slordigheid maar een ontwerpfout.
+// Voortaan bepaalt de worker WELKE competities meedoen (GET /leagues); de app zegt
+// alleen nog hoe ze heten.
+const PMX_LEAGUES_CACHE = 'pmx_worker_leagues_v1';
+
+// Weergavegegevens per league-id. NADRUKKELIJK geen tweede ledenlijst: staat een
+// competitie hier wel maar noemt de worker hem niet, dan doet hij niet mee.
+const LEAGUE_META = {
+  39: { key:'premier', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Premier League' },
+  140: { key:'laliga', flag:'🇪🇸', name:'La Liga' },
+  78: { key:'bundesliga', flag:'🇩🇪', name:'Bundesliga' },
+  135: { key:'seriea', flag:'🇮🇹', name:'Serie A' },
+  61: { key:'ligue1', flag:'🇫🇷', name:'Ligue 1' },
+  88: { key:'eredivisie', flag:'🇳🇱', name:'Eredivisie' },
+  94: { key:'portugal', flag:'🇵🇹', name:'Primeira Liga' },
+  144: { key:'jupiler', flag:'🇧🇪', name:'Jupiler Pro League' },
+  179: { key:'scotland', flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', name:'Scottish Prem' },
+  207: { key:'switzerland', flag:'🇨🇭', name:'Super League CH' },
+  203: { key:'superlig', flag:'🇹🇷', name:'Süper Lig' },
+  2: { key:'champions', flag:'⭐', name:'Champions League' },
+  3: { key:'europa', flag:'🟠', name:'Europa League' },
+  848: { key:'conference', flag:'🟢', name:'Conference League' },
+  89: { key:'kkd', flag:'🇳🇱', name:'Keuken Kampioen' },
+  79: { key:'bundesliga2', flag:'🇩🇪', name:'2. Bundesliga' },
+  80: { key:'liga3', flag:'🇩🇪', name:'3. Liga' },
+  40: { key:'championship', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' },
+  41: { key:'leagueone', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'League One' },
+  103: { key:'norway', flag:'🇳🇴', name:'Eliteserien' },
+  113: { key:'sweden', flag:'🇸🇪', name:'Allsvenskan' },
+};
+
+// Noodlijst. Wordt ALLEEN gebruikt als er nog nooit een workerlijst is opgehaald en er
+// ook niets in de cache staat -- praktisch dus alleen bij de allereerste app-start zonder
+// netwerk. Zolang deze bron actief is tonen we GEEN 'niet gescand'-markering: dat zou een
+// bewering zijn op basis van een lijst die we niet hebben kunnen verifieren.
+const SEED_LEAGUE_IDS = [39, 140, 78, 135, 61, 88, 94, 144, 179, 207, 203, 2, 3, 848, 89, 79, 80, 40, 41, 103, 113];
+
+let _compIds = null;   // huidige ledenlijst als array van id's
+let _compBron = null;  // 'worker' | 'cache' | 'nood'
+
+function _zetCompIds(ids, bron) {
+  const schoon = (Array.isArray(ids) ? ids : []).map(Number).filter(n => Number.isFinite(n));
+  if (!schoon.length) return false;          // een lege lijst is nooit een geldig antwoord
+  _compIds = schoon;
+  _compBron = bron;
+  return true;
 }
 
-// v26.344: WELKE COMPETITIES SCANT DE WORKER ECHT? De Vandaag-tab toont bewust breder
-// (COMP_IDS, 44 competities) zodat je kunt bladeren, maar voor de competities daarbuiten
-// maakt de backend geen picks, is er geen kalibratie en telt niets mee in de CLV. Dat
-// verschil was op het scherm onzichtbaar: een Russische of Roemeense wedstrijd zag er
-// precies zo uit als een Eredivisie-duel, ANALYSE-knop en al.
-// De set wordt AFGELEID uit getActiveCOMPLIST() + COMP_IDS, niet apart opgeschreven --
-// anders staat er weer een vierde lijst die kan gaan driften, en dat is precies wat er
-// vandaag drie keer misging.
-function getGescandeLeagueIds() {
-  const uit = new Set();
-  if (typeof COMP_IDS === 'undefined') return uit; // niets beweren zonder bron
-  for (const c of getActiveCOMPLIST()) {
-    const id = COMP_IDS[c.key];
-    if (typeof id === 'number') uit.add(id);
+// Zorgt dat er synchroon een lijst is: getActiveCOMPLIST() wordt op veel plekken
+// synchroon aangeroepen en mag nooit op een netwerkcall wachten.
+function _zorgVoorCompIds() {
+  if (_compIds) return;
+  try {
+    const rauw = localStorage.getItem(PMX_LEAGUES_CACHE);
+    if (rauw && _zetCompIds(JSON.parse(rauw), 'cache')) return;
+  } catch (e) { /* privemodus of stukke cache: door naar de noodlijst */ }
+  _zetCompIds(SEED_LEAGUE_IDS, 'nood');
+}
+
+function getActiveCOMPLIST() {
+  _zorgVoorCompIds();
+  const uit = [];
+  for (const id of _compIds) {
+    const meta = LEAGUE_META[id];
+    if (meta) { uit.push(meta); continue; }
+    // Onbekend id NIET stilzwijgend overslaan -- zo verdween Eliteserien uit beeld.
+    // Wel overslaan (zonder key kan de rest van de app niets ophalen), maar luid.
+    console.warn('[COMPLIST] worker scant competitie ' + id + ' maar de app kent hem niet — voeg hem toe aan LEAGUE_META');
   }
   return uit;
 }
 
-// null = we WETEN het niet (geen league-id op de wedstrijd). Dan tonen we ook niets:
-// 'buiten de scan' is een bewering over de buitenwereld en die doen we alleen als we
-// hem kunnen onderbouwen. true = gescand, false = aantoonbaar buiten de scan.
+// null = we kennen de echte workerlijst niet (nog nooit opgehaald, niets in cache).
+// Dan doen we geen enkele uitspraak over wat wel of niet gescand wordt.
+function getGescandeLeagueIds() {
+  _zorgVoorCompIds();
+  if (_compBron === 'nood') return null;
+  return new Set(_compIds);
+}
+
+// null = onbekend (geen league-id, of geen workerlijst). true = gescand.
+// false = aantoonbaar buiten de scan. Alleen bij false komt de markering op de kaart.
 function isGescandeWedstrijd(leagueId) {
   if (leagueId === null || leagueId === undefined) return null;
   const n = Number(leagueId);
   if (!Number.isFinite(n)) return null;
-  return getGescandeLeagueIds().has(n);
+  const set = getGescandeLeagueIds();
+  if (!set) return null;
+  return set.has(n);
+}
+
+// Wordt bij het opstarten aangeroepen (index.html initApp). Faalt hij, dan blijft de app
+// gewoon werken op de cache of de noodlijst -- alleen luidruchtig in de console.
+async function laadWorkerCompetities() {
+  const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const tmr = ctrl ? setTimeout(() => ctrl.abort(), 8000) : null;
+  try {
+    const r = await fetch(`${WORKER}/leagues`, ctrl ? { signal: ctrl.signal } : undefined);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const ids = (d && Array.isArray(d.gescand)) ? d.gescand.map(x => (x ? x.id : null)) : null;
+    if (!ids || !ids.length) throw new Error('lege of ontbrekende lijst');
+    const oud = JSON.stringify(_compIds || []);
+    if (!_zetCompIds(ids, 'worker')) throw new Error('geen bruikbare ids');
+    try { localStorage.setItem(PMX_LEAGUES_CACHE, JSON.stringify(_compIds)); } catch (e) {}
+    if (JSON.stringify(_compIds) !== oud && typeof renderWedstrijdenScreen === 'function') {
+      try { renderWedstrijdenScreen(); } catch (e) {}
+    }
+  } catch (e) {
+    console.warn('[COMPLIST] workerlijst niet opgehaald:', e && e.message, '— terugval op', _compBron || 'cache/nood');
+    _zorgVoorCompIds();
+  } finally { if (tmr) clearTimeout(tmr); }
 }
 
 // v26.312: COMP_LIST verwijderd. Hij werd EEN keer gezet bij het laden van het script en was daarna
