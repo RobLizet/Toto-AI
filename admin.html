@@ -140,11 +140,12 @@
         <button id="bTest" class="sec">Testmelding sturen</button>
         <button id="bDev" class="sec">Toestellen tellen</button>
         <button id="bTag" class="sec">Admin-tag zetten</button>
+        <button id="bLock" class="sec">Vergrendelen</button>
       </div>
       <div id="onderhoudOut" class="out"></div>
       <p class="note">
         Deze knoppen doen alleen wat er staat. Er zit bewust geen knop bij die picks,
-        odds of afrekeningen wijzigt — dat hoort niet achter een knop die je per ongeluk indrukt.
+        odds of afrekeningen wijzigt — dat hoort niet achter een knop die je per ongeluk indrukt.<br><strong>Vergrendelen</strong> wist de opgeslagen secret van dit toestel.
       </p>
     </div>
   </div>
@@ -156,7 +157,33 @@
   'use strict';
   var API = 'https://api.promatchxi.app';
   var params = new URLSearchParams(location.search);
-  var secret = params.get('secret') || sessionStorage.getItem('pmx_admin_secret') || '';
+
+  // v26.342: localStorage i.p.v. sessionStorage. Als geïnstalleerde app wordt deze
+  // pagina steeds opnieuw gestart, en sessionStorage overleeft dat niet -- dan sta je
+  // bij elke opening de SCAN_SECRET op een telefoon over te typen, en dan gebruik je
+  // het paneel niet meer. Afweging bewust: de sleutel staat nu op je toestel bewaard.
+  // Dat is dezelfde blootstelling als een bladwijzer met ?secret= erin, maar hij is
+  // wél met één knop te wissen (Vergrendelen). sessionStorage wordt eenmalig
+  // overgenomen zodat een openstaande sessie niet opnieuw hoeft in te loggen.
+  var SLEUTEL = 'pmx_admin_secret';
+  function leesSecret() {
+    var uit = params.get('secret');
+    if (uit) return uit;
+    try {
+      var l = localStorage.getItem(SLEUTEL);
+      if (l) return l;
+      var s = sessionStorage.getItem(SLEUTEL);
+      if (s) { localStorage.setItem(SLEUTEL, s); return s; }
+    } catch (e) { /* privémodus: dan gewoon elke keer invoeren */ }
+    return '';
+  }
+  function bewaarSecret(v) {
+    try { localStorage.setItem(SLEUTEL, v); } catch (e) { /* niets te doen */ }
+  }
+  function wisSecret() {
+    try { localStorage.removeItem(SLEUTEL); sessionStorage.removeItem(SLEUTEL); } catch (e) {}
+  }
+  var secret = leesSecret();
 
   // ── helpers ────────────────────────────────────────────────────────────
   // n(): NOOIT een verzonnen nul. null/undefined is 'niet gemeten' en dat moet
@@ -368,7 +395,12 @@
       .catch(function (e) { faalTekst(document.getElementById('val'), e); });
     get('/app-users?secret=' + encodeURIComponent(secret))
       .then(function (d) {
-        sessionStorage.setItem('pmx_admin_secret', secret);
+        bewaarSecret(secret);
+        // De sleutel uit de adresbalk halen zodra hij werkt: hij hoort niet in je
+        // geschiedenis, in een gedeelde schermafbeelding of in een gedeelde link.
+        if (params.get('secret')) {
+          try { history.replaceState(null, '', location.pathname); } catch (e) {}
+        }
         document.getElementById('gate').style.display = 'none';
         document.getElementById('content').style.display = 'block';
         document.getElementById('msg').textContent = '';
@@ -460,6 +492,11 @@
              ' met geldig token · ' + d.met_admin_tag + ' met admin-tag · ' +
              d.ongeldige_tokens + ' dood.';
     });
+  });
+  document.getElementById('bLock').addEventListener('click', function () {
+    wisSecret();
+    secret = '';
+    toonGate('Vergrendeld — secret van dit toestel gewist.');
   });
   document.getElementById('bTag').addEventListener('click', function () {
     zetTag();
