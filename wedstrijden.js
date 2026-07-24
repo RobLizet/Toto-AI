@@ -31,6 +31,12 @@ function getActiveCOMPLIST() {
     { key:'liga3',       flag:'🇩🇪', name:'3. Liga' },
     { key:'championship',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' },
     { key:'leagueone',   flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'League One' },
+    // v26.343: gelijkgetrokken met de worker (FASE2_LEAGUES, 21). Deze twee zijn in v303
+    // aan de scan toegevoegd omdat hun seizoen apr-nov loopt; zonder tegel EN zonder plek
+    // in de Vandaag-aggregatie zou een pick uit deze competities nergens in de app terug
+    // te vinden zijn -- wel een melding, geen wedstrijd om bij te kijken.
+    { key:'norway',      flag:'🇳🇴', name:'Eliteserien' },
+    { key:'sweden',      flag:'🇸🇪', name:'Allsvenskan' },
   ];
 }
 
@@ -545,7 +551,7 @@ async function loadVandaagTab() {
     const d = await r.json();
     const knownLeagueIds = new Set(Object.values(COMP_IDS));
     knownLeagueIds.delete(667); // oefenduels (globaal) niet in Vandaag-tab — alleen via eigen chip
-    knownLeagueIds.delete(COMP_IDS['norway']); knownLeagueIds.delete(COMP_IDS['sweden']); // v26.217: Scandinavische zomer-competities niet in de aggregatie — alleen via eigen tegel
+    // v26.343: uitsluiting van Noorwegen/Zweden weg -- de worker scant ze sinds v303.
     const now = Date.now();
 
     const fixtures = (d.response || []).filter(f => {
@@ -851,7 +857,7 @@ async function refreshLiveScores() {
     const d = await r.json();
     const knownLeagueIds = new Set(Object.values(COMP_IDS));
     knownLeagueIds.delete(667); // oefenduels (globaal) niet in Vandaag-tab — alleen via eigen chip
-    knownLeagueIds.delete(COMP_IDS['norway']); knownLeagueIds.delete(COMP_IDS['sweden']); // v26.217: Scandinavische zomer-competities niet in de aggregatie — alleen via eigen tegel
+    // v26.343: uitsluiting van Noorwegen/Zweden weg -- de worker scant ze sinds v303.
 
     // hele dag-lijst herbekijken: nieuw gestart toevoegen, afgelopen markeren, lopende bijwerken
     (d.response || []).forEach(f => {
@@ -2027,8 +2033,7 @@ async function loadTodayAllComps() {
     });
     const knownLeagueIdsSet = new Set(Object.values(COMP_IDS));
     knownLeagueIdsSet.delete(667); // v26.199: globale friendlies (Karpaty etc.) niet in WK/vandaag-aggregatie — alleen via eigen Oefenduels NL-scherm
-    knownLeagueIdsSet.delete(COMP_IDS['norway']); // v26.211: Scandinavische zomer-competities niet in de WK-aggregatie
-    knownLeagueIdsSet.delete(COMP_IDS['sweden']); // v26.211: Allsvenskan/Eliteserien alleen via hun eigen tegel
+    // v26.343: uitsluiting van Noorwegen/Zweden weg -- de worker scant ze sinds v303.
     const leagueMap = {};
     for (const f of fixtures) {
       const lid = f.league.id;
