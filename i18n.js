@@ -827,7 +827,10 @@
       'wed.rerunbanner': '⟳ New analysis… the previous one has been cleared',
       'wed.rerunbusy': '⟳ Generating new analysis…',
       'wed.rerunfail': 'Analysis failed:',
-      'wed.tip': 'TIP'
+      'wed.tip': 'TIP',
+
+      // v26.349: verschijnt alleen in de Engelse app -- zie dashboard.js
+      'dash.langpartial': '⚠ Interface partly translated — several screens and all match analyses are still in Dutch.'
     }
   };
 

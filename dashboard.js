@@ -471,6 +471,10 @@ function renderDashboard() {
       ${_flagBtn('nl', '🇳🇱', 'Nederlands', _dashLang === 'nl')}
       ${_flagBtn('en', '🇬🇧', 'English', _dashLang === 'en')}
     </div>
+    <!-- v26.349: de taalknop beloofde een Engelse app en levert er een halve. GEMETEN: 294 zichtbare
+         Nederlandse teksten hangen niet aan t(), en de analyses zelf blijven sowieso Nederlands.
+         Deze regel verschijnt UITSLUITEND in de Engelse app; in het Nederlands rendert er niets. -->
+    ${_dashLang === 'en' ? `<div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#d97706;margin:-.35rem 0 .6rem;line-height:1.35;">${t('dash.langpartial','\u26a0 Interface partly translated \u2014 several screens and all match analyses are still in Dutch.')}</div>` : ''}
 
     <!-- v26.222: dashboard-tabs (OVERZICHT/LIVE) verwijderd op verzoek — overzicht-inhoud staat direct getoond -->
 
