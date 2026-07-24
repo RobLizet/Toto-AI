@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
   <title>ProMatchXI — Beheer</title>
+
+  <!-- v26.341: EIGEN manifest, bewust niet dat van de hoofd-app. start_url en scope
+       staan op /admin.html, en het id is apart, zodat Android dit als een LOSSE app
+       installeert naast ProMatchXI in plaats van hetzelfde icoon te hergebruiken.
+       Het icoon deelt de donkerblauwe achtergrond van de hoofdapp maar heeft amber
+       knoppen -- op het beginscherm moet in een oogopslag duidelijk zijn welke van
+       de twee je aantikt. De schuifregelaars liggen binnen de veilige zone van een
+       maskable icoon (Android snijdt de buitenste ~10% weg). -->
+  <link rel="manifest" href="/admin-manifest.json" />
+  <meta name="theme-color" content="#fbbf24" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/admin-icon-192.png" />
+  <link rel="apple-touch-icon" href="/admin-icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PMXI Beheer" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <style>
     :root { color-scheme: dark; }
