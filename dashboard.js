@@ -539,6 +539,7 @@ function renderDashboard() {
         <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);text-align:center;margin-top:.3rem;">
           hitrate ${_cvNum(cv.hitrate_pct,'%')} \u00b7 ROI ${_cvNum(cv.roi_pct,'%',true)} \u00b7 CLV ${_cvNum(cv.avg_clv,'',true)} (n=${cv.met_clv})
         </div>
+        ${typeof cv.onspeelbaar_uitgesloten === 'number' && cv.onspeelbaar_uitgesloten > 0 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#d97706;text-align:center;margin-top:.2rem;">${cv.onspeelbaar_uitgesloten} ${t('dash.onspeelbaar','picks niet meegeteld (ontstonden na de aftrap)')}</div>` : ''}
         ${cv.settled < 30 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);text-align:center;margin-top:.15rem;opacity:.85;">${t('dash.teweinig','te weinig picks voor conclusies')}</div>` : ''}
       </div>` : ''}
       ${state._clvSummary && Number(state._clvSummary.picks) >= 20 ? `<div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
