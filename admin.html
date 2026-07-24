@@ -7,143 +7,451 @@
   <title>ProMatchXI — Beheer</title>
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <style>
-    :root { color-scheme: light dark; }
+    :root { color-scheme: dark; }
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0; padding: 16px; background: #0f1115; color: #e6e8eb;
+      margin: 0; padding: 14px 14px 40px; background: #0f1115; color: #e6e8eb;
+      -webkit-text-size-adjust: 100%;
     }
-    h1 { font-size: 18px; margin: 0 0 4px; }
-    .sub { color: #9aa0a6; font-size: 13px; margin: 0 0 16px; }
+    h1 { font-size: 18px; margin: 0 0 2px; }
+    .sub { color: #9aa0a6; font-size: 12px; margin: 0 0 14px; }
     .card {
       background: #1a1d23; border: 1px solid #262a31; border-radius: 12px;
-      padding: 14px; margin-bottom: 14px;
+      padding: 13px; margin-bottom: 12px;
     }
-    .stat { font-size: 28px; font-weight: 700; }
-    .stat-label { color: #9aa0a6; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #262a31; }
-    th { color: #9aa0a6; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
-    td.email { font-weight: 500; word-break: break-all; }
+    .card h2 {
+      font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+      color: #9aa0a6; margin: 0 0 10px; font-weight: 600;
+    }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .cell .k { color: #7c828a; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+    .cell .v { font-size: 19px; font-weight: 700; margin-top: 1px; line-height: 1.2; }
+    .cell .v.sm { font-size: 14px; font-weight: 600; }
+    .stat { font-size: 28px; font-weight: 700; line-height: 1.1; }
     .muted { color: #7c828a; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid #262a31; }
+    th { color: #9aa0a6; font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; }
+    tr:last-child td { border-bottom: none; }
+    td.email { word-break: break-all; }
     .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
-    .ok { background: #113a2a; color: #34d399; }
+    .ok   { background: #113a2a; color: #34d399; }
     .warn { background: #3a2f11; color: #fbbf24; }
-    .err { background: #3a1414; color: #f87171; }
+    .err  { background: #3a1414; color: #f87171; }
+    .neut { background: #23262d; color: #9aa0a6; }
+    .bar { height: 7px; background: #23262d; border-radius: 99px; overflow: hidden; margin: 9px 0 5px; }
+    .bar i { display: block; height: 100%; background: #34d399; border-radius: 99px; }
     input {
       width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #333;
       background: #12141a; color: #e6e8eb; font-size: 15px;
     }
     button {
-      margin-top: 10px; padding: 10px 16px; border: none; border-radius: 8px;
-      background: #2563eb; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+      padding: 10px 14px; border: none; border-radius: 8px;
+      background: #2563eb; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
     }
-    #tagStatus { margin-top: 10px; font-size: 12px; }
+    button.sec { background: #23262d; color: #e6e8eb; border: 1px solid #333; }
+    button:disabled { opacity: .5; cursor: default; }
+    .btnrow { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btnrow button { flex: 1 1 auto; min-width: 130px; }
+    .out { margin-top: 10px; font-size: 12px; white-space: pre-wrap; word-break: break-word; color: #9aa0a6; }
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .top button { padding: 8px 12px; font-size: 13px; }
+    .note { font-size: 11.5px; color: #7c828a; margin-top: 8px; line-height: 1.45; }
   </style>
 </head>
 <body>
   <h1>ProMatchXI — Beheer</h1>
-  <p class="sub">Geregistreerde gebruikers · admin-only</p>
+  <p class="sub">admin-only · niet geïndexeerd</p>
 
   <div id="gate" class="card" style="display:none">
-    <div class="stat-label" style="margin-bottom:8px">Secret vereist</div>
-    <input id="secretInput" type="password" placeholder="Voer secret in" />
-    <button id="secretBtn">Ontgrendelen</button>
+    <h2>Secret vereist</h2>
+    <input id="secretInput" type="password" placeholder="Voer secret in" autocomplete="off" />
+    <button id="secretBtn" style="margin-top:10px">Ontgrendelen</button>
   </div>
 
   <div id="content" style="display:none">
-    <div class="card">
-      <div class="stat-label">Totaal gebruikers</div>
-      <div class="stat" id="userCount">–</div>
-      <div id="tagStatus" class="muted">Admin-melding instellen…</div>
+    <div class="top">
+      <span id="ververst" class="muted">–</span>
+      <button id="refreshBtn" class="sec">Vernieuwen</button>
     </div>
+
     <div class="card">
-      <table>
-        <thead>
-          <tr><th>E-mail</th><th>Aangemeld</th><th>Laatst actief</th></tr>
-        </thead>
+      <h2>Systeem</h2>
+      <div id="sys"><span class="muted">laden…</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Validatie clubtijdperk</h2>
+      <div id="val"><span class="muted">laden…</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Datakwaliteit</h2>
+      <div id="data"><span class="muted">laden…</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Elo-blend (schaduw)</h2>
+      <div id="elo"><span class="muted">laden…</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Jobs op de server</h2>
+      <div id="jobs"><span class="muted">laden…</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Meldingen</h2>
+      <div id="push"><span class="muted">laden…</span></div>
+      <div id="tagStatus" class="note">Admin-melding instellen…</div>
+    </div>
+
+    <div class="card">
+      <h2>Gebruikers</h2>
+      <div class="stat" id="userCount">–</div>
+      <table style="margin-top:10px">
+        <thead><tr><th>E-mail</th><th>Aangemeld</th><th>Laatst actief</th></tr></thead>
         <tbody id="userRows"></tbody>
       </table>
+    </div>
+
+    <div class="card">
+      <h2>Onderhoud</h2>
+      <div class="btnrow">
+        <button id="bSweep" class="sec">Bezorging bijwerken</button>
+        <button id="bTest" class="sec">Testmelding sturen</button>
+        <button id="bDev" class="sec">Toestellen tellen</button>
+        <button id="bTag" class="sec">Admin-tag zetten</button>
+      </div>
+      <div id="onderhoudOut" class="out"></div>
+      <p class="note">
+        Deze knoppen doen alleen wat er staat. Er zit bewust geen knop bij die picks,
+        odds of afrekeningen wijzigt — dat hoort niet achter een knop die je per ongeluk indrukt.
+      </p>
     </div>
   </div>
 
   <div id="msg" class="muted"></div>
 
-  <script>
-    var params = new URLSearchParams(location.search);
-    var secret = params.get('secret') || sessionStorage.getItem('pmx_admin_secret') || '';
+<script>
+(function () {
+  'use strict';
+  var API = 'https://api.promatchxi.app';
+  var params = new URLSearchParams(location.search);
+  var secret = params.get('secret') || sessionStorage.getItem('pmx_admin_secret') || '';
 
-    function fmt(ts) {
-      if (!ts) return '<span class="muted">–</span>';
-      try {
-        var d = new Date(ts);
-        return d.toLocaleString('nl-NL', { day: '2-digit', month: 'short', year: '2-digit', hour: '2-digit', minute: '2-digit' });
-      } catch (e) { return ts; }
-    }
-
-    function setTag() {
-      // Tag dit toestel als admin, zodat admin-pushes (nieuwe registraties) hier aankomen.
-      var el = document.getElementById('tagStatus');
-      try {
-        window.OneSignalDeferred = window.OneSignalDeferred || [];
-        window.OneSignalDeferred.push(async function (OneSignal) {
-          try {
-            await OneSignal.init({
-              appId: '7efd1d2e-630e-48b3-bc32-2704e1a5dc2f',
-              serviceWorkerPath: '/OneSignalSDKWorker.js',
-              notifyButton: { enable: false },
-            });
-          } catch (e) { /* al geïnit door hoofd-app, negeren */ }
-          try {
-            await OneSignal.User.addTag('role', 'admin');
-            el.innerHTML = '<span class="badge ok">admin-melding actief op dit toestel</span>';
-          } catch (e) {
-            el.innerHTML = '<span class="badge warn">tag mislukt: ' + (e && e.message ? e.message : 'onbekend') + '</span>';
-          }
+  // ── helpers ────────────────────────────────────────────────────────────
+  // n(): NOOIT een verzonnen nul. null/undefined is 'niet gemeten' en dat moet
+  // op het scherm ook zo lezen, anders vertelt deze pagina iets over de
+  // buitenwereld dat nergens gemeten is.
+  function n(v, suffix) {
+    if (v === null || v === undefined || v === '') return '<span class="muted">–</span>';
+    if (typeof v === 'number' && !isFinite(v)) return '<span class="muted">–</span>';
+    return String(v) + (suffix || '');
+  }
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  function fmt(ts) {
+    if (!ts) return '<span class="muted">–</span>';
+    try {
+      return new Date(ts).toLocaleString('nl-NL',
+        { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return esc(ts); }
+  }
+  function cell(k, v, small) {
+    return '<div class="cell"><div class="k">' + esc(k) + '</div>' +
+           '<div class="v' + (small ? ' sm' : '') + '">' + v + '</div></div>';
+  }
+  function badge(cls, txt) { return '<span class="badge ' + cls + '">' + esc(txt) + '</span>'; }
+  function faalTekst(el, e) {
+    // Een mislukte call is GEEN lege meting. Dat verschil moet zichtbaar blijven.
+    el.innerHTML = badge('err', 'meting mislukt') +
+      '<div class="note">' + esc(e && e.message ? e.message : e) + '</div>';
+  }
+  function get(path) {
+    var sep = path.indexOf('?') === -1 ? '?' : '&';
+    return fetch(API + path + sep + '_t=' + Date.now())
+      .then(function (r) {
+        if (r.status === 401 || r.status === 403) throw new Error('geen toegang (401/403)');
+        return r.json().then(function (j) {
+          if (!r.ok) throw new Error('HTTP ' + r.status + (j && j.error ? ' · ' + j.error : ''));
+          return j;
         });
-      } catch (e) {
-        el.innerHTML = '<span class="badge warn">OneSignal niet geladen</span>';
-      }
-    }
+      });
+  }
 
-    async function loadUsers() {
-      var msg = document.getElementById('msg');
-      try {
-        var res = await fetch('https://api.promatchxi.app/app-users?secret=' + encodeURIComponent(secret));
-        if (res.status === 401) {
-          showGate('Onjuiste secret.');
-          return;
-        }
-        var data = await res.json();
+  // ── renderers ──────────────────────────────────────────────────────────
+  function renderSys(h) {
+    var el = document.getElementById('sys');
+    var w = Array.isArray(h.warnings) ? h.warnings : [];
+    var st = h.status === 'OK' && !w.length ? badge('ok', 'OK')
+           : w.length ? badge('warn', w.length + ' waarschuwing' + (w.length > 1 ? 'en' : ''))
+           : badge('neut', esc(h.status));
+    var min = h.last_scan_min_ago;
+    var scanBadge = (typeof min === 'number')
+      ? (min <= 70 ? badge('ok', min + ' min geleden') : badge('warn', min + ' min geleden'))
+      : badge('neut', 'onbekend');
+    el.innerHTML =
+      '<div class="grid">' +
+        cell('Status', st, true) +
+        cell('Worker', n(h.worker_version), true) +
+        cell('Laatste scan', scanBadge, true) +
+        cell('Scans vandaag', n(h.scans_today), true) +
+        cell('Picks open', n(h.picks_pending), true) +
+        cell('Picks afgerekend', n(h.picks_settled), true) +
+      '</div>' +
+      (w.length ? '<div class="note">' + w.map(function (x) { return badge('warn', x); }).join(' ') + '</div>' : '');
+  }
+
+  function renderVal(c) {
+    var el = document.getElementById('val');
+    var v = c && c.club_validatie;
+    if (!v || v.gemeten !== true) {
+      el.innerHTML = badge('neut', 'niet gemeten') +
+        '<div class="note">De worker kon de validatie-view niet lezen. Dat is iets anders dan nul picks.</div>';
+      return;
+    }
+    var settled = typeof v.settled === 'number' ? v.settled : null;
+    var doel = typeof v.doel === 'number' ? v.doel : null;
+    var pct = (settled !== null && doel) ? Math.min(100, Math.round(settled / doel * 100)) : 0;
+    var clv = v.avg_clv;
+    var clvBadge = (clv === null || clv === undefined) ? badge('neut', 'geen meting')
+                 : clv > 0 ? badge('ok', '+' + clv) : clv < 0 ? badge('err', String(clv)) : badge('warn', '0,00');
+    el.innerHTML =
+      '<div class="stat">' + n(settled) + ' <span class="muted" style="font-size:15px">van ' + n(doel) + '</span></div>' +
+      '<div class="bar"><i style="width:' + pct + '%"></i></div>' +
+      '<div class="grid3" style="margin-top:10px">' +
+        cell('Hitrate', n(v.hitrate_pct, '%'), true) +
+        cell('ROI', n(v.roi_pct, '%'), true) +
+        cell('CLV gem.', clvBadge, true) +
+        cell('CLV gemeten', n(v.met_clv), true) +
+        cell('CLV positief', n(v.clv_positief), true) +
+        cell('Onspeelbaar', n(v.onspeelbaar_uitgesloten), true) +
+      '</div>' +
+      '<p class="note">CLV is het cijfer dat telt: bewoog de markt naar ons toe of van ons weg? ' +
+      'Hitrate en ROI zijn op dit aantal picks nog ruis.</p>' +
+      (c.dichtstbij ? '<p class="note">Dichtst bij kalibratie: ' + esc(c.dichtstbij.naam) +
+        ' — nog ' + n(c.dichtstbij.nog) + ' picks.</p>' : '');
+  }
+
+  function renderData(h) {
+    var el = document.getElementById('data');
+    var ov = h.odds_dekking_venster || {};
+    var dek = (ov.pct === null || ov.pct === undefined)
+      ? badge('neut', 'geen wedstrijden')
+      : (ov.pct >= 90 ? badge('ok', ov.pct + '%') : badge('warn', ov.pct + '%'));
+    var gaps = h.clv_gaps;
+    var gapBadge = (gaps === null || gaps === undefined) ? badge('neut', '–')
+                 : gaps === 0 ? badge('ok', '0') : badge('warn', String(gaps));
+    var tr = (h.apif_proxy && h.apif_proxy.trend_24u) || {};
+    var trOk = tr.gemeten === true;
+    var html =
+      '<div class="grid3">' +
+        cell('Odds-dekking', dek, true) +
+        cell('Fixtures', n(ov.met_odds) + ' / ' + n(ov.van), true) +
+        cell('CLV-gaten', gapBadge, true) +
+      '</div>' +
+      '<div class="grid3" style="margin-top:10px">' +
+        cell('API-calls 24u', trOk ? n(tr.calls) : '<span class="muted">–</span>', true) +
+        cell('Verloren calls', trOk ? n(tr.opgegeven) : '<span class="muted">–</span>', true) +
+        cell('Piek geweigerd', trOk ? n(tr.piek_pct_per_scan, '%') : '<span class="muted">–</span>', true) +
+      '</div>';
+    var m = Array.isArray(h.clv_per_markt) ? h.clv_per_markt : [];
+    if (m.length) {
+      html += '<table style="margin-top:12px"><thead><tr><th>Markt</th><th>Picks</th><th>Hit</th><th>CLV</th><th>ROI</th></tr></thead><tbody>' +
+        m.map(function (r) {
+          return '<tr><td>' + esc(r.markt) + '</td><td>' + n(r.picks) + '</td><td>' +
+                 n(r.hitrate, '%') + '</td><td>' + n(r.avg_clv) + '</td><td>' + n(r.roi_pct, '%') + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    }
+    html += '<p class="note">Odds-dekking telt het hele 24-uursvenster, niet alleen de eerste 24 fixtures.</p>';
+    el.innerHTML = html;
+  }
+
+  function renderElo(h) {
+    var el = document.getElementById('elo');
+    var e = h.elo_blend;
+    if (!e) { el.innerHTML = badge('neut', 'niet gemeten'); return; }
+    var beter = (typeof e.brier_blend === 'number' && typeof e.brier_model === 'number')
+      ? (e.brier_blend < e.brier_model ? badge('ok', 'blend beter') : badge('warn', 'model beter'))
+      : badge('neut', '–');
+    el.innerHTML =
+      '<div class="grid3">' +
+        cell('Duels', n(e.n_duels) + ' / 40', true) +
+        cell('Brier model', n(e.brier_model), true) +
+        cell('Brier blend', n(e.brier_blend), true) +
+        cell('ROI model', n(e.roi_model_pct, '%'), true) +
+        cell('ROI blend', n(e.roi_blend_pct, '%'), true) +
+        cell('Oordeel', beter, true) +
+      '</div>' +
+      '<p class="note">Blendgewicht staat op ' + n(e.elo_blend_w) +
+      ' — de Elo raakt je picks dus niet. Vanaf 40 duels is er genoeg om over te beslissen. ' +
+      'Lagere Brier is beter.</p>';
+  }
+
+  function renderJobs(h) {
+    var el = document.getElementById('jobs');
+    var j = Array.isArray(h.jobs) ? h.jobs : [];
+    if (!j.length) { el.innerHTML = badge('neut', 'geen jobs gemeld'); return; }
+    el.innerHTML = '<table><thead><tr><th>Job</th><th>Laatst</th><th>Status</th></tr></thead><tbody>' +
+      j.map(function (r) {
+        var b = r.gemeten !== true ? badge('neut', 'niet gemeten')
+              : r.ok === true ? badge('ok', 'ok') : badge('err', 'fout');
+        var geleden = (typeof r.min_geleden === 'number') ? r.min_geleden + ' min' : '–';
+        return '<tr><td>' + esc(r.job) + '</td><td>' + geleden + '</td><td>' + b +
+               '</td></tr><tr><td colspan="3" class="muted" style="padding-top:0;border-bottom:1px solid #262a31">' +
+               esc(r.note || '') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  function renderPush(h) {
+    var el = document.getElementById('push');
+    var p = h.push || {};
+    var bez = p.bezorgd, mis = p.mislukt;
+    var b = (typeof bez === 'number' && bez > 0) ? badge('ok', String(bez))
+          : (typeof bez === 'number') ? badge('warn', '0') : badge('neut', '–');
+    el.innerHTML =
+      '<div class="grid3">' +
+        cell('Verstuurd 7d', n(p.verstuurd_7d), true) +
+        cell('Bezorgd', b, true) +
+        cell('Mislukt', n(p.mislukt), true) +
+      '</div>' +
+      (typeof mis === 'number' && mis > 0
+        ? '<p class="note">Mislukte bezorging betekent meestal een dood pushtoken op een oud toestel.</p>' : '');
+  }
+
+  function renderUsers(d) {
+    document.getElementById('userCount').textContent =
+      (typeof d.count === 'number') ? d.count : '–';
+    var rows = (d.users || []).map(function (u) {
+      return '<tr><td class="email">' + (u.email ? esc(u.email) : '<span class="muted">geen</span>') +
+             '</td><td>' + fmt(u.created_at) + '</td><td>' + fmt(u.last_seen) + '</td></tr>';
+    }).join('');
+    document.getElementById('userRows').innerHTML =
+      rows || '<tr><td colspan="3" class="muted">Nog geen gebruikers.</td></tr>';
+  }
+
+  // ── laden ──────────────────────────────────────────────────────────────
+  function laad() {
+    document.getElementById('ververst').textContent = 'laden…';
+    // Elke bron apart: valt er een weg, dan blijft de rest gewoon staan en
+    // zegt alleen dat blok dat het niet gemeten is.
+    get('/health')
+      .then(function (h) { renderSys(h); renderData(h); renderElo(h); renderJobs(h); renderPush(h); })
+      .catch(function (e) {
+        ['sys', 'data', 'elo', 'jobs', 'push'].forEach(function (id) {
+          faalTekst(document.getElementById(id), e);
+        });
+      });
+    get('/calibration-status')
+      .then(renderVal)
+      .catch(function (e) { faalTekst(document.getElementById('val'), e); });
+    get('/app-users?secret=' + encodeURIComponent(secret))
+      .then(function (d) {
         sessionStorage.setItem('pmx_admin_secret', secret);
         document.getElementById('gate').style.display = 'none';
         document.getElementById('content').style.display = 'block';
-        document.getElementById('userCount').textContent = data.count || 0;
-        var rows = (data.users || []).map(function (u) {
-          return '<tr><td class="email">' + (u.email || '<span class="muted">geen</span>') +
-                 '</td><td>' + fmt(u.created_at) +
-                 '</td><td>' + fmt(u.last_seen) + '</td></tr>';
-        }).join('');
-        document.getElementById('userRows').innerHTML = rows || '<tr><td colspan="3" class="muted">Nog geen gebruikers.</td></tr>';
-        msg.textContent = '';
-        setTag();
-      } catch (e) {
-        msg.innerHTML = '<span class="badge err">Fout bij laden: ' + (e && e.message ? e.message : e) + '</span>';
-      }
-    }
+        document.getElementById('msg').textContent = '';
+        renderUsers(d);
+        zetTag();
+      })
+      .catch(function (e) {
+        if (String(e.message).indexOf('401') !== -1 || String(e.message).indexOf('403') !== -1) {
+          toonGate('Onjuiste secret.');
+        } else {
+          document.getElementById('userRows').innerHTML =
+            '<tr><td colspan="3">' + badge('err', 'niet geladen') + '</td></tr>';
+        }
+      });
+    document.getElementById('ververst').textContent =
+      'bijgewerkt ' + new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
 
-    function showGate(note) {
-      document.getElementById('gate').style.display = 'block';
-      document.getElementById('content').style.display = 'none';
-      if (note) document.getElementById('msg').innerHTML = '<span class="badge err">' + note + '</span>';
-    }
+  function toonGate(note) {
+    document.getElementById('gate').style.display = 'block';
+    document.getElementById('content').style.display = 'none';
+    if (note) document.getElementById('msg').innerHTML = badge('err', note);
+  }
 
-    document.getElementById('secretBtn').addEventListener('click', function () {
-      secret = document.getElementById('secretInput').value.trim();
-      if (secret) { document.getElementById('msg').textContent = ''; loadUsers(); }
+  // ── onderhoud ──────────────────────────────────────────────────────────
+  var out = function () { return document.getElementById('onderhoudOut'); };
+  function actie(btn, pad, beschrijf) {
+    btn.disabled = true;
+    out().textContent = 'bezig…';
+    get(pad + (pad.indexOf('?') === -1 ? '?' : '&') + 'secret=' + encodeURIComponent(secret))
+      .then(function (d) { out().textContent = beschrijf(d); })
+      .catch(function (e) { out().innerHTML = badge('err', 'mislukt') + ' ' + esc(e.message); })
+      .then(function () { btn.disabled = false; });
+  }
+
+  function zetTag() {
+    var el = document.getElementById('tagStatus');
+    try {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      window.OneSignalDeferred.push(async function (OneSignal) {
+        try {
+          // v26.340: EXACT hetzelfde als index.html r748. De oude admin.html gebruikte
+          // '/OneSignalSDKWorker.js' in de root, en die claimt scope / -- precies de
+          // registratie die v26.333 heeft weggehaald omdat hij bij elke deploy het
+          // pushabonnement sloopte. Deze pagina zette hem dus stilletjes terug zodra je
+          // hem opende. Pad en scope moeten hier gelijk blijven aan de hoofd-app; twee
+          // varianten van dezelfde registratie is hoe dit de eerste keer misging.
+          await OneSignal.init({
+            appId: '7efd1d2e-630e-48b3-bc32-2704e1a5dc2f',
+            serviceWorkerPath: 'onesignal/OneSignalSDKWorker.js',
+            serviceWorkerParam: { scope: '/onesignal/' },
+            notifyButton: { enable: false },
+          });
+        } catch (e) { /* al geïnit door hoofd-app */ }
+        try {
+          await OneSignal.User.addTag('role', 'admin');
+          el.innerHTML = badge('ok', 'admin-meldingen actief op dit toestel');
+        } catch (e) {
+          el.innerHTML = badge('warn', 'tag mislukt: ' + (e && e.message ? e.message : 'onbekend'));
+        }
+      });
+    } catch (e) {
+      el.innerHTML = badge('warn', 'OneSignal niet geladen');
+    }
+  }
+
+  // ── knoppen ────────────────────────────────────────────────────────────
+  document.getElementById('secretBtn').addEventListener('click', function () {
+    secret = document.getElementById('secretInput').value.trim();
+    if (secret) { document.getElementById('msg').textContent = ''; laad(); }
+  });
+  document.getElementById('refreshBtn').addEventListener('click', laad);
+
+  document.getElementById('bSweep').addEventListener('click', function () {
+    actie(this, '/push-sweep', function (d) {
+      return 'Bezorging bijgewerkt — gevonden ' + (d.gevonden === undefined ? '?' : d.gevonden) +
+             ', bijgewerkt ' + (d.bijgewerkt === undefined ? '?' : d.bijgewerkt) + '.';
     });
+  });
+  document.getElementById('bTest').addEventListener('click', function () {
+    actie(this, '/push-test', function (d) {
+      return 'Testmelding verstuurd. Antwoord: ' + JSON.stringify(d).slice(0, 300);
+    });
+  });
+  document.getElementById('bDev').addEventListener('click', function () {
+    actie(this, '/push-devices?n=1', function (d) {
+      if (d.gemeten !== true) return 'Niet gemeten — OneSignal gaf geen bruikbaar antwoord.';
+      return 'Toestellen: ' + d.totaal_bij_onesignal + ' totaal · ' + d.geldige_tokens +
+             ' met geldig token · ' + d.met_admin_tag + ' met admin-tag · ' +
+             d.ongeldige_tokens + ' dood.';
+    });
+  });
+  document.getElementById('bTag').addEventListener('click', function () {
+    zetTag();
+    out().textContent = 'Admin-tag opnieuw gezet — zie het kopje Meldingen.';
+  });
 
-    if (secret) { loadUsers(); } else { showGate(''); }
-  </script>
+  if (secret) { laad(); } else { toonGate(''); }
+})();
+</script>
 </body>
 </html>
