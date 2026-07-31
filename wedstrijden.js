@@ -198,6 +198,14 @@ function renderWedstrijdenScreen() {
         display:flex;align-items:center;justify-content:center;gap:.35rem;">
         <span style="font-size:.9rem;">🇪🇺</span> ${t('wed.tab_ekkwal','EK-kwalificatie')}
       </button>
+      ${(typeof MODEL_PARAMS !== 'undefined' && MODEL_PARAMS && MODEL_PARAMS.oddsvergelijker_enabled === true) ? `
+      <button onclick="switchScreen('oddsvergelijker')"
+        style="flex:1;border:1px solid rgba(0,190,196,.35);border-radius:12px;padding:.6rem .4rem;
+        background:rgba(0,190,196,.08);color:rgba(255,255,255,.92);
+        font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;gap:.35rem;">
+        <span style="font-size:.9rem;">📈</span> ${t('od.title','Oddsvergelijker')}
+      </button>` : ''}
     </div>
 
     <!-- Competitie tiles - compact grid -->

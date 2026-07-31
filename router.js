@@ -73,6 +73,9 @@ function switchScreen(name) {
     case 'ekkwal':
       if (typeof renderEKKwalScreen === 'function') renderEKKwalScreen();
       break;
+    case 'oddsvergelijker':
+      if (typeof renderOddsvergelijkerScreen === 'function') renderOddsvergelijkerScreen();
+      break;
   }
 
   // Sluit menu bij schermwissel
