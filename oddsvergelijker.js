@@ -17,6 +17,10 @@ function _odFlagAan() {
   return (typeof MODEL_PARAMS !== 'undefined' && MODEL_PARAMS && MODEL_PARAMS.oddsvergelijker_enabled === true);
 }
 
+// Eenmalige zelf-refresh per sessie zodat het scherm ook werkt zonder eerst de
+// Analyse-tab te openen (silent = leest /picks, triggert GEEN scan-kosten).
+let _odRefreshGeprobeerd = false;
+
 // Odds netjes tonen; alleen een echt getal, anders een streepje (geen falsy-nul).
 function _odOdd(v) {
   return (typeof v === 'number' && isFinite(v)) ? v.toFixed(2) : '–';
@@ -57,6 +61,17 @@ function renderOddsvergelijkerScreen() {
 
   const scans = (state && Array.isArray(state.valueScans)) ? state.valueScans : [];
   if (!scans.length) {
+    // Zelf-vullend: eenmalig een SILENT refresh (leest /picks, geen scankosten),
+    // daarna hertekenen. Lukt dat niet of blijft de lijst leeg -> eerlijke lege staat.
+    if (!_odRefreshGeprobeerd && typeof refreshValueScansFromWorker === 'function') {
+      _odRefreshGeprobeerd = true;
+      s.innerHTML = kop + `<div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);
+        text-align:center;padding:1rem;">${t('od.laden_picks','\u27F3 Value-picks laden\u2026')}</div>`;
+      refreshValueScansFromWorker(true)
+        .then(() => renderOddsvergelijkerScreen())
+        .catch(() => renderOddsvergelijkerScreen());
+      return;
+    }
     s.innerHTML = kop + `
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);
         background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;
