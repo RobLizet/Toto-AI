@@ -112,11 +112,28 @@ function renderOddsvergelijkerScreen() {
 }
 
 // ── Detail: haalt de boeken-historie op en rendert lijnbeweging + tabel ──
+// Pick-label -> markt. U3.5/O2.5 -> ou (Over/Under); BTTS/NOBTTS -> btts; 1/X/2 -> 1x2.
+function _odPickMarkt(scan) {
+  const p = String((scan && (scan.pick || scan.pickLabel)) || '').trim().toUpperCase();
+  const m = p.match(/^([OU])\s*([0-9]+(?:\.[0-9])?)$/);
+  if (m) return { soort: 'ou', lijn: String(parseFloat(m[2])), kant: m[1] === 'O' ? 'over' : 'under' };
+  if (p === 'BTTS' || p === 'GG') return { soort: 'btts', kant: 'yes' };
+  if (p === 'NOBTTS' || p === 'NG') return { soort: 'btts', kant: 'no' };
+  return { soort: '1x2' };
+}
+
 async function pmxOddsvergOpen(fixtureId) {
   const box = document.getElementById('od-detail');
   if (!box) return;
+  const scan = _odScanVoor(fixtureId);
+  const markt = _odPickMarkt(scan);
   box.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);
-    text-align:center;padding:1rem;">${t('od.laden','\u27F3 Boeken-historie laden\u2026')}</div>`;
+    text-align:center;padding:1rem;">${t('od.laden', '\u27F3 Odds-historie laden\u2026')}</div>`;
+
+  // Goals/BTTS-pick -> goals-historie (consensus O/U + BTTS). Anders het 1X2-boekenscherm.
+  if (markt.soort === 'ou' || markt.soort === 'btts') {
+    return _odGoalsOpen(fixtureId, scan, markt, box);
+  }
 
   let d = null;
   try {
@@ -144,12 +161,127 @@ async function pmxOddsvergOpen(fixtureId) {
 
   const eerste = reeks[0];
   const laatste = reeks[reeks.length - 1];
-  const scan = _odScanVoor(fixtureId);
 
   box.innerHTML =
     _odLijnbewegingHtml(reeks, eerste, laatste, d.snapshots) +
     _odModelValueHtml(scan, laatste) +
     _odBoekenTabelHtml(laatste);
+}
+
+// ── Goals-variant: haalt /goals-history op en toont de lijn van de pick ──
+async function _odGoalsOpen(fixtureId, scan, markt, box) {
+  let d = null;
+  try {
+    const r = await fetch(`${_odWorker()}/goals-history?fixture=${encodeURIComponent(fixtureId)}&_cb=${Date.now()}`);
+    d = await r.json();
+  } catch (e) {
+    box.innerHTML = _odFout(t('od.fetchfout_g', 'Kon de goals-historie niet ophalen (netwerk of server). Probeer het zo opnieuw.'));
+    return;
+  }
+  if (!d || d.ok !== true) {
+    box.innerHTML = _odFout(t('od.fetchfout_g', 'Kon de goals-historie niet ophalen (netwerk of server). Probeer het zo opnieuw.'));
+    return;
+  }
+  const reeks = Array.isArray(d.reeks) ? d.reeks : [];
+  if (!reeks.length) {
+    box.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;
+      padding:.9rem;text-align:center;">${t('od.geenhistorie_g','Nog geen goals-historie voor deze wedstrijd.')}</div>`;
+    return;
+  }
+  const eerste = reeks[0], laatste = reeks[reeks.length - 1];
+  box.innerHTML =
+    _odGoalsLijnHtml(reeks, eerste, laatste, markt, d.snapshots) +
+    _odModelValueHtml(scan, laatste) +
+    _odGoalsContextHtml(laatste, markt) +
+    _odGoalsBron();
+}
+
+// Lijnbeweging voor de gekozen goals-lijn (O/U-lijn of BTTS): opening->closing + sparkline.
+function _odGoalsLijnHtml(reeks, eerste, laatste, markt, snapshots) {
+  const n = (typeof snapshots === 'number') ? snapshots : reeks.length;
+  const periode = _odPeriode(eerste.t, laatste.t);
+  let titel, paren, sparkVals, sparkLabel;
+  if (markt.soort === 'ou') {
+    const lijn = markt.lijn;
+    const eo = (eerste.ou && eerste.ou[lijn]) || {};
+    const lo = (laatste.ou && laatste.ou[lijn]) || {};
+    titel = `${t('od.ou', 'Over/Under')} ${lijn}`;
+    paren = [[t('od.over', 'Over'), eo.over, lo.over, markt.kant === 'over'],
+             [t('od.under', 'Under'), eo.under, lo.under, markt.kant === 'under']];
+    sparkVals = reeks.map(x => (x.ou && x.ou[lijn] && typeof x.ou[lijn][markt.kant] === 'number') ? x.ou[lijn][markt.kant] : null);
+    sparkLabel = `${markt.kant === 'over' ? t('od.over', 'Over') : t('od.under', 'Under')} ${lijn} ${t('od.overtijd', 'over tijd')}`;
+  } else {
+    const eb = eerste.btts || {}, lb = laatste.btts || {};
+    titel = t('od.btts', 'Beide teams scoren');
+    paren = [[t('od.ja', 'Ja'), eb.yes, lb.yes, markt.kant === 'yes'],
+             [t('od.nee', 'Nee'), eb.no, lb.no, markt.kant === 'no']];
+    sparkVals = reeks.map(x => (x.btts && typeof x.btts[markt.kant] === 'number') ? x.btts[markt.kant] : null);
+    sparkLabel = `${markt.kant === 'yes' ? t('od.ja', 'Ja') : t('od.nee', 'Nee')} ${t('od.overtijd', 'over tijd')}`;
+  }
+  const rijen = paren.map(([lab, o, c, isPick]) => {
+    const okv = (typeof o === 'number' && typeof c === 'number');
+    const dlt = okv ? (c - o) : null;
+    const kleur = dlt == null ? 'var(--muted)' : (dlt > 0 ? '#00BEC4' : (dlt < 0 ? '#f87171' : 'var(--muted)'));
+    const pijl = dlt == null ? '' : (dlt > 0 ? '\u2191' : (dlt < 0 ? '\u2193' : '\u2192'));
+    const dtxt = dlt == null ? '' : (dlt === 0 ? '0' : (dlt > 0 ? '+' : '') + dlt.toFixed(2));
+    const waarde = okv
+      ? `${o.toFixed(2)}\u2009\u2192\u2009${c.toFixed(2)} <span style="color:${kleur};">${pijl}${dtxt}</span>`
+      : '\u2013';
+    return `<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.18rem 0;${isPick ? 'font-weight:700;' : ''}">
+      <span style="color:${isPick ? '#00BEC4' : 'rgba(255,255,255,.85)'};">${lab}${isPick ? ' \u25C4 pick' : ''}</span>
+      <span style="color:#fff;">${waarde}</span></div>`;
+  }).join('');
+  const spark = _odSparkline(sparkVals);
+  return `
+  <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.8rem;margin-bottom:.6rem;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);letter-spacing:.06em;margin-bottom:.45rem;">
+      ${t('od.lijnbeweging_g', 'LIJNBEWEGING')} \u00b7 ${titel} \u00b7 ${n} ${t('od.snapshots', 'snapshots')}${periode ? ' \u00b7 ' + periode : ''}
+    </div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.58rem;">${rijen}</div>
+    ${spark ? `<div style="margin-top:.5rem;">${spark}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);text-align:center;margin-top:.15rem;">
+        ${sparkLabel} (${t('od.opening_links', 'opening links \u2192 closing rechts')})</div>` : ''}
+  </div>`;
+}
+
+// Context: de O/U-lijnen van de laatste snapshot (de pick-lijn gemarkeerd).
+function _odGoalsContextHtml(laatste, markt) {
+  const ou = laatste.ou;
+  if (!ou || typeof ou !== 'object') return '';
+  const lijnen = Object.keys(ou).sort((a, b) => Number(a) - Number(b));
+  if (!lijnen.length) return '';
+  const cel = v => (typeof v === 'number') ? v.toFixed(2) : '\u2013';
+  const rijen = lijnen.map(k => {
+    const o = ou[k] || {};
+    const isPick = (markt.soort === 'ou' && String(k) === String(markt.lijn));
+    return `<tr style="border-top:1px solid rgba(255,255,255,.06);">
+      <td style="padding:.26rem .3rem;color:${isPick ? '#00BEC4' : 'rgba(255,255,255,.85)'};font-weight:${isPick ? '700' : '400'};">${k}${isPick ? ' \u25C4' : ''}</td>
+      <td style="padding:.26rem .3rem;text-align:right;color:#fff;">${cel(o.over)}</td>
+      <td style="padding:.26rem .3rem;text-align:right;color:#fff;">${cel(o.under)}</td></tr>`;
+  }).join('');
+  return `
+  <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:.7rem;margin-bottom:.6rem;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);letter-spacing:.06em;margin-bottom:.4rem;">
+      ${t('od.andere_lijnen', 'O/U-LIJNEN (laatste snapshot)')}
+    </div>
+    <table style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;border-collapse:collapse;width:100%;">
+      <tr style="color:var(--muted);">
+        <td style="padding:.26rem .3rem;">${t('od.lijn', 'Lijn')}</td>
+        <td style="padding:.26rem .3rem;text-align:right;">${t('od.over', 'Over')}</td>
+        <td style="padding:.26rem .3rem;text-align:right;">${t('od.under', 'Under')}</td>
+      </tr>
+      ${rijen}
+    </table>
+  </div>`;
+}
+
+// Eerlijke bronvermelding: goals-odds zijn consensus, niet per boek.
+function _odGoalsBron() {
+  return `<div style="font-family:'IBM Plex Mono',monospace;font-size:.48rem;color:var(--muted);
+    text-align:center;padding:.2rem .4rem;line-height:1.5;">
+    ${t('od.goals_bron', 'Goals-odds zijn marktconsensus (geen per-boek), dus geen \u2605 beste-boek-tabel.')}
+  </div>`;
 }
 
 function _odFout(tekst) {
