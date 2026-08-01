@@ -109,6 +109,18 @@ const COMP_IDS = {
   africup: 6,          // Africa Cup of Nations
   asiancup: 7,         // AFC Asian Cup
   olympics_m: 480,     // Olympische Spelen mannen
+  // v26.353: nationale bekers + EK-kwalificatie (worker scant ze al; nodig zodat de tegel bij tikken laadt)
+  facup: 45,           // FA Cup (Engeland)
+  coupefrance: 66,     // Coupe de France
+  dfbpokal: 81,        // DFB-Pokal (Duitsland)
+  tacaportugal: 96,    // Taca de Portugal
+  coppaitalia: 137,    // Coppa Italia
+  copadelrey: 143,     // Copa del Rey (Spanje)
+  bekerbelgie: 147,    // Beker van Belgie
+  scottishcup: 181,    // Scottish Cup
+  turkiyekupasi: 206,  // Turkiye Kupasi
+  schweizercup: 209,   // Schweizer Cup
+  ek_kwal: 960,        // EK-kwalificatie
 };
 
 const COMP_NAMES = {
@@ -129,6 +141,14 @@ const COMP_NAMES = {
   goldcup: '🌎 Gold Cup', africup: '🌍 Africa Cup', asiancup: '🌏 Asian Cup',
   wk_kwal_europa: '🌍 WK Kwal. Europa', wk_kwal_azie: '🌏 WK Kwal. Azië',
   wk_kwal_latam: '🌎 WK Kwal. CONMEBOL',
+  // v26.353: interland-archief + nationale bekers
+  euro2024: '🇪🇺 EK', ek_kwal: '🇪🇺 EK-kwalificatie',
+  facup: '🏴󠁧󠁢󠁥󠁮󠁧󠁿 FA Cup',
+  coupefrance: '🇫🇷 Coupe de France', dfbpokal: '🇩🇪 DFB-Pokal',
+  tacaportugal: '🇵🇹 Taca de Portugal', coppaitalia: '🇮🇹 Coppa Italia',
+  copadelrey: '🇪🇸 Copa del Rey', bekerbelgie: '🇧🇪 Beker van Belgie',
+  scottishcup: '🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scottish Cup',
+  turkiyekupasi: '🇹🇷 Turkiye Kupasi', schweizercup: '🇨🇭 Schweizer Cup',
 };
 
 const FD_CODES = {

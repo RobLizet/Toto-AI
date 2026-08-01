@@ -12,32 +12,48 @@
 // keer afleiden. Vier kopieen van een lijst is geen slordigheid maar een ontwerpfout.
 // Voortaan bepaalt de worker WELKE competities meedoen (GET /leagues); de app zegt
 // alleen nog hoe ze heten.
-const PMX_LEAGUES_CACHE = 'pmx_worker_leagues_v1';
+const PMX_LEAGUES_CACHE = 'pmx_worker_leagues_v2'; // v26.353: bewaart nu {id,categorie,naam,seizoen}-objecten i.p.v. kale id's
 
 // Weergavegegevens per league-id. NADRUKKELIJK geen tweede ledenlijst: staat een
 // competitie hier wel maar noemt de worker hem niet, dan doet hij niet mee.
 const LEAGUE_META = {
-  39: { key:'premier', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Premier League' },
-  140: { key:'laliga', flag:'🇪🇸', name:'La Liga' },
-  78: { key:'bundesliga', flag:'🇩🇪', name:'Bundesliga' },
-  135: { key:'seriea', flag:'🇮🇹', name:'Serie A' },
-  61: { key:'ligue1', flag:'🇫🇷', name:'Ligue 1' },
-  88: { key:'eredivisie', flag:'🇳🇱', name:'Eredivisie' },
-  94: { key:'portugal', flag:'🇵🇹', name:'Primeira Liga' },
-  144: { key:'jupiler', flag:'🇧🇪', name:'Jupiler Pro League' },
-  179: { key:'scotland', flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', name:'Scottish Prem' },
-  207: { key:'switzerland', flag:'🇨🇭', name:'Super League CH' },
-  203: { key:'superlig', flag:'🇹🇷', name:'Süper Lig' },
-  2: { key:'champions', flag:'⭐', name:'Champions League' },
-  3: { key:'europa', flag:'🟠', name:'Europa League' },
-  848: { key:'conference', flag:'🟢', name:'Conference League' },
-  89: { key:'kkd', flag:'🇳🇱', name:'Keuken Kampioen' },
-  79: { key:'bundesliga2', flag:'🇩🇪', name:'2. Bundesliga' },
-  80: { key:'liga3', flag:'🇩🇪', name:'3. Liga' },
-  40: { key:'championship', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' },
-  41: { key:'leagueone', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'League One' },
-  103: { key:'norway', flag:'🇳🇴', name:'Eliteserien' },
-  113: { key:'sweden', flag:'🇸🇪', name:'Allsvenskan' },
+  39: { key:'premier', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Premier League' , cat:'clubliga' },
+  140: { key:'laliga', flag:'🇪🇸', name:'La Liga' , cat:'clubliga' },
+  78: { key:'bundesliga', flag:'🇩🇪', name:'Bundesliga' , cat:'clubliga' },
+  135: { key:'seriea', flag:'🇮🇹', name:'Serie A' , cat:'clubliga' },
+  61: { key:'ligue1', flag:'🇫🇷', name:'Ligue 1' , cat:'clubliga' },
+  88: { key:'eredivisie', flag:'🇳🇱', name:'Eredivisie' , cat:'clubliga' },
+  94: { key:'portugal', flag:'🇵🇹', name:'Primeira Liga' , cat:'clubliga' },
+  144: { key:'jupiler', flag:'🇧🇪', name:'Jupiler Pro League' , cat:'clubliga' },
+  179: { key:'scotland', flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', name:'Scottish Prem' , cat:'clubliga' },
+  207: { key:'switzerland', flag:'🇨🇭', name:'Super League CH' , cat:'clubliga' },
+  203: { key:'superlig', flag:'🇹🇷', name:'Süper Lig' , cat:'clubliga' },
+  2: { key:'champions', flag:'⭐', name:'Champions League' , cat:'euro_beker' },
+  3: { key:'europa', flag:'🟠', name:'Europa League' , cat:'euro_beker' },
+  848: { key:'conference', flag:'🟢', name:'Conference League' , cat:'euro_beker' },
+  89: { key:'kkd', flag:'🇳🇱', name:'Keuken Kampioen' , cat:'clubliga' },
+  79: { key:'bundesliga2', flag:'🇩🇪', name:'2. Bundesliga' , cat:'clubliga' },
+  80: { key:'liga3', flag:'🇩🇪', name:'3. Liga' , cat:'clubliga' },
+  40: { key:'championship', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'Championship' , cat:'clubliga' },
+  41: { key:'leagueone', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'League One' , cat:'clubliga' },
+  103: { key:'norway', flag:'🇳🇴', name:'Eliteserien' , cat:'clubliga' },
+  113: { key:'sweden', flag:'🇸🇪', name:'Allsvenskan' , cat:'clubliga' },
+  90:  { key:'beker',         flag:'🇳🇱', name:'KNVB Beker',     cat:'nationale_beker' },
+  45:  { key:'facup',         flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', name:'FA Cup',         cat:'nationale_beker' },
+  66:  { key:'coupefrance',   flag:'🇫🇷', name:'Coupe France',   cat:'nationale_beker' },
+  81:  { key:'dfbpokal',      flag:'🇩🇪', name:'DFB-Pokal',      cat:'nationale_beker' },
+  96:  { key:'tacaportugal',  flag:'🇵🇹', name:'Taca Portugal',  cat:'nationale_beker' },
+  137: { key:'coppaitalia',   flag:'🇮🇹', name:'Coppa Italia',   cat:'nationale_beker' },
+  143: { key:'copadelrey',    flag:'🇪🇸', name:'Copa del Rey',   cat:'nationale_beker' },
+  147: { key:'bekerbelgie',   flag:'🇧🇪', name:'Beker Belgie',   cat:'nationale_beker' },
+  181: { key:'scottishcup',   flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', name:'Scottish Cup',   cat:'nationale_beker' },
+  206: { key:'turkiyekupasi', flag:'🇹🇷', name:'Turkiye Kupasi', cat:'nationale_beker' },
+  209: { key:'schweizercup',  flag:'🇨🇭', name:'Schweizer Cup',  cat:'nationale_beker' },
+  1:   { key:'wk2026',        flag:'🏆', name:'WK 2026',        cat:'interland' },
+  4:   { key:'euro2024',      flag:'🇪🇺', name:'EK',             cat:'interland' },
+  5:   { key:'nations',       flag:'🌍', name:'Nations League', cat:'interland' },
+  32:  { key:'wk_kwal_europa',flag:'🌍', name:'WK-kwal.',       cat:'interland' },
+  960: { key:'ek_kwal',       flag:'🇪🇺', name:'EK-kwal.',       cat:'interland' },
 };
 
 // Noodlijst. Wordt ALLEEN gebruikt als er nog nooit een workerlijst is opgehaald en er
@@ -48,11 +64,47 @@ const SEED_LEAGUE_IDS = [39, 140, 78, 135, 61, 88, 94, 144, 179, 207, 203, 2, 3,
 
 let _compIds = null;   // huidige ledenlijst als array van id's
 let _compBron = null;  // 'worker' | 'cache' | 'nood'
+// v26.353: door de worker meegeleverde weergave-/scan-metadata per league-id.
+// { id: { categorie, naam, seizoen } }. Bron voor de tegel-GROEPERING en het
+// browse-SEIZOEN, zodat die niet in een aparte handmatige lijst hoeven te staan
+// die kan gaan driften (les van v26.345). Leeg in noodmodus/oude cache -> dan
+// valt de weergave terug op de hardgecodeerde cat in LEAGUE_META en getCurrentSeason.
+let _compMeta = {};
 
 function _zetCompIds(ids, bron) {
   const schoon = (Array.isArray(ids) ? ids : []).map(Number).filter(n => Number.isFinite(n));
   if (!schoon.length) return false;          // een lege lijst is nooit een geldig antwoord
   _compIds = schoon;
+  _compMeta = {};                            // kale id-lijst kent geeen categorie/seizoen
+  _compBron = bron;
+  return true;
+}
+
+// v26.353: zet de id-lijst EN de meta uit een worker-/cache-lijst. Accepteert zowel
+// objecten {id,categorie,naam,seizoen} (nieuw) als kale id's (oude cache): bij een kaal
+// id blijft de meta leeg en valt de weergave netjes terug.
+function _zetCompLijst(lijst, bron) {
+  if (!Array.isArray(lijst) || !lijst.length) return false;
+  const ids = [];
+  const meta = {};
+  for (const x of lijst) {
+    if (x === null || x === undefined) continue;
+    const isObj = (typeof x === 'object');
+    const id = Number(isObj ? x.id : x);
+    if (!Number.isFinite(id)) continue;
+    ids.push(id);
+    if (isObj) {
+      const seizoen = Number(x.seizoen);
+      meta[id] = {
+        categorie: (typeof x.categorie === 'string' && x.categorie) ? x.categorie : null,
+        naam: (typeof x.naam === 'string' && x.naam) ? x.naam : null,
+        seizoen: Number.isFinite(seizoen) ? seizoen : null,
+      };
+    }
+  }
+  if (!ids.length) return false;
+  _compIds = ids;
+  _compMeta = meta;
   _compBron = bron;
   return true;
 }
@@ -63,7 +115,7 @@ function _zorgVoorCompIds() {
   if (_compIds) return;
   try {
     const rauw = localStorage.getItem(PMX_LEAGUES_CACHE);
-    if (rauw && _zetCompIds(JSON.parse(rauw), 'cache')) return;
+    if (rauw && _zetCompLijst(JSON.parse(rauw), 'cache')) return; // v26.353: objectvorm met meta
   } catch (e) { /* privemodus of stukke cache: door naar de noodlijst */ }
   _zetCompIds(SEED_LEAGUE_IDS, 'nood');
 }
@@ -73,12 +125,31 @@ function getActiveCOMPLIST() {
   const uit = [];
   for (const id of _compIds) {
     const meta = LEAGUE_META[id];
-    if (meta) { uit.push(meta); continue; }
+    if (meta) {
+      // v26.353: cat komt bij voorkeur van de worker (categorie uit /leagues) zodat de
+      // tegel-groepering EEN bron heeft; valt terug op de hardgecodeerde cat in LEAGUE_META
+      // (noodmodus/oude cache). categorie is een niet-lege string, dus || is hier veilig.
+      const wm = _compMeta[id];
+      const cat = (wm && wm.categorie) || meta.cat || 'clubliga';
+      uit.push({ ...meta, cat });
+      continue;
+    }
     // Onbekend id NIET stilzwijgend overslaan -- zo verdween Eliteserien uit beeld.
     // Wel overslaan (zonder key kan de rest van de app niets ophalen), maar luid.
     console.warn('[COMPLIST] worker scant competitie ' + id + ' maar de app kent hem niet — voeg hem toe aan LEAGUE_META');
   }
   return uit;
+}
+
+// v26.353: het browse-seizoen komt bij voorkeur van de worker (seizoen uit /leagues),
+// niet uit getCurrentSeason -- die gaf standaard 2025 terwijl het lopende seizoen 2026 is,
+// waardoor de fixtures-lijst per 07/08 leeg zou blijven (dezelfde driftende-seizoen-familie
+// als v26.323, die alleen het odds-pad raakte). Number.isFinite i.p.v. falsy: seizoen 0
+// bestaat niet, maar we willen ook geen enkel geldig jaartal per ongeluk weggooien.
+function seizoenVoorComp(comp, leagueId) {
+  const wm = _compMeta[Number(leagueId)];
+  if (wm && Number.isFinite(wm.seizoen)) return wm.seizoen;
+  return getCurrentSeason(comp);
 }
 
 // null = we kennen de echte workerlijst niet (nog nooit opgehaald, niets in cache).
@@ -109,11 +180,13 @@ async function laadWorkerCompetities() {
     const r = await fetch(`${WORKER}/leagues`, ctrl ? { signal: ctrl.signal } : undefined);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    const ids = (d && Array.isArray(d.gescand)) ? d.gescand.map(x => (x ? x.id : null)) : null;
-    if (!ids || !ids.length) throw new Error('lege of ontbrekende lijst');
+    // v26.353: hele gescand-lijst (id + categorie + naam + seizoen) bewaren, niet alleen id's,
+    // zodat de tegel-groepering en het browse-seizoen uit dezelfde bron komen.
+    const lijst = (d && Array.isArray(d.gescand)) ? d.gescand.filter(x => x && x.id != null) : null;
+    if (!lijst || !lijst.length) throw new Error('lege of ontbrekende lijst');
     const oud = JSON.stringify(_compIds || []);
-    if (!_zetCompIds(ids, 'worker')) throw new Error('geen bruikbare ids');
-    try { localStorage.setItem(PMX_LEAGUES_CACHE, JSON.stringify(_compIds)); } catch (e) {}
+    if (!_zetCompLijst(lijst, 'worker')) throw new Error('geen bruikbare ids');
+    try { localStorage.setItem(PMX_LEAGUES_CACHE, JSON.stringify(lijst)); } catch (e) {}
     if (JSON.stringify(_compIds) !== oud && typeof renderWedstrijdenScreen === 'function') {
       try { renderWedstrijdenScreen(); } catch (e) {}
     }
@@ -144,6 +217,48 @@ function renderWedstrijdenScreen() {
   // v26.312: verse lijst i.p.v. de module-load-bevroren COMP_LIST — activeKeys hierboven is wel vers
   // v26.282: favorieten bovenaan het competitie-grid; stabiele sort behoudt de canonieke volgorde binnen elke groep
   const _sortedComps = [...getActiveCOMPLIST()].sort((a, b) => (favs.includes(a.key) ? 0 : 1) - (favs.includes(b.key) ? 0 : 1));
+
+  // v26.353: tegels gegroepeerd per categorie (bron: worker /leagues categorie), favorieten eerst
+  // binnen elke groep (stabiele sort hierboven blijft behouden per groep). Groepskopjes tonen alleen
+  // als de groep echt tegels bevat, zodat er geen lege koppen verschijnen.
+  const _GROEP_VOLGORDE = ['clubliga', 'euro_beker', 'nationale_beker', 'interland'];
+  const _GROEP_LABELS = {
+    clubliga: t('wed.grp_clubliga', 'Clubcompetities'),
+    euro_beker: t('wed.grp_eurobeker', 'Europees bekervoetbal'),
+    nationale_beker: t('wed.grp_nationalebeker', 'Nationale bekers'),
+    interland: t('wed.grp_interland', 'Interlands'),
+  };
+  const _perGroep = {};
+  for (const c of _sortedComps) {
+    const g = _GROEP_VOLGORDE.includes(c.cat) ? c.cat : 'clubliga';
+    (_perGroep[g] = _perGroep[g] || []).push(c);
+  }
+  const _compChipHtml = (c) => {
+    const isActive = state.activeComp === c.key;
+    const isFav = favs.includes(c.key);
+    const shortName = c.name.length > 10 ? c.name.split(' ').slice(0, 2).join(' ') : c.name;
+    return `<div class="comp-chip${isActive ? ' active' : ''}${isFav ? ' fav' : ''}" id="comp-${c.key}"
+      style="flex-direction:column;padding:.6rem .3rem;text-align:center;border-radius:14px;
+      cursor:pointer;background:${isActive ? 'rgba(0,190,196,.15)' : 'rgba(255,255,255,.05)'};
+      border:1.5px solid ${isActive ? 'rgba(0,190,196,.6)' : 'rgba(255,255,255,.1)'};
+      position:relative;"
+      ontouchstart="handleCompTouchStart('${c.key}',event)"
+      ontouchend="handleCompTouchEnd('${c.key}')"
+      onclick="handleCompTap('${c.key}')">
+      <div style="font-size:1.5rem;line-height:1.3;margin-bottom:.15rem;">${c.flag}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
+        color:${isActive ? '#00BEC4' : 'rgba(255,255,255,.9)'};overflow:hidden;white-space:nowrap;
+        text-overflow:ellipsis;max-width:100%;padding:0 3px;line-height:1.3;">${shortName}</div>
+      ${isFav ? '<div style="position:absolute;top:4px;right:5px;font-size:.6rem;">✓</div>' : ''}
+    </div>`;
+  };
+  const _compGridsHtml = _GROEP_VOLGORDE
+    .filter(g => (_perGroep[g] || []).length)
+    .map(g => `
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin:.55rem .1rem .35rem;">${_GROEP_LABELS[g]}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;" class="compGrid" data-cat="${g}">
+        ${_perGroep[g].map(_compChipHtml).join('')}
+      </div>`).join('');
 
   screen.innerHTML = `
     <!-- AutoCheck bar -->
@@ -208,29 +323,9 @@ function renderWedstrijdenScreen() {
       </button>` : ''}
     </div>
 
-    <!-- Competitie tiles - compact grid -->
+    <!-- Competitie tiles - gegroepeerd per categorie (v26.353) -->
     <div style="margin-bottom:.6rem;">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;" id="compGrid">
-        ${_sortedComps.map(c => {
-          const isActive = state.activeComp === c.key;
-          const isFav = favs.includes(c.key);
-          const shortName = c.name.length > 10 ? c.name.split(' ').slice(0,2).join(' ') : c.name;
-          return `<div class="comp-chip${isActive?' active':''}${isFav?' fav':''}" id="comp-${c.key}"
-            style="flex-direction:column;padding:.6rem .3rem;text-align:center;border-radius:14px;
-            cursor:pointer;background:${isActive?'rgba(0,190,196,.15)':'rgba(255,255,255,.05)'};
-            border:1.5px solid ${isActive?'rgba(0,190,196,.6)':'rgba(255,255,255,.1)'};
-            position:relative;"
-            ontouchstart="handleCompTouchStart('${c.key}',event)"
-            ontouchend="handleCompTouchEnd('${c.key}')"
-            onclick="handleCompTap('${c.key}')">
-            <div style="font-size:1.5rem;line-height:1.3;margin-bottom:.15rem;">${c.flag}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
-              color:${isActive?'#00BEC4':'rgba(255,255,255,.9)'};overflow:hidden;white-space:nowrap;
-              text-overflow:ellipsis;max-width:100%;padding:0 3px;line-height:1.3;">${shortName}</div>
-            ${isFav ? '<div style="position:absolute;top:4px;right:5px;font-size:.6rem;">✓</div>' : ''}
-          </div>`;
-        }).join('')}
-      </div>
+      ${_compGridsHtml}
     </div>
 
     <!-- Acties balk -->
@@ -1404,18 +1499,23 @@ function selectComp(comp) {
 
 // v26.282: favorieten-tegels bovenaan het grid sorteren (canonieke COMP_LIST-volgorde binnen elke groep)
 function resortCompGrid() {
-  const grid = document.getElementById('compGrid');
-  if (!grid) return;
+  // v26.353: er zijn nu meerdere .compGrid-grids (een per categorie) i.p.v. één #compGrid.
+  // Sorteer binnen ELKE groep afzonderlijk: een gefavoriete beker springt naar de top van
+  // 'Nationale bekers', niet uit zijn categorie omhoog.
+  const grids = document.querySelectorAll('.compGrid');
+  if (!grids.length) return;
   const favs = state.favoriteComps || [];
-  const order = getActiveCOMPLIST().map(c => c.key); // v26.312: vers, niet de bevroren COMP_LIST
-  const chips = Array.from(grid.querySelectorAll('.comp-chip'));
-  chips.sort((a, b) => {
-    const ka = a.id.replace('comp-', ''), kb = b.id.replace('comp-', '');
-    const fa = favs.includes(ka) ? 0 : 1, fb = favs.includes(kb) ? 0 : 1;
-    if (fa !== fb) return fa - fb;
-    return order.indexOf(ka) - order.indexOf(kb);
+  const order = getActiveCOMPLIST().map(c => c.key); // vers, niet de bevroren COMP_LIST
+  grids.forEach(grid => {
+    const chips = Array.from(grid.querySelectorAll('.comp-chip'));
+    chips.sort((a, b) => {
+      const ka = a.id.replace('comp-', ''), kb = b.id.replace('comp-', '');
+      const fa = favs.includes(ka) ? 0 : 1, fb = favs.includes(kb) ? 0 : 1;
+      if (fa !== fb) return fa - fb;
+      return order.indexOf(ka) - order.indexOf(kb);
+    });
+    chips.forEach(chip => grid.appendChild(chip));
   });
-  chips.forEach(chip => grid.appendChild(chip));
 }
 
 function toggleFavComp(comp) {
@@ -1698,7 +1798,7 @@ function renderEKKwalScreen() {
 async function loadFromAPIFootball(comp, _apiKey) {
   const leagueId = COMP_IDS[comp];
   if (!leagueId) return false;
-  const season = getCurrentSeason(comp);
+  const season = seizoenVoorComp(comp, leagueId); // v26.353: worker-seizoen (fallback getCurrentSeason)
   showLoadingMsg(`⟳ ${COMP_NAMES[comp] || comp} ${t('wed.loadingsuffix','laden...')}`, 'var(--muted)');
   try {
     const today = new Date().toISOString().split('T')[0];
