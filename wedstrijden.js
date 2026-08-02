@@ -266,6 +266,8 @@ function renderWedstrijdenScreen() {
       border:1.5px solid ${isActive ? 'rgba(0,190,196,.6)' : 'rgba(255,255,255,.1)'};
       position:relative;"
       ontouchstart="handleCompTouchStart('${c.key}',event)"
+      ontouchmove="handleCompTouchMove('${c.key}',event)"
+      ontouchcancel="handleCompTouchEnd('${c.key}')"
       ontouchend="handleCompTouchEnd('${c.key}')"
       onclick="handleCompTap('${c.key}')">
       <div style="font-size:1.5rem;line-height:1.3;margin-bottom:.15rem;">${c.flag}</div>
@@ -1474,14 +1476,38 @@ function goToAnalyse(matchId) {
 }
 
 // ── Competitie chip handlers ──────────────────────────────
+// v26.357: tegels minder gevoelig gemaakt (Rob: "waren altijd al uitermate gevoelig").
+// (1) long-press-drempel 500 -> 650ms (minder snel per ongeluk STAND & INFO openen),
+// (2) beweegt de vinger > 12px tijdens de druk (= scrollen), dan wordt de long-press
+//     geannuleerd -- voorheen vuurde die gewoon door tijdens het scrollen, met trilstoot,
+// (3) na een afgevuurde long-press wordt de nakomende click genegeerd, zodat je niet ook
+//     nog per ongeluk de competitie opent. Alles is een simpele knop hierboven te tunen.
 const _chipPressTimers = {};
+const _chipPressStart = {};
+let _chipLongFired = false;
+const CHIP_LONGPRESS_MS = 650;   // hold-duur voor STAND & INFO; hoger = minder gevoelig
+const CHIP_MOVE_CANCEL_PX = 12;  // beweegt de vinger meer dan dit, dan is het scrollen, geen long-press
 
 function handleCompTouchStart(comp, e) {
+  const t = e && e.touches && e.touches[0];
+  _chipPressStart[comp] = t ? { x: t.clientX, y: t.clientY } : null;
+  _chipLongFired = false;
   _chipPressTimers[comp] = setTimeout(() => {
     _chipPressTimers[comp] = null;
+    _chipLongFired = true;
     if (navigator.vibrate) navigator.vibrate(50);
     openCompDetail(comp);
-  }, 500);
+  }, CHIP_LONGPRESS_MS);
+}
+
+// v26.357: annuleer de long-press zodra de vinger noemenswaardig beweegt (scrollgebaar).
+function handleCompTouchMove(comp, e) {
+  const s = _chipPressStart[comp];
+  const t = e && e.touches && e.touches[0];
+  if (!s || !t) return;
+  if (Math.abs(t.clientX - s.x) > CHIP_MOVE_CANCEL_PX || Math.abs(t.clientY - s.y) > CHIP_MOVE_CANCEL_PX) {
+    if (_chipPressTimers[comp]) { clearTimeout(_chipPressTimers[comp]); _chipPressTimers[comp] = null; }
+  }
 }
 
 function handleCompTouchEnd(comp) {
@@ -1489,9 +1515,12 @@ function handleCompTouchEnd(comp) {
     clearTimeout(_chipPressTimers[comp]);
     _chipPressTimers[comp] = null;
   }
+  _chipPressStart[comp] = null;
 }
 
 function handleCompTap(comp) {
+  // v26.357: vuurde de long-press net (STAND & INFO), negeer dan de nakomende click.
+  if (_chipLongFired) { _chipLongFired = false; return; }
   if (_multiMode) {
     toggleFavComp(comp);
     if (navigator.vibrate) navigator.vibrate(40);
