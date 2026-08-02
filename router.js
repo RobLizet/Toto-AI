@@ -9,6 +9,7 @@ function switchScreen(name) {
   // v26.301: WK 2026-tabblad vervangen door VVV-Venlo. Alle oude wk2026-verwijzingen
   // (dashboard-tegels e.d.) worden omgeleid naar het dashboard zodat er niets crasht.
   if (name === 'wk2026') name = 'dashboard';
+  if (name === 'oefennl') name = 'wedstrijden'; // v26.355: Oefenduels-tab verwijderd -> route veilig omgeleid (bewaarde/oude state)
   // Verberg alle screens
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 

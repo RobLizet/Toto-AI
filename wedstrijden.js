@@ -311,15 +311,8 @@ function renderWedstrijdenScreen() {
     <!-- ══ TAB: WEDSTRIJDEN ══ -->
     <div id="wtab-content-wedstrijden">
 
-    <!-- v26.190: eigen tabs voor NL-oefenduels + EK-kwalificatie -->
+    <!-- v26.190/v26.355: eigen tab voor EK-kwalificatie (NL-oefenduels-tab verwijderd op verzoek) -->
     <div style="display:flex;gap:.5rem;margin-bottom:.7rem;">
-      <button onclick="switchScreen('oefennl')"
-        style="flex:1;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.6rem .4rem;
-        background:rgba(255,255,255,.05);color:rgba(255,255,255,.92);
-        font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;gap:.35rem;">
-        <span style="font-size:.9rem;">🤝</span> ${t('wed.tab_oefennl','Oefenduels NL')}
-      </button>
       <button onclick="switchScreen('ekkwal')"
         style="flex:1;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.6rem .4rem;
         background:rgba(255,255,255,.05);color:rgba(255,255,255,.92);
