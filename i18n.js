@@ -359,7 +359,7 @@
       'ana.scanlogstats': 'SCAN LOG STATS',
       // ── v26.194: aanvullende UI-vertalingen ──
       'wed.scan3days': 'SCAN 3 DAYS',
-      'wed.todaybtn': 'TODAY',
+      'wed.todaybtn': 'TODAY + TOMORROW',
       'wed.standinfo': 'STANDINGS & INFO',
       'wed.addmanual': 'Add match manually',
       'wed.nothingfound': 'Nothing found for',

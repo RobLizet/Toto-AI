@@ -270,7 +270,7 @@ function renderWedstrijdenScreen() {
       ontouchcancel="handleCompTouchEnd('${c.key}')"
       ontouchend="handleCompTouchEnd('${c.key}')"
       onclick="handleCompTap('${c.key}')">
-      <div style="font-size:1.5rem;line-height:1.3;margin-bottom:.15rem;">${c.flag}</div>
+      <div style="font-size:1.15rem;line-height:1.3;margin-bottom:.2rem;">${c.flag}</div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
         color:${isActive ? '#00BEC4' : 'rgba(255,255,255,.9)'};overflow:hidden;white-space:nowrap;
         text-overflow:ellipsis;max-width:100%;padding:0 3px;line-height:1.3;">${shortName}</div>
@@ -346,7 +346,7 @@ function renderWedstrijdenScreen() {
     <!-- Meer-paneel (v26.358): secundaire acties samengevouwen voor rust/overzicht -->
     <div id="wedMeerMenu" style="display:none;flex-direction:column;gap:.4rem;margin-bottom:.6rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.5rem;">
       <button id="scan3DaysBtn" onclick="scanAllTodayValue('3days')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📅 ${t('wed.scan3days','SCAN 3 DAGEN')}</button>
-      <button onclick="loadTodayAllComps()" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📅 ${t('wed.todaybtn','VANDAAG')}</button>
+      <button onclick="loadTodayAllComps()" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📅 ${t('wed.todaybtn','VANDAAG + MORGEN')}</button>
       <button onclick="openCompDetail(state.activeComp)" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📊 ${t('wed.standinfo','STAND & INFO')}</button>
       <button onclick="switchScreen('ekkwal')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">🇪🇺 ${t('wed.tab_ekkwal','EK-kwalificatie')}</button>
       ${(typeof MODEL_PARAMS !== 'undefined' && MODEL_PARAMS && MODEL_PARAMS.oddsvergelijker_enabled === true) ? `<button onclick="switchScreen('oddsvergelijker')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📈 ${t('od.title','Oddsvergelijker')}</button>` : ''}
@@ -429,7 +429,7 @@ function renderWedstrijdenScreen() {
     <div class="analyse-block" style="padding:1.1rem;margin-top:.7rem;">
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#fff;letter-spacing:.05em;margin-bottom:.8rem;">🏆 COMBI TIPS</div>
       <button id="combiGenBtn" onclick="generateCombiTip()" style="width:100%;padding:.8rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.05em;background:linear-gradient(135deg,#00BEC4,#0099a8);color:#fff;border:none;border-radius:12px;cursor:pointer;margin-bottom:.5rem;">${t('wed.gentips','⚡ GENEREER TOP 3 TIPS + COMBI')}</button>
-      <button onclick="openMonteCarloModal()" style="width:100%;padding:.65rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.05em;background:rgba(124,58,237,.15);border:1.5px solid rgba(124,58,237,.5);color:#a78bfa;border-radius:12px;cursor:pointer;">${t('wed.montecarlo','🎲 MONTE CARLO BANKROLL SIMULATIE')}</button>
+      <button onclick="openMonteCarloModal()" style="width:100%;padding:.65rem;font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.05em;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);color:rgba(255,255,255,.9);border-radius:12px;cursor:pointer;">${t('wed.montecarlo','🎲 MONTE CARLO BANKROLL SIMULATIE')}</button>
       <div id="combiCard" style="display:none;margin-top:.8rem;"></div>
     </div>
 
