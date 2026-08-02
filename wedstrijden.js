@@ -99,6 +99,8 @@ function _zetCompLijst(lijst, bron) {
         categorie: (typeof x.categorie === 'string' && x.categorie) ? x.categorie : null,
         naam: (typeof x.naam === 'string' && x.naam) ? x.naam : null,
         seizoen: Number.isFinite(seizoen) ? seizoen : null,
+        // v26.356: duel binnen 5 dagen (true/false/null). null = worker kon het niet meten -> app toont de tegel.
+        duel_binnen_5d: (typeof x.duel_binnen_5d === 'boolean') ? x.duel_binnen_5d : null,
       };
     }
   }
@@ -131,7 +133,9 @@ function getActiveCOMPLIST() {
       // (noodmodus/oude cache). categorie is een niet-lege string, dus || is hier veilig.
       const wm = _compMeta[id];
       const cat = (wm && wm.categorie) || meta.cat || 'clubliga';
-      uit.push({ ...meta, cat });
+      // v26.356: duel binnen 5 dagen (true/false/null) voor de tegel-zichtbaarheid; null = niet gemeten.
+      const duel5d = (wm && typeof wm.duel_binnen_5d === 'boolean') ? wm.duel_binnen_5d : null;
+      uit.push({ ...meta, cat, duel5d });
       continue;
     }
     // Onbekend id NIET stilzwijgend overslaan -- zo verdween Eliteserien uit beeld.
@@ -230,7 +234,12 @@ function renderWedstrijdenScreen() {
   const favs = state.favoriteComps || [];
   // v26.312: verse lijst i.p.v. de module-load-bevroren COMP_LIST — activeKeys hierboven is wel vers
   // v26.282: favorieten bovenaan het competitie-grid; stabiele sort behoudt de canonieke volgorde binnen elke groep
-  const _sortedComps = [...getActiveCOMPLIST()].sort((a, b) => (favs.includes(a.key) ? 0 : 1) - (favs.includes(b.key) ? 0 : 1));
+  // v26.356: alleen tegels tonen van competities met een duel binnen 5 dagen (bron: worker /leagues
+  // duel_binnen_5d), OF favorieten (die blijven altijd staan). duel5d===null betekent 'niet gemeten'
+  // -> tegel gewoon tonen (nooit verbergen op een niet-meting). Favorieten daarna eerst gesorteerd.
+  const _sortedComps = [...getActiveCOMPLIST()]
+    .filter(c => c.duel5d !== false || favs.includes(c.key))
+    .sort((a, b) => (favs.includes(a.key) ? 0 : 1) - (favs.includes(b.key) ? 0 : 1));
 
   // v26.353: tegels gegroepeerd per categorie (bron: worker /leagues categorie), favorieten eerst
   // binnen elke groep (stabiele sort hierboven blijft behouden per groep). Groepskopjes tonen alleen
@@ -332,7 +341,7 @@ function renderWedstrijdenScreen() {
 
     <!-- Competitie tiles - gegroepeerd per categorie (v26.353) -->
     <div style="margin-bottom:.6rem;">
-      ${_compGridsHtml}
+      ${_compGridsHtml || `<div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.55);text-align:center;padding:1.1rem .5rem;">${t('wed.geentegels5d','Geen competities met een wedstrijd binnen 5 dagen. Ze verschijnen zodra er weer gespeeld wordt.')}</div>`}
     </div>
 
     <!-- Acties balk -->

@@ -374,6 +374,7 @@
       'wed.grp_nationalebeker': 'National cups',
       'wed.grp_interland': 'Internationals',
       'wed.vandaagnote': "Today's matches from the competitions the model scans.",
+      'wed.geentegels5d': 'No competitions with a match within 5 days. They reappear once play resumes.',
       'wed.oefennl_sub': 'Eredivisie & KKD clubs · view + analyse, no value scan',
       'wed.ekkwal_sub': 'Euro 2028 qualification · starts spring 2027',
       'wed.loadingfriendlies': '\u27f3 Loading NL friendlies...',
