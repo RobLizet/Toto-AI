@@ -373,6 +373,7 @@
       'wed.grp_eurobeker': 'European club cups',
       'wed.grp_nationalebeker': 'National cups',
       'wed.grp_interland': 'Internationals',
+      'wed.vandaagnote': "Today's matches from the competitions the model scans.",
       'wed.oefennl_sub': 'Eredivisie & KKD clubs · view + analyse, no value scan',
       'wed.ekkwal_sub': 'Euro 2028 qualification · starts spring 2027',
       'wed.loadingfriendlies': '\u27f3 Loading NL friendlies...',

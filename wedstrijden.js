@@ -152,6 +152,20 @@ function seizoenVoorComp(comp, leagueId) {
   return getCurrentSeason(comp);
 }
 
+// v26.354: de league-ids van de competities die de gebruiker ECHT heeft = zijn tegels
+// (= de worker-scanlijst). Bron voor het filteren van de Vandaag-/live-/alle-comps-lijsten,
+// zodat daar geen wedstrijden meer verschijnen uit competities die NIET gescand worden
+// (Oekraine, Allsvenskan, friendlies, jeugdbekers ...). Afgeleid uit getActiveCOMPLIST
+// (altijd gevuld: worker -> cache -> noodlijst) i.p.v. de brede Object.values(COMP_IDS) (~44).
+function mijnCompLeagueIds() {
+  const s = new Set();
+  for (const c of getActiveCOMPLIST()) {
+    const id = Number(COMP_IDS[c.key]);
+    if (Number.isFinite(id)) s.add(id);
+  }
+  return s;
+}
+
 // null = we kennen de echte workerlijst niet (nog nooit opgehaald, niets in cache).
 // Dan doen we geen enkele uitspraak over wat wel of niet gescand wordt.
 function getGescandeLeagueIds() {
@@ -465,12 +479,11 @@ function renderWedstrijdenScreen() {
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00BEC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         ALLE WEDSTRIJDEN VANDAAG
       </div>
-      <!-- v26.344: uitleg bij de NIET GESCAND-markering. Op een telefoon bestaat 'hover'
-           niet, dus de title-tekst op de badge alleen is niet genoeg. Een zin die je een
-           keer leest is beter dan een markering die je moet raden. -->
+      <!-- v26.354: Vandaag toont nu alleen de gescande competities (scanset), dus de oude
+           'deze lijst is breder / NIET GESCAND'-uitleg klopt niet meer en is weg. -->
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;line-height:1.5;
         color:rgba(255,255,255,.55);padding:0 .2rem .7rem;">
-        ${t('wed.browsenote','Deze lijst is breder dan wat het model scant. Wedstrijden met NIET GESCAND zijn er alleen om te bladeren: daar maakt de app geen picks, is er geen kalibratie en telt niets mee in de CLV.')}
+        ${t('wed.vandaagnote','Alle wedstrijden van vandaag uit de competities die het model scant.')}
       </div>
       <div id="allCompsLoadingVandaag" style="display:none;flex-direction:column;align-items:center;padding:2rem;gap:.6rem;">
         <div style="width:24px;height:24px;border:2.5px solid rgba(0,190,196,.2);border-top-color:#00BEC4;border-radius:50%;animation:spin .7s linear infinite;"></div>
@@ -742,9 +755,8 @@ async function loadVandaagTab() {
     const todayStr = new Date().toISOString().split('T')[0];
     const r = await apiFetch(`${WORKER}/apif/fixtures?date=${todayStr}&_cb=${Date.now()}`, null, 12000);
     const d = await r.json();
-    const knownLeagueIds = new Set(Object.values(COMP_IDS));
-    knownLeagueIds.delete(667); // oefenduels (globaal) niet in Vandaag-tab — alleen via eigen chip
-    // v26.343: uitsluiting van Noorwegen/Zweden weg -- de worker scant ze sinds v303.
+    // v26.354: ALLEEN jouw competities (scanset/tegels), niet de brede COMP_IDS-lijst.
+    const knownLeagueIds = mijnCompLeagueIds();
     const now = Date.now();
 
     const fixtures = (d.response || []).filter(f => {
@@ -1048,9 +1060,7 @@ async function refreshLiveScores() {
     const today = new Date().toISOString().split('T')[0];
     const r = await apiFetch(`${WORKER}/apif/fixtures?date=${today}&_cb=${Date.now()}`, null, 12000);
     const d = await r.json();
-    const knownLeagueIds = new Set(Object.values(COMP_IDS));
-    knownLeagueIds.delete(667); // oefenduels (globaal) niet in Vandaag-tab — alleen via eigen chip
-    // v26.343: uitsluiting van Noorwegen/Zweden weg -- de worker scant ze sinds v303.
+    const knownLeagueIds = mijnCompLeagueIds(); // v26.354: alleen jouw competities
 
     // hele dag-lijst herbekijken: nieuw gestart toevoegen, afgelopen markeren, lopende bijwerken
     (d.response || []).forEach(f => {
@@ -2241,9 +2251,7 @@ async function loadTodayAllComps() {
       const now = Date.now();
       return kickoff > now - 30 * 60 * 1000 && kickoff < now + 48 * 60 * 60 * 1000;
     });
-    const knownLeagueIdsSet = new Set(Object.values(COMP_IDS));
-    knownLeagueIdsSet.delete(667); // v26.199: globale friendlies (Karpaty etc.) niet in WK/vandaag-aggregatie — alleen via eigen Oefenduels NL-scherm
-    // v26.343: uitsluiting van Noorwegen/Zweden weg -- de worker scant ze sinds v303.
+    const knownLeagueIdsSet = mijnCompLeagueIds(); // v26.354: alleen jouw competities (scanset/tegels)
     const leagueMap = {};
     for (const f of fixtures) {
       const lid = f.league.id;
