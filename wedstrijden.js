@@ -322,63 +322,42 @@ function renderWedstrijdenScreen() {
     <!-- ══ TAB: WEDSTRIJDEN ══ -->
     <div id="wtab-content-wedstrijden">
 
-    <!-- v26.190/v26.355: eigen tab voor EK-kwalificatie (NL-oefenduels-tab verwijderd op verzoek) -->
-    <div style="display:flex;gap:.5rem;margin-bottom:.7rem;">
-      <button onclick="switchScreen('ekkwal')"
-        style="flex:1;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.6rem .4rem;
-        background:rgba(255,255,255,.05);color:rgba(255,255,255,.92);
-        font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;gap:.35rem;">
-        <span style="font-size:.9rem;">🇪🇺</span> ${t('wed.tab_ekkwal','EK-kwalificatie')}
-      </button>
-      ${(typeof MODEL_PARAMS !== 'undefined' && MODEL_PARAMS && MODEL_PARAMS.oddsvergelijker_enabled === true) ? `
-      <button onclick="switchScreen('oddsvergelijker')"
-        style="flex:1;border:1px solid rgba(0,190,196,.35);border-radius:12px;padding:.6rem .4rem;
-        background:rgba(0,190,196,.08);color:rgba(255,255,255,.92);
-        font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;gap:.35rem;">
-        <span style="font-size:.9rem;">📈</span> ${t('od.title','Oddsvergelijker')}
-      </button>` : ''}
-    </div>
-
     <!-- Competitie tiles - gegroepeerd per categorie (v26.353) -->
     <div style="margin-bottom:.6rem;">
       ${_compGridsHtml || `<div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.55);text-align:center;padding:1.1rem .5rem;">${t('wed.geentegels5d','Geen competities met een wedstrijd binnen 5 dagen. Ze verschijnen zodra er weer gespeeld wordt.')}</div>`}
     </div>
 
-    <!-- Acties balk -->
+    <!-- Acties (v26.358: opgeschoond -- alleen Favorieten + Meer zichtbaar, rest in het Meer-paneel) -->
     <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
       <button id="multiModeBtn" onclick="toggleMultiMode()"
         style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
-        padding:.35rem .8rem;border-radius:999px;cursor:pointer;
+        padding:.4rem .9rem;border-radius:999px;cursor:pointer;
         background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.3);color:#00BEC4;">
-        📌 MULTI-SCAN
+        ⭐ ${t('wed.favbtn','FAVORIETEN')}
       </button>
-      <button id="scan3DaysBtn" onclick="scanAllTodayValue('3days')"
+      <button id="wedMeerBtn" onclick="toggleWedMeer()"
         style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
-        padding:.35rem .8rem;border-radius:999px;cursor:pointer;
-        background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.35);color:#a78bfa;">
-        📅 ${t('wed.scan3days','SCAN 3 DAGEN')}
+        padding:.4rem .9rem;border-radius:999px;cursor:pointer;
+        background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.9);">
+        ⋯ ${t('wed.morebtn','MEER')}
       </button>
-      <button onclick="loadTodayAllComps()"
-        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
-        padding:.35rem .8rem;border-radius:999px;cursor:pointer;
-        background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.25);color:#00BEC4;">
-        📅 ${t('wed.todaybtn','VANDAAG')}
-      </button>
-      <button onclick="openCompDetail(state.activeComp)"
-        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
-        padding:.35rem .8rem;border-radius:999px;cursor:pointer;
-        background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.25);color:#00BEC4;">
-        📊 ${t('wed.standinfo','STAND & INFO')}
-      </button>
+    </div>
+
+    <!-- Meer-paneel (v26.358): secundaire acties samengevouwen voor rust/overzicht -->
+    <div id="wedMeerMenu" style="display:none;flex-direction:column;gap:.4rem;margin-bottom:.6rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.5rem;">
+      <button id="scan3DaysBtn" onclick="scanAllTodayValue('3days')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📅 ${t('wed.scan3days','SCAN 3 DAGEN')}</button>
+      <button onclick="loadTodayAllComps()" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📅 ${t('wed.todaybtn','VANDAAG')}</button>
+      <button onclick="openCompDetail(state.activeComp)" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📊 ${t('wed.standinfo','STAND & INFO')}</button>
+      <button onclick="switchScreen('ekkwal')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">🇪🇺 ${t('wed.tab_ekkwal','EK-kwalificatie')}</button>
+      ${(typeof MODEL_PARAMS !== 'undefined' && MODEL_PARAMS && MODEL_PARAMS.oddsvergelijker_enabled === true) ? `<button onclick="switchScreen('oddsvergelijker')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📈 ${t('od.title','Oddsvergelijker')}</button>` : ''}
+      <button onclick="toggleManualMatchSection()" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">➕ ${t('wed.addmanual','Wedstrijd handmatig toevoegen')}</button>
     </div>
 
     <!-- Multi-scan hint -->
     <div id="multiModeHint" style="display:none;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;
       background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.15);border-radius:8px;
       padding:.4rem .8rem;margin-bottom:.5rem;">
-      ✓ Multi-modus actief — tik op competities om te selecteren
+      ✓ ${t('wed.favhint','Tik competities aan om ze als favoriet te bewaren (ze blijven altijd zichtbaar). Kies er 2 of meer om ze samen te scannen.')}
     </div>
 
     <!-- Multi-scan balk -->
@@ -386,7 +365,7 @@ function renderWedstrijdenScreen() {
       background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:12px;
       padding:.55rem .9rem;margin-bottom:.7rem;gap:.5rem;">
       <div style="flex:1;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;">📌 MULTI-SCAN</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;">⭐ ${t('wed.favbar','FAVORIETEN')}</div>
         <div id="multiScanComps" style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">
           ${favs.length >= 2 ? favs.map(c => COMP_NAMES[c]?.split(' ').slice(1).join(' ') || c).join(' · ') : 'Selecteer nog een competitie'}
         </div>
@@ -406,15 +385,6 @@ function renderWedstrijdenScreen() {
       </div>
     </div>
 
-    <!-- Handmatig wedstrijd toevoegen -->
-    <div style="margin-bottom:.6rem;">
-      <button onclick="toggleManualMatchSection()"
-        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
-        padding:.35rem .8rem;border-radius:999px;
-        background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.95);cursor:pointer;">
-        ➕ ${t('wed.addmanual','Wedstrijd handmatig toevoegen')}
-      </button>
-    </div>
     <div id="manualMatchSection" style="display:none;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);
       border-radius:14px;padding:.9rem;margin-bottom:.7rem;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.95);margin-bottom:.6rem;">${t('wed.manualinput','HANDMATIGE INVOER')}</div>
@@ -1599,9 +1569,17 @@ function toggleMultiMode() {
     if (btn) { btn.textContent = '✓ KLAAR'; btn.style.background = 'rgba(0,190,196,.2)'; btn.style.color = '#00BEC4'; }
     if (hint) hint.style.display = 'block';
   } else {
-    if (btn) { btn.textContent = '📌 MULTI-SCAN SELECTEREN'; btn.style.background = 'rgba(0,190,196,.1)'; btn.style.color = '#00BEC4'; }
+    if (btn) { btn.textContent = '⭐ FAVORIETEN'; btn.style.background = 'rgba(0,190,196,.1)'; btn.style.color = '#00BEC4'; }
     if (hint) hint.style.display = 'none';
   }
+}
+
+// v26.358: Meer-paneel open/dicht (secundaire acties samengevouwen).
+function toggleWedMeer() {
+  const m = document.getElementById('wedMeerMenu');
+  if (!m) return;
+  const dicht = (m.style.display === 'none' || !m.style.display);
+  m.style.display = dicht ? 'flex' : 'none';
 }
 
 // ── Match laden ──────────────────────────────────────────

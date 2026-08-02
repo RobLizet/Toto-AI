@@ -170,8 +170,8 @@ body {
 }
 .comp-chip.active,
 .scan-comp-chip.on {
-  background: #00BEC4 !important;
-  color: #fff !important;
+  background: rgba(0,190,196,.14) !important; /* v26.358: was solid #00BEC4 -- rustiger: lichte tint + teal rand */
+  color: #00BEC4 !important;
   border-color: #00BEC4 !important;
 }
 
