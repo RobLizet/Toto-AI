@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.360'; // v26.360: MARKT-badge leesbaar gemaakt (grijs maar leesbaar i.p.v. bijna onzichtbaar)
+const SW_VERSION = '36.361'; // v26.361: MARKT-badge helemaal weg (tip-hoekje alleen nog echte value/model-picks)
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });

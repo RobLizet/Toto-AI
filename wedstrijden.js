@@ -1248,10 +1248,9 @@ function renderMatchCard(m) {
   // v26.214: eigen analyse (ANALYSE-knop) heeft voorrang — die toont sinds v26.251 exact de backend-pick
   const _man = (state._manualTips || {})[String(m.id)];
   if (_man && _man.pick && !m.isDone) { _tipPick = _man.pick; _tipValue = _man.value || 0; _tipSource = (_man.value >= 5) ? 'value' : 'model'; }
-  if (!_tipPick && !m.isDone) {
-    const _hp = parseFloat(m.homePct)||0, _dp = parseFloat(m.drawPct)||0, _ap = parseFloat(m.awayPct)||0;
-    if (_hp || _dp || _ap) { _tipPick = (_hp >= _dp && _hp >= _ap) ? '1' : ((_ap >= _dp) ? '2' : 'X'); _tipSource = 'market'; }
-  }
+  // v26.361: MARKT-fallback verwijderd (door Rob gevraagd). Het tip-hoekje toont nu ALLEEN een echte
+  // pick (value uit de backend of model uit de ANALYSE-knop). De marktfavoriet zei hetzelfde als de
+  // kansenbalk + odds er direct onder -- overbodig, en zonder is het scherm rustiger. Geen pick = geen badge.
   // v26.224: nette labels voor goal-markt-picks op de card (backend kan nu ook O/U + BTTS als tip kiezen)
   const _tipCodeMap = { 'O1.5':'O 1.5','O2.5':'O 2.5','O3.5':'O 3.5','U1.5':'U 1.5','U2.5':'U 2.5','U3.5':'U 3.5','BTTS_Y':'GG','BTTS_N':'NG','NOBTTS':'NO BTTS' };
   const _tipCode = _tipCodeMap[_tipPick] || (_tipPick || '');
