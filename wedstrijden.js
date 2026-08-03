@@ -1257,12 +1257,12 @@ function renderMatchCard(m) {
   const _tipCode = _tipCodeMap[_tipPick] || (_tipPick || '');
   const _isMarket = _tipSource === 'market';
   const _tipCol  = _tipSource === 'value' ? ((_tipValue >= 15) ? '#00BEC4' : '#f59e0b')
-                 : _tipSource === 'model' ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.3)';
+                 : _tipSource === 'model' ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.72)';
   const _tipBg   = _tipSource === 'value' ? ((_tipValue >= 15) ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)')
-                 : _tipSource === 'model' ? 'rgba(255,255,255,.05)' : 'rgba(255,255,255,.025)';
+                 : _tipSource === 'model' ? 'rgba(255,255,255,.05)' : 'rgba(255,255,255,.06)';
   const _tipBd   = _tipSource === 'value' ? ((_tipValue >= 15) ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)')
-                 : _tipSource === 'model' ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.07)';
-  const _tipLblCol = _tipSource === 'value' ? 'rgba(255,255,255,.65)' : _tipSource === 'model' ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.28)';
+                 : _tipSource === 'model' ? 'rgba(255,255,255,.14)' : 'rgba(255,255,255,.2)';
+  const _tipLblCol = _tipSource === 'value' ? 'rgba(255,255,255,.65)' : _tipSource === 'model' ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.55)';
   const _tipLblTxt = _isMarket ? t('wed.market','MARKT') : t('wed.tip','TIP');
   const tipBadge = (_tipCode && !m.isDone) ? `
     <div style="position:absolute;top:6px;left:6px;z-index:3;text-align:center;

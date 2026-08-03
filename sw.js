@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.359'; // v26.359: Wedstrijden-scherm rustiger stap 3+4 (VANDAAG->VANDAAG+MORGEN, kleinere vlaggen, laatste paars weg)
+const SW_VERSION = '36.360'; // v26.360: MARKT-badge leesbaar gemaakt (grijs maar leesbaar i.p.v. bijna onzichtbaar)
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
