@@ -950,18 +950,20 @@ function renderValueBannerInAnalyse(displayScans, total) {
   const highCount = displayScans.filter(s => s.value >= 15).length;
   const medCount = displayScans.filter(s => s.value >= 5 && s.value < 15).length;
   const html = `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .9rem;
-      background:linear-gradient(135deg,rgba(0,190,196,.08),rgba(5,150,105,.05));
-      border-bottom:1px solid rgba(0,190,196,.15);">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:#00BEC4;">⚡ VALUE SCAN</div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">
-        <span style="color:#00BEC4;font-weight:700;">${highCount} sterk</span> · <span style="color:#b45309;font-weight:700;">${medCount} licht</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem .9rem;
+      background:linear-gradient(135deg,rgba(0,190,196,.18),rgba(16,185,129,.12),rgba(168,85,247,.10));
+      border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(0,190,196,.28);">
+      <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.98rem;letter-spacing:.04em;
+        background:linear-gradient(90deg,#00BEC4,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent;">✨ VALUE PICKS</div>
+      <div style="display:flex;gap:.35rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:800;">
+        <span style="background:rgba(0,190,196,.16);border:1px solid rgba(0,190,196,.4);color:#00BEC4;border-radius:999px;padding:2px 7px;">${highCount} STERK</span>
+        <span style="background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.4);color:#f59e0b;border-radius:999px;padding:2px 7px;">${medCount} LICHT</span>
       </div>
     </div>
     ${displayScans.slice(0,6).map(s => {
-      const cls = s.value >= 15 ? '#00BEC4' : '#b45309';
+      const cls = s.value >= 15 ? '#00BEC4' : '#f59e0b';
       const sign = s.value > 0 ? '+' : '';
-      return `<div style="display:flex;align-items:center;padding:.55rem .9rem;border-bottom:1px solid rgba(255,255,255,0.09);cursor:pointer;" onclick="openValueAnalysis('${s.match.id}')">
+      return `<div style="display:flex;align-items:center;padding:.55rem .9rem;border-bottom:1px solid rgba(255,255,255,0.09);border-left:3px solid ${cls};cursor:pointer;" onclick="openValueAnalysis('${s.match.id}')">
         <div style="flex:1;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:#ffffff;">${s.match.home} vs ${s.match.away}${s.sharp ? '<span style="font-size:.36rem;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#ef4444;border-radius:4px;padding:1px 4px;margin-left:.3rem;font-weight:700;">🔥 SHARP</span>' : ''}</div>
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${tPick(s.pickLabel)} · ${s.kans}%${s.poissonUsed?(s._hasXG?' (P+AI+xG)':' (P+AI)'):s._hasXG?' (xG)':''} · ${s.reason}</div>
@@ -998,7 +1000,7 @@ function renderAnalyseScanResults(scans) {
   const teltNiet = scans.filter(s =>  s.isSparseData || s.value <  DREMPEL.minValue || (s.confidence||0) <  DREMPEL.minConf);
 
   const renderPick = (s, geldig) => {
-    const valColor = !geldig ? '#94a3b8' : s.value >= 15 ? '#00BEC4' : '#b45309';
+    const valColor = !geldig ? '#94a3b8' : s.value >= 15 ? '#00BEC4' : '#f59e0b';
     const sign = s.value > 0 ? '+' : '';
     const home = s.match?.home || s.home || '?';
     const away = s.match?.away || s.away || '?';
@@ -1010,6 +1012,7 @@ function renderAnalyseScanResults(scans) {
 
     return `<div style="display:flex;align-items:center;padding:.5rem .9rem;
       border-bottom:1px solid rgba(255,255,255,0.09);cursor:pointer;
+      border-left:3px solid ${geldig ? valColor : 'transparent'};
       ${!geldig ? 'opacity:.45;' : ''}"
       onclick="openValueAnalysis('${s.match?.id || s.id}')">
       <div style="flex:1;">
@@ -1045,13 +1048,14 @@ function renderAnalyseScanResults(scans) {
   };
 
   const html = `
-    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,190,196,.25);border-radius:14px;
-      overflow:hidden;margin-bottom:.5rem;">
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,190,196,.3);border-radius:14px;
+      overflow:hidden;margin-bottom:.5rem;box-shadow:0 0 24px rgba(0,190,196,.10);">
       <div style="display:flex;justify-content:space-between;align-items:center;
-        padding:.55rem .9rem;background:linear-gradient(135deg,rgba(0,190,196,.08),rgba(5,150,105,.05));
-        border-bottom:1px solid rgba(0,190,196,.15);">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:800;color:#00BEC4;">
-          ⚡ SCAN RESULTATEN · ${teltMee.length} picks <span style="color:rgba(255,255,255,.95);font-weight:400;">van ${scans.length}</span>
+        padding:.6rem .9rem;background:linear-gradient(135deg,rgba(0,190,196,.18),rgba(16,185,129,.12),rgba(168,85,247,.10));
+        border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(0,190,196,.28);">
+        <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.92rem;letter-spacing:.04em;
+          background:linear-gradient(90deg,#00BEC4,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent;">
+          🎯 SCAN RESULTATEN · ${teltMee.length}<span style="color:rgba(255,255,255,.6);"> / ${scans.length}</span>
         </div>
         <button onclick="document.getElementById('analyseScanResults').innerHTML=''"
           style="background:none;border:none;color:rgba(255,255,255,.95);cursor:pointer;font-size:.85rem;">✕</button>

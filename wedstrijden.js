@@ -629,9 +629,9 @@ function renderMatches(matches) {
     if (_kanGroeperen && _gescandLijst.length && _restLijst.length) {
       const _div = document.createElement('div');
       _div.style.cssText = 'display:flex;align-items:center;gap:.5rem;margin:.7rem .3rem .3rem;';
-      _div.innerHTML = `<div style="flex:1;height:1px;background:rgba(255,255,255,.1);"></div>` +
-        `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.5);white-space:nowrap;">${t('wed.notscanned_divider','NOG NIET GESCAND')}</span>` +
-        `<div style="flex:1;height:1px;background:rgba(255,255,255,.1);"></div>`;
+      _div.innerHTML = `<div style="flex:1;height:1px;background:rgba(251,146,60,.25);"></div>` +
+        `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;letter-spacing:.1em;color:#fb923c;white-space:nowrap;">○ ${t('wed.notscanned_divider','NOG NIET GESCAND')}</span>` +
+        `<div style="flex:1;height:1px;background:rgba(251,146,60,.25);"></div>`;
       list.appendChild(_div);
     }
     _restLijst.forEach(m => { const card = renderMatchCard(m); if (card) list.appendChild(card); });
@@ -1403,8 +1403,8 @@ function renderMatchCard(m) {
     } else if (state._analysedGemeten === true && _gescand === true) {
       _scanChip = `<span title="${t('wed.notscanned_help','Dit duel valt onder een gescande competitie maar is nog niet geanalyseerd -- dat gebeurt zodra de aftrap binnen 24 uur komt.')}"
         style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:800;white-space:nowrap;
-        padding:1px 6px;border-radius:999px;background:rgba(148,163,184,.12);
-        color:rgba(255,255,255,.55);border:1px solid rgba(148,163,184,.2);">○ ${t('wed.notscanned','NOG NIET GESCAND')}</span>`;
+        padding:1px 6px;border-radius:999px;background:rgba(251,146,60,.16);
+        color:#fb923c;border:1px solid rgba(251,146,60,.45);">○ ${t('wed.notscanned','NOG NIET GESCAND')}</span>`;
     }
   }
 
