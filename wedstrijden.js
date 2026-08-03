@@ -888,7 +888,7 @@ async function renderWedValuePicks() {
   function pickCard(p) {
     const fid = p.fixtureId || p.fixture_id || '';
     const pc  = (p.pick || '').replace(/[^A-Za-z0-9.]/g, '');
-    const vc = p.value >= 20 ? '#00BEC4' : p.value >= 12 ? '#f59e0b' : '#d97706';
+    const vc = p.value >= 20 ? '#00BEC4' : p.value >= 12 ? '#f59e0b' : '#fb923c';
     const cc = p.confidence >= 8 ? '#00BEC4' : p.confidence >= 6 ? '#f59e0b' : 'rgba(255,255,255,.5)';
     const sharpT  = p.sharpTier || p.sharp_tier || '';
     const sharpSc = p.sharpScore || p.sharp_score || 0;
@@ -902,7 +902,7 @@ async function renderWedValuePicks() {
       isSteam && badge('🔴 ' + parseFloat(p.sharpMove).toFixed(1) + '%', '#dc2626'),
     ].filter(Boolean).join(' ');
 
-    return `<div class="worker-pick-row" onclick="openValuePickPopup(${allPicks.indexOf(p)})" style="cursor:pointer;margin-bottom:.5rem;display:flex;flex-direction:column;align-items:stretch;background:rgba(255,255,255,.04);border:1px solid ${vc}44;border-left:3px solid ${vc};border-radius:12px;padding:.6rem .7rem;">
+    return `<div class="worker-pick-row" onclick="openValuePickPopup(${allPicks.indexOf(p)})" style="cursor:pointer;display:flex;flex-direction:column;align-items:stretch;margin-bottom:.55rem !important;background:linear-gradient(135deg, ${vc}24, rgba(255,255,255,.03)) !important;border:1px solid ${vc}55 !important;border-left:4px solid ${vc} !important;border-radius:14px !important;padding:.65rem .75rem !important;box-shadow:0 0 16px ${vc}22 !important;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;">
         <div style="flex:1;min-width:0;">
           <div style="${sans};font-size:.7rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||'?'}</div>
