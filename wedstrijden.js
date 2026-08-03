@@ -562,6 +562,7 @@ function renderMatches(matches) {
   const list = document.getElementById('matchList');
   if (!list) return;
   ensureWorkerPicks(); // v26.165: laad worker-picks → value-badges + gloed verschijnen zonder scannen
+  ensureAnalysedMap(); // v26.362: laad 'gescand'-status per duel → statuslabel + groepering
 
   // v26.144: vangnet — afgelopen/gepasseerde wedstrijden nooit als speelbaar tonen (kickoff via matchKickoffMs, ook voor oude cache)
   const _STALE_MS = 2.5 * 60 * 60 * 1000;
@@ -615,10 +616,26 @@ function renderMatches(matches) {
   }
 
   list.innerHTML = '';
-  matches.forEach(m => {
-    const card = renderMatchCard(m);
-    if (card) list.appendChild(card);
-  });
+  // v26.362: OPTIE C -- gescande duels bovenaan, niet-gescande eronder met een scheiding.
+  // Alleen groeperen als de scan-status ECHT gemeten is (state._analysedGemeten); anders de
+  // bestaande volgorde onaangeroerd laten (geen groepering op een niet-meting).
+  {
+    const _am2 = state._analysedMap || {};
+    const _kanGroeperen = state._analysedGemeten === true;
+    const _isGescand = mm => _kanGroeperen && !mm.isDone && mm.id != null && !!_am2[mm.id];
+    const _gescandLijst = _kanGroeperen ? matches.filter(_isGescand) : matches;
+    const _restLijst    = _kanGroeperen ? matches.filter(mm => !_isGescand(mm)) : [];
+    _gescandLijst.forEach(m => { const card = renderMatchCard(m); if (card) list.appendChild(card); });
+    if (_kanGroeperen && _gescandLijst.length && _restLijst.length) {
+      const _div = document.createElement('div');
+      _div.style.cssText = 'display:flex;align-items:center;gap:.5rem;margin:.7rem .3rem .3rem;';
+      _div.innerHTML = `<div style="flex:1;height:1px;background:rgba(255,255,255,.1);"></div>` +
+        `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;letter-spacing:.1em;color:rgba(255,255,255,.5);white-space:nowrap;">${t('wed.notscanned_divider','NOG NIET GESCAND')}</span>` +
+        `<div style="flex:1;height:1px;background:rgba(255,255,255,.1);"></div>`;
+      list.appendChild(_div);
+    }
+    _restLijst.forEach(m => { const card = renderMatchCard(m); if (card) list.appendChild(card); });
+  }
 
   // Toon value scan button als er matches met odds zijn
   const withOdds = matches.filter(m => m.homeOdds !== '—' && parseFloat(m.homeOdds) > 1).length;
@@ -1195,6 +1212,31 @@ async function ensureWorkerPicks(force) {
   if (typeof renderMatches === 'function' && (state.matches || []).length) renderMatches(state.matches);
 }
 
+// v26.362: laad de 'gescand'-status per wedstrijd uit de worker (/analysed = ai_analysis_log.analysed_at).
+// Losstaand van de picks: dit zegt of het MODEL een duel heeft beoordeeld, niet of er een pick uit kwam.
+// CIJFERBRON: alleen bij gemeten===true tonen we een status; kon de worker de bron niet lezen, dan
+// beweren we NIETS (geen 'nog niet gescand' zonder meting).
+async function ensureAnalysedMap(force) {
+  if (state._analysedLoading) return;
+  if (!force && state._analysedLoaded) return;
+  state._analysedLoading = true;
+  try {
+    const r = await fetch('https://api.promatchxi.app/analysed');
+    if (r.ok) {
+      const d = await r.json();
+      if (d && d.gemeten === true && d.fixtures && typeof d.fixtures === 'object') {
+        state._analysedMap = d.fixtures;       // { fixtureId: analysed_at (ISO) }
+        state._analysedGemeten = true;
+      } else {
+        state._analysedGemeten = false;        // bron niet leesbaar -> niets beweren
+      }
+    }
+  } catch (e) { state._analysedGemeten = false; }
+  state._analysedLoaded = true;
+  state._analysedLoading = false;
+  if (typeof renderMatches === 'function' && (state.matches || []).length) renderMatches(state.matches);
+}
+
 function renderMatchCard(m) {
   if (!m) return null;
   const card = document.createElement('div');
@@ -1342,6 +1384,30 @@ function renderMatchCard(m) {
       ${t('wed.browseonly','NIET GESCAND')}
     </span>` : '';
 
+  // v26.362: 'GESCAND'-STATUS PER DUEL (bron: worker /analysed = ai_analysis_log.analysed_at).
+  // Losstaand van _buitenScan (dat gaat over de COMPETITIE in de scanset). Alleen voor speelbare duels.
+  // - analysed_at aanwezig -> GEMETEN feit: '✓ GESCAND HH:MM' (altijd veilig te tonen).
+  // - geen analysed_at, maar de bron is bewezen gelezen (_analysedGemeten) EN de competitie zit bewezen
+  //   in de scanset (_gescand===true) -> eerlijke '○ NOG NIET GESCAND'.
+  // - in alle andere gevallen (bron niet gemeten, competitie onbekend/buiten-scan) -> NIETS.
+  let _scanChip = '';
+  if (!m.isDone && !m.isLive && m.id != null) {
+    const _at = (state._analysedMap || {})[m.id];
+    if (_at) {
+      let _hhmm = '';
+      try { _hhmm = new Date(_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }); } catch (e) {}
+      _scanChip = `<span title="${t('wed.scanned_help','Het model heeft dit duel geanalyseerd (een pick of bewust geen value). De tijd is het laatste analysemoment.')}"
+        style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:800;white-space:nowrap;
+        padding:1px 6px;border-radius:999px;background:rgba(0,190,196,.12);
+        color:#00BEC4;border:1px solid rgba(0,190,196,.3);">✓ ${t('wed.scanned','GESCAND')}${_hhmm ? ' ' + _hhmm : ''}</span>`;
+    } else if (state._analysedGemeten === true && _gescand === true) {
+      _scanChip = `<span title="${t('wed.notscanned_help','Dit duel valt onder een gescande competitie maar is nog niet geanalyseerd -- dat gebeurt zodra de aftrap binnen 24 uur komt.')}"
+        style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;font-weight:800;white-space:nowrap;
+        padding:1px 6px;border-radius:999px;background:rgba(148,163,184,.12);
+        color:rgba(255,255,255,.55);border:1px solid rgba(148,163,184,.2);">○ ${t('wed.notscanned','NOG NIET GESCAND')}</span>`;
+    }
+  }
+
   card.innerHTML = `
     <div style="position:relative;">
       ${valueBadge}
@@ -1355,6 +1421,7 @@ function renderMatchCard(m) {
             ${m.comp || ''}
           </span>
           ${_buitenScan}
+          ${_scanChip}
         </div>
         <div style="display:flex;align-items:center;gap:.5rem;">
           <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:#00BEC4;font-weight:700;">
