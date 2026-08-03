@@ -902,7 +902,7 @@ async function renderWedValuePicks() {
       isSteam && badge('🔴 ' + parseFloat(p.sharpMove).toFixed(1) + '%', '#dc2626'),
     ].filter(Boolean).join(' ');
 
-    return `<div class="worker-pick-row" onclick="openValuePickPopup(${allPicks.indexOf(p)})" style="cursor:pointer;margin-bottom:.4rem;display:flex;flex-direction:column;align-items:stretch;">
+    return `<div class="worker-pick-row" onclick="openValuePickPopup(${allPicks.indexOf(p)})" style="cursor:pointer;margin-bottom:.5rem;display:flex;flex-direction:column;align-items:stretch;background:rgba(255,255,255,.04);border:1px solid ${vc}44;border-left:3px solid ${vc};border-radius:12px;padding:.6rem .7rem;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;">
         <div style="flex:1;min-width:0;">
           <div style="${sans};font-size:.7rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||'?'}</div>
@@ -938,13 +938,14 @@ async function renderWedValuePicks() {
 
   state._valuePicksList = allPicks; // v26.107: voor openValuePickPopup
   el.innerHTML =
-    `<div style="${mono};font-size:.5rem;font-weight:800;color:rgba(255,255,255,.95);letter-spacing:.08em;margin-bottom:.75rem;">
-      ⚡ VALUE PICKS OVERZICHT · ${allPicks.length} picks
+    `<div style="${bebas};font-size:1.05rem;letter-spacing:.04em;margin-bottom:.75rem;
+      background:linear-gradient(90deg,#00BEC4,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent;">
+      ✨ VALUE PICKS · ${allPicks.length}
     </div>`
     + section('ELITE PICKS',          '⭐', elite,   '#00BEC4')
     + section('TRIPLE & DOUBLE LOCK', '🔒', locks,   '#7c3aed')
     + section('SHARP MONEY',          '⚡', sharp,   '#f59e0b')
-    + section('VALUE PICKS',          '📊', regular, 'rgba(255,255,255,.5)');
+    + section('VALUE PICKS',          '📊', regular, '#34d399');
 }
 
 

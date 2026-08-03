@@ -1,5 +1,5 @@
 // ProMatchXI Service Worker v25.2 — Cache bust bij elke deploy
-const SW_VERSION = '36.363'; // v26.363: value-picks-tabblad kleurrijker + 'nog niet gescand' opvallend. SW_VERSION mee omhoog (cache-first HTML/JS). // // v26.362: 'gescand'-status op de wedstrijdtegels (worker v316 /analysed). SW_VERSION mee omhoog want sw.js serveert HTML/JS cache-first -- zonder bump zou de nieuwe wedstrijden.js/state.js nooit op het toestel verschijnen. // v26.361: MARKT-badge helemaal weg (tip-hoekje alleen nog echte value/model-picks)
+const SW_VERSION = '36.364'; // v26.364: echte Value Picks-subtab kleurrijker. SW_VERSION mee omhoog (cache-first). // // v26.363: value-picks-tabblad kleurrijker + 'nog niet gescand' opvallend. SW_VERSION mee omhoog (cache-first HTML/JS). // // v26.362: 'gescand'-status op de wedstrijdtegels (worker v316 /analysed). SW_VERSION mee omhoog want sw.js serveert HTML/JS cache-first -- zonder bump zou de nieuwe wedstrijden.js/state.js nooit op het toestel verschijnen. // v26.361: MARKT-badge helemaal weg (tip-hoekje alleen nog echte value/model-picks)
 const CACHE = 'totoai-' + SW_VERSION;
 
 self.addEventListener('install', e => { self.skipWaiting(); });
