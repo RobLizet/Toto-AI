@@ -456,6 +456,14 @@ function renderDashboard() {
   const _cvNum = (v, suffix, plus) => (v === null || v === undefined)
     ? '\u2014' : ((plus && v >= 0 ? '+' : '') + v + (suffix || ''));
 
+  // v26.367: break-even-bewuste kleuren -- geen rood op 'niet 100%'. avgOdds uit de settled picks zelf (CIJFERBRON); onbekend -> neutraal (geen claim).
+  const _oddsPicks = settledPicks.filter(p => Number(p.odds) > 1);
+  const _avgOddsSettled = _oddsPicks.length ? (_oddsPicks.reduce((a,p) => a + Number(p.odds), 0) / _oddsPicks.length) : null;
+  const _beHit = (_avgOddsSettled && isFinite(_avgOddsSettled) && _avgOddsSettled > 1) ? Math.round(100 / _avgOddsSettled) : null;
+  const _hitColor = (hr) => (hr === null || hr === undefined) ? '#ffffff' : (_beHit === null) ? '#ffffff' : (hr >= _beHit) ? '#00BEC4' : (hr >= _beHit - 3) ? '#f59e0b' : '#ef4444';
+  const _roiColor = (r) => (r === null || r === undefined) ? '#ffffff' : (Number(r) >= 0) ? '#00BEC4' : (Number(r) >= -5) ? '#f59e0b' : '#ef4444';
+  const _clvColor = (c) => (c === null || c === undefined || isNaN(Number(c))) ? 'rgba(255,255,255,.75)' : (Number(c) >= 0.5) ? '#00BEC4' : (Number(c) <= -0.5) ? '#ef4444' : 'rgba(255,255,255,.75)';
+
   const _dashLang = (typeof pmxLang === 'function' ? pmxLang() : 'nl');
   const _flagBtn = (code, flag, label, on) =>
     `<button onclick="setAppLang('${code}')" title="${label}" aria-label="${label}"
@@ -481,77 +489,87 @@ function renderDashboard() {
     <div id="dashOverviewContent">
     ${laatsteScanCard}
 
-    <!-- Voortgang kaart — ring + stats rij -->
-    <div class="dash-soft" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;cursor:pointer;backdrop-filter:blur(8px);"
+    <!-- v26.367: dashboard-held omgedraaid -- clubtijdperk (go/no-go) is de held; alle-picks + kalibratie + globale CLV achter 'meer details'. Break-even-bewuste kleuren. cv null -> alle-picks blijft de held (null-safe). -->
+    <div class="dash-soft" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:.85rem 1rem;margin-bottom:.75rem;cursor:pointer;backdrop-filter:blur(8px);"
       onclick="showPicksModal()">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div style="flex:1;padding-right:.5rem;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🎯 ${t('dash.progress1','VOORTGANG NAAR')} <span style="color:#00BEC4;">100</span> ${t('dash.progress2','PICKS')}</div>
-            <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
-          </div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.5);margin:0 0 .45rem;line-height:1.3;">${t('dash.allpicksnote','alle picks · incl. WK/kwalificatie — go/no-go: clubtijdperk')}</div>
-          <div style="background:rgba(255,255,255,.08);border-radius:999px;height:7px;overflow:hidden;margin-bottom:.35rem;">
-            <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#00BEC4,#00e5c8);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
-          </div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);display:flex;gap:.35rem;flex-wrap:wrap;">
-            ${(() => {
-              // U2: geen dubbele cijfers — inline = voortgang, statrij hieronder = prestatie
-              const parts = [];
-              if (kwaliPicks.length > 0) {
-                parts.push('<span>' + kwaliPicks.length + '/100 picks</span>');
-                if (settledPicks.length > 0) parts.push('<span>' + settledPicks.length + ' ' + t('dash.settled','afgerond') + '</span>');
-              }
-              return parts.length ? parts.join(' · ') : '<span>Scan wedstrijden →</span>';
-            })()}
-          </div>
+      ${cv ? `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">⚽ ${t('dash.gonogo','GO/NO-GO')} · <span style="color:#00BEC4;">${t('dash.clubera','CLUBTIJDPERK')}</span></div>
+        <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;">
+        <div style="flex:1;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:${_clvColor(cv.avg_clv)};">${_cvNum(cv.avg_clv,'%',true)}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">${t('dash.gemclv','GEM. CLV')} · n=${cv.met_clv}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.85);margin-top:.35rem;">${t('dash.nog','nog')} ${cv.nog} ${t('dash.naar','naar')} ${cv.doel}</div>
         </div>
         <div style="position:relative;width:58px;height:58px;flex-shrink:0;">
           <svg width="58" height="58" viewBox="0 0 58 58" style="transform:rotate(-90deg);">
             <circle fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5" cx="29" cy="29" r="23"/>
-            <circle fill="none" stroke="#00BEC4" stroke-width="5" cx="29" cy="29" r="23" stroke-dasharray="145" stroke-dashoffset="${Math.round(145-(145*Math.min(100,kwaliPicks.length)/100)*0.55)}" stroke-linecap="round"/>
-            <circle fill="none" stroke="#00e5c8" stroke-width="5" cx="29" cy="29" r="23" stroke-dasharray="145" stroke-dashoffset="${Math.round(145-(145*Math.min(100,settledPicks.length)/100)*0.3)}" stroke-linecap="round"/>
+            <circle fill="none" stroke="#00BEC4" stroke-width="5" cx="29" cy="29" r="23" stroke-dasharray="145" stroke-dashoffset="${Math.round(145 - 145 * Math.max(0, Math.min(100, Number(cv.pct) || 0)) / 100)}" stroke-linecap="round"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;"><div style=\'font-family:Bebas Neue,sans-serif;font-size:1.25rem;color:#00BEC4;\'>${kwaliPicks.length}</div><div style=\'font-family:IBM Plex Mono,monospace;font-size:.46rem;color:rgba(255,255,255,.45);margin-top:1px;\'>/100</div></div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;"><div style="font-family:Bebas Neue,sans-serif;font-size:1.25rem;color:#00BEC4;">${cv.settled}</div><div style="font-family:IBM Plex Mono,monospace;font-size:.46rem;color:rgba(255,255,255,.45);margin-top:1px;">/${cv.doel}</div></div>
+        </div>
+      </div>
+      <div style="height:5px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:.5rem;overflow:hidden;">
+        <div style="height:100%;width:${Math.max(0, Math.min(100, Number(cv.pct) || 0))}%;background:linear-gradient(90deg,#00BEC4,#00e5c8);border-radius:3px;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,0.09);margin-top:.6rem;padding-top:.5rem;">
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#ffffff;line-height:1;">${_cvNum(cv.hitrate_pct,'%')}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:${_roiColor(cv.roi_pct === null || cv.roi_pct === undefined ? null : Number(cv.roi_pct))};line-height:1;">${_cvNum(cv.roi_pct,'%',true)}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#ffffff;line-height:1;">${cv.met_clv}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">MET CLV</div></div>
+      </div>
+      ${typeof cv.onspeelbaar_uitgesloten === 'number' && cv.onspeelbaar_uitgesloten > 0 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#f59e0b;text-align:center;margin-top:.35rem;">${cv.onspeelbaar_uitgesloten} ${t('dash.onspeelbaar','picks niet meegeteld (ontstonden na de aftrap)')}</div>` : ''}
+      ${cv.settled < 30 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);text-align:center;margin-top:.2rem;opacity:.85;">${t('dash.teweinig','te weinig picks voor conclusies')}</div>` : ''}
+      ` : `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div style="flex:1;padding-right:.5rem;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🎯 ${t('dash.progress1','VOORTGANG NAAR')} <span style="color:#00BEC4;">100</span> ${t('dash.progress2','PICKS')}</div>
+            <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
+          </div>
+          <div style="background:rgba(255,255,255,.08);border-radius:999px;height:7px;overflow:hidden;margin-bottom:.35rem;">
+            <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#00BEC4,#00e5c8);width:${Math.min(100, kwaliPicks.length)}%;transition:width .4s;"></div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">${kwaliPicks.length > 0 ? kwaliPicks.length + '/100 picks' + (settledPicks.length > 0 ? ' · ' + settledPicks.length + ' ' + t('dash.settled','afgerond') : '') : t('dash.scanprompt','Scan wedstrijden →')}</div>
+        </div>
+        <div style="position:relative;width:58px;height:58px;flex-shrink:0;">
+          <svg width="58" height="58" viewBox="0 0 58 58" style="transform:rotate(-90deg);">
+            <circle fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5" cx="29" cy="29" r="23"/>
+            <circle fill="none" stroke="#00BEC4" stroke-width="5" cx="29" cy="29" r="23" stroke-dasharray="145" stroke-dashoffset="${Math.round(145 - 145 * Math.min(100, kwaliPicks.length) / 100)}" stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;"><div style="font-family:Bebas Neue,sans-serif;font-size:1.25rem;color:#00BEC4;">${kwaliPicks.length}</div><div style="font-family:IBM Plex Mono,monospace;font-size:.46rem;color:rgba(255,255,255,.45);margin-top:1px;">/100</div></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,0.09);margin-top:.55rem;padding-top:.5rem;">
-        <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;line-height:1;">${kwaliPicks.filter(p=>!p.status||p.status==='pending').length}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">OPEN</div></div>
-        <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${scanHitrate !== null && scanHitrate >= 50 ? '#00BEC4' : scanHitrate !== null ? '#ef4444' : '#ffffff'};line-height:1;">${scanHitrate !== null ? scanHitrate+'%' : '—'}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
-        <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${scanROI !== null && scanROI >= 0 ? '#00BEC4' : '#ef4444'};line-height:1;">${scanROI !== null ? (scanROI>=0?'+':'')+scanROI.toFixed(1)+'%' : '—'}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
-        <div style="text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:${winStreak >= 3 ? '#00BEC4' : winStreak >= 1 ? '#d97706' : '#ffffff'};line-height:1;">${winStreak > 0 ? '🔥'+winStreak : winPicks.length+'/'+settledPicks.length}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">${winStreak > 0 ? 'STREAK' : 'W/L'}</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#ffffff;line-height:1;">${kwaliPicks.filter(p=>!p.status||p.status==='pending').length}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">OPEN</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${_hitColor(scanHitrate)};line-height:1;">${scanHitrate !== null ? scanHitrate+'%' : '—'}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${_roiColor(scanROI)};line-height:1;">${scanROI !== null ? (scanROI>=0?'+':'')+scanROI.toFixed(1)+'%' : '—'}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${winStreak >= 3 ? '#00BEC4' : winStreak >= 1 ? '#f59e0b' : '#ffffff'};line-height:1;">${winStreak > 0 ? '🔥'+winStreak : winPicks.length+'/'+settledPicks.length}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">${winStreak > 0 ? 'STREAK' : 'W/L'}</div></div>
       </div>
-      <!-- v26.338: AI-calibratie per competitie uit /calibration-status. Niet gemeten = geen bewering. -->
-      <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap;">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">🤖 ${t('dash.aicalib2','AI GEKALIBREERD')}</span>
-        ${(calib && calib.gemeten === true)
-          ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${calib.competities_gekalibreerd > 0 ? '#00BEC4' : '#d97706'};">${calib.competities_gekalibreerd}/${calib.competities_met_picks} ${t('dash.comps','comp.')}</span>`
-          + (calib.dichtstbij ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);width:100%;text-align:center;margin-top:.2rem;">${calib.dichtstbij.naam}: ${t('dash.nog','nog')} ${calib.dichtstbij.nog} ${t('dash.picks','picks')}</span>` : '')
-          : `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);">${t('dash.nietgemeten','niet gemeten')}</span>`}
+      `}
+      <div onclick="toggleDashDetails(event)" style="display:flex;align-items:center;justify-content:center;gap:.3rem;margin-top:.55rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);cursor:pointer;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.6);">${t('dash.moredetails','meer details')}</span>
+        <span id="dashDetailsArrow" style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.6);">${state._dashDetailsOpen ? '▴' : '▾'}</span>
       </div>
-      <!-- v26.339: CLUBTIJDPERK-teller. De teller erboven telt ALLES (incl. WK en Primera Nacional
-           van voor 20-07); de Play Store-beslissing rust op clubdata en dat getal stond nergens.
-           Niet gemeten = geen blok, nooit een 0/100 die als meting leest. -->
-      ${cv ? `<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
-        <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;flex-wrap:wrap;">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">\u26bd ${t('dash.clubera','CLUBTIJDPERK')}</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:#00BEC4;">${cv.settled}/${cv.doel}</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);">${t('dash.nog','nog')} ${cv.nog}</span>
+      <div id="dashDetails" style="display:${state._dashDetailsOpen ? 'block' : 'none'};">
+        ${cv ? `<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.7);text-align:center;">
+          ${t('dash.allpicks','alle picks (levenslang)')}: <span style="color:rgba(255,255,255,.95);">${settledPicks.length}</span> · <span style="color:${_hitColor(scanHitrate)};">${scanHitrate!==null?scanHitrate+'%':'—'}</span> · <span style="color:${_roiColor(scanROI)};">${scanROI!==null?(scanROI>=0?'+':'')+scanROI.toFixed(1)+'%':'—'}</span>
+          <div style="color:var(--muted);font-size:.4rem;margin-top:.2rem;">${t('dash.allpicksnote2','incl. WK/kwalificatie — niet de validatie')}</div>
+        </div>` : ''}
+        <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">🤖 ${t('dash.aicalib2','AI GEKALIBREERD')}</span>
+          ${(calib && calib.gemeten === true)
+            ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${calib.competities_gekalibreerd > 0 ? '#00BEC4' : '#f59e0b'};">${calib.competities_gekalibreerd}/${calib.competities_met_picks} ${t('dash.comps','comp.')}</span>`
+              + (calib.dichtstbij ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);width:100%;text-align:center;margin-top:.2rem;">${calib.dichtstbij.naam}: ${t('dash.nog','nog')} ${calib.dichtstbij.nog} ${t('dash.picks','picks')}</span>` : '')
+            : `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);">${t('dash.nietgemeten','niet gemeten')}</span>`}
         </div>
-        <div style="height:4px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:.35rem;overflow:hidden;">
-          <div style="height:100%;width:${Math.max(0, Math.min(100, Number(cv.pct) || 0))}%;background:#00BEC4;border-radius:3px;"></div>
-        </div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);text-align:center;margin-top:.3rem;">
-          hitrate ${_cvNum(cv.hitrate_pct,'%')} \u00b7 ROI ${_cvNum(cv.roi_pct,'%',true)} \u00b7 CLV ${_cvNum(cv.avg_clv,'',true)} (n=${cv.met_clv})
-        </div>
-        ${typeof cv.onspeelbaar_uitgesloten === 'number' && cv.onspeelbaar_uitgesloten > 0 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#d97706;text-align:center;margin-top:.2rem;">${cv.onspeelbaar_uitgesloten} ${t('dash.onspeelbaar','picks niet meegeteld (ontstonden na de aftrap)')}</div>` : ''}
-        ${cv.settled < 30 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);text-align:center;margin-top:.15rem;opacity:.85;">${t('dash.teweinig','te weinig picks voor conclusies')}</div>` : ''}
-      </div>` : ''}
-      ${state._clvSummary && Number(state._clvSummary.picks) >= 20 ? `<div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">\u{1F4C8} GEM. CLV</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${Number(state._clvSummary.avgCLV)>=0?'#00BEC4':'#ef4444'};">${Number(state._clvSummary.avgCLV)>=0?'+':''}${state._clvSummary.avgCLV}%</span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.88);">\u00b7 ${state._clvSummary.pctBeatClose}% beat close \u00b7 n=${state._clvSummary.picks}</span>
-      </div>` : ''}
+        ${state._clvSummary && Number(state._clvSummary.picks) >= 20 ? `<div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap;">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">📈 ${t('dash.gemclvglobal','GEM. CLV (globaal)')}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${_clvColor(state._clvSummary.avgCLV)};">${Number(state._clvSummary.avgCLV)>=0?'+':''}${state._clvSummary.avgCLV}%</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.88);">· ${state._clvSummary.pctBeatClose}% beat close · n=${state._clvSummary.picks}</span>
+        </div>` : ''}
+      </div>
     </div>
 
     <!-- Top value pick als beschikbaar -->
@@ -983,6 +1001,16 @@ Geef een heldere analyse in het Nederlands.` }]
 }
 
 // ── Picks Modal ──────────────────────────────────────────
+// v26.367: klap 'meer details' op het dashboard in/uit. state._dashDetailsOpen overleeft een re-render.
+function toggleDashDetails(ev) {
+  if (ev && ev.stopPropagation) ev.stopPropagation();
+  state._dashDetailsOpen = !state._dashDetailsOpen;
+  var d = document.getElementById('dashDetails');
+  var a = document.getElementById('dashDetailsArrow');
+  if (d) d.style.display = state._dashDetailsOpen ? 'block' : 'none';
+  if (a) a.textContent = state._dashDetailsOpen ? '▴' : '▾';
+}
+
 function showPicksModal() {
   const scanLog = state.scanLog || [];
   const allPicks = state._qualityPicks ? state._qualityPicks.slice() : scanLog.flatMap(s => s.picks || []); // v26.117: Supabase-picks
