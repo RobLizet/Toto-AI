@@ -463,6 +463,9 @@ function renderDashboard() {
   const _hitColor = (hr) => (hr === null || hr === undefined) ? '#ffffff' : (_beHit === null) ? '#ffffff' : (hr >= _beHit) ? '#00BEC4' : (hr >= _beHit - 3) ? '#f59e0b' : '#ef4444';
   const _roiColor = (r) => (r === null || r === undefined) ? '#ffffff' : (Number(r) >= 0) ? '#00BEC4' : (Number(r) >= -5) ? '#f59e0b' : '#ef4444';
   const _clvColor = (c) => (c === null || c === undefined || isNaN(Number(c))) ? 'rgba(255,255,255,.75)' : (Number(c) >= 0.5) ? '#00BEC4' : (Number(c) <= -0.5) ? '#ef4444' : 'rgba(255,255,255,.75)';
+  // v26.368: club-hitrate op break-even -- gem_odds uit de worker (v317), over exact de settled club-picks.
+  const _beClub = (cv && Number(cv.gem_odds) > 1) ? Math.round(100 / Number(cv.gem_odds)) : null;
+  const _hitColorClub = (hr) => (hr === null || hr === undefined) ? '#ffffff' : (_beClub === null) ? '#ffffff' : (hr >= _beClub) ? '#00BEC4' : (hr >= _beClub - 3) ? '#f59e0b' : '#ef4444';
 
   const _dashLang = (typeof pmxLang === 'function' ? pmxLang() : 'nl');
   const _flagBtn = (code, flag, label, on) =>
@@ -515,7 +518,7 @@ function renderDashboard() {
         <div style="height:100%;width:${Math.max(0, Math.min(100, Number(cv.pct) || 0))}%;background:linear-gradient(90deg,#00BEC4,#00e5c8);border-radius:3px;"></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,0.09);margin-top:.6rem;padding-top:.5rem;">
-        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#ffffff;line-height:1;">${_cvNum(cv.hitrate_pct,'%')}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:${_hitColorClub(cv.hitrate_pct === null || cv.hitrate_pct === undefined ? null : Number(cv.hitrate_pct))};line-height:1;">${_cvNum(cv.hitrate_pct,'%')}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
         <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:${_roiColor(cv.roi_pct === null || cv.roi_pct === undefined ? null : Number(cv.roi_pct))};line-height:1;">${_cvNum(cv.roi_pct,'%',true)}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
         <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#ffffff;line-height:1;">${cv.met_clv}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">MET CLV</div></div>
       </div>
