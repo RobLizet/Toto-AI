@@ -490,6 +490,7 @@ function renderDashboard() {
             <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🎯 ${t('dash.progress1','VOORTGANG NAAR')} <span style="color:#00BEC4;">100</span> ${t('dash.progress2','PICKS')}</div>
             <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
           </div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.4rem;color:rgba(255,255,255,.5);margin:0 0 .45rem;line-height:1.3;">${t('dash.allpicksnote','alle picks · incl. WK/kwalificatie — go/no-go: clubtijdperk')}</div>
           <div style="background:rgba(255,255,255,.08);border-radius:999px;height:7px;overflow:hidden;margin-bottom:.35rem;">
             <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#00BEC4,#00e5c8);width:${Math.min(100,kwaliPicks.length)}%;transition:width .4s;"></div>
           </div>
