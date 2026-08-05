@@ -270,7 +270,7 @@ function renderWedstrijdenScreen() {
       ontouchcancel="handleCompTouchEnd('${c.key}')"
       ontouchend="handleCompTouchEnd('${c.key}')"
       onclick="handleCompTap('${c.key}')">
-      <div style="font-size:1.15rem;line-height:1.3;margin-bottom:.2rem;">${c.flag}</div>
+      <div style="font-size:1.15rem;line-height:1.3;margin-bottom:.2rem;">${c.cat === 'euro_beker' ? '<span style="color:#00BEC4;">★</span>' : c.flag}</div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;
         color:${isActive ? '#00BEC4' : 'rgba(255,255,255,.9)'};overflow:hidden;white-space:nowrap;
         text-overflow:ellipsis;max-width:100%;padding:0 3px;line-height:1.3;">${shortName}</div>
