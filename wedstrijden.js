@@ -600,7 +600,7 @@ function renderMatches(matches) {
             background:linear-gradient(135deg,rgba(0,190,196,.12),rgba(0,190,196,.08));
             border:1px solid rgba(0,190,196,.25);
             font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:700;
-            color:#2563eb;cursor:pointer;">
+            color:#00BEC4;cursor:pointer;">
             📅 ${t('wed.loadalltoday','Alles vandaag laden')}
           </button>
           <button onclick="loadMatches('${_comp}')"
@@ -616,25 +616,61 @@ function renderMatches(matches) {
   }
 
   list.innerHTML = '';
-  // v26.362: OPTIE C -- gescande duels bovenaan, niet-gescande eronder met een scheiding.
-  // Alleen groeperen als de scan-status ECHT gemeten is (state._analysedGemeten); anders de
-  // bestaande volgorde onaangeroerd laten (geen groepering op een niet-meting).
+  // v26.369: primaire groepering op CATEGORIE (clubcompetitie / beker / Europees), net als de tegels.
+  // Alleen bij 2+ categorieen in beeld (bij een enkele competitie geen ruis). Binnen elke categorie
+  // blijft 'gescand bovenaan' (v26.362) werken via de helper _renderGroep. Categorie via m.leagueId ->
+  // _compMeta = dezelfde bron als de tegel-groepering; onbekend -> clubcompetities-bucket (geen verzonnen groep).
   {
     const _am2 = state._analysedMap || {};
     const _kanGroeperen = state._analysedGemeten === true;
     const _isGescand = mm => _kanGroeperen && !mm.isDone && mm.id != null && !!_am2[mm.id];
-    const _gescandLijst = _kanGroeperen ? matches.filter(_isGescand) : matches;
-    const _restLijst    = _kanGroeperen ? matches.filter(mm => !_isGescand(mm)) : [];
-    _gescandLijst.forEach(m => { const card = renderMatchCard(m); if (card) list.appendChild(card); });
-    if (_kanGroeperen && _gescandLijst.length && _restLijst.length) {
-      const _div = document.createElement('div');
-      _div.style.cssText = 'display:flex;align-items:center;gap:.5rem;margin:.7rem .3rem .3rem;';
-      _div.innerHTML = `<div style="flex:1;height:1px;background:rgba(251,146,60,.25);"></div>` +
-        `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;letter-spacing:.1em;color:#fb923c;white-space:nowrap;">○ ${t('wed.notscanned_divider','NOG NIET GESCAND')}</span>` +
-        `<div style="flex:1;height:1px;background:rgba(251,146,60,.25);"></div>`;
-      list.appendChild(_div);
+
+    const _renderGroep = (arr) => {
+      const _g = _kanGroeperen ? arr.filter(_isGescand) : arr;
+      const _r = _kanGroeperen ? arr.filter(mm => !_isGescand(mm)) : [];
+      _g.forEach(m => { const card = renderMatchCard(m); if (card) list.appendChild(card); });
+      if (_kanGroeperen && _g.length && _r.length) {
+        const _div = document.createElement('div');
+        _div.style.cssText = 'display:flex;align-items:center;gap:.5rem;margin:.7rem .3rem .3rem;';
+        _div.innerHTML = `<div style="flex:1;height:1px;background:rgba(251,146,60,.25);"></div>` +
+          `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;letter-spacing:.1em;color:#fb923c;white-space:nowrap;">○ ${t('wed.notscanned_divider','NOG NIET GESCAND')}</span>` +
+          `<div style="flex:1;height:1px;background:rgba(251,146,60,.25);"></div>`;
+        list.appendChild(_div);
+      }
+      _r.forEach(m => { const card = renderMatchCard(m); if (card) list.appendChild(card); });
+    };
+
+    const _CAT_ORDER = ['clubliga', 'euro_beker', 'nationale_beker', 'interland'];
+    const _CAT_LABEL = {
+      clubliga: t('wed.grp_clubliga', 'Clubcompetities'),
+      euro_beker: t('wed.grp_eurobeker', 'Europees bekervoetbal'),
+      nationale_beker: t('wed.grp_nationalebeker', 'Nationale bekers'),
+      interland: t('wed.grp_interland', 'Interlands'),
+    };
+    const _catVan = (m) => {
+      const lid = m && m.leagueId;
+      const wm = (lid !== null && lid !== undefined) ? _compMeta[Number(lid)] : null;
+      const c = wm && wm.categorie;
+      return (c && _CAT_ORDER.includes(c)) ? c : 'clubliga';
+    };
+
+    const _perCat = {};
+    matches.forEach(m => { const c = _catVan(m); (_perCat[c] = _perCat[c] || []).push(m); });
+    const _aanwezig = _CAT_ORDER.filter(c => (_perCat[c] || []).length);
+
+    if (_aanwezig.length <= 1) {
+      _renderGroep(matches);
+    } else {
+      _aanwezig.forEach(c => {
+        const _h = document.createElement('div');
+        _h.style.cssText = 'display:flex;align-items:center;gap:.5rem;margin:.85rem .3rem .4rem;';
+        _h.innerHTML = `<span style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:800;letter-spacing:.08em;color:#00BEC4;white-space:nowrap;">${_CAT_LABEL[c]}</span>` +
+          `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.45);">${_perCat[c].length}</span>` +
+          `<div style="flex:1;height:1px;background:rgba(0,190,196,.2);"></div>`;
+        list.appendChild(_h);
+        _renderGroep(_perCat[c]);
+      });
     }
-    _restLijst.forEach(m => { const card = renderMatchCard(m); if (card) list.appendChild(card); });
   }
 
   // Toon value scan button als er matches met odds zijn
