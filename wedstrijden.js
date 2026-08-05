@@ -277,13 +277,21 @@ function renderWedstrijdenScreen() {
       ${isFav ? '<div style="position:absolute;top:4px;right:5px;font-size:.6rem;">✓</div>' : ''}
     </div>`;
   };
-  const _compGridsHtml = _GROEP_VOLGORDE
-    .filter(g => (_perGroep[g] || []).length)
-    .map(g => `
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;margin:.55rem .1rem .35rem;">${_GROEP_LABELS[g]}</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;" class="compGrid" data-cat="${g}">
-        ${_perGroep[g].map(_compChipHtml).join('')}
-      </div>`).join('');
+  // v26.372: gestapelde secties -> scrollbare categorie-tabs (Rob). Grids houden class/id/data-cat,
+  // dus resortCompGrid/updateFavCompUI blijven werken. Actieve tab in state._wedCatTab (bewaard).
+  const _presentGroups = _GROEP_VOLGORDE.filter(g => (_perGroep[g] || []).length);
+  let _activeCat = state._wedCatTab;
+  if (!(['fav'].concat(_presentGroups)).includes(_activeCat)) _activeCat = _presentGroups[0] || 'fav';
+  const _pill = (cat, label, on) => `<button class="wedcat-pill" data-cat="${cat}" onclick="setWedCatTab('${cat}')" style="flex:0 0 auto;white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:700;padding:.42rem .85rem;border-radius:999px;cursor:pointer;background:${on ? 'rgba(0,190,196,.18)' : 'rgba(255,255,255,.05)'};color:${on ? '#00BEC4' : 'rgba(255,255,255,.75)'};border:1px solid ${on ? 'rgba(0,190,196,.45)' : 'rgba(255,255,255,.1)'};">${label}</button>`;
+  const _catTabsHtml = [_pill('fav', '★ ' + t('wed.favtab','Favorieten'), _activeCat === 'fav')]
+    .concat(_presentGroups.map(g => _pill(g, _GROEP_LABELS[g], _activeCat === g)))
+    .join('');
+  const _catSectionsHtml = _presentGroups.map(g => `
+      <div class="wedcat-sec" data-cat="${g}" style="display:${_activeCat === g ? 'block' : 'none'};margin-bottom:.6rem;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;" class="compGrid" data-cat="${g}">
+          ${_perGroep[g].map(_compChipHtml).join('')}
+        </div>
+      </div>`).join('') || `<div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.55);text-align:center;padding:1.1rem .5rem;">${t('wed.geentegels5d','Geen competities met een wedstrijd binnen 5 dagen. Ze verschijnen zodra er weer gespeeld wordt.')}</div>`;
 
   screen.innerHTML = `
     <!-- AutoCheck bar -->
@@ -304,7 +312,7 @@ function renderWedstrijdenScreen() {
         Vandaag
       </button>
       <button id="wtab-value" onclick="setWedstrijdenTab('value')"
-        style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.25rem;background:transparent;color:rgba(255,255,255,.88);">
+        style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.25rem;background:rgba(0,190,196,.11);color:#00BEC4;box-shadow:inset 0 0 0 1px rgba(0,190,196,.4);">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Value Picks
       </button>
@@ -323,37 +331,13 @@ function renderWedstrijdenScreen() {
     <div id="wtab-content-wedstrijden">
 
     <!-- Competitie tiles - gegroepeerd per categorie (v26.353) -->
-    <div style="margin-bottom:.6rem;">
-      ${_compGridsHtml || `<div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.55);text-align:center;padding:1.1rem .5rem;">${t('wed.geentegels5d','Geen competities met een wedstrijd binnen 5 dagen. Ze verschijnen zodra er weer gespeeld wordt.')}</div>`}
+    <!-- v26.372: scrollbare categorie-tab-balk -->
+    <div style="display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.2rem;margin-bottom:.55rem;-webkit-overflow-scrolling:touch;">
+      ${_catTabsHtml}
     </div>
-
-    <!-- Acties (v26.358: opgeschoond -- alleen Favorieten + Meer zichtbaar, rest in het Meer-paneel) -->
-    <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
-      <button id="multiModeBtn" onclick="toggleMultiMode()"
-        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
-        padding:.4rem .9rem;border-radius:999px;cursor:pointer;
-        background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.3);color:#00BEC4;">
-        ⭐ ${t('wed.favbtn','FAVORIETEN')}
-      </button>
-      <button id="wedMeerBtn" onclick="toggleWedMeer()"
-        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
-        padding:.4rem .9rem;border-radius:999px;cursor:pointer;
-        background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.9);">
-        ⋯ ${t('wed.morebtn','MEER')}
-      </button>
-    </div>
-
-    <!-- Meer-paneel (v26.358): secundaire acties samengevouwen voor rust/overzicht -->
-    <div id="wedMeerMenu" style="display:none;flex-direction:column;gap:.4rem;margin-bottom:.6rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.5rem;">
-      <button id="scan3DaysBtn" onclick="scanAllTodayValue('3days')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📅 ${t('wed.scan3days','SCAN 3 DAGEN')}</button>
-      <button onclick="loadTodayAllComps()" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📅 ${t('wed.todaybtn','VANDAAG + MORGEN')}</button>
-      <button onclick="openCompDetail(state.activeComp)" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📊 ${t('wed.standinfo','STAND & INFO')}</button>
-      <button onclick="switchScreen('ekkwal')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">🇪🇺 ${t('wed.tab_ekkwal','EK-kwalificatie')}</button>
-      ${(typeof MODEL_PARAMS !== 'undefined' && MODEL_PARAMS && MODEL_PARAMS.oddsvergelijker_enabled === true) ? `<button onclick="switchScreen('oddsvergelijker')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📈 ${t('od.title','Oddsvergelijker')}</button>` : ''}
-      <button onclick="toggleManualMatchSection()" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">➕ ${t('wed.addmanual','Wedstrijd handmatig toevoegen')}</button>
-    </div>
-
-    <!-- Multi-scan hint -->
+    <!-- Favorieten-tab (cross-categorie): multi-scan hierin verplaatst -->
+    <div class="wedcat-sec" data-cat="fav" style="display:${_activeCat === 'fav' ? 'block' : 'none'};margin-bottom:.6rem;">
+      ${(state.favoriteComps || []).length ? '' : `<div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.6);text-align:center;padding:1rem .5rem;line-height:1.5;">${t('wed.favtab_empty','Nog geen favorieten. Tik ⭐ BEWAREN en dan een competitie in een andere tab.')}</div>`}
     <div id="multiModeHint" style="display:none;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#00BEC4;
       background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.15);border-radius:8px;
       padding:.4rem .8rem;margin-bottom:.5rem;">
@@ -384,7 +368,36 @@ function renderWedstrijdenScreen() {
         </button>
       </div>
     </div>
+    </div>
+    ${_catSectionsHtml}
 
+    <!-- Acties (v26.358: opgeschoond -- alleen Favorieten + Meer zichtbaar, rest in het Meer-paneel) -->
+    <div style="display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;">
+      <button id="multiModeBtn" onclick="toggleMultiMode()"
+        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
+        padding:.4rem .9rem;border-radius:999px;cursor:pointer;
+        background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.3);color:#00BEC4;">
+        ⭐ ${t('wed.savebtn','BEWAREN')}
+      </button>
+      <button id="wedMeerBtn" onclick="toggleWedMeer()"
+        style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:700;
+        padding:.4rem .9rem;border-radius:999px;cursor:pointer;
+        background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.9);">
+        ⋯ ${t('wed.morebtn','MEER')}
+      </button>
+    </div>
+
+    <!-- Meer-paneel (v26.358): secundaire acties samengevouwen voor rust/overzicht -->
+    <div id="wedMeerMenu" style="display:none;flex-direction:column;gap:.4rem;margin-bottom:.6rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.5rem;">
+      <button id="scan3DaysBtn" onclick="scanAllTodayValue('3days')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📅 ${t('wed.scan3days','SCAN 3 DAGEN')}</button>
+      <button onclick="loadTodayAllComps()" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📅 ${t('wed.todaybtn','VANDAAG + MORGEN')}</button>
+      <button onclick="openCompDetail(state.activeComp)" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📊 ${t('wed.standinfo','STAND & INFO')}</button>
+      <button onclick="switchScreen('ekkwal')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">🇪🇺 ${t('wed.tab_ekkwal','EK-kwalificatie')}</button>
+      ${(typeof MODEL_PARAMS !== 'undefined' && MODEL_PARAMS && MODEL_PARAMS.oddsvergelijker_enabled === true) ? `<button onclick="switchScreen('oddsvergelijker')" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">📈 ${t('od.title','Oddsvergelijker')}</button>` : ''}
+      <button onclick="toggleManualMatchSection()" style="width:100%;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:.55rem;font-weight:700;padding:.55rem .8rem;border-radius:9px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.92);display:flex;align-items:center;gap:.5rem;">➕ ${t('wed.addmanual','Wedstrijd handmatig toevoegen')}</button>
+    </div>
+
+    <!-- Multi-scan hint -->
     <div id="manualMatchSection" style="display:none;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);
       border-radius:14px;padding:.9rem;margin-bottom:.7rem;">
       <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.95);margin-bottom:.6rem;">${t('wed.manualinput','HANDMATIGE INVOER')}</div>
@@ -762,6 +775,22 @@ function renderOddsArrow(open, cur) {
 
 
 // ── TAB SWITCH WEDSTRIJDEN ────────────────────────────────
+// v26.372: wissel tussen de scrollbare categorie-tabs op het Wedstrijden-scherm. Toont alleen de
+// actieve sectie; keuze bewaard in state._wedCatTab zodat hij een re-render overleeft.
+function setWedCatTab(cat) {
+  state._wedCatTab = cat;
+  if (typeof saveState === 'function') saveState();
+  document.querySelectorAll('.wedcat-sec').forEach(sec => {
+    sec.style.display = (sec.getAttribute('data-cat') === cat) ? 'block' : 'none';
+  });
+  document.querySelectorAll('.wedcat-pill').forEach(pill => {
+    const on = pill.getAttribute('data-cat') === cat;
+    pill.style.background = on ? 'rgba(0,190,196,.18)' : 'rgba(255,255,255,.05)';
+    pill.style.color = on ? '#00BEC4' : 'rgba(255,255,255,.75)';
+    pill.style.borderColor = on ? 'rgba(0,190,196,.45)' : 'rgba(255,255,255,.1)';
+  });
+}
+
 function setWedstrijdenTab(tab) {
   const tabs = ['wedstrijden','vandaag','value','live'];
   tabs.forEach(t => {
@@ -770,9 +799,16 @@ function setWedstrijdenTab(tab) {
     const isActive = t === tab;
     if (content) content.style.display = isActive ? 'block' : 'none';
     if (btn) {
-      btn.style.background = isActive ? 'rgba(0,190,196,.15)' : 'transparent';
-      btn.style.color      = isActive ? '#00BEC4' : 'rgba(255,255,255,.4)';
-      btn.style.boxShadow  = isActive ? '0 1px 4px rgba(0,0,0,.2)' : 'none';
+      if (t === 'value') {
+        // v26.372: Value Picks blijft altijd opvallen (teal pill), extra sterk als actief.
+        btn.style.background = isActive ? 'rgba(0,190,196,.24)' : 'rgba(0,190,196,.11)';
+        btn.style.color      = '#00BEC4';
+        btn.style.boxShadow  = isActive ? '0 1px 8px rgba(0,190,196,.35)' : 'inset 0 0 0 1px rgba(0,190,196,.4)';
+      } else {
+        btn.style.background = isActive ? 'rgba(0,190,196,.15)' : 'transparent';
+        btn.style.color      = isActive ? '#00BEC4' : 'rgba(255,255,255,.4)';
+        btn.style.boxShadow  = isActive ? '0 1px 4px rgba(0,0,0,.2)' : 'none';
+      }
     }
   });
   if (tab === 'vandaag') loadVandaagTab();
@@ -1688,7 +1724,7 @@ function toggleMultiMode() {
     if (btn) { btn.textContent = '✓ KLAAR'; btn.style.background = 'rgba(0,190,196,.2)'; btn.style.color = '#00BEC4'; }
     if (hint) hint.style.display = 'block';
   } else {
-    if (btn) { btn.textContent = '⭐ FAVORIETEN'; btn.style.background = 'rgba(0,190,196,.1)'; btn.style.color = '#00BEC4'; }
+    if (btn) { btn.textContent = '⭐ BEWAREN'; btn.style.background = 'rgba(0,190,196,.1)'; btn.style.color = '#00BEC4'; }
     if (hint) hint.style.display = 'none';
   }
 }
