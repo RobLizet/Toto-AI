@@ -625,19 +625,20 @@ function renderMatches(matches) {
     const _kanGroeperen = state._analysedGemeten === true;
     const _isGescand = mm => _kanGroeperen && !mm.isDone && mm.id != null && !!_am2[mm.id];
 
-    const _renderGroep = (arr) => {
+    const _renderGroep = (arr, target) => {
+      const _t = target || list;
       const _g = _kanGroeperen ? arr.filter(_isGescand) : arr;
       const _r = _kanGroeperen ? arr.filter(mm => !_isGescand(mm)) : [];
-      _g.forEach(m => { const card = renderMatchCard(m); if (card) list.appendChild(card); });
+      _g.forEach(m => { const card = renderMatchCard(m); if (card) _t.appendChild(card); });
       if (_kanGroeperen && _g.length && _r.length) {
         const _div = document.createElement('div');
         _div.style.cssText = 'display:flex;align-items:center;gap:.5rem;margin:.7rem .3rem .3rem;';
         _div.innerHTML = `<div style="flex:1;height:1px;background:rgba(251,146,60,.25);"></div>` +
           `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;letter-spacing:.1em;color:#fb923c;white-space:nowrap;">○ ${t('wed.notscanned_divider','NOG NIET GESCAND')}</span>` +
           `<div style="flex:1;height:1px;background:rgba(251,146,60,.25);"></div>`;
-        list.appendChild(_div);
+        _t.appendChild(_div);
       }
-      _r.forEach(m => { const card = renderMatchCard(m); if (card) list.appendChild(card); });
+      _r.forEach(m => { const card = renderMatchCard(m); if (card) _t.appendChild(card); });
     };
 
     const _CAT_ORDER = ['clubliga', 'euro_beker', 'nationale_beker', 'interland'];
@@ -661,14 +662,29 @@ function renderMatches(matches) {
     if (_aanwezig.length <= 1) {
       _renderGroep(matches);
     } else {
+      // v26.370: categorie-kopjes tikbaar-inklapbaar. Stand in state._wedCatDicht zodat een her-render
+      // (odds-refresh/live-update) de open/dicht-keuze niet terugdraait. Pijltje toont de stand.
+      state._wedCatDicht = state._wedCatDicht || {};
       _aanwezig.forEach(c => {
+        const _dicht0 = !!state._wedCatDicht[c];
         const _h = document.createElement('div');
-        _h.style.cssText = 'display:flex;align-items:center;gap:.5rem;margin:.85rem .3rem .4rem;';
+        _h.style.cssText = 'display:flex;align-items:center;gap:.5rem;margin:.85rem .3rem .4rem;cursor:pointer;';
         _h.innerHTML = `<span style="font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:800;letter-spacing:.08em;color:#00BEC4;white-space:nowrap;">${_CAT_LABEL[c]}</span>` +
           `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.45);">${_perCat[c].length}</span>` +
-          `<div style="flex:1;height:1px;background:rgba(0,190,196,.2);"></div>`;
+          `<div style="flex:1;height:1px;background:rgba(0,190,196,.2);"></div>` +
+          `<span class="wedcat-pijl" style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.55);">${_dicht0 ? '▸' : '▾'}</span>`;
         list.appendChild(_h);
-        _renderGroep(_perCat[c]);
+        const _box = document.createElement('div');
+        _box.style.display = _dicht0 ? 'none' : 'block';
+        list.appendChild(_box);
+        _renderGroep(_perCat[c], _box);
+        _h.onclick = () => {
+          const _nu = !state._wedCatDicht[c];
+          state._wedCatDicht[c] = _nu;
+          _box.style.display = _nu ? 'none' : 'block';
+          const _p = _h.querySelector('.wedcat-pijl');
+          if (_p) _p.textContent = _nu ? '▸' : '▾';
+        };
       });
     }
   }
