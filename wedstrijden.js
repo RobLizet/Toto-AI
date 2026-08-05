@@ -312,7 +312,7 @@ function renderWedstrijdenScreen() {
         Vandaag
       </button>
       <button id="wtab-value" onclick="setWedstrijdenTab('value')"
-        style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.25rem;background:rgba(0,190,196,.11);color:#00BEC4;box-shadow:inset 0 0 0 1px rgba(0,190,196,.4);">
+        style="flex:1;border:none;border-radius:9px;padding:.5rem .2rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:.25rem;background:rgba(245,197,24,.09);color:#F5C518;box-shadow:inset 0 0 0 1.5px rgba(245,197,24,.6),0 0 8px rgba(245,197,24,.18);">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Value Picks
       </button>
@@ -800,10 +800,10 @@ function setWedstrijdenTab(tab) {
     if (content) content.style.display = isActive ? 'block' : 'none';
     if (btn) {
       if (t === 'value') {
-        // v26.372: Value Picks blijft altijd opvallen (teal pill), extra sterk als actief.
-        btn.style.background = isActive ? 'rgba(0,190,196,.24)' : 'rgba(0,190,196,.11)';
-        btn.style.color      = '#00BEC4';
-        btn.style.boxShadow  = isActive ? '0 1px 8px rgba(0,190,196,.35)' : 'inset 0 0 0 1px rgba(0,190,196,.4)';
+        // v26.373: Value Picks als opvallende GOUDEN pill (Rob), extra sterk als actief.
+        btn.style.background = isActive ? 'rgba(245,197,24,.16)' : 'rgba(245,197,24,.09)';
+        btn.style.color      = '#F5C518';
+        btn.style.boxShadow  = isActive ? 'inset 0 0 0 1.5px #F5C518,0 0 12px rgba(245,197,24,.4)' : 'inset 0 0 0 1.5px rgba(245,197,24,.6),0 0 8px rgba(245,197,24,.18)';
       } else {
         btn.style.background = isActive ? 'rgba(0,190,196,.15)' : 'transparent';
         btn.style.color      = isActive ? '#00BEC4' : 'rgba(255,255,255,.4)';
