@@ -55,10 +55,22 @@ async function renderAnalyticsInto(containerId) {
     if (atr.ok) autoTune = await atr.json();
   } catch(e) { console.warn('[Analytics inline] worker niet bereikbaar:', e.message); }
   const local = _calcLocalStats(supabasePicks || undefined);
+  state._analyseCache = { local, workerData, aiAcc, autoTune, containerId }; // v26.374: hergebruik bij schakelen (geen re-fetch)
   el.innerHTML = _analyticsHTML(local, workerData, aiAcc, autoTune, `renderAnalyticsInto('${containerId}')`);
 }
 
 // ── Lokale statistieken berekenen uit scanLog ────────
+// v26.374: schakel Analyse tussen clubtijdperk (validatie) en alle picks; herbouwt uit cache, geen re-fetch.
+function setAnalyseSet(set) {
+  state._analyseSet = set;
+  if (typeof saveState === 'function') saveState();
+  const c = state._analyseCache;
+  if (c && c.containerId) {
+    const el = document.getElementById(c.containerId);
+    if (el) el.innerHTML = _analyticsHTML(c.local, c.workerData, c.aiAcc, c.autoTune, "renderAnalyticsInto('" + c.containerId + "')");
+  }
+}
+
 function _calcLocalStats(allPicksOverride) {
   const scanLog = state.scanLog || [];
   const _fromBackend = !!(allPicksOverride && allPicksOverride.length);
@@ -283,6 +295,49 @@ function _analyticsHTML(local, worker, aiAcc, autoTune, refreshFn) {
   html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:#ffffff;">📊 STATS & ANALYTICS</div>';
   html += '<button onclick="' + _refresh + '" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.3rem .6rem;font-size:.7rem;color:rgba(255,255,255,.95);cursor:pointer;">↻ ' + t('an.refresh','Vernieuwen') + '</button>';
   html += '</div>';
+
+  // ── v26.374: schakelaar Clubtijdperk (validatie, WK eruit) / Alle picks -- default club ──
+  const _set = (state._analyseSet === 'all') ? 'all' : 'club';
+  const _cv = worker && worker.clubValidatie;
+  const _csClub = worker && worker.clvSummaryClub;
+  const _num = (x) => (x === null || x === undefined || x === '') ? null : Number(x);
+  const _pill = (val, label, on) => '<button onclick="setAnalyseSet(\'' + val + '\')" style="flex:1;border:none;border-radius:8px;padding:.42rem .3rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;cursor:pointer;background:' + (on ? 'rgba(0,190,196,.18)' : 'transparent') + ';color:' + (on ? '#00BEC4' : 'rgba(255,255,255,.5)') + ';box-shadow:' + (on ? 'inset 0 0 0 1px rgba(0,190,196,.4)' : 'none') + ';">' + label + '</button>';
+  html += '<div style="display:flex;gap:.4rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.25rem;margin-bottom:.75rem;">';
+  html += _pill('club', '\u2605 ' + t('an.set_club', 'Clubtijdperk'), _set === 'club');
+  html += _pill('all', t('an.set_all', 'Alle picks'), _set === 'all');
+  html += '</div>';
+
+  if (_set === 'club' && _cv) {
+    const cl = { total: _num(_cv.settled), settled: _num(_cv.settled), wins: null,
+      hitrate: _num(_cv.hitrate), roi: _num(_cv.roi), avgOdds: _num(_cv.avgOdds),
+      avgValue: null, openPicks: null, roiTrend: [],
+      byPick: { '1': {w:0,t:0}, 'X': {w:0,t:0}, '2': {w:0,t:0} },
+      byLeague: [], byBucket: [], confBuckets: [] };
+    const wcl = Object.assign({}, worker, { clvSummary: _csClub,
+      clvByLeague: (worker && worker.clvByLeague ? worker.clvByLeague : []).filter(l => [1,4,5,32,960].indexOf(Number(l.leagueId)) === -1) });
+    html += _analyticsFindings(cl, wcl);
+    const _beC = (cl.avgOdds && cl.avgOdds > 1) ? Math.round(100 / cl.avgOdds) : null;
+    const _hitC = (cl.hitrate != null && _beC != null) ? (cl.hitrate >= _beC ? '#00BEC4' : cl.hitrate >= _beC - 3 ? '#f59e0b' : '#dc2626') : '#ffffff';
+    const _roiC = cl.roi == null ? '#ffffff' : cl.roi >= 0 ? '#00BEC4' : cl.roi >= -5 ? '#f59e0b' : '#dc2626';
+    const _clvV = _csClub ? _num(_csClub.avgCLV) : null;
+    const _clvC = _clvV == null ? 'rgba(255,255,255,.75)' : _clvV >= 0.5 ? '#00BEC4' : _clvV <= -0.5 ? '#dc2626' : 'rgba(255,255,255,.75)';
+    html += '<div class="analytics-block">';
+    html += '<div class="analytics-block-title">' + t('an.overview','OVERZICHT') + ' <span style="font-size:.44rem;font-weight:400;color:rgba(255,255,255,.5);">' + t('an.club_sub','clubtijdperk \u00b7 WK eruit') + '</span></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">';
+    html += _kpi('SETTLED', cl.settled != null ? cl.settled : '\u2014', '#00BEC4');
+    html += _kpi('HITRATE', cl.hitrate != null ? cl.hitrate + '%' : '\u2014', _hitC);
+    html += _kpi('ROI', cl.roi != null ? (cl.roi >= 0 ? '+' : '') + cl.roi + '%' : '\u2014', _roiC);
+    html += _kpi('CLV', (_clvV != null) ? (_clvV >= 0 ? '+' : '') + _csClub.avgCLV + '%' : '\u2014', _clvC);
+    html += '</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.4rem;">';
+    html += _kpiSmall(t('an.avgodds','GEM. ODDS'), cl.avgOdds != null ? cl.avgOdds : '\u2014');
+    html += _kpiSmall(t('an.beatclose','BEAT CLOSE'), (_csClub && _csClub.pctBeatClose != null) ? _csClub.pctBeatClose + '%' : '\u2014');
+    html += _kpiSmall(t('an.metclv','MET CLV'), (_cv.metClv != null) ? _cv.metClv : '\u2014');
+    html += '</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.5);margin-top:.6rem;line-height:1.5;">' + t('an.club_note','Uitsplitsingen per competitie/markt/odds staan onder \u2018Alle picks\u2019.') + '</div>';
+    html += '</div>';
+    return html;
+  }
 
   // ── v26.293: Bevindingen (deterministische duiding, bovenaan) ──
   html += _analyticsFindings(local, worker);
