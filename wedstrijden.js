@@ -2041,7 +2041,9 @@ async function fetchOddsForMatches(leagueId, _apiKey) {
   const leagueMatches = (state.matches || []).filter(m => String(m.leagueId) === String(leagueId));
   // v26.323: seizoen uit de fixture zelf (league.season), niet uit de driftende seasonForLeague-lijst.
   // Nullish (?? niet ||): een gemeten seizoen 0 bestaat niet, maar undefined -> terugval op de helper.
-  const season = leagueMatches.find(m => m.season != null)?.season ?? seasonForLeague(leagueId);
+  // v26.376: terugval opgewaardeerd naar seizoenVoorComp (worker-bron via _compMeta), seasonForLeague
+  // pas als laatste redmiddel voor competities die de worker niet scant (bv. losse extra's).
+  const season = leagueMatches.find(m => m.season != null)?.season ?? seizoenVoorComp(null, leagueId);
   let dates = [...new Set(leagueMatches.map(m => m.dateISO).filter(Boolean))];
   if (!dates.length) dates = [new Date().toISOString().split('T')[0]];
   const cb = Date.now();
@@ -2108,7 +2110,8 @@ async function fetchOddsForAllMatches(matches, _apiKey) {
     // rate-limit niet verzadigt bij het in één keer laden van veel competities.
     if (_leagueIdx++ > 0) await new Promise(r => setTimeout(r, 220));
     // v26.323: seizoen uit de fixture zelf (league.season), niet uit de driftende seasonForLeague-lijst.
-    const season = (byLeague[leagueId] || []).find(m => m.season != null)?.season ?? seasonForLeague(leagueId);
+    // v26.376: terugval opgewaardeerd naar seizoenVoorComp (worker-bron), seasonForLeague als laatste redmiddel.
+    const season = (byLeague[leagueId] || []).find(m => m.season != null)?.season ?? seizoenVoorComp(null, leagueId);
     // v26.97: per league ALLE unieke datums ophalen i.p.v. alleen de eerste match.
     // Hierdoor kregen WK-matches op 14 juni geen odds als er ook een match op 13 juni stond.
     const dates = [...new Set((byLeague[leagueId] || []).map(m => m.dateISO).filter(Boolean))];

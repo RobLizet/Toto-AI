@@ -2231,7 +2231,16 @@ async function scanAllTodayValue(mode = 'today') {
 
     await Promise.all(SCAN_LEAGUE_IDS.map(async leagueId => {
       try {
-        const season = seasonForLeague(leagueId);
+        // v26.376: GEMETEN dat deze losse ontdekkingsscan (SCAN 3 DAGEN/VANDAAG/MORGEN, vuurt zodra
+        // state.matches <5 wedstrijden met odds heeft) 19 van de 33 competities het VERKEERDE seizoen
+        // gaf via seasonForLeague -- exact de KKD/Eredivisie/Bundesliga/PL/La Liga/Serie A/Ligue1-bug
+        // uit v26.375, maar dan in dit codepad (hier bestaat nog geen fixture om het seizoen uit te
+        // lezen -- kip-en-ei, dus een per-league-heuristiek blijft hier nodig). seizoenVoorComp gebruikt
+        // eerst de ECHTE worker-data (_compMeta, gevuld uit /leagues) en valt pas terug op de oude lijst
+        // voor competities die de worker niet scant. Dekking gemeten: 14 van de 19 foute competities nu
+        // correct via de worker-bron; de resterende 5 (218/197/106/283/345) zijn 'extra'-competities die
+        // de worker zelf niet scant en dus toch al buiten de validatie vallen.
+        const season = seizoenVoorComp(null, leagueId);
         // v26.108: 3-dagen-scan haalt een datumrange op (vandaag t/m +2)
         const dateQ = mode === '3days' ? `from=${todayStr}&to=${day3Str}`
                     : mode === 'tomorrow' ? `date=${tomorrowStr}`
