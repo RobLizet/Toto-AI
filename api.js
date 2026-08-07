@@ -413,10 +413,12 @@ async function fetchTeamForm(teamId) {
   } catch(e) { return []; }
 }
 
-async function fetchTeamStats(teamId, leagueId) {
+async function fetchTeamStats(teamId, leagueId, seasonArg) {
   if (!teamId) return null;
   try {
-    const season = seasonForLeague(leagueId);
+    // v26.375: seizoen uit de fixture (seasonArg = m.season), niet de driftende seasonForLeague-lijst.
+    // Fallback op seasonForLeague alleen als de fixture geen seizoen meegaf (geen regressie).
+    const season = (seasonArg != null) ? seasonArg : seasonForLeague(leagueId);
     const r = await apiFetch(`https://v3.football.api-sports.io/teams/statistics?team=${teamId}&league=${leagueId}&season=${season}`, null, 7000); // v26.255: expliciet, past binnen het ruimere wt-venster
     const d = await r.json();
     return d.response || null;
@@ -432,10 +434,10 @@ async function fetchLineups(fixtureId) {
   } catch(e) { return null; }
 }
 
-async function fetchTopScorers(leagueId) {
+async function fetchTopScorers(leagueId, seasonArg) {
   if (!leagueId) return null;
   try {
-    const season = seasonForLeague(leagueId);
+    const season = (seasonArg != null) ? seasonArg : seasonForLeague(leagueId); // v26.375: seizoen uit de fixture
     const r = await apiFetch(`https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=${season}`, null, 5000);
     const d = await r.json();
     return d.response?.slice(0, 10) || null;
@@ -443,10 +445,12 @@ async function fetchTopScorers(leagueId) {
 }
 
 // ── Standings ophalen ────────────────────────────────────
-async function fetchStandings(leagueId, _unused) {
+async function fetchStandings(leagueId, seasonArg) {
   if (!leagueId) return null;
   try {
-    const season = seasonForLeague(leagueId);
+    // v26.375: seizoen uit de fixture (seasonArg = m.season). Zonder dit gaf seasonForLeague voor
+    // 28 van de 35 gescande competities het VORIGE seizoen -> eindstand vorig jaar als 'huidige' stand.
+    const season = (seasonArg != null) ? seasonArg : seasonForLeague(leagueId);
     const r = await apiFetch(`https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season}`, null, 6000);
     const d = await r.json();
     return d.response?.[0]?.league?.standings?.[0] || null;

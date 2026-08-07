@@ -74,6 +74,14 @@ function extractStandingInfo(standings, teamId) {
   const gd = entry.goalsDiff || 0;
   const form = entry.form || '';
 
+  // v26.375: nieuw seizoen — nog geen wedstrijden gespeeld. Rang, punten en vorm zijn dan niet
+  // betekenisvol (de #x is bij 0 punten willekeurig), en een rang-gebaseerde motivatie zou het
+  // Poisson-model een valse titel-/degradatieboost geven via motivatieFactor. Geen bewering doen
+  // die de data niet draagt: neutrale factor, geen label, en de aanroeper markeert 'nieuw seizoen'.
+  if (played === 0) {
+    return { pos, pts, played, gd, form, total, motivatie: 'nieuw_seizoen', motivatieLabel: '', motivatieFactor: 1.0, notStarted: true };
+  }
+
   // Motivatie detectie
   let motivatie = 'normaal';
   let motivatieLabel = '';

@@ -1547,11 +1547,11 @@ async function runAnalyse() {
       wt(fetchH2H(m.homeId, m.awayId), 5000),
       wt(fetchTeamForm(m.homeId), 5000),
       wt(fetchTeamForm(m.awayId), 5000),
-      wt(fetchTeamStats(m.homeId, leagueId || 88), 9000), // v26.255: 5s was krapper dan de rate-limit-retry van apiFetch
-      wt(fetchTeamStats(m.awayId, leagueId || 88), 9000), // -> stille null -> poisson.valid=false -> 'model n.v.t.'
+      wt(fetchTeamStats(m.homeId, leagueId || 88, m.season), 9000), // v26.375: seizoen uit de fixture (m.season) -> teamstats uit het JUISTE seizoen, niet vorig jaar
+      wt(fetchTeamStats(m.awayId, leagueId || 88, m.season), 9000), // v26.375
       wt(fetchLineups(m.id), 4000),
       wt(fetchInjuries(m.id), 3000),
-      wt(fetchStandings(leagueId || m.leagueId, null), 4000),
+      wt(fetchStandings(leagueId || m.leagueId, m.season), 4000), // v26.375: standings uit het JUISTE seizoen (was: eindstand vorig jaar)
       wt(fetchPredictions(m.id), 5000),
     ]);
 
@@ -1727,18 +1727,29 @@ async function runAnalyse() {
     // Stand context
     const homeStand = standings ? extractStandingInfo(standings, m.homeId) : null;
     const awayStand  = standings ? extractStandingInfo(standings, m.awayId)  : null;
-    const standStr = [
-      homeStand ? `${m.home}: pos ${homeStand.pos}/${homeStand.total}, ${homeStand.pts}pt, GD ${homeStand.gd>0?'+':''}${homeStand.gd}${homeStand.motivatieLabel?' ('+homeStand.motivatieLabel+')':''}` : '',
-      awayStand  ? `${m.away}: pos ${awayStand.pos}/${awayStand.total}, ${awayStand.pts}pt, GD ${awayStand.gd>0?'+':''}${awayStand.gd}${awayStand.motivatieLabel?' ('+awayStand.motivatieLabel+')':''}` : ''
-    ].filter(Boolean).join('\n') || 'stand niet beschikbaar';
+    // v26.375: nieuw seizoen als de opgehaalde stand er is maar nog 0 duels gespeeld zijn (notStarted).
+    // Voedt zowel de LLM-prompt, het ranglijst-blok als het vorm-label -- zodat de app een lege ronde-1-
+    // stand niet als een echte ranglijst presenteert en de vorm eerlijk als 'deels vorig seizoen' labelt.
+    const seasonNotStarted = (homeStand || awayStand) && (!homeStand || homeStand.notStarted) && (!awayStand || awayStand.notStarted);
+    const _standLine = (name, s) => !s ? ''
+      : s.notStarted ? `${name}: nieuw seizoen, nog niet begonnen (geen stand)`
+      : `${name}: pos ${s.pos}/${s.total}, ${s.pts}pt, GD ${s.gd>0?'+':''}${s.gd}${s.motivatieLabel?' ('+s.motivatieLabel+')':''}`;
+    const standStr = [ _standLine(m.home, homeStand), _standLine(m.away, awayStand) ].filter(Boolean).join('\n') || 'stand niet beschikbaar';
 
     // v26.281: RANGLIJST-context zichtbaar bovenaan de STATS-sectie. De stand werd al opgehaald en voedt
     // zelfs het model (motivatieFactor -> Poisson), maar zat alleen verweven in de LLM-tekst. Nu een los,
     // deterministisch blok — alleen als er een tabel is (clubcompetities); bij cups/WK-knockout: niets tonen.
     let standingsHtml = '';
     try {
-      if (homeStand || awayStand) {
-        const _srow = (name, s) => s ? `
+      if (seasonNotStarted) {
+        // v26.375: ronde 1 -- er is een stand-object maar 0 duels gespeeld. Geen vermomde eindstand tonen.
+        standingsHtml = `
+          <div style="margin-bottom:.7rem;padding:.65rem .8rem;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:10px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;color:#00BEC4;letter-spacing:.06em;margin-bottom:.4rem;">\ud83c\udf31 NIEUW SEIZOEN</div>
+            <div style="font-size:.58rem;line-height:1.7;color:rgba(255,255,255,.78);">Ronde 1 &mdash; er is nog geen ranglijst voor dit seizoen. Vorm en statistieken hieronder kunnen deels uit het vorige seizoen komen.</div>
+          </div>`;
+      } else if (homeStand || awayStand) {
+        const _srow = (name, s) => (s && !s.notStarted) ? `
           <div style="display:flex;justify-content:space-between;gap:.5rem;font-size:.62rem;line-height:1.95;color:rgba(255,255,255,.88);">
             <span style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>
             <span style="font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.72);white-space:nowrap;">#${s.pos}/${s.total} \u00b7 ${s.pts}pt \u00b7 GD ${s.gd>0?'+':''}${s.gd}${s.motivatieLabel ? ' \u00b7 ' + s.motivatieLabel : ''}</span>
@@ -1886,8 +1897,9 @@ async function runAnalyse() {
 Competitie: ${m.comp} | ${m.date} ${m.time} | Fase: ${phase.label||'normaal'}
 Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}
 ${poissonStr}
-Vorm ${m.home}: ${homeFormStr}
-Vorm ${m.away}: ${awayFormStr}
+Vorm ${m.home}: ${homeFormStr}${seasonNotStarted ? ' (laatste duels, deels vorig seizoen)' : ''}
+Vorm ${m.away}: ${awayFormStr}${seasonNotStarted ? ' (laatste duels, deels vorig seizoen)' : ''}
+${seasonNotStarted ? 'LET OP: dit is de eerste speelronde van het nieuwe seizoen. Er is nog geen ranglijst en de vorm/statistieken komen deels uit het vorige seizoen (andere selectie/transfers). Presenteer dit NIET als actuele seizoensvorm of -stand; benoem de onzekerheid eerlijk.' : ''}
 H2H: ${h2hStr}
 ${h2hWStr}
 Standen: ${standStr}
