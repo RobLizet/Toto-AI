@@ -69,10 +69,6 @@
   <!-- OneSignal -->
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 
-  <!-- Firebase Compat SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script>
   // v26.241: globale error-boundary — voorkomt dat één ongevangen JS-fout de hele UI sloopt.
   (function(){
@@ -676,6 +672,11 @@
 <!-- ══════════════════════════════════════════
      JAVASCRIPT — volgorde is belangrijk
 ══════════════════════════════════════════ -->
+
+<!-- Firebase Compat SDKs (verplaatst uit <head> in v26.377 -- first paint niet meer geblokkeerd; alle firebase-consumers draaien op regel 681+) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <!-- 1. State -->
 <script src="state.js?v=1786176600"></script>
