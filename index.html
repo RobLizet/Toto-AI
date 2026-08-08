@@ -899,6 +899,33 @@
   <script>
   var _fabHistory = [];
 
+  // v26.378: FAB auto-verbergen bij scrollen -- knop schuift weg tijdens omlaag-scrollen (lezen),
+  // komt terug bij omhoog-scrollen of stilstand. capture:true vangt window- EN container-scroll.
+  (function(){
+    var _fabLastY = 0, _fabIdle = null;
+    function _fabBtn(){ return document.getElementById('fab-chat'); }
+    function _fabPanelOpen(){
+      var p = document.getElementById('fab-chat-panel');
+      return p && p.style.display === 'flex';
+    }
+    function _fabShow(){ var b = _fabBtn(); if (b) b.classList.remove('fab-hidden'); }
+    function _fabHide(){ var b = _fabBtn(); if (b) b.classList.add('fab-hidden'); }
+    function _fabOnScroll(e){
+      if (_fabPanelOpen()) { _fabShow(); return; }   // nooit verbergen als de chat openstaat
+      var t = e.target;
+      var y = (t && t !== document && t.scrollTop != null)
+        ? t.scrollTop
+        : (window.scrollY || document.documentElement.scrollTop || 0);
+      var dy = y - _fabLastY;
+      _fabLastY = y;
+      if (dy > 6) _fabHide();          // omlaag scrollen -> weg
+      else if (dy < -6) _fabShow();    // omhoog -> terug
+      clearTimeout(_fabIdle);
+      _fabIdle = setTimeout(_fabShow, 600);  // 600ms stilstand -> weer tonen
+    }
+    window.addEventListener('scroll', _fabOnScroll, { passive: true, capture: true });
+  })();
+
   function toggleFloatingChat() {
     var panel = document.getElementById('fab-chat-panel');
     if (!panel) return;

@@ -998,7 +998,7 @@ async function renderWedValuePicks() {
           ${badges ? `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.25rem;">${badges}</div>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0;">
-          <div style="${bebas};font-size:1.3rem;color:${vc};line-height:1;">+${Math.round(p.value||0)}%</div>
+          <div style="${bebas};font-size:1.3rem;color:${vc};line-height:1;">+${Math.round(p.value||0)}pp</div>
           <div style="${mono};font-size:.46rem;color:${cc};">conf ${p.confidence||0}/10</div>
         </div>
       </div>
@@ -1368,7 +1368,7 @@ function renderMatchCard(m) {
       color:${_vp.value >= 15 ? '#00BEC4' : '#f59e0b'};
       background:${_vp.value >= 15 ? 'rgba(0,190,196,.14)' : 'rgba(245,158,11,.12)'};
       border:1px solid ${_vp.value >= 15 ? 'rgba(0,190,196,.4)' : 'rgba(245,158,11,.35)'};
-      padding:2px 8px;border-radius:999px;z-index:2;cursor:pointer;" onclick="event.stopPropagation();showHelp('value-badge')" title="Tik voor uitleg">⚡ +${Math.round(_vp.value)}%</div>` : '';
+      padding:2px 8px;border-radius:999px;z-index:2;cursor:pointer;" onclick="event.stopPropagation();showHelp('value-badge')" title="Tik voor uitleg">⚡ +${Math.round(_vp.value)}pp</div>` : '';
 
   // v26.252: TIP-hoekje in 2 lagen — value-pick (de échte, getrackte backend-pick) of MARKT-favoriet.
   // De tussenlaag ("model-lean" uit /model-tips) is verwijderd: die kwam uit de scan-Poisson, haalde de
@@ -2582,7 +2582,7 @@ function renderMultiScanResults(picks, numComps) {
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
           <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.88);letter-spacing:.04em;">EDGE</div>
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${cls};line-height:.9;">${sign}${Math.round(s.value)}%</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${cls};line-height:.9;">${sign}${Math.round(s.value)}pp</div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#00BEC4;">@${(s.odds||0).toFixed(2)}</div>
           ${s.ev!=null?`<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">EV ${s.ev>=0?'+':''}${Math.round(s.ev)}%</div>`:''}
           
@@ -2634,7 +2634,7 @@ function renderScanResults(scans, restored = false) {
             <div class="scan-result-match">${s.home} vs ${s.away}</div>
             <div class="scan-result-pick">${s.pickLabel}${s.odds ? ' · @ ' + s.odds.toFixed(2) : ''}${s.confidence ? ' · 🎲 ' + s.confidence + '/10' : ''}</div>
           </div>
-          <div class="scan-result-value ${cls}">${sign}${Math.round(s.value)}%</div>
+          <div class="scan-result-value ${cls}">${sign}${Math.round(s.value)}pp</div>
           <button onclick="event.stopPropagation();addScanPickToCombi('${s.matchId}','','${(s.pickLabel||'').replace(/'/g,"\\'")}',${s.odds||1.5},'${(s.home||'').replace(/'/g,"\\'")}','${(s.away||'').replace(/'/g,"\\'")}')"
             id="sr-combi-${s.matchId}"
             style="font-family:monospace;font-size:.48rem;font-weight:800;padding:2px 7px;border-radius:999px;cursor:pointer;

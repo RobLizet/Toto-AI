@@ -929,6 +929,8 @@ body.dark .odds-btn.value-highlight { background: rgba(29,185,116,.15) !importan
   background: var(--navy) !important;
   box-shadow: 0 4px 16px rgba(27,38,70,.3) !important;
 }
+/* v26.378: FAB schuift weg bij omlaag-scrollen (leest), inline transition:transform .2s animeert de slide */
+#fab-chat.fab-hidden { transform: translateX(150%); pointer-events: none; }
 
 /* ── SCROLLBAR ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
