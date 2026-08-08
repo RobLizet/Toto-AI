@@ -141,6 +141,10 @@
 .analyse-block-header {
   display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem;
 }
+/* v26.379: section-kop breekt niet meer bij het koppelteken (SCHADUW-PICKS/DOELPUNTEN-MARKTEN). Titel blijft heel; hint kort desnoods in met ellipsis; chevron blijft zichtbaar */
+.analyse-block-header > div:first-child { white-space:nowrap; flex-shrink:0; }
+.analyse-block-header > div:last-child { min-width:0; }
+.analyse-block-header > div:last-child > div:first-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .analyse-block-title {
   font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:800;
   color:var(--ink);letter-spacing:.06em;display:flex;align-items:center;gap:.4rem;
