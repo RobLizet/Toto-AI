@@ -703,9 +703,10 @@
 <script src="wallet.js?v=1786176600"></script>
 <script src="instellingen.js?v=1786176600"></script>
 <script src="analytics.js?v=1786176600"></script>
-<script src="vvv.js?v=1786176600"></script>
-<script src="wk2026.js?v=1786176600"></script>
-<script src="oddsvergelijker.js?v=1786176600"></script>
+<!-- v26.380: vvv.js / wk2026.js / oddsvergelijker.js zijn NIET meer eager geladen.
+     Ze worden lazy geladen bij het eerste bezoek via ensureLazyModule() in router.js
+     (LAZY_SCREENS). Scheelt ~106KB opstartlast; wk2026 (route omgeleid) en
+     oddsvergelijker (dormant flag) triggeren normaal nooit en laden dus nooit. -->
 
 <!-- 7. App Init -->
 <script>
@@ -715,6 +716,10 @@
   // ── Laad opgeslagen state ──
   loadState();
   applyStoredTheme();
+  // v26.380: MODEL_PARAMS expliciet pre-warmen. Dit gebeurde voorheen als neveneffect
+  // van het (nu lazy-geladen) oddsvergelijker.js; expliciet houden zodat de flag-read
+  // in wedstrijden.js vroeg beschikbaar is. loadModelParams cachet zelf (api.js).
+  if (typeof loadModelParams === 'function') { try { loadModelParams().catch(function () {}); } catch (e) {} }
 
   // v26.345: competitielijst bij de worker ophalen (optie C). Bewust NIET afgewacht:
   // getActiveCOMPLIST() werkt synchroon door op de localStorage-cache van de vorige keer,

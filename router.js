@@ -4,12 +4,62 @@
 // v32: eigen sub-schermen oefennl + ekkwal (bereikbaar via knoppen in Matches, back-knop terug naar wedstrijden)
 // ═══════════════════════════════════════════════════════
 
+// ── v26.380: LAZY-LOAD van geisoleerde blad-schermen ────────────────
+// Deze modules laden pas bij het EERSTE bezoek i.p.v. bij het opstarten.
+// Gemeten veilig: geen eager module leest hun functies bij het laden
+// (enkel guarded render-refs). wk2026 wordt bovendien omgeleid (regel hieronder)
+// en oddsvergelijker zit achter een dormant flag -> die triggeren normaal nooit.
+// marker = de functie die bestaat zodra de module geladen is.
+var LAZY_SCREENS = {
+  vvv:             { src: 'vvv.js',             marker: 'renderVVVScreen' },
+  oddsvergelijker: { src: 'oddsvergelijker.js', marker: 'renderOddsvergelijkerScreen' },
+  wk2026:          { src: 'wk2026.js',          marker: 'renderWK2026Screen' }
+};
+var _lazyPromises = {};
+function ensureLazyModule(src) {
+  if (_lazyPromises[src]) return _lazyPromises[src];
+  _lazyPromises[src] = new Promise(function (resolve, reject) {
+    var s = document.createElement('script');
+    s.src = src + '?v=1786176600';
+    s.onload = function () { resolve(true); };
+    s.onerror = function () { _lazyPromises[src] = null; reject(new Error('lazy load mislukt: ' + src)); };
+    document.body.appendChild(s);
+  });
+  return _lazyPromises[src];
+}
+function _lazyLoaderHtml() {
+  return '<div style="padding:3rem 1rem;text-align:center;color:rgba(255,255,255,.5);font-family:\'IBM Plex Mono\',monospace;font-size:.65rem;letter-spacing:.05em;">laden\u2026</div>';
+}
+function _lazyErrHtml() {
+  return '<div style="padding:2.5rem 1rem;text-align:center;color:#f87171;font-family:\'IBM Plex Mono\',monospace;font-size:.65rem;line-height:1.6;">Kon dit scherm niet laden.<br>Tik nogmaals of controleer je verbinding.</div>';
+}
+
 // switchScreen is de nieuwe naam, switchTab is de alias (legacy)
 function switchScreen(name) {
   // v26.301: WK 2026-tabblad vervangen door VVV-Venlo. Alle oude wk2026-verwijzingen
   // (dashboard-tegels e.d.) worden omgeleid naar het dashboard zodat er niets crasht.
   if (name === 'wk2026') name = 'dashboard';
   if (name === 'oefennl') name = 'wedstrijden'; // v26.355: Oefenduels-tab verwijderd -> route veilig omgeleid (bewaarde/oude state)
+
+  // v26.380: is dit een lazy-scherm dat nog niet geladen is? Toon een loader,
+  // laad de module, en roep switchScreen daarna opnieuw aan (dan bestaat de
+  // marker en valt hij door naar het normale render-pad hieronder).
+  var _lz = LAZY_SCREENS[name];
+  if (_lz && typeof window[_lz.marker] !== 'function') {
+    document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('active'); });
+    var _lzScreen = document.getElementById('screen-' + name);
+    if (_lzScreen) { _lzScreen.classList.add('active'); _lzScreen.innerHTML = _lazyLoaderHtml(); }
+    document.querySelectorAll('#bottom-nav .bnav-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.screen === name);
+    });
+    state.activeScreen = name;
+    state.activeTab = name;
+    ensureLazyModule(_lz.src)
+      .then(function () { switchScreen(name); })
+      .catch(function () { if (_lzScreen) _lzScreen.innerHTML = _lazyErrHtml(); });
+    return;
+  }
+
   // Verberg alle screens
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
