@@ -2759,7 +2759,8 @@ async function loadCompStand(leagueId) {
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:rgba(255,255,255,.95);">'+t('wed.loadingstand','⟳ Stand laden...')+'</div>';
   try {
-    const standings = await fetchStandings(leagueId, null);
+    const season = seizoenVoorComp(null, leagueId); // v26.381: huidig seizoen uit de worker (/leagues via _compMeta) i.p.v. null->seasonForLeague(=vorig jaar)
+    const standings = await fetchStandings(leagueId, season);
     if (!standings?.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:rgba(255,255,255,.95);">'+t('wed.nostandings','Geen stand beschikbaar')+'</div>'; return; }
     let html = '<div style="font-family:IBM Plex Mono,monospace;font-size:.48rem;">'
       + '<div style="display:grid;grid-template-columns:1.2rem 1fr repeat(5,2rem);gap:.3rem;padding:.3rem 0;color:rgba(255,255,255,.95);font-weight:700;border-bottom:1px solid rgba(255,255,255,0.09);margin-bottom:.3rem;">'
@@ -2785,7 +2786,8 @@ async function loadCompTopscorers(leagueId) {
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:rgba(255,255,255,.95);">'+t('wed.loadingscorers','⟳ Topscorers laden...')+'</div>';
   try {
-    const scorers = await fetchTopScorers(leagueId);
+    const season = seizoenVoorComp(null, leagueId); // v26.381: idem als de Stand-tab; topscorers uit het lopende seizoen
+    const scorers = await fetchTopScorers(leagueId, season);
     if (!scorers?.length) { el.innerHTML = '<div style="text-align:center;padding:2rem;font-family:IBM Plex Mono,monospace;font-size:.55rem;color:rgba(255,255,255,.95);">'+t('wed.nodata','Geen data beschikbaar')+'</div>'; return; }
     let html = '<div>';
     scorers.slice(0,10).forEach(function(s, i) {
