@@ -391,7 +391,19 @@ const SEASON_2026_LEAGUES_MASTER = new Set([
   71, 98, 103, 113, 119, 128, 129, 239, 253, 292, 480, 848
 ]);
 function seasonForLeague(leagueId) {
-  return SEASON_2026_LEAGUES_MASTER.has(Number(leagueId)) ? 2026 : 2025;
+  const id = Number(leagueId);
+  // v26.382: eerst de ECHTE worker-bron (_compMeta uit /leagues), net als seizoenVoorComp en de
+  // analyse-ontdekkingsscan. De statische MASTER-lijst is nu slechts het LAATSTE vangnet -- voor
+  // competities die de worker niet scant, of een koude cache/offline. Zo geeft deze terugval voor
+  // clubcompetities niet langer stilzwijgend het vorige seizoen (Eredivisie/PL/Bundesliga-bug).
+  // try/catch dekt de laadvolgorde af: api.js laadt voor wedstrijden.js waar _compMeta (let) leeft;
+  // een vroege aanroep valt netjes terug i.p.v. een TDZ-ReferenceError. Number.isFinite (geen falsy):
+  // _compMeta bewaart seizoen als getal-of-null, en 0 is geen geldig seizoen maar wel finite.
+  try {
+    const wm = _compMeta[id];
+    if (wm && Number.isFinite(wm.seizoen)) return wm.seizoen;
+  } catch (e) { /* _compMeta nog niet geladen -> statisch vangnet hieronder */ }
+  return SEASON_2026_LEAGUES_MASTER.has(id) ? 2026 : 2025;
 }
 
 // ── Team & fixture data ophalen ───────────────────────────
