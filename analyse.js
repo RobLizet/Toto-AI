@@ -41,13 +41,10 @@ async function loadClaudeInsight(force) {
   const ps = Object.entries(byP).map(([k,v])=>(k==='1'?'Thuis':k==='X'?'Gelijkspel':'Uit')+': '+v.w+'/'+v.t+' ('+Math.round(v.w/v.t*100)+'%)').join(', ')||'geen data';
   const prompt = 'Je bent een eerlijke betting analyst. Analyseer deze statistieken van een Nederlandse AI-betting app en geef feedback in 4-5 zinnen, informele toon, geen bullet points:\n\nGesettled: '+st.length+' picks ('+w.length+' win)\nHitrate: '+hr+'%\nROI: '+(roi>=0?'+':'')+roi+'%\nOpen: '+ap.filter(p=>p.status==='pending').length+'\nPer type: '+ps+'\nLaatste 10: '+(l10hr!==null?l10hr+'% hitrate, ROI '+l10roi+'%':'te weinig data')+'\n\nBespreek: eerlijk oordeel, 1 sterkte, 1 verbeterpunt, verwachting richting 100 picks.';
   try {
-    const res = await fetch('https://toto-proxy.zweetzakken.workers.dev/anthropic', {
-      method: 'POST', headers: {'Content-Type':'application/json',
-        ...(_userAnthropicKey ? { 'x-user-anthropic-key': _userAnthropicKey } : {})},
-      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user',content:prompt}] })
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const d = await res.json();
+    // v26.383: via de gedeelde anthropicFetchWithRetry-helper (Firebase-auth + eigen-key + WORKER-routing + retry
+    // bij 529), i.p.v. een eigen rauwe fetch die een niet-gedeclareerde eigen-key-variabele aanriep (ReferenceError).
+    // anthropicFetch retourneert al geparste JSON en gooit zelf bij een non-ok respons (buitenste catch vangt dat).
+    const d = await anthropicFetchWithRetry(null, { model:'claude-sonnet-4-6', max_tokens:400, messages:[{role:'user',content:prompt}] });
     const txt = d?.content?.[0]?.text || d?.error || 'Geen analyse.';
     const ihtml = '<div style="padding:.75rem .85rem .6rem;">'
       +'<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">'
