@@ -2774,7 +2774,7 @@ async function syncPicksToFirebase(picks) {
 
     // Supabase sync via worker POST /picks
     try {
-      const workerUrl = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://toto-proxy.zweetzakken.workers.dev') + '/picks';
+      const workerUrl = (typeof WORKER_URL !== 'undefined' ? WORKER_URL : 'https://api.promatchxi.app') + '/picks';
       const res = await fetch(workerUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
