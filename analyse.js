@@ -263,7 +263,7 @@ function calculateConfidenceV20(pick, leagueId, calibration) {
 
 // ── Anthropic fetch helper ────────────────────────────
 async function anthropicFetch(apiKey, body) {
-  const WORKER = 'https://toto-proxy.zweetzakken.workers.dev';
+  const WORKER = 'https://api.promatchxi.app'; // v26.384: AI-proxy op eigen domein (was oude workers.dev-subdomein; zelfde worker, byte-identiek getest). Eén domein voor alle calls.
   let authToken = '';
   try {
     const u = typeof firebase !== 'undefined' && firebase.auth().currentUser;
