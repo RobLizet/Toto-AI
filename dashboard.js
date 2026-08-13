@@ -1026,6 +1026,33 @@ function openValuePicks() {
   }
 }
 
+// v26.388: Bet365-doorlink op elke value-pick. Zonder Bet365-Partners kun je niet
+// betrouwbaar op de exacte markt landen (interne roterende event-ID's), dus: pick
+// naar het klembord + Bet365 openen -> plak in hun zoekbalk. Bookmaker wisselen =
+// alleen B365_URL + de bet365.open-tekst aanpassen.
+function _b365esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _b365CopyFallback(txt){
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.top='-1000px'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  } catch(e){}
+}
+function openInBet365(matchStr, pickStr, odds){
+  var B365_URL = 'https://www.bet365.com';
+  var parts = [matchStr, pickStr].filter(function(x){ return x && x !== '?'; });
+  var txt = parts.join(' \u00b7 ');
+  if (odds != null && odds !== '' && odds !== 'null') txt += ' @ ' + odds;
+  // klembord EERST initieren binnen het tik-gebaar (permissie), dan pas openen
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt); }
+    else { _b365CopyFallback(txt); }
+  } catch(e){ _b365CopyFallback(txt); }
+  if (typeof showToast === 'function') showToast(t('bet365.copied','\ud83d\udccb Pick gekopieerd \u2014 plak in de Bet365-zoekbalk'));
+  try { window.open(B365_URL, '_blank'); } catch(e){}
+}
+
 function showPicksModal() {
   const scanLog = state.scanLog || [];
   const allPicks = state._qualityPicks ? state._qualityPicks.slice() : scanLog.flatMap(s => s.picks || []); // v26.117: Supabase-picks
@@ -1118,6 +1145,7 @@ function showPicksModal() {
             <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:${rel.color};font-weight:700;">${rel.score}/100</div>
           </div>
           ${renderPickReasons(p)}${renderSharpBadge(p)}${renderPickWeighting(p)}${clvHtml}${scoreHtml}
+          <button onclick="event.stopPropagation();openInBet365(this.dataset.m,this.dataset.p,this.dataset.o)" data-m="${_b365esc(p.match||p.matchName||'')}" data-p="${_b365esc(tPick(p.pickLabel||p.pick||''))}" data-o="${(p.odds!=null&&isFinite(p.odds))?parseFloat(p.odds).toFixed(2):''}" style="width:100%;margin-top:.4rem;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.35);color:#00BEC4;border-radius:8px;padding:.42rem;font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:800;letter-spacing:.3px;cursor:pointer;">\u2197 ${t('bet365.open','Open bij Bet365')}</button>
         </div>`;
       }).join('')}
     </div>
