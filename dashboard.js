@@ -1014,16 +1014,14 @@ function toggleDashDetails(ev) {
   if (a) a.textContent = state._dashDetailsOpen ? '▴' : '▾';
 }
 
-// v26.387: home-tegel VALUE PICKS opent de picks-sheet; laadt eerst de picks als
-// ze nog niet binnen zijn (=== undefined, geen falsy-check) zodat de sheet niet
-// leeg opent bij een snelle tik voor loadQualityPicks() klaar is.
+// v26.389: home-tegel VALUE PICKS opent de GOUDEN Value Picks-tab in het Wedstrijden-
+// scherm (Robs keuze), niet meer de PICKS OVERZICHT-sheet. Geen re-render-race:
+// laadWorkerCompetities tekent het scherm alleen bij startup+lijstwijziging opnieuw,
+// en renderWedstrijdenScreen loopt synchroon in switchScreen, dus de wtab-elementen
+// bestaan als setWedstrijdenTab draait.
 function openValuePicks() {
-  var open = function(){ if (typeof showPicksModal === 'function') showPicksModal(); };
-  if (state._qualityPicks === undefined && typeof loadQualityPicks === 'function') {
-    loadQualityPicks().then(open).catch(open);
-  } else {
-    open();
-  }
+  switchScreen('wedstrijden');
+  setTimeout(function(){ if (typeof setWedstrijdenTab === 'function') setWedstrijdenTab('value'); }, 80);
 }
 
 // v26.388: Bet365-doorlink op elke value-pick. Zonder Bet365-Partners kun je niet

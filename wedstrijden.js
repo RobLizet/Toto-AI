@@ -1003,6 +1003,7 @@ async function renderWedValuePicks() {
         </div>
       </div>
       ${fid ? `<div onclick="event.stopPropagation();pmxToggleBooks(event,this,${fid},'${pc}')" style="${mono};font-size:.44rem;color:#00BEC4;margin-top:.4rem;cursor:pointer;">📊 vergelijk bookmakers ▾</div><div class="pmx-books-panel" style="display:none;margin-top:.35rem;background:rgba(255,255,255,.05);border-radius:.5rem;padding:.4rem .15rem;"></div>` : ''}
+      <button onclick="event.stopPropagation();openInBet365(this.dataset.m,this.dataset.p,this.dataset.o)" data-m="${_b365esc(p.match||'')}" data-p="${_b365esc(p.pickLabel||p.pick||'')}" data-o="${(p.odds!=null&&isFinite(p.odds))?parseFloat(p.odds).toFixed(2):''}" style="width:100%;margin-top:.5rem;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.35);color:#00BEC4;border-radius:8px;padding:.42rem;font-family:'IBM Plex Mono',monospace;font-size:.5rem;font-weight:800;letter-spacing:.3px;cursor:pointer;text-align:center;">\u2197 ${t('bet365.open','Open bij Bet365')}</button>
     </div>`;
   }
 
