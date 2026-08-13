@@ -1039,9 +1039,12 @@ function _b365CopyFallback(txt){
 }
 function openInBet365(matchStr, pickStr, odds){
   var B365_URL = 'https://www.bet365.com';
-  // v26.390: alleen de WEDSTRIJD kopieren (teams). De volledige 'pick @ odds'-string
-  // gaf 0 zoekresultaten in Bet365; de teams wel. Rob kiest zelf de markt.
+  // v26.391: teams + de lijn (bv 3.5) als de pick een over/under-lijn heeft -> de
+  // bookmaker-zoekbalk springt dan direct naar de juiste O/U-markt (Rob). Geen lijn
+  // (1X2/BTTS) -> alleen de teams. Komma-lijn (3,5) genormaliseerd naar punt.
   var txt = String(matchStr==null?'':matchStr).replace(/\s+vs\.?\s+/i, ' ').trim();
+  var lm = String(pickStr==null?'':pickStr).match(/(\d+)[.,](\d+)/);
+  if (lm) txt += ' ' + lm[1] + '.' + lm[2];
   try {
     if (txt && navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt); }
     else if (txt) { _b365CopyFallback(txt); }
