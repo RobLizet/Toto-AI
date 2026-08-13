@@ -1039,15 +1039,14 @@ function _b365CopyFallback(txt){
 }
 function openInBet365(matchStr, pickStr, odds){
   var B365_URL = 'https://www.bet365.com';
-  var parts = [matchStr, pickStr].filter(function(x){ return x && x !== '?'; });
-  var txt = parts.join(' \u00b7 ');
-  if (odds != null && odds !== '' && odds !== 'null') txt += ' @ ' + odds;
-  // klembord EERST initieren binnen het tik-gebaar (permissie), dan pas openen
+  // v26.390: alleen de WEDSTRIJD kopieren (teams). De volledige 'pick @ odds'-string
+  // gaf 0 zoekresultaten in Bet365; de teams wel. Rob kiest zelf de markt.
+  var txt = String(matchStr==null?'':matchStr).replace(/\s+vs\.?\s+/i, ' ').trim();
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt); }
-    else { _b365CopyFallback(txt); }
-  } catch(e){ _b365CopyFallback(txt); }
-  if (typeof showToast === 'function') showToast(t('bet365.copied','\ud83d\udccb Pick gekopieerd \u2014 plak in de Bet365-zoekbalk'));
+    if (txt && navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt); }
+    else if (txt) { _b365CopyFallback(txt); }
+  } catch(e){ if (txt) { try { _b365CopyFallback(txt); } catch(e2){} } }
+  if (typeof showToast === 'function') showToast(t('bet365.copied','\ud83d\udccb Wedstrijd gekopieerd \u2014 plak in de Bet365-zoekbalk'));
   try { window.open(B365_URL, '_blank'); } catch(e){}
 }
 
