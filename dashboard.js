@@ -596,21 +596,21 @@ function renderDashboard() {
     <!-- 4 Nav kaarten — gouden SVG iconen -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
 
-      <!-- WEDSTRIJDEN -->
-      <div onclick="switchScreen('wedstrijden')"
+      <!-- VALUE PICKS -->
+      <div onclick="openValuePicks()"
         style="background:linear-gradient(135deg,rgba(0,60,70,.6),rgba(0,35,45,.5));border:1px solid rgba(0,190,196,.2);border-radius:16px;padding:16px;cursor:pointer;min-height:140px;display:flex;flex-direction:column;position:relative;overflow:hidden;"
         ontouchstart="this.style.transform=\'scale(.97)\'" ontouchend="this.style.transform=\'scale(1)\'">
         <div style="position:absolute;bottom:-8px;right:-8px;opacity:.07;pointer-events:none;">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1"><path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/></svg>
         </div>
         <div style="margin-bottom:10px;">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,.9)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+            <path d="M6 3h12l4 6-10 13L2 9Z"/><path d="M11 3 8 9l4 13 4-13-3-6"/><path d="M2 9h20"/>
           </svg>
         </div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">${t('dash.tile.matches','WEDSTRIJDEN')}</div>
-        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">${t('dash.tile.matches_sub','Laad matches, bekijk quotes en value indicators')}</div>
-        <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">LIVE API</span></div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">${t('dash.tile.valuepicks','VALUE PICKS')}</div>
+        <div style="font-family:\'Plus Jakarta Sans\',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">${t('dash.tile.valuepicks_sub','Alle value picks met reliability, edge en CLV')}</div>
+        <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">VALUE</span></div>
       </div>
 
       <!-- ANALYSE -->
@@ -1012,6 +1012,18 @@ function toggleDashDetails(ev) {
   var a = document.getElementById('dashDetailsArrow');
   if (d) d.style.display = state._dashDetailsOpen ? 'block' : 'none';
   if (a) a.textContent = state._dashDetailsOpen ? '▴' : '▾';
+}
+
+// v26.387: home-tegel VALUE PICKS opent de picks-sheet; laadt eerst de picks als
+// ze nog niet binnen zijn (=== undefined, geen falsy-check) zodat de sheet niet
+// leeg opent bij een snelle tik voor loadQualityPicks() klaar is.
+function openValuePicks() {
+  var open = function(){ if (typeof showPicksModal === 'function') showPicksModal(); };
+  if (state._qualityPicks === undefined && typeof loadQualityPicks === 'function') {
+    loadQualityPicks().then(open).catch(open);
+  } else {
+    open();
+  }
 }
 
 function showPicksModal() {
