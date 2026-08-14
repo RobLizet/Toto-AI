@@ -1067,11 +1067,19 @@ function _overzichtHtml(d) {
   const markt = Array.isArray(d.per_markt) ? d.per_markt : [];
   const op = d.operationeel || {};
   const num = x => (x === null || x === undefined || x === '') ? '\u2014' : x;
+  // v26.393: break-even-kleuren, dezelfde conventie als het dashboard (v26.367/368).
+  const _clvKleur = c => (!Number.isFinite(c)) ? '#fff' : (c >= 0.5 ? '#00BEC4' : (c <= -0.5 ? '#dc2626' : 'rgba(255,255,255,.75)'));
+  const _roiKleur = r => (!Number.isFinite(r)) ? '#fff' : (r >= 0 ? '#00BEC4' : (r >= -5 ? '#f59e0b' : '#dc2626'));
+  const _hitKleur = (h, odds) => {
+    if (!Number.isFinite(h) || !Number.isFinite(odds) || odds <= 1) return '#fff';
+    const be = 100 / odds;
+    return h >= be ? '#00BEC4' : (h >= be - 3 ? '#f59e0b' : '#dc2626');
+  };
   const settled = Number(v.settled);
   const doelMin = (d.doel && d.doel.settled_min) || 100;
   const doelMax = (d.doel && d.doel.settled_max) || 200;
   const pct = Number.isFinite(settled) ? Math.min(100, Math.round(settled / doelMin * 100)) : 0;
-  const rij = (label, val) => `<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.06);"><span style="color:rgba(255,255,255,.65);">${label}</span><span style="font-weight:700;color:#fff;">${val}</span></div>`;
+  const rij = (label, val, kleur) => `<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.06);"><span style="color:rgba(255,255,255,.65);">${label}</span><span style="font-weight:700;color:${kleur||'#fff'};">${val}</span></div>`;
 
   let html = `<div style="background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.22);border-radius:12px;padding:.8rem;margin-bottom:.9rem;">
     <div style="font-weight:800;color:#00BEC4;letter-spacing:.5px;margin-bottom:.5rem;">\u{1F3AF} ${t('overzicht.validatie','GO/NO-GO \u2014 CLUBTIJDPERK')}</div>
@@ -1080,11 +1088,11 @@ function _overzichtHtml(d) {
       <span style="color:rgba(255,255,255,.6);">/ ${doelMin}\u2013${doelMax} ${t('overzicht.settled','settled')}</span>
     </div>
     <div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;margin-bottom:.6rem;"><div style="height:100%;width:${pct}%;background:#00BEC4;"></div></div>`;
-  html += rij(t('overzicht.avgclv','Gem. CLV (beslist de lancering)'), `${num(v.avg_clv)}%`);
+  html += rij(t('overzicht.avgclv','Gem. CLV (beslist de lancering)'), `${num(v.avg_clv)}%`, _clvKleur(Number(v.avg_clv)));
   html += rij(t('overzicht.clvpos','Met positieve CLV'), `${num(v.clv_positief)} / ${num(v.settled)}`);
-  html += rij(t('overzicht.hitrate','Hitrate'), `${num(v.hitrate_pct)}%`);
+  html += rij(t('overzicht.hitrate','Hitrate'), `${num(v.hitrate_pct)}%`, _hitKleur(Number(v.hitrate_pct), Number(v.gem_odds)));
   html += rij(t('overzicht.odds','Gem. odds'), num(v.gem_odds));
-  html += rij(t('overzicht.roi','ROI'), `${num(v.roi_pct)}%`);
+  html += rij(t('overzicht.roi','ROI'), `${num(v.roi_pct)}%`, _roiKleur(Number(v.roi_pct)));
   html += `</div>`;
 
   if (markt.length) {
@@ -1092,7 +1100,7 @@ function _overzichtHtml(d) {
     markt.forEach(m => {
       html += `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:.5rem .65rem;margin-bottom:.45rem;">
         <div style="display:flex;justify-content:space-between;margin-bottom:.25rem;"><span style="font-weight:700;color:#fff;">${num(m.markt)}</span><span style="color:rgba(255,255,255,.6);">${num(m.picks)} picks</span></div>
-        <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.7);font-size:.56rem;"><span>CLV ${num(m.avg_clv)}%</span><span>hit ${num(m.hitrate)}%</span><span>ROI ${num(m.roi_pct)}%</span></div>
+        <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.7);font-size:.56rem;"><span style="color:${_clvKleur(Number(m.avg_clv))};">CLV ${num(m.avg_clv)}%</span><span>hit ${num(m.hitrate)}%</span><span style="color:${_roiKleur(Number(m.roi_pct))};">ROI ${num(m.roi_pct)}%</span></div>
       </div>`;
     });
   }
@@ -1102,6 +1110,7 @@ function _overzichtHtml(d) {
   html += rij(t('overzicht.pending','Openstaand'), num(op.pending));
   html += rij(t('overzicht.settledtot','Afgerekend'), num(op.settled));
 
+  html += `<div style="font-size:.5rem;color:rgba(255,255,255,.45);margin-top:.7rem;text-align:center;">\u25CF ${t('overzicht.legteal','op/boven break-even')} \u00b7 \u25CF ${t('overzicht.legamber','net eronder')} \u00b7 \u25CF ${t('overzicht.legrood','onder break-even')}</div>`;
   if (d.gemeten_op) {
     let tijd = d.gemeten_op;
     try { tijd = new Date(d.gemeten_op).toLocaleString('nl-NL'); } catch (e) {}
