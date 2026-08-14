@@ -613,6 +613,18 @@ function renderDashboard() {
         <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">VALUE</span></div>
       </div>
 
+      <!-- OVERZICHT (v26.392) -->
+      <div onclick="openOverzicht()"
+        style="background:linear-gradient(135deg,rgba(0,60,70,.6),rgba(0,35,45,.5));border:1px solid rgba(0,190,196,.2);border-radius:16px;padding:16px;cursor:pointer;min-height:140px;display:flex;flex-direction:column;position:relative;overflow:hidden;"
+        ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform='scale(1)'">
+        <div style="margin-bottom:10px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(0,190,196,.9)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 4-6"/></svg>
+        </div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:.3px;line-height:1.2;margin-bottom:6px;">${t('dash.tile.overzicht','OVERZICHT')}</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:10.5px;color:rgba(255,255,255,.95);line-height:1.5;flex:1;">${t('dash.tile.overzicht_sub','Validatie, CLV en modelprestatie in een oogopslag')}</div>
+        <div style="margin-top:8px;"><span style="font-size:10px;font-weight:800;color:#00BEC4;border:1px solid rgba(0,190,196,.4);border-radius:4px;padding:2px 7px;letter-spacing:.4px;">LIVE</span></div>
+      </div>
+
       <!-- ANALYSE -->
       <div onclick="switchScreen('analyse')"
         style="background:linear-gradient(135deg,rgba(0,50,80,.6),rgba(0,30,60,.4));border:1px solid rgba(0,150,196,.2);border-radius:16px;padding:16px;cursor:pointer;min-height:140px;display:flex;flex-direction:column;position:relative;overflow:hidden;"
@@ -1019,6 +1031,85 @@ function toggleDashDetails(ev) {
 // laadWorkerCompetities tekent het scherm alleen bij startup+lijstwijziging opnieuw,
 // en renderWedstrijdenScreen loopt synchroon in switchScreen, dus de wtab-elementen
 // bestaan als setWedstrijdenTab draait.
+// v26.392: OVERZICHT-scherm — haalt live cijfers uit de worker (/overzicht, die de
+// afgeschermde validatie-views met de service-key leest). CIJFERBRON: num() toont '—' bij
+// null/leeg, nooit een verzonnen nul; gemeten:false => eerlijke 'kon niet meten'-melding.
+function openOverzicht() {
+  const overlay = document.createElement('div');
+  overlay.id = 'overzichtOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:flex-end;';
+  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'background:#0B1519;border-radius:20px 20px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:1rem;';
+  sheet.onclick = (e) => e.stopPropagation();
+  sheet.innerHTML = `
+    <div style="width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto .75rem;"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;">\u{1F4CA} ${t('overzicht.titel','Overzicht')}</div>
+      <div onclick="document.getElementById('overzichtOverlay').remove()" style="cursor:pointer;color:rgba(255,255,255,.6);font-size:1.2rem;padding:0 .3rem;">\u2715</div>
+    </div>
+    <div id="overzichtBody" style="font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.9);font-size:.62rem;">
+      <div style="text-align:center;padding:1.5rem;color:rgba(255,255,255,.6);">${t('overzicht.laden','Laden\u2026')}</div>
+    </div>`;
+  overlay.appendChild(sheet);
+  document.body.appendChild(overlay);
+  fetch(WORKER_URL + '/overzicht')
+    .then(r => r.json())
+    .then(d => { const b = document.getElementById('overzichtBody'); if (b) b.innerHTML = _overzichtHtml(d); })
+    .catch(() => { const b = document.getElementById('overzichtBody'); if (b) b.innerHTML = `<div style="color:#f59e0b;padding:1rem;text-align:center;">${t('overzicht.fout','Kon het overzicht niet ophalen \u2014 probeer later opnieuw.')}</div>`; });
+}
+
+function _overzichtHtml(d) {
+  if (!d || d.gemeten === false) {
+    return `<div style="color:#f59e0b;padding:1rem;text-align:center;">${t('overzicht.nietgemeten','De cijfers konden nu niet uit de database worden gelezen. Probeer het later opnieuw.')}</div>`;
+  }
+  const v = d.validatie || {};
+  const markt = Array.isArray(d.per_markt) ? d.per_markt : [];
+  const op = d.operationeel || {};
+  const num = x => (x === null || x === undefined || x === '') ? '\u2014' : x;
+  const settled = Number(v.settled);
+  const doelMin = (d.doel && d.doel.settled_min) || 100;
+  const doelMax = (d.doel && d.doel.settled_max) || 200;
+  const pct = Number.isFinite(settled) ? Math.min(100, Math.round(settled / doelMin * 100)) : 0;
+  const rij = (label, val) => `<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid rgba(255,255,255,.06);"><span style="color:rgba(255,255,255,.65);">${label}</span><span style="font-weight:700;color:#fff;">${val}</span></div>`;
+
+  let html = `<div style="background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.22);border-radius:12px;padding:.8rem;margin-bottom:.9rem;">
+    <div style="font-weight:800;color:#00BEC4;letter-spacing:.5px;margin-bottom:.5rem;">\u{1F3AF} ${t('overzicht.validatie','GO/NO-GO \u2014 CLUBTIJDPERK')}</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.35rem;">
+      <span style="font-size:1.5rem;font-weight:800;color:#fff;">${num(v.settled)}</span>
+      <span style="color:rgba(255,255,255,.6);">/ ${doelMin}\u2013${doelMax} ${t('overzicht.settled','settled')}</span>
+    </div>
+    <div style="height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;margin-bottom:.6rem;"><div style="height:100%;width:${pct}%;background:#00BEC4;"></div></div>`;
+  html += rij(t('overzicht.avgclv','Gem. CLV (beslist de lancering)'), `${num(v.avg_clv)}%`);
+  html += rij(t('overzicht.clvpos','Met positieve CLV'), `${num(v.clv_positief)} / ${num(v.settled)}`);
+  html += rij(t('overzicht.hitrate','Hitrate'), `${num(v.hitrate_pct)}%`);
+  html += rij(t('overzicht.odds','Gem. odds'), num(v.gem_odds));
+  html += rij(t('overzicht.roi','ROI'), `${num(v.roi_pct)}%`);
+  html += `</div>`;
+
+  if (markt.length) {
+    html += `<div style="font-weight:800;color:#00BEC4;letter-spacing:.5px;margin:.4rem 0 .5rem;">\u{1F4C8} ${t('overzicht.permarkt','PER MARKT (alle settled)')}</div>`;
+    markt.forEach(m => {
+      html += `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:.5rem .65rem;margin-bottom:.45rem;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:.25rem;"><span style="font-weight:700;color:#fff;">${num(m.markt)}</span><span style="color:rgba(255,255,255,.6);">${num(m.picks)} picks</span></div>
+        <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.7);font-size:.56rem;"><span>CLV ${num(m.avg_clv)}%</span><span>hit ${num(m.hitrate)}%</span><span>ROI ${num(m.roi_pct)}%</span></div>
+      </div>`;
+    });
+  }
+
+  html += `<div style="font-weight:800;color:#00BEC4;letter-spacing:.5px;margin:.7rem 0 .5rem;">\u2699\uFE0F ${t('overzicht.operationeel','OPERATIONEEL')}</div>`;
+  html += rij(t('overzicht.totaal','Picks totaal'), num(op.picks_totaal));
+  html += rij(t('overzicht.pending','Openstaand'), num(op.pending));
+  html += rij(t('overzicht.settledtot','Afgerekend'), num(op.settled));
+
+  if (d.gemeten_op) {
+    let tijd = d.gemeten_op;
+    try { tijd = new Date(d.gemeten_op).toLocaleString('nl-NL'); } catch (e) {}
+    html += `<div style="text-align:center;color:rgba(255,255,255,.4);font-size:.52rem;margin-top:.8rem;">${t('overzicht.gemetenop','gemeten')}: ${tijd}</div>`;
+  }
+  return html;
+}
+
 function openValuePicks() {
   switchScreen('wedstrijden');
   setTimeout(function(){ if (typeof setWedstrijdenTab === 'function') setWedstrijdenTab('value'); }, 80);
