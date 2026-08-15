@@ -1105,6 +1105,22 @@ function _overzichtHtml(d) {
     });
   }
 
+  // v26.394: shadow-1X2-sectie -- de onderdrukte 1X2 live volgen (CLV break-even-gekleurd).
+  if (d.shadow_1x2 && d.shadow_1x2.totaal) {
+    const s1 = d.shadow_1x2.totaal;
+    html += `<div style="font-weight:800;color:#00BEC4;letter-spacing:.5px;margin:.7rem 0 .5rem;">\u{1F576}\uFE0F ${t('overzicht.shadow1x2','SHADOW 1X2 (ONDERDRUKT)')}</div>`;
+    html += `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:.55rem .65rem;margin-bottom:.5rem;">`;
+    html += rij(t('overzicht.settledn','Settled'), num(s1.settled));
+    html += rij(t('overzicht.avgclv2','Gem. CLV'), `${num(s1.avg_clv)}%`, _clvKleur(Number(s1.avg_clv)));
+    html += rij('ROI', `${num(s1.roi_pct)}%`, _roiKleur(Number(s1.roi_pct)));
+    html += rij(t('overzicht.hitrate','Hitrate'), `${num(s1.hitrate_pct)}%`);
+    html += `<div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.4rem;line-height:1.4;">${t('overzicht.shadow1x2note','ROI kan positief ogen, maar de CLV is negatief = geen edge. Daarom worden 1X2-picks onderdrukt.')}</div>`;
+    html += `</div>`;
+    (d.shadow_1x2.per_reden || []).forEach(r => {
+      html += `<div style="display:flex;justify-content:space-between;padding:.28rem .2rem;font-size:.56rem;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.05);"><span style="color:rgba(255,255,255,.85);">${r.reden} (${num(r.settled)})</span><span><span style="color:${_clvKleur(Number(r.avg_clv))};">CLV ${num(r.avg_clv)}%</span> \u00b7 <span style="color:${_roiKleur(Number(r.roi_pct))};">ROI ${num(r.roi_pct)}%</span></span></div>`;
+    });
+  }
+
   html += `<div style="font-weight:800;color:#00BEC4;letter-spacing:.5px;margin:.7rem 0 .5rem;">\u2699\uFE0F ${t('overzicht.operationeel','OPERATIONEEL')}</div>`;
   html += rij(t('overzicht.totaal','Picks totaal'), num(op.picks_totaal));
   html += rij(t('overzicht.pending','Openstaand'), num(op.pending));
