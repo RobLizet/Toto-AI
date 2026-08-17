@@ -1126,6 +1126,19 @@ function _overzichtHtml(d) {
   html += rij(t('overzicht.pending','Openstaand'), num(op.pending));
   html += rij(t('overzicht.settledtot','Afgerekend'), num(op.settled));
 
+  // v26.397: API-Football's eigen voorspelling ter vergelijking (v331 in de worker). Alleen een
+  // steekproef op ONZE nieuwe picks, geen onafhankelijke ijking van API-Football's model in het
+  // algemeen -- dat staat er expliciet bij zodat het cijfer niet verkeerd gelezen wordt.
+  if (d.api_predictions && Number(d.api_predictions.settled) > 0) {
+    const ap = d.api_predictions;
+    html += `<div style="font-weight:800;color:#00BEC4;letter-spacing:.5px;margin:.7rem 0 .5rem;">\u{1F4CA} ${t('overzicht.apipred','API-FOOTBALL VOORSPELLING (TER VERGELIJKING)')}</div>`;
+    html += `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:.55rem .65rem;margin-bottom:.5rem;">`;
+    html += rij(t('overzicht.settledn','Settled'), num(ap.settled));
+    html += rij(t('overzicht.hitrate','Hitrate'), `${num(ap.hitrate)}%`);
+    html += `<div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.4rem;line-height:1.4;">${t('overzicht.apiprednote','Steekproef op onze eigen nieuwe picks, geen volledige dekking van alle wedstrijden.')}</div>`;
+    html += `</div>`;
+  }
+
   html += `<div style="font-size:.5rem;color:rgba(255,255,255,.45);margin-top:.7rem;text-align:center;">\u25CF ${t('overzicht.legteal','op/boven break-even')} \u00b7 \u25CF ${t('overzicht.legamber','net eronder')} \u00b7 \u25CF ${t('overzicht.legrood','onder break-even')}</div>`;
   if (d.gemeten_op) {
     let tijd = d.gemeten_op;
