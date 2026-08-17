@@ -1552,21 +1552,34 @@ async function runAnalyse() {
       wt(fetchPredictions(m.id), 5000),
     ]);
 
-    // v26.395: SEIZOENSFILTER OP DE VORM. fetchTeamForm haalt /fixtures?team=X&last=8 op ZONDER
-    // seizoensgrens -- API-Football's 'last=N' negeert het seizoen volledig. Vroeg in een nieuw
-    // seizoen (weinig eigen duels) vult die 8 zich daardoor stil aan met duels van VORIG seizoen
-    // (andere selectie/transfers), zonder label. Dat voedde zowel de VORM-tekst als -- zwaarder --
-    // het client-Poisson-model (extractTeamGoalStats, 55% gewicht op 'recente vorm'). GEMETEN
-    // gemeld door Rob op De Graafschap-Jong AZ (13e/1pt resp. 19e/0pt): DLDWL/5 duels kon bij die
-    // standen onmogelijk allemaal dit seizoen zijn. FIX: filter op f.league.season === m.season
-    // vóór ELK verder gebruik (xG-fetch, Poisson-vormweging, vorm-tekst). Onbekend season-veld
-    // telt NIET als afwijkend -- geen uitsluiting zonder bewijs (CIJFERBRON). homeFormRaw/awayFormRaw
-    // blijven bewaard voor de eerlijke "geen gespeelde wedstrijden"-vs-"geen duels DIT seizoen"-
-    // onderscheiding verderop; bij te weinig eigen-seizoensduels valt het bestaande vangnet terug
-    // (Poisson: extractTeamGoalStats vereist al >=3 duels voor vormweging, ongewijzigd).
-    const _bySeason = arr => (arr || []).filter(f => f?.league?.season == null || f.league.season === m.season);
-    const homeForm = _bySeason(homeFormRaw);
-    const awayForm = _bySeason(awayFormRaw);
+    // v26.396: RETRACTIE OP v26.395 -- de seizoensfilter loste "vorig seizoen" op (bevestigd: 0
+    // duels meer van seizoen 2025), maar GEMETEN bij API-Football bleek een tweede, gerelateerde
+    // bug: preseason-OEFENDUELS ('Friendlies Clubs', league.id 667) dragen HETZELFDE season-label
+    // (2026) als de echte competitie, dus de seizoensfilter liet ze gewoon door. Bij De
+    // Graafschap/Jong AZ bestond de "vorm" daardoor uit 1 echt KKD-duel + 4-6 oefenduels tegen
+    // wisselende tegenstanders (Kifisia, Al-Jazira, IJsselmeervogels, ...) -- niet representatief
+    // (andere opstelling, geen verdedigende inzet, willekeurige tegenstandersterkte) en zwaar
+    // gewogen (55%) in het client-Poisson-model. BIJVANGST bij dezelfde meting: een GEANNULEERD
+    // oefenduel (CANC, Graafschap-Al-Jazira) werd door formatFormCompact als gelijkspel (0-0)
+    // meegeteld -- die functie checkte de status nooit. FIX (optie 2, Rob akkoord): filter nu op
+    // DEZELFDE competitie als de geanalyseerde wedstrijd (f.league.id === de wedstrijd-league) EN
+    // status FT/AET/PEN (zelfde statuscheck als extractTeamGoalStats al gebruikt) -- strenger dan
+    // v26.395's seizoensfilter, maar dat is bewust: bij een net gestart seizoen met 1-2
+    // competitieduels valt de vorm dan eerlijk terug op het bestaande "te weinig data"-vangnet
+    // i.p.v. op te vullen met niet-vergelijkbare oefenduels. homeFormRaw/awayFormRaw blijven
+    // bewaard voor het eerlijke "geen gespeelde wedstrijden"-vs-"geen duels DIT seizoen"-
+    // onderscheid verderop; _fetchFaalde blijft op de RAW-array gemeten (een geweigerde call is
+    // hetzelfde probleem, ongeacht welk filter erna draait).
+    const _wedLeagueId = m.leagueId || leagueId;
+    const _bySeasonComp = arr => (arr || []).filter(f => {
+      const st = f?.fixture?.status?.short;
+      if (st !== 'FT' && st !== 'AET' && st !== 'PEN') return false; // CANC/PST/ABD/NS nooit als uitslag tellen
+      const sameSeason = f?.league?.season == null || f.league.season === m.season;
+      const sameLeague = _wedLeagueId == null || f?.league?.id == null || f.league.id === _wedLeagueId;
+      return sameSeason && sameLeague;
+    });
+    const homeForm = _bySeasonComp(homeFormRaw);
+    const awayForm = _bySeasonComp(awayFormRaw);
 
     // v18.9: xG ophalen uit fixture statistics voor betere Poisson
     const [homeXG, awayXG] = await Promise.all([
@@ -1690,9 +1703,9 @@ async function runAnalyse() {
     // gemeten (een geweigerde call raakt beide arrays gelijk, seizoensfilter kan dat niet verbergen).
     const _seasonLeeg = (filtered, raw) => (!filtered || !filtered.length) && raw && raw.length > 0;
     const homeFormStr = homeForm?.length ? formatFormCompact(homeForm.slice(0,5), m.homeId, m.home)
-      : (formFromPred(predictions,'home') || (_fetchFaalde(homeFormRaw) ? NIET_OPGEHAALD : (_seasonLeeg(homeForm, homeFormRaw) ? 'nog geen duels dit seizoen (vorig seizoen bewust niet meegenomen)' : 'geen gespeelde wedstrijden'))); // v26.245/v26.395
+      : (formFromPred(predictions,'home') || (_fetchFaalde(homeFormRaw) ? NIET_OPGEHAALD : (_seasonLeeg(homeForm, homeFormRaw) ? 'nog geen afgeronde competitieduels dit seizoen (oefenduels/andere competities bewust niet meegenomen)' : 'geen gespeelde wedstrijden'))); // v26.245/v26.395/v26.396
     const awayFormStr = awayForm?.length ? formatFormCompact(awayForm.slice(0,5), m.awayId, m.away)
-      : (formFromPred(predictions,'away') || (_fetchFaalde(awayFormRaw) ? NIET_OPGEHAALD : (_seasonLeeg(awayForm, awayFormRaw) ? 'nog geen duels dit seizoen (vorig seizoen bewust niet meegenomen)' : 'geen gespeelde wedstrijden'))); // v26.245/v26.395
+      : (formFromPred(predictions,'away') || (_fetchFaalde(awayFormRaw) ? NIET_OPGEHAALD : (_seasonLeeg(awayForm, awayFormRaw) ? 'nog geen afgeronde competitieduels dit seizoen (oefenduels/andere competities bewust niet meegenomen)' : 'geen gespeelde wedstrijden'))); // v26.245/v26.395/v26.396
     // v26.309: poisson.missReason (v26.255) wist het antwoord al, maar bereikte de prompt nooit.
     const _poissonMiss = { fetch: 'Poisson: NIET OPGEHAALD (teamstatistieken niet geladen — technische fout, geen uitspraak over doen)',
       thin: 'Poisson: geen model (te weinig gespeelde wedstrijden)',
@@ -1910,17 +1923,18 @@ async function runAnalyse() {
       }
     } catch(e) { console.warn('[analyse] modelblok', e.message); }
 
-    // v26.395: dunne-seizoen-label -- homeForm/awayForm zijn al op m.season gefilterd, dus <5 hier
-    // betekent ECHT "nog maar N duels dit seizoen", niet een verkapte vorig-seizoen-mix. Alleen
-    // tonen als seasonNotStarted (0 duels totaal, bestaande vlag) niet al een stelliger label geeft.
+    // v26.396: dunne-seizoen-label -- homeForm/awayForm zijn al op competitie+seizoen+status
+    // gefilterd, dus <5 hier betekent ECHT "nog maar N afgeronde competitieduels", geen verkapte
+    // oefenduel-/vorig-seizoen-mix. Alleen tonen als seasonNotStarted (0 duels totaal, bestaande
+    // vlag) niet al een stelliger label geeft.
     const homeFormThin = !seasonNotStarted && homeForm?.length > 0 && homeForm.length < 5;
     const awayFormThin = !seasonNotStarted && awayForm?.length > 0 && awayForm.length < 5;
     const context = `Wedstrijd: ${m.home} vs ${m.away}
 Competitie: ${m.comp} | ${m.date} ${m.time} | Fase: ${phase.label||'normaal'}
 Quotes: 1=${m.homeOdds} X=${m.drawOdds} 2=${m.awayOdds}
 ${poissonStr}
-Vorm ${m.home}: ${homeFormStr}${seasonNotStarted ? ' (laatste duels, deels vorig seizoen)' : homeFormThin ? ` (nog maar ${homeForm.length} duels dit seizoen)` : ''}
-Vorm ${m.away}: ${awayFormStr}${seasonNotStarted ? ' (laatste duels, deels vorig seizoen)' : awayFormThin ? ` (nog maar ${awayForm.length} duels dit seizoen)` : ''}
+Vorm ${m.home}: ${homeFormStr}${seasonNotStarted ? ' (laatste duels, deels vorig seizoen)' : homeFormThin ? ` (nog maar ${homeForm.length} duel${homeForm.length===1?'':'s'} dit seizoen)` : ''}
+Vorm ${m.away}: ${awayFormStr}${seasonNotStarted ? ' (laatste duels, deels vorig seizoen)' : awayFormThin ? ` (nog maar ${awayForm.length} duel${awayForm.length===1?'':'s'} dit seizoen)` : ''}
 ${seasonNotStarted ? 'LET OP: dit is de eerste speelronde van het nieuwe seizoen. Er is nog geen ranglijst en de vorm/statistieken komen deels uit het vorige seizoen (andere selectie/transfers). Presenteer dit NIET als actuele seizoensvorm of -stand; benoem de onzekerheid eerlijk.' : ''}
 H2H: ${h2hStr}
 ${h2hWStr}
