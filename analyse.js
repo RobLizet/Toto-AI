@@ -1940,7 +1940,7 @@ H2H: ${h2hStr}
 ${h2hWStr}
 Standen: ${standStr}
 Blessures: ${injStr}
-Formaties: ${formationStr}${lineupsPromptStr ? '\nOPSTELLINGEN (bevestigd, alleen deze spelers noemen):\n' + lineupsPromptStr : ''}${predStr ? '\n\nAPI PREDICTIONS:\n' + predStr : ''}${modelBlock}`;
+Formaties: ${formationStr}${lineupsPromptStr ? '\nOPSTELLINGEN (bevestigd, alleen deze spelers noemen):\n' + lineupsPromptStr : ''}${modelBlock}`;
 
     const data = await anthropicFetchWithRetry(null, {
       model: 'claude-sonnet-4-6',
@@ -2054,9 +2054,26 @@ KWALITEITSREGELS:
       </div>`;
 
     fill('vorm',    sectionCard('⚡', t('ana.form','VORM'), result.vorm || '—', '#60a5fa'));
-    const predBadge = predictions?.advice
-      ? `<br><span style="font-family:monospace;font-size:.5rem;color:#60a5fa;">💡 API-Football (referentie): ${predictions.advice}${predictions.percent?.home != null ? ` · ${predictions.percent.home}%/${predictions.percent.draw}%/${predictions.percent.away}%` : ''}</span>`
-      : '';
+    // v26.397: Predictions reality-check. Vergelijk API-Football percentages met Poisson kansen.
+    // Als afwijking >10% op één van de drie uitkomsten, tag als waarschuwing. Kan helpen bij model-drift.
+    const predBadge = predictions?.advice ? (() => {
+      let warning = '';
+      if (predictions.percent?.home != null && poisson != null) {
+        const apiH = parseInt(predictions.percent.home, 10) || 0;
+        const apiX = parseInt(predictions.percent.draw, 10) || 0;
+        const apiA = parseInt(predictions.percent.away, 10) || 0;
+        const poissonH = Math.round(poisson.h * 100);
+        const poissonX = Math.round(poisson.x * 100);
+        const poissonA = Math.round(poisson.a * 100);
+        const diffH = Math.abs(apiH - poissonH);
+        const diffX = Math.abs(apiX - poissonX);
+        const diffA = Math.abs(apiA - poissonA);
+        if (diffH > 10 || diffX > 10 || diffA > 10) {
+          warning = ` ⚠️ grote afwijking van model (API: ${apiH}/${apiX}/${apiA} vs Poisson: ${poissonH}/${poissonX}/${poissonA})`;
+        }
+      }
+      return `<br><span style="font-family:monospace;font-size:.5rem;color:#60a5fa;">💡 API-Football (referentie)${warning}: ${predictions.advice}</span>`;
+    })() : '';
     fill('stats',   sectionCard('📊', 'STATS', standingsHtml + (result.stats||'—') + (poisson.valid ? `<br><span style="font-family:monospace;font-size:.5rem;color:#00a8ad;">📐 ${poissonStr}</span>` : '') + predBadge, '#00a8ad'));
     fill('tactiek', sectionCard('⚔️', 'TACTIEK & FORMATIES', lineupsHtml + (result.tactiek || '—'), '#d97706'));
     const _mvm = (typeof buildModelVsMarktHTML === 'function') ? buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) : ''; // v26.253: tip meegeven — VALUE-INDEX mag de tipkaart niet tegenspreken
