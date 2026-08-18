@@ -63,7 +63,15 @@ function calcInjuryFactor(injuries, teamId) {
 }
 
 // ── Stand informatie extraheren ───────────────────────────
-function extractStandingInfo(standings, teamId) {
+// v26.399: leagueId erbij -- GEVERIFIEERD (18-08, keukenkampioendivisie.nl/KNVB): de KKD (league_id 89)
+// kent momenteel GEEN degradatie (standaardelftallen, KNVB-besluit al meerdere seizoenen verlengd,
+// opnieuw bevestigd voor 2025/26). De generieke "pos>=total-2 -> degradatiegevaar"-regel gaf daar dus
+// een VERZONNEN dreiging mee in zowel de LLM-prompt als het STAND-blok op het scherm -- exact dezelfde
+// fout die worker v337 al repareerde voor de automatische scan-pijplijn, hier de handmatige diepte-
+// analyse-tegenhanger. KKD-promotie: top-2 rechtstreeks, plek 3-10 (schatting) promotie-play-offrace --
+// het exacte veld schuift jaarlijks door de periodekampioenschappen (zie worker v338 voor de volledige
+// periodeberekening; die is hier NIET meegenomen, alleen de basisfout is gecorrigeerd).
+function extractStandingInfo(standings, teamId, leagueId) {
   if (!standings?.length) return null;
   const entry = standings.find(s => String(s.team?.id) === String(teamId));
   if (!entry) return null;
@@ -82,37 +90,52 @@ function extractStandingInfo(standings, teamId) {
     return { pos, pts, played, gd, form, total, motivatie: 'nieuw_seizoen', motivatieLabel: '', motivatieFactor: 1.0, notStarted: true };
   }
 
+  const isKKD = String(leagueId) === '89'; // Keuken Kampioen Divisie: geen degradatie (KNVB-besluit)
+
   // Motivatie detectie
   let motivatie = 'normaal';
   let motivatieLabel = '';
   let motivatieFactor = 1.0;
 
-  // Top 3: titelstrijd
-  if (pos <= 3) {
-    motivatie = 'titelstrijd';
-    motivatieLabel = `🏆 Positie ${pos} — titelaspiraties`;
-    motivatieFactor = 1.05;
-  }
-  // Degradatiezone (laatste 3)
-  else if (pos >= total - 2) {
-    motivatie = 'degradatiestrijd';
-    motivatieLabel = `🔴 Positie ${pos}/${total} — degradatiegevaar`;
-    motivatieFactor = 1.08; // extra gemotiveerd door overleving
-  }
-  // Veilige middenmotor
-  else if (pos >= 8 && pos <= total - 5) {
-    const remainingMatches = played < 30 ? (38 - played) : 0;
-    if (remainingMatches <= 3) {
-      motivatie = 'niets_te_winnen';
-      motivatieLabel = `😴 Positie ${pos} — seizoen bijna voorbij`;
-      motivatieFactor = 0.92; // minder gemotiveerd
+  if (isKKD) {
+    if (pos <= 2) {
+      motivatie = 'promotie_rechtstreeks';
+      motivatieLabel = `⬆️ Positie ${pos} — rechtstreekse promotie in zicht`;
+      motivatieFactor = 1.05;
+    } else if (pos <= 10) {
+      motivatie = 'promotie_playoffrace';
+      motivatieLabel = `🎯 Positie ${pos} — promotie-play-offrace (incl. periodekampioenschappen)`;
+      motivatieFactor = 1.03;
     }
-  }
-  // Europees voetbal race (pos 4-7)
-  else if (pos >= 4 && pos <= 7) {
-    motivatie = 'europees';
-    motivatieLabel = `🌍 Positie ${pos} — europarace`;
-    motivatieFactor = 1.03;
+    // geen degradatiegevaar-label: bestaat momenteel niet in de KKD
+  } else {
+    // Top 3: titelstrijd
+    if (pos <= 3) {
+      motivatie = 'titelstrijd';
+      motivatieLabel = `🏆 Positie ${pos} — titelaspiraties`;
+      motivatieFactor = 1.05;
+    }
+    // Degradatiezone (laatste 3)
+    else if (pos >= total - 2) {
+      motivatie = 'degradatiestrijd';
+      motivatieLabel = `🔴 Positie ${pos}/${total} — degradatiegevaar`;
+      motivatieFactor = 1.08; // extra gemotiveerd door overleving
+    }
+    // Veilige middenmotor
+    else if (pos >= 8 && pos <= total - 5) {
+      const remainingMatches = played < 30 ? (38 - played) : 0;
+      if (remainingMatches <= 3) {
+        motivatie = 'niets_te_winnen';
+        motivatieLabel = `😴 Positie ${pos} — seizoen bijna voorbij`;
+        motivatieFactor = 0.92; // minder gemotiveerd
+      }
+    }
+    // Europees voetbal race (pos 4-7)
+    else if (pos >= 4 && pos <= 7) {
+      motivatie = 'europees';
+      motivatieLabel = `🌍 Positie ${pos} — europarace`;
+      motivatieFactor = 1.03;
+    }
   }
 
   return { pos, pts, played, gd, form, total, motivatie, motivatieLabel, motivatieFactor };

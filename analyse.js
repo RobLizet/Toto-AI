@@ -1755,8 +1755,8 @@ async function runAnalyse() {
     } catch(e) { lineupsHtml = ''; lineupsPromptStr = ''; }
 
     // Stand context
-    const homeStand = standings ? extractStandingInfo(standings, m.homeId) : null;
-    const awayStand  = standings ? extractStandingInfo(standings, m.awayId)  : null;
+    const homeStand = standings ? extractStandingInfo(standings, m.homeId, m.leagueId) : null;
+    const awayStand  = standings ? extractStandingInfo(standings, m.awayId, m.leagueId)  : null;
     // v26.375: nieuw seizoen als de opgehaalde stand er is maar nog 0 duels gespeeld zijn (notStarted).
     // Voedt zowel de LLM-prompt, het ranglijst-blok als het vorm-label -- zodat de app een lege ronde-1-
     // stand niet als een echte ranglijst presenteert en de vorm eerlijk als 'deels vorig seizoen' labelt.
