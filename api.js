@@ -469,6 +469,18 @@ async function fetchStandings(leagueId, seasonArg) {
   } catch(e) { return null; }
 }
 
+// v26.400: alle KKD-seizoensfixtures ophalen voor de echte periodetitelberekening (mirror van worker
+// v338 fetchKKDPeriodeStand). 1 call, alleen aangeroepen bij een KKD-wedstrijd (analyse.js). Puur
+// pass-through, geen berekening hier -- die zit in football.js:computeKkdPeriodeStand.
+async function fetchKKDFixtures(seasonArg) {
+  if (seasonArg == null) return null;
+  try {
+    const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?league=89&season=${seasonArg}`, null, 9000);
+    const d = await r.json();
+    return Array.isArray(d.response) ? d.response : null;
+  } catch(e) { return null; }
+}
+
 // ── Injuries/suspensions ophalen ────────────────────────
 async function fetchInjuries(fixtureId) {
   if (!fixtureId) return null;

@@ -1540,7 +1540,7 @@ async function runAnalyse() {
     // en zou een compleet gevulde analyse alsnog "niet opgehaald" gaan melden.
     if (typeof apifDiagReset === 'function') apifDiagReset();
 
-    const [h2h, homeFormRaw, awayFormRaw, hStats, aStats, lineups, injuries, standings, predictions] = await Promise.all([
+    const [h2h, homeFormRaw, awayFormRaw, hStats, aStats, lineups, injuries, standings, predictions, kkdFixtures] = await Promise.all([
       wt(fetchH2H(m.homeId, m.awayId), 5000),
       wt(fetchTeamForm(m.homeId), 5000),
       wt(fetchTeamForm(m.awayId), 5000),
@@ -1550,7 +1550,11 @@ async function runAnalyse() {
       wt(fetchInjuries(m.id), 3000),
       wt(fetchStandings(leagueId || m.leagueId, m.season), 4000), // v26.375: standings uit het JUISTE seizoen (was: eindstand vorig jaar)
       wt(fetchPredictions(m.id), 5000),
+      // v26.400: KKD-periodetitels -- ALLEEN ophalen bij een echte KKD-wedstrijd (1 extra call, mirror
+      // van worker v338), zodat elke andere competitie-analyse onaangeraakt blijft.
+      String(leagueId || m.leagueId) === '89' ? wt(fetchKKDFixtures(m.season), 9000) : Promise.resolve(null),
     ]);
+    const kkdPeriode = (typeof computeKkdPeriodeStand === 'function' && kkdFixtures) ? computeKkdPeriodeStand(kkdFixtures) : null;
 
     // v26.396: RETRACTIE OP v26.395 -- de seizoensfilter loste "vorig seizoen" op (bevestigd: 0
     // duels meer van seizoen 2025), maar GEMETEN bij API-Football bleek een tweede, gerelateerde
@@ -1755,8 +1759,8 @@ async function runAnalyse() {
     } catch(e) { lineupsHtml = ''; lineupsPromptStr = ''; }
 
     // Stand context
-    const homeStand = standings ? extractStandingInfo(standings, m.homeId, m.leagueId) : null;
-    const awayStand  = standings ? extractStandingInfo(standings, m.awayId, m.leagueId)  : null;
+    const homeStand = standings ? extractStandingInfo(standings, m.homeId, m.leagueId, kkdPeriode) : null;
+    const awayStand  = standings ? extractStandingInfo(standings, m.awayId, m.leagueId, kkdPeriode)  : null;
     // v26.375: nieuw seizoen als de opgehaalde stand er is maar nog 0 duels gespeeld zijn (notStarted).
     // Voedt zowel de LLM-prompt, het ranglijst-blok als het vorm-label -- zodat de app een lege ronde-1-
     // stand niet als een echte ranglijst presenteert en de vorm eerlijk als 'deels vorig seizoen' labelt.

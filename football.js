@@ -63,15 +63,23 @@ function calcInjuryFactor(injuries, teamId) {
 }
 
 // ── Stand informatie extraheren ───────────────────────────
-// v26.399: leagueId erbij -- GEVERIFIEERD (18-08, keukenkampioendivisie.nl/KNVB): de KKD (league_id 89)
+// v26.400: leagueId erbij -- GEVERIFIEERD (18-08, keukenkampioendivisie.nl/KNVB): de KKD (league_id 89)
 // kent momenteel GEEN degradatie (standaardelftallen, KNVB-besluit al meerdere seizoenen verlengd,
 // opnieuw bevestigd voor 2025/26). De generieke "pos>=total-2 -> degradatiegevaar"-regel gaf daar dus
 // een VERZONNEN dreiging mee in zowel de LLM-prompt als het STAND-blok op het scherm -- exact dezelfde
 // fout die worker v337 al repareerde voor de automatische scan-pijplijn, hier de handmatige diepte-
 // analyse-tegenhanger. KKD-promotie: top-2 rechtstreeks, plek 3-10 (schatting) promotie-play-offrace --
-// het exacte veld schuift jaarlijks door de periodekampioenschappen (zie worker v338 voor de volledige
-// periodeberekening; die is hier NIET meegenomen, alleen de basisfout is gecorrigeerd).
-function extractStandingInfo(standings, teamId, leagueId) {
+// het exacte veld schuift jaarlijks door de periodekampioenschappen (zie kkdPeriodeGrenzen/
+// computeKkdPeriodeStand hieronder, mirror van worker v338, voor de ECHTE periodeberekening).
+// v26.400 (vervolg): Jong-teams (beloftenelftallen) kunnen niet promoveren, ook niet via een
+// periodetitel (GEVERIFIEERD, bet365-bron: "beloftenteams ... kunnen niet promoveren naar de
+// Eredivisie en zijn dan ook uitgesloten van deelname aan de play-offs") -- zij krijgen daarom GEEN
+// promotie-/periodelabel, wel een feitelijke notitie over wisselende opstellingssterkte. Team-ID's
+// GEVERIFIEERD tegen /teams?league=89&season=2026, niet geraden: Jong PSV 411, Jong AZ 418,
+// Jong Ajax 425, Jong Utrecht 428.
+const JONG_TEAM_IDS_KKD = new Set(['411', '418', '425', '428']);
+
+function extractStandingInfo(standings, teamId, leagueId, kkdPeriode) {
   if (!standings?.length) return null;
   const entry = standings.find(s => String(s.team?.id) === String(teamId));
   if (!entry) return null;
@@ -91,23 +99,42 @@ function extractStandingInfo(standings, teamId, leagueId) {
   }
 
   const isKKD = String(leagueId) === '89'; // Keuken Kampioen Divisie: geen degradatie (KNVB-besluit)
+  const isJong = isKKD && JONG_TEAM_IDS_KKD.has(String(teamId));
 
   // Motivatie detectie
   let motivatie = 'normaal';
   let motivatieLabel = '';
   let motivatieFactor = 1.0;
 
-  if (isKKD) {
+  if (isJong) {
+    motivatie = 'beloftenteam';
+    motivatieLabel = '⚠️ Beloftenteam — kan niet promoveren, wisselende opstellingssterkte afhankelijk van het programma van het eerste elftal';
+    motivatieFactor = 1.0; // geen berekend signaal, puur informatief
+  } else if (isKKD) {
     if (pos <= 2) {
       motivatie = 'promotie_rechtstreeks';
       motivatieLabel = `⬆️ Positie ${pos} — rechtstreekse promotie in zicht`;
       motivatieFactor = 1.05;
     } else if (pos <= 10) {
       motivatie = 'promotie_playoffrace';
-      motivatieLabel = `🎯 Positie ${pos} — promotie-play-offrace (incl. periodekampioenschappen)`;
+      motivatieLabel = `🎯 Positie ${pos} — promotie-play-offrace`;
       motivatieFactor = 1.03;
     }
     // geen degradatiegevaar-label: bestaat momenteel niet in de KKD
+    if (kkdPeriode) {
+      const gewonnen = kkdPeriode.gewonnenPeriodes?.[String(teamId)];
+      if (gewonnen?.length) {
+        motivatie = 'periode_ticket_binnen';
+        motivatieLabel = `🥉 Play-off-ticket al binnen via periode ${gewonnen.join('/')}`;
+      } else {
+        const rij = kkdPeriode.huidigePeriode?.tabel?.find(r => String(r.teamId) === String(teamId));
+        if (rij && rij.pos <= 3) {
+          motivatie = 'periodetitelstrijd';
+          const extra = motivatieLabel ? ` (+ periodetitelstrijd: ${rij.pos}e in periode ${kkdPeriode.huidigePeriode.nr})` : `🥉 Periodetitelstrijd — ${rij.pos}e in periode ${kkdPeriode.huidigePeriode.nr}`;
+          motivatieLabel = motivatieLabel ? motivatieLabel + extra : extra;
+        }
+      }
+    }
   } else {
     // Top 3: titelstrijd
     if (pos <= 3) {
@@ -139,6 +166,78 @@ function extractStandingInfo(standings, teamId, leagueId) {
   }
 
   return { pos, pts, played, gd, form, total, motivatie, motivatieLabel, motivatieFactor };
+}
+
+// v26.400: KKD-PERIODETITELS ECHT BEREKEND (mirror van worker v338, zelfde geverifieerde bron:
+// keukenkampioendivisie.nl -- periode 1&4 zijn 10 wedstrijden, periode 2&3 zijn 9, tie-break
+// doelsaldo dan gescoorde doelpunten). Periodegrenzen ALLEEN geverifieerd voor 38 rondes (20 teams,
+// de normale KKD-bezetting); bij een afwijkend totaal valt dit terug op een symmetrische schatting
+// die NIET apart geverifieerd is (grenzenGeverifieerd:false in het retourobject).
+function kkdPeriodeGrenzen(totaalRondes) {
+  if (totaalRondes === 38) return { grenzen: [[1,10],[11,19],[20,29],[30,38]], geverifieerd: true };
+  const basis = Math.floor(totaalRondes / 4);
+  const rest = totaalRondes - basis * 4;
+  const lengtes = [basis, basis, basis, basis];
+  for (let i = 0; i < rest; i++) lengtes[i % 2 === 0 ? 0 : 3] += 1;
+  let r = 1; const grenzen = [];
+  for (const len of lengtes) { grenzen.push([r, r + len - 1]); r += len; }
+  return { grenzen, geverifieerd: false };
+}
+
+// Berekent de periodestand uit een RUWE fixtures-array (van fetchKKDFixtures). Zuiver rekenwerk,
+// geen netwerk hier -- de fetch zit in api.js zodat football.js een puur-rekenmodule blijft.
+function computeKkdPeriodeStand(fixtures) {
+  if (!Array.isArray(fixtures) || !fixtures.length) return null;
+  const totaalRondes = new Set(fixtures.map(f => f.league?.round).filter(Boolean)).size;
+  if (!totaalRondes) return null;
+  const { grenzen, geverifieerd } = kkdPeriodeGrenzen(totaalRondes);
+
+  const metRonde = fixtures.map(f => {
+    const m = /(\d+)\s*$/.exec(f.league?.round || '');
+    const ronde = m ? parseInt(m[1], 10) : null;
+    return { ronde, fixture: f };
+  }).filter(x => x.ronde != null);
+
+  const gespeeldeRondes = metRonde.filter(x => x.fixture.fixture?.status?.short === 'FT').map(x => x.ronde);
+  if (!gespeeldeRondes.length) return null;
+  const huidigeRonde = Math.max(...gespeeldeRondes);
+  const huidigePeriodeIdx = grenzen.findIndex(([lo, hi]) => huidigeRonde >= lo && huidigeRonde <= hi);
+  if (huidigePeriodeIdx < 0) return null;
+
+  function periodeTabel(lo, hi) {
+    const punten = {};
+    metRonde.forEach(({ ronde, fixture: f }) => {
+      if (ronde < lo || ronde > hi || f.fixture?.status?.short !== 'FT') return;
+      const hId = f.teams?.home?.id, aId = f.teams?.away?.id;
+      const gh = f.goals?.home, ga = f.goals?.away;
+      if (hId == null || aId == null || gh == null || ga == null) return;
+      for (const id of [hId, aId]) if (!punten[id]) punten[id] = { pts: 0, gd: 0, gf: 0 };
+      punten[hId].gd += gh - ga; punten[hId].gf += gh;
+      punten[aId].gd += ga - gh; punten[aId].gf += ga;
+      if (gh > ga) punten[hId].pts += 3;
+      else if (gh < ga) punten[aId].pts += 3;
+      else { punten[hId].pts += 1; punten[aId].pts += 1; }
+    });
+    return Object.entries(punten)
+      .map(([teamId, v]) => ({ teamId, ...v }))
+      .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf)
+      .map((row, i) => ({ ...row, pos: i + 1 }));
+  }
+
+  const huidigePeriodeTabel = periodeTabel(...grenzen[huidigePeriodeIdx]);
+  const gewonnenPeriodes = {};
+  for (let i = 0; i < huidigePeriodeIdx; i++) {
+    const tabel = periodeTabel(...grenzen[i]);
+    if (tabel[0]) {
+      const winId = tabel[0].teamId;
+      (gewonnenPeriodes[winId] = gewonnenPeriodes[winId] || []).push(i + 1);
+    }
+  }
+  return {
+    huidigePeriode: { nr: huidigePeriodeIdx + 1, tabel: huidigePeriodeTabel, ronde: [huidigeRonde, grenzen[huidigePeriodeIdx][1]] },
+    gewonnenPeriodes,
+    grenzenGeverifieerd: geverifieerd
+  };
 }
 
 // ── Tijdsgewogen H2H ──────────────────────────────────────
