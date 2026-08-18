@@ -3012,9 +3012,59 @@ function printAnalyse() {
   setTimeout(function(){ try { w.print(); } catch(e){} }, 400);
 }
 
-function openMatchAnalyseModalById(matchId) {
-  const m = (state.matches || []).find(x => String(x.id) === String(matchId));
-  if (!m) { console.warn('Match niet gevonden:', matchId); return; }
+// v26.402: FALLBACK-FETCH ALS DE WEDSTRIJD NIET IN DE ZICHTBARE LIJST STAAT. AANLEIDING (screenshot
+// Rob, 18-08): klik op "ANALYSEER" in een Value Pick-popup (Levski Sofia vs AEK Athens FC, Champions
+// League) belandde stil op het Matches-scherm met de laatst-bekeken competitie (Keuken Kampioen
+// Divisie) en de bijbehorende wedstrijd, zonder analyse-modal en zonder foutmelding. GEMETEN in de
+// code: openMatchAnalyseModalById zocht ALLEEN in state.matches (r3016), en die array bevat uitsluitend
+// de wedstrijden van de LAATST GEOPENDE competitietab op het Matches-scherm -- een Value Pick kan uit
+// elke competitie komen, dus zodra die niet toevallig samenviel met de open tab, gaf .find() undefined,
+// het if(!m)-blok deed console.warn + return, en switchScreen('wedstrijden') liet de gebruiker gewoon
+// op de onderliggende, verkeerde competitietab staan. Geen crash, geen zichtbare fout -- vandaar dat
+// het alleen via een screenshot opviel. FIX: bij een gemiste lookup wordt de fixture nu ALTIJD direct
+// bij api-sports opgehaald (/fixtures?id=, zelfde endpoint/patroon als het bestaande meldflow in
+// analyse.js r2800) en omgezet naar een volledig match-object (incl. homeId/awayId/leagueId/season --
+// velden die runAnalyse() nodig heeft voor H2H/teamstats/standings en die op een pick-object uit /picks
+// NOOIT beschikbaar zijn, want de worker slaat homeId/awayId niet op picks op). Odds blijven op een
+// streepje (geen extra call, de pick liet de prijs al zien in de popup ervoor) -- de 1X2-oddsrij in de
+// modal verschijnt dan simpelweg niet, puur cosmetisch, geen functieverlies. Mislukt ook DIE call, dan
+// een ZICHTBARE melding (alert) i.p.v. een console.warn die niemand ziet.
+async function fetchFixtureForAnalyse(matchId) {
+  if (!matchId) return null;
+  try {
+    const r = await apiFetch(`https://v3.football.api-sports.io/fixtures?id=${matchId}`, null, 6000);
+    const d = await r.json();
+    const fx = d.response?.[0];
+    if (!fx) return null;
+    const dt = fx.fixture?.date ? new Date(fx.fixture.date) : null;
+    return {
+      id: fx.fixture.id,
+      home: fx.teams?.home?.name || '?',
+      away: fx.teams?.away?.name || '?',
+      homeId: fx.teams?.home?.id || null,
+      awayId: fx.teams?.away?.id || null,
+      leagueId: fx.league?.id || null,
+      comp: fx.league?.name || '',
+      leagueName: fx.league?.name || '',
+      season: fx.league?.season ?? null,
+      date: dt ? dt.toISOString().split('T')[0] : '',
+      time: dt ? dt.toISOString().substring(11, 16) : '',
+      timestamp: fx.fixture?.timestamp ? fx.fixture.timestamp * 1000 : null,
+      homeOdds: '—', drawOdds: '—', awayOdds: '—', // geen extra /odds-call hier -- puur cosmetisch gemist
+    };
+  } catch(e) { console.warn('[fetchFixtureForAnalyse] fout:', e.message); return null; }
+}
+
+async function openMatchAnalyseModalById(matchId) {
+  let m = (state.matches || []).find(x => String(x.id) === String(matchId));
+  if (!m) {
+    m = await fetchFixtureForAnalyse(matchId);
+    if (!m) {
+      console.warn('Match niet gevonden (ook niet via directe fetch):', matchId);
+      alert('Kon deze wedstrijd niet laden voor analyse. Controleer je verbinding en probeer opnieuw.');
+      return;
+    }
+  }
   state.selectedMatch = m;
   const existing = document.getElementById('match-analyse-modal');
   if (existing) existing.remove();
