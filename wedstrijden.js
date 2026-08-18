@@ -935,6 +935,9 @@ async function renderWedValuePicks() {
           sharpScore: p.sharpScore || p.sharp_score,
           sharpMove:  p.oddsMovement || p.odds_movement,
           fixtureId:  fid,
+          // v26.401: stand/motivatie-context (worker v340) doorgeven aan de kaart. String, dus geen
+          // parseFloat/Number.isFinite nodig; ontbreekt hij, dan toont de kaart eenvoudig niets extra.
+          standContext: p.standContext || p.stand_context || null,
           _source:    'supabase',
         });
       });
@@ -995,6 +998,7 @@ async function renderWedValuePicks() {
         <div style="flex:1;min-width:0;">
           <div style="${sans};font-size:.7rem;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||'?'}</div>
           <div style="${mono};font-size:.44rem;color:rgba(255,255,255,.55);margin-top:.1rem;">${p.pickLabel||p.pick||'?'} · <b style="color:#fff;">@ ${p.odds||'?'}</b> · ${p.comp||''}</div>
+          ${p.standContext ? `<div style="${mono};font-size:.4rem;color:#c084fc;margin-top:.15rem;">📋 ${p.standContext}</div>` : ''}
           ${badges ? `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.25rem;">${badges}</div>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0;">
