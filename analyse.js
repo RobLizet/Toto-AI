@@ -1322,6 +1322,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
       fetch: 'Faire markt-kansen \u2014 de teamstatistieken konden niet worden geladen (API-limiet of trage respons). Tik op \u201cNieuwe analyse\u201d om het opnieuw te proberen.',
       thin: 'Faire markt-kansen \u2014 model niet beschikbaar (te weinig gespeelde wedstrijden voor deze teams)',
       onbruikbaar: 'Faire markt-kansen \u2014 model niet beschikbaar (statistieken onbruikbaar voor dit duel)',
+      degenerate: 'Faire markt-kansen \u2014 model niet beschikbaar (de berekening gaf een onmogelijk laag doelpuntentotaal; geen bruikbare kansschatting)',
     };
     const note = (gm && hasMarket) ? '+pp = model hoger dan markt (mogelijk value)' : (hasMarket ? (_missTxt[poisson.missReason] || _missTxt.thin) : ((goalOdds && goalOdds._faalde && goalOdds._faalde.ou) ? 'Modelkans uit verwachte goals \u2014 de O/U-odds konden niet worden opgehaald (technische fout); ze bestaan wel' : 'Modelkans uit verwachte goals \u2014 O/U-odds nog niet gepost voor deze wedstrijd'));
     goalsHTML = `<div style="${body ? 'margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);' : ''}">
@@ -1335,7 +1336,14 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
   let ahHTML = '';
   const ahOdds = goalOdds?.ah;
   if (ahOdds && Object.keys(ahOdds).length) {
-    const canModel = modelValid && typeof asianModelProbs === 'function' && poisson.lambdaHome > 0 && poisson.lambdaAway > 0;
+    // v26.403: EV-BLOKKADE. `lambda > 0` liet 0.01 door: bij Atletico-Malaga (19-08) stond er
+    // "Beste EV: Malaga +0.5 @3.35 +231.7%" terwijl de analysetekst er zelf bij zei dat het model
+    // defect was. Een groen +231.7% weegt zwaarder dan een waarschuwing, dus de EV mag hier niet
+    // berekend worden -- niet gedempt, niet gelabeld, maar afwezig. Ondergrens gelijk aan die in
+    // calcPoissonKansen (totaal 0.5), zodat beide lagen dezelfde definitie van "bruikbaar" hanteren.
+    const _ahLamTot = (Number(poisson.lambdaHome) || 0) + (Number(poisson.lambdaAway) || 0);
+    const canModel = modelValid && typeof asianModelProbs === 'function'
+      && poisson.lambdaHome > 0 && poisson.lambdaAway > 0 && _ahLamTot >= 0.5;
     // v26.233: mismatch-anker ook op AH — AH is de 1X2-mismatch in een ander jasje, dus de SoS-valkuil geldt hier 1-op-1
     const _topA = canModel ? Math.max(Number(poisson.k1)||0, Number(poisson.kX)||0, Number(poisson.k2)||0) : 0;
     const _mmA = poisson.anchor?.applied ? 0 : Math.max(0, Math.min(1, (_topA - 55) / 30)); // v26.254: geen dubbele shrink bovenop het anker
@@ -1601,7 +1609,10 @@ async function runAnalyse() {
     // door een rate-limit. Dat is de UI iets laten beweren wat de code niet weet.
     if (!poisson.valid) {
       const _played = t => Number(t?.fixtures?.played?.total) || 0;
+      // v26.403: 'degenerate' als vierde reden. Zonder deze tak kreeg een lambda-totaal van 0.02
+      // het label 'onbruikbaar', wat niet vertelt DAT het een rekenuitkomst was en geen datagebrek.
       poisson.missReason = (!hStats || !aStats) ? 'fetch'
+        : poisson.degenerate != null ? 'degenerate'
         : (_played(hStats) < 3 || _played(aStats) < 3) ? 'thin'
         : 'onbruikbaar';
     }
@@ -1713,7 +1724,8 @@ async function runAnalyse() {
     // v26.309: poisson.missReason (v26.255) wist het antwoord al, maar bereikte de prompt nooit.
     const _poissonMiss = { fetch: 'Poisson: NIET OPGEHAALD (teamstatistieken niet geladen — technische fout, geen uitspraak over doen)',
       thin: 'Poisson: geen model (te weinig gespeelde wedstrijden)',
-      onbruikbaar: 'Poisson: geen model (statistieken onbruikbaar voor dit duel)' };
+      onbruikbaar: 'Poisson: geen model (statistieken onbruikbaar voor dit duel)',
+      degenerate: 'Poisson: geen model (berekening gaf een onmogelijk laag doelpuntentotaal <0.5 \u2014 rekenuitkomst, GEEN uitspraak dat er weinig doelpunten komen)' };
     const poissonStr = poisson.valid ? `Poisson: 1=${poisson.k1}% X=${poisson.kX}% 2=${poisson.k2}%${poisson.injLabel||''}`
       : (_poissonMiss[poisson.missReason] || _poissonMiss.thin);
     const formationStr = lineups?.length ? `${lineups[0]?.team?.name||m.home}: ${lineups[0]?.formation||'?'} vs ${lineups[1]?.team?.name||m.away}: ${lineups[1]?.formation||'?'}` : 'nog niet bekend';
