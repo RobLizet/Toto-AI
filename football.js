@@ -794,7 +794,15 @@ function getStrengthShrinkKDef() { return _lsNum('pmx_shrink_k_def', STRENGTH_SH
 
 // Trekt een absoluut goals-gemiddelde naar het competitiegemiddelde, gewogen naar sample-size.
 function shrinkStrength(val, n, leagueAvg, K) {
-  if (!(K > 0) || !(n > 0) || !(val >= 0) || !(leagueAvg > 0)) return val; // v26.260: val === 0 is geldig en moet juist geshrunkt worden
+  // v26.404: de bewaking `!(n > 0)` gaf bij NUL gespeelde duels de waarde ONVERANDERD terug -- exact het
+  // tegenovergestelde van wat v26.300 er als bedoeling bij schreef ("n=0 -> volledige shrink naar leagueAvg").
+  // Gevolg, gemeten op Atletico-Malaga (La Liga speelronde 1, 19-08): API-Football geeft bij 0 gespeelde duels
+  // letterlijk "0.0" als doelpuntgemiddelde -- een echte nul, geen lege waarde -- die nul bleef staan, MIN_STRENGTH
+  // klemde de sterktes op 0.10, en lambda werd 0.10*0.10/1.35 ~ 0.008 per kant (totaal ~0.02). De worker kwam op
+  // 2.4 voor dezelfde wedstrijd omdat die bij n=0 wel op het competitiegemiddelde uitkomt: twee modellen die
+  // hetzelfde hoorden te doen. De formule hieronder geeft bij n=0 vanzelf (0*ratio + K*1)/(0+K) = 1.0 = leagueAvg,
+  // dus de bewaking sloot juist de JUISTE uitkomst uit. Nu alleen n < 0 als ongeldig (bestaat niet).
+  if (!(K > 0) || !(n >= 0) || !(val >= 0) || !(leagueAvg > 0)) return val; // v26.260: val === 0 is geldig en moet juist geshrunkt worden
   const ratio = val / leagueAvg;
   const shrunk = (n * ratio + K * 1.0) / (n + K);
   return shrunk * leagueAvg;
