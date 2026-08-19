@@ -690,11 +690,14 @@ function extractTeamGoalStats(stats, recentFixtures = null, fixtureXgData = null
     if (validAgainst.length >= 2) xgAgainst = parseFloat((validAgainst.reduce((a,b)=>a+b,0) / validAgainst.length).toFixed(2));
   }
 
-  const gamesPlayed = stats.fixtures?.played?.total || null;
+  // v26.405: FALSY-NUL. `|| null` maakte van 0 gespeelde duels 'onbekend', waardoor de nieuwe
+  // nul-duels-bewaking hieronder niet kon onderscheiden of een team echt nog niet gespeeld had
+  // of dat de teller simpelweg ontbrak. Number.isFinite behoudt de gemeten 0.
+  const gamesPlayed = Number.isFinite(stats.fixtures?.played?.total) ? stats.fixtures.played.total : null;
   // v26.257: sample-size per split — de home-sterkte steunt alleen op thuiswedstrijden, de away-sterkte
   // alleen op uitwedstrijden. Zonder dat kun je niet regulariseren met de juiste n.
-  const playedHome = stats.fixtures?.played?.home || null;
-  const playedAway = stats.fixtures?.played?.away || null;
+  const playedHome = Number.isFinite(stats.fixtures?.played?.home) ? stats.fixtures.played.home : null; // v26.405: idem
+  const playedAway = Number.isFinite(stats.fixtures?.played?.away) ? stats.fixtures.played.away : null; // v26.405: idem
   let base = {
     // v26.260: `parseFloat(x) || null` maakte van een echte 0.0 een null, want 0 is falsy in JS. Een team
     // dat nul tegendoelpunten toeliet viel daardoor terug op het competitiegemiddelde: Spain hield thuis
@@ -820,6 +823,15 @@ function calcPoissonKansen(homeStats, awayStats, leagueAvgOrId = 1.35, homeInjFa
     ? leagueAvgOrId
     : getLeagueAvg(leagueAvgOrId);
   if (!homeStats || !awayStats) return { k1:null, kX:null, k2:null, valid:false };
+
+  // v26.405: NUL GESPEELDE DUELS -> GEEN MODEL (beslissing Rob, 19-08). Met 0 duels rust elke uitkomst
+  // volledig op het competitiegemiddelde: geen enkel datapunt over DEZE teams. v26.404 maakte dat getal
+  // wiskundig netjes (2.70 i.p.v. 0.02), maar netjes is niet hetzelfde als onderbouwd -- een gemiddelde
+  // tonen als 'de verwachting voor dit duel' is een uitspraak zonder bron. Alleen blokkeren bij een
+  // GEMETEN nul (=== 0): is de teller onbekend (null), dan weten we het niet en blijft het oude pad gelden,
+  // want 'niet gemeten' mag nooit als 'nul' lezen.
+  if (homeStats.gamesPlayed === 0 || awayStats.gamesPlayed === 0)
+    return { k1:null, kX:null, k2:null, valid:false, noGames:true };
   // v26.260: _firstNum i.p.v. `||` — een gemeten 0 is data, geen ontbrekende waarde.
   let homeAttackBase  = _firstNum(homeStats.avgScoredHome, homeStats.avgScoredTotal, leagueAvg);
   let awayDefenceBase = _firstNum(awayStats.avgConcAway,   awayStats.avgConcTotal,   leagueAvg);
