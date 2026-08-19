@@ -1323,6 +1323,7 @@ function buildModelVsMarktHTML(poisson, m, goalOdds, codeTip) {
       thin: 'Faire markt-kansen \u2014 model niet beschikbaar (te weinig gespeelde wedstrijden voor deze teams)',
       onbruikbaar: 'Faire markt-kansen \u2014 model niet beschikbaar (statistieken onbruikbaar voor dit duel)',
       degenerate: 'Faire markt-kansen \u2014 model niet beschikbaar (de berekening gaf een onmogelijk laag doelpuntentotaal; geen bruikbare kansschatting)',
+      geen_duels: 'Faire markt-kansen \u2014 model niet beschikbaar (nog geen enkel duel gespeeld dit seizoen; een kansschatting zou volledig op het competitiegemiddelde rusten)',
     };
     const note = (gm && hasMarket) ? '+pp = model hoger dan markt (mogelijk value)' : (hasMarket ? (_missTxt[poisson.missReason] || _missTxt.thin) : ((goalOdds && goalOdds._faalde && goalOdds._faalde.ou) ? 'Modelkans uit verwachte goals \u2014 de O/U-odds konden niet worden opgehaald (technische fout); ze bestaan wel' : 'Modelkans uit verwachte goals \u2014 O/U-odds nog niet gepost voor deze wedstrijd'));
     goalsHTML = `<div style="${body ? 'margin-top:.6rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.09);' : ''}">
@@ -1612,6 +1613,7 @@ async function runAnalyse() {
       // v26.403: 'degenerate' als vierde reden. Zonder deze tak kreeg een lambda-totaal van 0.02
       // het label 'onbruikbaar', wat niet vertelt DAT het een rekenuitkomst was en geen datagebrek.
       poisson.missReason = (!hStats || !aStats) ? 'fetch'
+        : poisson.noGames ? 'geen_duels'
         : poisson.degenerate != null ? 'degenerate'
         : (_played(hStats) < 3 || _played(aStats) < 3) ? 'thin'
         : 'onbruikbaar';
@@ -1725,7 +1727,8 @@ async function runAnalyse() {
     const _poissonMiss = { fetch: 'Poisson: NIET OPGEHAALD (teamstatistieken niet geladen — technische fout, geen uitspraak over doen)',
       thin: 'Poisson: geen model (te weinig gespeelde wedstrijden)',
       onbruikbaar: 'Poisson: geen model (statistieken onbruikbaar voor dit duel)',
-      degenerate: 'Poisson: geen model (berekening gaf een onmogelijk laag doelpuntentotaal <0.5 \u2014 rekenuitkomst, GEEN uitspraak dat er weinig doelpunten komen)' };
+      degenerate: 'Poisson: geen model (berekening gaf een onmogelijk laag doelpuntentotaal <0.5 \u2014 rekenuitkomst, GEEN uitspraak dat er weinig doelpunten komen)',
+      geen_duels: 'Poisson: geen model (minstens een van beide teams heeft NUL duels gespeeld dit seizoen \u2014 elke kansschatting zou volledig op het competitiegemiddelde rusten, dus doe GEEN kwantitatieve uitspraak over de verwachte uitslag of het doelpuntentotaal)' };
     const poissonStr = poisson.valid ? `Poisson: 1=${poisson.k1}% X=${poisson.kX}% 2=${poisson.k2}%${poisson.injLabel||''}`
       : (_poissonMiss[poisson.missReason] || _poissonMiss.thin);
     const formationStr = lineups?.length ? `${lineups[0]?.team?.name||m.home}: ${lineups[0]?.formation||'?'} vs ${lineups[1]?.team?.name||m.away}: ${lineups[1]?.formation||'?'}` : 'nog niet bekend';
