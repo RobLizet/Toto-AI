@@ -852,8 +852,18 @@ function calcPoissonKansen(homeStats, awayStats, leagueAvgOrId = 1.35, homeInjFa
   const homeAdv = isNeutral ? 1.0 : 1.08; // 8% thuisvoordeel correctie
   const lambdaHome = (homeAttack * awayDefence) / leagueAvg * homeAdv;
   const lambdaAway = (awayAttack * homeDefence) / leagueAvg / homeAdv;
-  if (lambdaHome <= 0 || lambdaAway <= 0 || lambdaHome > 6 || lambdaAway > 6)
-    return { k1:null, kX:null, k2:null, valid:false };
+  // v26.403: ONDERGRENS OP HET DOELPUNTENTOTAAL. De oude test was `lambda <= 0`, en 0.01 is
+  // groter dan nul -> het model verklaarde zichzelf GELDIG bij een verwacht totaal van 0.02.
+  // Poisson geeft dan ~98% kans op 0-0, dus 1=1% X=98% 2=1% (gemeten bij Atletico-Malaga 19-08).
+  // Dat werd normaal opgevangen door de vloer in analyse.js, maar die zit INGESLOTEN in het
+  // odds-blok (`if (_oh > 1 && _od > 1 && _oa > 1)`) en valt dus juist weg als de 1X2-odds
+  // ontbreken -- precies wanneer het model alleen staat. Ondergrens 0.5 op het TOTAAL: onder een
+  // half doelpunt per wedstrijd bestaat geen voetbalwedstrijd, dus dat is geen dunne schatting
+  // maar een rekenfout. valid:false => geen 1X2, geen Asian lines, geen EV. GEEN vloer/ophoging:
+  // een verzonnen 2.1 tonen zou van "wij weten het niet" een net ogend cijfer maken.
+  const _lamTot = lambdaHome + lambdaAway;
+  if (lambdaHome <= 0 || lambdaAway <= 0 || lambdaHome > 6 || lambdaAway > 6 || _lamTot < 0.5)
+    return { k1:null, kX:null, k2:null, valid:false, degenerate: _lamTot < 0.5 ? _lamTot : undefined };
   const { p1, pX, p2 } = poissonMatchProbs(lambdaHome, lambdaAway);
   const injLabel = (homeInjFactor?.count || awayInjFactor?.count)
     ? ` [thuis ${homeInjFactor?.count||0}bless, uit ${awayInjFactor?.count||0}bless]` : '';
