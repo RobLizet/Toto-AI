@@ -114,6 +114,11 @@
     </div>
 
     <div class="card">
+      <h2>xG (schaduw)</h2>
+      <div id="xg"><span class="muted">laden…</span></div>
+    </div>
+
+    <div class="card">
       <h2>Jobs op de server</h2>
       <div id="jobs"><span class="muted">laden…</span></div>
     </div>
@@ -336,6 +341,33 @@
       'Lagere Brier is beter.</p>';
   }
 
+  function renderXg(h) {
+    var el = document.getElementById('xg');
+    var x = h.xg_shadow;
+    if (!x) { el.innerHTML = badge('neut', 'niet gemeten'); return; }
+    if (!x.settled_met_xg) {
+      el.innerHTML = badge('neut', 'nog geen afgerekende duels met xG') +
+        '<p class="note">Afgerekend totaal: ' + n(x.settled) + '. Schaduwmeting draait sinds 20-08 — ' +
+        'de eerste MAE-vergelijking verschijnt zodra er afgerekende duels met een xG-cijfer bij zitten.</p>';
+      return;
+    }
+    var beter = (typeof x.mae_xg === 'number' && typeof x.mae_model === 'number')
+      ? (x.mae_xg < x.mae_model ? badge('ok', 'xG beter') : badge('warn', 'model beter'))
+      : badge('neut', '–');
+    el.innerHTML =
+      '<div class="grid3">' +
+        cell('Afgerekend', n(x.settled), true) +
+        cell('Met xG', n(x.settled_met_xg), true) +
+        cell('Oordeel', beter, true) +
+        cell('MAE xG', n(x.mae_xg), true) +
+        cell('MAE model', n(x.mae_model), true) +
+        cell('MAE markt', n(x.mae_markt), true) +
+      '</div>' +
+      '<p class="note">Gem. gedekte duels per team: thuis ' + n(x.gem_home_xg_n) + ', uit ' + n(x.gem_away_xg_n) +
+      ' (van max 6). Backtest 18-08 op 15 duels gaf MAE xG 1,63 vs model 1,27 — dit is de herhaling ' +
+      'op schaal. Lagere MAE is beter. Puur diagnose, raakt geen enkele pick.</p>';
+  }
+
   function renderJobs(h) {
     var el = document.getElementById('jobs');
     var j = Array.isArray(h.jobs) ? h.jobs : [];
@@ -396,7 +428,7 @@
     // Elke bron apart: valt er een weg, dan blijft de rest gewoon staan en
     // zegt alleen dat blok dat het niet gemeten is.
     get('/health')
-      .then(function (h) { renderSys(h); renderData(h); renderElo(h); renderJobs(h); renderPush(h); })
+      .then(function (h) { renderSys(h); renderData(h); renderElo(h); renderXg(h); renderJobs(h); renderPush(h); })
       .catch(function (e) {
         ['sys', 'data', 'elo', 'jobs', 'push'].forEach(function (id) {
           faalTekst(document.getElementById(id), e);
