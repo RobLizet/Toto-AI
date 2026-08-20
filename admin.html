@@ -119,6 +119,11 @@
     </div>
 
     <div class="card">
+      <h2>Lambda-anker (schaduw)</h2>
+      <div id="anchor"><span class="muted">laden…</span></div>
+    </div>
+
+    <div class="card">
       <h2>Jobs op de server</h2>
       <div id="jobs"><span class="muted">laden…</span></div>
     </div>
@@ -368,6 +373,43 @@
       'op schaal. Lagere MAE is beter. Puur diagnose, raakt geen enkele pick.</p>';
   }
 
+  function renderAnchor(h) {
+    var el = document.getElementById('anchor');
+    var a = h.lambda_anchor_shadow;
+    if (!a) { el.innerHTML = badge('neut', 'niet gemeten'); return; }
+    if (!a.settled) {
+      el.innerHTML = badge('neut', 'nog geen afgerekende duels') +
+        '<p class="note">Schaduwmeting draait sinds 20-08 (raw w=0 vs voorgesteld anker w=0,50 vs markt). ' +
+        'De vergelijking vult zich vanzelf — bedoeld om klaar te staan vóór de ankersessie van 21-09.</p>';
+      return;
+    }
+    var beter = (typeof a.mae_tot_anchor === 'number' && typeof a.mae_tot_raw === 'number')
+      ? (a.mae_tot_anchor < a.mae_tot_raw ? badge('ok', 'anker beter') : badge('warn', 'raw beter'))
+      : badge('neut', '–');
+    function lijnBlok(titel, n_, raw_, anchor_, mkt_) {
+      return '<p class="note" style="margin-bottom:4px"><strong>' + titel + '</strong> (n=' + n(n_) + ')</p>' +
+        '<div class="grid3" style="margin-bottom:10px">' +
+          cell('Brier raw', n(raw_), true) + cell('Brier anker', n(anchor_), true) + cell('Brier markt', n(mkt_), true) +
+        '</div>';
+    }
+    el.innerHTML =
+      '<div class="grid3">' +
+        cell('Afgerekend', n(a.settled), true) +
+        cell('MAE raw', n(a.mae_tot_raw), true) +
+        cell('MAE anker', n(a.mae_tot_anchor), true) +
+        cell('MAE markt', n(a.mae_tot_markt), true) +
+        cell('Oordeel (MAE totaal)', beter, true) +
+        cell('', '', true) +
+      '</div>' +
+      '<div style="margin-top:12px">' +
+        lijnBlok('O2.5', a.n_o25, a.brier_o25_raw, a.brier_o25_anchor, a.brier_o25_mkt) +
+        lijnBlok('O3.5', a.n_o35, a.brier_o35_raw, a.brier_o35_anchor, a.brier_o35_mkt) +
+        lijnBlok('BTTS', a.n_btts, a.brier_btts_raw, a.brier_btts_anchor, a.brier_btts_mkt) +
+      '</div>' +
+      '<p class="note">Raw = huidig live model (w=0). Anker = voorgesteld gewicht 0,50. Markt = de-vigde ' +
+      'marktkans per lijn. Lagere MAE/Brier is beter. Puur diagnose, raakt geen enkele pick tot 21-09.</p>';
+  }
+
   function renderJobs(h) {
     var el = document.getElementById('jobs');
     var j = Array.isArray(h.jobs) ? h.jobs : [];
@@ -428,7 +470,7 @@
     // Elke bron apart: valt er een weg, dan blijft de rest gewoon staan en
     // zegt alleen dat blok dat het niet gemeten is.
     get('/health')
-      .then(function (h) { renderSys(h); renderData(h); renderElo(h); renderXg(h); renderJobs(h); renderPush(h); })
+      .then(function (h) { renderSys(h); renderData(h); renderElo(h); renderXg(h); renderAnchor(h); renderJobs(h); renderPush(h); })
       .catch(function (e) {
         ['sys', 'data', 'elo', 'jobs', 'push'].forEach(function (id) {
           faalTekst(document.getElementById(id), e);
