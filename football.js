@@ -1087,22 +1087,23 @@ function formatH2HCompact(fixtures, homeName, awayName) {
   return `${fixtures.length} duels: ${homeName.split(' ')[0]} ${homeTeamWins}w, ${awayName.split(' ')[0]} ${awayTeamWins}w, ${dr}gelijk (gem ${avg} goals)`;
 }
 
-// v26.408: BUG GEVONDEN EN GEFIXT (Rob gemeld met screenshot: "VVV begon thuis met 3-4 verlies
-// tegen Heracles en won 2e wedstrijd met 0-2 bij NAC" -- de analyse zei "overwinning (5-4) gevolgd
-// door verlies"). GEMETEN tegen de echte API-Football-data (team-id 204, seizoen 2026, Eerste
-// Divisie): VVV Venlo 3-4 Heracles (07-08, verlies) en NAC Breda 0-2 VVV Venlo (14-08, overwinning)
-// -- Rob had exact gelijk. ROOT CAUSE: formatFormCompact somt gFor/gAg op over ALLE meegegeven
-// duels en presenteerde dat als EEN enkel `(gFor-gAg)`-blokje naast de W/L-letters -- ononderscheidbaar
-// van een losse wedstrijduitslag. Voor VVV: verlies 3-4 + winst 2-0 = totaal 5 voor/4 tegen, dus de
-// string werd "WL (5-4, scoorde 2/2)" (recent-eerst: W=NAC, L=Heracles). De AI las die "(5-4)" als
-// de score van de overwinning, niet als het opgetelde doelsaldo over twee duels -- een ambigu format
-// dat een taalmodel bijna wel MOEST verkeerd lezen, geen losstaande AI-fout. FIX: elke wedstrijd
-// krijgt nu zijn EIGEN score in de tekst (`W 2-0, L 3-4`), het opgetelde doelsaldo blijft erbij maar
-// expliciet gelabeld als "totaal doelsaldo" -- geen twee getallen meer die er hetzelfde uitzien maar
-// iets anders betekenen. RAAKT ALLEEN de losse frontend-analyse (popup, "Claude analyseert..."):
-// formatFormCompact komt 0x voor in cloudworker.js, dus geen wijziging aan backend-picks, staking of
-// CLV. Rollback: perMatch-opbouw + de nieuwe return-regel eruit, terug naar het oude
-// `${letters} (${gFor}-${gAg}, scoorde ${scored}/${fixtures.length})`, versie -> v26.407.
+// v26.409: TWEEDE FOUT IN DEZELFDE ZIN, DOOR ROB GEMELD ("andersom begonnen met 3-4 vorige wedstrijd
+// 2-0"). v26.408 gaf elke wedstrijd zijn eigen score, maar liet de VOLGORDE onaangeroerd -- en die is
+// fout. GEMETEN tegen API-Football (/fixtures?team=204&last=8): de API levert NIEUWSTE EERST
+// ([0]=14-08 NAC 0-2 VVV, [1]=07-08 VVV 3-4 Heracles). De tekst werd daardoor "W 2-0, L 3-4", wat
+// chronologisch leest als "eerst gewonnen, toen verloren" -- exact omgekeerd. Dat is dezelfde
+// klasse fout als v26.408 zelf: een reeks getallen zonder expliciet label, waarbij de lezer (hier de
+// AI, en ook Rob op het scherm) een volgorde MOET aannemen die nergens staat. TWEE INGREPEN, zodat
+// de volgorde niet meer geraden hoeft te worden: (1) de duels worden expliciet OMGEDRAAID naar
+// chronologisch (oudste eerst), zodat de leesrichting overeenkomt met "begon het seizoen met ...";
+// (2) elke wedstrijd krijgt zijn DATUM (dd-mm) in de tekst, zodat de chronologie ook zonder de
+// volgorde-aanname klopt en een toekomstige wijziging aan de sorteervolgorde deze bug niet opnieuw
+// kan introduceren. LET OP voor toekomstige aanpassingen: de W/L-LETTERREEKS (`letters`) blijft
+// bewust op de OORSPRONKELIJKE API-volgorde (nieuwste eerst) staan, want dat is de conventie van een
+// vormstring zoals API-Football die zelf ook levert; alleen de leesbare per-duel-tekst is
+// chronologisch. RAAKT ALLEEN de losse frontend-analyse (formatFormCompact komt 0x voor in
+// cloudworker.js) -- geen wijziging aan backend-picks, staking of CLV. Rollback: de reverse() +
+// het datum-deel eruit, terug naar de v26.408-opbouw, versie -> v26.408.
 function formatFormCompact(fixtures, teamId, teamName) {
   if (!fixtures?.length) return '';
   let letters = '', gFor = 0, gAg = 0, scored = 0;
@@ -1116,9 +1117,14 @@ function formatFormCompact(fixtures, teamId, teamName) {
     if (tFor > 0) scored++;
     const letter = team.winner === true ? 'W' : team.winner === false ? 'L' : 'D';
     letters += letter;
-    perMatch.push(`${letter} ${tFor}-${tAg}`);
+    const opp = isHome ? f.teams.away?.name : f.teams.home?.name;
+    const d = f.fixture?.date ? String(f.fixture.date).slice(0, 10) : null;
+    const dTxt = d ? `${d.slice(8, 10)}-${d.slice(5, 7)} ` : '';
+    const plek = isHome ? 'thuis' : 'uit';
+    perMatch.push(`${dTxt}${plek} ${letter} ${tFor}-${tAg}${opp ? ` vs ${opp}` : ''}`);
   });
-  return `${perMatch.join(', ')} (totaal doelsaldo ${gFor}-${gAg}, scoorde ${scored}/${fixtures.length})`;
+  // Chronologisch (oudste eerst): API-Football levert nieuwste eerst, zie kop hierboven.
+  return `${perMatch.slice().reverse().join(' | ')} (totaal doelsaldo ${gFor}-${gAg}, scoorde ${scored}/${fixtures.length})`;
 }
 
 
