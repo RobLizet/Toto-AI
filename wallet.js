@@ -18,7 +18,7 @@ function renderAnalysePopup(text, onImport) {
         background:${color}18;border-left:3px solid ${color};border-radius:0 8px 8px 0;">
         ${trimmed}</div>`;
     } else {
-      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.88);line-height:1.85;margin:.1rem 0;">${trimmed}</div>`;
+      html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.88);line-height:1.85;margin:.1rem 0;">${trimmed}</div>`;
     }
   });
 
@@ -106,8 +106,8 @@ function detectLockLevel(fixtureId, pick) {
 }
 
 function lockBadge(level) {
-  if (level === 'triple') return '<span style="font-family:monospace;font-size:.48rem;font-weight:900;color:#00BEC4;background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);padding:2px 7px;border-radius:999px;">🏆 TRIPLE LOCK</span>';
-  if (level === 'double') return '<span style="font-family:monospace;font-size:.48rem;font-weight:900;color:#b45309;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.25);padding:2px 7px;border-radius:999px;">🔒 DOUBLE LOCK</span>';
+  if (level === 'triple') return '<span style="font-family:monospace;font-size:.58rem;font-weight:900;color:#00BEC4;background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);padding:2px 7px;border-radius:999px;">🏆 TRIPLE LOCK</span>';
+  if (level === 'double') return '<span style="font-family:monospace;font-size:.58rem;font-weight:900;color:#b45309;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.25);padding:2px 7px;border-radius:999px;">🔒 DOUBLE LOCK</span>';
   return '';
 }
 
@@ -122,12 +122,12 @@ function renderWalletScreen() {
       <!-- WALLET TAB -->
       <div id="wsub-content-wallet" style="display:none;">
         <div style="background:linear-gradient(135deg,#061518,#04383F);border:1px solid rgba(0,190,196,.2);border-radius:18px;padding:1.1rem 1.2rem;margin-bottom:.75rem;box-shadow:0 4px 18px rgba(0,0,0,.35);">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.55);letter-spacing:.08em;margin-bottom:.3rem;">${t('wal.currentbalance','HUIDIG SALDO')}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.57rem;color:rgba(255,255,255,.55);letter-spacing:.08em;margin-bottom:.3rem;">${t('wal.currentbalance','HUIDIG SALDO')}</div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:2.4rem;color:#fff;letter-spacing:.03em;line-height:1;" id="bigBalance">€0,00</div>
           <div class="wallet-actions">
-            <button style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#00BEC4;cursor:pointer;" onclick="openDepositModal()">${t('wal.deposit','+ Storten')}</button>
-            <button style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:rgba(255,255,255,.7);cursor:pointer;" onclick="openWithdrawModal()">${t('wal.withdraw','- Opnemen')}</button>
-            <button style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:#ef4444;cursor:pointer;" onclick="clearWallet()">${t('wal.clear','Wissen')}</button>
+            <button style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.3);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;font-weight:700;color:#00BEC4;cursor:pointer;" onclick="openDepositModal()">${t('wal.deposit','+ Storten')}</button>
+            <button style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;font-weight:700;color:rgba(255,255,255,.7);cursor:pointer;" onclick="openWithdrawModal()">${t('wal.withdraw','- Opnemen')}</button>
+            <button style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:.4rem .75rem;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;font-weight:700;color:#ef4444;cursor:pointer;" onclick="clearWallet()">${t('wal.clear','Wissen')}</button>
           </div>
         </div>
         <div class="wallet-strip">
@@ -156,7 +156,7 @@ function renderWalletScreen() {
             </div>
           </div>
           <canvas id="walletChart" height="100"></canvas>
-          <div id="chartEmpty" style="display:none;font-family:monospace;font-size:.6rem;color:rgba(255,255,255,.95);text-align:center;padding:1.5rem 0;"></div>
+          <div id="chartEmpty" style="display:none;font-family:monospace;font-size:.66rem;color:rgba(255,255,255,.95);text-align:center;padding:1.5rem 0;"></div>
         </div>
         <button class="export-btn" onclick="exportWalletCSV()">${t('wal.exportcsv','📥 Exporteer als CSV')}</button>
         <div class="section-header"><span>${t('wal.mybets','MIJN INZETTEN')}</span></div>
@@ -173,17 +173,17 @@ function renderWalletScreen() {
         </div>
         <div style="margin-bottom:.6rem;padding:.85rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.55rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.08em;">HUIDIGE BANKROLL</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.57rem;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.08em;">HUIDIGE BANKROLL</div>
             <div style="display:flex;gap:.3rem;flex-shrink:0;">
-              <button id="trUnitsBtn" class="small-action-btn" style="padding:.22rem .45rem;font-size:.5rem;" onclick="toggleTrackerUnits()">€ / units</button>
-              <button class="small-action-btn" style="padding:.22rem .45rem;font-size:.5rem;" onclick="setTrackerBankroll()">✏️</button>
-              <button class="small-action-btn" style="padding:.22rem .45rem;font-size:.5rem;" onclick="resetTracker()">🗑️</button>
+              <button id="trUnitsBtn" class="small-action-btn" style="padding:.22rem .45rem;font-size:.60rem;" onclick="toggleTrackerUnits()">€ / units</button>
+              <button class="small-action-btn" style="padding:.22rem .45rem;font-size:.60rem;" onclick="setTrackerBankroll()">✏️</button>
+              <button class="small-action-btn" style="padding:.22rem .45rem;font-size:.60rem;" onclick="resetTracker()">🗑️</button>
             </div>
           </div>
           <div id="trSaldo" style="font-size:1.55rem;font-weight:800;font-family:'IBM Plex Mono',monospace;color:#00BEC4;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">€100,00</div>
-          <div id="trGroei" style="font-size:.62rem;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.8);margin-top:.35rem;">—</div>
-          <div id="trBankInfo" style="font-size:.56rem;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.62);margin-top:.25rem;">Start €100 · 1 unit = €2,00 (2%)</div>
-          <div id="trTestInfo" style="display:none;font-size:.56rem;font-family:'IBM Plex Mono',monospace;color:#f59e0b;margin-top:.3rem;padding-top:.3rem;border-top:1px solid rgba(255,255,255,.08);line-height:1.45;"></div>
+          <div id="trGroei" style="font-size:.68rem;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.8);margin-top:.35rem;">—</div>
+          <div id="trBankInfo" style="font-size:.64rem;font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.62);margin-top:.25rem;">Start €100 · 1 unit = €2,00 (2%)</div>
+          <div id="trTestInfo" style="display:none;font-size:.64rem;font-family:'IBM Plex Mono',monospace;color:#f59e0b;margin-top:.3rem;padding-top:.3rem;border-top:1px solid rgba(255,255,255,.08);line-height:1.45;"></div>
         </div>
         <div class="wallet-strip" style="margin-bottom:.75rem;">
           <div class="w-item"><div class="w-label">${t('wal.staked','Ingezet')}</div><div class="val" id="trStaked">€0</div></div>
@@ -248,7 +248,7 @@ function renderWalletScreen() {
         <!-- Voortgangsbalk naar 100 picks -->
         <div id="btProgressWrap" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.7rem 1rem;margin-bottom:.75rem;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
-            <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${t('wal.progresstrackrecord','VOORTGANG TRACKRECORD')}</div>
+            <div style="font-family:monospace;font-size:.60rem;color:rgba(255,255,255,.95);">${t('wal.progresstrackrecord','VOORTGANG TRACKRECORD')}</div>
             <div id="btProgressLabel" style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00BEC4;letter-spacing:.04em;">0/100</div>
           </div>
           <div style="background:rgba(0,0,0,.08);border-radius:999px;height:7px;overflow:hidden;">
@@ -281,7 +281,7 @@ function renderWalletScreen() {
   `;
   setWalletSubTab('tracker'); // v26.238: saldo-wallet + resultaten verborgen, alleen tracker
   } catch(e) {
-    el.innerHTML = '<div style="padding:1rem;font-family:monospace;font-size:.6rem;color:#dc2626;">⚠ Wallet fout: ' + e.message + '<br><small>' + e.stack?.split('\n')[1] + '</small></div>';
+    el.innerHTML = '<div style="padding:1rem;font-family:monospace;font-size:.66rem;color:#dc2626;">⚠ Wallet fout: ' + e.message + '<br><small>' + e.stack?.split('\n')[1] + '</small></div>';
     console.error('renderWalletScreen fout:', e);
   }
 }
@@ -372,9 +372,9 @@ function renderBetHistory() {
                    : pmxIsPush(b)          ? '#b45309'
                    : _p > 0 ? '#00BEC4' : _p < 0 ? '#dc2626' : '#94a3b8';
     const scoreTag = b.score ? ` [${b.score}]` : (b.liveScore ? ` ⚽${b.liveScore}${b.liveMinute?` ${b.liveMinute}'`:''}` : '');
-    const srcBadge = b.source === 'value' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(0,190,196,.1);color:#00BEC4;padding:1px 6px;border-radius:4px;font-weight:700;">⚡ Value</span> ' : b.source === 'analyse' ? '<span style="font-family:monospace;font-size:.44rem;background:rgba(0,190,196,.1);color:#00a8ad;padding:1px 6px;border-radius:4px;font-weight:700;">🤖 AI</span> ' : '';
+    const srcBadge = b.source === 'value' ? '<span style="font-family:monospace;font-size:.55rem;background:rgba(0,190,196,.1);color:#00BEC4;padding:1px 6px;border-radius:4px;font-weight:700;">⚡ Value</span> ' : b.source === 'analyse' ? '<span style="font-family:monospace;font-size:.55rem;background:rgba(0,190,196,.1);color:#00a8ad;padding:1px 6px;border-radius:4px;font-weight:700;">🤖 AI</span> ' : '';
     const legsHtml = isCombi && b.legs ? b.legs.map((l,i) => `
-      <div style="display:flex;justify-content:space-between;padding:.25rem 0;border-top:1px solid var(--bet-border,rgba(255,255,255,0.09));font-family:monospace;font-size:.5rem;">
+      <div style="display:flex;justify-content:space-between;padding:.25rem 0;border-top:1px solid var(--bet-border,rgba(255,255,255,0.09));font-family:monospace;font-size:.60rem;">
         <span style="color:var(--bet-text,#ffffff);">${l.match||''} — ${l.pick} @ ${l.odds}</span>
         <span style="color:${l.legStatus==='win'?'#00BEC4':l.legStatus==='lose'?'#dc2626':'#94a3b8'};">${l.legStatus==='win'?'✓':l.legStatus==='lose'?'✗':'⏳'}</span>
       </div>`).join('') : '';
@@ -383,7 +383,7 @@ function renderBetHistory() {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.3rem;">
         <div style="flex:1;">
           <div style="font-size:.85rem;font-weight:700;color:var(--bet-text,#ffffff);">${srcBadge}${b.matchName||b.match||''}${scoreTag}</div>
-          <div style="font-family:monospace;font-size:.6rem;color:var(--bet-muted,rgba(255,255,255,.5));margin-top:.15rem;">
+          <div style="font-family:monospace;font-size:.66rem;color:var(--bet-muted,rgba(255,255,255,.5));margin-top:.15rem;">
             ${isCombi ? `Combi ${b.legs?.length||0} legs` : b.pick} @ ${b.odds} · €${b.amount||b.stake||0} → €${b.payout||0} · ${b.date||''}
           </div>
           ${isCombi ? `<div style="margin-top:.3rem;">${legsHtml}</div>` : ''}
@@ -395,7 +395,7 @@ function renderBetHistory() {
           ? `<button class="small-action-btn" onclick="checkBetResult(${b.id})">🔍</button>`
           : `<button class="small-action-btn" onclick="checkBetResult(${b.id})">${t('wal.check','🔍 Check')}</button>`}
         <div class="bet-status ${b.status||'pending'}" onclick="${isCombi?`cycleCombiBetStatus(${b.id})`:`cycleBetStatus(${b.id})`}"
-          style="color:${pnlColor};font-family:monospace;font-size:.6rem;font-weight:700;cursor:pointer;">${pnlText}</div>
+          style="color:${pnlColor};font-family:monospace;font-size:.66rem;font-weight:700;cursor:pointer;">${pnlText}</div>
       </div>
     </div>`;
   }).join('');
@@ -1274,7 +1274,7 @@ function renderTracker() {
     const _pnl     = pmxProfit(b);
     const pnlText  = b.status==='pending' ? '⏳ Open' : pmxIsPush(b) ? 'push €0,00' : `${_pnl>=0?'+':'-'}€${Math.abs(_pnl).toFixed(2)}`;
     const pnlColor = b.status==='pending' ? '#475569' : pmxIsPush(b) ? '#b45309' : _pnl>0 ? '#00BEC4' : _pnl<0 ? '#dc2626' : '#94a3b8';
-    const testBadge = pmxIsTest(b) ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;background:rgba(217,119,6,.18);color:#f59e0b;border:1px solid rgba(217,119,6,.45);border-radius:6px;padding:.05rem .3rem;margin-right:.25rem;white-space:nowrap;">🧪 TEST</span>` : '';
+    const testBadge = pmxIsTest(b) ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.57rem;background:rgba(217,119,6,.18);color:#f59e0b;border:1px solid rgba(217,119,6,.45);border-radius:6px;padding:.05rem .3rem;margin-right:.25rem;white-space:nowrap;">🧪 TEST</span>` : '';
     const srcLbl   = sourceLabel[b.source||'eigen']||'✏️ Eigen';
     const srcCls   = sourceClass[b.source||'eigen']||'src-eigen';
     const isCombi  = b.type==='combi';
@@ -1297,8 +1297,8 @@ function renderTracker() {
         </div>
       </div>
       <div class="tracker-row-bottom">
-        <span style="font-family:monospace;font-size:.58rem;color:rgba(255,255,255,.95);">€${b.stake} → €${b.payout}</span>
-        ${b.note ? `<span style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);font-style:italic;">${b.note}</span>` : ''}
+        <span style="font-family:monospace;font-size:.65rem;color:rgba(255,255,255,.95);">€${b.stake} → €${b.payout}</span>
+        ${b.note ? `<span style="font-family:monospace;font-size:.60rem;color:rgba(255,255,255,.95);font-style:italic;">${b.note}</span>` : ''}
         <div class="tracker-result ${b.status}" onclick="cycleTrackerStatus(${b.id})" style="color:${pnlColor};">${pnlText}</div>
       </div>
     </div>`;
@@ -1581,7 +1581,7 @@ function renderBacktest() {
         <span style="color:rgba(255,255,255,.95);">📊 ${p.bookmaker||'?'}</span>
         ${p.poissonUsed ? '<span style="color:#00a8ad;">P+AI</span>' : ''}
       </div>
-      <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);margin-bottom:.25rem;line-height:1.5;">
+      <div style="font-family:monospace;font-size:.61rem;color:rgba(255,255,255,.95);margin-bottom:.25rem;line-height:1.5;">
         AI ${p.aiKans}% kans · ½ Kelly ${p.kelly}% · ${p.reason||''}
         ${p.score ? `<b style="color:#ffffff;"> [${p.score}]</b>` : ''}
       </div>
@@ -1589,14 +1589,14 @@ function renderBacktest() {
         const signals = buildPickReasons(p);
         if (!signals.length) return '';
         return `<div style="display:flex;flex-wrap:wrap;gap:.2rem;margin-bottom:.35rem;">
-          ${signals.map(s => `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
+          ${signals.map(s => `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.50rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
         </div>`;
       })() : ''}
       <div class="bt-footer">
         <div style="display:flex;gap:.4rem;align-items:center;">
           ${p.status==='pending' ? `<button onclick="checkBacktestPick('${p.id}')" class="check-btn">🔍 CHECK</button>` : ''}
           <button onclick="deleteBacktestPick('${p.id}')" class="del-btn">✕</button>
-          <button onclick="quickBetFromBacktest('${p.id}')" class="small-action-btn" style="font-size:.45rem;">💰 Bet</button>
+          <button onclick="quickBetFromBacktest('${p.id}')" class="small-action-btn" style="font-size:.56rem;">💰 Bet</button>
         </div>
         <div class="bt-result ${p.status||'pending'}" onclick="cycleBacktestStatus('${p.id}')">${statusTxt}</div>
       </div>
@@ -1699,41 +1699,41 @@ function renderKillerStats(picks, settled) {
 
   // Renderen
   el.innerHTML = `
-    <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">⚡ STATS OVERZICHT</div>
+    <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;font-weight:700;color:var(--text);margin-bottom:.6rem;">⚡ STATS OVERZICHT</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
 
       <!-- ROI laatste 7 dagen -->
       <div style="background:var(--card-bg,rgba(0,0,0,.04));border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;">
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${roi7Color};">${roi7 !== null ? (parseFloat(roi7)>=0?'+':'')+roi7+'%' : '—'}</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">ROI LAATSTE 7 DAGEN</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:rgba(255,255,255,.95);">${last7.length} picks gesetteld</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:var(--muted);">ROI LAATSTE 7 DAGEN</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.50rem;color:rgba(255,255,255,.95);">${last7.length} picks gesetteld</div>
       </div>
 
       <!-- Win streak -->
       <div style="background:var(--card-bg,rgba(0,0,0,.04));border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;">
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:${streak>=3?'#00BEC4':streak>=1?'#b45309':'#94a3b8'};">${streak}🔥</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">HUIDIGE WIN STREAK</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:rgba(255,255,255,.95);">Max: ${maxStreak} op rij</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:var(--muted);">HUIDIGE WIN STREAK</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.50rem;color:rgba(255,255,255,.95);">Max: ${maxStreak} op rij</div>
       </div>
 
       <!-- Beste league -->
       <div style="background:var(--card-bg,rgba(0,0,0,.04));border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .6rem;">
         ${bestLeague ? `
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.75rem;color:#00BEC4;line-height:1.1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${bestLeague[0]}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">BESTE LEAGUE</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:rgba(255,255,255,.95);">${Math.round(bestLeague[1].wins/bestLeague[1].total*100)}% hitrate · ${bestLeague[1].total}x</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.77rem;color:#00BEC4;line-height:1.1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${bestLeague[0]}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:var(--muted);">BESTE LEAGUE</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.50rem;color:rgba(255,255,255,.95);">${Math.round(bestLeague[1].wins/bestLeague[1].total*100)}% hitrate · ${bestLeague[1].total}x</div>
         ` : `
-          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.75rem;color:#94a3b8;">—</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">BESTE LEAGUE</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:rgba(255,255,255,.95);">Min 3 picks nodig</div>
+          <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.77rem;color:#94a3b8;">—</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:var(--muted);">BESTE LEAGUE</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.50rem;color:rgba(255,255,255,.95);">Min 3 picks nodig</div>
         `}
       </div>
 
       <!-- Elite picks -->
       <div style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.2);border-radius:10px;padding:.5rem .6rem;">
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00a8ad;">${eliteHr !== null ? eliteHr+'%' : '—'}</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">⭐ ELITE HITRATE</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:rgba(255,255,255,.95);">${eliteWins.length}/${elitePicks.length} gewonnen</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:var(--muted);">⭐ ELITE HITRATE</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.50rem;color:rgba(255,255,255,.95);">${eliteWins.length}/${elitePicks.length} gewonnen</div>
       </div>
 
       ${clvAvg !== null ? `
@@ -1742,9 +1742,9 @@ function renderKillerStats(picks, settled) {
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div>
             <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${parseFloat(clvAvg)>=0?'#00BEC4':'#dc2626'};">${parseFloat(clvAvg)>=0?'+':''}${clvAvg}% CLV</div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:var(--muted);">CLOSING LINE VALUE</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:var(--muted);">CLOSING LINE VALUE</div>
           </div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.36rem;color:rgba(255,255,255,.95);text-align:right;">Gebaseerd op ${clvPicks.length} picks<br>+ CLV = betere odds dan markt</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.50rem;color:rgba(255,255,255,.95);text-align:right;">Gebaseerd op ${clvPicks.length} picks<br>+ CLV = betere odds dan markt</div>
         </div>
       </div>` : ''}
 
@@ -1773,14 +1773,14 @@ function renderTripleLockHitrate() {
   card.style.display='block';
 
   const trRow = triples.length ? `
-    <div style="font-family:monospace;font-size:.75rem;font-weight:900;color:${trHr===null?'#94a3b8':trHr>=55?'#00BEC4':trHr>=40?'#d97706':'#dc2626'};">
+    <div style="font-family:monospace;font-size:.77rem;font-weight:900;color:${trHr===null?'#94a3b8':trHr>=55?'#00BEC4':trHr>=40?'#d97706':'#dc2626'};">
       ${trHr !== null ? trHr+'%' : '—'}
     </div>
-    <div style="font-family:monospace;font-size:.48rem;color:rgba(255,255,255,.95);">Triple · ${triples.filter(p=>p.status==='win').length}W/${triples.filter(p=>p.status==='lose').length}V (${triples.length} picks)</div>
+    <div style="font-family:monospace;font-size:.58rem;color:rgba(255,255,255,.95);">Triple · ${triples.filter(p=>p.status==='win').length}W/${triples.filter(p=>p.status==='lose').length}V (${triples.length} picks)</div>
   ` : '';
 
   const dRow = doubles.length ? `
-    <div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.95);margin-top:.4rem;">
+    <div style="font-family:monospace;font-size:.63rem;color:rgba(255,255,255,.95);margin-top:.4rem;">
       🔒 Double · ${dHr !== null ? dHr+'%' : '—'} hitrate · ${doubles.filter(p=>p.status==='win').length}W/${doubles.filter(p=>p.status==='lose').length}V (${doubles.length} picks)
     </div>
   ` : '';
@@ -1789,7 +1789,7 @@ function renderTripleLockHitrate() {
     <div style="display:flex;align-items:center;gap:.75rem;">
       <div style="font-size:1.5rem;">🏆</div>
       <div>
-        <div style="font-family:monospace;font-size:.5rem;color:rgba(255,255,255,.95);margin-bottom:.15rem;">TRIPLE LOCK HITRATE</div>
+        <div style="font-family:monospace;font-size:.60rem;color:rgba(255,255,255,.95);margin-bottom:.15rem;">TRIPLE LOCK HITRATE</div>
         ${trRow}
         ${dRow}
       </div>
@@ -1834,7 +1834,7 @@ function renderBtScoreboard(picks) {
     </div>`;
   }).join('');
   el.style.display='block';
-  el.innerHTML=`<div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.95);margin-bottom:.5rem;">Wins / afgeronde picks · hitrate%</div><div class="bt-scoreboard">${rows}</div>`;
+  el.innerHTML=`<div style="font-family:monospace;font-size:.63rem;color:rgba(255,255,255,.95);margin-bottom:.5rem;">Wins / afgeronde picks · hitrate%</div><div class="bt-scoreboard">${rows}</div>`;
 }
 
 function renderBtCompBreakdown(picks) { /* intern — via setBtSubTab('comps') */ }
@@ -1986,7 +1986,7 @@ function renderValuePicks() {
     el.innerHTML = `
       <div style="text-align:center;padding:3rem 1rem;">
         <div style="font-size:2rem;margin-bottom:.75rem;">⚡</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.95);">
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.66rem;color:rgba(255,255,255,.95);">
           Geen value picks beschikbaar.<br>Voer eerst een Value Scan uit via de Analyse tab.
         </div>
       </div>`;
@@ -2000,7 +2000,7 @@ function renderValuePicks() {
   let html = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;">VALUE PICKS</div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${allPicks.length} picks</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:rgba(255,255,255,.95);">${allPicks.length} picks</div>
     </div>`;
 
   allPicks.forEach(p => {
@@ -2021,10 +2021,10 @@ function renderValuePicks() {
         padding:.9rem 1rem;margin-bottom:.6rem;
         border-left:${lockLv==='triple'?'4px solid #00BEC4':lockLv==='double'?'4px solid #b45309':'1px solid rgba(255,255,255,0.09)'};">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.45rem;color:rgba(255,255,255,.95);">${comp}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:rgba(255,255,255,.95);">${comp}</div>
           <div style="display:flex;gap:.3rem;align-items:center;">
             ${badge}
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;font-weight:800;
               color:${valueClass(value)};background:${valueBg(value)};padding:2px 8px;border-radius:6px;">
               ${valueLbl(value)} +${value.toFixed(1)}%
             </div>
@@ -2033,27 +2033,27 @@ function renderValuePicks() {
         <div style="font-family:\'DM Sans\',sans-serif;font-size:.95rem;font-weight:700;color:#ffffff;margin-bottom:.4rem;">${matchName}</div>
         <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
           <span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#ffffff;">${pick}</span>
-          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${pickLabel}</span>
+          <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:rgba(255,255,255,.95);">${pickLabel}</span>
           <span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00BEC4;margin-left:auto;">${odds}</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.45rem;color:rgba(255,255,255,.95);">
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;color:rgba(255,255,255,.95);">
             Conf: ${'★'.repeat(Math.min(conf,10))}${'☆'.repeat(Math.max(0,10-conf))} ${conf}/10
           </div>
-          ${reason ? `<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);max-width:55%;text-align:right;">${reason}</div>` : ''}
+          ${reason ? `<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);max-width:55%;text-align:right;">${reason}</div>` : ''}
         </div>
         <div style="display:flex;gap:.4rem;">
           <button onclick="quickBetFromValue('${matchId}','${pick}','${pickLabel}',${odds})"
             style="flex:2;padding:.5rem;border-radius:10px;
             background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.8));
-            border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;
+            border:none;font-family:\'IBM Plex Mono\',monospace;font-size:.63rem;
             font-weight:800;color:#fff;cursor:pointer;">
             💰 INZETTEN
           </button>
           <button onclick="addValueToCombiBuilder('${matchId}','${pick}','${pickLabel}',${odds})"
             style="flex:1;padding:.5rem;border-radius:10px;
             background:rgba(0,190,196,.08);border:1px solid rgba(0,190,196,.2);
-            font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:700;color:#00a8ad;cursor:pointer;">
+            font-family:\'IBM Plex Mono\',monospace;font-size:.63rem;font-weight:700;color:#00a8ad;cursor:pointer;">
             + COMBI
           </button>
         </div>
@@ -2179,30 +2179,30 @@ function showCombiSlipOverlay() {
           background:rgba(255,255,255,.05);border:1px solid rgba(28,35,48,.07);
           border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
           <div style="flex:1;min-width:0;">
-            <div style="font-size:.75rem;font-weight:700;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.home||'?'} vs ${l.away||'?'}</div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#00BEC4;font-weight:700;">${l.pickLabel||l.pick}</div>
+            <div style="font-size:.77rem;font-weight:700;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.home||'?'} vs ${l.away||'?'}</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.57rem;color:#00BEC4;font-weight:700;">${l.pickLabel||l.pick}</div>
           </div>
           <div style="display:flex;align-items:center;gap:.5rem;flex-shrink:0;">
             <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">${parseFloat(l.odds).toFixed(2)}</div>
             <button onclick="state.combiBuilder=state.combiBuilder.filter(x=>x.matchId!=='${l.matchId}');saveState();showCombiSlipOverlay();"
-              style="background:none;border:none;color:rgba(255,255,255,.95);cursor:pointer;font-size:.7rem;">✕</button>
+              style="background:none;border:none;color:rgba(255,255,255,.95);cursor:pointer;font-size:.73rem;">✕</button>
           </div>
         </div>`).join('')}
       <div style="display:flex;justify-content:space-between;align-items:center;
         background:rgba(0,190,196,.06);border-radius:8px;padding:.4rem .7rem;margin-top:.3rem;margin-bottom:.5rem;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">€${defaultBet} × ${totalOdds.toFixed(2)}</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:rgba(255,255,255,.95);">€${defaultBet} × ${totalOdds.toFixed(2)}</div>
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00BEC4;">€${payout}</div>
       </div>
       <div style="display:flex;gap:.4rem;">
         <button onclick="switchScreen('wedstrijden');setTimeout(()=>{document.getElementById('combiBuilder')?.scrollIntoView({behavior:'smooth'});if(typeof updateCombiBuilder==='function')updateCombiBuilder();},300);"
           style="flex:1;padding:.5rem;border-radius:10px;background:rgba(0,190,196,.08);
           border:1px solid rgba(0,190,196,.2);font-family:\'IBM Plex Mono\',monospace;
-          font-size:.55rem;font-weight:700;color:#00a8ad;cursor:pointer;">✏ Bewerken</button>
+          font-size:.63rem;font-weight:700;color:#00a8ad;cursor:pointer;">✏ Bewerken</button>
         <button onclick="placeCombiFromOverlay()"
           style="flex:2;padding:.5rem;border-radius:10px;
           background:linear-gradient(135deg,rgba(0,190,196,.9),rgba(0,190,196,.8));
           color:#fff;border:none;font-family:\'IBM Plex Mono\',monospace;
-          font-size:.55rem;font-weight:800;cursor:pointer;">💶 PLAATSEN</button>
+          font-size:.63rem;font-weight:800;cursor:pointer;">💶 PLAATSEN</button>
       </div>
     </div>`;
 }
@@ -2252,33 +2252,33 @@ function openJacksPhotoImport() {
           <h3 style="margin:0;font-size:1rem;">📸 Bookmaker Import</h3>
           <button onclick="closeJacksPhotoImport()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;">✕</button>
         </div>
-        <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.95);margin-bottom:.75rem;line-height:1.7;">
+        <div style="font-family:monospace;font-size:.61rem;color:rgba(255,255,255,.95);margin-bottom:.75rem;line-height:1.7;">
           Screenshot van je bookmaker-betgeschiedenis uploaden — AI leest de bets automatisch uit.
         </div>
         <label style="display:block;width:100%;padding:.65rem;border-radius:12px;text-align:center;
           background:linear-gradient(135deg,rgba(255,140,0,.12),rgba(255,100,0,.08));
           border:2px dashed rgba(255,140,0,.4);cursor:pointer;margin-bottom:.6rem;">
-          <div style="font-family:monospace;font-size:.65rem;font-weight:800;color:#e67e00;">📷 Kies screenshot(s)</div>
-          <div style="font-family:monospace;font-size:.48rem;color:rgba(255,255,255,.95);margin-top:.2rem;">JPG of PNG</div>
+          <div style="font-family:monospace;font-size:.70rem;font-weight:800;color:#e67e00;">📷 Kies screenshot(s)</div>
+          <div style="font-family:monospace;font-size:.58rem;color:rgba(255,255,255,.95);margin-top:.2rem;">JPG of PNG</div>
           <input type="file" accept="image/*" multiple onchange="handleJacksPhotoUpload(event)" style="display:none;">
         </label>
         <div id="jacksPhotoPreview" style="display:none;margin-bottom:.6rem;">
           <img id="jacksPhotoImg" style="width:100%;border-radius:10px;max-height:200px;object-fit:contain;background:rgba(255,255,255,.04);">
         </div>
-        <div id="jacksPhotoStatus" style="font-family:monospace;font-size:.55rem;text-align:center;padding:.5rem;display:none;"></div>
+        <div id="jacksPhotoStatus" style="font-family:monospace;font-size:.63rem;text-align:center;padding:.5rem;display:none;"></div>
         <div id="jacksPhotoBets" style="margin-bottom:.6rem;"></div>
         <div id="jacksPhotoActionBtns" style="display:none;gap:.5rem;margin-top:.5rem;">
           <button onclick="analyseJacksPhotoBets()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
             background:linear-gradient(135deg,rgba(0,190,196,.15),rgba(0,190,196,.08));
             border:1px solid rgba(0,190,196,.35);color:#00BEC4;font-family:monospace;
-            font-size:.56rem;font-weight:800;cursor:pointer;">🤖 Laat Claude analyseren</button>
+            font-size:.64rem;font-weight:800;cursor:pointer;">🤖 Laat Claude analyseren</button>
           <button onclick="confirmJacksPhotoImport()" style="flex:1;padding:.5rem .4rem;border-radius:10px;
             background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
-            color:rgba(255,255,255,.7);font-family:monospace;font-size:.56rem;cursor:pointer;">📥 Direct importeren</button>
+            color:rgba(255,255,255,.7);font-family:monospace;font-size:.64rem;cursor:pointer;">📥 Direct importeren</button>
         </div>
         <div id="jacksPhotoAIAnalyse" style="width:100%;"></div>
         <div style="margin-top:.5rem;">
-          <button onclick="closeJacksPhotoImport()" style="width:100%;padding:.5rem;border-radius:8px;background:rgba(0,0,0,.06);border:1px solid rgba(255,255,255,0.09);cursor:pointer;font-family:monospace;font-size:.6rem;">Annuleer</button>
+          <button onclick="closeJacksPhotoImport()" style="width:100%;padding:.5rem;border-radius:8px;background:rgba(0,0,0,.06);border:1px solid rgba(255,255,255,0.09);cursor:pointer;font-family:monospace;font-size:.66rem;">Annuleer</button>
           <button id="jacksPhotoImportBtn" style="display:none;"></button>
         </div>
       </div>`;
@@ -2404,10 +2404,10 @@ Datum formaat: dd-mm-yyyy`,
           <div style="display:flex;align-items:center;gap:.5rem;">
             <div style="font-size:.9rem;">${statusIcon}</div>
             <div style="flex:1;min-width:0;">
-              <div style="font-family:monospace;font-size:.58rem;font-weight:700;color:#ffffff;">${title}</div>
-              <div style="font-family:monospace;font-size:.46rem;color:rgba(255,255,255,.95);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${sub} · €${b.stake||'?'} · ${b.date||'?'}</div>
+              <div style="font-family:monospace;font-size:.65rem;font-weight:700;color:#ffffff;">${title}</div>
+              <div style="font-family:monospace;font-size:.57rem;color:rgba(255,255,255,.95);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${sub} · €${b.stake||'?'} · ${b.date||'?'}</div>
             </div>
-            <div style="font-family:monospace;font-size:.55rem;font-weight:800;color:${statusColor};">
+            <div style="font-family:monospace;font-size:.63rem;font-weight:800;color:${statusColor};">
               ${b.status === 'gewonnen' ? `+€${((b.payout||0)-(b.stake||0)).toFixed(2)}` :
                 b.status === 'verloren' ? `-€${(b.stake||0).toFixed(2)}` : `→€${b.payout||'?'}`}
             </div>
@@ -2528,7 +2528,7 @@ async function analyseJacksPhotoBets() {
   if (!el) return;
 
   el.innerHTML = `<div style="text-align:center;padding:.75rem 0;">
-    <div style="font-family:monospace;font-size:.52rem;color:rgba(255,255,255,.88);">⏳ Claude analyseert je bets...</div>
+    <div style="font-family:monospace;font-size:.61rem;color:rgba(255,255,255,.88);">⏳ Claude analyseert je bets...</div>
   </div>`;
 
   // Bouw context op — ondersteun zowel combis als enkelvoudige bets
@@ -2585,19 +2585,19 @@ REGELS:
       const secMatch = Object.keys(sectionColors).find(e => trimmed.startsWith(e));
       if (secMatch) {
         const color = sectionColors[secMatch];
-        html += `<div style="font-family:monospace;font-size:.52rem;font-weight:800;color:${color};
+        html += `<div style="font-family:monospace;font-size:.61rem;font-weight:800;color:${color};
           margin:.6rem 0 .25rem;padding:.35rem .5rem;background:${color}15;
           border-left:3px solid ${color};border-radius:0 6px 6px 0;">${trimmed}</div>`;
       } else {
-        html += `<div style="font-family:monospace;font-size:.48rem;color:rgba(255,255,255,.8);line-height:1.75;">${trimmed}</div>`;
+        html += `<div style="font-family:monospace;font-size:.58rem;color:rgba(255,255,255,.8);line-height:1.75;">${trimmed}</div>`;
       }
     });
 
-    el.innerHTML = '<div style="font-family:monospace;font-size:.55rem;color:rgba(255,255,255,.95);text-align:center;padding:.5rem;">✅ Analyse gereed</div>';
+    el.innerHTML = '<div style="font-family:monospace;font-size:.63rem;color:rgba(255,255,255,.95);text-align:center;padding:.5rem;">✅ Analyse gereed</div>';
     renderAnalysePopup(text, 'confirmJacksPhotoImport()');
 
   } catch(e) {
-    el.innerHTML = `<div style="font-family:monospace;font-size:.5rem;color:#ef4444;padding:.5rem;">
+    el.innerHTML = `<div style="font-family:monospace;font-size:.60rem;color:#ef4444;padding:.5rem;">
       Fout bij analyse: ${e.message}</div>`;
   }
 }
@@ -2640,8 +2640,8 @@ function showWalletPopup(type, data) {
   function makeRows(rows) {
     return rows.filter(([,v]) => v && v !== '—').map(([k, v, col]) =>
       `<div style="display:flex;justify-content:space-between;align-items:center;padding:.4rem 0;border-bottom:1px solid var(--card-bg,rgba(0,0,0,.06));">
-        <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);">${k}</div>
-        <div style="font-family:monospace;font-size:.52rem;font-weight:700;color:${col||'var(--ink,#0f172a)'};">${v}</div>
+        <div style="font-family:monospace;font-size:.58rem;color:var(--sub,#64748b);">${k}</div>
+        <div style="font-family:monospace;font-size:.61rem;font-weight:700;color:${col||'var(--ink,#0f172a)'};">${v}</div>
       </div>`).join('');
   }
 
@@ -2650,7 +2650,7 @@ function showWalletPopup(type, data) {
     const statusColor = p.status==='win'?'#00BEC4':p.status==='lose'?'#dc2626':'#d97706';
     const icon = p.status==='win'?'✅':p.status==='lose'?'❌':'⏳';
     headerHtml = `<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${p.matchName||'Pick'}</div>
-      <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">📅 ${p.date||''}${p.matchTime||p.time ? ' ' + (p.matchTime||p.time) : ''} · ${p.comp||''}</div>`;
+      <div style="font-family:monospace;font-size:.58rem;color:var(--sub,#64748b);margin-top:.1rem;">📅 ${p.date||''}${p.matchTime||p.time ? ' ' + (p.matchTime||p.time) : ''} · ${p.comp||''}</div>`;
     bodyHtml = makeRows([
       ['Pick', p.pickLabel||p.pick||'—', null],
       ['Quote', p.odds||'—', null],
@@ -2664,8 +2664,8 @@ function showWalletPopup(type, data) {
     ]);
     if (p.reason) {
       bodyHtml += `<div style="background:rgba(0,190,196,.05);border-left:3px solid #2563eb;border-radius:0 8px 8px 0;padding:.5rem .7rem;margin-top:.6rem;">
-        <div style="font-family:monospace;font-size:.44rem;color:#1d4ed8;font-weight:700;margin-bottom:.2rem;">REDEN</div>
-        <div style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;color:var(--ink,#0f172a);line-height:1.6;">${p.reason}</div>
+        <div style="font-family:monospace;font-size:.55rem;color:#1d4ed8;font-weight:700;margin-bottom:.2rem;">REDEN</div>
+        <div style="font-family:\'DM Sans\',sans-serif;font-size:.70rem;color:var(--ink,#0f172a);line-height:1.6;">${p.reason}</div>
       </div>`;
     }
     // Signalen sectie
@@ -2673,9 +2673,9 @@ function showWalletPopup(type, data) {
       const signals = buildPickReasons(p);
       if (signals.length) {
         bodyHtml += `<div style="margin-top:.6rem;">
-          <div style="font-family:monospace;font-size:.44rem;font-weight:700;color:rgba(255,255,255,.95);margin-bottom:.3rem;">SIGNALEN</div>
+          <div style="font-family:monospace;font-size:.55rem;font-weight:700;color:rgba(255,255,255,.95);margin-bottom:.3rem;">SIGNALEN</div>
           <div style="display:flex;flex-wrap:wrap;gap:.25rem;">
-            ${signals.map(s => `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
+            ${signals.map(s => `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.57rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
           </div>
         </div>`;
       }
@@ -2684,7 +2684,7 @@ function showWalletPopup(type, data) {
     const allPicks = state.valueBacktest?.picks || [];
     const settled = allPicks.filter(x => x.status==='win'||x.status==='lose');
     if (settled.length >= 2) {
-      bodyHtml += `<div style="margin-top:.8rem;"><div style="font-family:monospace;font-size:.46rem;font-weight:700;color:rgba(255,255,255,.95);margin-bottom:.3rem;">ROI CURVE</div>
+      bodyHtml += `<div style="margin-top:.8rem;"><div style="font-family:monospace;font-size:.57rem;font-weight:700;color:rgba(255,255,255,.95);margin-bottom:.3rem;">ROI CURVE</div>
         <canvas id="popupBtChart" height="70" style="width:100%;border-radius:8px;"></canvas></div>`;
     }
 
@@ -2696,7 +2696,7 @@ function showWalletPopup(type, data) {
     const pnlColor = b.status==='pending' ? '#d97706' : pmxIsPush(b) ? '#b45309' : pnlVal>0 ? '#00BEC4' : pnlVal<0 ? '#dc2626' : '#94a3b8';
     const icon = b.status==='win'?'✅':b.status==='lose'?'❌':'⏳';
     headerHtml = `<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;color:var(--ink,#0f172a);">${icon} ${b.match||'Weddenschap'}</div>
-      <div style="font-family:monospace;font-size:.48rem;color:var(--sub,#64748b);margin-top:.1rem;">${b.date||''} · ${b.bookmaker||''}</div>`;
+      <div style="font-family:monospace;font-size:.58rem;color:var(--sub,#64748b);margin-top:.1rem;">${b.date||''} · ${b.bookmaker||''}</div>`;
     bodyHtml = makeRows([
       ['Pick', b.pick||'—', null],
       ['Quote', b.odds||'—', null],
@@ -2709,16 +2709,16 @@ function showWalletPopup(type, data) {
       ['Testbet', pmxIsTest(b) ? '🧪 ja — telt niet mee' : '—', pmxIsTest(b) ? '#f59e0b' : null],
     ]);
     // v26.303: markeer/ontmarkeer als testbet
-    bodyHtml += `<button onclick="toggleTrackerTest(${b.id})" style="width:100%;margin-top:.7rem;background:${pmxIsTest(b)?'rgba(0,190,196,.12)':'rgba(217,119,6,.12)'};border:1px solid ${pmxIsTest(b)?'rgba(0,190,196,.45)':'rgba(217,119,6,.45)'};color:${pmxIsTest(b)?'#00BEC4':'#f59e0b'};border-radius:10px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:700;cursor:pointer;">${pmxIsTest(b)?'✅ Testmarkering weghalen (telt weer mee)':'🧪 Markeer als testbet (telt niet mee)'}</button>`;
+    bodyHtml += `<button onclick="toggleTrackerTest(${b.id})" style="width:100%;margin-top:.7rem;background:${pmxIsTest(b)?'rgba(0,190,196,.12)':'rgba(217,119,6,.12)'};border:1px solid ${pmxIsTest(b)?'rgba(0,190,196,.45)':'rgba(217,119,6,.45)'};color:${pmxIsTest(b)?'#00BEC4':'#f59e0b'};border-radius:10px;padding:.5rem;font-family:'IBM Plex Mono',monospace;font-size:.61rem;font-weight:700;cursor:pointer;">${pmxIsTest(b)?'✅ Testmarkering weghalen (telt weer mee)':'🧪 Markeer als testbet (telt niet mee)'}</button>`;
     if (b.legs && b.legs.length) {
-      bodyHtml += `<div style="font-family:monospace;font-size:.48rem;font-weight:700;color:rgba(255,255,255,.95);margin:.7rem 0 .3rem;">COMBI LEGS</div>`;
+      bodyHtml += `<div style="font-family:monospace;font-size:.58rem;font-weight:700;color:rgba(255,255,255,.95);margin:.7rem 0 .3rem;">COMBI LEGS</div>`;
       b.legs.forEach((l,i) => {
         const lc = l.status==='win'?'#00BEC4':l.status==='lose'?'#dc2626':'#d97706';
         bodyHtml += `<div style="background:var(--card-bg,rgba(0,0,0,.03));border-radius:10px;padding:.5rem .7rem;margin-bottom:.3rem;">
-          <div style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;font-weight:600;">${l.match||'Leg '+(i+1)}</div>
+          <div style="font-family:\'DM Sans\',sans-serif;font-size:.70rem;font-weight:600;">${l.match||'Leg '+(i+1)}</div>
           <div style="display:flex;justify-content:space-between;margin-top:.2rem;">
-            <div style="font-family:monospace;font-size:.46rem;color:rgba(255,255,255,.95);">${l.pick} @ ${l.odds}</div>
-            <div style="font-family:monospace;font-size:.46rem;font-weight:700;color:${lc};">${l.status==='win'?'WIN':l.status==='lose'?'VERLIES':'OPEN'}</div>
+            <div style="font-family:monospace;font-size:.57rem;color:rgba(255,255,255,.95);">${l.pick} @ ${l.odds}</div>
+            <div style="font-family:monospace;font-size:.57rem;font-weight:700;color:${lc};">${l.status==='win'?'WIN':l.status==='lose'?'VERLIES':'OPEN'}</div>
           </div></div>`;
       });
     }

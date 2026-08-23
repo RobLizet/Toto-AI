@@ -66,7 +66,7 @@ function renderCLVBadge(p) {
   const pos = clv > 0;
   const color = pos ? '#00BEC4' : '#dc2626';
   const slotOdds = p.odds ? (parseFloat(p.odds) / (1 + clv / 100)).toFixed(2) : null;
-  return `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;
+  return `<span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;
     color:${color};background:${color}18;border:1px solid ${color}33;
     border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">
     ${pos ? '✓' : '✗'} CLV ${pos ? '+' : ''}${clv.toFixed(1)}%${slotOdds ? ` → sloot ${slotOdds}` : ''}
@@ -103,13 +103,13 @@ function renderSharpBadge(p) {
 
   // Steam tag
   const steamTag = hasSteam
-    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;
+    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;
         color:#dc2626;background:rgba(220,38,38,.10);border:1px solid rgba(220,38,38,.22);
         border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">
         🔴 STEAM ${move.toFixed(1)}%
       </span>`
     : hasDrift
-    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;
+    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;
         color:#64748b;background:rgba(100,116,139,.08);border:1px solid rgba(100,116,139,.2);
         border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">
         ↑ DRIFT +${move.toFixed(1)}%
@@ -118,7 +118,7 @@ function renderSharpBadge(p) {
 
   // Score tag
   const scoreTag = score !== null
-    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;
+    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;
         color:${cfg.color};background:${cfg.bg};border:1px solid ${cfg.color}33;
         border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">
         ${cfg.icon} ${cfg.label} ${Math.round(score)}/100
@@ -127,7 +127,7 @@ function renderSharpBadge(p) {
 
   // Divergentie tag
   const divTag = div !== null && div >= 6
-    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;
+    ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;
         color:rgba(255,255,255,.45);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
         border-radius:5px;padding:.08rem .3rem;white-space:nowrap;">
         📐 model ↔ markt ${div.toFixed(1)}pp
@@ -177,7 +177,7 @@ function renderPickReasons(p) {
   const signals = buildPickReasons(p);
   if (!signals.length) return '';
   return `<div style="display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.35rem;">
-    ${signals.map(s => `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
+    ${signals.map(s => `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;background:${s.color}18;color:${s.color};border:1px solid ${s.color}33;border-radius:6px;padding:.1rem .35rem;white-space:nowrap;">${s.icon} ${s.text}</span>`).join('')}
   </div>`;
 }
 
@@ -217,13 +217,13 @@ function renderPickWeighting(p) {
   const f = pickWeightFactors(p);
   if (f.length < 2) return '';
   let html = '<div style="margin-top:.4rem;padding:.4rem .5rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;">';
-  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.45);margin-bottom:.3rem;">GEWOGEN UITLEG</div>';
+  html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.45);margin-bottom:.3rem;">GEWOGEN UITLEG</div>';
   f.forEach(x => {
     const c = x.pct >= 60 ? '#00BEC4' : x.pct >= 40 ? '#d97706' : '#64748b';
     html += '<div style="display:flex;align-items:center;gap:.45rem;margin-bottom:.22rem;">';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.6);min-width:46px;">' + x.label + '</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.6);min-width:46px;">' + x.label + '</div>';
     html += '<div style="flex:1;background:#0f2230;border-radius:999px;height:5px;overflow:hidden;"><div style="background:' + c + ';height:100%;width:' + x.pct + '%;border-radius:999px;"></div></div>';
-    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.55);min-width:64px;text-align:right;">' + x.sub + '</div>';
+    html += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.55);min-width:64px;text-align:right;">' + x.sub + '</div>';
     html += '</div>';
   });
   html += '</div>';
@@ -399,19 +399,19 @@ function renderDashboard() {
     const _livePicks = (_latestScan.picks||[]).filter(p => !matchHasStarted(p)); // v26.123: geen verleden wedstrijden
     const lp = _livePicks.slice().sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,5);
     let h = '<div class="dash-soft" style="background:rgba(255,255,255,0.05);border:1px solid rgba(0,190,196,.25);border-radius:16px;padding:.8rem 1rem;margin-bottom:.75rem;">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.55);">🔍 LAATSTE SCAN'+(t?' · '+t:'')+'</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.88);">'+_livePicks.length+' picks</div></div>';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.61rem;font-weight:800;color:rgba(255,255,255,.55);">🔍 LAATSTE SCAN'+(t?' · '+t:'')+'</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.57rem;color:rgba(255,255,255,.88);">'+_livePicks.length+' picks</div></div>';
     lp.forEach(p => {
       const v = Math.round(p.value||0); const sign = v>=0?'+':'';
       const light = (p.isSparseData || (p.confidence||0) < 6 || (p.value||0) < 8);
-      const badge = light ? '<span style="font-size:.46rem;color:#d97706;border:1px solid rgba(217,119,6,.4);border-radius:4px;padding:0 .25rem;margin-left:.3rem;vertical-align:middle;">licht</span>' : '';
+      const badge = light ? '<span style="font-size:.57rem;color:#d97706;border:1px solid rgba(217,119,6,.4);border-radius:4px;padding:0 .25rem;margin-left:.3rem;vertical-align:middle;">licht</span>' : '';
       const q = (p.match||'').replace(/'/g,'');
       const vcol = v>=8?'#00BEC4':(v>=0?'#94a3b8':'#ef4444');
       h += '<div onclick="openScanLog(\''+q+'\')" style="display:flex;align-items:center;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,.07);cursor:pointer;">';
-      h += '<div style="flex:1;min-width:0;padding-right:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(p.match||'?')+badge+'</div>';
-      h += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">'+tPick(p.pickLabel||p.pick||'')+' · @'+(Number(p.odds)||0).toFixed(2)+'</div></div>';
+      h += '<div style="flex:1;min-width:0;padding-right:.5rem;"><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+(p.match||'?')+badge+'</div>';
+      h += '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">'+tPick(p.pickLabel||p.pick||'')+' · @'+(Number(p.odds)||0).toFixed(2)+'</div></div>';
       h += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:.95rem;color:'+vcol+';">'+sign+v+'%</div></div>';
     });
-    h += '<div onclick="openScanLog(\'\')" style="text-align:center;margin-top:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:#00BEC4;cursor:pointer;">Volledige scan-log →</div>';
+    h += '<div onclick="openScanLog(\'\')" style="text-align:center;margin-top:.5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.57rem;color:#00BEC4;cursor:pointer;">Volledige scan-log →</div>';
     h += '</div>';
     return h;
   })() : '';
@@ -485,7 +485,7 @@ function renderDashboard() {
     <!-- v26.349: de taalknop beloofde een Engelse app en levert er een halve. GEMETEN: 294 zichtbare
          Nederlandse teksten hangen niet aan t(), en de analyses zelf blijven sowieso Nederlands.
          Deze regel verschijnt UITSLUITEND in de Engelse app; in het Nederlands rendert er niets. -->
-    ${_dashLang === 'en' ? `<div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#d97706;margin:-.35rem 0 .6rem;line-height:1.35;">${t('dash.langpartial','\u26a0 Interface partly translated \u2014 several screens and all match analyses are still in Dutch.')}</div>` : ''}
+    ${_dashLang === 'en' ? `<div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:#d97706;margin:-.35rem 0 .6rem;line-height:1.35;">${t('dash.langpartial','\u26a0 Interface partly translated \u2014 several screens and all match analyses are still in Dutch.')}</div>` : ''}
 
     <!-- v26.222: dashboard-tabs (OVERZICHT/LIVE) verwijderd op verzoek — overzicht-inhoud staat direct getoond -->
 
@@ -497,80 +497,80 @@ function renderDashboard() {
       onclick="showPicksModal()">
       ${cv ? `
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">⚽ ${t('dash.gonogo','GO/NO-GO')} · <span style="color:#00BEC4;">${t('dash.clubera','CLUBTIJDPERK')}</span></div>
-        <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.61rem;font-weight:800;color:rgba(255,255,255,.95);">⚽ ${t('dash.gonogo','GO/NO-GO')} · <span style="color:#00BEC4;">${t('dash.clubera','CLUBTIJDPERK')}</span></div>
+        <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;">
         <div style="flex:1;">
           <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:${_clvColor(cv.avg_clv)};">${_cvNum(cv.avg_clv,'%',true)}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">${t('dash.gemclv','GEM. CLV')} · n=${cv.met_clv}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.85);margin-top:.35rem;">${t('dash.nog','nog')} ${cv.nog} ${t('dash.naar','naar')} ${cv.doel}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--muted);margin-top:.15rem;">${t('dash.gemclv','GEM. CLV')} · n=${cv.met_clv}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.85);margin-top:.35rem;">${t('dash.nog','nog')} ${cv.nog} ${t('dash.naar','naar')} ${cv.doel}</div>
         </div>
         <div style="position:relative;width:58px;height:58px;flex-shrink:0;">
           <svg width="58" height="58" viewBox="0 0 58 58" style="transform:rotate(-90deg);">
             <circle fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5" cx="29" cy="29" r="23"/>
             <circle fill="none" stroke="#00BEC4" stroke-width="5" cx="29" cy="29" r="23" stroke-dasharray="145" stroke-dashoffset="${Math.round(145 - 145 * Math.max(0, Math.min(100, Number(cv.pct) || 0)) / 100)}" stroke-linecap="round"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;"><div style="font-family:Bebas Neue,sans-serif;font-size:1.25rem;color:#00BEC4;">${cv.settled}</div><div style="font-family:IBM Plex Mono,monospace;font-size:.46rem;color:rgba(255,255,255,.45);margin-top:1px;">/${cv.doel}</div></div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;"><div style="font-family:Bebas Neue,sans-serif;font-size:1.25rem;color:#00BEC4;">${cv.settled}</div><div style="font-family:IBM Plex Mono,monospace;font-size:.57rem;color:rgba(255,255,255,.45);margin-top:1px;">/${cv.doel}</div></div>
         </div>
       </div>
       <div style="height:5px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:.5rem;overflow:hidden;">
         <div style="height:100%;width:${Math.max(0, Math.min(100, Number(cv.pct) || 0))}%;background:linear-gradient(90deg,#00BEC4,#00e5c8);border-radius:3px;"></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(255,255,255,0.09);margin-top:.6rem;padding-top:.5rem;">
-        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:${_hitColorClub(cv.hitrate_pct === null || cv.hitrate_pct === undefined ? null : Number(cv.hitrate_pct))};line-height:1;">${_cvNum(cv.hitrate_pct,'%')}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
-        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:${_roiColor(cv.roi_pct === null || cv.roi_pct === undefined ? null : Number(cv.roi_pct))};line-height:1;">${_cvNum(cv.roi_pct,'%',true)}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
-        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#ffffff;line-height:1;">${cv.met_clv}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);margin-top:.15rem;">MET CLV</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:${_hitColorClub(cv.hitrate_pct === null || cv.hitrate_pct === undefined ? null : Number(cv.hitrate_pct))};line-height:1;">${_cvNum(cv.hitrate_pct,'%')}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:${_roiColor(cv.roi_pct === null || cv.roi_pct === undefined ? null : Number(cv.roi_pct))};line-height:1;">${_cvNum(cv.roi_pct,'%',true)}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#ffffff;line-height:1;">${cv.met_clv}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--muted);margin-top:.15rem;">MET CLV</div></div>
       </div>
-      ${typeof cv.onspeelbaar_uitgesloten === 'number' && cv.onspeelbaar_uitgesloten > 0 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:#f59e0b;text-align:center;margin-top:.35rem;">${cv.onspeelbaar_uitgesloten} ${t('dash.onspeelbaar','picks niet meegeteld (ontstonden na de aftrap)')}</div>` : ''}
-      ${cv.settled < 30 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.42rem;color:var(--muted);text-align:center;margin-top:.2rem;opacity:.85;">${t('dash.teweinig','te weinig picks voor conclusies')}</div>` : ''}
+      ${typeof cv.onspeelbaar_uitgesloten === 'number' && cv.onspeelbaar_uitgesloten > 0 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:#f59e0b;text-align:center;margin-top:.35rem;">${cv.onspeelbaar_uitgesloten} ${t('dash.onspeelbaar','picks niet meegeteld (ontstonden na de aftrap)')}</div>` : ''}
+      ${cv.settled < 30 ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:var(--muted);text-align:center;margin-top:.2rem;opacity:.85;">${t('dash.teweinig','te weinig picks voor conclusies')}</div>` : ''}
       ` : `
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;padding-right:.5rem;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🎯 ${t('dash.progress1','VOORTGANG NAAR')} <span style="color:#00BEC4;">100</span> ${t('dash.progress2','PICKS')}</div>
-            <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.61rem;font-weight:800;color:rgba(255,255,255,.95);">🎯 ${t('dash.progress1','VOORTGANG NAAR')} <span style="color:#00BEC4;">100</span> ${t('dash.progress2','PICKS')}</div>
+            <button onclick="event.stopPropagation();openPicksInsight()" style="width:22px;height:22px;border-radius:50%;background:rgba(220,38,38,.15);border:1.5px solid rgba(220,38,38,.5);color:#ef4444;font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">?</button>
           </div>
           <div style="background:rgba(255,255,255,.08);border-radius:999px;height:7px;overflow:hidden;margin-bottom:.35rem;">
             <div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#00BEC4,#00e5c8);width:${Math.min(100, kwaliPicks.length)}%;transition:width .4s;"></div>
           </div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">${kwaliPicks.length > 0 ? kwaliPicks.length + '/100 picks' + (settledPicks.length > 0 ? ' · ' + settledPicks.length + ' ' + t('dash.settled','afgerond') : '') : t('dash.scanprompt','Scan wedstrijden →')}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">${kwaliPicks.length > 0 ? kwaliPicks.length + '/100 picks' + (settledPicks.length > 0 ? ' · ' + settledPicks.length + ' ' + t('dash.settled','afgerond') : '') : t('dash.scanprompt','Scan wedstrijden →')}</div>
         </div>
         <div style="position:relative;width:58px;height:58px;flex-shrink:0;">
           <svg width="58" height="58" viewBox="0 0 58 58" style="transform:rotate(-90deg);">
             <circle fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5" cx="29" cy="29" r="23"/>
             <circle fill="none" stroke="#00BEC4" stroke-width="5" cx="29" cy="29" r="23" stroke-dasharray="145" stroke-dashoffset="${Math.round(145 - 145 * Math.min(100, kwaliPicks.length) / 100)}" stroke-linecap="round"/>
           </svg>
-          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;"><div style="font-family:Bebas Neue,sans-serif;font-size:1.25rem;color:#00BEC4;">${kwaliPicks.length}</div><div style="font-family:IBM Plex Mono,monospace;font-size:.46rem;color:rgba(255,255,255,.45);margin-top:1px;">/100</div></div>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;"><div style="font-family:Bebas Neue,sans-serif;font-size:1.25rem;color:#00BEC4;">${kwaliPicks.length}</div><div style="font-family:IBM Plex Mono,monospace;font-size:.57rem;color:rgba(255,255,255,.45);margin-top:1px;">/100</div></div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,0.09);margin-top:.55rem;padding-top:.5rem;">
-        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#ffffff;line-height:1;">${kwaliPicks.filter(p=>!p.status||p.status==='pending').length}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">OPEN</div></div>
-        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${_hitColor(scanHitrate)};line-height:1;">${scanHitrate !== null ? scanHitrate+'%' : '—'}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
-        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${_roiColor(scanROI)};line-height:1;">${scanROI !== null ? (scanROI>=0?'+':'')+scanROI.toFixed(1)+'%' : '—'}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
-        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${winStreak >= 3 ? '#00BEC4' : winStreak >= 1 ? '#f59e0b' : '#ffffff'};line-height:1;">${winStreak > 0 ? '🔥'+winStreak : winPicks.length+'/'+settledPicks.length}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);margin-top:.15rem;">${winStreak > 0 ? 'STREAK' : 'W/L'}</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#ffffff;line-height:1;">${kwaliPicks.filter(p=>!p.status||p.status==='pending').length}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--muted);margin-top:.15rem;">OPEN</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${_hitColor(scanHitrate)};line-height:1;">${scanHitrate !== null ? scanHitrate+'%' : '—'}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--muted);margin-top:.15rem;">HITRATE</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${_roiColor(scanROI)};line-height:1;">${scanROI !== null ? (scanROI>=0?'+':'')+scanROI.toFixed(1)+'%' : '—'}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--muted);margin-top:.15rem;">ROI</div></div>
+        <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:${winStreak >= 3 ? '#00BEC4' : winStreak >= 1 ? '#f59e0b' : '#ffffff'};line-height:1;">${winStreak > 0 ? '🔥'+winStreak : winPicks.length+'/'+settledPicks.length}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--muted);margin-top:.15rem;">${winStreak > 0 ? 'STREAK' : 'W/L'}</div></div>
       </div>
       `}
       <div onclick="toggleDashDetails(event)" style="display:flex;align-items:center;justify-content:center;gap:.3rem;margin-top:.55rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);cursor:pointer;">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.6);">${t('dash.moredetails','meer details')}</span>
-        <span id="dashDetailsArrow" style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.6);">${state._dashDetailsOpen ? '▴' : '▾'}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.6);">${t('dash.moredetails','meer details')}</span>
+        <span id="dashDetailsArrow" style="font-family:'IBM Plex Mono',monospace;font-size:.60rem;color:rgba(255,255,255,.6);">${state._dashDetailsOpen ? '▴' : '▾'}</span>
       </div>
       <div id="dashDetails" style="display:${state._dashDetailsOpen ? 'block' : 'none'};">
-        ${cv ? `<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:rgba(255,255,255,.7);text-align:center;">
+        ${cv ? `<div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:rgba(255,255,255,.7);text-align:center;">
           ${t('dash.allpicks','alle picks (levenslang)')}: <span style="color:rgba(255,255,255,.95);">${settledPicks.length}</span> · <span style="color:${_hitColor(scanHitrate)};">${scanHitrate!==null?scanHitrate+'%':'—'}</span> · <span style="color:${_roiColor(scanROI)};">${scanROI!==null?(scanROI>=0?'+':'')+scanROI.toFixed(1)+'%':'—'}</span>
-          <div style="color:var(--muted);font-size:.4rem;margin-top:.2rem;">${t('dash.allpicksnote2','incl. WK/kwalificatie — niet de validatie')}</div>
+          <div style="color:var(--muted);font-size:.53rem;margin-top:.2rem;">${t('dash.allpicksnote2','incl. WK/kwalificatie — niet de validatie')}</div>
         </div>` : ''}
         <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap;">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">🤖 ${t('dash.aicalib2','AI GEKALIBREERD')}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.57rem;color:rgba(255,255,255,.95);">🤖 ${t('dash.aicalib2','AI GEKALIBREERD')}</span>
           ${(calib && calib.gemeten === true)
-            ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${calib.competities_gekalibreerd > 0 ? '#00BEC4' : '#f59e0b'};">${calib.competities_gekalibreerd}/${calib.competities_met_picks} ${t('dash.comps','comp.')}</span>`
-              + (calib.dichtstbij ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.44rem;color:var(--muted);width:100%;text-align:center;margin-top:.2rem;">${calib.dichtstbij.naam}: ${t('dash.nog','nog')} ${calib.dichtstbij.nog} ${t('dash.picks','picks')}</span>` : '')
-            : `<span style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:var(--muted);">${t('dash.nietgemeten','niet gemeten')}</span>`}
+            ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:800;color:${calib.competities_gekalibreerd > 0 ? '#00BEC4' : '#f59e0b'};">${calib.competities_gekalibreerd}/${calib.competities_met_picks} ${t('dash.comps','comp.')}</span>`
+              + (calib.dichtstbij ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--muted);width:100%;text-align:center;margin-top:.2rem;">${calib.dichtstbij.naam}: ${t('dash.nog','nog')} ${calib.dichtstbij.nog} ${t('dash.picks','picks')}</span>` : '')
+            : `<span style="font-family:'IBM Plex Mono',monospace;font-size:.60rem;color:var(--muted);">${t('dash.nietgemeten','niet gemeten')}</span>`}
         </div>
         ${state._clvSummary && Number(state._clvSummary.picks) >= 20 ? `<div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,0.07);flex-wrap:wrap;">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.95);">📈 ${t('dash.gemclvglobal','GEM. CLV (globaal)')}</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;color:${_clvColor(state._clvSummary.avgCLV)};">${Number(state._clvSummary.avgCLV)>=0?'+':''}${state._clvSummary.avgCLV}%</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:.46rem;color:rgba(255,255,255,.88);">· ${state._clvSummary.pctBeatClose}% beat close · n=${state._clvSummary.picks}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.57rem;color:rgba(255,255,255,.95);">📈 ${t('dash.gemclvglobal','GEM. CLV (globaal)')}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:800;color:${_clvColor(state._clvSummary.avgCLV)};">${Number(state._clvSummary.avgCLV)>=0?'+':''}${state._clvSummary.avgCLV}%</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.57rem;color:rgba(255,255,255,.88);">· ${state._clvSummary.pctBeatClose}% beat close · n=${state._clvSummary.picks}</span>
         </div>` : ''}
       </div>
     </div>
@@ -582,9 +582,9 @@ function renderDashboard() {
       onclick="(function(){var mid=(topValuePick&&(topValuePick.match?.id||topValuePick.matchId||topValuePick.fixtureId||''));switchScreen('analyse');setTimeout(()=>{showAnalyseSubTab('scan');if(mid&&typeof openValueAnalysis==='function')openValueAnalysis(mid);},150);})()">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;">
         <div style="flex:1;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.48rem;font-weight:800;color:#00BEC4;margin-bottom:.2rem;">⚡ ${t('dash.bestvalue','BESTE VALUE PICK')}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;font-weight:800;color:#00BEC4;margin-bottom:.2rem;">⚡ ${t('dash.bestvalue','BESTE VALUE PICK')}</div>
           <div style="font-family:\'DM Sans\',sans-serif;font-size:.8rem;font-weight:700;color:#ffffff;">${topValuePick.match?.home||topValuePick.home||'?'} vs ${topValuePick.match?.away||topValuePick.away||'?'}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);margin-top:.15rem;">${tPick(topValuePick.pickLabel||topValuePick.pick)} · conf ${topValuePick.confidence||'?'}/10</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:rgba(255,255,255,.95);margin-top:.15rem;">${tPick(topValuePick.pickLabel||topValuePick.pick)} · conf ${topValuePick.confidence||'?'}/10</div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.4rem;color:#00BEC4;">+${Math.round(topValuePick.value||0)}%</div>
@@ -684,23 +684,23 @@ function renderDashboard() {
     <!-- Weekoverzicht -->
     ${weekScans.length ? `
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;font-weight:800;color:rgba(255,255,255,.95);margin-bottom:.5rem;">${t('dash.thisweek','📅 DEZE WEEK')}</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;font-weight:800;color:rgba(255,255,255,.95);margin-bottom:.5rem;">${t('dash.thisweek','📅 DEZE WEEK')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.4rem;">
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">${weekScans.length}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">SCANS</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">SCANS</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00a8ad;">${weekPicksArr.length}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">PICKS</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">PICKS</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:${weekHR!==null&&weekHR>=50?'#00BEC4':'#dc2626'};">${weekHR !== null ? weekHR+'%' : '—'}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">HITRATE</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">HITRATE</div>
         </div>
         <div style="text-align:center;background:rgba(15,23,42,.04);border-radius:10px;padding:.4rem;">
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;">${weekOpen}</div>
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">OPEN</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">OPEN</div>
         </div>
       </div>
     </div>` : ''}
@@ -708,12 +708,12 @@ function renderDashboard() {
     <!-- v26.297: TRACKRECORD-kaart samengevoegd in de bovenste VOORTGANG-kaart (hitrate/ROI waren 1-op-1 dubbel; AI-calibratie zit nu als chip in die kaart) -->
 
     <!-- Disclaimer -->
-    <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.95);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid rgba(255,255,255,0.09);margin-top:.5rem;">
+    <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.57rem;color:rgba(255,255,255,.95);text-align:center;padding:.75rem;line-height:1.6;border-top:1px solid rgba(255,255,255,0.09);margin-top:.5rem;">
       ⚠️ ${t('dash.onlyfor','Uitsluitend voor')} <b>${t('dash.disclaimer1','entertainment & educatie')}</b> · <a href="Disclaimer.html" target="_blank" rel="noopener" style="color:inherit;">${t('dash.disclaimer2','Geen echt gokadvies')}</a><br>
       ${t('dash.playresp','Speel verantwoord')} · 18+ · ${t('dash.helpline','Verslavingslijn')}: 0900-1090
     </div>
 
-    <div style="font-family:'Dancing Script',cursive;font-size:.75rem;color:rgba(255,255,255,.95);text-align:center;padding:.5rem 0 1rem;">
+    <div style="font-family:'Dancing Script',cursive;font-size:.77rem;color:rgba(255,255,255,.95);text-align:center;padding:.5rem 0 1rem;">
       Made by Rob Borghouts
     </div>
     </div><!-- /dashOverviewContent -->
@@ -721,10 +721,10 @@ function renderDashboard() {
     <!-- Live scores content -->
     <div id="dashLiveContent" style="display:none;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;">
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;font-weight:800;color:rgba(255,255,255,.95);">🔴 ${t('dash.livescores','LIVE STANDEN VAN JE PICKS')}</div>
-        <button onclick="loadLiveScores()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.25rem .5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.95);cursor:pointer;">⟳ ${t('dash.refresh','Ververs')}</button>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.61rem;font-weight:800;color:rgba(255,255,255,.95);">🔴 ${t('dash.livescores','LIVE STANDEN VAN JE PICKS')}</div>
+        <button onclick="loadLiveScores()" style="background:none;border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:.25rem .5rem;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.95);cursor:pointer;">⟳ ${t('dash.refresh','Ververs')}</button>
       </div>
-      <div id="liveScoresList"><div style="text-align:center;padding:2rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">${t('dash.taplive','Tik op LIVE om standen te laden...')}</div></div>
+      <div id="liveScoresList"><div style="text-align:center;padding:2rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;">${t('dash.taplive','Tik op LIVE om standen te laden...')}</div></div>
     </div>
   `;
 
@@ -752,8 +752,8 @@ function renderDailyTipCard(tip) {
         <div style="display:flex;align-items:center;gap:.5rem;">
           <div style="font-size:1.1rem;">🎯</div>
           <div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.56rem;font-weight:800;color:rgba(255,255,255,.95);">TIP VAN DE DAG</div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);">${t('dash.noqualpick','Vandaag geen gekwalificeerde pick — scan meer wedstrijden.')}</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.64rem;font-weight:800;color:rgba(255,255,255,.95);">TIP VAN DE DAG</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:rgba(255,255,255,.95);">${t('dash.noqualpick','Vandaag geen gekwalificeerde pick — scan meer wedstrijden.')}</div>
           </div>
         </div>
       </div>`;
@@ -771,20 +771,20 @@ function renderDailyTipCard(tip) {
       onclick="switchScreen('analyse');setTimeout(()=>{showAnalyseSubTab('scan');if(tip&&tip.fixtureId&&typeof openValueAnalysis==='function')openValueAnalysis(tip.fixtureId);},150)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem;">
         <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;color:#00BEC4;letter-spacing:.04em;">🎯 ${t('dash.tipofday','TIP VAN DE DAG')}</div>
-        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.42rem;color:rgba(255,255,255,.95);">${isToday ? 'Vandaag' : (tip.date||'')}</div>
+        <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.95);">${isToday ? 'Vandaag' : (tip.date||'')}</div>
       </div>
       <div style="font-family:\'DM Sans\',sans-serif;font-size:.85rem;font-weight:800;color:#ffffff;margin-bottom:.3rem;">${tip.match||'?'}</div>
       <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.45rem;">
         <span style="background:rgba(0,190,196,.12);border:1px solid rgba(0,190,196,.25);
-          color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;font-weight:800;
+          color:#00BEC4;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;
           border-radius:8px;padding:.2rem .5rem;">${tPick(tip.pickLabel)||'?'}</span>
         <span style="font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;color:#00BEC4;">${tip.odds||'?'}</span>
-        <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;font-weight:800;color:${valColor};">+${Math.round(tip.value||0)}%</span>
-        <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:#f59e0b;margin-left:auto;">${stars}</span>
+        <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:800;color:${valColor};">+${Math.round(tip.value||0)}%</span>
+        <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.66rem;color:#f59e0b;margin-left:auto;">${stars}</span>
       </div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:rgba(255,255,255,.95);line-height:1.65;">${tip.analyse||tip.tip||''}</div>
-      ${tip.zwakPunt ? `<div style="margin-top:.35rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;padding:.25rem .5rem;border-radius:6px;background:rgba(255,165,0,.07);border:1px solid rgba(255,165,0,.2);color:#d97706;">⚡ Risico: ${tip.zwakPunt}</div>` : ''}
-      <div style="margin-top:.45rem;font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);opacity:.7;">
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:rgba(255,255,255,.95);line-height:1.65;">${tip.analyse||tip.tip||''}</div>
+      ${tip.zwakPunt ? `<div style="margin-top:.35rem;font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;padding:.25rem .5rem;border-radius:6px;background:rgba(255,165,0,.07);border:1px solid rgba(255,165,0,.2);color:#d97706;">⚡ Risico: ${tip.zwakPunt}</div>` : ''}
+      <div style="margin-top:.45rem;font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);opacity:.7;">
         🎲 ${conf}/10 confidence · ${tMarket(tip.markt||'Uitslag')} · Uitsluitend entertainment & educatie
       </div>
     </div>`;
@@ -826,7 +826,7 @@ function openCompKeuze() {
   COMPS.forEach(c => {
     const tile = document.createElement('div');
     tile.style.cssText = 'background:rgba(255,255,255,.8);border:1.5px solid rgba(15,23,42,.08);border-radius:14px;padding:.7rem .4rem;text-align:center;cursor:pointer;';
-    tile.innerHTML = `<div style="font-size:1.4rem;">${c.flag}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;font-weight:700;color:#1e293b;margin-top:.2rem;">${c.name}</div>`;
+    tile.innerHTML = `<div style="font-size:1.4rem;">${c.flag}</div><div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;font-weight:700;color:#1e293b;margin-top:.2rem;">${c.name}</div>`;
     tile.onclick = () => {
       overlay.remove();
       if (typeof openCompDetail === 'function') openCompDetail(c.key);
@@ -909,7 +909,7 @@ async function openPicksInsight() {
     </div>
     <div id="insightContent">
       <div style="text-align:center;padding:2rem 0;">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.88);">⏳ AI analyseert jouw statistieken...</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:rgba(255,255,255,.88);">⏳ AI analyseert jouw statistieken...</div>
       </div>
     </div>`;
 
@@ -977,13 +977,13 @@ Geef een heldere analyse in het Nederlands.` }]
       const secMatch = Object.keys(sectionColors).find(e => trimmed.startsWith(e));
       if (secMatch) {
         const color = sectionColors[secMatch];
-        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:800;
+        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:800;
           color:${color};letter-spacing:.05em;margin:.75rem 0 .35rem;padding:.4rem .6rem;
           background:${color}18;border-left:3px solid ${color};border-radius:0 8px 8px 0;">
           ${trimmed}
         </div>`;
       } else if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
-        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.8);
+        html += `<div style="font-family:'IBM Plex Mono',monospace;font-size:.60rem;color:rgba(255,255,255,.8);
           line-height:1.7;padding:.15rem 0 .15rem .8rem;border-left:2px solid rgba(255,255,255,.1);">
           ${trimmed.substring(1).trim()}
         </div>`;
@@ -1003,7 +1003,7 @@ Geef een heldere analyse in het Nederlands.` }]
         ].map(([label, val, color]) => `
           <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:.45rem .3rem;text-align:center;">
             <div style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:${color};line-height:1;">${val}</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:.36rem;color:rgba(255,255,255,.88);margin-top:2px;">${label}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:.50rem;color:rgba(255,255,255,.88);margin-top:2px;">${label}</div>
           </div>`).join('')}
       </div>`;
 
@@ -1011,7 +1011,7 @@ Geef een heldere analyse in het Nederlands.` }]
 
   } catch(e) {
     const el = document.getElementById('insightContent');
-    if (el) el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:#ef4444;padding:1rem;text-align:center;">Fout: ${e.message}</div>`;
+    if (el) el.innerHTML = `<div style="font-family:'IBM Plex Mono',monospace;font-size:.60rem;color:#ef4444;padding:1rem;text-align:center;">Fout: ${e.message}</div>`;
   }
 }
 
@@ -1048,7 +1048,7 @@ function openOverzicht() {
       <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;">\u{1F4CA} ${t('overzicht.titel','Overzicht')}</div>
       <div onclick="document.getElementById('overzichtOverlay').remove()" style="cursor:pointer;color:rgba(255,255,255,.6);font-size:1.2rem;padding:0 .3rem;">\u2715</div>
     </div>
-    <div id="overzichtBody" style="font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.9);font-size:.62rem;">
+    <div id="overzichtBody" style="font-family:'IBM Plex Mono',monospace;color:rgba(255,255,255,.9);font-size:.68rem;">
       <div style="text-align:center;padding:1.5rem;color:rgba(255,255,255,.6);">${t('overzicht.laden','Laden\u2026')}</div>
     </div>`;
   overlay.appendChild(sheet);
@@ -1100,7 +1100,7 @@ function _overzichtHtml(d) {
     markt.forEach(m => {
       html += `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:.5rem .65rem;margin-bottom:.45rem;">
         <div style="display:flex;justify-content:space-between;margin-bottom:.25rem;"><span style="font-weight:700;color:#fff;">${num(m.markt)}</span><span style="color:rgba(255,255,255,.6);">${num(m.picks)} picks</span></div>
-        <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.7);font-size:.56rem;"><span style="color:${_clvKleur(Number(m.avg_clv))};">CLV ${num(m.avg_clv)}%</span><span>hit ${num(m.hitrate)}%</span><span style="color:${_roiKleur(Number(m.roi_pct))};">ROI ${num(m.roi_pct)}%</span></div>
+        <div style="display:flex;justify-content:space-between;color:rgba(255,255,255,.7);font-size:.64rem;"><span style="color:${_clvKleur(Number(m.avg_clv))};">CLV ${num(m.avg_clv)}%</span><span>hit ${num(m.hitrate)}%</span><span style="color:${_roiKleur(Number(m.roi_pct))};">ROI ${num(m.roi_pct)}%</span></div>
       </div>`;
     });
   }
@@ -1114,10 +1114,10 @@ function _overzichtHtml(d) {
     html += rij(t('overzicht.avgclv2','Gem. CLV'), `${num(s1.avg_clv)}%`, _clvKleur(Number(s1.avg_clv)));
     html += rij('ROI', `${num(s1.roi_pct)}%`, _roiKleur(Number(s1.roi_pct)));
     html += rij(t('overzicht.hitrate','Hitrate'), `${num(s1.hitrate_pct)}%`);
-    html += `<div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.4rem;line-height:1.4;">${t('overzicht.shadow1x2note','ROI kan positief ogen, maar de CLV is negatief = geen edge. Daarom worden 1X2-picks onderdrukt.')}</div>`;
+    html += `<div style="font-size:.60rem;color:rgba(255,255,255,.5);margin-top:.4rem;line-height:1.4;">${t('overzicht.shadow1x2note','ROI kan positief ogen, maar de CLV is negatief = geen edge. Daarom worden 1X2-picks onderdrukt.')}</div>`;
     html += `</div>`;
     (d.shadow_1x2.per_reden || []).forEach(r => {
-      html += `<div style="display:flex;justify-content:space-between;padding:.28rem .2rem;font-size:.56rem;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.05);"><span style="color:rgba(255,255,255,.85);">${r.reden} (${num(r.settled)})</span><span><span style="color:${_clvKleur(Number(r.avg_clv))};">CLV ${num(r.avg_clv)}%</span> \u00b7 <span style="color:${_roiKleur(Number(r.roi_pct))};">ROI ${num(r.roi_pct)}%</span></span></div>`;
+      html += `<div style="display:flex;justify-content:space-between;padding:.28rem .2rem;font-size:.64rem;color:rgba(255,255,255,.7);border-bottom:1px solid rgba(255,255,255,.05);"><span style="color:rgba(255,255,255,.85);">${r.reden} (${num(r.settled)})</span><span><span style="color:${_clvKleur(Number(r.avg_clv))};">CLV ${num(r.avg_clv)}%</span> \u00b7 <span style="color:${_roiKleur(Number(r.roi_pct))};">ROI ${num(r.roi_pct)}%</span></span></div>`;
     });
   }
 
@@ -1135,15 +1135,15 @@ function _overzichtHtml(d) {
     html += `<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:.55rem .65rem;margin-bottom:.5rem;">`;
     html += rij(t('overzicht.settledn','Settled'), num(ap.settled));
     html += rij(t('overzicht.hitrate','Hitrate'), `${num(ap.hitrate)}%`);
-    html += `<div style="font-size:.5rem;color:rgba(255,255,255,.5);margin-top:.4rem;line-height:1.4;">${t('overzicht.apiprednote','Steekproef op onze eigen nieuwe picks, geen volledige dekking van alle wedstrijden.')}</div>`;
+    html += `<div style="font-size:.60rem;color:rgba(255,255,255,.5);margin-top:.4rem;line-height:1.4;">${t('overzicht.apiprednote','Steekproef op onze eigen nieuwe picks, geen volledige dekking van alle wedstrijden.')}</div>`;
     html += `</div>`;
   }
 
-  html += `<div style="font-size:.5rem;color:rgba(255,255,255,.45);margin-top:.7rem;text-align:center;">\u25CF ${t('overzicht.legteal','op/boven break-even')} \u00b7 \u25CF ${t('overzicht.legamber','net eronder')} \u00b7 \u25CF ${t('overzicht.legrood','onder break-even')}</div>`;
+  html += `<div style="font-size:.60rem;color:rgba(255,255,255,.45);margin-top:.7rem;text-align:center;">\u25CF ${t('overzicht.legteal','op/boven break-even')} \u00b7 \u25CF ${t('overzicht.legamber','net eronder')} \u00b7 \u25CF ${t('overzicht.legrood','onder break-even')}</div>`;
   if (d.gemeten_op) {
     let tijd = d.gemeten_op;
     try { tijd = new Date(d.gemeten_op).toLocaleString('nl-NL'); } catch (e) {}
-    html += `<div style="text-align:center;color:rgba(255,255,255,.4);font-size:.52rem;margin-top:.8rem;">${t('overzicht.gemetenop','gemeten')}: ${tijd}</div>`;
+    html += `<div style="text-align:center;color:rgba(255,255,255,.4);font-size:.61rem;margin-top:.8rem;">${t('overzicht.gemetenop','gemeten')}: ${tijd}</div>`;
   }
   return html;
 }
@@ -1216,8 +1216,8 @@ function showPicksModal() {
     <div style="width:40px;height:4px;background:rgba(0,0,0,.15);border-radius:2px;margin:0 auto .75rem;"></div>
     <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.2rem;margin-bottom:.5rem;">🎯 ${t('dash.picksoverview','Picks Overzicht')}</div>
     <details open style="background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:10px;padding:.5rem .7rem;margin-bottom:.75rem;">
-      <summary style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:700;color:#00BEC4;cursor:pointer;">📋 Pick-kwaliteit checklist</summary>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.95);line-height:1.7;margin-top:.5rem;">
+      <summary style="font-family:'IBM Plex Mono',monospace;font-size:.66rem;font-weight:700;color:#00BEC4;cursor:pointer;">📋 Pick-kwaliteit checklist</summary>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.95);line-height:1.7;margin-top:.5rem;">
         ⭐ <b>Tier eerst</b> — Elite / A+ (Reliability 75+)<br>
         💎 <b>Value 8–25%</b> — boven ~40% is meestal een stale lijn<br>
         🎯 <b>Odds 1.5–3.5</b> — geen longshots (5.0+)<br>
@@ -1227,7 +1227,7 @@ function showPicksModal() {
         📈 <b>Sharp money</b> mee = bevestiging, tegen = rode vlag<br>
         💰 <b>Inzet 1–2%</b> bankroll · singles &gt; combi's · niet terugjagen
       </div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.45);margin-top:.5rem;border-top:1px solid rgba(255,255,255,.08);padding-top:.4rem;line-height:1.5;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:.60rem;color:rgba(255,255,255,.45);margin-top:.5rem;border-top:1px solid rgba(255,255,255,.08);padding-top:.4rem;line-height:1.5;">
         CLV is je echte scorebord: verslaat je structureel de slotkoers → edge. Entertainment · 18+ · speel met geld dat je kunt missen.
       </div>
     </details>
@@ -1241,13 +1241,13 @@ function showPicksModal() {
         ['ROI', roi !== null ? (roi >= 0 ? '+' : '') + roi.toFixed(1) + '%' : '—'],
       ].map(([label, val]) => `
         <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.4rem;text-align:center;">
-          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.44rem;color:rgba(255,255,255,.95);">${label}</div>
+          <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.55rem;color:rgba(255,255,255,.95);">${label}</div>
           <div style="font-family:\'Bebas Neue\',sans-serif;font-size:.9rem;color:#00BEC4;">${val}</div>
         </div>`).join('')}
     </div>
 
     <!-- Picks lijst -->
-    ${eliteOn ? (hiddenCount > 0 ? `<div onclick="togglePicksFilter()" style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:.45rem .65rem;margin-bottom:.5rem;cursor:pointer;"><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.55);">🔒 ${hiddenCount} pick${hiddenCount===1?'':'s'} verborgen (B/C)</span><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:700;color:#00BEC4;">toon alles →</span></div>` : '') : `<div onclick="togglePicksFilter()" style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:8px;padding:.45rem .65rem;margin-bottom:.5rem;cursor:pointer;"><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;color:rgba(255,255,255,.55);">👁 Alle tiers zichtbaar</span><span style="font-family:'IBM Plex Mono',monospace;font-size:.54rem;font-weight:700;color:#00BEC4;">alleen Elite/A+ →</span></div>`}
+    ${eliteOn ? (hiddenCount > 0 ? `<div onclick="togglePicksFilter()" style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:.45rem .65rem;margin-bottom:.5rem;cursor:pointer;"><span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.55);">🔒 ${hiddenCount} pick${hiddenCount===1?'':'s'} verborgen (B/C)</span><span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;color:#00BEC4;">toon alles →</span></div>` : '') : `<div onclick="togglePicksFilter()" style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,190,196,.06);border:1px solid rgba(0,190,196,.18);border-radius:8px;padding:.45rem .65rem;margin-bottom:.5rem;cursor:pointer;"><span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.55);">👁 Alle tiers zichtbaar</span><span style="font-family:'IBM Plex Mono',monospace;font-size:.62rem;font-weight:700;color:#00BEC4;">alleen Elite/A+ →</span></div>`}
     ${sorted.length === 0 ? '<div style="text-align:center;color:rgba(255,255,255,.95);font-size:.8rem;padding:1rem;">Nog geen picks — scan wedstrijden!</div>' :
       sorted.map(p => {
         const rel = calcReliabilityScore(p);
@@ -1258,23 +1258,23 @@ function showPicksModal() {
         return `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:.5rem .7rem;margin-bottom:.4rem;display:flex;flex-direction:column;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <div style="flex:1;min-width:0;">
-              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.7rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
-              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.6rem;color:rgba(255,255,255,.95);">${tPick(p.pickLabel||p.pick||'?')} · @${parseFloat(p.odds||2).toFixed(2)} · +${Math.round(p.value||0)}pp value</div>
+              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.73rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.match||p.matchName||'?'}</div>
+              <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.66rem;color:rgba(255,255,255,.95);">${tPick(p.pickLabel||p.pick||'?')} · @${parseFloat(p.odds||2).toFixed(2)} · +${Math.round(p.value||0)}pp value</div>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;margin-left:.5rem;">
               <div style="font-size:1rem;">${statusIcon(p.status)}</div>
-              <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;color:${rel.color};background:${rel.color}18;border-radius:4px;padding:.12rem .4rem;font-weight:700;">${cat.label}</span>
+              <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;color:${rel.color};background:${rel.color}18;border-radius:4px;padding:.12rem .4rem;font-weight:700;">${cat.label}</span>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:.4rem;margin:.3rem 0;">
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;color:rgba(255,255,255,.88);">RELIABILITY</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.57rem;color:rgba(255,255,255,.88);">RELIABILITY</div>
             <div style="flex:1;background:rgba(255,255,255,.1);border-radius:999px;height:5px;overflow:hidden;">
               <div style="background:${rel.barColor};height:100%;border-radius:999px;width:${rel.score}%;"></div>
             </div>
-            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.52rem;color:${rel.color};font-weight:700;">${rel.score}/100</div>
+            <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.61rem;color:${rel.color};font-weight:700;">${rel.score}/100</div>
           </div>
           ${renderPickReasons(p)}${renderSharpBadge(p)}${renderPickWeighting(p)}${clvHtml}${scoreHtml}
-          <button onclick="event.stopPropagation();openInBet365(this.dataset.m,this.dataset.p,this.dataset.o)" data-m="${_b365esc(p.match||p.matchName||'')}" data-p="${_b365esc(tPick(p.pickLabel||p.pick||''))}" data-o="${(p.odds!=null&&isFinite(p.odds))?parseFloat(p.odds).toFixed(2):''}" style="width:100%;margin-top:.4rem;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.35);color:#00BEC4;border-radius:8px;padding:.42rem;font-family:'IBM Plex Mono',monospace;font-size:.56rem;font-weight:800;letter-spacing:.3px;cursor:pointer;">\u2197 ${t('bet365.open','Open bij Bet365')}</button>
+          <button onclick="event.stopPropagation();openInBet365(this.dataset.m,this.dataset.p,this.dataset.o)" data-m="${_b365esc(p.match||p.matchName||'')}" data-p="${_b365esc(tPick(p.pickLabel||p.pick||''))}" data-o="${(p.odds!=null&&isFinite(p.odds))?parseFloat(p.odds).toFixed(2):''}" style="width:100%;margin-top:.4rem;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.35);color:#00BEC4;border-radius:8px;padding:.42rem;font-family:'IBM Plex Mono',monospace;font-size:.64rem;font-weight:800;letter-spacing:.3px;cursor:pointer;">\u2197 ${t('bet365.open','Open bij Bet365')}</button>
         </div>`;
       }).join('')}
     </div>
@@ -1355,7 +1355,7 @@ async function loadLiveScores() {
   });
 
   if (!uniquePicks.length) {
-    list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;line-height:1.6;">'+t('dash.nolivepicks','Geen openstaande picks om live te volgen.<br>Doe eerst een scan!')+'</div>';
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;line-height:1.6;">'+t('dash.nolivepicks','Geen openstaande picks om live te volgen.<br>Doe eerst een scan!')+'</div>';
     return;
   }
 
@@ -1403,9 +1403,9 @@ async function loadLiveScores() {
 
     // Update tijd
     const now = new Date();
-    list.innerHTML += `<div style="text-align:center;padding:.5rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.46rem;">${t('dash.lastupdated','Laatst bijgewerkt')}: ${now.toLocaleTimeString(pmxLang()==='en'?'en-GB':'nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ${t('dash.refreshes60','ververst elke 60s')}</div>`;
+    list.innerHTML += `<div style="text-align:center;padding:.5rem;color:rgba(255,255,255,.95);font-family:\'IBM Plex Mono\',monospace;font-size:.57rem;">${t('dash.lastupdated','Laatst bijgewerkt')}: ${now.toLocaleTimeString(pmxLang()==='en'?'en-GB':'nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'})} · ${t('dash.refreshes60','ververst elke 60s')}</div>`;
   } catch(e) {
-    list.innerHTML = '<div style="text-align:center;padding:2rem;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.5rem;">'+t('dash.liveerror','Fout bij laden live data. Probeer opnieuw.')+'</div>';
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:#dc2626;font-family:\'IBM Plex Mono\',monospace;font-size:.60rem;">'+t('dash.liveerror','Fout bij laden live data. Probeer opnieuw.')+'</div>';
   }
 }
 
@@ -1416,8 +1416,8 @@ function liveCardHtml(pick, fx) {
   if (!fx) {
     const dt = [pick.matchDate||pick.date, pick.matchTime||pick.time].filter(Boolean).join(' ');
     return `<div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;">
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;font-weight:700;">${matchName}</div>
-      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.58rem;color:rgba(255,255,255,.95);margin-top:.2rem;">${tPick(pick.pickLabel||pick.pick)} @ ${pick.odds}${dt ? ' · 📅 ' + dt : ''} · ⏳ ${t('dash.notstarted','Nog niet begonnen')}</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.72rem;font-weight:700;">${matchName}</div>
+      <div style="font-family:\'IBM Plex Mono\',monospace;font-size:.65rem;color:rgba(255,255,255,.95);margin-top:.2rem;">${tPick(pick.pickLabel||pick.pick)} @ ${pick.odds}${dt ? ' · 📅 ' + dt : ''} · ⏳ ${t('dash.notstarted','Nog niet begonnen')}</div>
     </div>`;
   }
 
@@ -1477,15 +1477,15 @@ function liveCardHtml(pick, fx) {
 
   return `<div style="background:rgba(255,255,255,0.05);border:1.5px solid ${borderColor};border-radius:12px;padding:.6rem .8rem;margin-bottom:.5rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.35rem;">
-      <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;font-weight:700;color:${statusColor};">${statusBadge}</span>
-      ${winIndicator ? `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;">${winIndicator}</span>` : ''}
+      <span style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:700;color:${statusColor};">${statusBadge}</span>
+      ${winIndicator ? `<span style="font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;">${winIndicator}</span>` : ''}
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
-      <div style="flex:1;text-align:right;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:${pick.pick==='1'?'700':'400'};">${homeTeam}</div>
+      <div style="flex:1;text-align:right;font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;font-weight:${pick.pick==='1'?'700':'400'};">${homeTeam}</div>
       <div style="font-family:\'Bebas Neue\',sans-serif;font-size:1.3rem;color:var(--text);min-width:50px;text-align:center;">${homeGoals} - ${awayGoals}</div>
-      <div style="flex:1;text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;font-weight:${pick.pick==='2'?'700':'400'};">${awayTeam}</div>
+      <div style="flex:1;text-align:left;font-family:\'IBM Plex Mono\',monospace;font-size:.68rem;font-weight:${pick.pick==='2'?'700':'400'};">${awayTeam}</div>
     </div>
-    <div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.54rem;color:rgba(255,255,255,.95);margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.09);">
+    <div style="text-align:center;font-family:\'IBM Plex Mono\',monospace;font-size:.62rem;color:rgba(255,255,255,.95);margin-top:.35rem;padding-top:.35rem;border-top:1px solid rgba(255,255,255,0.09);">
       ${(function(){var mk=pickMarket(pick.pick);return (mk.group!=='1X2'&&mk.label)?`<span style="background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);color:#c084fc;border-radius:4px;padding:.05rem .3rem;font-weight:700;margin-right:.3rem;">${tMarket(mk.label.toUpperCase())}</span>`:'';})()}🎯 ${tPick(pick.pickLabel||pick.pick)} @ ${pick.odds} · +${pick.value||0}pp value
       ${kickoffStr ? `<br>📅 ${kickoffStr}` : ''}
     </div>

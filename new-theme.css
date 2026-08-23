@@ -1244,7 +1244,7 @@ body.creme .bottom-nav {
 /* Crème bottom nav — labels duidelijker */
 body.creme .bnav-label {
   font-weight: 700 !important;
-  font-size: .56rem !important;
+  font-size: .64rem !important;
   color: #7a5230 !important;
 }
 /* Crème bottom nav — eigen kleur per tab (hoge specificiteit voor SVG currentColor) */

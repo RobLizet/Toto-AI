@@ -89,7 +89,7 @@ body::before{
 /* 6-ITEM BOTTOM NAV — compact */
 @media (max-width:430px){
   .bnav-btn{padding:.35rem .1rem;}
-  .bnav-label{font-size:.37rem;letter-spacing:0;}
+  .bnav-label{font-size:.51rem;letter-spacing:0;}
 }
 
 /* SECTION HEADER */
@@ -234,16 +234,16 @@ body::before{
   border-radius:50%;background:#e8404a;border:1.5px solid #0B1519;}
 #autoCheckBar{display:none;position:fixed;bottom:72px;left:50%;transform:translateX(-50%);
   background:rgba(0,40,50,.97);color:#00BEC4;border:1px solid rgba(0,190,196,.3);
-  font-family:var(--font);font-size:.6rem;font-weight:700;
+  font-family:var(--font);font-size:.66rem;font-weight:700;
   padding:.45rem 1.1rem;border-radius:999px;z-index:9999;white-space:nowrap;}
 #jsBanner{display:none;position:fixed;top:0;left:0;right:0;z-index:99999;
-  background:#e8404a;color:#fff;font-family:var(--font);font-size:.6rem;
+  background:#e8404a;color:#fff;font-family:var(--font);font-size:.66rem;
   font-weight:700;padding:.5rem 1rem;cursor:pointer;}
 #installBanner{display:none;background:rgba(0,190,196,.1);border:1px solid rgba(0,190,196,.2);
   border-radius:14px;padding:.7rem 1rem;margin-bottom:1rem;align-items:center;gap:.8rem;}
 #installBanner.show{display:flex;}
 .install-btn{background:#00BEC4;color:#fff;border:none;border-radius:999px;
-  font-family:var(--font);font-size:.62rem;font-weight:700;padding:6px 14px;cursor:pointer;}
+  font-family:var(--font);font-size:.68rem;font-weight:700;padding:6px 14px;cursor:pointer;}
 .dismiss-btn{background:transparent;border:none;color:rgba(255,255,255,.88);cursor:pointer;font-size:1rem;}
 @keyframes bell-ring{0%,100%{transform:rotate(0);}20%{transform:rotate(15deg);}
   40%{transform:rotate(-15deg);}60%{transform:rotate(10deg);}80%{transform:rotate(-10deg);}}
@@ -674,7 +674,7 @@ body.sky { --card: rgba(255,255,255,.85) !important; --card2: rgba(255,255,255,.
 }
 .screen-analyse [style*="font-size:.4"],
 .screen-analyse [style*="font-size:.5"] {
-  font-size: .65rem !important;
+  font-size: .70rem !important;
 }
 .screen-analyse [style*="IBM Plex Mono"] {
   letter-spacing: 0 !important;
