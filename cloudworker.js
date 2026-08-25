@@ -6,7 +6,47 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v354'; // v354: DE ANKER-SCHADUW MAT ZIJN EIGEN ANKER NIET -- model_tot_anchor was het PRE-anker totaal.
+const VERSION = 'v355'; // v355: BEREKENDE LAMBDA'S ALS DERDE EN VIERDE SCHADUWBRON (Rob akkoord 25-08, "beide" varianten).
+// AANLEIDING: Rob vroeg "wat is de oorzaak dat de cijfers niet goed zijn?". GEMETEN, drie lagen diep:
+// (a) 48 club-era picks -- model verwacht gemiddeld 2,86 goals vs markt 3,32, en in 42 van de 48 zit
+// het model ONDER de markt; (b) 16 afgerekende schaduwduels -- werkelijk gespeeld 3,50, markt zat er
+// 0,18 naast, ons model 0,46, dus de markt is ruim twee keer zo nauwkeurig; (c) U3.5 (60 picks) --
+// modelkans 69,0%, boekkans 57,1%, WERKELIJK 46,7%. Het value-filter selecteert per definitie de duels
+// waar het model het verst van de markt afwijkt, dus als die afwijking een fout is filtert het systeem
+// op zijn eigen grootste fouten. Dat is de oorzaak van de negatieve CLV, niet een symptoom ervan.
+// De onderliggende reden staat al in v345: gh/ga zijn AI-GESCHAT, er zit geen berekening onder.
+// WAT DIT TOEVOEGT: twee GEREKENDE lambda-bronnen naast de bestaande AI-schatting, anker en markt.
+// Formule is de klassieke Maher/Dixon-Coles-opzet (aanvalskracht x verdedigingszwakte x competitie-
+// gemiddelde), GEEN zelfbedachte weging. Het thuisvoordeel zit in de gemeten thuis/uit-kolommen van
+// standings i.p.v. in een verzonnen constante -- gemeten Eredivisie 2026: 1,875 goals per team per duel.
+// TWEE VENSTERS, expliciet door Rob geakkordeerd om niet te gokken welke beter is: _s = heel seizoen /
+// zelfde competitie (teams/statistics, al opgehaald sinds v335), _r = laatste <=10 duels over
+// competities heen (/fixtures?team=&last=10, oefenduels league 667 eruit gefilterd).
+// BEPERKING DIE BIJ ELKE CONCLUSIE HOORT, gemeten en niet weggemoffeld: die twee vensters verschillen
+// in TWEE opzichten tegelijk (venstergrootte EN competitie-afbakening), dus een verschil tussen _s en
+// _r is niet zonder meer aan het venster toe te schrijven. En op 25-08 is het seizoen pas 2-3 duels
+// oud (Ajax: played.total=2), dus _s en _r overlappen NU nog bijna volledig -- ze divergeren pas over
+// enkele maanden. Precies daarom nu al loggen: dan LIGT die historie er tegen de tijd dat de
+// vergelijking zinvol wordt, i.p.v. dat we dan pas beginnen met meten.
+// GEEN TERUGVAL OP DE AI-LAMBDA bij een mislukte berekening: ontbreken standings, stats of gespeelde
+// duels, dan blijven precies die kolommen NULL. Terugvallen zou de vergelijking zichzelf gelijk laten
+// geven -- dezelfde val die v346 bij het alt-model bewust vermeed. Nul gespeelde duels wordt apart
+// afgevangen: api-sports geeft dan letterlijk '0.0' terug (v343) en dat is de AFWEZIGHEID van een
+// meting, geen aanvalskracht van nul.
+// NIEUW: 16 nullable kolommen op lambda_anchor_shadow (migratie add_calc_lambdas_to_anchor_shadow,
+// vooraf toegepast) + view v_lambda_bron_vergelijking die alle VIJF bronnen op dezelfde afgerekende
+// duels afzet op MAE en Brier per lijn (REVOKE anon/authenticated, zoals alle validatie-views).
+// KOSTEN: max 2 extra calls per fixture voor het korte venster, maar gededupliceerd PER TEAM en via
+// apifCached 6u bewaard -- de laatste 10 uitslagen veranderen binnen een scanuur toch niet. Gemeten
+// verbruik nu ~600 per 24u van 7500, dus ruim binnen budget ook op een piekdag. Het lange venster kost
+// NUL extra calls (teams/statistics en standings werden al opgehaald in v335/v336).
+// RAAKT GEEN ENKELE PICK: geen wijziging aan pickselectie, drempels, staking, CLV of de live lambda's.
+// lambda_anchor_w staat onveranderd op 0. Dit is uitsluitend meten, zodat op 21-09 niet alleen "helpt
+// het anker?" beantwoord kan worden maar ook "is een berekende lambda beter dan de schatting?".
+// Rollback: het v355-blok met compGemiddelden/_lambdaUitKracht/calcLambdasSeizoen/fetchRecentGoals/
+// calcLambdasRecent + het recentMap-ophaalblok + de 16 velden in anchorRows eruit, VERSION -> v354
+// (kolommen en view mogen blijven, nullable en additief).
+// v354: // v354: DE ANKER-SCHADUW MAT ZIJN EIGEN ANKER NIET -- model_tot_anchor was het PRE-anker totaal.
 // GEVONDEN 25-08 doordat Rob het beheerscherm deelde: het lambda-anker-blok toonde MAE RAW 1.938 en
 // MAE ANKER 1.938 -- EXACT gelijk tot op drie decimalen -- met oordeel 'raw beter'. Twee modellen die
 // tot op de duizendste gelijk scoren is geen uitkomst maar een symptoom. GEMETEN in lambda_anchor_shadow:
@@ -3921,6 +3961,122 @@ async function fetchTeamStatsWorker(teamId, leagueId, season, env) {
   } catch(e) { console.warn('[TeamStats] fetch fout', teamId, e.message); return null; }
 }
 
+// ===== v355: BEREKENDE LAMBDA'S (SCHADUW, RAAKT GEEN ENKELE PICK) =====
+// AANLEIDING: Rob vroeg 25-08 "wat is de oorzaak dat de cijfers niet goed zijn?". GEMETEN over 48
+// club-era picks: het model verwacht gemiddeld 2,86 goals, de markt 3,32 (gap -0,46), en in 42 van
+// de 48 gevallen zit het model ONDER de markt. Op de 16 afgerekende schaduwduels was het werkelijke
+// totaal 3,50 -- de markt zat er 0,18 naast, ons model 0,46. De lambda's komen namelijk niet uit een
+// berekening maar uit de JSON-schatting van het taalmodel (v345). Het anker (21-09) dempt die bias,
+// maar maakt het model niet slimmer dan de markt; de echte vraag is of een GEREKENDE lambda beter is.
+// DIT MEET DAT, en niets anders: alleen schaduwkolommen, geen pick/drempel/staking/CLV geraakt.
+//
+// FORMULE: de klassieke Maher/Dixon-Coles-opzet, geen zelfbedachte weging --
+//   lambda_thuis = aanvalskracht(thuisteam, thuis) x verdedigingszwakte(uitteam, uit) x comp_thuisgemiddelde
+// waarbij aanvalskracht = eigen doelpunten per duel gedeeld door het competitiegemiddelde op dezelfde
+// plek (thuis vs thuis, uit vs uit). Het thuisvoordeel zit daarmee IN de competitiegemiddelden en wordt
+// niet als losse constante verzonnen -- gemeten Eredivisie 2026: comp-gemiddelde 1,875 goals per team
+// per duel, met een echt verschil tussen de thuis- en uitkolom van standings.
+//
+// TWEE VENSTERS, door Rob geakkordeerd (25-08) om niet te hoeven gokken welke beter is:
+//   _s = LANG   : heel seizoen, ZELFDE competitie (teams/statistics, al opgehaald sinds v335)
+//   _r = KORT   : laatste <=10 duels, OVER competities heen (/fixtures?team=&last=10)
+// BEPERKING, hoort bij elke conclusie: die twee verschillen in TWEE opzichten tegelijk (venstergrootte
+// EN competitie-afbakening), dus een verschil tussen _s en _r is niet zonder meer aan het venster toe te
+// schrijven. Bovendien is het seizoen op 25-08 pas 2-3 duels oud, dus _s en _r overlappen nu nog bijna
+// volledig -- ze divergeren pas over enkele maanden. Nu al loggen zodat die historie er dan LIGT.
+
+// Competitiegemiddelden uit de standings-tabel die v336 toch al ophaalt (geen extra call).
+// Retourneert doelpunten per team per duel, apart voor de thuis- en de uitkolom.
+function compGemiddelden(standTable) {
+  if (!Array.isArray(standTable) || !standTable.length) return null;
+  let hG = 0, hP = 0, aG = 0, aP = 0;
+  for (const row of standTable) {
+    const h = row?.home, a = row?.away;
+    if (h && Number.isFinite(h.played) && Number.isFinite(h.goals?.for)) { hG += h.goals.for; hP += h.played; }
+    if (a && Number.isFinite(a.played) && Number.isFinite(a.goals?.for)) { aG += a.goals.for; aP += a.played; }
+  }
+  // Beide kanten moeten echt gespeeld zijn; 0 duels geeft geen gemiddelde, en 0 invullen zou de
+  // hele formule op nul zetten (deling door nul verderop) -- dus expliciet null.
+  if (!(hP > 0) || !(aP > 0)) return null;
+  return { thuis: hG / hP, uit: aG / aP, nThuis: hP, nUit: aP };
+}
+
+// Kern van de formule. Alle drie de ingrediënten moeten GEMETEN zijn; ontbreekt er een, dan null.
+// LET OP -- EERSTE VERSIE WAS FOUT EN IS VOOR DEPLOY BETRAPT door de formule standalone op echte
+// Eredivisie-data na te rekenen (Ajax thuis vs AZ uit). Ik normaliseerde de VERDEDIGINGSindex op het
+// TEGENoverliggende kolomgemiddelde (tegendoelpunten van een uitploeg gedeeld door comp.uit). Dat is
+// onjuist: de doelpunten die UITploegen tegen krijgen worden per definitie door THUISploegen gescoord,
+// dus het juiste ijkpunt is comp.thuis -- hetzelfde gemiddelde als waar de aanvalsindex op ijkt.
+// Gevolg van de fout was een lambda die er op de testcase een factor 2 naast zat (0,48 i.p.v. 1,20).
+// Met beide indices op HETZELFDE kolomgemiddelde valt de formule samen tot de standaardvorm
+// lambda = gfPer * gaPer / compKolom, wat precies de klassieke Maher-uitdrukking is.
+function _lambdaUitKracht(gfPer, gaPer, compKolom) {
+  if (![gfPer, gaPer, compKolom].every(Number.isFinite)) return null;
+  if (!(compKolom > 0)) return null;
+  const l = (gfPer * gaPer) / compKolom;
+  return Number.isFinite(l) && l > 0 ? l : null;
+}
+
+// LANG venster: uit teams/statistics (thuiscijfers van de thuisploeg, uitcijfers van de uitploeg).
+function calcLambdasSeizoen(hStats, aStats, comp) {
+  if (!hStats || !aStats || !comp) return null;
+  const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
+  const hFor = num(hStats?.goals?.for?.average?.home);
+  const hAgainst = num(hStats?.goals?.against?.average?.home);
+  const aFor = num(aStats?.goals?.for?.average?.away);
+  const aAgainst = num(aStats?.goals?.against?.average?.away);
+  const nH = Number.isFinite(hStats?.fixtures?.played?.home) ? hStats.fixtures.played.home : null;
+  const nA = Number.isFinite(aStats?.fixtures?.played?.away) ? aStats.fixtures.played.away : null;
+  // Nul gespeelde duels: api-sports geeft dan letterlijk '0.0' terug (v343). Dat is GEEN meting van
+  // aanvalskracht maar de afwezigheid ervan -- doorrekenen zou een lambda van 0 opleveren.
+  if (!(nH > 0) || !(nA > 0)) return null;
+  // Thuis-lambda ijkt op de THUISkolom: de aanval van de thuisploeg en de tegendoelpunten van de
+  // uitploeg worden allebei in die kolom gescoord. Uit-lambda spiegelbeeldig op de UITkolom.
+  const lh = _lambdaUitKracht(hFor, aAgainst, comp.thuis);
+  const la = _lambdaUitKracht(aFor, hAgainst, comp.uit);
+  if (lh === null || la === null) return null;
+  return { lh, la, nHome: nH, nAway: nA };
+}
+
+// KORT venster: laatste <=10 afgeronde duels per team, oefenduels eruit.
+// Geeft doelpunten voor/tegen per duel terug, plus hoeveel duels dat waren.
+async function fetchRecentGoals(teamId, env, maxDuels = 10) {
+  if (!teamId) return null;
+  try {
+    const fx = await apifCached(`/fixtures?team=${teamId}&last=${maxDuels}`, env);
+    if (!Array.isArray(fx) || !fx.length) return null;
+    let gf = 0, ga = 0, n = 0;
+    for (const f of fx) {
+      if (f?.fixture?.status?.short !== 'FT') continue;      // alleen echt gespeelde duels
+      if (f?.league?.id === 667) continue;                    // Friendlies Clubs -- geen competitief signaal
+      const hId = f?.teams?.home?.id, aId = f?.teams?.away?.id;
+      const hG = f?.goals?.home, aG = f?.goals?.away;
+      if (!Number.isFinite(hG) || !Number.isFinite(aG)) continue;
+      if (hId === teamId)      { gf += hG; ga += aG; n++; }
+      else if (aId === teamId) { gf += aG; ga += hG; n++; }
+    }
+    if (!(n > 0)) return null;
+    return { gfPer: gf / n, gaPer: ga / n, n };
+  } catch(e) { console.warn('[RecentGoals] fetch fout', teamId, e.message); return null; }
+}
+
+// Het korte venster mengt thuis- en uitduels, dus er is geen aparte thuis-/uitkracht te meten.
+// Daarom: kracht bepalen op het ALGEMENE competitiegemiddelde, en het thuisvoordeel daarna toepassen
+// via de gemeten thuis/uit-verhouding uit standings. Zo blijft het thuisvoordeel gemeten en wordt het
+// niet als vuistregel (bv. "x1,35") verzonnen.
+function calcLambdasRecent(hRec, aRec, comp) {
+  if (!hRec || !aRec || !comp) return null;
+  const compAlg = (comp.thuis + comp.uit) / 2;
+  if (!(compAlg > 0)) return null;
+  const lhBasis = _lambdaUitKracht(hRec.gfPer, aRec.gaPer, compAlg);
+  const laBasis = _lambdaUitKracht(aRec.gfPer, hRec.gaPer, compAlg);
+  if (lhBasis === null || laBasis === null) return null;
+  const lh = lhBasis * (comp.thuis / compAlg);
+  const la = laBasis * (comp.uit / compAlg);
+  if (!(lh > 0) || !(la > 0)) return null;
+  return { lh, la, nHome: hRec.n, nAway: aRec.n };
+}
+
 // v336: STAND/MOTIVATIE NAAR DE AUTOMATISCHE SCAN-PROMPT (door Rob gevraagd, vervolg op v334/v335).
 // Zelfde gat: football.js:extractStandingInfo bestaat al lang, alleen gebruikt in de handmatige
 // diepte-analyse. Poort 1-op-1, inclusief de v26.375-guard (played===0 -> neutraal, geen valse
@@ -4517,6 +4673,20 @@ async function runScan(env, force = false, skipTellerReset = false) {
       if (r?.status === 'fulfilled' && r.value) statsMap[m.fixtureId] = r.value;
     });
   } catch(e) { console.warn('[Scan] stats/H2H-batch fout (non-fataal):', e.message); }
+  // v355: KORT VENSTER voor de berekende-lambda-schaduw. Per TEAM gededupliceerd (twee fixtures met
+  // hetzelfde team kosten samen 1 call) en via apifCached 6u bewaard -- de laatste 10 uitslagen
+  // veranderen binnen een scanuur toch niet. Alleen teams die daadwerkelijk in de analyseBatch zitten.
+  // Kosten: max 2 calls per fixture bij een volle batch (48), in de praktijk minder door dedup+cache;
+  // bij een gemeten verbruik van ~600 per 24u ruim binnen de 7500/dag.
+  const recentMap = {};
+  try {
+    const teamIds = [...new Set(analyseBatch.flatMap(m => [m.homeId, m.awayId]).filter(Boolean))];
+    const recResults = await apifChunked(teamIds, (tid) => fetchRecentGoals(tid, env), { size: 6, gapMs: 350 });
+    teamIds.forEach((tid, i) => {
+      const r = recResults[i];
+      if (r?.status === 'fulfilled' && r.value) recentMap[tid] = r.value;
+    });
+  } catch(e) { console.warn('[Scan] recent-goals-batch fout (non-fataal):', e.message); }
   // v336: stand/motivatie, gededupliceerd per competitie+seizoen (1 call dekt alle fixtures in diezelfde
   // competitie, dus veel goedkoper dan de per-fixture H2H/teamstats hierboven).
   const standingsMap = {};
@@ -4842,6 +5012,16 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       if (!gmRaw || !gmAnchor) continue;
       const mktO = (line) => { const x = o?.ou?.[line]; return x && Number.isFinite(x.fairOver) ? x.fairOver : null; };
       const mktBtts = (o?.btts && Number.isFinite(o.btts.fairYes)) ? o.btts.fairYes : null;
+      // v355: DERDE EN VIERDE BRON -- lambda's BEREKEND uit teamstatistieken i.p.v. AI-geschat.
+      // Beide varianten mogen los mislukken (geen standings, nul gespeelde duels, call gefaald):
+      // dan blijven precies die kolommen NULL. Bewust GEEN terugval op de AI-lambda's -- dan zou
+      // de vergelijking zichzelf gelijk geven, dezelfde val als bij het alt-model in v346.
+      const _comp = compGemiddelden(standingsMap[`${m.leagueId}|${m.leagueSeason}`]);
+      const _sm = statsMap[m.fixtureId];
+      const _cs = calcLambdasSeizoen(_sm?.hStats, _sm?.aStats, _comp);
+      const _cr = calcLambdasRecent(recentMap[m.homeId], recentMap[m.awayId], _comp);
+      const _gcs = _cs ? goalMarkets(_cs.lh, _cs.la) : null;
+      const _gcr = _cr ? goalMarkets(_cr.lh, _cr.la) : null;
       anchorRows.push({
         fixture_id: m.fixtureId, league_id: m.leagueId ?? null, match_date: m.matchDate || null,
         home: m.home || null, away: m.away || null,
@@ -4853,6 +5033,18 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
         o25_raw: gmRaw.ou['2.5'].over, o25_anchor: gmAnchor.ou['2.5'].over, o25_mkt: mktO('2.5'),
         o35_raw: gmRaw.ou['3.5'].over, o35_anchor: gmAnchor.ou['3.5'].over, o35_mkt: mktO('3.5'),
         btts_raw: gmRaw.btts.yes, btts_anchor: gmAnchor.btts.yes, btts_mkt: mktBtts,
+        lh_calc_s: _cs ? _cs.lh : null, la_calc_s: _cs ? _cs.la : null,
+        tot_calc_s: _cs ? _cs.lh + _cs.la : null,
+        o25_calc_s: _gcs ? _gcs.ou['2.5'].over : null,
+        o35_calc_s: _gcs ? _gcs.ou['3.5'].over : null,
+        btts_calc_s: _gcs ? _gcs.btts.yes : null,
+        calc_s_n_home: _cs ? _cs.nHome : null, calc_s_n_away: _cs ? _cs.nAway : null,
+        lh_calc_r: _cr ? _cr.lh : null, la_calc_r: _cr ? _cr.la : null,
+        tot_calc_r: _cr ? _cr.lh + _cr.la : null,
+        o25_calc_r: _gcr ? _gcr.ou['2.5'].over : null,
+        o35_calc_r: _gcr ? _gcr.ou['3.5'].over : null,
+        btts_calc_r: _gcr ? _gcr.btts.yes : null,
+        calc_r_n_home: _cr ? _cr.nHome : null, calc_r_n_away: _cr ? _cr.nAway : null,
       });
     }
     if (anchorRows.length) {
