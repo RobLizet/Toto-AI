@@ -6,7 +6,36 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v353'; // v353: TWEE INGREPEN, DOOR ROB GEAKKOORD IN DE DINSDAG-DOORLICHTING (25-08).
+const VERSION = 'v354'; // v354: DE ANKER-SCHADUW MAT ZIJN EIGEN ANKER NIET -- model_tot_anchor was het PRE-anker totaal.
+// GEVONDEN 25-08 doordat Rob het beheerscherm deelde: het lambda-anker-blok toonde MAE RAW 1.938 en
+// MAE ANKER 1.938 -- EXACT gelijk tot op drie decimalen -- met oordeel 'raw beter'. Twee modellen die
+// tot op de duizendste gelijk scoren is geen uitkomst maar een symptoom. GEMETEN in lambda_anchor_shadow:
+// in ALLE 16 settled rijen is model_tot_anchor identiek aan model_tot_raw, terwijl lh_anchor+la_anchor
+// er wel degelijk van afwijkt (fixture 1551762: lambda-som raw 2,300 vs anchor 2,839, markt 3,378 --
+// het anker DOET wel iets, het werd alleen niet weggeschreven).
+// OORZAAK, in de bron bevestigd: anchorLambdasW zet base.modelTot op lh+la VOOR de aanpassing en
+// werkt dat daarna niet bij; alleen base.lh/base.la worden geschaald. `anchor.modelTot` las dus per
+// constructie het RAW-totaal. Dat is GEEN vergissing in anchorLambdasW zelf: v324 stempelt bewust het
+// PRE-anker totaal op elke pick (picks.model_goal_tot), en de 21-09-gap is per definitie model-VOOR-anker
+// min markt. De fout zat in de LEZER: de schaduwrij had het totaal NA aanpassing nodig en greep naar
+// het veld dat pre-anker betekent. Twee verschillende grootheden die op EEN veldnaam zaten -- dezelfde
+// familie als v300 (picks.odds deed 'instapprijs' en 'huidige prijs' tegelijk).
+// FIX: nieuw APART veld `totNa` in anchorLambdasW (= lh+la NA aanpassing; opgeteld i.p.v. `target`
+// overgenomen, want de Math.max(0.05)-vloer kan de som van target laten afwijken), en r4816 leest dat.
+// `modelTot` is ONgewijzigd, dus v324/picks.model_goal_tot en buildGoalCandidates blijven exact zoals ze
+// waren -- geverifieerd: alle vier de overige .modelTot-lezers zijn pre-anker en horen dat te zijn.
+// REIKWIJDTE, niet overdrijven: dit raakt UITSLUITEND de diagnosekolom model_tot_anchor en de MAE die
+// daarop rust. De BRIER-scores per lijn (o25_anchor/o35_anchor/btts_anchor) waren AL correct -- die komen
+// uit goalMarkets(anchor.lh, anchor.la) en lezen de echte anker-lambda's, niet dit veld. De cijfers die
+// het 21-09-besluit dragen (Brier per lijn: O2.5 raw 0,2539 vs anker 0,2371 vs markt 0,2234) zijn dus
+// nooit fout geweest; alleen de MAE-regel en het 'raw beter'-label erboven waren betekenisloos.
+// GEEN pick, drempel, staking of CLV geraakt -- lambda_anchor_shadow is puur diagnose en lambda_anchor_w
+// staat nog steeds op 0.
+// DATACORRECTIE apart, zelfde sessie: de bestaande rijen krijgen model_tot_anchor = lh_anchor + la_anchor.
+// Narekenbaar per rij uit kolommen die er al staan, geen schatting, geen herberekening van het model.
+// Rollback: `anchor.totNa` terug naar `anchor.modelTot` op r4816 + het totNa-veld uit anchorLambdasW,
+// VERSION -> v353 (dan staat het foute cijfer er weer).
+// v353: TWEE INGREPEN, DOOR ROB GEAKKOORD IN DE DINSDAG-DOORLICHTING (25-08).
 // PUNT 1 -- SEIZOENSDUELS PER TEAM WORDEN NU OP ELKE PICK VASTGELEGD (het dinsdag-meetpunt
 // 'presteren dunne-data-picks slechter' kon nooit gemeten worden). EIGEN EERDERE AANNAME
 // INGETROKKEN: ik meldde deze sessie eerst dat er GEEN bruikbare bron voor seizoensduels
@@ -2768,7 +2797,11 @@ function anchorLambdas(gh, ga, odds) {
 // (w=0,50, het voorgestelde gewicht) side-by-side berekend worden zonder de globale state te raken.
 function anchorLambdasW(gh, ga, odds, w) {
   const lh = parseFloat(gh), la = parseFloat(ga);
-  const base = { lh, la, modelTot: (lh > 0 && la > 0) ? lh + la : null, mktTot: null, gap: null, coherent: true, applied: false, w };
+  // v354: `modelTot` is en BLIJFT het PRE-anker totaal -- v324 stempelt dat op elke goal-kandidaat
+  // (picks.model_goal_tot) en de 21-09-gap is per definitie model-VOOR-anker min markt. Voor de
+  // schaduwmeting is echter het totaal NA aanpassing nodig; dat is `totNa`, een APART veld.
+  // Ze door elkaar halen was precies de v354-bug.
+  const base = { lh, la, modelTot: (lh > 0 && la > 0) ? lh + la : null, totNa: (lh > 0 && la > 0) ? lh + la : null, mktTot: null, gap: null, coherent: true, applied: false, w };
   if (!(lh > 0) || !(la > 0)) return base;
   const mktTot = marketTotalGoals(lh, la, odds);
   if (mktTot == null) return base;
@@ -2780,6 +2813,7 @@ function anchorLambdasW(gh, ga, odds, w) {
   const f = target / base.modelTot;
   base.lh = Math.max(0.05, lh * f);
   base.la = Math.max(0.05, la * f);
+  base.totNa = base.lh + base.la; // v354: som NA aanpassing (de max(0.05)-vloer kan 'm iets van `target` af laten wijken, dus optellen i.p.v. target overnemen)
   base.applied = true;
   return base;
 }
@@ -4813,7 +4847,7 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
         home: m.home || null, away: m.away || null,
         lh_raw: raw.lh, la_raw: raw.la, lh_anchor: anchor.lh, la_anchor: anchor.la,
         model_tot_raw: Number.isFinite(raw.modelTot) ? raw.modelTot : null,
-        model_tot_anchor: Number.isFinite(anchor.modelTot) ? anchor.modelTot : null,
+        model_tot_anchor: Number.isFinite(anchor.totNa) ? anchor.totNa : null,
         market_tot: Number.isFinite(raw.mktTot) ? raw.mktTot : null,
         o15_raw: gmRaw.ou['1.5'].over, o15_anchor: gmAnchor.ou['1.5'].over, o15_mkt: mktO('1.5'),
         o25_raw: gmRaw.ou['2.5'].over, o25_anchor: gmAnchor.ou['2.5'].over, o25_mkt: mktO('2.5'),
