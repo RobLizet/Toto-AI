@@ -6,7 +6,43 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v356'; // v356: DRIE REPARATIES. TWEE DAARVAN OP MIJN EIGEN v355-ONTWERP, GEVONDEN DOORDAT
+const VERSION = 'v357'; // v357: MISLUKTE SUPABASE-SCHRIJFACTIES WORDEN GETELD EN DE FOUTBOODSCHAP BEWAARD.
+// AANLEIDING 26-08: bij het uitzoeken van een auth-fout die Rob op het beheerscherm zag, kwamen via
+// de Supabase-logs TWEE stille storingen boven water die maandenlang onzichtbaar waren.
+// (a) sharp_signal_results weigerde ELKE goal-markt-pick -- APART GEFIXT in twee migraties, want er
+//     zaten TWEE sloten op dezelfde deur: een check-constraint op ARRAY['1','X','2'] EN de kolom nog
+//     op varchar(1) (exact de v254-bug, destijds op shadow_picks gefixt maar hier blijven staan).
+//     GEMETEN: de tabel had 3 rijen terwijl er 143 afgerekende picks zijn; ~140 nooit weggeschreven.
+//     Na de eerste migratie faalde mijn testinsert nog steeds -- was ik daar gestopt zonder te testen,
+//     dan had ik gemeld dat het opgelost was terwijl er nog niets werd weggeschreven.
+//     Bewust GEEN nieuwe enum-lijst teruggezet: die zou opnieuw breken bij een nieuwe markt.
+// (b) model_market_comparison verloor 7 HELE BATCHES in 23 uur op een check-constraint-violation.
+//     OORZAAK NIET GEVONDEN, en dat staat hier expliciet i.p.v. dat er een plausibele gok in de
+//     changelog belandt: de enige schrijfplek (r~1007) pusht `p` uit een HARDGECODEERDE array
+//     ['1','X','2'], de kolom is varchar(12), en een testinsert met pick='1' slaagt gewoon. De
+//     Hetzner-jobs zijn UITGESLOTEN als bron (elo_backfill/elo_backtest/heartbeat/disk raken die
+//     tabel geen van alle). Er is dus een schrijfpad dat ik niet zie. De constraint blijft daarom
+//     BEWUST STAAN -- hij vangt iets af dat ik niet begrijp, en weghalen zou het bewijs vernietigen
+//     in plaats van het probleem oplossen.
+// WAT DEZE VERSIE TOEVOEGT is precies de meting die dat gat dicht. sb() telde tot nu toe alleen
+// 401/403 apart (v290); elke andere mislukte schrijfactie ging in een console.error die vanuit de
+// sandbox onleesbaar is -- dezelfde blinde vlek als odds_dekking (v265), candidates_removed (v269),
+// analysis_skipped (v272), push_log (v283) en goal_odds_status (v293), nu op het schrijfpad zelf.
+// Twee module-tellers (_sbSchrijfFouten + _sbLaatsteFout met tabel, HTTP-status en de eerste 300
+// tekens van de Postgres-melding), per scan gereset in resetApifTellers zodat scan_runs PER SCAN meet
+// en niet cumulatief over een hergebruikte isolate (de v265-les). ALLEEN POST/PATCH/DELETE: een
+// mislukte GET is een leesprobleem met een eigen route (sb-null + healthGemeten, v356), en die twee
+// op een hoop zou het cijfer betekenisloos maken.
+// NIEUW: twee nullable kolommen scan_runs.sb_schrijf_fouten/sb_laatste_fout (NULL = scan van voor
+// v357, dus niet gemeten en niet foutloos), warning supabase_schrijf_fout in /health -- een WARNING
+// en geen info, want een 400 laat de hele batch omvallen en dat is echt dataverlies -- en view
+// v_sb_schrijffouten (REVOKE anon/authenticated) die per scanuur toont wat er misging.
+// HIERMEE is de openstaande vraag bij de eerstvolgende scan te beantwoorden zonder logonderzoek:
+// de geweigerde rij staat dan gewoon in scan_runs.sb_laatste_fout.
+// Geen wijziging aan pickselectie, drempels, staking, CLV of het model; lambda_anchor_w blijft 0.
+// Rollback: de twee tellers + het if-blok in sb() + de reset-regels + de twee scan_runs-velden + de
+// health-warning eruit, VERSION -> v356 (kolommen en view mogen blijven, nullable en additief).
+// v356: // v356: DRIE REPARATIES. TWEE DAARVAN OP MIJN EIGEN v355-ONTWERP, GEVONDEN DOORDAT
 // ROB HET BEHEERSCHERM DEELDE EN DE NIEUWE KOLOMMEN VRIJWEL LEEG BLEKEN (1 van de 6 duels gevuld).
 // PUNT 1 -- BEKERS HEBBEN GEEN KLASSEMENT, EN DAAR ZIT HET GROOTSTE DEEL VAN DE PICKS. v355 haalde het
 // competitiegemiddelde uitsluitend uit /standings. GEMETEN 26-08: voor de Champions League play-offs
@@ -351,6 +387,11 @@ async function fb(env, path, method = 'GET', body = null) {
 // dat zichtbaar in /health. Staat boven zijn eerste gebruiker (no-use-before-define).
 let _sbAuthFouten = 0;
 let _sbAuthLaatste = null;
+// v357: tellers voor mislukte SCHRIJFacties (POST/PATCH/DELETE). Module-breed net als de
+// apif-tellers; resetApifTellers() zet ze per scan op nul zodat scan_runs per scan meet en niet
+// cumulatief over een hergebruikte isolate (de v265-les).
+let _sbSchrijfFouten = 0;
+let _sbLaatsteFout = null;
 
 async function sb(env, table, method = 'GET', body = null, query = '') {
   try {
@@ -377,6 +418,18 @@ async function sb(env, table, method = 'GET', body = null, query = '') {
     });
     if (!res.ok) {
       const err = await res.text();
+      // v357: SCHRIJFFOUTEN WORDEN NU GETELD EN BEWAARD. AANLEIDING 26-08: model_market_comparison
+      // faalde 7x in 23 uur op een check-constraint, en dat was ALLEEN via de Supabase-logs te
+      // vinden -- hier stond het al die tijd in een console.error die vanuit de sandbox onleesbaar
+      // is. Een 400 laat de HELE batch omvallen, dus dat is echt dataverlies. Precies dezelfde
+      // blinde vlek als odds_dekking (v265), candidates_removed (v269), analysis_skipped (v272),
+      // push_log (v283) en goal_odds_status (v293) -- nu op het schrijfpad zelf.
+      // ALLEEN SCHRIJFACTIES: een mislukte GET is een leesprobleem en heeft zijn eigen route
+      // (sb-null + healthGemeten, v356); die twee op een hoop zou dit cijfer betekenisloos maken.
+      if (method === 'POST' || method === 'PATCH' || method === 'DELETE') {
+        _sbSchrijfFouten++;
+        _sbLaatsteFout = `${table} ${res.status}: ${err.slice(0, 300)}`;
+      }
       if (res.status === 401 || res.status === 403) {
         _sbAuthFouten++;
         _sbAuthLaatste = new Date().toISOString();
@@ -629,6 +682,8 @@ function resetApifTellers() {
   _apifOpgegeven = 0; // v297
   _apifVia = null;
   _apifGemeten = true;
+  _sbSchrijfFouten = 0; // v357: per scan meten, niet cumulatief over een hergebruikte isolate
+  _sbLaatsteFout = null;
   _scanStart = Date.now();
 }
 
@@ -725,6 +780,11 @@ async function sbUpdateScanStatus(data, env) {
       api_refused: _apifGemeten ? _apifWeigeringen : null,
       api_errors: _apifGemeten ? _apifApiErrors : null, // v276
       api_opgegeven: _apifGemeten ? _apifOpgegeven : null, // v297
+      // v357: mislukte Supabase-schrijfacties tijdens deze scan. Altijd een getal (de teller loopt
+      // ongeacht of apif gemeten is), en de laatste foutboodschap erbij zodat de VOLGENDE keer
+      // meteen zichtbaar is WELKE rij geweigerd werd i.p.v. dat het weer een logonderzoek kost.
+      sb_schrijf_fouten: _sbSchrijfFouten,
+      sb_laatste_fout: _sbLaatsteFout,
       api_via: _apifVia,
       duration_ms: _scanStart === null ? null : (Date.now() - _scanStart),
       fout: data.fout || null,
@@ -7453,6 +7513,11 @@ export default {
         // v290: een geweigerde Supabase-sleutel is nu zichtbaar i.p.v. stil. Telt per isolate;
         // 0 is een meetwaarde, niet 'onbekend'.
         if (_sbAuthFouten > 0) warnings.push(`supabase_auth_fout(${_sbAuthFouten}, laatst ${_sbAuthLaatste})`);
+        // v357: een mislukte SCHRIJFactie is dataverlies (een 400 laat de hele batch omvallen) en
+        // stond tot nu toe alleen in een console.error. Dit is een warning en geen info: er gaat
+        // aantoonbaar iets verloren. De teller is per isolate, dus dit toont wat DEZE worker-instantie
+        // heeft zien misgaan -- scan_runs.sb_schrijf_fouten is de persistente, per-scan versie.
+        if (_sbSchrijfFouten > 0) warnings.push(`supabase_schrijf_fout(${_sbSchrijfFouten}, laatst ${_sbLaatsteFout})`);
 
         // v291: WELKE SLEUTELVORM DRAAIT ER? Na de omzetting van 22-07 was /health groen --
         // maar dat was hij met de oude sleutel ook, dus 'groen' bewees de wissel niet. Dit toont
