@@ -6,7 +6,59 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v355'; // v355: BEREKENDE LAMBDA'S ALS DERDE EN VIERDE SCHADUWBRON (Rob akkoord 25-08, "beide" varianten).
+const VERSION = 'v356'; // v356: DRIE REPARATIES. TWEE DAARVAN OP MIJN EIGEN v355-ONTWERP, GEVONDEN DOORDAT
+// ROB HET BEHEERSCHERM DEELDE EN DE NIEUWE KOLOMMEN VRIJWEL LEEG BLEKEN (1 van de 6 duels gevuld).
+// PUNT 1 -- BEKERS HEBBEN GEEN KLASSEMENT, EN DAAR ZIT HET GROOTSTE DEEL VAN DE PICKS. v355 haalde het
+// competitiegemiddelde uitsluitend uit /standings. GEMETEN 26-08: voor de Champions League play-offs
+// geeft die endpoint een LEGE array terug -- knock-outrondes hebben geen tabel. Zonder gemiddelde valt
+// de hele formule weg, dus de berekende lambda's kwamen NIET tot stand voor euro_cup: 75 van de 119
+// club-era picks, oftewel juist de meerderheid. Dat was een ontwerpfout van mij, geen implementatiefout:
+// ik ging uit van standings zonder te controleren of bekercompetities die hebben.
+// FIX: compGemiddeldenUitFixtures als terugval -- hetzelfde gemiddelde, berekend uit de al gespeelde
+// fixtures van diezelfde competitie. Geen aanname, exact dezelfde grootheid uit een andere bron.
+// GEMETEN dekking 26-08: CL 77 gespeelde duels, EL 64, Conference League 214 -- ruim voldoende, en het
+// thuisvoordeel is er duidelijk in zichtbaar (thuis ~1,66 vs uit ~1,05). 1 gecachete call per
+// competitie, en ALLEEN als standings niets gaf, dus voor domestic verandert er niets.
+// PUNT 2 -- VROEG IN HET SEIZOEN IS DE THUIS/UIT-SPLITSING LEEG. GEMETEN 26-08: Real Madrid stond in
+// La Liga op played.home = 0 (speelronde 1, alleen uit gespeeld) en api-sports geeft dan letterlijk
+// '0.0' als thuisgemiddelde. De v355-guard blokkeerde dat TERECHT -- nul duels is geen meting, en
+// doorrekenen zou een lambda van nul opleveren -- maar het gevolg was dat het lange venster nu bijna
+// overal wegviel, precies in de periode waarin we zitten. FIX: tweetraps-ladder. Trap 'split' bij >=2
+// duels op de eigen plek (zuiverst, ongewijzigd gedrag); trap 'totaal' als dat te dun is: alle duels
+// samen met het GEMETEN competitie-thuisvoordeel erop toegepast -- exact dezelfde constructie die het
+// korte venster al gebruikte, dus geen nieuwe aanname. Welke trap gebruikt is gaat mee de database in
+// (calc_s_methode), zodat een verschil tussen beide later te MEten is i.p.v. verstopt in een gemiddelde.
+// PUNT 2b -- SHRINKAGE, BETRAPT BIJ HET NAREKENEN VOOR DEPLOY. Mijn eerste ladder-versie liet n=1 toe
+// en gaf op de echte duels van 26-08 lambda's van EXACT 0,00 (Real Sociedad scoorde niet in zijn enige
+// duel) en 6,89 (Rapid Vienna). Een lambda van 0 is wiskundig kapot: P(0 doelpunten)=1 en elke O/U-kans
+// degenereert. Dat zou onzin zijn geweest die er in de database als meting uitziet. FIX: teamgemiddelden
+// worden naar het competitiegemiddelde getrokken met pseudocounts (PSEUDO_DUELS=5, empirical Bayes --
+// de standaardaanpak voor kleine steekproeven, geen zelfbedachte truc), overal toegepast: beide trappen
+// van het lange venster en ook het korte. Nagerekend op dezelfde duels geeft dat plausibele totalen
+// (1,6-4,3). PSEUDO_DUELS=5 is een EXPLICIETE KEUZE en geen meting -- bij vijf eigen duels wegen eigen
+// data en competitiegemiddelde elk de helft. Te ijken over enkele weken, daarom gaan comp_n en de
+// team-n's mee de database in.
+// BEWUST GEEN DREMPEL OP comp_n: een dun competitiegemiddelde wordt gelogd MET zijn n (comp_n, comp_bron)
+// zodat achteraf op betrouwbaarheid gefilterd kan worden. Nu een ondergrens raden zou een keuze
+// vastleggen die later niet meer terug te draaien is in de al verzamelde data.
+// PUNT 3 -- EEN MISLUKTE LEESACTIE PRODUCEERDE TWEE VERZONNEN STORINGEN. GEMETEN 26-08 08:13:20: een
+// enkele Supabase-auth-fout liet sb() null teruggeven; `rows?.[0] || {}` maakte daar een leeg object
+// van, waarna `last_scan_min_ago == null` als "geen scan" las (-> scan_verouderd) en
+// `avg_snaps_recent || 0` als "0 snapshots" (-> snapshots_dun). Beide ONWAAR: de scan was 12 minuten
+// oud en de snapshots zaten op 17,9 per fixture. Rob zag drie waarschuwingen en "laatste scan onbekend"
+// op een volstrekt gezond systeem, terwijl /health minuten later weer volledig schoon was. Dit is exact
+// de familie die v290 (sb-null), v293 (goal_odds_status), v298 (Number(null)=0) en v306 (/app-users
+// meldde 0 gebruikers bij een mislukte lees) elders al hebben dichtgezet -- nu in de health-check zelf,
+// oftewel in het gereedschap dat juist alle andere blinde vlekken moet bewaken. FIX: healthGemeten =
+// Array.isArray(rows) scheidt "niet gemeten" (sb null) van "gemeten leegte" ([]); bij niet-gemeten EEN
+// eerlijke melding health_meting_mislukt en GEEN van de vier afgeleide alarmen (scan_verouderd,
+// snapshots_dun, dagcap_bijna, versie_mismatch). ok wordt nog steeds false -- dit IS een storing -- maar
+// dan met de juiste reden. Nieuw veld `gemeten` in het antwoord, conform de bestaande conventie.
+// GEEN van de drie punten raakt een pick, drempel, staking, CLV of het model; lambda_anchor_w blijft 0.
+// Rollback per punt los: 1 = de `|| await compGemiddeldenUitFixtures(...)` eruit, 2 = calcLambdasSeizoen
+// terug naar de enkele split-tak, 3 = healthGemeten-vlag + de vier guards + de melding eruit.
+// VERSION -> v355 (kolommen mogen blijven, nullable en additief).
+// v355: // v355: BEREKENDE LAMBDA'S ALS DERDE EN VIERDE SCHADUWBRON (Rob akkoord 25-08, "beide" varianten).
 // AANLEIDING: Rob vroeg "wat is de oorzaak dat de cijfers niet goed zijn?". GEMETEN, drie lagen diep:
 // (a) 48 club-era picks -- model verwacht gemiddeld 2,86 goals vs markt 3,32, en in 42 van de 48 zit
 // het model ONDER de markt; (b) 16 afgerekende schaduwduels -- werkelijk gespeeld 3,50, markt zat er
@@ -3998,7 +4050,56 @@ function compGemiddelden(standTable) {
   // Beide kanten moeten echt gespeeld zijn; 0 duels geeft geen gemiddelde, en 0 invullen zou de
   // hele formule op nul zetten (deling door nul verderop) -- dus expliciet null.
   if (!(hP > 0) || !(aP > 0)) return null;
-  return { thuis: hG / hP, uit: aG / aP, nThuis: hP, nUit: aP };
+  return { thuis: hG / hP, uit: aG / aP, n: hP, bron: 'standings' };
+}
+
+// v356: FALLBACK VOOR COMPETITIES ZONDER TABEL. GEMETEN 26-08: /standings voor de Champions League
+// play-offs geeft een LEGE array terug -- knock-outrondes hebben simpelweg geen klassement. Zonder
+// deze fallback viel compGemiddelden daar op null en daarmee de HELE berekende-lambda-meting, precies
+// voor euro_cup waar 75 van de 119 club-era picks zitten. Dat was een ontwerpfout in v355: ik ging uit
+// van standings zonder te controleren of bekers die hebben.
+// Het gemiddelde komt dan uit de al gespeelde fixtures van diezelfde competitie -- geen aanname, exact
+// dezelfde grootheid, alleen een andere bron. GEMETEN dekking 26-08: CL 77 gespeelde duels, EL 64,
+// Conference League 214 -- ruim voldoende, en het thuisvoordeel is er duidelijk in zichtbaar
+// (thuis ~1,66 vs uit ~1,05). 1 call per competitie, gecached, en alleen als standings niets gaf.
+async function compGemiddeldenUitFixtures(leagueId, season, env) {
+  if (!leagueId || season == null) return null;
+  try {
+    const fx = await apifCached(`/fixtures?league=${leagueId}&season=${season}`, env);
+    if (!Array.isArray(fx) || !fx.length) return null;
+    let hG = 0, aG = 0, n = 0;
+    for (const f of fx) {
+      if (f?.fixture?.status?.short !== 'FT') continue;
+      const h = f?.goals?.home, a = f?.goals?.away;
+      if (!Number.isFinite(h) || !Number.isFinite(a)) continue;
+      hG += h; aG += a; n++;
+    }
+    if (!(n > 0)) return null;
+    return { thuis: hG / n, uit: aG / n, n, bron: 'fixtures' };
+  } catch(e) { console.warn('[CompGem] fixtures-fallback fout', leagueId, e.message); return null; }
+}
+
+// v356: SHRINKAGE NAAR HET COMPETITIEGEMIDDELDE. BETRAPT BIJ HET NAREKENEN VOOR DEPLOY, en dit was
+// geen detail: mijn eerste ladder-versie liet ook n=1 toe en produceerde op de echte duels van 26-08
+// lambda's van EXACT 0,00 (Real Sociedad scoorde niet in zijn enige duel) en van 6,89 (Rapid Vienna).
+// Een lambda van 0 is bovendien wiskundig kapot -- dan is P(0 doelpunten) gelijk aan 1 en degenereert
+// elke O/U-kans. Dat zou onzin zijn geweest die er in de database als meting uitziet: precies het
+// soort verzonnen cijfer dat deze codebase overal bestrijdt, dan door mij zelf geintroduceerd.
+// OPLOSSING is de standaardaanpak voor kleine steekproeven (empirical Bayes / pseudocounts), geen
+// zelfbedachte truc: het teamgemiddelde wordt naar het competitiegemiddelde getrokken met een gewicht
+// dat afneemt naarmate er meer duels gespeeld zijn. Bij nul eigen duels sta je exact op het
+// competitiegemiddelde (je weet nog niets), bij veel duels praktisch op je eigen cijfer.
+// PSEUDO_DUELS = 5 is een EXPLICIETE KEUZE en geen meting: het betekent "vijf duels aan prior-gewicht",
+// dus bij vijf eigen duels wegen eigen data en competitiegemiddelde elk de helft. Nagerekend op de
+// echte duels van 26-08 geeft dat plausibele totalen (1,6-4,3) waar de ongeschrunkte versie 0,00 en
+// 6,89 gaf. comp_n en de team-n's gaan mee de database in, zodat later te zien is hoe zwaar er
+// geschrunkt is en of deze waarde bijstelling verdient -- dat is een ijkvraag voor over een paar weken,
+// niet iets om nu blind vast te zetten.
+const PSEUDO_DUELS = 5;
+function _shrink(gemiddelde, nDuels, compGem) {
+  if (!Number.isFinite(gemiddelde) || !Number.isFinite(compGem)) return null;
+  const n = Number.isFinite(nDuels) && nDuels > 0 ? nDuels : 0;
+  return (gemiddelde * n + PSEUDO_DUELS * compGem) / (n + PSEUDO_DUELS);
 }
 
 // Kern van de formule. Alle drie de ingrediënten moeten GEMETEN zijn; ontbreekt er een, dan null.
@@ -4017,25 +4118,50 @@ function _lambdaUitKracht(gfPer, gaPer, compKolom) {
   return Number.isFinite(l) && l > 0 ? l : null;
 }
 
-// LANG venster: uit teams/statistics (thuiscijfers van de thuisploeg, uitcijfers van de uitploeg).
+// LANG venster: uit teams/statistics.
+// v356: TWEETRAPS-LADDER. GEMETEN 26-08: Real Madrid stond in La Liga op played.home = 0 (speelronde 1,
+// alleen uit gespeeld) en api-sports geeft dan letterlijk '0.0' als thuisgemiddelde terug. De v355-guard
+// blokkeerde dat terecht -- nul duels is geen meting -- maar het gevolg was dat het lange venster vroeg
+// in het seizoen vrijwel overal wegviel, precies de periode waarin we nu zitten.
+//   'split'  = aparte thuis-/uitcijfers (zuiverst; eist >=2 duels op die plek)
+//   'totaal' = alle duels samen, met het competitie-thuisvoordeel erop toegepast -- exact dezelfde
+//              constructie die het KORTE venster al gebruikt, dus geen nieuwe aanname
+// Welke van de twee gebruikt is gaat mee de database in (calc_s_methode), zodat een verschil tussen
+// beide later te meten is i.p.v. verstopt te zitten in een gemiddelde.
 function calcLambdasSeizoen(hStats, aStats, comp) {
   if (!hStats || !aStats || !comp) return null;
   const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
-  const hFor = num(hStats?.goals?.for?.average?.home);
-  const hAgainst = num(hStats?.goals?.against?.average?.home);
-  const aFor = num(aStats?.goals?.for?.average?.away);
-  const aAgainst = num(aStats?.goals?.against?.average?.away);
   const nH = Number.isFinite(hStats?.fixtures?.played?.home) ? hStats.fixtures.played.home : null;
   const nA = Number.isFinite(aStats?.fixtures?.played?.away) ? aStats.fixtures.played.away : null;
-  // Nul gespeelde duels: api-sports geeft dan letterlijk '0.0' terug (v343). Dat is GEEN meting van
-  // aanvalskracht maar de afwezigheid ervan -- doorrekenen zou een lambda van 0 opleveren.
-  if (!(nH > 0) || !(nA > 0)) return null;
-  // Thuis-lambda ijkt op de THUISkolom: de aanval van de thuisploeg en de tegendoelpunten van de
-  // uitploeg worden allebei in die kolom gescoord. Uit-lambda spiegelbeeldig op de UITkolom.
-  const lh = _lambdaUitKracht(hFor, aAgainst, comp.thuis);
-  const la = _lambdaUitKracht(aFor, hAgainst, comp.uit);
-  if (lh === null || la === null) return null;
-  return { lh, la, nHome: nH, nAway: nA };
+  const nHt = Number.isFinite(hStats?.fixtures?.played?.total) ? hStats.fixtures.played.total : null;
+  const nAt = Number.isFinite(aStats?.fixtures?.played?.total) ? aStats.fixtures.played.total : null;
+  // Trap 1: genoeg duels op de eigen plek -> de zuivere thuis/uit-splitsing (met shrinkage, want ook
+  // drie thuisduels is nog steeds een kleine steekproef).
+  if (nH >= 2 && nA >= 2) {
+    const hFor = _shrink(num(hStats?.goals?.for?.average?.home), nH, comp.thuis);
+    const aAgn = _shrink(num(aStats?.goals?.against?.average?.away), nA, comp.thuis);
+    const aFor = _shrink(num(aStats?.goals?.for?.average?.away), nA, comp.uit);
+    const hAgn = _shrink(num(hStats?.goals?.against?.average?.home), nH, comp.uit);
+    const lh = _lambdaUitKracht(hFor, aAgn, comp.thuis);
+    const la = _lambdaUitKracht(aFor, hAgn, comp.uit);
+    if (lh !== null && la !== null) return { lh, la, nHome: nH, nAway: nA, methode: 'split' };
+  }
+  // Trap 2: te dun gesplitst, maar er is wel gespeeld -> totalen + gemeten thuisvoordeel.
+  if (nHt >= 1 && nAt >= 1) {
+    const compAlg = (comp.thuis + comp.uit) / 2;
+    if (!(compAlg > 0)) return null;
+    const hFor = _shrink(num(hStats?.goals?.for?.average?.total), nHt, compAlg);
+    const hAgn = _shrink(num(hStats?.goals?.against?.average?.total), nHt, compAlg);
+    const aFor = _shrink(num(aStats?.goals?.for?.average?.total), nAt, compAlg);
+    const aAgn = _shrink(num(aStats?.goals?.against?.average?.total), nAt, compAlg);
+    const lhB = _lambdaUitKracht(hFor, aAgn, compAlg);
+    const laB = _lambdaUitKracht(aFor, hAgn, compAlg);
+    if (lhB === null || laB === null) return null;
+    const lh = lhB * (comp.thuis / compAlg), la = laB * (comp.uit / compAlg);
+    if (!(lh > 0) || !(la > 0)) return null;
+    return { lh, la, nHome: nHt, nAway: nAt, methode: 'totaal' };
+  }
+  return null;
 }
 
 // KORT venster: laatste <=10 afgeronde duels per team, oefenduels eruit.
@@ -4068,8 +4194,15 @@ function calcLambdasRecent(hRec, aRec, comp) {
   if (!hRec || !aRec || !comp) return null;
   const compAlg = (comp.thuis + comp.uit) / 2;
   if (!(compAlg > 0)) return null;
-  const lhBasis = _lambdaUitKracht(hRec.gfPer, aRec.gaPer, compAlg);
-  const laBasis = _lambdaUitKracht(aRec.gfPer, hRec.gaPer, compAlg);
+  // v356: ook hier shrinkage -- een kort venster kan legitiem op 3-4 duels uitkomen (net begonnen
+  // seizoen, ploeg die alleen beker speelt) en dan is het ruwe gemiddelde net zo ruizig als bij het
+  // lange venster. Zelfde PSEUDO_DUELS, zodat de twee vensters op dit punt vergelijkbaar blijven.
+  const hFor = _shrink(hRec.gfPer, hRec.n, compAlg);
+  const hAgn = _shrink(hRec.gaPer, hRec.n, compAlg);
+  const aFor = _shrink(aRec.gfPer, aRec.n, compAlg);
+  const aAgn = _shrink(aRec.gaPer, aRec.n, compAlg);
+  const lhBasis = _lambdaUitKracht(hFor, aAgn, compAlg);
+  const laBasis = _lambdaUitKracht(aFor, hAgn, compAlg);
   if (lhBasis === null || laBasis === null) return null;
   const lh = lhBasis * (comp.thuis / compAlg);
   const la = laBasis * (comp.uit / compAlg);
@@ -5016,7 +5149,8 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
       // Beide varianten mogen los mislukken (geen standings, nul gespeelde duels, call gefaald):
       // dan blijven precies die kolommen NULL. Bewust GEEN terugval op de AI-lambda's -- dan zou
       // de vergelijking zichzelf gelijk geven, dezelfde val als bij het alt-model in v346.
-      const _comp = compGemiddelden(standingsMap[`${m.leagueId}|${m.leagueSeason}`]);
+      const _comp = compGemiddelden(standingsMap[`${m.leagueId}|${m.leagueSeason}`])
+        || await compGemiddeldenUitFixtures(m.leagueId, m.leagueSeason, env); // v356: bekers hebben geen tabel
       const _sm = statsMap[m.fixtureId];
       const _cs = calcLambdasSeizoen(_sm?.hStats, _sm?.aStats, _comp);
       const _cr = calcLambdasRecent(recentMap[m.homeId], recentMap[m.awayId], _comp);
@@ -5045,6 +5179,9 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
         o35_calc_r: _gcr ? _gcr.ou['3.5'].over : null,
         btts_calc_r: _gcr ? _gcr.btts.yes : null,
         calc_r_n_home: _cr ? _cr.nHome : null, calc_r_n_away: _cr ? _cr.nAway : null,
+        comp_n: _comp ? _comp.n : null,
+        comp_bron: _comp ? _comp.bron : null,
+        calc_s_methode: _cs ? _cs.methode : null,
       });
     }
     if (anchorRows.length) {
@@ -7046,8 +7183,26 @@ export default {
     if (path === '/health') {
       try {
         const rows = await sb(env, 'v_health', 'GET', null, '?limit=1');
+        // v356: EEN MISLUKTE LEESACTIE PRODUCEERDE TWEE VERZONNEN STORINGEN. GEMETEN 26-08 08:13:20:
+        // een enkele Supabase-auth-fout liet sb() null teruggeven; `rows?.[0] || {}` maakte daar een
+        // leeg object van, en dan leest `last_scan_min_ago == null` als "geen scan" (-> scan_verouderd)
+        // en `avg_snaps_recent || 0` als "0 snapshots" (-> snapshots_dun). Beide waren ONWAAR: de scan
+        // was 12 minuten oud en de snapshots zaten op 17,9 per fixture. Rob zag drie waarschuwingen en
+        // "laatste scan onbekend" op een volstrekt gezond systeem. Dit is exact de familie die v290
+        // (sb-null), v293, v298 (Number(null)=0) en v306 (/app-users meldde 0 gebruikers bij een
+        // mislukte lees) elders al hebben dichtgezet -- nu in de health-check zelf, oftewel in het
+        // gereedschap dat juist alle andere blinde vlekken moet bewaken.
+        // ONDERSCHEID: sb() geeft null bij een mislukte call en [] bij geen rijen. Die twee mogen niet
+        // op een hoop: het eerste is "niet gemeten", het tweede is een gemeten leegte.
+        const healthGemeten = Array.isArray(rows);
         const h = rows?.[0] || {};
         const warnings = [];
+        if (!healthGemeten) {
+          // Niet gemeten: EEN eerlijke melding, en géén van de afgeleide alarmen die op lege velden
+          // zouden afgaan. ok wordt hierdoor false (dit IS een storing), maar dan wel met de juiste
+          // reden erbij i.p.v. twee verzonnen symptomen.
+          warnings.push('health_meting_mislukt(v_health onbereikbaar)');
+        }
         // v309: infos = meldingen die WEL zichtbaar moeten zijn maar ok NIET mogen laten dalen
         // (ok = warnings.length === 0). Nu alleen de gedempte vakantie-backup; zie het jobs-blok.
         const infos = [];
@@ -7056,7 +7211,7 @@ export default {
         // met het echte fullScan-venster (was 12-16, miste avond-aftrappen 17-21 UTC post-WK).
         // Buiten die uren zijn er geen scans gepland → geen valse "scan_verouderd" 's nachts.
         const activeHours = hour >= 6 && hour <= 22; // v266: gelijk aan het echte cron-venster in scheduled()
-        if (activeHours && (h.last_scan_min_ago == null || h.last_scan_min_ago > 75)) warnings.push('scan_verouderd');
+        if (healthGemeten && activeHours && (h.last_scan_min_ago == null || h.last_scan_min_ago > 75)) warnings.push('scan_verouderd');
         // v237: versie_mismatch alarmeert pas als een scan de nieuwe code ECHT heeft overgeslagen.
         // De check bedoelt "worker gedeployd maar de scan draait nog oude code". Direct na een deploy
         // is een mismatch echter volstrekt normaal: de vorige scan liep nu eenmaal onder de vorige
@@ -7068,7 +7223,7 @@ export default {
         // rapporteert nog de oude versie -> de deploy is niet doorgekomen -> echt alarm. Zo nee -> we
         // wachten gewoon; wel zichtbaar in het antwoord, maar geen ok=false.
         let versieInfo = null;
-        if ((h.scan_version || '') !== VERSION) {
+        if (healthGemeten && (h.scan_version || '') !== VERSION) {
           let sinds = null;
           try {
             const vs = await sb(env, 'model_config', 'GET', null, '?config_key=eq.worker_version_seen&select=note,updated_at&limit=1');
@@ -7085,8 +7240,8 @@ export default {
           if (scanNaDeploy) warnings.push(`versie_mismatch(scan=${h.scan_version},worker=${VERSION})`);
           else versieInfo = `wacht_op_scan(scan=${h.scan_version},worker=${VERSION},sinds=${sinds})`;
         }
-        if ((h.scans_today || 0) >= 35) warnings.push('dagcap_bijna'); // v189: gelijkgetrokken met MANUAL_SCAN_DAY_CAP 40
-        if (Number(h.avg_snaps_recent || 0) < 2) warnings.push('snapshots_dun');
+        if (healthGemeten && (h.scans_today || 0) >= 35) warnings.push('dagcap_bijna'); // v189: gelijkgetrokken met MANUAL_SCAN_DAY_CAP 40
+        if (healthGemeten && Number(h.avg_snaps_recent || 0) < 2) warnings.push('snapshots_dun');
         // v206: security-vangnet — publieke tabellen zonder RLS worden binnen een dag gemeld
         try {
           const rlsGaps = await sb(env, 'v_rls_audit', 'GET', null, '?select=object_name,issue') || [];
@@ -7451,6 +7606,7 @@ export default {
         }
 
         return json({ ok: warnings.length === 0, status: warnings.length ? 'WARN' : 'OK',
+          gemeten: healthGemeten, // v356: false = v_health was onbereikbaar; alle velden hieronder zijn dan leeg en betekenen "niet gemeten", niet "nul"
           warnings, infos, versie_info: versieInfo, worker_version: VERSION, ...h, odds_dekking: oddsDek, odds_dekking_venster: oddsDekVenster, odds_dekking_clubliga: oddsDekClubliga, supabase_sleutel: sleutelVorm, push: pushStat, clv_gaps: clvGaps, clv_per_markt: clvMarkt, elo_blend: eloBlend, xg_shadow: xgCal, lambda_anchor_shadow: lambdaAnchorCal, apif_proxy: apifStatus, jobs: jobsStat, goal_odds_status_24u: goalOddsStatus, checked_at: new Date().toISOString() });
       } catch(e) {
         return json({ ok: false, status: 'ERROR', error: e.message, worker_version: VERSION }, 500);
