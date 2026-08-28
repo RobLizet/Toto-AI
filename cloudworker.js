@@ -6,7 +6,7 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v357'; // v357: MISLUKTE SUPABASE-SCHRIJFACTIES WORDEN GETELD EN DE FOUTBOODSCHAP BEWAARD.
+const VERSION = 'v358'; // v358: APART ANKERGEWICHT VOOR BTTS (dormant, geen model_config-rij aangemaakt). GEMETEN 28-08 in lambda_anchor_shadow (n=38): het anker verbetert O2.5 (Brier 0,2357->0,2245) en O3.5 (0,3024->0,2925) maar VERSLECHTERT BTTS (0,2238->0,2281). Oorzaak is meetbaar: op BTTS is het RAW model al beter dan de markt zelf (0,2238 vs mkt 0,2310) -- de enige markt waar dat zo is -- dus het anker trekt daar naar een SLECHTERE referentie toe. Het globale 'anker beter'-oordeel op MAE-totaal (1,668->1,626) wordt gedomineerd door de O/U-picks (117 van de 138) en verbergt dit; beslissen op die ene regel zou de enige markt met positieve CLV (+0,89 op 20 picks) hebben gebroken. NIEUW: LAMBDA_ANCHOR_W_BTTS (model_config-sleutel lambda_anchor_w_btts). NULL = geen rij = BTTS volgt LAMBDA_ANCHOR_W = BYTE-IDENTIEK aan v357: bij gelijke gewichten wordt er geen tweede goalMarkets gerekend, geen extra Poisson-matrix, geen extra API-call. Wijkt het gewicht af, dan komt UITSLUITEND de BTTS/NOBTTS-kans uit een tweede anchorLambdasW+goalMarkets op eigen lambda's; de O/U-lijnen blijven onaangeroerd op het bestaande gm. FALSY-VERBOD EXPLICIET: 0 is hier een GELDIGE waarde (= 'BTTS op raw, geen anker') en is precies de stand die optie B nodig heeft -- daarom overal Number.isFinite en nergens `|| LAMBDA_ANCHOR_W`, want dat zou een bewust gezette 0 stil laten terugvallen op het O/U-gewicht en de hele wijziging onwerkzaam maken. BEWUST GEEN model_config-rij aangemaakt: de knop bestaat maar doet niets tot iemand hem zet, zodat de 21-09-beslissing een expliciete keuze blijft en niet meelift op het omzetten van lambda_anchor_w. /health toont nu actief_w_ou / actief_w_btts / btts_apart_gezet, GELEZEN UIT model_config en niet uit de module-variabelen -- loadTuneConfig draait binnen runScan, dus een losse route ziet daar de default en zou een onwaar gewicht tonen (de v352-val). Guard: mislukt de tweede goalMarkets, dan blijft de bestaande gm staan met een luide console.warn -- terugvallen op het O/U-gewicht is v357-gedrag en dus een bekende uitkomst, nooit een verzonnen kans. GEEN wijziging aan drempels, staking, CLV, de schaduwmeting of de 1X2-kant (anchorLambdas op r2832 is ongemoeid). Rollback: model_config-rij lambda_anchor_w_btts verwijderen (geen deploy nodig), of het _wBtts/gmBtts-blok + de config-lezing + het health-blok eruit, VERSION -> v357. // v357: MISLUKTE SUPABASE-SCHRIJFACTIES WORDEN GETELD EN DE FOUTBOODSCHAP BEWAARD.
 // AANLEIDING 26-08: bij het uitzoeken van een auth-fout die Rob op het beheerscherm zag, kwamen via
 // de Supabase-logs TWEE stille storingen boven water die maandenlang onzichtbaar waren.
 // (a) sharp_signal_results weigerde ELKE goal-markt-pick -- APART GEFIXT in twee migraties, want er
@@ -2623,6 +2623,21 @@ const ELO_VALIDATE_MIN_N = 40;       // v212: vanaf zoveel gerijpte schaduw-duel
 const LAMBDA_ANCHOR_DEADBAND = 0.30; // < 0.30 goal verschil = ruis, niet corrigeren
 const LAMBDA_ANCHOR_MAX_W    = 1.0;  // veiligheidsbovengrens
 let   LAMBDA_ANCHOR_W        = 0;    // geladen uit model_config; 0 = picks byte-identiek
+
+// v358: APART ANKERGEWICHT VOOR BTTS. GEMETEN 28-08 in lambda_anchor_shadow (n=38): het anker
+// verbetert O2.5 (Brier 0,2357 -> 0,2245) en O3.5 (0,3024 -> 0,2925) maar VERSLECHTERT BTTS
+// (0,2238 -> 0,2281). Reden is meetbaar en niet verrassend: op BTTS is het RAW model al beter
+// dan de markt zelf (0,2238 vs mkt 0,2310) -- de enige markt waar dat zo is -- dus het anker
+// trekt daar richting een SLECHTERE referentie. Het globale "anker beter"-oordeel op MAE-totaal
+// (1,668 -> 1,626) wordt gedomineerd door de O/U-picks (117 van de 138) en VERBERGT dit.
+// NULL = niet apart ingesteld = volg LAMBDA_ANCHOR_W = byte-identiek aan v357. De knop bestaat
+// dus wel maar doet NIETS tot iemand hem bewust zet; er is met opzet GEEN model_config-rij
+// aangemaakt, zodat de 21-09-beslissing een expliciete keuze blijft en niet per ongeluk meelift
+// op het omzetten van lambda_anchor_w.
+// LET OP bij het zetten: 0 is hier een GELDIGE, betekenisvolle waarde (= "BTTS op raw, geen
+// anker"). Daarom overal Number.isFinite en nooit `|| LAMBDA_ANCHOR_W` -- dat zou een bewust
+// gezette 0 stil laten terugvallen op het O/U-gewicht en optie B onmogelijk maken (falsy-familie).
+let   LAMBDA_ANCHOR_W_BTTS   = null; // null = volg LAMBDA_ANCHOR_W
 // v194: auto-kalibratie — instelbaar, veilig, dry-run-first
 const AUTOTUNE_ENABLED  = true;          // analyse + logging aan
 const AUTOTUNE_APPLY    = false;         // v332: DRY-RUN. Analyse + logging draaien door (AUTOTUNE_ENABLED=true), maar er wordt NIETS toegepast. Gezet na de null-in-band-bug: de tuner heeft s1 vier keer verlaagd op een verzonnen gap van -31. Pas weer op true als calibration_tune_log een paar weken plausibele regels toont (band 00-20% hoort ~n=82 model~13,7 actueel~13,4 te geven, niet n=800+ model~1). Rem blijft sowieso: alleen clubdata >= CLUB_ERA_START en n >= AUTOTUNE_MIN_N; stappen klein/begrensd/gelogd.
@@ -2977,6 +2992,20 @@ function buildGoalCandidates(m, ai, odds) {
   const _an = anchorLambdas(ai.gh, ai.ga, odds); // v215: totaal-anker (dormant bij lambda_anchor_w=0)
   const gm = goalMarkets(_an.lh, _an.la);
   if (!gm) return out;
+  // v358: BTTS mag een EIGEN ankergewicht hebben. Wijkt het niet af (de default), dan wordt er
+  // niets extra's gerekend en is dit pad byte-identiek aan v357 -- geen extra Poisson-matrix,
+  // geen extra API-call, geen gedragswijziging. Wijkt het wel af, dan komt UITSLUITEND de
+  // BTTS-kans uit een tweede goalMarkets op eigen lambda's; de O/U-lijnen blijven op `gm`.
+  const _wBtts = Number.isFinite(LAMBDA_ANCHOR_W_BTTS) ? LAMBDA_ANCHOR_W_BTTS : LAMBDA_ANCHOR_W;
+  let gmBtts = gm;
+  if (_wBtts !== LAMBDA_ANCHOR_W) {
+    const _anB = anchorLambdasW(ai.gh, ai.ga, odds, _wBtts);
+    const _gmB = goalMarkets(_anB.lh, _anB.la);
+    // Mislukt de tweede berekening (niet-eindige lambda's), dan blijft de BESTAANDE gm staan.
+    // Bewust geen fallback op een verzonnen kans en bewust niet de kandidaat laten vallen:
+    // terugvallen op het O/U-gewicht is het gedrag van v357 en dus een bekende, veilige uitkomst.
+    if (_gmB) gmBtts = _gmB; else console.warn('[Anker] BTTS-hergebruik gm: tweede goalMarkets gaf null');
+  }
   for (const line of GOAL_LINES) {
     const o = odds?.ou?.[line];
     if (!o) continue;
@@ -2986,8 +3015,8 @@ function buildGoalCandidates(m, ai, odds) {
   }
   const b = odds?.btts;
   if (b) {
-    if (b.yes > 1) out.push({ pick: 'BTTS',   label: 'Beide teams scoren',     aiKans: gm.btts.yes, bookOdds: b.yes, fairImplied: b.fairYes, marketGroup: 'BTTS' });
-    if (b.no  > 1) out.push({ pick: 'NOBTTS', label: 'Niet beide teams scoren', aiKans: gm.btts.no,  bookOdds: b.no,  fairImplied: b.fairNo,  marketGroup: 'BTTS' });
+    if (b.yes > 1) out.push({ pick: 'BTTS',   label: 'Beide teams scoren',     aiKans: gmBtts.btts.yes, bookOdds: b.yes, fairImplied: b.fairYes, marketGroup: 'BTTS' });
+    if (b.no  > 1) out.push({ pick: 'NOBTTS', label: 'Niet beide teams scoren', aiKans: gmBtts.btts.no,  bookOdds: b.no,  fairImplied: b.fairNo,  marketGroup: 'BTTS' });
   }
   // v324: modelTot en mktTot uit de anker-diagnose op elke kandidaat zetten, zodat de
   // model-vs-markt-kloof per pick direct meetbaar wordt i.p.v. achteraf gereconstrueerd.
@@ -3399,10 +3428,13 @@ async function loadTuneConfig(env) {
     if (map.lowprob_extra_shrink_2 != null && isFinite(map.lowprob_extra_shrink_2)) TUNE.s2 = map.lowprob_extra_shrink_2;
     if (map.elo_blend_w != null && isFinite(map.elo_blend_w)) ELO_BLEND_W = Math.min(Math.max(map.elo_blend_w, 0), ELO_MAX_W); // v208
     if (map.lambda_anchor_w != null && isFinite(map.lambda_anchor_w)) LAMBDA_ANCHOR_W = Math.min(Math.max(map.lambda_anchor_w, 0), LAMBDA_ANCHOR_MAX_W); // v215
+    // v358: ontbreekt de rij, dan blijft dit null en volgt BTTS gewoon LAMBDA_ANCHOR_W (= v357-gedrag).
+    // Een gezette 0 is een ECHTE waarde ("BTTS op raw") en moet die 0 houden -- vandaar != null + isFinite.
+    if (map.lambda_anchor_w_btts != null && isFinite(map.lambda_anchor_w_btts)) LAMBDA_ANCHOR_W_BTTS = Math.min(Math.max(map.lambda_anchor_w_btts, 0), LAMBDA_ANCHOR_MAX_W);
     if (map.calib_factor_w != null && isFinite(map.calib_factor_w)) CALIB_FACTOR_W = Math.min(Math.max(map.calib_factor_w, 0), 1); // v296
     if (map.dixon_coles_w != null && isFinite(map.dixon_coles_w)) DIXON_COLES_W = Math.min(Math.max(map.dixon_coles_w, 0), DIXON_COLES_MAX_W); // v344
     if (map.alt_model_shadow_w != null && isFinite(map.alt_model_shadow_w)) ALT_MODEL_SHADOW_W = Math.min(Math.max(map.alt_model_shadow_w, 0), 1); // v346
-    console.log(`[Tune] config geladen: s1=${TUNE.s1} s2=${TUNE.s2} elo_blend_w=${ELO_BLEND_W} lambda_anchor_w=${LAMBDA_ANCHOR_W} calib_factor_w=${CALIB_FACTOR_W} dixon_coles_w=${DIXON_COLES_W}`);
+    console.log(`[Tune] config geladen: s1=${TUNE.s1} s2=${TUNE.s2} elo_blend_w=${ELO_BLEND_W} lambda_anchor_w=${LAMBDA_ANCHOR_W} lambda_anchor_w_btts=${LAMBDA_ANCHOR_W_BTTS === null ? 'volgt O/U' : LAMBDA_ANCHOR_W_BTTS} calib_factor_w=${CALIB_FACTOR_W} dixon_coles_w=${DIXON_COLES_W}`);
   } catch(e) { console.error('[Tune] config laden mislukt (defaults blijven):', e.message); }
 }
 
@@ -7383,6 +7415,21 @@ export default {
             n_btts: Number(l.n_btts || 0),
             brier_btts_raw: num(l.brier_btts_raw), brier_btts_anchor: num(l.brier_btts_anchor), brier_btts_mkt: num(l.brier_btts_mkt),
           };
+          // v358: welke gewichten staan er ECHT live? Bewust uit model_config gelezen en NIET uit
+          // de module-variabelen: loadTuneConfig draait binnen runScan, dus een losse route als
+          // /health ziet daar de module-default en zou een onwaar gewicht tonen -- exact de val die
+          // in v352 de alt-model-schaduw stilhield. Hier dus de bron, niet de kopie.
+          try {
+            const cfg = await sb(env, 'model_config', 'GET', null, '?config_key=in.(lambda_anchor_w,lambda_anchor_w_btts)&select=config_key,config_value') || [];
+            const cm = {}; cfg.forEach(r => { cm[r.config_key] = Number(r.config_value); });
+            const wOU = Number.isFinite(cm.lambda_anchor_w) ? cm.lambda_anchor_w : 0;
+            // null = geen rij = BTTS volgt het O/U-gewicht. Een gezette 0 blijft 0 (falsy-verbod).
+            const wBT = Number.isFinite(cm.lambda_anchor_w_btts) ? cm.lambda_anchor_w_btts : null;
+            lambdaAnchorCal.actief_w_ou = wOU;
+            lambdaAnchorCal.actief_w_btts = wBT === null ? wOU : wBT;
+            lambdaAnchorCal.btts_apart_gezet = wBT !== null && wBT !== wOU;
+            lambdaAnchorCal.gemeten_w = true;
+          } catch(e) { lambdaAnchorCal.gemeten_w = false; }
         } catch(e) { /* view niet beschikbaar => health niet laten falen */ }
 
         // v228: Elo-sweep-versheid — sweepEloFromResults bevroor stil sinds 08-07 (dubbele swallow-catch).
