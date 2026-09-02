@@ -240,8 +240,30 @@ function _analyticsFindings(local, worker) {
     f.push({ dot: d, txt: txt });
   }
 
-  // 4) Opvallende competitie (alleen bij >=5 CLV-picks per competitie, anders te dun)
-  const cbl = (worker && worker.clvByLeague) ? worker.clvByLeague.filter(l => Number(l.picks) >= 5 && l.avgCLV != null) : [];
+  // 4) Opvallende competitie
+  // v26.411 — GEMETEN 02-09: dit blok meldde "La Liga valt negatief op (CLV -3,84% over
+  // 9 picks) - hier lekt de meeste waarde weg". Nagerekend: n=9, standaardfout 1,91. Dat is
+  // niet te onderscheiden van nul, en zeker geen "meeste waarde". Erger nog was het MECHANISME:
+  // de oude drempel picks>=5 sorteerde puur op avgCLV en pakte de buitenste. Hoe kleiner de
+  // steekproef, hoe extremer het gemiddelde mag uitvallen, dus het blok selecteerde SYSTEMATISCH
+  // op ruis. Op dat moment stond competitie 88 op CLV -1,26 over n=23 met standaardfout 0,65 --
+  // veel betrouwbaarder, maar minder extreem, dus onzichtbaar. Precies andersom dan bedoeld.
+  // NU: n>=20 EN de standaardfout moet kleiner zijn dan de helft van het gemiddelde. Dat tweede
+  // is de echte toets; de n-drempel alleen laat een brede spreiding nog steeds door.
+  // seCLV komt van de worker. Ontbreekt hij (oudere worker), dan valt de competitie AF i.p.v.
+  // door: een bevinding tonen waarvan de betrouwbaarheid niet gemeten is, is precies wat hier
+  // fout ging. Number.isFinite, geen `|| 0` -- een ontbrekende se mag geen 0 worden, want 0
+  // zou "perfect nauwkeurig" betekenen (falsy-nul, CIJFERBRON).
+  const LEAGUE_MIN_N = 20;
+  const _betrouwbaar = (l) => {
+    const se = Number(l.seCLV);
+    const m = Number(l.avgCLV);
+    if (!Number.isFinite(se) || !Number.isFinite(m) || m === 0) return false;
+    return se < Math.abs(m) / 2;
+  };
+  const cbl = (worker && worker.clvByLeague)
+    ? worker.clvByLeague.filter(l => Number(l.picks) >= LEAGUE_MIN_N && l.avgCLV != null && _betrouwbaar(l))
+    : [];
   if (cbl.length) {
     const sorted = cbl.slice().sort((a, b) => Number(a.avgCLV) - Number(b.avgCLV));
     const worst = sorted[0], best = sorted[sorted.length - 1];
