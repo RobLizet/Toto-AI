@@ -6,7 +6,14 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v384'; // v384: NIEUW ENDPOINT /odds-scan voor ProMatchXIodds (los repo/PWA "ProMatchXI Odds",
+const VERSION = 'v385'; // v385: DIAGNOSE OP /odds-scan -- GEMETEN 0 VAN 13 fixtures met odds, en dat is
+// verdacht genoeg (0/13, geen "sommige") om eerst te meten dan te gokken. Tijdelijk veld
+// _diagnose_redenen telt WAAROM elke gemiste fixture miste: geen_call_resultaat (apif gaf null/lege
+// array -- call zelf faalde), geen_bookmakers_blok (call ok, maar data[0].bookmakers leeg), geen_bet1_in_boek
+// (er zijn boeken maar geen enkele heeft bet id=1/Match Winner), onvolledige_odds (bet1 aanwezig maar niet
+// alle drie h/d/a > 1). Wordt verwijderd zodra de oorzaak vaststaat. Geen wijziging aan pickselectie/model/
+// CLV van de hoofdapp. Rollback: VERSION -> v384, _redenen-blok + het veld eruit.
+// v384: NIEUW ENDPOINT /odds-scan voor ProMatchXIodds (los repo/PWA "ProMatchXI Odds",
 // arbitrage-scanner). AANLEIDING: Rob wil die app live trekken met echte data i.p.v. de mock-JSON die er
 // nu in staat, en koos ervoor de bestaande API-Football-infra te hergebruiken i.p.v. een nieuwe key/worker.
 // GEBOUWD: haalt fixtures op binnen het bestaande 24u-venster over dezelfde FASE2_LEAGUES-competities,
@@ -7624,14 +7631,21 @@ export default {
 
       const uitkomsten = [];
       let surebetCount = 0;
+      // v385-diagnose (tijdelijk): WAAROM een fixture geen odds opleverde, per gemeten categorie --
+      // dezelfde discipline als goal_odds_status (v293): "niet gemeten" en "gemeten leeg" mogen niet
+      // op een hoop. Wordt verwijderd zodra de oorzaak van de 0/13-meting vaststaat.
+      const _redenen = { geen_call_resultaat: 0, geen_bookmakers_blok: 0, geen_bet1_in_boek: 0, onvolledige_odds: 0 };
       matches.forEach((f, i) => {
         const data = oddsResults[i];
-        if (!data || !data.length) return; // geen odds gemeten voor deze fixture -> niet meenemen
+        if (!data || !data.length) { _redenen.geen_call_resultaat++; return; } // geen odds gemeten voor deze fixture -> niet meenemen
         const books = data[0]?.bookmakers || [];
+        if (!books.length) { _redenen.geen_bookmakers_blok++; return; }
         let bestH = null, bestD = null, bestA = null;
+        let _heeftBet1 = false;
         for (const bm of books) {
           const bet = bm.bets?.find(b => b.id === 1);
           if (!bet) continue;
+          _heeftBet1 = true;
           const h = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
           const d = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
           const a = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
@@ -7639,7 +7653,8 @@ export default {
           if (d > 1 && (!bestD || d > bestD.odd)) bestD = { odd: d, boek: bm.name };
           if (a > 1 && (!bestA || a > bestA.odd)) bestA = { odd: a, boek: bm.name };
         }
-        if (!bestH || !bestD || !bestA) return; // niet alle drie uitkomsten gemeten -- geen verzonnen prijs
+        if (!_heeftBet1) { _redenen.geen_bet1_in_boek++; return; }
+        if (!bestH || !bestD || !bestA) { _redenen.onvolledige_odds++; return; } // niet alle drie uitkomsten gemeten -- geen verzonnen prijs
         const impliedSom = 1 / bestH.odd + 1 / bestD.odd + 1 / bestA.odd;
         const isSurebet = impliedSom < 1;
         const roiPct = ((1 / impliedSom) - 1) * 100;
@@ -7667,6 +7682,7 @@ export default {
         fixtures_gecontroleerd: matches.length,
         fixtures_met_odds: uitkomsten.length,
         surebets: surebetCount,
+        _diagnose_redenen: _redenen, // v385, tijdelijk
         wedstrijden: uitkomsten,
       }), {
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=180', ...CORS },
