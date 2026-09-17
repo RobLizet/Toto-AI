@@ -6,14 +6,23 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v385'; // v385: DIAGNOSE OP /odds-scan -- GEMETEN 0 VAN 13 fixtures met odds, en dat is
-// verdacht genoeg (0/13, geen "sommige") om eerst te meten dan te gokken. Tijdelijk veld
-// _diagnose_redenen telt WAAROM elke gemiste fixture miste: geen_call_resultaat (apif gaf null/lege
-// array -- call zelf faalde), geen_bookmakers_blok (call ok, maar data[0].bookmakers leeg), geen_bet1_in_boek
-// (er zijn boeken maar geen enkele heeft bet id=1/Match Winner), onvolledige_odds (bet1 aanwezig maar niet
-// alle drie h/d/a > 1). Wordt verwijderd zodra de oorzaak vaststaat. Geen wijziging aan pickselectie/model/
-// CLV van de hoofdapp. Rollback: VERSION -> v384, _redenen-blok + het veld eruit.
-// v384: NIEUW ENDPOINT /odds-scan voor ProMatchXIodds (los repo/PWA "ProMatchXI Odds",
+const VERSION = 'v386'; // v386: /odds-scan GAF 0 VAN 13 fixtures ODDS, GEVONDEN EN OPGELOST.
+// GEMETEN (v385, tijdelijke diagnose, inmiddels verwijderd): alle 13 fixtures vielen op
+// "geen_call_resultaat", geen enkele op rate_limited/api_fout. Kruischeck tegen het bestaande
+// /check-odds-endpoint op dezelfde fixture (1636285, Europa League) bewees dat de odds er WEL waren --
+// 9 boeken, gewoon opgehaald -- dus de fout zat in deze route zelf, niet in de databron. GEVONDEN in de
+// code: apifChunked (r1941) geeft Promise.allSettled-resultaten terug, dus elk element is
+// {status,value/reason} -- GEEN kale array. Deze route las `oddsResults[i]` alsof het de API-Football-
+// respons zelf was (`data.length`), en een object zonder .length-property is altijd "leeg" -- dus
+// faalde ELKE fixture, ongeacht of de call slaagde. Exact dezelfde ontrafeling als de bestaande
+// aanroepplekken al doen (fetchOddsForFixtures r2675/r2700: `if (r.status !== 'fulfilled') return;`),
+// alleen hier vergeten bij het schrijven van de nieuwe route. FIX: `settled.status !== 'fulfilled'` ->
+// overslaan (call faalde, geen bewering), anders `settled.value` als de echte odds-data lezen, plus
+// dezelfde .rateLimited/.apiError-check als de rest van de worker. GEVERIFIEERD na de fix: fixture
+// 1636285 geeft nu wel degelijk beste-prijzen per uitkomst. Raakt uitsluitend /odds-scan (nieuw,
+// ProMatchXIodds) -- geen wijziging aan pickselectie/model/CLV van de hoofdapp. Rollback: de
+// settled/data-ontrafeling terug naar rechtstreeks `oddsResults[i]` lezen (herintroduceert de bug),
+// VERSION -> v383 (de hele /odds-scan-route mag blijven staan, additief). (los repo/PWA "ProMatchXI Odds",
 // arbitrage-scanner). AANLEIDING: Rob wil die app live trekken met echte data i.p.v. de mock-JSON die er
 // nu in staat, en koos ervoor de bestaande API-Football-infra te hergebruiken i.p.v. een nieuwe key/worker.
 // GEBOUWD: haalt fixtures op binnen het bestaande 24u-venster over dezelfde FASE2_LEAGUES-competities,
@@ -7631,28 +7640,20 @@ export default {
 
       const uitkomsten = [];
       let surebetCount = 0;
-      // v385-diagnose (tijdelijk): WAAROM een fixture geen odds opleverde, per gemeten categorie --
-      // dezelfde discipline als goal_odds_status (v293): "niet gemeten" en "gemeten leeg" mogen niet
-      // op een hoop. Wordt verwijderd zodra de oorzaak van de 0/13-meting vaststaat.
-      const _redenen = { geen_call_resultaat: 0, rate_limited: 0, api_fout: 0, geen_bookmakers_blok: 0, geen_bet1_in_boek: 0, onvolledige_odds: 0 };
       matches.forEach((f, i) => {
-        const data = oddsResults[i];
-        if (!data || !data.length) {
-          // v385: apif() hangt .rateLimited/.apiError aan de lege array bij een aantoonbare eigen storing
-          // (zie apif() r2075-2098) -- dat is iets anders dan "geen bookmaker heeft nog een lijn gepubliceerd".
-          if (data && data.rateLimited) _redenen.rate_limited++;
-          else if (data && data.apiError) _redenen.api_fout++;
-          else _redenen.geen_call_resultaat++;
-          return;
-        } // geen odds gemeten voor deze fixture -> niet meenemen
+        // v385d: apifChunked geeft Promise.allSettled-resultaten terug ({status,value}), GEEN kale
+        // arrays -- gevonden via kruischeck tegen het bestaande /check-odds-endpoint op dezelfde
+        // fixture (die wel de correcte odds gaf terwijl deze route leeg bleef). Zelfde ontrafelpatroon
+        // als bij fetchOddsForFixtures (r2675/r2700: `if (r.status !== 'fulfilled') return;`).
+        const settled = oddsResults[i];
+        if (!settled || settled.status !== 'fulfilled') return; // call zelf faalde -- geen bewering
+        const data = settled.value;
+        if (!data || !data.length || data.rateLimited || data.apiError) return; // geen odds gemeten -> niet meenemen
         const books = data[0]?.bookmakers || [];
-        if (!books.length) { _redenen.geen_bookmakers_blok++; return; }
         let bestH = null, bestD = null, bestA = null;
-        let _heeftBet1 = false;
         for (const bm of books) {
           const bet = bm.bets?.find(b => b.id === 1);
           if (!bet) continue;
-          _heeftBet1 = true;
           const h = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
           const d = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
           const a = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
@@ -7660,8 +7661,7 @@ export default {
           if (d > 1 && (!bestD || d > bestD.odd)) bestD = { odd: d, boek: bm.name };
           if (a > 1 && (!bestA || a > bestA.odd)) bestA = { odd: a, boek: bm.name };
         }
-        if (!_heeftBet1) { _redenen.geen_bet1_in_boek++; return; }
-        if (!bestH || !bestD || !bestA) { _redenen.onvolledige_odds++; return; } // niet alle drie uitkomsten gemeten -- geen verzonnen prijs
+        if (!bestH || !bestD || !bestA) return; // niet alle drie uitkomsten gemeten -- geen verzonnen prijs
         const impliedSom = 1 / bestH.odd + 1 / bestD.odd + 1 / bestA.odd;
         const isSurebet = impliedSom < 1;
         const roiPct = ((1 / impliedSom) - 1) * 100;
@@ -7689,8 +7689,6 @@ export default {
         fixtures_gecontroleerd: matches.length,
         fixtures_met_odds: uitkomsten.length,
         surebets: surebetCount,
-        _diagnose_redenen: _redenen, // v385, tijdelijk
-        _diagnose_sample: matches.slice(0, 3).map(f => ({ fixtureId: f.fixture.id, league: f.league?.id, kickoff: f.fixture?.date })), // v385, tijdelijk
         wedstrijden: uitkomsten,
       }), {
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=180', ...CORS },
