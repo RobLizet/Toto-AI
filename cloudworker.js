@@ -7634,10 +7634,17 @@ export default {
       // v385-diagnose (tijdelijk): WAAROM een fixture geen odds opleverde, per gemeten categorie --
       // dezelfde discipline als goal_odds_status (v293): "niet gemeten" en "gemeten leeg" mogen niet
       // op een hoop. Wordt verwijderd zodra de oorzaak van de 0/13-meting vaststaat.
-      const _redenen = { geen_call_resultaat: 0, geen_bookmakers_blok: 0, geen_bet1_in_boek: 0, onvolledige_odds: 0 };
+      const _redenen = { geen_call_resultaat: 0, rate_limited: 0, api_fout: 0, geen_bookmakers_blok: 0, geen_bet1_in_boek: 0, onvolledige_odds: 0 };
       matches.forEach((f, i) => {
         const data = oddsResults[i];
-        if (!data || !data.length) { _redenen.geen_call_resultaat++; return; } // geen odds gemeten voor deze fixture -> niet meenemen
+        if (!data || !data.length) {
+          // v385: apif() hangt .rateLimited/.apiError aan de lege array bij een aantoonbare eigen storing
+          // (zie apif() r2075-2098) -- dat is iets anders dan "geen bookmaker heeft nog een lijn gepubliceerd".
+          if (data && data.rateLimited) _redenen.rate_limited++;
+          else if (data && data.apiError) _redenen.api_fout++;
+          else _redenen.geen_call_resultaat++;
+          return;
+        } // geen odds gemeten voor deze fixture -> niet meenemen
         const books = data[0]?.bookmakers || [];
         if (!books.length) { _redenen.geen_bookmakers_blok++; return; }
         let bestH = null, bestD = null, bestA = null;
