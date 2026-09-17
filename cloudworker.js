@@ -6,7 +6,35 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v386'; // v386: /odds-scan GAF 0 VAN 13 fixtures ODDS, GEVONDEN EN OPGELOST.
+const VERSION = 'v387'; // v387: /odds-scan UITGEBREID -- drie markten (was alleen 1X2), instelbare
+// ROI-drempel, surebet-geschiedenis in Supabase + eenmalige pushmelding per nieuwe surebet, nieuw
+// endpoint /surebet-history. AANLEIDING: Rob vroeg om meer functionaliteit op de arbitrage-scanner
+// (ProMatchXIodds). GEBOUWD: (1) de odds-call laat de bet=1-filter vallen -- een onbefilterde
+// /odds-call geeft 1X2 (bet 1), Over/Under (bet 5) EN BTTS (bet 8) in EEN respons terug, exact het
+// patroon dat fetchOddsForFixtures al gebruikt voor de goal-markten (r2695), dus NUL extra API-calls
+// t.o.v. v386: nog steeds 1 call per fixture, nu voor drie markten. Elke markt krijgt zijn eigen
+// beste-prijs-per-uitkomst en implied_som/surebet/roi_pct, in een markten-array per wedstrijd (was
+// een vlakke structuur op fixture-niveau -- FRONTEND-WIJZIGING NODIG, hier niet meegenomen). (2)
+// query-param ?min_roi= (default 0) filtert welke gevonden arbitrages als surebet meetellen in de
+// telling en de meldingen; de ruwe implied_som/roi_pct blijven altijd zichtbaar per markt, ook onder
+// de drempel -- de drempel raakt alleen wat als 'surebet' geteld wordt, nooit de onderliggende cijfers.
+// (3) nieuwe tabel odds_surebets (RLS aan, REVOKE anon/authenticated; migratie create_odds_surebets_table)
+// -- 1 rij per fixture+markt, first_seen_at/last_seen_at als aanwezigheidsvenster, max_roi_pct als
+// hoogst gemeten ROI. Bij elke /odds-scan-aanroep: eerst LEZEN welke surebets al bekend zijn (voorkomt
+// een aanname over wat nieuw is), dan een enkele upsert-batch (on_conflict=fixture_id,markt) die
+// first_seen_at/notified_at van bestaande rijen behoudt en nieuwe rijen aanmaakt. (4) ECHT NIEUWE
+// surebets (niet eerder in de tabel) krijgen een gebundelde pushmelding (adminOnly, dezelfde
+// tag=admin-targeting als de rest van de worker) -- eenmalig per surebet, nooit een herhaalmelding
+// zolang hij blijft bestaan; notified_at wordt META de melding gezet (dezelfde conventie als push_log
+// elders: een gelogde melding vereist geen bevestigde bezorging, alleen een poging). Mislukt de opslag
+// zelf, dan wordt nieuweSurebets bewust leeggemaakt voor die aanroep -- een onzekere meting mag geen
+// melding sturen. (5) nieuw endpoint GET /surebet-history: dunne pass-through van odds_surebets,
+// nieuwste eerst, voor een geschiedenisscherm in de frontend. Kosten: dezelfde 1 call/fixture als
+// v386 (~60 max), plus 1 GET + 1 POST naar Supabase per scan met surebets erin -- verwaarloosbaar.
+// Geen wijziging aan pickselectie/model/CLV van de hoofdapp; raakt uitsluitend /odds-scan en de nieuwe
+// tabel/route. Rollback: VERSION -> v386, het odds_surebets-blok + /surebet-history eruit, odds-call
+// terug naar `?fixture=${id}&bet=1`, markten-array terug naar de vlakke v386-structuur (tabel mag
+// blijven staan, additief).
 // GEMETEN (v385, tijdelijke diagnose, inmiddels verwijderd): alle 13 fixtures vielen op
 // "geen_call_resultaat", geen enkele op rate_limited/api_fout. Kruischeck tegen het bestaande
 // /check-odds-endpoint op dezelfde fixture (1636285, Europa League) bewees dat de odds er WEL waren --
@@ -7611,6 +7639,10 @@ export default {
       const LEAGUE_NAAM = Object.fromEntries(FASE2_LEAGUES.map(l => [l.id, l.naam]));
       const today = new Date().toISOString().split('T')[0];
       const tomorrow = new Date(nowMs + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      // v387: drempel instelbaar per aanroep (?min_roi=0.5); default 0 -- elke aantoonbare
+      // arbitrage (implied_som<1) telt als surebet, maar de frontend kan verfijnen zonder deploy.
+      const minRoiParam = parseFloat(url.searchParams.get('min_roi'));
+      const minRoi = Number.isFinite(minRoiParam) ? minRoiParam : 0;
 
       let fixturesRaw;
       try {
@@ -7636,63 +7668,175 @@ export default {
       }).slice(0, 60); // budgetgrens: max 60 odds-calls per aanroep, edge-cache vangt herhaalbezoek op
 
       const fixtureIds = matches.map(f => f.fixture.id);
-      const oddsResults = await apifChunked(fixtureIds, (id) => apif(`/odds?fixture=${id}&bet=1`, env));
+      // v387: GEEN bet-filter meer (was &bet=1) -- een onbefilterde /odds-call levert 1X2 (bet 1),
+      // Over/Under (bet 5) EN BTTS (bet 8) in EEN respons, exact hetzelfde patroon als de goal-odds-
+      // tak in fetchOddsForFixtures (r2695: `apif(\`/odds?fixture=\${id}\`, env)`). Nul extra API-calls
+      // t.o.v. v386 -- nog steeds 1 call per fixture, nu met drie markten in plaats van een.
+      const oddsResults = await apifChunked(fixtureIds, (id) => apif(`/odds?fixture=${id}`, env));
+
+      // Vindt per boek de beste (hoogste) prijs voor elke opgegeven uitkomst-matcher.
+      // matchers = { sleutel: (bet) => waarde|null } -- bet is 1 bets-object uit de respons.
+      function bestePerUitkomst(books, betId, waardeGetters) {
+        const best = {};
+        for (const key of Object.keys(waardeGetters)) best[key] = null;
+        for (const bm of books) {
+          const bet = bm.bets?.find(b => b.id === betId);
+          if (!bet) continue;
+          for (const [key, getter] of Object.entries(waardeGetters)) {
+            const odd = getter(bet);
+            if (odd > 1 && (!best[key] || odd > best[key].odd)) best[key] = { odd, boek: bm.name };
+          }
+        }
+        return best;
+      }
+      const waarde = (bet, matchValue) => {
+        const v = bet.values?.find(x => x.value === matchValue);
+        return v ? parseFloat(v.odd || 0) : 0;
+      };
 
       const uitkomsten = [];
-      let surebetCount = 0;
+      const gevondenSurebets = [];
       matches.forEach((f, i) => {
-        // v385d: apifChunked geeft Promise.allSettled-resultaten terug ({status,value}), GEEN kale
-        // arrays -- gevonden via kruischeck tegen het bestaande /check-odds-endpoint op dezelfde
-        // fixture (die wel de correcte odds gaf terwijl deze route leeg bleef). Zelfde ontrafelpatroon
-        // als bij fetchOddsForFixtures (r2675/r2700: `if (r.status !== 'fulfilled') return;`).
         const settled = oddsResults[i];
         if (!settled || settled.status !== 'fulfilled') return; // call zelf faalde -- geen bewering
         const data = settled.value;
         if (!data || !data.length || data.rateLimited || data.apiError) return; // geen odds gemeten -> niet meenemen
         const books = data[0]?.bookmakers || [];
-        let bestH = null, bestD = null, bestA = null;
-        for (const bm of books) {
-          const bet = bm.bets?.find(b => b.id === 1);
-          if (!bet) continue;
-          const h = parseFloat(bet.values?.find(v => v.value === 'Home')?.odd || 0);
-          const d = parseFloat(bet.values?.find(v => v.value === 'Draw')?.odd || 0);
-          const a = parseFloat(bet.values?.find(v => v.value === 'Away')?.odd || 0);
-          if (h > 1 && (!bestH || h > bestH.odd)) bestH = { odd: h, boek: bm.name };
-          if (d > 1 && (!bestD || d > bestD.odd)) bestD = { odd: d, boek: bm.name };
-          if (a > 1 && (!bestA || a > bestA.odd)) bestA = { odd: a, boek: bm.name };
+        if (!books.length) return;
+
+        const markten = [];
+
+        // Markt 1: 1X2 (bet id 1)
+        const b1x2 = bestePerUitkomst(books, 1, {
+          h: bet => waarde(bet, 'Home'), d: bet => waarde(bet, 'Draw'), a: bet => waarde(bet, 'Away'),
+        });
+        if (b1x2.h && b1x2.d && b1x2.a) {
+          const som = 1 / b1x2.h.odd + 1 / b1x2.d.odd + 1 / b1x2.a.odd;
+          markten.push({ markt: '1X2', beste: { thuis: b1x2.h, gelijk: b1x2.d, uit: b1x2.a }, implied_som: parseFloat(som.toFixed(4)), surebet: som < 1, roi_pct: parseFloat((((1 / som) - 1) * 100).toFixed(2)) });
         }
-        if (!bestH || !bestD || !bestA) return; // niet alle drie uitkomsten gemeten -- geen verzonnen prijs
-        const impliedSom = 1 / bestH.odd + 1 / bestD.odd + 1 / bestA.odd;
-        const isSurebet = impliedSom < 1;
-        const roiPct = ((1 / impliedSom) - 1) * 100;
-        if (isSurebet) surebetCount++;
-        uitkomsten.push({
+
+        // Markt 2: Over/Under 2.5 (bet id 5) -- vaste lijn 2.5, de meest gebruikelijke goal-markt
+        const bou = bestePerUitkomst(books, 5, {
+          over: bet => { const v = bet.values?.find(x => x.value === 'Over 2.5'); return v ? parseFloat(v.odd || 0) : 0; },
+          under: bet => { const v = bet.values?.find(x => x.value === 'Under 2.5'); return v ? parseFloat(v.odd || 0) : 0; },
+        });
+        if (bou.over && bou.under) {
+          const som = 1 / bou.over.odd + 1 / bou.under.odd;
+          markten.push({ markt: 'O2.5', beste: { over: bou.over, under: bou.under }, implied_som: parseFloat(som.toFixed(4)), surebet: som < 1, roi_pct: parseFloat((((1 / som) - 1) * 100).toFixed(2)) });
+        }
+
+        // Markt 3: BTTS (bet id 8)
+        const bbtts = bestePerUitkomst(books, 8, {
+          yes: bet => { const v = bet.values?.find(x => /^yes$/i.test(x.value || '')); return v ? parseFloat(v.odd || 0) : 0; },
+          no: bet => { const v = bet.values?.find(x => /^no$/i.test(x.value || '')); return v ? parseFloat(v.odd || 0) : 0; },
+        });
+        if (bbtts.yes && bbtts.no) {
+          const som = 1 / bbtts.yes.odd + 1 / bbtts.no.odd;
+          markten.push({ markt: 'BTTS', beste: { ja: bbtts.yes, nee: bbtts.no }, implied_som: parseFloat(som.toFixed(4)), surebet: som < 1, roi_pct: parseFloat((((1 / som) - 1) * 100).toFixed(2)) });
+        }
+
+        if (!markten.length) return;
+
+        const fixtureInfo = {
           fixtureId: f.fixture.id,
           home: f.teams?.home?.name,
           away: f.teams?.away?.name,
           league: LEAGUE_NAAM[f.league?.id] || f.league?.name,
           kickoff: f.fixture?.date,
           boeken_gemeten: books.length,
-          beste: { thuis: bestH, gelijk: bestD, uit: bestA },
-          implied_som: parseFloat(impliedSom.toFixed(4)),
-          surebet: isSurebet,
-          roi_pct: parseFloat(roiPct.toFixed(2)),
+          markten,
+        };
+        uitkomsten.push(fixtureInfo);
+
+        markten.forEach(m => {
+          if (m.surebet && m.roi_pct >= minRoi) {
+            gevondenSurebets.push({
+              fixture_id: f.fixture.id, markt: m.markt, home: f.teams?.home?.name, away: f.teams?.away?.name,
+              league: LEAGUE_NAAM[f.league?.id] || f.league?.name, kickoff: f.fixture?.date,
+              roi_pct: m.roi_pct, implied_som: m.implied_som, beste: m.beste,
+            });
+          }
         });
       });
 
-      uitkomsten.sort((a, b) => b.roi_pct - a.roi_pct);
+      uitkomsten.sort((a, b) => {
+        const bestA = Math.max(0, ...a.markten.map(m => m.surebet ? m.roi_pct : -Infinity));
+        const bestB = Math.max(0, ...b.markten.map(m => m.surebet ? m.roi_pct : -Infinity));
+        return bestB - bestA;
+      });
+
+      // v387: SUREBETS BIJHOUDEN + MELDEN. GEEN aanname over wat al bekend is: eerst lezen wat er
+      // in odds_surebets staat voor exact deze fixture+markt-combinaties, dan pas bepalen wat NIEUW
+      // is. Bestaande rijen behouden hun first_seen_at en notified_at (nooit een dubbele melding
+      // voor dezelfde surebet); nieuwe rijen krijgen notified_at meteen mee -- net als push_log elders
+      // in dit bestand vereist een gelogde melding geen bevestigde bezorging, alleen een poging.
+      let nieuweSurebets = [];
+      if (gevondenSurebets.length) {
+        try {
+          const ids = [...new Set(gevondenSurebets.map(s => s.fixture_id))];
+          const bestaand = await sb(env, 'odds_surebets', 'GET', null,
+            `?fixture_id=in.(${ids.join(',')})&select=fixture_id,markt,first_seen_at,notified_at,max_roi_pct`);
+          const bestaandMap = new Map();
+          if (Array.isArray(bestaand)) {
+            bestaand.forEach(r => bestaandMap.set(`${r.fixture_id}|${r.markt}`, r));
+          }
+          const rows = gevondenSurebets.map(s => {
+            const key = `${s.fixture_id}|${s.markt}`;
+            const oud = bestaandMap.get(key);
+            const isNieuw = !oud;
+            if (isNieuw) nieuweSurebets.push(s);
+            return {
+              fixture_id: s.fixture_id, markt: s.markt, home: s.home, away: s.away,
+              league: s.league, kickoff: s.kickoff, roi_pct: s.roi_pct, implied_som: s.implied_som,
+              beste: s.beste,
+              max_roi_pct: oud && Number.isFinite(parseFloat(oud.max_roi_pct)) ? Math.max(parseFloat(oud.max_roi_pct), s.roi_pct) : s.roi_pct,
+              first_seen_at: oud ? oud.first_seen_at : new Date().toISOString(),
+              last_seen_at: new Date().toISOString(),
+              notified_at: oud ? oud.notified_at : new Date().toISOString(),
+            };
+          });
+          await sb(env, 'odds_surebets', 'POST', rows, '?on_conflict=fixture_id,markt');
+        } catch (e) {
+          console.error('[OddsScan] surebet-opslag mislukt:', e.message);
+          nieuweSurebets = []; // onzeker of iets nieuw was -- geen melding sturen op een halve meting
+        }
+      }
+      if (nieuweSurebets.length) {
+        try {
+          const eerste = nieuweSurebets[0];
+          const meer = nieuweSurebets.length > 1 ? ` (+${nieuweSurebets.length - 1} meer)` : '';
+          await sendPushNotification(env,
+            '🎯 Surebet gevonden',
+            `${eerste.home} - ${eerste.away} · ${eerste.markt} · +${eerste.roi_pct}% ROI${meer}`,
+            { type: 'surebet_found' }, { adminOnly: true });
+        } catch (e) { console.error('[OddsScan] push mislukt:', e.message); }
+      }
 
       return new Response(JSON.stringify({
         ok: true,
         versie: VERSION,
         gemeten_op: new Date().toISOString(),
+        min_roi: minRoi,
         fixtures_gecontroleerd: matches.length,
         fixtures_met_odds: uitkomsten.length,
-        surebets: surebetCount,
+        surebets: gevondenSurebets.length,
+        nieuwe_surebets: nieuweSurebets.length,
         wedstrijden: uitkomsten,
       }), {
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=180', ...CORS },
       });
+    }
+
+    // v387: GESCHIEDENIS VAN GEVONDEN SUREBETS (ProMatchXIodds). Dunne pass-through van
+    // odds_surebets, nieuwste eerst. Puur lezen, geen schrijfactie; sb() null -> 502 zodat 'de
+    // call faalde' niet als 'geen surebets' leest.
+    if (path === '/surebet-history') {
+      const limiet = Math.min(parseInt(url.searchParams.get('n') || '50', 10) || 50, 200);
+      const rows = await sb(env, 'odds_surebets', 'GET', null,
+        `?select=fixture_id,markt,home,away,league,kickoff,roi_pct,max_roi_pct,implied_som,beste,first_seen_at,last_seen_at,notified_at&order=first_seen_at.desc&limit=${limiet}`);
+      if (rows === null) return json({ ok: false, gemeten: false, error: 'databron onbereikbaar' }, 502);
+      return json({ ok: true, versie: VERSION, gemeten: true, aantal: rows.length, surebets: rows },
+        200, { 'Cache-Control': 'public, max-age=60' });
     }
 
     if (path === '/leagues') {
