@@ -789,6 +789,28 @@ function setWedCatTab(cat) {
     pill.style.color = on ? '#00BEC4' : 'rgba(255,255,255,.75)';
     pill.style.borderColor = on ? 'rgba(0,190,196,.45)' : 'rgba(255,255,255,.1)';
   });
+  // v26.412: BUG (Rob gemeld met screenshot: tikte op 'Europees bekervoetbal', tegel
+  // 'Europa League' verscheen, maar de lijst eronder bleef Eredivisie tonen -- vr 18 sep
+  // Groningen-PEC Zwolle, exact de default state.activeComp). GEMETEN met een live
+  // Playwright-sessie op promatchxi.app: setWedCatTab wisselde alleen welke TEGELS
+  // zichtbaar zijn, nooit de wedstrijdenlijst -- die blijft op de laatst geselecteerde
+  // competitie staan (bij het openen van het scherm: Eredivisie, de default). Tegels en
+  // lijst konden zo alsnog twee verschillende competities tonen, terwijl de UI het
+  // tegendeel suggereert. FIX: bij het wisselen naar een echte tegel-categorie (niet
+  // 'fav', die heeft geen grid maar de multi-scan-balk) automatisch de EERSTE tegel van
+  // die categorie selecteren via selectComp -- exact dezelfde actie als zelf op de tegel
+  // tikken. Alleen als de huidige selectie niet al in deze categorie zit, zodat
+  // heen-en-weer wisselen tussen tabs niet onnodig herlaadt. Geen model-/pick-/
+  // CLV-wijziging, puur UI-consistentie.
+  if (cat !== 'fav') {
+    const sec = document.querySelector('.wedcat-sec[data-cat="' + cat + '"]');
+    const eersteTegel = sec ? sec.querySelector('.comp-chip') : null;
+    const eersteKey = eersteTegel ? eersteTegel.id.replace('comp-', '') : null;
+    if (eersteKey) {
+      const huidigeCat = (getActiveCOMPLIST().find(c => c.key === state.activeComp) || {}).cat;
+      if (huidigeCat !== cat) selectComp(eersteKey);
+    }
+  }
 }
 
 function setWedstrijdenTab(tab) {
