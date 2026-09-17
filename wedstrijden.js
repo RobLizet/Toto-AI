@@ -884,18 +884,30 @@ async function loadVandaagTab() {
       return;
     }
 
-    // In state zetten zodat odds eraan gekoppeld worden, dan quotes ophalen
-    state.matches = allMatches;
-    try { await fetchOddsForAllMatches(state.matches, null); } catch(e) {}
-
-    if (loading) loading.style.display = 'none';
     allMatches.sort((a,b) => (a.time||'').localeCompare(b.time||''));
+    state.matches = allMatches;
 
-    list.innerHTML = '';
-    allMatches.forEach(m => {
-      const card = renderMatchCard(m);
-      if (card) list.appendChild(card);
-    });
+    // v26.413: BUG (Rob gemeld: 'ook geen Europese wedstrijden bij Vandaag', maar
+    // gemeten dat de data er wel was -- de tab wachtte alleen tot ALLE odds van
+    // ALLE wedstrijden van de HELE dag binnen waren voordat er ook maar 1 kaart
+    // verscheen; op een dag met veel duels (vandaag: 9 Europa League + Eredivisie
+    // e.a.) kon dat 10-20s duren met alleen 'Wedstrijden laden...' in beeld, wat
+    // aanvoelde als 'niets'). FIX: kaarten meteen tekenen (zonder odds -- die
+    // velden staan dan nog op '—', hasOdds false, geen verzonnen waarde), odds
+    // erachteraan ophalen en de lijst pas opnieuw tekenen zodra ze binnen zijn --
+    // zelfde patroon als loadFromAPIFootball/fetchOddsForMatches(...).then(...).
+    const tekenLijst = () => {
+      list.innerHTML = '';
+      allMatches.forEach(m => {
+        const card = renderMatchCard(m);
+        if (card) list.appendChild(card);
+      });
+    };
+    if (loading) loading.style.display = 'none';
+    tekenLijst();
+
+    try { await fetchOddsForAllMatches(state.matches, null); } catch(e) {}
+    tekenLijst();
 
   } catch(e) {
     if (loading) loading.style.display = 'none';
