@@ -7690,6 +7690,7 @@ export default {
         fixtures_met_odds: uitkomsten.length,
         surebets: surebetCount,
         _diagnose_redenen: _redenen, // v385, tijdelijk
+        _diagnose_sample: matches.slice(0, 3).map(f => ({ fixtureId: f.fixture.id, league: f.league?.id, kickoff: f.fixture?.date })), // v385, tijdelijk
         wedstrijden: uitkomsten,
       }), {
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=180', ...CORS },
