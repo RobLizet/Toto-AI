@@ -6,7 +6,18 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v391'; // v391: RETRACTIE + FIX op het v390-alarm. Het nieuwe alarm odds_dekking_laag_druk
+const VERSION = 'v392'; // v392: fetchOddsForFixtures MEET al sinds v243 oddsCallsUsed/pad/rate-limit-hits
+// intern (_st.calls/_st.pad/_bump), maar de ECHTE runScan-aanroep gaf hiervoor altijd `null` als stats-
+// param (alleen runScanTest ving het op) -- dus die meting bestond, maar niemand ving hem op, exact de
+// v265/v269/v272/v283/v287/v295-familie. AANLEIDING: bij de 19-09-doorlichting (62% dekking op
+// nog-niet-afgetrapte wedstrijden, budget=499) kon niet worden vastgesteld of het budget wél werd
+// opgebruikt. Nu wordt een echt statsobject meegegeven en gelogd: scan_runs.odds_calls_used (werkelijk
+// verbruikt), odds_pad (per_competitie/datum_bulk), odds_rl_hits (som van alle rate-limit-tellers).
+// Migratie toegepast, geverifieerd. Puur telemetrie, geen enkele wijziging aan de odds-ophaallogica zelf,
+// dus geen gedragswijziging op een productiescan -- alleen zichtbaarheid. Rollback: oddsStats-object terug
+// naar `null` op de aanroep, de drie nieuwe velden uit scanData1/de scan_runs-POST verwijderen, VERSION
+// -> v391.
+// v391: RETRACTIE + FIX op het v390-alarm. Het nieuwe alarm odds_dekking_laag_druk
 // (v390) vuurde 19-09 tussen 11:00-15:00 UTC ONONDERBROKEN op exact 63-64%, en de CI-workflow
 // 'PMX health monitor' faalde daardoor elke run (ok:false zodra warnings niet leeg is) en mailde Rob.
 // GEMETEN vóór er iets werd aangepast: in diezelfde periode steeg het v390-budget van 400 naar 481-491,
@@ -949,6 +960,9 @@ async function sbUpdateScanStatus(data, env) {
       odds_alle_met_ns: g(data.oddsAlleMetNs), // v391: exclusief live (kan nooit odds krijgen)
       odds_alle_van_ns: g(data.oddsAlleVanNs), // v391
       odds_alle_live: g(data.oddsAlleLiveCount), // v391
+      odds_calls_used: g(data.oddsCallsUsed), // v392
+      odds_pad: data.oddsPad || null, // v392
+      odds_rl_hits: g(data.oddsRlHits), // v392
       picks_saved: g(data.lastPickCount),
       candidates_removed: g(data.removedCount),
       analysis_skipped: g(data.analysisSkipped), // v271: 0=overgeslagen gemeten, NULL=niet gemeten
@@ -5275,8 +5289,15 @@ async function runScan(env, force = false, skipTellerReset = false) {
   // v390: dynamisch budget i.p.v. het vaste getal uit v389 -- zie calcOddsBudget hierboven.
   const oddsMaxCalls = calcOddsBudget(allMatches.length);
   console.log(`[Odds] budget deze scan: ${oddsMaxCalls} calls (${ODDS_BUDGET_FLOOR} + ${ODDS_BUDGET_PER_FIXTURE}*${allMatches.length}, cap ${ODDS_BUDGET_CAP})`);
-  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, oddsMaxCalls, ENABLE_GOAL_MARKETS, allMatches, null, rawBooksMap, goalStatusMap);
-  console.log(`[Scan] Odds gevonden voor ${Object.keys(oddsMap).length} wedstrijden`);
+  // v392: stats-param was hier `null` sinds v243 -- fetchOddsForFixtures MEET oddsCallsUsed/pad/rl-hits
+  // intern (_st.calls/_st.pad/_bump), maar niets ving die meting op in de echte scan (alleen runScanTest
+  // gaf een object mee). Gevolg: bij de 19-09-doorlichting (62% dekking op nog-niet-afgetrapte
+  // wedstrijden, ruim budget=499) kon niet worden vastgesteld of het budget wél of niet werd opgebruikt --
+  // exact de "meting bestaat, niemand ving hem op"-familie (v265/v269/v272/v283/v287/v295). Nu wél
+  // opgevangen en gelogd (scan_runs.odds_calls_used/odds_pad/odds_rl_hits, migratie toegepast).
+  const oddsStats = {};
+  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, oddsMaxCalls, ENABLE_GOAL_MARKETS, allMatches, oddsStats, rawBooksMap, goalStatusMap);
+  console.log(`[Scan] Odds gevonden voor ${Object.keys(oddsMap).length} wedstrijden (${oddsStats.calls ?? '?'}/${oddsMaxCalls} calls gebruikt, pad=${oddsStats.pad ?? '?'})`);
 
   const oddsHistoryPath = `odds_history/${today}`;
   const existingHistory = await fb(env, oddsHistoryPath) || {};
@@ -6507,7 +6528,11 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     oddsAlleMet: Object.keys(oddsMap).length, oddsAlleVan: allMatches.length,
     oddsClubligaMet, oddsClubligaVan, // v323
     oddsBudgetMaxcalls: oddsMaxCalls, // v390
-    oddsAlleMetNs, oddsAlleVanNs, oddsAlleLiveCount }; // v391
+    oddsAlleMetNs, oddsAlleVanNs, oddsAlleLiveCount, // v391
+    // v392: eindelijk gemeten i.p.v. onbekend -- zie de toelichting bij oddsStats hierboven.
+    oddsCallsUsed: Number.isFinite(oddsStats.calls) ? oddsStats.calls : null,
+    oddsPad: oddsStats.pad || null,
+    oddsRlHits: (oddsStats.rl_competitie || 0) + (oddsStats.rl_bulk || 0) + (oddsStats.rl_fallback || 0) + (oddsStats.rl_goals || 0) };
   await sbUpdateScanStatus(scanData1, env);
 
   const elitePicks = Object.values(opgeslagenNieuw).filter(p => p.elite); // v268
