@@ -6,7 +6,21 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v388'; // v388: /odds-scan EN /surebet-history VERWIJDERD (route eruit, tabel odds_surebets
+const VERSION = 'v389'; // v389: GOAL-ODDS BUDGET VERRUIMD 220->400 (maxCalls in de runScan-odds-aanroep,
+// regel bij fetchOddsForFixtures(fixtureIds, env, 220, ...) -> 400). AANLEIDING: doorlichting 19-09,
+// odds_dekking_venster (v_health) zakte naar 63% (104/165) t.o.v. de eerder gemeten baseline van 77-100%
+// (12-08, 149 scans). GEMETEN in scan_runs (laatste 72u, odds_alle_met/odds_alle_van): de dekking daalt
+// EXACT samen op met het aantal wedstrijden in het venster -- bij matches_total 13-36 blijft de dekking
+// 85-100%, bij matches_total 150-183 (vrijdag/zaterdagavond) zakt hij naar 44-67% (bv. 18-09 22:00 UTC:
+// 165 wedstrijden, 104 dekking = 63%). Rekenkundig verklaard: 1X2-calls verbruiken ~1 call/fixture, dus
+// bij 183 fixtures is het budget=220 al bijna op vóór de goal-odds-calls (ook ~1/fixture) aan de beurt
+// komen -- exact hetzelfde mechanisme als de v352-fix (130->220), nu weer tegen de nieuwe seizoenspiek
+// aangelopen. Bij 183 fixtures is minimaal ~366 nodig (1X2 + goals per fixture); 400 geeft marge.
+// Kosten: piekdag 18-09 gebruikte 3685 van 7500 calls/dag, dus ruimschoots binnen budget ook met een
+// paar honderd calls extra op de drukste uren. Subrequest-limiet (Paid=1000/invocation) blijft ruim.
+// GEEN wijziging aan pickselectie/model/staking/drempels/CLV, alleen het aflever-budget van bestaande
+// odds-calls. Rollback: '400,' terug naar '220,' op de runScan-aanroep, VERSION -> v388.
+// v388: /odds-scan EN /surebet-history VERWIJDERD (route eruit, tabel odds_surebets
 // blijft staan maar wordt niet meer beschreven -- Rob besloot ProMatchXIodds helemaal weg te gooien nadat
 // bleek dat de gratis odds-databron (API-Football) vrijwel geen overlap heeft met de 21 KSA-vergunde
 // bookmakers in Nederland: van de boeken die daadwerkelijk als beste prijs terugkwamen (1xBet, Pinnacle,
@@ -5185,7 +5199,7 @@ async function runScan(env, force = false, skipTellerReset = false) {
   // (gemeten dagverbruik nu: 77). Het comment 'bulk dekt alles' dat hier stond was aantoonbaar onwaar.
   const rawBooksMap = {}; // v277: per-boek odds -> market_consensus.bookmaker_odds (oddsvergelijker-fundering)
   const goalStatusMap = {}; // v293: per fixture waarom goal_odds wel/niet gevuld is
-  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, 220, ENABLE_GOAL_MARKETS, allMatches, null, rawBooksMap, goalStatusMap);
+  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, 400, ENABLE_GOAL_MARKETS, allMatches, null, rawBooksMap, goalStatusMap);
   console.log(`[Scan] Odds gevonden voor ${Object.keys(oddsMap).length} wedstrijden`);
 
   const oddsHistoryPath = `odds_history/${today}`;
