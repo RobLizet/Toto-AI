@@ -6,7 +6,18 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v394'; // v394: allMatches.round + odds_missing_leagues.missendeRondes -- welke EXACTE
+const VERSION = 'v395'; // v395: ODDS_GEEN_MARKT_RONDES -- FA Cup-kwalificatie ('Qualifying'-rondes) en
+// Taça de Portugal 'Round of 128' worden nu VOOR odds-fetch/analyse/dekkingstelling uit allMatches
+// gefilterd. AANLEIDING: v394 mat de exacte rondenaam (56/56 FA Cup "2nd Round Qualifying", 5/5 Taça
+// "Round of 128" zonder odds -- 100% van de missende NS-fixtures, geen restcategorie). Gebruiker koos
+// optie 3 (19-09): geen markt = geen value-bet mogelijk, dus AI-analyse erop is verspild budget, en
+// meetellen in de NS-dekkingsnoemer liet /health vals afgaan op iets onfixbaars. FA Cup-filter is
+// generiek op "Qualifying" (dekt alle kwalificatierondes, komt vanzelf terug zodra de Proper-fase met
+// prijsbare clubs begint); Taça-filter is de exacte gemeten rondenaam (1 datapunt, geen bredere
+// aanname). Nieuw scan_runs.odds_geen_markt_uitgesloten (aantal) voor verificatie na deploy.
+// Rollback: ODDS_GEEN_MARKT_RONDES/heeftGeenMarktRonde en de allMatches-filter verwijderen,
+// oddsGeenMarktUitgesloten-veld uit scanData1/scan_runs-POST verwijderen, VERSION -> v394.
+// v394: allMatches.round + odds_missing_leagues.missendeRondes -- welke EXACTE
 // rondenaam mist odds binnen FA Cup/Taça de Portugal (v393 wees de hele competitie aan: 57/77 resp.
 // 5/13). AANLEIDING: gebruiker koos optie 3 (bekercompetities zonder markt uit analyse EN dekkingsteller
 // halen), maar leagueId-45/96 blanket uitsluiten zou ook latere, wel geprijsde rondes (FA Cup 3e ronde
@@ -980,6 +991,7 @@ async function sbUpdateScanStatus(data, env) {
       odds_pad: data.oddsPad || null, // v392
       odds_rl_hits: g(data.oddsRlHits), // v392
       odds_missing_leagues: data.oddsMissingLeagues || null, // v393
+      odds_geen_markt_uitgesloten: g(data.oddsGeenMarktUitgesloten), // v395
       picks_saved: g(data.lastPickCount),
       candidates_removed: g(data.removedCount),
       analysis_skipped: g(data.analysisSkipped), // v271: 0=overgeslagen gemeten, NULL=niet gemeten
@@ -4030,8 +4042,29 @@ const FASE2_LEAGUES = [
 
 function activeLeagueIds(today) {
   // v304/v314: leest dezelfde constante als runScan; Elo-sweep NOOIT op interland
-  // (landenteams zouden club-team_ratings vervuilen). Datum-tak vervallen (ruim voorbij 20-07).
+  // (landenteams zouden club-team_ratings vullen). Datum-tak vervallen (ruim voorbij 20-07).
   return FASE2_LEAGUES.filter(l => l.cat !== 'interland').map(l => l.id);
+}
+
+// v395: competitie+ronde-combinaties waarvan GEMETEN is (v393/v394, scan_runs.odds_missing_leagues)
+// dat bookmakers er geen markt op bieden -- FA Cup "2nd Round Qualifying" was 56/56 zonder odds,
+// Taça de Portugal "Round of 128" was 5/5 zonder odds. Reden om dit uit de analyse/dekkingsteller te
+// halen (gebruiker-gekozen optie 3, 19-09): een fixture zonder odds kan per definitie nooit een
+// value-bet worden, dus AI-analyse hierop is verspilde Anthropic-budget, en meetellen in de NS-
+// dekkingsnoemer laat het /health-alarm vals afgaan op iets dat niet te fixen valt.
+// FA Cup: 'contains' op "Qualifying" dekt de HELE kwalificatiefase (1e t/m 5e ronde) generiek, niet
+// alleen de nu actieve ronde -- zodra de competitie de "Proper"-fase bereikt (met PL/Championship-
+// clubs, wel markt) matcht dit niet meer en komt die competitie vanzelf terug in de analyse.
+// Taça de Portugal: alleen de exacte, gemeten rondenaam ("Round of 128") -- er is maar 1 datapunt,
+// dus geen bredere aanname (bijv. "Round of 64") zonder dat gemeten te hebben.
+const ODDS_GEEN_MARKT_RONDES = [
+  { leagueId: 45, matchType: 'contains', waarde: 'Qualifying' },
+  { leagueId: 96, matchType: 'exact', waarde: 'Round of 128' },
+];
+function heeftGeenMarktRonde(leagueId, round) {
+  if (!round) return false;
+  return ODDS_GEEN_MARKT_RONDES.some(r => r.leagueId === leagueId &&
+    (r.matchType === 'exact' ? round === r.waarde : round.includes(r.waarde)));
 }
 
 // v315: welke gescande competities een NOG-TE-SPELEN duel binnen 5 dagen hebben.
@@ -5052,6 +5085,7 @@ async function runScan(env, force = false, skipTellerReset = false) {
   console.log(`[Scan] Start scan (${hour}:00 UTC, venster ${scanFrom}:00-${scanTo}:00 UTC)`);
 
   let allMatches = [];
+  let oddsGeenMarktUitgesloten = 0; // v395: buiten de try-scope, net als allMatches -- anders niet zichtbaar bij scanData1 verderop.
 
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
@@ -5211,6 +5245,12 @@ async function runScan(env, force = false, skipTellerReset = false) {
         // rondenaam i.p.v. op competitie gebouwd worden, zonder te gokken welke rondes het betreft.
         round: f.league?.round || null,
       }));
+    const _voorGeenMarktFilter = allMatches.length;
+    allMatches = allMatches.filter(m => !heeftGeenMarktRonde(m.leagueId, m.round));
+    // v395: gemeten geen-marktrondes (zie ODDS_GEEN_MARKT_RONDES) uit het venster -- vóór odds-fetch,
+    // analyse-batch én dekkingstelling, zodat het overal in één keer doorwerkt.
+    oddsGeenMarktUitgesloten = _voorGeenMarktFilter - allMatches.length;
+    if (oddsGeenMarktUitgesloten > 0) console.log(`[Odds] ${oddsGeenMarktUitgesloten} fixture(s) uitgesloten (geen-marktronde, zie ODDS_GEEN_MARKT_RONDES)`);
 
     console.log(`[Scan] ${allMatches.length} wedstrijden na filter (NS/live)`);
   } catch(e) {
@@ -6583,7 +6623,8 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     oddsCallsUsed: Number.isFinite(oddsStats.calls) ? oddsStats.calls : null,
     oddsPad: oddsStats.pad || null,
     oddsRlHits: (oddsStats.rl_competitie || 0) + (oddsStats.rl_bulk || 0) + (oddsStats.rl_fallback || 0) + (oddsStats.rl_goals || 0),
-    oddsMissingLeagues: oddsMissingLeagues }; // v393
+    oddsMissingLeagues: oddsMissingLeagues, // v393
+    oddsGeenMarktUitgesloten }; // v395
   await sbUpdateScanStatus(scanData1, env);
 
   const elitePicks = Object.values(opgeslagenNieuw).filter(p => p.elite); // v268
