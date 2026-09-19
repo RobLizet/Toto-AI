@@ -6,7 +6,20 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v389'; // v389: GOAL-ODDS BUDGET VERRUIMD 220->400 (maxCalls in de runScan-odds-aanroep,
+const VERSION = 'v390'; // v390: TWEE VERVOLGSTAPPEN OP DE v389-FIX. (1) ODDS-CALLBUDGET IS NU DYNAMISCH:
+// vaste 400 vervangen door calcOddsBudget() = ODDS_BUDGET_FLOOR(250) + ODDS_BUDGET_PER_FIXTURE(1.4) *
+// allMatches.length, cap 900, runtime-instelbaar via model_config (zelfde patroon als TUNE/ELO_BLEND_W).
+// AANLEIDING: v352 (130->220) en v389 (220->400) losten dezelfde inzinking twee keer op met een vast
+// getal; bij de volgende seizoenspiek (meer fixtures) loopt hetzelfde mechanisme weer vast. Nieuwe kolom
+// scan_runs.odds_budget_maxcalls (migratie toegepast, geverifieerd via information_schema) logt het
+// berekende budget per scan. (2) /health-ALARM VERSCHERPT: odds_dekking_laag_druk waarschuwt nu ook bij
+// av>=80 EN dekking <70% -- de bestaande 15%-drempel had de 19-09-inzinking (63%, ruim >15%) NIET gevangen.
+// Kwalificatierondes (~20% bij kleine vensters, av<80) triggeren dit niet vals. BEIDE wijzigingen raken
+// UITSLUITEND het odds-aflever-budget en telemetrie/alarmering -- GEEN wijziging aan pickselectie, model,
+// staking of drempels. Rollback: calcOddsBudget-aanroep terug naar het vaste getal '400,', de nieuwe
+// warnings-regel verwijderen, VERSION -> v389. Kosten: bij 183 fixtures nu ~506 i.p.v. 400 calls (nog
+// steeds ruim binnen de 7500/dag, piekdag 18-09 gebruikte 3685-4300).
+// v389: GOAL-ODDS BUDGET VERRUIMD 220->400 (maxCalls in de runScan-odds-aanroep,
 // regel bij fetchOddsForFixtures(fixtureIds, env, 220, ...) -> 400). AANLEIDING: doorlichting 19-09,
 // odds_dekking_venster (v_health) zakte naar 63% (104/165) t.o.v. de eerder gemeten baseline van 77-100%
 // (12-08, 149 scans). GEMETEN in scan_runs (laatste 72u, odds_alle_met/odds_alle_van): de dekking daalt
@@ -922,6 +935,7 @@ async function sbUpdateScanStatus(data, env) {
       sb_schrijf_fouten: _sbSchrijfFouten,
       sb_laatste_fout: _sbLaatsteFout,
       odds_snapshot_fout: _oddsSnapFout, // v383: rij-bouwfout in saveOddsSnapshots, NULL = geen fout deze scan
+      odds_budget_maxcalls: g(data.oddsBudgetMaxcalls), // v390: het berekende budget, voor trendmeting
       api_via: _apifVia,
       duration_ms: _scanStart === null ? null : (Date.now() - _scanStart),
       fout: data.fout || null,
@@ -2846,6 +2860,27 @@ let ELO_BLEND_W = 0;                 // geladen uit model_config bij scan-start;
 const ELO_SHADOW_W = 0.30;           // v211: referentiegewicht voor de schaduw-blend (backtest-log), onafhankelijk van de live-vlag
 const ELO_VALIDATE_MIN_N = 40;       // v212: vanaf zoveel gerijpte schaduw-duels meldt /health dat de blend te valideren is
 
+// v390: DYNAMISCH ODDS-CALLBUDGET i.p.v. een vaste maxCalls op de runScan-odds-aanroep. AANLEIDING:
+// v352 (130->220) en v389 (220->400) losten dezelfde soort inzinking twee keer op met een vaste
+// getal-bump -- bij de volgende seizoenspiek (meer competities/fixtures) loopt precies hetzelfde
+// mechanisme weer vast totdat iemand het weer met de hand optrekt. GEMETEN (v389-commentaar hierboven):
+// bij 183 fixtures is ~366 calls nodig (1X2 + goal-odds, ~1/fixture/fase), dus het budget moet
+// MEESCHALEN met allMatches.length, niet met een los getal per versie. Formule: FLOOR + FACTOR *
+// aantal_fixtures, met een CAP als veiligheidsbovengrens (nooit alle 7500 dagcalls in 1 scan kunnen
+// opsouperen). Raakt UITSLUITEND het odds-aflever-budget, GEEN pickselectie/model/staking/drempels --
+// zelfde deploy-categorie als v389, dus geen 21-09-wachttijd. Runtime-overschrijfbaar via model_config
+// (odds_budget_floor/odds_budget_per_fixture/odds_budget_cap), zelfde patroon als TUNE/ELO_BLEND_W.
+const ODDS_BUDGET_FLOOR_DEFAULT        = 250;  // ondergrens: nooit minder dan dit, ook op een rustige dag
+const ODDS_BUDGET_PER_FIXTURE_DEFAULT  = 1.4;  // calls per fixture in het venster (1X2-fase + goal-fase samen, met marge)
+const ODDS_BUDGET_CAP_DEFAULT          = 900;  // veiligheidsbovengrens per scan (~12% van de daglimiet van 7500)
+let ODDS_BUDGET_FLOOR       = ODDS_BUDGET_FLOOR_DEFAULT;
+let ODDS_BUDGET_PER_FIXTURE = ODDS_BUDGET_PER_FIXTURE_DEFAULT;
+let ODDS_BUDGET_CAP         = ODDS_BUDGET_CAP_DEFAULT;
+function calcOddsBudget(aantalFixtures) {
+  const n = Number.isFinite(aantalFixtures) ? aantalFixtures : 0;
+  return Math.min(ODDS_BUDGET_CAP, Math.round(ODDS_BUDGET_FLOOR + ODDS_BUDGET_PER_FIXTURE * n));
+}
+
 // v215: MARKT-ANKER OP HET DOELPUNTENTOTAAL. De Poisson-lambda's zijn SoS-blind; wijkt het model-totaal
 // materieel af van het markt-impliciete totaal (uit de de-vigde Over 2.5), dan zijn ALLE goal-markten
 // systematisch dezelfde fout (Under 1.5/2.5/3.5 + BTTS-Nee allemaal "value"). Dat is geen edge maar een
@@ -3760,7 +3795,12 @@ async function loadTuneConfig(env) {
     if (map.calib_factor_w != null && isFinite(map.calib_factor_w)) CALIB_FACTOR_W = Math.min(Math.max(map.calib_factor_w, 0), 1); // v296
     if (map.dixon_coles_w != null && isFinite(map.dixon_coles_w)) DIXON_COLES_W = Math.min(Math.max(map.dixon_coles_w, 0), DIXON_COLES_MAX_W); // v344
     if (map.alt_model_shadow_w != null && isFinite(map.alt_model_shadow_w)) ALT_MODEL_SHADOW_W = Math.min(Math.max(map.alt_model_shadow_w, 0), 1); // v346
-    console.log(`[Tune] config geladen: s1=${TUNE.s1} s2=${TUNE.s2} elo_blend_w=${ELO_BLEND_W} lambda_anchor_w=${LAMBDA_ANCHOR_W} lambda_anchor_w_btts=${LAMBDA_ANCHOR_W_BTTS === null ? 'volgt O/U' : LAMBDA_ANCHOR_W_BTTS} calib_factor_w=${CALIB_FACTOR_W} dixon_coles_w=${DIXON_COLES_W}`);
+    // v390: dynamisch odds-budget, zelfde runtime-override-patroon. Ruime, niet-model-inhoudelijke
+    // grenzen op de clamps -- dit is een API-callbudget, geen kans/gewicht, dus geen 0-1 begrenzing.
+    if (map.odds_budget_floor != null && isFinite(map.odds_budget_floor)) ODDS_BUDGET_FLOOR = Math.min(Math.max(map.odds_budget_floor, 0), 2000);
+    if (map.odds_budget_per_fixture != null && isFinite(map.odds_budget_per_fixture)) ODDS_BUDGET_PER_FIXTURE = Math.min(Math.max(map.odds_budget_per_fixture, 0), 10);
+    if (map.odds_budget_cap != null && isFinite(map.odds_budget_cap)) ODDS_BUDGET_CAP = Math.min(Math.max(map.odds_budget_cap, 0), 3000);
+    console.log(`[Tune] config geladen: s1=${TUNE.s1} s2=${TUNE.s2} elo_blend_w=${ELO_BLEND_W} lambda_anchor_w=${LAMBDA_ANCHOR_W} lambda_anchor_w_btts=${LAMBDA_ANCHOR_W_BTTS === null ? 'volgt O/U' : LAMBDA_ANCHOR_W_BTTS} calib_factor_w=${CALIB_FACTOR_W} dixon_coles_w=${DIXON_COLES_W} odds_budget=${ODDS_BUDGET_FLOOR}+${ODDS_BUDGET_PER_FIXTURE}/fixture,cap=${ODDS_BUDGET_CAP}`);
   } catch(e) { console.error('[Tune] config laden mislukt (defaults blijven):', e.message); }
 }
 
@@ -5199,7 +5239,10 @@ async function runScan(env, force = false, skipTellerReset = false) {
   // (gemeten dagverbruik nu: 77). Het comment 'bulk dekt alles' dat hier stond was aantoonbaar onwaar.
   const rawBooksMap = {}; // v277: per-boek odds -> market_consensus.bookmaker_odds (oddsvergelijker-fundering)
   const goalStatusMap = {}; // v293: per fixture waarom goal_odds wel/niet gevuld is
-  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, 400, ENABLE_GOAL_MARKETS, allMatches, null, rawBooksMap, goalStatusMap);
+  // v390: dynamisch budget i.p.v. het vaste getal uit v389 -- zie calcOddsBudget hierboven.
+  const oddsMaxCalls = calcOddsBudget(allMatches.length);
+  console.log(`[Odds] budget deze scan: ${oddsMaxCalls} calls (${ODDS_BUDGET_FLOOR} + ${ODDS_BUDGET_PER_FIXTURE}*${allMatches.length}, cap ${ODDS_BUDGET_CAP})`);
+  const oddsMap = await fetchOddsForFixtures(fixtureIds, env, oddsMaxCalls, ENABLE_GOAL_MARKETS, allMatches, null, rawBooksMap, goalStatusMap);
   console.log(`[Scan] Odds gevonden voor ${Object.keys(oddsMap).length} wedstrijden`);
 
   const oddsHistoryPath = `odds_history/${today}`;
@@ -6415,7 +6458,8 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     // v295: oddsMap is gevuld voor ALLE fixtureIds in het venster (fetchOddsForFixtures krijgt
     // fixtureIds = allMatches, niet batch), dus dit is een echte meting en geen schatting.
     oddsAlleMet: Object.keys(oddsMap).length, oddsAlleVan: allMatches.length,
-    oddsClubligaMet, oddsClubligaVan }; // v323
+    oddsClubligaMet, oddsClubligaVan, // v323
+    oddsBudgetMaxcalls: oddsMaxCalls }; // v390
   await sbUpdateScanStatus(scanData1, env);
 
   const elitePicks = Object.values(opgeslagenNieuw).filter(p => p.elite); // v268
@@ -8232,6 +8276,14 @@ export default {
               // najaars-kwalificatiedagen legitiem ~20% halen -- 15% brengt die twee niet in de knel. Vangt
               // nu wel een echte instorting op een drukke dag. NULL-venster (av niet gemeten) alarmeert niet.
               if (av >= 10 && pctA !== null && pctA < 15) warnings.push(`odds_dekking_laag(${am}/${av} = ${pctA}%)`);
+              // v390: TWEEDE, STRENGERE DREMPEL VOOR DRUKKE VENSTERS. AANLEIDING: de 15%-drempel hierboven
+              // ving de 19-09-inzinking NIET -- die zakte naar 44-67% (bv. 63%), ruim boven 15%, en bleef
+              // dus onopgemerkt tot een handmatige doorlichting. GEMETEN (12-08, 149 scans, zelfde basis als
+              // de 15%-drempel): bij av>=80 (drukke domestic avond, ruim voorbij het kwalificatie-schaal van
+              // ~20-24 fixtures) hoort de dekking op 77-100% te zitten. Drempel op 70% laat normale ruis door
+              // en vangt een echte inzinking. av<80 gebruikt uitsluitend de bestaande 15%-drempel, want
+              // kwalificatierondes (~20% bij kleine vensters) mogen dit niet vals triggeren.
+              if (av >= 80 && pctA !== null && pctA < 70) warnings.push(`odds_dekking_laag_druk(${am}/${av} = ${pctA}%)`);
             }
             // v323: dekking apart voor clubliga -- strengere drempel (<70%) mogelijk want domestic
             // topcompetities halen ~100%; kwalificatie (~20%, geen clubliga) kan dit niet vals triggeren.
