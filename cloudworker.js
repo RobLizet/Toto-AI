@@ -6,7 +6,15 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v392'; // v392: fetchOddsForFixtures MEET al sinds v243 oddsCallsUsed/pad/rate-limit-hits
+const VERSION = 'v393'; // v393: scan_runs.odds_missing_leagues (jsonb, top 25) -- per league hoeveel NS-
+// fixtures wel/niet een odds-snapshot kregen. AANLEIDING: v392-meting toonde odds_calls_used=151 van
+// oddsBudgetMaxcalls=499 en odds_rl_hits=0 -- budget en rate-limit waren dus AANTOONBAAR NIET de reden
+// voor de 62% NS-dekking (102/164). De enige overgebleven, nog niet gemeten verklaring: sommige
+// competities/fixtures hebben bij api-sports gewoon geen bookmaker-odds (vgl. de eerder besproken
+// "United of Manchester"-FA Cup-kwalificatie, 7e klasse). Puur read-only telling op bestaande
+// allMatches/oddsMap-data, geen extra API-calls, geen gedragswijziging elders.
+// Rollback: odds_missing_leagues-veld uit scanData1 en de scan_runs-POST verwijderen, VERSION -> v392.
+// v392: fetchOddsForFixtures MEET al sinds v243 oddsCallsUsed/pad/rate-limit-hits
 // intern (_st.calls/_st.pad/_bump), maar de ECHTE runScan-aanroep gaf hiervoor altijd `null` als stats-
 // param (alleen runScanTest ving het op) -- dus die meting bestond, maar niemand ving hem op, exact de
 // v265/v269/v272/v283/v287/v295-familie. AANLEIDING: bij de 19-09-doorlichting (62% dekking op
@@ -963,6 +971,7 @@ async function sbUpdateScanStatus(data, env) {
       odds_calls_used: g(data.oddsCallsUsed), // v392
       odds_pad: data.oddsPad || null, // v392
       odds_rl_hits: g(data.oddsRlHits), // v392
+      odds_missing_leagues: data.oddsMissingLeagues || null, // v393
       picks_saved: g(data.lastPickCount),
       candidates_removed: g(data.removedCount),
       analysis_skipped: g(data.analysisSkipped), // v271: 0=overgeslagen gemeten, NULL=niet gemeten
@@ -6515,6 +6524,25 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
   const oddsAlleVanNs = _nsM.length;
   const oddsAlleMetNs = _nsM.filter(m => oddsMap[m.fixtureId]).length;
   const oddsAlleLiveCount = allMatches.length - _nsM.length;
+  // v393: AANLEIDING v392-meting -- oddsCallsUsed (151) bleef ruim onder oddsBudgetMaxcalls (499) en
+  // oddsRlHits was 0, dus het budget/rate-limit was AANTOONBAAR NIET de beperkende factor voor de
+  // resterende NS-dekkingskloof (102/164 = 62%). De enige overgebleven verklaring die nog niet gemeten
+  // was: bepaalde competities/fixtures hebben simpelweg GEEN bookmaker-odds bij api-sports (zoals de
+  // eerder besproken "United of Manchester"-wedstrijd, een 7e-klasse FA Cup-kwalificatie). Dit telt
+  // per leagueId hoeveel NS-fixtures wel/niet een odds-snapshot kregen, zodat dat vermoeden een meting
+  // wordt in plaats van een aanname. Puur read-only tellen op al bestaande data (allMatches/oddsMap) --
+  // geen extra API-calls, geen gedragswijziging.
+  const _missingByLeague = {};
+  for (const m of _nsM) {
+    const key = m.leagueId ?? 'onbekend';
+    if (!_missingByLeague[key]) _missingByLeague[key] = { leagueId: m.leagueId ?? null, leagueName: m.leagueName || '', totaal: 0, missend: 0 };
+    _missingByLeague[key].totaal++;
+    if (!oddsMap[m.fixtureId]) _missingByLeague[key].missend++;
+  }
+  const oddsMissingLeagues = Object.values(_missingByLeague)
+    .filter(l => l.missend > 0)
+    .sort((a, b) => b.missend - a.missend)
+    .slice(0, 25);
   const scanData1 = { lastRun: new Date().toISOString(), scanDate: today,
     lastPickCount: newCount, lastMatchCount: analyseBatch.length,
     lastWithOdds: withOdds.length, lastWithoutOdds: withoutOdds.length,
@@ -6532,7 +6560,8 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     // v392: eindelijk gemeten i.p.v. onbekend -- zie de toelichting bij oddsStats hierboven.
     oddsCallsUsed: Number.isFinite(oddsStats.calls) ? oddsStats.calls : null,
     oddsPad: oddsStats.pad || null,
-    oddsRlHits: (oddsStats.rl_competitie || 0) + (oddsStats.rl_bulk || 0) + (oddsStats.rl_fallback || 0) + (oddsStats.rl_goals || 0) };
+    oddsRlHits: (oddsStats.rl_competitie || 0) + (oddsStats.rl_bulk || 0) + (oddsStats.rl_fallback || 0) + (oddsStats.rl_goals || 0),
+    oddsMissingLeagues: oddsMissingLeagues }; // v393
   await sbUpdateScanStatus(scanData1, env);
 
   const elitePicks = Object.values(opgeslagenNieuw).filter(p => p.elite); // v268
