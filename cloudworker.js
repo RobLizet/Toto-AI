@@ -6,7 +6,15 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v393'; // v393: scan_runs.odds_missing_leagues (jsonb, top 25) -- per league hoeveel NS-
+const VERSION = 'v394'; // v394: allMatches.round + odds_missing_leagues.missendeRondes -- welke EXACTE
+// rondenaam mist odds binnen FA Cup/Taça de Portugal (v393 wees de hele competitie aan: 57/77 resp.
+// 5/13). AANLEIDING: gebruiker koos optie 3 (bekercompetities zonder markt uit analyse EN dekkingsteller
+// halen), maar leagueId-45/96 blanket uitsluiten zou ook latere, wel geprijsde rondes (FA Cup 3e ronde
+// met PL-clubs) weggooien -- dat is een aanname, geen meting. Deze stap meet eerst de exacte rondenaam
+// (bijv. "1st Qualifying Round") van de missende fixtures, zodat het filter straks op ronde kan i.p.v.
+// op competitie. Puur read-only, geen gedragswijziging.
+// Rollback: allMatches.round-veld en missendeRondes uit oddsMissingLeagues verwijderen, VERSION -> v393.
+// v393: scan_runs.odds_missing_leagues (jsonb, top 25) -- per league hoeveel NS-
 // fixtures wel/niet een odds-snapshot kregen. AANLEIDING: v392-meting toonde odds_calls_used=151 van
 // oddsBudgetMaxcalls=499 en odds_rl_hits=0 -- budget en rate-limit waren dus AANTOONBAAR NIET de reden
 // voor de 62% NS-dekking (102/164). De enige overgebleven, nog niet gemeten verklaring: sommige
@@ -5194,6 +5202,14 @@ async function runScan(env, force = false, skipTellerReset = false) {
         // pre-match odds meer krijgen (API-Football levert /odds?bet=1/5/8 alleen vóór aftrap), dus
         // meetellen in de dekkingsnoemer verlaagt het percentage zonder dat budget daar iets aan verhelpt.
         isLive: ['1H','2H','HT','ET','BT','P'].includes(f.fixture?.status?.short),
+        // v394: bewaard voor de "geen-odds-competities"-meting (FA Cup/Taça de Portugal). Nationale bekers
+        // hebben pas vanaf de latere rondes bookmaker-interesse -- de kwalificatie-/voorrondes met
+        // amateurclubs (bijv. "United of Manchester") nooit. AANLEIDING: v393 wees de HELE competitie aan
+        // (57/77 FA Cup, 5/13 Taça), maar een blanket-uitsluiting op leagueId zou ook de latere, wél
+        // geprijsde rondes (bijv. FA Cup 3e ronde met Premier League-clubs) weggooien. `round` is de
+        // ruwe API-Football-tekst (bijv. "1st Qualifying Round"); pas na deze meting kan een filter op
+        // rondenaam i.p.v. op competitie gebouwd worden, zonder te gokken welke rondes het betreft.
+        round: f.league?.round || null,
       }));
 
     console.log(`[Scan] ${allMatches.length} wedstrijden na filter (NS/live)`);
@@ -6535,9 +6551,15 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
   const _missingByLeague = {};
   for (const m of _nsM) {
     const key = m.leagueId ?? 'onbekend';
-    if (!_missingByLeague[key]) _missingByLeague[key] = { leagueId: m.leagueId ?? null, leagueName: m.leagueName || '', totaal: 0, missend: 0 };
+    if (!_missingByLeague[key]) _missingByLeague[key] = { leagueId: m.leagueId ?? null, leagueName: m.leagueName || '', totaal: 0, missend: 0, missendeRondes: {} };
     _missingByLeague[key].totaal++;
-    if (!oddsMap[m.fixtureId]) _missingByLeague[key].missend++;
+    if (!oddsMap[m.fixtureId]) {
+      _missingByLeague[key].missend++;
+      // v394: welke ronde precies mist odds -- nodig om straks op rondenaam te kunnen filteren i.p.v.
+      // op hele competitie (zie toelichting bij allMatches.round hierboven).
+      const rk = m.round || 'onbekend';
+      _missingByLeague[key].missendeRondes[rk] = (_missingByLeague[key].missendeRondes[rk] || 0) + 1;
+    }
   }
   const oddsMissingLeagues = Object.values(_missingByLeague)
     .filter(l => l.missend > 0)
