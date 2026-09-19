@@ -6,7 +6,28 @@
 // v99: POST /picks endpoint, UTC timezone fix, altijd push na scan
 // v98: Firebase → Supabase migratie, leagueConfig uitgebreid
 
-const VERSION = 'v390'; // v390: TWEE VERVOLGSTAPPEN OP DE v389-FIX. (1) ODDS-CALLBUDGET IS NU DYNAMISCH:
+const VERSION = 'v391'; // v391: RETRACTIE + FIX op het v390-alarm. Het nieuwe alarm odds_dekking_laag_druk
+// (v390) vuurde 19-09 tussen 11:00-15:00 UTC ONONDERBROKEN op exact 63-64%, en de CI-workflow
+// 'PMX health monitor' faalde daardoor elke run (ok:false zodra warnings niet leeg is) en mailde Rob.
+// GEMETEN vóór er iets werd aangepast: in diezelfde periode steeg het v390-budget van 400 naar 481-491,
+// terwijl scan_runs.api_calls (het TOTAAL per scan, dus ruim boven het odds-deel alleen) in elke scan al
+// ONDER het beschikbare odds-budget bleef. Budget was dus AANTOONBAAR NIET meer de beperkende factor --
+// mijn v390-aanname dat een hoger budget de dekking op een drukke dag verbetert, klopt dus niet
+// universeel en wordt hier voor dit geval INGETROKKEN. UITGEZOCHT in de code, niet geraden: allMatches
+// (regel ~5127) bevat naast NS ook LIVE wedstrijden (1H/2H/HT/ET/BT/P). API-Football levert /odds?bet=
+// 1/5/8 uitsluitend VOOR aftrap -- een live wedstrijd kan dus NOOIT meer odds krijgen, ongeacht budget.
+// Die live-wedstrijden zaten gewoon in de noemer van het v390-alarm, wat een reële, budget-onafhankelijke
+// ondergrens (elke drukke zaterdagmiddag heeft lopende duels) liet lezen als een storing. FIX: elke
+// match-record krijgt een isLive-vlag (geen modelinvloed, puur telemetrie); nieuwe kolommen
+// scan_runs/scan_status .odds_alle_met_ns/_van_ns/_live (migratie toegepast, geverifieerd) tellen de
+// dekking EXCLUSIEF live wedstrijden. Het odds_dekking_laag_druk-alarm gebruikt vanaf nu die _ns-telling
+// i.p.v. de alles-inclusief-telling. Zelfde 80/70%-drempel, nu op de juiste (budget-beïnvloedbare)
+// populatie. GEEN wijziging aan pickselectie/model/staking/drempels, GEEN terugdraai van het v390-budget
+// zelf (dat blijft dynamisch -- alleen onbewezen dat het bij DEZE 63%-inzinking de oorzaak was, niet dat
+// het nutteloos is; een volgende budget-gedreven inzinking op nog-niet-afgetrapte wedstrijden vangt de
+// _ns-drempel nu wél zuiver). Rollback: het amNs/avNs-blok verwijderen en de oude av/am-regel met de
+// <70%-drempel terugzetten, VERSION -> v390 (geeft de CI-mails weer terug, dus niet zonder reden).
+// v390: TWEE VERVOLGSTAPPEN OP DE v389-FIX. (1) ODDS-CALLBUDGET IS NU DYNAMISCH:
 // vaste 400 vervangen door calcOddsBudget() = ODDS_BUDGET_FLOOR(250) + ODDS_BUDGET_PER_FIXTURE(1.4) *
 // allMatches.length, cap 900, runtime-instelbaar via model_config (zelfde patroon als TUNE/ELO_BLEND_W).
 // AANLEIDING: v352 (130->220) en v389 (220->400) losten dezelfde inzinking twee keer op met een vast
@@ -877,6 +898,11 @@ async function sbUpdateScanStatus(data, env) {
     last_odds_alle_van: _g(data.oddsAlleVan),
     last_odds_clubliga_met: _g(data.oddsClubligaMet), // v323
     last_odds_clubliga_van: _g(data.oddsClubligaVan), // v323
+    // v391: zelfde telling, maar LIVE wedstrijden (kunnen structureel geen odds meer krijgen) eruit --
+    // zie de toelichting bij scanData1.oddsAlleMetNs in runScan.
+    last_odds_alle_met_ns: _g(data.oddsAlleMetNs),
+    last_odds_alle_van_ns: _g(data.oddsAlleVanNs),
+    last_odds_alle_live: _g(data.oddsAlleLiveCount),
     scans_today: _g(data.scansToday),
     version: data.version || VERSION,
     // v265: uit de tellers zelf, niet via het meegegeven object -- er zijn twee
@@ -920,6 +946,9 @@ async function sbUpdateScanStatus(data, env) {
       odds_alle_van: g(data.oddsAlleVan),
       odds_clubliga_met: g(data.oddsClubligaMet), // v323
       odds_clubliga_van: g(data.oddsClubligaVan), // v323
+      odds_alle_met_ns: g(data.oddsAlleMetNs), // v391: exclusief live (kan nooit odds krijgen)
+      odds_alle_van_ns: g(data.oddsAlleVanNs), // v391
+      odds_alle_live: g(data.oddsAlleLiveCount), // v391
       picks_saved: g(data.lastPickCount),
       candidates_removed: g(data.removedCount),
       analysis_skipped: g(data.analysisSkipped), // v271: 0=overgeslagen gemeten, NULL=niet gemeten
@@ -5138,6 +5167,10 @@ async function runScan(env, force = false, skipTellerReset = false) {
         leagueSeason: f.league?.season || null, // v243: seizoen uit de fixture zelf (zie fetchOddsForFixtures)
         leagueName: f.league?.name || '',
         venue: f.fixture?.venue?.name || '',
+        // v391: bewaard voor de dekkingsmeting -- een LIVE wedstrijd (afgetrapt) kan structureel geen
+        // pre-match odds meer krijgen (API-Football levert /odds?bet=1/5/8 alleen vóór aftrap), dus
+        // meetellen in de dekkingsnoemer verlaagt het percentage zonder dat budget daar iets aan verhelpt.
+        isLive: ['1H','2H','HT','ET','BT','P'].includes(f.fixture?.status?.short),
       }));
 
     console.log(`[Scan] ${allMatches.length} wedstrijden na filter (NS/live)`);
@@ -6447,6 +6480,20 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
   const _clubligaM = allMatches.filter(m => _clubligaIds.has(m.leagueId));
   const oddsClubligaVan = _clubligaM.length;
   const oddsClubligaMet = _clubligaM.filter(m => oddsMap[m.fixtureId]).length;
+  // v391: dekking exclusief LIVE wedstrijden. AANLEIDING: het v390-alarm odds_dekking_laag_druk vuurde
+  // de hele zaterdagmiddag (11-19 UTC) op EXACT hetzelfde percentage (63-64%) ONDANKS dat het budget
+  // ondertussen van 400 naar 481-491 was gestegen -- api_calls (TOTAAL per scan, dus ruim boven het
+  // odds-deel) bleef in elke scan al ONDER het beschikbare odds-budget, dus budget was aantoonbaar NIET
+  // de beperkende factor meer. GEMETEN in de code: allMatches bevat naast NS ook LIVE wedstrijden
+  // (1H/2H/HT/ET/BT/P, regel ~5127) -- en API-Football levert /odds?bet=1/5/8 alleen VOOR aftrap. Een
+  // live wedstrijd kan dus NOOIT odds krijgen, hoeveel budget er ook is; meetellen in de noemer verlaagt
+  // het percentage structureel zonder dat het iets zegt over de odds-ophaal-kwaliteit. Apart geteld i.p.v.
+  // de bestaande velden herdefiniëren (v322-les: een bestaand veld van betekenis laten veranderen breekt
+  // het alarm dat er al op hangt).
+  const _nsM = allMatches.filter(m => !m.isLive);
+  const oddsAlleVanNs = _nsM.length;
+  const oddsAlleMetNs = _nsM.filter(m => oddsMap[m.fixtureId]).length;
+  const oddsAlleLiveCount = allMatches.length - _nsM.length;
   const scanData1 = { lastRun: new Date().toISOString(), scanDate: today,
     lastPickCount: newCount, lastMatchCount: analyseBatch.length,
     lastWithOdds: withOdds.length, lastWithoutOdds: withoutOdds.length,
@@ -6459,7 +6506,8 @@ Exact ${analyseBatch.length} objecten, zelfde volgorde.`;
     // fixtureIds = allMatches, niet batch), dus dit is een echte meting en geen schatting.
     oddsAlleMet: Object.keys(oddsMap).length, oddsAlleVan: allMatches.length,
     oddsClubligaMet, oddsClubligaVan, // v323
-    oddsBudgetMaxcalls: oddsMaxCalls }; // v390
+    oddsBudgetMaxcalls: oddsMaxCalls, // v390
+    oddsAlleMetNs, oddsAlleVanNs, oddsAlleLiveCount }; // v391
   await sbUpdateScanStatus(scanData1, env);
 
   const elitePicks = Object.values(opgeslagenNieuw).filter(p => p.elite); // v268
@@ -8247,7 +8295,7 @@ export default {
         let oddsDekVenster = null;
         let oddsDekClubliga = null; // v323
         try {
-          const sc = await sb(env, 'scan_status', 'GET', null, '?id=eq.current&select=last_match_count,last_with_odds,last_without_odds,last_odds_alle_met,last_odds_alle_van,last_odds_clubliga_met,last_odds_clubliga_van&limit=1');
+          const sc = await sb(env, 'scan_status', 'GET', null, '?id=eq.current&select=last_match_count,last_with_odds,last_without_odds,last_odds_alle_met,last_odds_alle_van,last_odds_clubliga_met,last_odds_clubliga_van,last_odds_alle_met_ns,last_odds_alle_van_ns,last_odds_alle_live&limit=1');
           const r0 = sc?.[0];
           if (r0) {
             const wo = Number(r0.last_with_odds || 0);
@@ -8276,14 +8324,25 @@ export default {
               // najaars-kwalificatiedagen legitiem ~20% halen -- 15% brengt die twee niet in de knel. Vangt
               // nu wel een echte instorting op een drukke dag. NULL-venster (av niet gemeten) alarmeert niet.
               if (av >= 10 && pctA !== null && pctA < 15) warnings.push(`odds_dekking_laag(${am}/${av} = ${pctA}%)`);
-              // v390: TWEEDE, STRENGERE DREMPEL VOOR DRUKKE VENSTERS. AANLEIDING: de 15%-drempel hierboven
-              // ving de 19-09-inzinking NIET -- die zakte naar 44-67% (bv. 63%), ruim boven 15%, en bleef
-              // dus onopgemerkt tot een handmatige doorlichting. GEMETEN (12-08, 149 scans, zelfde basis als
-              // de 15%-drempel): bij av>=80 (drukke domestic avond, ruim voorbij het kwalificatie-schaal van
-              // ~20-24 fixtures) hoort de dekking op 77-100% te zitten. Drempel op 70% laat normale ruis door
-              // en vangt een echte inzinking. av<80 gebruikt uitsluitend de bestaande 15%-drempel, want
-              // kwalificatierondes (~20% bij kleine vensters) mogen dit niet vals triggeren.
-              if (av >= 80 && pctA !== null && pctA < 70) warnings.push(`odds_dekking_laag_druk(${am}/${av} = ${pctA}%)`);
+            }
+            // v391: RETRACTIE van de v390-drempel hieronder in zijn oorspronkelijke vorm. AANLEIDING:
+            // odds_dekking_laag_druk vuurde 19-09 tussen 11:00-15:00 UTC ONONDERBROKEN op 63-64%, terwijl
+            // het budget in diezelfde periode van 400 naar 481-491 steeg -- als budget de beperkende
+            // factor was geweest, had de dekking moeten verbeteren. GEMETEN: api_calls (het TOTAAL per
+            // scan, dus ruim boven het odds-deel alleen) bleef in elke scan al onder het beschikbare
+            // odds-budget. Budget was dus aantoonbaar niet (meer) de bottleneck. UITGEZOCHT in de code:
+            // allMatches bevat naast NS ook LIVE wedstrijden (1H/2H/HT/ET/BT/P), en API-Football levert
+            // pre-match /odds alleen VOOR aftrap -- een live wedstrijd kan dus NOOIT odds krijgen, hoeveel
+            // budget er ook is. Die live-wedstrijden zaten in de noemer van de v390-drempel, wat een reële,
+            // budget-onafhankelijke ondergrens liet lezen als "storing". FIX: de strengere drempel gebruikt
+            // nu last_odds_alle_*_ns (v391, LIVE eruit) i.p.v. de alles-inclusief-telling hierboven.
+            const amNs = Number(r0.last_odds_alle_met_ns);
+            const avNs = Number(r0.last_odds_alle_van_ns);
+            if (Number.isFinite(amNs) && Number.isFinite(avNs) && r0.last_odds_alle_van_ns !== null) {
+              const pctNs = avNs > 0 ? Math.round((amNs / avNs) * 100) : null;
+              // Zelfde 80/70%-redenering als de ingetrokken v390-drempel, nu op de juiste (budget-
+              // beïnvloedbare) populatie: nog-niet-afgetrapte wedstrijden in het venster.
+              if (avNs >= 80 && pctNs !== null && pctNs < 70) warnings.push(`odds_dekking_laag_druk(${amNs}/${avNs}_ns = ${pctNs}%, live_uitgesloten=${Number(r0.last_odds_alle_live) || 0})`);
             }
             // v323: dekking apart voor clubliga -- strengere drempel (<70%) mogelijk want domestic
             // topcompetities halen ~100%; kwalificatie (~20%, geen clubliga) kan dit niet vals triggeren.
